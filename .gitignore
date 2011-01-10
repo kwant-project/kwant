@@ -1,0 +1,13 @@
+*~
+MANIFEST
+*.pyc
+*.so
+/kwant/*/*.c
+/kwant/_static_version.py
+/build
+/dist
+/doc/build
+/doc/source/reference/generated/
+/doc/source/images/*.png
+/doc/source/images/*.pdf
+/doc/source/images/.*_flag

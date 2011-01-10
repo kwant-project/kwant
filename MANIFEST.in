@@ -1,0 +1,17 @@
+# This file specifies the files to be included in the source distribution
+# in addition to the default ones.
+
+recursive-include kwant *.pxd
+recursive-include kwant *.h
+recursive-include kwant test_*.py
+
+include TODO.txt
+recursive-include examples *.py
+
+include doc/other/*[a-zA-Z]
+include doc/Makefile
+recursive-include doc/source *.rst *.py *.svg
+recursive-include doc/source/_static *[a-zA-Z]
+recursive-include doc/templates *[a-zA-Z]
+prune doc/source/reference/generated
+recursive-include doc/sphinxext *.py *.txt *.in

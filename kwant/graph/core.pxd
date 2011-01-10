@@ -1,0 +1,33 @@
+cimport numpy as np
+from kwant.graph.defs cimport gint
+
+cdef struct Edge:
+    gint tail, head
+
+cdef class Graph:
+    cdef int allow_negative_nodes
+    cdef Edge *edges
+    cdef gint capacity, size, _num_nodes
+    cdef gint num_pp_edges, num_pn_edges, num_np_edges
+
+    cpdef reserve(self, gint capacity)
+    cpdef gint add_edge(self, gint tail, gint head) except -1
+    cdef _add_edges_ndarray_int64(self, np.ndarray[np.int64_t, ndim=2] edges)
+    cdef _add_edges_ndarray_int32(self, np.ndarray[np.int32_t, ndim=2] edges)
+
+cdef class gintArraySlice:
+    cdef gint *begin, *end
+
+cdef class CGraph:
+    cdef readonly bint twoway, edge_nr_translation
+    cdef readonly gint num_nodes, num_edges, num_px_edges, num_xp_edges
+    cdef gint *heads_idxs, *heads
+    cdef gint *tails_idxs, *tails, *edge_ids
+    cdef gint *edge_ids_by_edge_nr, edge_nr_end
+
+cdef class CGraph_malloc(CGraph):
+    pass
+
+cdef class EdgeIterator:
+    cdef CGraph graph
+    cdef gint edge_id, tail
