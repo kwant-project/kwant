@@ -1034,18 +1034,11 @@ class Builder(object):
         hoppings : Iterator over hoppings
            All matching possible hoppings
         """
-        minus_delta = tuple(-x for x in delta)
+        d = tuple(-x for x in delta)
         for site0 in self.sites():
-            group0 = site0.group
-            if group0 is group_a:
-                group1 = group_b
-                d = minus_delta
-            elif group0 is group_b:
-                group1 = group_a
-                d = delta
-            else:
+            if site0.group is not group_a:
                 continue
-            site1 = site0.shifted(d, group1)
+            site1 = site0.shifted(d, group_b)
             if site1 in self:
                 yield site0, site1
 
