@@ -3,13 +3,21 @@ Roughly in order of importance.                                     -*-org-*-
 * Define a few benchmarks and check performance.  Optimize the code.
 
 * Write a fast tiny array module.
-  (If this turns out to be a performance bottleneck.)
+  This should speed up many operations in kwant.
 
-* Provide support for calculating and nicely plotting LDOS.
-  Make a tutorial example for this.
+* Wrap mumps, umfpack, or some other sparse linear algebra library with Cython.
+  Use it directly in sparse solver.  This will allow to fine-tune the solution
+  of sparse systems.
 
-* Allow attaching lead with further then nearest slice hoppings.
+* Benchmark mumps and check whether nested dissection would be useful.
+  If yes, implement it.
+
+* Provide support for plotting LDOS and other functions
+  of the site in the system.  Make a tutorial example for this.
+
+* Allow attaching lead with further than nearest slice hoppings.
   The most easy way to do this is increasing the period of the lead.
+  Alternatively, generalize modes and InfiniteSystem format.
 
 * Optionally show site coordinates when plotting a system.
 
@@ -23,12 +31,26 @@ Roughly in order of importance.                                     -*-org-*-
   This is a good starting point:
   http://www.cs.umbc.edu/~olano/papers/GPUTEA.pdf
 
-* Write a RGF solver which uses graph/slicer.
+* Incorprorate efficient correlated disorder using scipy.spatial.
+
+* Write an RGF/SM solver which uses graph/slicer.
 
 * Implement the C solver interface.
 
 * Wrap TB_SIM as a solver.
 
-* Wrap umfpack or some other sparse linear algebra library with Cython.
-  Use it directly in sparse solver.  This will allow to fine-tune the solution
-  of sparse systems.
+* Implement time domain propagation solver, or coordinate with Kruckl, who
+  wanted to implement it.
+
+* Implement models module, incorporate units into it.
+
+* Improve handling of systems with important additional degrees of freedom.
+  i.e. spin, or electron-hole (currently two leads need to be introduced per
+  actual lead, in order to calculate Andreev transport).
+
+* Implement automatic search for discrete symmetries of a tight binding model
+  and of conservation laws.
+
+* Revisit Symmetry, make it more general (allow for description of other
+  discrete symmetries, potentially also symmetries which change builder
+  values).
