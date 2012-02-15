@@ -66,7 +66,7 @@ the hoppings in the form expected by
   hopping from `(i, j)` to `(i+1, j)`, whereas `(1, 1)` would
   mean hopping to `(i+1, j+1)`.
 - The target lattice (where to hop to)
-- The source lattice (where the hopping originates
+- The source lattice (where the hopping originates)
 
 Since we are only dealing with a single lattice here, source and target
 lattice are identical, but still must be specified  (for an example
@@ -315,7 +315,7 @@ Up to now, the system contains constant hoppings and onsite energies,
 and we still need to include the phase shift due to the magnetic flux.
 This is done by **overwriting** the values of hoppings in x-direction
 along the branch cut in the lower arm of the ring. For this we select
-all hoppings in x-drection that are of the form `((1, j), (0, j))`
+all hoppings in x-direction that are of the form `((1, j), (0, j))`
 with ``j<0``:
 
 .. literalinclude:: ../../../examples/tutorial2c.py

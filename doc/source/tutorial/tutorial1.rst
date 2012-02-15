@@ -302,7 +302,7 @@ generator that iterates over all points in the rectangle as did the
 two ``for``-loops in the previous example. In fact, a
 `~kwant.builder.Builder` can not only be indexed by a single
 lattice point -- it also allows for lists of points, or, as in this
-example, an generator (as is also used in list comprehensions in
+example, a generator (as is also used in list comprehensions in
 python).
 
 Having added all lattice points in one line, we now turn to the
@@ -415,7 +415,7 @@ The result of the example should be identical to the previous one.
 
      For technical reasons it is not possible to add several points
      using a tuple of sites. Hence it is worth noting
-     the a subtle detail in
+     a subtle detail in
 
      .. literalinclude:: ../../../examples/tutorial1b.py
          :lines: 27

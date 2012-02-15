@@ -9,9 +9,8 @@ and two non-collinear leads. In the process, we will touch
 all of the topics that we have seen in the previous tutorials,
 but now for the honeycomb lattice. As you will see, everything
 carries over nicely.
-spectrum of a quantum dot.
 
-We begin from defining the honeycomb lattice of graphene. This is
+We begin by defining the honeycomb lattice of graphene. This is
 in principle already done in `kwant.lattice.Honeycomb`, but we do it
 explicitly here to show how to define a new lattice:
 
@@ -70,7 +69,7 @@ as add an additional link:
     :lines: 55-56
 
 Note that the conversion from a tuple `(i,j)` to site
-is done be the sublattices `a` and `b`.
+is done by the sublattices `a` and `b`.
 
 Later, we will compute some eigenvalues of the closed
 scattering region without leads. For that, obtain a finalized
@@ -115,7 +114,7 @@ plot the system:
     :lines: 135-137, 142-147
 
 Here we customize the plotting: `plotter_symbols` is a dictionary
-which the sublattice objects `a` and `b` as keys, and the
+with the sublattice objects `a` and `b` as keys, and the
 `~kwant.plotter.Circle` objects specify that the sublattice `a` should
 be drawn using a filled black circle, and `b` using a white circle
 with a black outline. The radius of the circle is given in relative
@@ -128,7 +127,7 @@ length scale using the argument `a` as in the example (not to be
 confused with the sublattice `a`) which is here set to the distance
 between carbon atoms in the graphene lattice. Specifying ``r=0.3`` in
 `~kwant.plotter.Circle` hence means that the radius of the circle is
-30% of the carbon-carbon distance. Using this relative units it is
+30% of the carbon-carbon distance. Using this relative unit it is
 easy to make good-looking plots where the symbols cover a well-defined
 part of the plot.
 
@@ -178,7 +177,7 @@ an open quantum dot
    :func:`plot <kwant.plotter.plot>` for more details.
 
  - In a lattice with more than one basis atom, you can always act either
-   on all sublattice at the same time, or on a single sublattice only.
+   on all sublattices at the same time, or on a single sublattice only.
 
    For example, you can add lattice points for all sublattices in the
    current example using::

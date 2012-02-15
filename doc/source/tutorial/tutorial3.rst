@@ -48,7 +48,7 @@ Hamiltonian is approximating.
 
   - Note that we have used `~kwant.system.InfiniteSystem.energies` as if it
     were a function. In fact, `~kwant.system.InfiniteSystem.energies` is a
-    so-called callable object, i.e. a object that can be used just as a
+    so-called callable object, i.e. an object that can be used just as a
     function. We could also have written::
 
         Energies = flead.energies
@@ -103,7 +103,11 @@ want to use sparse matrix methods.) Finally, we obtain the result:
 At zero magnetic field several energy levels are degenerate (since our
 quantum dot is rather symmetric). These degeneracies are split
 by the magnetic field, and the eigenenergies flow towards the
-Landau level energies at higher magnetic fields [#]_
+Landau level energies at higher magnetic fields [#]
+
+.. seealso::
+    The full source code can be found in
+    :download:`examples/tutorial3b.py <../../../examples/tutorial3b.py>`
 
 .. specialnote:: Technical details
 
