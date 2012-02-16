@@ -5,6 +5,18 @@ Roughly in order of importance.                                     -*-org-*-
 * Write a fast tiny array module.
   This should speed up many operations in kwant.
 
+* Take care of mutable default arguments (mostly in plotter)
+  This should also allow to solve the problem with unreadable function
+  prototypes in the documentation.
+
+* Allow plotting of finalized infinite systems.
+
+* Enhance the line argument of kwant.plotter.plot
+  It could understand "hopping kinds" in the same way possible_hoppings does.
+
+* Provide nice support for graphene double layers
+  This could be done by allowing lattices to be shifted, or in some other way.
+
 * Wrap mumps, umfpack, or some other sparse linear algebra library with Cython.
   Use it directly in sparse solver.  This will allow to fine-tune the solution
   of sparse systems.
@@ -15,7 +27,7 @@ Roughly in order of importance.                                     -*-org-*-
 * Provide support for plotting LDOS and other functions
   of the site in the system.  Make a tutorial example for this.
 
-* Allow attaching lead with further than nearest slice hoppings.
+* Allow attaching leads with further than nearest slice hoppings.
   The most easy way to do this is increasing the period of the lead.
   Alternatively, generalize modes and InfiniteSystem format.
 
