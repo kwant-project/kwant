@@ -55,6 +55,9 @@ class System(object):
         in which they appear. If sparse is set to `True`, a
         `scipy.sparse.coo_matrix` is returned, otherwise a dense one.
         """
+        msg = 'Hopping from site {0} to site {1} does not match the ' +\
+              'dimensions of onsite Hamiltonians of these sites.'
+
         def create_sparse():
             # Calculate the data size.
             num_entries = 0
@@ -76,8 +79,7 @@ class System(object):
                         # The shape check is here to prevent data corruption.
                         shape = (1, 1) if np.isscalar(h) else h.shape
                         if shape != (b_norb[n_j], a_norb[n_i]):
-                            raise ValueError('matrix element '
-                                             'dimensions mismatch')
+                            raise ValueError(msg.format(i, j))
                         if np.isscalar(h):
                             data[offset] = h
                             ij[0, offset] = n_j
@@ -107,8 +109,7 @@ class System(object):
                             h_sub[b_off[n_j] : b_off[n_j + 1],
                                     a_off[n_i] : a_off[n_i + 1]] = ham(j, i)
                         except ValueError:
-                            raise ValueError('matrix element '
-                                             'dimensions mismatch')
+                            raise ValueError(msg.format(i, j))
             return h_sub
 
         gr = self.graph
