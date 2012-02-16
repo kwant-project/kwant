@@ -1068,12 +1068,14 @@ class Builder(object):
         """
         sym = lead_builder.symmetry
 
-        if sym.num_directions != 1 \
-                or not all(-1 <= sym.which(hopping[1])[0] <= 1
-                            for hopping in lead_builder.hoppings()):
-            raise ValueError('Only builders with a 1D symmetry and no '
-                             'hoppings between non-neighboring slices '
-                             'are allowed.')
+        if sym.num_directions != 1:
+            raise ValueError('Only builders with a 1D symmetry are allowed.')
+        for hopping in lead_builder.hoppings():
+            if not -1 <= sym.which(hopping[1])[0] <= 1:
+                msg = 'Hopping {0} connects non-neighboring slices. Only ' +\
+                      'nearest-slice hoppings are allowed ' +\
+                      '(consider increasing the lead period).'
+                raise ValueError(msg.format(hopping))
         try:
             lead_builder.sites().next()
         except StopIteration:
@@ -1097,7 +1099,7 @@ class Builder(object):
             orig_dom = sym.which(origin)[0]
             all_doms = [dom for dom in all_doms if dom <= orig_dom]
         if len(all_doms) == 0:
-            raise ValueError('Builder does not interrupt the lead,'
+            raise ValueError('Builder does not intersect with the lead,'
                              ' this lead cannot be attached.')
         max_dom = max(all_doms)
         min_dom = min(all_doms)
@@ -1160,21 +1162,19 @@ class Builder(object):
         Attached leads are also finalized and will be present in the finalized
         system to be returned.
 
-        Currently, only Builder instances without or with a single `Symmetry`
-        can be finalized.
+        Currently, only Builder instances without or with a 1D translational
+        `Symmetry` can be finalized.
         """
         if self.symmetry.num_directions == 0:
             return self._finalized_finite()
         elif self.symmetry.num_directions == 1:
             return self._finalized_infinite()
         else:
-            raise ValueError('Currently, only builders without or with a '
-                             'single symmetry can be finalized.')
+            raise ValueError('Currently, only builders without or with a 1D '
+                             'translational symmetry can be finalized.')
 
     def _finalized_finite(self):
-        if self.symmetry.num_directions != 0:
-            raise ValueError(
-                'Only systems without symmetries are supported for now.')
+        assert self.symmetry.num_directions == 0
         ham = self._ham
 
         #### Make translation tables.
@@ -1229,9 +1229,7 @@ class Builder(object):
         ham = self._ham
         sym = self.symmetry
         gbp = self._group_by_pgid
-        if sym.num_directions != 1:
-            raise ValueError('System builder must have a single symmetry'
-                             ' direction.')
+        assert sym.num_directions == 1
 
         #### For each site of the fundamental domain, determine whether it has
         #### neighbors or not.
@@ -1309,8 +1307,8 @@ class Builder(object):
                     fd = sym.which(head)[0]
                     if fd != 1:
                         tail = unpack(ptail, gbp)
-                        msg = 'Further-then-nearest-neighbor slices ' \
-                        'are connected by hopping\n{0}.'
+                        msg = 'Further-than-nearest-neighbor slices ' \
+                              'are connected by hopping\n{0}.'
                         raise ValueError(msg.format((tail, head)))
                     continue
                 if head_id >= slice_size:
