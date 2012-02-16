@@ -8,6 +8,20 @@ import scipy.sparse as sp
 import scipy.sparse.linalg as spl
 from kwant import physics, system
 
+# This patches a memory leak in scipy:
+# http://projects.scipy.org/scipy/ticket/1597
+#
+# TODO: Remove this code once it is likely that the official bug fix has
+# reached all of our users.
+def del_for_umfpackcontext(self):
+    self.free()
+try:
+    if not hasattr(spl.dsolve.umfpack.UmfpackContext, '__del__'):
+        spl.dsolve.umfpack.UmfpackContext.__del__ = del_for_umfpackcontext
+except:
+    pass
+del del_for_umfpackcontext
+
 def make_linear_sys(sys, out_leads, in_leads, energy=0,
                     force_realspace=False):
     """
