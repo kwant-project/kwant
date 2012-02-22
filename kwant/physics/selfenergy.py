@@ -36,6 +36,10 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
     n = h_onslice.shape[0]
     m = h_hop.shape[1]
 
+    # Inter-slice hopping is zero.  The current algorithm is not suited to
+    # treat this extremely singular case.
+    assert np.any(h_hop)
+
     eps = np.finfo(np.common_type(h_onslice, h_hop)).eps
 
     # First check if the hopping matrix has eigenvalues close to 0.
@@ -517,6 +521,9 @@ def self_energy(h_onslice, h_hop, tol=1e6):
 
     m = h_hop.shape[1]
 
+    if not np.any(h_hop):
+        return np.zeros((m, m))
+
     if (h_onslice.shape[0] != h_onslice.shape[1] or
         h_onslice.shape[0] != h_hop.shape[0]):
         raise ValueError("Incompatible matrix sizes for h_onslice and h_hop.")
@@ -637,6 +644,11 @@ def modes(h_onslice, h_hop, tol=1e6):
     if (h_onslice.shape[0] != h_onslice.shape[1] or
         h_onslice.shape[0] != h_hop.shape[0]):
         raise ValueError("Incompatible matrix sizes for h_onslice and h_hop.")
+
+    if not np.any(h_hop):
+        n = h_hop.shape[0]
+        svd = (np.empty((n, 0)), np.empty((0, 0)), np.empty((0, m)))
+        return np.empty((0, 0)), np.empty((0, 0)), 0, svd
 
     # Defer most of the calculation to a helper routine.
     ev, evanselect, propselect, vec_gen, ord_schur, \

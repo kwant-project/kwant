@@ -81,6 +81,9 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
             h = lead.slice_hamiltonian()
             h -= energy * np.identity(h.shape[0])
             v = lead.inter_slice_hopping()
+            if not np.any(v):
+                num_modes.append(0)
+                continue
 
             u, ulinv, nprop, svd = physics.modes(h, v)
 

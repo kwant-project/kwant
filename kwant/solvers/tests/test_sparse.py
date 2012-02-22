@@ -255,3 +255,19 @@ def test_self_energy():
                         np.sort(eig_should_be.real))
     assert_almost_equal(t_should_be, sol.transmission(1, 0))
     assert_almost_equal(noise_should_be, sol.noise(1, 0))
+
+def test_very_singular_leads():
+    sys = kwant.Builder()
+    gr = kwant.lattice.Chain()
+    left_lead = kwant.Builder(kwant.TranslationalSymmetry([(-1,)]))
+    right_lead = kwant.Builder(kwant.TranslationalSymmetry([(1,)]))
+    sys.default_site_group = gr
+    left_lead.default_site_group = right_lead.default_site_group = gr
+    sys[(0,)] = left_lead[(0,)] = right_lead[(0,)] = np.identity(2)
+    left_lead[(0,), (1,)] = np.zeros((2, 2))
+    right_lead[(0,), (1,)] = np.identity(2)
+    sys.attach_lead(left_lead)
+    sys.attach_lead(right_lead)
+    fsys = sys.finalized()
+    result = solve(fsys)
+    assert result[1] == [0, 2]
