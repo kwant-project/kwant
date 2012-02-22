@@ -127,8 +127,6 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
                     lead_mat_in = np.dot(v, ulinv_in)
 
                 rhs.append(sp.bmat([[vdaguin_sp], [lead_mat_in]]))
-            else:
-                rhs.append(np.zeros((0, 0)))
         else:
             sigma = lead.self_energy(energy)
             num_modes.append(sigma)

@@ -412,7 +412,7 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
         eigenvector space) of the (general) Schur decomposition reordered such
         that the eigenvalues chosen by the array select are in the top left
         block.
-    u, v, w :
+    u, w, v :
         if the hopping is singular, the svd of the hopping matrix, otherwise
         they all the three values are None.
     extract, project : functions
@@ -538,7 +538,7 @@ def self_energy(h_onslice, h_hop, tol=1e6):
     else:
         n = h_onslice.shape[0]
 
-    # Compute the propagating eigenvectors, if they present.
+    # Compute the propagating eigenvectors, if they are present.
     nprop = np.sum(propselect)
 
     if nprop > 0:
