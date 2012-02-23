@@ -623,14 +623,15 @@ def plot(system, filename=defaultname, fmt=None, a=None,
     if hasattr(symbols, "__call__"):
         fsymbols = symbols
     elif hasattr(symbols, "__getitem__"):
-        fsymbols = lambda x : symbols[x]
+        fsymbols = lambda x : symbols[x.group]
     else:
         fsymbols = lambda x : symbols
 
     if hasattr(lines, "__call__"):
         flines = lines
     elif hasattr(lines, "__getitem__"):
-        flines = lambda x, y : lines[x,y] if (x,y) in lines else lines[y,x]
+        flines = lambda x, y : (lines[x.group, y.group] if (x.group, y.group)
+                                in lines else lines[y.group, x.group])
     else:
         flines = lambda x, y : lines
 
@@ -639,7 +640,7 @@ def plot(system, filename=defaultname, fmt=None, a=None,
     elif hasattr(lead_symbols, "__call__"):
         flsymbols = lead_symbols
     elif hasattr(lead_symbols, "__getitem__"):
-        flsymbols = lambda x : lead_symbols[x]
+        flsymbols = lambda x : lead_symbols[x.group]
     else:
         flsymbols = lambda x : lead_symbols
 
@@ -648,8 +649,9 @@ def plot(system, filename=defaultname, fmt=None, a=None,
     elif hasattr(lead_lines, "__call__"):
         fllines = lead_lines
     elif hasattr(lines, "__getitem__"):
-        fllines = lambda x, y : (lead_lines[x,y]
-                                 if (x,y) in lead_lines else lead_lines[y,x])
+        fllines = lambda x, y : (lead_lines[x.group, y.group]
+                                 if (x.group, y.group) in lead_lines
+                                 else lead_lines[y.group ,x.group])
     else:
         fllines = lambda x, y : lead_lines
 
@@ -804,7 +806,7 @@ def plot(system, filename=defaultname, fmt=None, a=None,
     # The lines for the hoppings
 
     for site1, site2 in iterate_system_hoppings(system):
-        line = flines(site1.group, site2.group)
+        line = flines(site1, site2)
 
         if line is not None:
             line._draw_cairo(ctx, pos(site1), pos(site2), dist)
@@ -812,46 +814,46 @@ def plot(system, filename=defaultname, fmt=None, a=None,
     for site1, site2, ucindx1, ucindx2 in \
             iterate_lead_hoppings(system, len(lead_fading)):
         if ucindx1 == ucindx2:
-            line = fllines(site1.group, site2.group)
+            line = fllines(site1, site2)
 
             if line is not None:
                 line._draw_cairo(ctx, pos(site1), pos(site2), dist,
                                  fading=(bcol, lead_fading[ucindx1]))
         else:
             if ucindx1 > -1:
-                line = fllines(site1.group, site2.group)
+                line = fllines(site1, site2)
                 if line is not None:
                     line._draw_cairo(ctx, pos(site1), (pos(site1)+pos(site2))/2,
                                      dist, fading=(bcol, lead_fading[ucindx1]))
             else:
                 #one end of the line is in the system
-                line = flines(site1.group, site2.group)
+                line = flines(site1, site2)
                 if line is not None:
                     line._draw_cairo(ctx, pos(site1), (pos(site1)+pos(site2))/2,
                                      dist)
 
             if ucindx2 > -1:
-                line = fllines(site2.group, site1.group)
+                line = fllines(site2, site1)
                 if line is not None:
                     line._draw_cairo(ctx, pos(site2), (pos(site1)+pos(site2))/2,
                                      dist, fading=(bcol, lead_fading[ucindx2]))
             else:
                 #one end of the line is in the system
-                line = flines(site2.group, site1.group)
+                line = flines(site2, site1)
                 if line is not None:
                     line._draw_cairo(ctx, pos(site2), (pos(site1)+pos(site2))/2,
                                      dist)
     # the symbols for the sites
 
     for site in iterate_system_sites(system):
-        symbol = fsymbols(site.group)
+        symbol = fsymbols(site)
 
         if symbol is not None:
             symbol._draw_cairo(ctx, pos(site), dist)
 
     for site, ucindx in iterate_lead_sites(system,
                                            lead_copies=len(lead_fading)):
-        symbol = flsymbols(site.group)
+        symbol = flsymbols(site)
 
         if symbol is not None:
             symbol._draw_cairo(ctx, pos(site), dist,
