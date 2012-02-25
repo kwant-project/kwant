@@ -71,7 +71,7 @@ def factorized(A, piv_tol=1.0, sym_piv_tol=1.0):
     return solve
 
 def make_linear_sys(sys, out_leads, in_leads, energy=0,
-                    force_realspace=False):
+                    force_realspace=False, return_modes=False):
     """
     Make a sparse linear system of equations defining a scattering problem.
 
@@ -90,16 +90,22 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
         calculate Green's function between the outermost lead
         sites, instead of lead modes. This is almost always
         more computationally expensive and less stable.
+    return_modes : bool
+        additionally return the wave functions of modes in the leads, as
+        returned by `kwant.physics.selfenergy.modes`.
 
     Returns
     -------
-    (h_sys, rhs, keep_vars, num_modes) : tuple of inhomogeneous data
+    (h_sys, rhs, keep_vars, num_modes, modes) : tuple of inhomogeneous data
         `h_sys` is a numpy.sparse.csc_matrix, containing the right hand side
         of the system of equations, `rhs` is the list of matrices with the
         left hand side, `keep_vars` is a list with numbers of variables in the
         solution that have to be stored (typically a small part of the
-        complete solution). Finally, `num_modes` is a list with number of
-        propagating modes or lattice points in each lead.
+        complete solution), and `num_modes` is a list with number of
+        propagating modes or lattice points in each lead. Finally, if
+        `return_modes == True`, a list `modes` is also returned, which
+        contains mode wave functions in each lead that is defined as a
+        tight-binding system, and the lead self-energy otherwise.
 
     Notes
     -----
@@ -123,6 +129,8 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
     keep_vars = []
     rhs = []
     num_modes = []
+    if return_modes:
+        mode_wave_functions = []
     for leadnum, lead_neighbors in enumerate(sys.lead_neighbor_seqs):
         lead = sys.leads[leadnum]
         if isinstance(lead, system.InfiniteSystem) and not force_realspace:
@@ -131,10 +139,13 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
             v = lead.inter_slice_hopping()
             if not np.any(v):
                 num_modes.append(0)
+                if return_modes:
+                    mode_wave_functions.append(physics.modes(h, v))
                 continue
 
             u, ulinv, nprop, svd = physics.modes(h, v)
-
+            if return_modes:
+                mode_wave_functions.append((u, ulinv, nprop, svd))
             num_modes.append(nprop)
 
             if leadnum in out_leads:
@@ -177,6 +188,8 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
                 rhs.append(sp.bmat([[vdaguin_sp], [lead_mat_in]]))
         else:
             sigma = lead.self_energy(energy)
+            if return_modes:
+                mode_wave_functions.append(sigma)
             num_modes.append(sigma)
             indices = np.r_[tuple(range(offsets[i], offsets[i + 1]) for i in
                                  lead_neighbors)]
@@ -192,7 +205,10 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
                 rhs.append(sp.coo_matrix((-np.ones(l), [indices,
                                                         np.arange(l)])))
 
-    return h_sys, rhs, keep_vars, num_modes
+    result = (h_sys, rhs, keep_vars, num_modes)
+    if return_modes:
+        result += (mode_wave_functions,)
+    return result
 
 
 def solve_linsys(a, b, keep_vars=None):
@@ -235,7 +251,7 @@ def solve_linsys(a, b, keep_vars=None):
 
 
 def solve(sys, energy=0, out_leads=None, in_leads=None,
-          force_realspace=False):
+          force_realspace=False, return_modes=False):
     """
     Calculate a Green's function of a system.
 
@@ -254,12 +270,18 @@ def solve(sys, energy=0, out_leads=None, in_leads=None,
         calculate Green's function between the outermost lead
         sites, instead of lead modes. This is almost always
         more computationally expensive and less stable.
+    return_modes : bool
+        additionally return the wave functions of modes in the leads, as
+        returned by `kwant.physics.selfenergy.modes`.
 
     Returns
     -------
-    output: `BlockResult`
+    output : `BlockResult`
         see notes below and `BlockResult` docstring for more information about
         the output format.
+    modes : list
+        a list with wave functions of the lead modes (only returned if
+        `return_modes == True`).
 
     Notes
     -----
@@ -294,13 +316,19 @@ def solve(sys, energy=0, out_leads=None, in_leads=None,
     if len(in_leads) == 0 or len(out_leads) == 0:
         raise ValueError('No output is requested.')
     linsys = make_linear_sys(sys, out_leads, in_leads, energy,
-                             force_realspace)
+                             force_realspace, return_modes)
+    if return_modes:
+        mode_wave_functions = linsys[-1]
+        linsys = linsys[: -1]
     out_modes = [len(i) for i in linsys[2]]
     in_modes = [i.shape[1] for i in linsys[1]]
     result = BlockResult(solve_linsys(*linsys[: -1]), linsys[3])
     result.in_leads = in_leads
     result.out_leads = out_leads
-    return result
+    if not return_modes:
+        return result
+    else:
+        return result, mode_wave_functions
 
 
 class BlockResult(namedtuple('BlockResultTuple', ['data', 'num_modes'])):

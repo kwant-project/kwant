@@ -42,6 +42,16 @@ def test_output():
     assert_almost_equal(s1, s2)
     assert_almost_equal(s.H * s, np.identity(s.shape[0]))
     assert_raises(ValueError, solve, fsys, 0, [])
+    modes = solve(fsys, return_modes=True)[1]
+    h = fsys.leads[0].slice_hamiltonian()
+    t = fsys.leads[0].inter_slice_hopping()
+    modes1 = kwant.physics.modes(h, t)
+    h = fsys.leads[1].slice_hamiltonian()
+    t = fsys.leads[1].inter_slice_hopping()
+    modes2 = kwant.physics.modes(h, t)
+    print modes1, modes
+    assert_almost_equal(modes1[0], modes[0][0])
+    assert_almost_equal(modes2[1], modes[1][1])
 
 
 # Test that a system with one lead has unitary scattering matrix.
