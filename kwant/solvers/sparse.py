@@ -119,6 +119,10 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
     h_sys = sys.hamiltonian_submatrix(sparse=True).tocsc()
     h_sys = h_sys - energy * sp.identity(h_sys.shape[0], format='csc')
 
+    # Hermiticity check.
+    if np.any(np.abs((h_sys - h_sys.T.conj()).data) > 1e-13):
+        raise ValueError('System Hamiltonian is not Hermitian.')
+
     norb, num_nodes = sys.num_orbitals, sys.graph.num_nodes
     norb_arr = np.array([norb(i) for i in xrange(num_nodes)], int)
     offsets = np.zeros(norb_arr.shape[0] + 1, int)
@@ -135,6 +139,12 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
         lead = sys.leads[leadnum]
         if isinstance(lead, system.InfiniteSystem) and not force_realspace:
             h = lead.slice_hamiltonian()
+
+            # Hermiticity check.
+            if not np.allclose(h, h.T.conj(), rtol=1e-13):
+                msg = 'Lead number {0} has a non-Hermitian slice Hamiltonian.'
+                raise ValueError(msg.format(leadnum))
+
             h -= energy * np.identity(h.shape[0])
             v = lead.inter_slice_hopping()
             if not np.any(v):

@@ -268,6 +268,8 @@ class InfiniteSystem(System):
         """
         result = Energies()
         result.ham = self.slice_hamiltonian()
+        if not np.allclose(result.ham, result.ham.T.conj()):
+            raise ValueError('The slice Hamiltonian is not Hermitian.')
         hop = self.inter_slice_hopping()
         result.hop = np.empty(result.ham.shape, dtype=complex)
         result.hop[:, : hop.shape[1]] = hop
