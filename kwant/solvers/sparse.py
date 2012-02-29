@@ -5,7 +5,7 @@ from collections import namedtuple
 import numpy as np
 import scipy.linalg as la
 import scipy.sparse as sp
-import scipy.sparse.linalg as spl
+import scipy.sparse.linalg.dsolve.umfpack as umfpack
 from kwant import physics, system
 
 # This patches a memory leak in scipy:
@@ -21,6 +21,54 @@ try:
 except:
     pass
 del del_for_umfpackcontext
+
+def factorized(A, piv_tol=1.0, sym_piv_tol=1.0):
+    """
+    Return a fuction for solving a sparse linear system, with A pre-factorized.
+
+    Example:
+      solve = factorized( A ) # Makes LU decomposition.
+      x1 = solve( rhs1 ) # Uses the LU factors.
+      x2 = solve( rhs2 ) # Uses again the LU factors.
+
+    Parameters
+    ----------
+    A : csc_matrix
+        matrix to be factorized
+    piv_tol : float, 0 <= piv_tol <= 1.0
+    sym_piv_tol : float, 0 <= piv_tol <= 1.0
+        thresholds used by umfpack for pivoting. 0 means no pivoting,
+        1.0 means full pivoting as in dense matrices (guaranteeing
+        stability, but reducing possibly sparsity). Defaults of umfpack
+        are 0.1 and 0.001 respectively. Whether piv_tol or sym_piv_tol
+        are used is decided internally by umfpack, depending on whether
+        the matrix is "symmetric" enough.
+    """
+
+    if not sp.isspmatrix_csc(A):
+        A = csc_matrix(A)
+
+    A.sort_indices()
+    A = A.asfptype()  #upcast to a floating point format
+
+    if A.dtype.char not in 'dD':
+        raise ValueError("convert matrix data to double, please, using"
+                         " .astype()")
+
+    family = {'d' : 'di', 'D' : 'zi'}
+    umf = umfpack.UmfpackContext( family[A.dtype.char] )
+
+    # adjust pivot thresholds
+    umf.control[umfpack.UMFPACK_PIVOT_TOLERANCE] = piv_tol
+    umf.control[umfpack.UMFPACK_SYM_PIVOT_TOLERANCE] = sym_piv_tol
+
+    # Make LU decomposition.
+    umf.numeric( A )
+
+    def solve( b ):
+        return umf.solve( umfpack.UMFPACK_A, A, b, autoTranspose = True )
+
+    return solve
 
 def make_linear_sys(sys, out_leads, in_leads, energy=0,
                     force_realspace=False):
@@ -170,9 +218,10 @@ def solve_linsys(a, b, keep_vars=None):
     This function is largely a wrapper to a scipy.sparse.linalg.factorized.
     """
     a = sp.csc_matrix(a)
+
     if keep_vars == None:
         keep_vars = [range(a.shape[1])]
-    slv = spl.factorized(a)
+    slv = factorized(a)
     keeptot = sum(keep_vars, [])
     sols = []
     for mat in b:
