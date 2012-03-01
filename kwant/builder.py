@@ -91,9 +91,8 @@ class Site(object):
             raise ValueError('Dimensionality mismatch')
         return group(*tuple(a + b for a, b in izip(tag, delta)))
 
-
     def __hash__(self):
-        return id(self.group) ^ hash(self.tag)
+        return self.group.group_id ^ hash(self.tag)
 
     def __eq__(self, other):
         return self.group is other.group and self.tag == other.tag
@@ -108,6 +107,10 @@ class Site(object):
     def pos(self):
         """Real space position of the site."""
         return self.group.pos(self.tag)
+
+
+# Counter used to give each newly created group an unique id.
+next_group_id = 0
 
 
 class SiteGroup(object):
@@ -125,10 +128,14 @@ class SiteGroup(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self):
-        self.packed_group_id = pgid_of_group(self)
+        global next_group_id
+        self.group_id = next_group_id
+        next_group_id += 1
+        self.packed_group_id = struct.pack(gid_pack_fmt, self.group_id)
 
     def __repr__(self):
-        return '<{0} at {1}>'.format(self.__class__.__name__, hex(id(self)))
+        return '<{0} object: Site group {1}>'.format(
+            self.__class__.__name__, self.group_id)
 
     @abc.abstractmethod
     def pack_tag(self, tag):
@@ -183,11 +190,7 @@ class SimpleSiteGroup(SiteGroup):
 
 # This is used for packing and unpacking group ids (gids).
 gid_pack_fmt = '@P'
-gid_pack_size = len(struct.pack(gid_pack_fmt, id(None)))
-
-def pgid_of_group(group):
-    assert isinstance(group, SiteGroup)
-    return struct.pack(gid_pack_fmt, id(group))
+gid_pack_size = len(struct.pack(gid_pack_fmt, 0))
 
 
 # The reason why this is a global function and not a method of Builder is that

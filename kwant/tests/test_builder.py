@@ -54,8 +54,6 @@ def test_graph():
 
 
 def test_site_groups():
-    pgid = builder.pgid_of_group
-
     sys = builder.Builder()
     assert_equal(sys._group_by_pgid, {})
     sg = builder.SimpleSiteGroup()
@@ -72,9 +70,10 @@ def test_site_groups():
     assert_equal(sys[sg(1)], 123)
     assert_raises(KeyError, sys.__getitem__, osg(1))
 
-    assert_equal(sys._group_by_pgid, {pgid(sg) : sg})
+    assert_equal(sys._group_by_pgid, {sg.packed_group_id : sg})
     sys[osg(1)] = 321
-    assert_equal(sys._group_by_pgid, {pgid(sg) : sg, pgid(osg) : osg})
+    assert_equal(sys._group_by_pgid, {sg.packed_group_id : sg,
+                                      osg.packed_group_id : osg})
     assert_equal(sys[osg(1)], 321)
 
     assert_equal(sg(-5).shifted((-2,), osg), osg(-7))

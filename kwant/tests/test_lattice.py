@@ -19,7 +19,7 @@ def test_make_lattice():
 def test_pack_unpack():
     for dim in [1, 2, 3, 5, 10, 99]:
         group = lattice.make_lattice(np.identity(dim))
-        group_by_pgid = {builder.pgid_of_group(group) : group}
+        group_by_pgid = {group.packed_group_id : group}
         tag = tuple(xrange(dim))
         site = group(*tag)
         psite = site.packed()
