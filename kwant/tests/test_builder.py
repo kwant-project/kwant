@@ -442,14 +442,19 @@ def test_attach_lead():
     sys[(1,)] = 0
     lead0 = builder.Builder(VerySimpleSymmetry(-2))
     assert_raises(ValueError, sys.attach_lead, lead0)
+
     lead0.default_site_group = gr
     lead0[(0,)] = lead0[(1,)] = 1
+
+    sys2 = builder.Builder()
+    sys2.default_site_group = gr
+    sys2[(1,)] = 0
+    sys2.attach_lead(lead0)
+    assert_raises(ValueError, sys2.finalized)
+
     lead0[(0,), (1,)] = lead0[(0,), (2,)] = 1
     assert_raises(ValueError, sys.attach_lead, lead0)
 
-    sys = builder.Builder()
-    sys.default_site_group = gr
-    sys[(1,)] = 0
     sys[(0,)] = 1
     assert_raises(ValueError, sys.attach_lead, lead0, gr(5))
 
@@ -466,6 +471,7 @@ def test_attach_lead():
     assert_equal(len(list(sys.sites())), 5)
     sys.attach_lead(lead0, gr(-5))
     assert_equal(set(sys.leads[0].neighbors), set([gr(-1), gr(0)]))
+    sys.finalized()
 
 
 def test_neighbors_not_in_single_domain():

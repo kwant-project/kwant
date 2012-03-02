@@ -1200,7 +1200,12 @@ class Builder(object):
         finalized_leads = []
         lead_neighbor_seqs = []
         for lead_nr, lead in enumerate(self.leads):
-            finalized_leads.append(lead.finalized())
+            try:
+                finalized_leads.append(lead.finalized())
+            except ValueError, e:
+                msg = 'Problem finalizing lead {0}:'
+                e.args = (' '.join((msg.format(lead_nr),) + e.args),)
+                raise
             lns = [id_by_psite[neighbor.packed()]
                    for neighbor in lead.neighbors]
             lead_neighbor_seqs.append(np.array(lns))
@@ -1250,6 +1255,9 @@ class Builder(object):
                 # Tail is a fund. domain site not connected to prev. domain.
                 plsites_without.append(ptail)
         slice_size = len(plsites_with) + len(plsites_without)
+
+        if not plsites_with:
+            raise ValueError('Infinite system with disconnected slices.')
 
         ### Create list of packed sites `psites` and a lookup table
         if order_of_neighbors is None:
