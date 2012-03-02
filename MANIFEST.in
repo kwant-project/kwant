@@ -1,12 +1,14 @@
 # This file specifies the files to be included in the source distribution
 # in addition to the default ones.
 
+include MANIFEST.in
+include TODO.txt
+
 recursive-include kwant *.pyx
 recursive-include kwant *.pxd
 recursive-include kwant *.h
 recursive-include kwant test_*.py
 
-include TODO.txt
 recursive-include examples *.py
 
 include doc/other/*[a-zA-Z]
