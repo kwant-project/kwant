@@ -54,8 +54,8 @@ be sure to tell python where to find it.  This can be done by setting the
 You can make this setting permanent by adding this line to your the file
 ``.bashrc`` in your home directory.
 
-To check successful installation try executing some examples in the
-``examples`` subdirectory.
+To check successful installation try executing some scripts in the ``examples``
+subdirectory.
 
 
 Documentation
@@ -79,8 +79,8 @@ Please consult the documentation for further information on how to use kwant.
 Hacking
 =======
 
-To work on the library itself it is useful to build it in-place.  This can be
-done with the following command ::
+To work on kwant itself it is useful to build it in-place.  This can be done
+with the following command ::
 
     python setup.py build_ext -i
 
@@ -104,7 +104,8 @@ Some conventions to keep in mind:
 Tests
 =====
 
-We use the `nose testing framework
-<http://somethingaboutorange.com/mrl/projects/nose/>`_.  To run the tests,
-execute the command ``nosetests`` from the root directory of the package after
-it has been built in place.
+kwant includes extensive unit tests which are supposed to cover all of its
+functionality.  We use the `nose
+<http://somethingaboutorange.com/mrl/projects/nose/>`_ testing framework.  To
+run the tests, execute the command ``nosetests`` from the root directory of the
+package after it has been built in place.
