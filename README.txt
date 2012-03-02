@@ -11,15 +11,19 @@ The only exception to this is the ``doc/sphinxext`` subdirectory, which is free
 software.  (See the file ``LICENSE.txt`` in that subdirectory.)
 
 
-Installation
-============
+Installation from source
+========================
 
 The prerequisites are
 
  - More or less current versions of `Python <http://python.org>`_ and `SciPy
    <http://scipy.org>`_.  Python 2.6 and scipy 0.7.2 should be enough.
 
- - `Cython <http://cython.org/>`_ -- Version 0.13 works for us.
+ - An environment which allows to compile Python extensions written in C.  This
+   includes a C compiler and Python C headers.  The latter might be provided in
+   a separate package like ``python-dev``.
+
+ - Some incarnation of `LAPACK <http://www.netlib.org/lapack/>`_.
 
 optional:
 
@@ -99,6 +103,10 @@ Some conventions to keep in mind:
 
 * Write tests for all the important functionality you add.  Be sure not to
   break existing tests.
+
+Several modules are written in `Cython <http://cython.org/>`_ (.pyx file name
+extension).  You will need Cython if you want to modify them.  Turn on
+cythonization by passing the option ``--run-cython`` to setup.py.
 
 
 Tests

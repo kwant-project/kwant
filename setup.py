@@ -5,6 +5,13 @@ from distutils.core import setup
 from distutils.extension import Extension
 import numpy as np
 
+run_cython = '--run-cython' in sys.argv
+if run_cython:
+    sys.argv.remove('--run-cython')
+    from Cython.Distutils import build_ext
+    cmdclass = {'build_ext': build_ext}
+else:
+    cmdclass = {}
 
 # This is an exact copy of the function from kwant/version.py.  We can't import
 # it here (because kwant is not yet built when this scipt is run), so we just
@@ -33,13 +40,6 @@ def get_version_from_git():
             version += '-dirty'
     return version
 
-try:
-    from Cython.Distutils import build_ext
-except ImportError:
-    use_cython = False
-else:
-    use_cython = True
-
 def get_static_version():
     try:
         with open('kwant/_static_version.py') as f:
@@ -66,21 +66,29 @@ else:
 # replacing ".pyx" with ".c" if Cython is not to be used.
 extensions = [ # (["kwant.graph.scotch", ["kwant/graph/scotch.pyx"]],
                #  {"libraries" : ["scotch", "scotcherr"]}),
-               (["kwant.graph.core", ["kwant/graph/core.pyx"]], {}),
-               (["kwant.graph.utils", ["kwant/graph/utils.pyx"]], {}),
+               (["kwant.graph.core", ["kwant/graph/core.pyx"]],
+                {"depends" : ["kwant/graph/core.pxd", "kwant/graph/defs.h",
+                              "kwant/graph/defs.pxd"]}),
+               (["kwant.graph.utils", ["kwant/graph/utils.pyx"]],
+                {"depends" : ["kwant/graph/defs.h", "kwant/graph/defs.pxd",
+                              "kwant/graph/core.pxd"]}),
                (["kwant.graph.slicer", ["kwant/graph/slicer.pyx",
                                         "kwant/graph/c_slicer/partitioner.cc",
                                         "kwant/graph/c_slicer/slicer.cc"]],
-                {}),
+                {"depends" : ["kwant/graph/defs.h", "kwant/graph/defs.pxd",
+                              "kwant/graph/core.pxd",
+                              "kwant/graph/c_slicer.pxd",
+                              "kwant/graph/c_slicer/bucket_list.h",
+                              "kwant/graph/c_slicer/graphwrap.h",
+                              "kwant/graph/c_slicer/partitioner.h",
+                              "kwant/graph/c_slicer/slicer.h"]}),
                (["kwant.linalg.lapack", ["kwant/linalg/lapack.pyx"]],
-                {"libraries" : ["lapack", "blas"]}) ]
+                {"libraries" : ["lapack", "blas"],
+                 "depends" : ["kwant/linalg/f_lapack.pxd"]}) ]
 
-cmdclass = {}
 ext_modules = []
-include_dirs = [np.get_include()]
-
 for args, keywords in extensions:
-    if not use_cython:
+    if not run_cython:
         if 'language' in keywords:
             if keywords['language'] == 'c':
                 ext = '.c'
@@ -91,10 +99,34 @@ for args, keywords in extensions:
                 exit(1)
         else:
             ext = '.c'
-        args[1] = [s.replace('.pyx', ext) for s in args[1]]
+        pyx_files = []
+        cythonized_files = []
+        sources = []
+        for f in args[1]:
+            if f[-4:] == '.pyx':
+                pyx_files.append(f)
+                f = f[:-4] + ext
+                cythonized_files.append(f)
+            sources.append(f)
+        args[1] = sources
+
+        try:
+            cythonized_oldest = min(os.stat(f).st_mtime
+                                    for f in cythonized_files)
+        except OSError:
+            msg = "{0} is missing. Run `./setup.py --run-cython build'."
+            print >>sys.stderr, msg.format(f)
+            exit(1)
+        for f in pyx_files + keywords.get('depends', []):
+            if os.stat(f).st_mtime > cythonized_oldest:
+                msg = "{0} has been modified. " \
+                "Run `./setup.py --run-cython build'."
+                print >>sys.stderr, msg.format(f)
+                exit(1)
+
     ext_modules.append(Extension(*args, **keywords))
-if use_cython:
-    cmdclass.update({'build_ext': build_ext})
+
+include_dirs = [np.get_include()]
 
 setup(name='kwant',
       version=version,
