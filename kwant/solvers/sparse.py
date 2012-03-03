@@ -15,11 +15,8 @@ from kwant import physics, system
 # reached all of our users.
 def del_for_umfpackcontext(self):
     self.free()
-try:
-    if not hasattr(spl.dsolve.umfpack.UmfpackContext, '__del__'):
-        spl.dsolve.umfpack.UmfpackContext.__del__ = del_for_umfpackcontext
-except:
-    pass
+if not hasattr(umfpack.UmfpackContext, '__del__'):
+    umfpack.UmfpackContext.__del__ = del_for_umfpackcontext
 del del_for_umfpackcontext
 
 def factorized(A, piv_tol=1.0, sym_piv_tol=1.0):

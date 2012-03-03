@@ -281,3 +281,6 @@ def test_very_singular_leads():
     fsys = sys.finalized()
     result = solve(fsys)
     assert result[1] == [0, 2]
+
+def test_umfpack_del():
+    assert hasattr(kwant.solvers.sparse.umfpack.UmfpackContext, '__del__')
