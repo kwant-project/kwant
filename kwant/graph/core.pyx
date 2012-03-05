@@ -198,6 +198,7 @@ cdef class Graph:
         cdef gint *tbuf = result.tails_idxs + 1, *tails = result.tails
         cdef gint *edge_ids = result.edge_ids
         cdef gint edge_id = 0, num_edges     # = 0 is there to silence warning.
+        cdef Edge *edge
 
         # `hbuf` is just `heads_idxs` shifted by one.  We will use `hbuf` to
         # build up `heads` and its end state will be such that `heads_idxs`
@@ -209,11 +210,11 @@ cdef class Graph:
         memset(result.heads_idxs, 0, (self._num_nodes + 1) * sizeof(gint))
         if twoway:
             memset(result.tails_idxs, 0, (self._num_nodes + 1) * sizeof(gint))
-        for edge_nr in range(self.size):
-            if self.edges[edge_nr].tail >= 0:
-                hbuf[self.edges[edge_nr].tail] += 1
-            if twoway and self.edges[edge_nr].head >= 0:
-                tbuf[self.edges[edge_nr].head] += 1
+        for edge in self.edges[:self.size]:
+            if edge.tail >= 0:
+                hbuf[edge.tail] += 1
+            if twoway and edge.head >= 0:
+                tbuf[edge.head] += 1
 
         # Replace `hbuf` with its "antiderivative" and then subtract the
         # original `hbuf` from it.  This is done in one pass.
@@ -231,27 +232,26 @@ cdef class Graph:
 
         # Iterate through all edges and build `heads` and `tails`.
         next_np_edge_id = result.num_px_edges
-        for edge_nr in range(self.size):
-            edge = self.edges[edge_nr]
-            head = edge.head
-            tail = edge.tail
-            if tail >= 0:
-                edge_id = hbuf[tail]
-                hbuf[tail] += 1
+        edge_nr = 0
+        for edge in self.edges[:self.size]:
+            if edge.tail >= 0:
+                edge_id = hbuf[edge.tail]
+                hbuf[edge.tail] += 1
             elif twoway:
-                assert head >= 0
+                assert edge.head >= 0
                 edge_id = next_np_edge_id
                 next_np_edge_id += 1
             else:
                 edge_id = -1
             if edge_id >= 0:
-                heads[edge_id] = head
-            if twoway and head >= 0:
-                tails[tbuf[head]] = tail
-                edge_ids[tbuf[head]] = edge_id
-                tbuf[head] += 1
+                heads[edge_id] = edge.head
+            if twoway and edge.head >= 0:
+                tails[tbuf[edge.head]] = edge.tail
+                edge_ids[tbuf[edge.head]] = edge_id
+                tbuf[edge.head] += 1
             if edge_nr_translation:
                 result.edge_ids_by_edge_nr[edge_nr] = edge_id
+                edge_nr += 1
 
         assert result.num_edges == next_np_edge_id
         return result
@@ -262,11 +262,10 @@ cdef class Graph:
         That resulting file can be visualized with dot(1) or neato(1) form the
         graphviz package.
         """
-        cdef gint edge_nr
+        cdef Edge *edge
         file.write("digraph g {\n")
-        for edge_nr in range(self.size):
-            file.write("  %d -> %d;\n" %
-                       (self.edges[edge_nr].tail, self.edges[edge_nr].head))
+        for edge in self.edges[:self.size]:
+            file.write("  %d -> %d;\n" % (edge.tail, edge.head))
         file.write("}\n")
 
 

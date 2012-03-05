@@ -105,8 +105,8 @@ Some conventions to keep in mind:
   break existing tests.
 
 Several modules are written in `Cython <http://cython.org/>`_ (.pyx file name
-extension).  You will need Cython if you want to modify them.  Turn on
-cythonization by passing the option ``--run-cython`` to setup.py.
+extension).  You will need Cython (>= 0.15) if you want to modify them.  Turn
+on cythonization by passing the option ``--run-cython`` to setup.py.
 
 
 Tests
