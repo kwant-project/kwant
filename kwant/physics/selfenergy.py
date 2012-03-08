@@ -467,8 +467,8 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
             extract, project = linsys[3]
 
             vec_gen = lambda x: kla.evecs_from_gen_schur(s, t, z=z, select=x)
-            ord_schur = lambda x: kla.order_schur(x, s, t,
-                                                  z=z, calc_ev=False)[2]
+            ord_schur = lambda x: kla.order_gen_schur(x, s, t,
+                                                      z=z, calc_ev=False)[2]
     else:
         # Hopping matrix can be safely inverted -> regular eigenproblem can be
         # used. This also means, that the hopping matrix is n x n square.
