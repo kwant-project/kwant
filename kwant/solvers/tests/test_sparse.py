@@ -49,7 +49,6 @@ def test_output():
     h = fsys.leads[1].slice_hamiltonian()
     t = fsys.leads[1].inter_slice_hopping()
     modes2 = kwant.physics.modes(h, t)
-    print modes1, modes
     assert_almost_equal(modes1[0], modes[0][0])
     assert_almost_equal(modes2[1], modes[1][1])
 
