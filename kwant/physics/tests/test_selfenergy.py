@@ -222,6 +222,14 @@ def test_singular_degenerate_with_crossing():
     assert_almost_equal(g,
                         se.self_energy(h_onslice, h_hop))
 
+def test_singular_h_and_t():
+    h = 0.1 * np.identity(6)
+    t = np.eye(6, 6, 4)
+    sigma = se.self_energy(h, t)
+    sigma_should_be = np.zeros((6,6))
+    sigma_should_be[4, 4] = sigma_should_be[5, 5] = -10
+    assert_almost_equal(se.self_energy(h, t), sigma_should_be)
+
 def test_modes():
     h, t = .3, .7
     vecs, vecslinv, nrpop, svd = se.modes(np.mat(h), np.mat(t))

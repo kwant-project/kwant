@@ -457,9 +457,9 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
             propselect = (np.abs(np.abs(alpha) - np.abs(beta)) <
                           eps * tol * np.abs(beta))
 
-            invalid_warning_setting = np.seterr(invalid='ignore')['invalid']
+            warning_settings = np.seterr(divide='ignore', invalid='ignore')
             ev = alpha/beta
-            np.seterr(invalid=invalid_warning_setting)
+            np.seterr(**warning_settings)
             # Note: the division is OK here, as we later only access
             #       eigenvalues close to the unit circle
 
