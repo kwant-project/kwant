@@ -35,14 +35,14 @@ def test_output():
 
     result1 = solve(fsys)
     s, modes1 = result1
-    assert s.shape == 2 * (sum(modes1),)
+    assert s.shape == 2 * (sum(i[2] for i in modes1),)
     s1 = np.asmatrix(result1.submatrix(1, 0))
     s2, modes2 = solve(fsys, 0, [1], [0])
-    assert s2.shape == (modes2[1], modes2[0])
+    assert s2.shape == (modes2[1][2], modes2[0][2])
     assert_almost_equal(s1, s2)
     assert_almost_equal(s.H * s, np.identity(s.shape[0]))
     assert_raises(ValueError, solve, fsys, 0, [])
-    modes = solve(fsys, return_modes=True)[1]
+    modes = solve(fsys)[1]
     h = fsys.leads[0].slice_hamiltonian()
     t = fsys.leads[0].inter_slice_hopping()
     modes1 = kwant.physics.modes(h, t)
@@ -80,8 +80,8 @@ def test_two_equal_leads():
     def check_fsys():
         s, leads = solve(fsys)[: 2]
         assert_almost_equal(s.H * s, np.identity(s.shape[0]))
-        n_modes = leads[0]
-        assert leads[1] == n_modes
+        n_modes = leads[0][2]
+        assert leads[1][2] == n_modes
         assert_almost_equal(s[: n_modes, : n_modes], 0)
         t_elements = np.sort(np.abs(np.asarray(s[n_modes :, : n_modes])),
                              axis=None)
@@ -136,8 +136,8 @@ def test_graph_system():
 
     s, leads = solve(fsys)[: 2]
     assert_almost_equal(s.H * s, np.identity(s.shape[0]))
-    n_modes = leads[0]
-    assert_equal(leads[1], n_modes)
+    n_modes = leads[0][2]
+    assert_equal(leads[1][2], n_modes)
     assert_almost_equal(s[: n_modes, : n_modes], 0)
     t_elements = np.sort(np.abs(np.asarray(s[n_modes :, : n_modes])),
                          axis=None)
@@ -168,8 +168,8 @@ def test_singular_graph_system():
 
     s, leads = solve(fsys)[: 2]
     assert_almost_equal(s.H * s, np.identity(s.shape[0]))
-    n_modes = leads[0]
-    assert leads[1] == n_modes
+    n_modes = leads[0][2]
+    assert leads[1][2] == n_modes
     assert_almost_equal(s[: n_modes, : n_modes], 0)
     t_elements = np.sort(np.abs(np.asarray(s[n_modes :, : n_modes])),
                          axis=None)
@@ -279,7 +279,7 @@ def test_very_singular_leads():
     sys.attach_lead(right_lead)
     fsys = sys.finalized()
     result = solve(fsys)
-    assert result[1] == [0, 2]
+    assert [i[2] for i in result[1]] == [0, 2]
 
 def test_umfpack_del():
     assert hasattr(kwant.solvers.sparse.umfpack.UmfpackContext, '__del__')

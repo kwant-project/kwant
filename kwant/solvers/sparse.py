@@ -67,8 +67,7 @@ def factorized(A, piv_tol=1.0, sym_piv_tol=1.0):
 
     return solve
 
-def make_linear_sys(sys, out_leads, in_leads, energy=0,
-                    force_realspace=False, return_modes=False):
+def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
     """
     Make a sparse linear system of equations defining a scattering problem.
 
@@ -87,22 +86,18 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
         calculate Green's function between the outermost lead
         sites, instead of lead modes. This is almost always
         more computationally expensive and less stable.
-    return_modes : bool
-        additionally return the wave functions of modes in the leads, as
-        returned by `kwant.physics.selfenergy.modes`.
 
     Returns
     -------
-    (h_sys, rhs, keep_vars, num_modes, modes) : tuple of inhomogeneous data
+    (h_sys, rhs, keep_vars, lead_info) : tuple of inhomogeneous data
         `h_sys` is a numpy.sparse.csc_matrix, containing the right hand side
         of the system of equations, `rhs` is the list of matrices with the
         left hand side, `keep_vars` is a list with numbers of variables in the
         solution that have to be stored (typically a small part of the
-        complete solution), and `num_modes` is a list with number of
-        propagating modes or lattice points in each lead. Finally, if
-        `return_modes == True`, a list `modes` is also returned, which
+        complete solution). Finally, a list `lead_info` is also returned, which
         contains mode wave functions in each lead that is defined as a
-        tight-binding system, and the lead self-energy otherwise.
+        tight-binding system (and as returned by `kwant.physics.modes`), and
+        the lead self-energy otherwise.
 
     Notes
     -----
@@ -128,9 +123,7 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
     # Then create blocks of the linear system and add them step by step.
     keep_vars = []
     rhs = []
-    num_modes = []
-    if return_modes:
-        mode_wave_functions = []
+    lead_info = []
     for leadnum, lead_neighbors in enumerate(sys.lead_neighbor_seqs):
         lead = sys.leads[leadnum]
         if isinstance(lead, system.InfiniteSystem) and not force_realspace:
@@ -144,15 +137,11 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
             h -= energy * np.identity(h.shape[0])
             v = lead.inter_slice_hopping()
             if not np.any(v):
-                num_modes.append(0)
-                if return_modes:
-                    mode_wave_functions.append(physics.modes(h, v))
+                lead_info.append(physics.modes(h, v))
                 continue
 
             u, ulinv, nprop, svd = physics.modes(h, v)
-            if return_modes:
-                mode_wave_functions.append((u, ulinv, nprop, svd))
-            num_modes.append(nprop)
+            lead_info.append((u, ulinv, nprop, svd))
 
             if leadnum in out_leads:
                 keep_vars.append(range(h_sys.shape[0], h_sys.shape[0] + nprop))
@@ -194,9 +183,7 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
                 rhs.append(sp.bmat([[vdaguin_sp], [lead_mat_in]]))
         else:
             sigma = lead.self_energy(energy)
-            if return_modes:
-                mode_wave_functions.append(sigma)
-            num_modes.append(sigma)
+            lead_info.append(sigma)
             indices = np.r_[tuple(range(offsets[i], offsets[i + 1]) for i in
                                  lead_neighbors)]
             assert sigma.shape == 2 * indices.shape
@@ -211,9 +198,7 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
                 rhs.append(sp.coo_matrix((-np.ones(l), [indices,
                                                         np.arange(l)])))
 
-    result = (h_sys, rhs, keep_vars, num_modes)
-    if return_modes:
-        result += (mode_wave_functions,)
+    result = (h_sys, rhs, keep_vars, lead_info)
     return result
 
 
@@ -256,8 +241,7 @@ def solve_linsys(a, b, keep_vars=None):
     return np.mat(sols).T
 
 
-def solve(sys, energy=0, out_leads=None, in_leads=None,
-          force_realspace=False, return_modes=False):
+def solve(sys, energy=0, out_leads=None, in_leads=None, force_realspace=False):
     """
     Calculate a Green's function of a system.
 
@@ -276,18 +260,12 @@ def solve(sys, energy=0, out_leads=None, in_leads=None,
         calculate Green's function between the outermost lead
         sites, instead of lead modes. This is almost always
         more computationally expensive and less stable.
-    return_modes : bool
-        additionally return the wave functions of modes in the leads, as
-        returned by `kwant.physics.selfenergy.modes`.
 
     Returns
     -------
     output : `BlockResult`
         see notes below and `BlockResult` docstring for more information about
         the output format.
-    modes : list
-        a list with wave functions of the lead modes (only returned if
-        `return_modes == True`).
 
     Notes
     -----
@@ -298,13 +276,14 @@ def solve(sys, energy=0, out_leads=None, in_leads=None,
     the leads are defined as a self-energy, the result is just the real
     space retarded Green's function between from in_leads to out_leads. If the
     leads are defined as tight-binding systems, then Green's function from
-    incoming to outgoing modes is returned. Additionally a list containing
-    numbers of modes in each lead is returned. Sum of these numbers equals to
-    the size of the returned Green's function subblock. The Green's function
-    elements between incoming and outgoing modes form the scattering matrix of
-    the system. If some leads are defined via self-energy, and some as
-    tight-binding systems, result has Green's function's elements between modes
-    and sites.
+    incoming to outgoing modes is returned. Also returned is a list containing
+    the output of `kwant.physics.modes` for the leads which are defined as
+    builders, and self-energies for leads defined via self-energy. This list
+    allows to split the Green's function into blocks corresponding to different
+    leads. The Green's function elements between incoming and outgoing modes
+    form the scattering matrix of the system. If some leads are defined via
+    self-energy, and some as tight-binding systems, result has Green's
+    function's elements between modes and sites.
 
     Alternatively, if force_realspace=True is used, G^R is returned
     always in real space, however this option is more computationally
@@ -321,28 +300,21 @@ def solve(sys, energy=0, out_leads=None, in_leads=None,
         raise ValueError('Lead lists must be sorted and with unique entries.')
     if len(in_leads) == 0 or len(out_leads) == 0:
         raise ValueError('No output is requested.')
-    linsys = make_linear_sys(sys, out_leads, in_leads, energy,
-                             force_realspace, return_modes)
-    if return_modes:
-        mode_wave_functions = linsys[-1]
-        linsys = linsys[: -1]
+    linsys = make_linear_sys(sys, out_leads, in_leads, energy, force_realspace)
     out_modes = [len(i) for i in linsys[2]]
     in_modes = [i.shape[1] for i in linsys[1]]
     result = BlockResult(solve_linsys(*linsys[: -1]), linsys[3])
     result.in_leads = in_leads
     result.out_leads = out_leads
-    if not return_modes:
-        return result
-    else:
-        return result, mode_wave_functions
+    return result
 
 
-class BlockResult(namedtuple('BlockResultTuple', ['data', 'num_modes'])):
+class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
     """
     Solution of a transport problem, subblock of retarded Green's function.
 
     This class is derived from ``namedtuple('BlockResultTuple', ['data',
-    'num_modes'])``. In addition to direct access to `data` and `num_modes`,
+    'lead_info'])``. In addition to direct access to `data` and `lead_info`,
     this class also supports a higher level interface via its methods.
 
     Instance Variables
@@ -350,9 +322,9 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'num_modes'])):
     data : numpy matrix
         a matrix containing all the requested matrix elements of Green's
         function.
-    num_modes : list of integers
-        a list of numbers of modes (or sites if real space lead representation
-        is used) in each lead.
+    lead_info : list of data
+        a list with output of `kwant.physics.modes` for each lead defined as a
+        builder, and self-energy for each lead defined as self-energy term.
     """
     def block_coords(self, lead_out, lead_in):
         """
@@ -362,9 +334,9 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'num_modes'])):
         lead_in = self.in_leads.index(lead_in)
         if not hasattr(self, '_sizes'):
             sizes = []
-            for i in self.num_modes:
-                if np.isscalar(i):
-                    sizes.append(i)
+            for i in self.lead_info:
+                if isinstance(i, tuple):
+                    sizes.append(i[2])
                 else:
                     sizes.append(i.shape[0])
             self._sizes = np.array(sizes)
@@ -382,24 +354,24 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'num_modes'])):
 
     def _a_ttdagger_a_inv(self, lead_out, lead_in):
         gf = np.asmatrix(self.submatrix(lead_out, lead_in))
-        if np.isscalar(self.num_modes[lead_out]):
-            gamma_out = np.asmatrix(np.identity(self.num_modes[lead_out]))
+        if isinstance(self.lead_info[lead_out], tuple):
+            gamma_out = np.asmatrix(np.identity(self._sizes[lead_out]))
         else:
-            gamma_out = np.matrix(self.num_modes[lead_out], dtype=complex)
+            gamma_out = np.matrix(self.lead_info[lead_out], dtype=complex)
             gamma_out -= gamma_out.H
             gamma_out *= 1j
-        if np.isscalar(self.num_modes[lead_in]):
-            gamma_in = np.asmatrix(np.identity(self.num_modes[lead_in]))
+        if isinstance(self.lead_info[lead_in], tuple):
+            gamma_in = np.asmatrix(np.identity(self._sizes[lead_in]))
         else:
-            gamma_in = np.matrix(self.num_modes[lead_in], dtype=complex)
+            gamma_in = np.matrix(self.lead_info[lead_in], dtype=complex)
             gamma_in -= gamma_in.H
             gamma_in *= 1j
         return gamma_out * gf * gamma_in * gf.H
 
     def transmission(self, lead_out, lead_in):
         """Return transmission from lead_in to lead_out."""
-        if np.isscalar(self.num_modes[lead_out]) and \
-           np.isscalar(self.num_modes[lead_in]):
+        if isinstance(self.lead_info[lead_out], tuple) and \
+           isinstance(self.lead_info[lead_in], tuple):
             return la.norm(self.submatrix(lead_out, lead_in))**2
         else:
             return np.trace(self._a_ttdagger_a_inv(lead_out, lead_in)).real
