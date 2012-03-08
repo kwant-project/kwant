@@ -43,7 +43,7 @@ def factorized(A, piv_tol=1.0, sym_piv_tol=1.0):
     """
 
     if not sp.isspmatrix_csc(A):
-        A = csc_matrix(A)
+        A = sp.csc_matrix(A)
 
     A.sort_indices()
     A = A.asfptype()  #upcast to a floating point format
