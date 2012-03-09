@@ -3,6 +3,11 @@ What's New in kwant 0.2
 
 This article explains the user-visible changes in kwant 0.2.
 
+Calculation of the local density of states
+------------------------------------------
+The new function `kwant.solvers.sparse.ldos` allows the calculation of the
+local density of states.
+
 Return value of sparse solver
 -----------------------------
 

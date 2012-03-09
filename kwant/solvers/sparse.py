@@ -1,4 +1,4 @@
-__all__ = [ 'make_linear_sys' , 'solve', 'BlockResult']
+__all__ = ['make_linear_sys', 'solve', 'ldos', 'BlockResult']
 
 from functools import reduce
 from collections import namedtuple
@@ -381,3 +381,36 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
         ttdag = self._a_ttdagger_a_inv(lead_out, lead_in)
         ttdag -= ttdag * ttdag
         return np.trace(ttdag).real
+
+def ldos(fsys, e=0):
+    """
+    Calculate the local density of states of a system at a given energy.
+
+    Parameters
+    ----------
+    sys : `kwant.system.FiniteSystem`
+        low level system, containing the leads and the Hamiltonian of the
+        scattering region.
+    energy : number
+        excitation energy at which to solve the scattering problem.
+
+    Returns
+    -------
+    ldos : a numpy array
+        local density of states at each orbital of the system.
+    """
+    linsys = make_linear_sys(fsys, [], [], e)
+    num_extra_vars = 0
+    for i in linsys[-1]:
+        if isinstance(i, tuple):
+            num_extra_vars += i[0].shape[1] - i[2]
+    a = linsys[0]
+    slv = factorized(a)
+    num_orb = a.shape[0] - num_extra_vars
+    vec = np.zeros(a.shape[0], complex)
+    ldos = np.zeros(num_orb, complex)
+    for i in xrange(num_orb):
+        vec[i] = 1
+        ldos[i] = slv(vec)[i]
+        vec[i] = 0
+    return ldos.imag / np.pi

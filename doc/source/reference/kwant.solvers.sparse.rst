@@ -7,5 +7,6 @@
    :toctree: generated/
 
    solve
+   ldos
    make_linear_sys
    BlockResult

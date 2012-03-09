@@ -283,3 +283,16 @@ def test_very_singular_leads():
 
 def test_umfpack_del():
     assert hasattr(kwant.solvers.sparse.umfpack.UmfpackContext, '__del__')
+
+def test_ldos():
+    sys = kwant.Builder()
+    gr = kwant.lattice.Chain()
+    lead = kwant.Builder(kwant.TranslationalSymmetry((gr.vec((1,)),)))
+    sys.default_site_group = lead.default_site_group = gr
+    sys[(0,)] = sys[(1,)] = lead[(0,)] = 0
+    sys[(0,), (1,)] = lead[(0,), (1,)] = 1
+    sys.attach_lead(lead)
+    sys.attach_lead(lead.reversed())
+    fsys = sys.finalized()
+    assert_almost_equal(kwant.solvers.sparse.ldos(fsys, 0),
+                        np.array([1, 1]) / (2 * np.pi))
