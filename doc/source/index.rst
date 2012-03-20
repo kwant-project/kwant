@@ -8,9 +8,14 @@ kwant documentation
    README file (includes installation instructions) <readme>
 
 .. toctree::
+   :maxdepth: 1
+
+   whatsnew/index
+
+.. toctree::
    :maxdepth: 2
 
-   tutorial/index.rst
+   tutorial/index
 
 .. toctree::
    :maxdepth: 2
