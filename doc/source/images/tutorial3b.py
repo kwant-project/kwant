@@ -68,7 +68,7 @@ for iB in xrange(100):
     B = iB * 0.002
 
 # Obtain the Hamiltonian as a dense matrix
-    ham_mat = fsys.hamiltonian_submatrix()
+    ham_mat = fsys.hamiltonian_submatrix()[0]
 
     ev = la.eigh(ham_mat, eigvals_only=True)
 

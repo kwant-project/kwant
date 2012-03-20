@@ -113,17 +113,16 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0,
     """
     if not sys.lead_neighbor_seqs:
         raise ValueError('System contains no leads.')
-    h_sys = sys.hamiltonian_submatrix(sparse=True).tocsc()
+    h_sys, norb = sys.hamiltonian_submatrix(sparse=True)[:2]
+    h_sys = h_sys.tocsc()
     h_sys = h_sys - energy * sp.identity(h_sys.shape[0], format='csc')
 
     # Hermiticity check.
     if np.any(np.abs((h_sys - h_sys.T.conj()).data) > 1e-13):
         raise ValueError('System Hamiltonian is not Hermitian.')
 
-    norb, num_nodes = sys.num_orbitals, sys.graph.num_nodes
-    norb_arr = np.array([norb(i) for i in xrange(num_nodes)], int)
-    offsets = np.zeros(norb_arr.shape[0] + 1, int)
-    offsets[1 :] = np.cumsum(norb_arr)
+    offsets = np.zeros(norb.shape[0] + 1, int)
+    offsets[1 :] = np.cumsum(norb)
 
     # Process the leads, generate the eigenvector matrices and lambda vectors.
     # Then create blocks of the linear system and add them step by step.

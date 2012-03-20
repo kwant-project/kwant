@@ -1358,9 +1358,13 @@ class Builder(object):
 
 ################ Finalized systems
 
-class System(system.System):
-    """Finalized Builder."""
 
+class FiniteSystem(system.FiniteSystem):
+    """
+    Finalized `Builder` with leads.
+
+    Usable as input for the solvers in `kwant.solvers`.
+    """
     def hamiltonian(self, i, j):
         if i == j:
             value = self.onsite_hamiltonians[i]
@@ -1391,14 +1395,35 @@ class System(system.System):
         return self.site(i).pos
 
 
-class FiniteSystem(System, system.FiniteSystem):
-    """
-    Finalized `Builder` with leads.
-
-    Usable as input for the solvers in `kwant.solvers`.
-    """
-    pass
-
-
-class InfiniteSystem(System, system.InfiniteSystem):
+class InfiniteSystem(system.InfiniteSystem):
     """Finalized infinite system, extracted from a `Builder`."""
+    def hamiltonian(self, i, j):
+        if i == j:
+            if i >= self.slice_size:
+                i -= self.slice_size
+            value = self.onsite_hamiltonians[i]
+            if hasattr(value, '__call__'):
+                value = value(self.symmetry.to_fd(self.site(i)))
+            return value
+        else:
+            edge_id = self.graph.first_edge_id(i, j)
+            value = self.hoppings[edge_id]
+            conj = value is other
+            if conj:
+                i, j = j, i
+                edge_id = self.graph.first_edge_id(i, j)
+                value = self.hoppings[edge_id]
+            if hasattr(value, '__call__'):
+                site_i = self.site(i)
+                site_j = self.site(j)
+                value = value(*self.symmetry.to_fd(site_i, site_j))
+            if conj:
+                value = herm_conj(value)
+            return value
+
+    def site(self, i):
+        a, b = self.psites_idxs[i : i + 2]
+        return unpack(self.psites[a : b], self.group_by_pgid)
+
+    def pos(self, i):
+        return self.site(i).pos
