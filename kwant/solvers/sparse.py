@@ -136,12 +136,11 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
 
             h -= energy * np.identity(h.shape[0])
             v = lead.inter_slice_hopping()
+            modes = physics.modes(h, v)
+            lead_info.append(modes)
             if not np.any(v):
-                lead_info.append(physics.modes(h, v))
                 continue
-
-            u, ulinv, nprop, svd = physics.modes(h, v)
-            lead_info.append((u, ulinv, nprop, svd))
+            u, ulinv, nprop, svd = modes
 
             if leadnum in out_leads:
                 keep_vars.append(range(h_sys.shape[0], h_sys.shape[0] + nprop))
@@ -353,20 +352,16 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
         return self.data[self.block_coords(lead_out, lead_in)]
 
     def _a_ttdagger_a_inv(self, lead_out, lead_in):
-        gf = np.asmatrix(self.submatrix(lead_out, lead_in))
-        if isinstance(self.lead_info[lead_out], tuple):
-            gamma_out = np.asmatrix(np.identity(self._sizes[lead_out]))
-        else:
-            gamma_out = np.matrix(self.lead_info[lead_out], dtype=complex)
-            gamma_out -= gamma_out.H
-            gamma_out *= 1j
-        if isinstance(self.lead_info[lead_in], tuple):
-            gamma_in = np.asmatrix(np.identity(self._sizes[lead_in]))
-        else:
-            gamma_in = np.matrix(self.lead_info[lead_in], dtype=complex)
-            gamma_in -= gamma_in.H
-            gamma_in *= 1j
-        return gamma_out * gf * gamma_in * gf.H
+        gf = self.submatrix(lead_out, lead_in)
+        factors = []
+        for lead, gf2 in ((lead_out, gf), (lead_in, gf.conj().T)):
+            possible_se = self.lead_info[lead]
+            if not isinstance(possible_se, tuple):
+                # Lead is a "self energy lead": multiply gf2 with a gamma
+                # matrix.
+                factors.append(1j * (possible_se - possible_se.conj().T))
+            factors.append(gf2)
+        return reduce(np.dot, factors)
 
     def transmission(self, lead_out, lead_in):
         """Return transmission from lead_in to lead_out."""
@@ -379,7 +374,7 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
     def noise(self, lead_out, lead_in):
         """Return shot noise from lead_in to lead_out."""
         ttdag = self._a_ttdagger_a_inv(lead_out, lead_in)
-        ttdag -= ttdag * ttdag
+        ttdag -= np.dot(ttdag, ttdag)
         return np.trace(ttdag).real
 
 def ldos(fsys, e=0):
