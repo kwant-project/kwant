@@ -394,11 +394,12 @@ def ldos(fsys, e=0):
     ldos : a numpy array
         local density of states at each orbital of the system.
     """
+    Modes = physics.Modes
     linsys = make_linear_sys(fsys, [], [], e)
     num_extra_vars = 0
     for i in linsys[-1]:
-        if isinstance(i, tuple):
-            num_extra_vars += i[0].shape[1] - i[2]
+        if isinstance(i, Modes):
+            num_extra_vars += i.vecs.shape[1] - i.nmodes
     a = linsys[0]
     slv = factorized(a)
     num_orb = a.shape[0] - num_extra_vars

@@ -1,5 +1,6 @@
 from __future__ import division
 from math import sin, cos, sqrt, pi, copysign
+from collections import namedtuple
 import numpy as np
 import numpy.linalg as npl
 import scipy.linalg as la
@@ -7,7 +8,7 @@ import kwant.linalg as kla
 
 dot = np.dot
 
-__all__ = [ 'self_energy', 'modes' ]
+__all__ = ['self_energy', 'modes', 'Modes']
 
 def setup_linsys(h_onslice, h_hop, tol=1e6):
     """
@@ -569,12 +570,12 @@ def self_energy(h_onslice, h_hop, tol=1e6):
         #       eigenvectors will be real, too.
 
         if nprop > 0:
-            nrmodes = np.sum(rselect)
-            vecs[:, : nrmodes] = prop_vecs[:, rselect]
+            nmodes = np.sum(rselect)
+            vecs[:, : nmodes] = prop_vecs[:, rselect]
         else:
-            nrmodes = 0
+            nmodes = 0
 
-        vecs[:, nrmodes:] = vec_gen(select)
+        vecs[:, nmodes:] = vec_gen(select)
 
         if v is not None:
             return dot(v * w, dot(vecs[n :], dot(npl.inv(vecs[: n]),
@@ -596,6 +597,8 @@ def self_energy(h_onslice, h_hop, tol=1e6):
         else:
             return dot(h_hop.T.conj(), dot(z[n:, : n], npl.inv(z[: n, : n])))
 
+Modes = namedtuple('Modes', ['vecs', 'vecslmbdainv', 'nmodes', 'svd'])
+
 def modes(h_onslice, h_hop, tol=1e6):
     """
     Compute the eigendecomposition of a translation operator of a lead.
@@ -610,15 +613,13 @@ def modes(h_onslice, h_hop, tol=1e6):
 
     Returns
     -------
-    vecs : numpy matrix
-        the matrix of eigenvectors of translation operator.
-    vecslmbdainv : numpy matrix
-        the matrix of eigenvectors multiplied with their corresponding inverse
-        eigenvalue.
-    nrmodes : integer
-        number of propagating modes in either direction.
-    (u, s, v) : singular value decomposition of the hopping matrix.
-        If `h_hop` is invertible, a single None is returned instead.
+    (vecs, vecslmbdainv, nmodes, svd) : Modes
+        `vecs` is the matrix of eigenvectors of the translation operator.
+        `vecslmbdainv` is the matrix of eigenvectors multiplied with their
+        corresponding inverse eigenvalue.  `nmodes` is the number of
+        propagating modes in either direction.  `svd` is a tuple (u, s, v)
+        holding the singular value decomposition of the hopping matrix, or a
+        single None if `h_hop` is invertible.
 
     Notes
     -----
@@ -629,7 +630,7 @@ def modes(h_onslice, h_hop, tol=1e6):
     If it is singular, the projections (u^dagger psi, v^dagger psi lambda^-1)
     are returned.
 
-    First `nrmodes` are incoming, second `nrmodes` are reflected, the rest are
+    First `nmodes` are incoming, second `nmodes` are reflected, the rest are
     evanescent.
 
     Propagating modes with the same lambda are orthogonalized. All the
@@ -648,7 +649,7 @@ def modes(h_onslice, h_hop, tol=1e6):
     if not np.any(h_hop):
         n = h_hop.shape[0]
         svd = (np.empty((n, 0)), np.empty((0, 0)), np.empty((0, m)))
-        return np.empty((0, 0)), np.empty((0, 0)), 0, svd
+        return Modes(np.empty((0, 0)), np.empty((0, 0)), 0, svd)
 
     # Defer most of the calculation to a helper routine.
     ev, evanselect, propselect, vec_gen, ord_schur, \
@@ -686,7 +687,7 @@ def modes(h_onslice, h_hop, tol=1e6):
         prop_vecs /= maxnode
 
         lprop = np.logical_not(rprop)
-        nrmodes = np.sum(rprop)
+        nmodes = np.sum(rprop)
         vecs = np.c_[prop_vecs[n:, lprop], prop_vecs[n:, rprop],
                      evan_vecs[n:]]
         vecslmbdainv = np.c_[prop_vecs[: n, lprop], prop_vecs[: n, rprop],
@@ -695,12 +696,10 @@ def modes(h_onslice, h_hop, tol=1e6):
     else:
         vecs = evan_vecs[n:]
         vecslmbdainv = evan_vecs[: n]
-        nrmodes = 0
+        nmodes = 0
 
-    if s is not None:
-        return vecs, vecslmbdainv, nrmodes, (u, s, v)
-    else:
-        return vecs, vecslmbdainv, nrmodes, None
+    svd = None if s is None else (u, s, v)
+    return Modes(vecs, vecslmbdainv, nmodes, svd)
 
 
 def square_self_energy(width, hopping, potential, fermi_energy):
