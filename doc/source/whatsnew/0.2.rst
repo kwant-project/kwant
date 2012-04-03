@@ -10,13 +10,15 @@ local density of states.
 
 Return value of sparse solver
 -----------------------------
-
 `kwant.solvers.sparse.solve` now always returns a single instance of
 `~kwant.solvers.sparse.BlockResult`.  The latter has been generalized to
 include more information for leads defined as infinite systems.
 
 Return value of `~kwant.system.System.hamiltonian_submatrix`
 ------------------------------------------------------------
-
 `~kwant.system.System.hamiltonian_submatrix` now always returns a 3-tuple
 ``hamiltonian_part, to_norb, from_norb``.
+
+Return value of `~kwant.solvers.sparse.make_linear_sys` has changed
+-------------------------------------------------------------------
+A namedtuple is used for more clarity.

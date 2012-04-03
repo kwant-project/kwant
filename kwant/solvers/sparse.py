@@ -1,4 +1,4 @@
-__all__ = ['make_linear_sys', 'solve', 'ldos', 'BlockResult']
+__all__ = ['make_linear_sys', 'LinearSys', 'solve', 'ldos', 'BlockResult']
 
 from functools import reduce
 from collections import namedtuple
@@ -67,6 +67,10 @@ def factorized(A, piv_tol=1.0, sym_piv_tol=1.0):
 
     return solve
 
+
+LinearSys = namedtuple('LinearSys', ['h_sys', 'rhs', 'keep_vars'])
+
+
 def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
     """
     Make a sparse linear system of equations defining a scattering problem.
@@ -89,15 +93,17 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
 
     Returns
     -------
-    (h_sys, rhs, keep_vars, lead_info) : tuple of inhomogeneous data
+    (h_sys, rhs, keep_vars) : LinearSys
         `h_sys` is a numpy.sparse.csc_matrix, containing the right hand side
         of the system of equations, `rhs` is the list of matrices with the
         left hand side, `keep_vars` is a list with numbers of variables in the
         solution that have to be stored (typically a small part of the
-        complete solution). Finally, a list `lead_info` is also returned, which
-        contains mode wave functions in each lead that is defined as a
-        tight-binding system (and as returned by `kwant.physics.modes`), and
-        the lead self-energy otherwise.
+        complete solution).
+    lead_info : list of objects
+        Contains one entry for each lead.  For a lead defined as a
+        tight-binding system, this is an instance of `kwant.physics.Modes` (as
+        returned by `kwant.physics.modes`), otherwise the lead self-energy
+        matrix.
 
     Notes
     -----
@@ -197,11 +203,10 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
                 rhs.append(sp.coo_matrix((-np.ones(l), [indices,
                                                         np.arange(l)])))
 
-    result = (h_sys, rhs, keep_vars, lead_info)
-    return result
+    return LinearSys(h_sys, rhs, keep_vars), lead_info
 
 
-def solve_linsys(a, b, keep_vars=None):
+def solve_linear_sys(a, b, keep_vars=None):
     """
     Solve matrix system of equations a x = b with sparse input.
 
@@ -299,10 +304,11 @@ def solve(sys, energy=0, out_leads=None, in_leads=None, force_realspace=False):
         raise ValueError('Lead lists must be sorted and with unique entries.')
     if len(in_leads) == 0 or len(out_leads) == 0:
         raise ValueError('No output is requested.')
-    linsys = make_linear_sys(sys, out_leads, in_leads, energy, force_realspace)
-    out_modes = [len(i) for i in linsys[2]]
-    in_modes = [i.shape[1] for i in linsys[1]]
-    result = BlockResult(solve_linsys(*linsys[: -1]), linsys[3])
+    linsys, lead_info = make_linear_sys(sys, out_leads, in_leads, energy,
+                                        force_realspace)
+    out_modes = [len(i) for i in linsys.keep_vars]
+    in_modes = [i.shape[1] for i in linsys.rhs]
+    result = BlockResult(solve_linear_sys(*linsys), lead_info)
     result.in_leads = in_leads
     result.out_leads = out_leads
     return result
@@ -395,16 +401,14 @@ def ldos(fsys, e=0):
         local density of states at each orbital of the system.
     """
     Modes = physics.Modes
-    linsys = make_linear_sys(fsys, [], [], e)
-    num_extra_vars = 0
-    for i in linsys[-1]:
-        if isinstance(i, Modes):
-            num_extra_vars += i.vecs.shape[1] - i.nmodes
-    a = linsys[0]
-    slv = factorized(a)
-    num_orb = a.shape[0] - num_extra_vars
-    vec = np.zeros(a.shape[0], complex)
+    linsys, lead_info = make_linear_sys(fsys, [], [], e)
+    h = linsys.h_sys
+    num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
+                         for li in lead_info if isinstance(li, Modes))
+    num_orb = h.shape[0] - num_extra_vars
+    vec = np.zeros(h.shape[0], complex)
     ldos = np.zeros(num_orb, complex)
+    slv = factorized(h)
     for i in xrange(num_orb):
         vec[i] = 1
         ldos[i] = slv(vec)[i]
