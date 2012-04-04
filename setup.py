@@ -86,7 +86,12 @@ extensions = [ # (["kwant.graph.scotch", ["kwant/graph/scotch.pyx"]],
                               "kwant/graph/c_slicer/slicer.h"]}),
                (["kwant.linalg.lapack", ["kwant/linalg/lapack.pyx"]],
                 {"libraries" : ["lapack", "blas"],
-                 "depends" : ["kwant/linalg/f_lapack.pxd"]}) ]
+                 "depends" : ["kwant/linalg/f_lapack.pxd"]}),
+               (["kwant.linalg._mumps", ["kwant/linalg/_mumps.pyx"]],
+                {"libraries" : ["zmumps", "mumps_common", "pord",
+                                "metis", "mpiseq", "lapack", "blas",
+                                "gfortran"],
+                 "depends" : ["kwant/linalg/cmumps.pxd"]}) ]
 
 ext_modules = []
 for args, keywords in extensions:
