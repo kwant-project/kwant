@@ -11,204 +11,177 @@
 
 from cmath import exp
 from math import pi
+
 import kwant
+
+# For plotting
+import pylab
 
 import latex, html
 
-# First, define the tight-binding system
+def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
+    # Start with an empty tight-binding system and a single square lattice.
+    # `a` is the lattice constant (by default set to 1 for simplicity).
 
-sys = kwant.Builder()
+    lat = kwant.lattice.Square(a)
 
-# Here, we are only working with square lattices
+    sys = kwant.Builder()
 
-# for simplicity, take lattice constant = 1
-a = 1
-lat = kwant.lattice.Square(a)
+    #### Define the scattering region. ####
+    # Now, we aim for a more complex shape, namely a ring (or annulus)
+    def ring(pos):
+        (x, y) = pos
+        rsq = x**2 + y**2
+        return ( r1**2 < rsq < r2**2)
 
-t = 1.0
-W = 10
-r1 = 10
-r2 = 20
+    # and add the corresponding lattice points using the `shape`-function
+    sys[lat.shape(ring, (0, 11))] = 4 * t
+    for hopping in lat.nearest:
+        sys[sys.possible_hoppings(*hopping)] = - t
 
-# Define the scattering region
-# Now, we aim for a more compelx shape, namely a ring (or annulus)
+    # In order to introduce a flux through the ring, we introduce a phase
+    # on the hoppings on the line cut through one of the arms
 
-def ring(pos):
-    (x, y) = pos
-    rsq = x**2 + y**2
-    return ( r1**2 < rsq < r2**2)
+    # since we want to change the flux without modifying Builder repeatedly,
+    # we define the modified hoppings as a function that takes the flux
+    # through the global variable phi.
+    def fluxphase(site1, site2):
+        return exp(1j * phi)
 
-sys[lat.shape(ring, (0, 11))] = 4 * t
-for hopping in lat.nearest:
-    sys[sys.possible_hoppings(*hopping)] = - t
+    def crosses_branchcut(hop):
+        ix0, iy0 = hop[0].tag
 
-# In order to introduce a flux through the ring, we introduce a phase
-# on the hoppings on the line cut through one of the arms
+        # possible_hoppings with the argument (1, 0) below
+        # returns hoppings ordered as ((i+1, j), (i, j))
+        return iy0 < 0 and ix0 == 1 # ix1 == 0 then implied
 
-# since we want to change the flux without modifying Builder repeatedly,
-# we define the modified hoppings as a function that takes the flux
-# as a global variable.
+    # Modify only those hopings in x-direction that cross the branch cut
+    sys[(hop for hop in sys.possible_hoppings((1,0), lat, lat)
+         if crosses_branchcut(hop))] = fluxphase
 
-def fluxphase(site1, site2):
-    return exp(1j * phi)
+    #### Define the leads. ####
+    # left lead
+    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+    lead0 = kwant.Builder(sym_lead0)
 
-# Now go through all the hoppings and modify those in the lower
-# arm of the ring that go from x=0 to x=1
+    def lead_shape(pos):
+        (x, y) = pos
+        return (-1 < x < 1) and ( -W/2 < y < W/2  )
 
-for (site1, site2) in sys.hoppings():
-    ix1, iy1 = site1.tag
-    ix2, iy2 = site2.tag
+    lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
+    for hopping in lat.nearest:
+        lead0[lead0.possible_hoppings(*hopping)] = - t
 
-    hopx = tuple(sorted((ix1, ix2)))
+    # Then the lead to the right
+    # (again, obtained using reverse()
+    lead1 = lead0.reversed()
 
-    if hopx == (0, 1) and iy1 == iy2 and iy1 < 0:
-        sys[lat(hopx[1], iy1), lat(hopx[0], iy1)] = fluxphase
+    #### Attach the leads and return the finalized system. ####
+    sys.attach_lead(lead0)
+    sys.attach_lead(lead1)
 
-# Then, define the leads:
+    return sys.finalized()
 
-# First the lead to the left
 
-# (Note: in the current version, TranslationalSymmetry takes a
-# realspace vector)
-sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
-lead0 = kwant.Builder(sym_lead0)
-lead0.default_site_group = lat
+def make_system_note1(a=1, t=1.0, W=10, r1=10, r2=20):
+    lat = kwant.lattice.Square(a)
+    sys = kwant.Builder()
+    def ring(pos):
+        (x, y) = pos
+        rsq = x**2 + y**2
+        return ( r1**2 < rsq < r2**2)
+    sys[lat.shape(ring, (0, 11))] = 4 * t
+    for hopping in lat.nearest:
+        sys[sys.possible_hoppings(*hopping)] = - t
+    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+    lead0 = kwant.Builder(sym_lead0)
+    def lead_shape(pos):
+        (x, y) = pos
+        return (-1 < x < 1) and ( 0.5 * W < y < 1.5 * W )
+    lead0[lat.shape(lead_shape, (0, W))] = 4 * t
+    for hopping in lat.nearest:
+        lead0[lead0.possible_hoppings(*hopping)] = - t
+    lead1 = lead0.reversed()
+    sys.attach_lead(lead0)
+    sys.attach_lead(lead1)
+    return sys.finalized()
 
-def lead_shape(pos):
-    (x, y) = pos
-    return (-1 < x < 1) and ( -W/2 < y < W/2  )
 
-lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
-for hopping in lat.nearest:
-    lead0[lead0.possible_hoppings(*hopping)] = - t
+def make_system_note2(a=1, t=1.0, W=10, r1=10, r2=20):
+    lat = kwant.lattice.Square(a)
+    sys = kwant.Builder()
+    def ring(pos):
+        (x, y) = pos
+        rsq = x**2 + y**2
+        return ( r1**2 < rsq < r2**2)
+    sys[lat.shape(ring, (0, 11))] = 4 * t
+    for hopping in lat.nearest:
+        sys[sys.possible_hoppings(*hopping)] = - t
+    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+    lead0 = kwant.Builder(sym_lead0)
+    def lead_shape(pos):
+        (x, y) = pos
+        return (-1 < x < 1) and ( -W/2 < y < W/2  )
+    lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
+    for hopping in lat.nearest:
+        lead0[lead0.possible_hoppings(*hopping)] = - t
+    lead1 = lead0.reversed()
+    sys.attach_lead(lead0)
+    sys.attach_lead(lead1, lat(0, 0))
+    return sys.finalized()
 
-# Then the lead to the right
-# there we can use a special function that simply reverses the direction
 
-lead1 = lead0.reversed()
+def plot_conductance(fsys, energy, fluxes):
+    # compute conductance
+    # global variable phi controls the flux
+    global phi
 
-# Then attach the leads to the system
+    normalized_fluxes = [flux/(2 * pi) for flux in fluxes]
+    data = []
+    for flux in fluxes:
+        phi = flux
 
-sys.attach_lead(lead0)
-sys.attach_lead(lead1)
+        smatrix = kwant.solve(fsys, energy)
+        data.append(smatrix.transmission(1, 0))
 
-# finalize the system
+    pylab.plot(normalized_fluxes, data)
+    pylab.xlabel("flux [in units of the flux quantum]",
+                 fontsize=latex.mpl_label_size)
+    pylab.ylabel("conductance [in units of e^2/h]",
+                 fontsize=latex.mpl_label_size)
+    fig = pylab.gcf()
+    pylab.setp(fig.get_axes()[0].get_xticklabels(),
+               fontsize=latex.mpl_tick_size)
+    pylab.setp(fig.get_axes()[0].get_yticklabels(),
+               fontsize=latex.mpl_tick_size)
+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
+    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
+    fig.savefig("tutorial2c_result.pdf")
+    fig.savefig("tutorial2c_result.png",
+                dpi=(html.figwidth_px/latex.mpl_width_in))
 
-fsys = sys.finalized()
 
-# and plot it, to make sure it's proper
+def main():
+    fsys = make_system()
 
-kwant.plot(fsys, "tutorial2c_sys.pdf", width=latex.figwidth_pt)
-kwant.plot(fsys, "tutorial2c_sys.png", width=html.figwidth_px)
+    # Check that the system looks as intended.
+    kwant.plot(fsys, "tutorial2c_sys.pdf", width=latex.figwidth_pt)
+    kwant.plot(fsys, "tutorial2c_sys.png", width=html.figwidth_px)
 
-# Now that we have the system, we can compute conductance
+    # We should see a conductance that is periodic with the flux quantum
+    plot_conductance(fsys, energy=0.15, fluxes=[0.01 * i * 3 * 2 * pi
+                                                for i in xrange(100)])
 
-energy = 0.15
-phases = []
-data = []
-for iphi in xrange(100):
-    phi = iphi * 0.01 * 3 * 2 * pi
+    # Finally, some plots needed for the notes
+    fsys = make_system_note1()
+    kwant.plot(fsys, "tutorial2c_note1.pdf", width=latex.figwidth_small_pt)
+    kwant.plot(fsys, "tutorial2c_note1.png", width=html.figwidth_small_px)
+    fsys = make_system_note2()
+    kwant.plot(fsys, "tutorial2c_note2.pdf", width=latex.figwidth_small_pt)
+    kwant.plot(fsys, "tutorial2c_note2.png", width=html.figwidth_small_px)
 
-    # compute the scattering matrix at energy energy
-    smatrix = kwant.solve(fsys, energy)
 
-    # compute the transmission probability from lead 0 to
-    # lead 1
-    phases.append(phi / (2 * pi))
-    data.append(smatrix.transmission(1, 0))
-
-# Use matplotlib to write output
-# We should see conductance steps
-import pylab
-
-pylab.plot(phases, data)
-pylab.xlabel("flux [in units of the flux quantum]",
-             fontsize=latex.mpl_label_size)
-pylab.ylabel("conductance [in units of e^2/h]",
-             fontsize=latex.mpl_label_size)
-fig = pylab.gcf()
-pylab.setp(fig.get_axes()[0].get_xticklabels(),
-           fontsize=latex.mpl_tick_size)
-pylab.setp(fig.get_axes()[0].get_yticklabels(),
-           fontsize=latex.mpl_tick_size)
-fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
-fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-fig.savefig("tutorial2c_result.pdf")
-fig.savefig("tutorial2c_result.png",
-            dpi=(html.figwidth_px/latex.mpl_width_in))
-
-# Finally, some plots needed for the notes
-
-sys = kwant.Builder()
-
-sys[lat.shape(ring, (0, 11))] = 4 * t
-for hopping in lat.nearest:
-    sys[sys.possible_hoppings(*hopping)] = - t
-
-sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
-lead0 = kwant.Builder(sym_lead0)
-lead0.default_site_group = lat
-
-def lead_shape(pos):
-    (x, y) = pos
-    return (-1 < x < 1) and ( 0.5 * W < y < 1.5 * W )
-
-lead0[lat.shape(lead_shape, (0, W))] = 4 * t
-for hopping in lat.nearest:
-    lead0[lead0.possible_hoppings(*hopping)] = - t
-
-# Then the lead to the right
-# there we can use a special function that simply reverses the direction
-
-lead1 = lead0.reversed()
-
-# Then attach the leads to the system
-
-sys.attach_lead(lead0)
-sys.attach_lead(lead1)
-
-# finalize the system
-
-fsys = sys.finalized()
-
-# and plot it, to make sure it's proper
-
-kwant.plot(fsys, "tutorial2c_note1.pdf", width=latex.figwidth_small_pt)
-kwant.plot(fsys, "tutorial2c_note1.png", width=html.figwidth_small_px)
-
-sys = kwant.Builder()
-
-sys[lat.shape(ring, (0, 11))] = 4 * t
-for hopping in lat.nearest:
-    sys[sys.possible_hoppings(*hopping)] = - t
-
-sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
-lead0 = kwant.Builder(sym_lead0)
-lead0.default_site_group = lat
-
-def lead_shape(pos):
-    (x, y) = pos
-    return (-1 < x < 1) and ( -W/2 < y < W/2  )
-
-lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
-for hopping in lat.nearest:
-    lead0[lead0.possible_hoppings(*hopping)] = - t
-
-# Then the lead to the right
-# there we can use a special function that simply reverses the direction
-
-lead1 = lead0.reversed()
-
-# Then attach the leads to the system
-
-sys.attach_lead(lead0)
-sys.attach_lead(lead1, lat(0, 0))
-
-# finalize the system
-
-fsys = sys.finalized()
-
-# and plot it, to make sure it's proper
-
-kwant.plot(fsys, "tutorial2c_note2.pdf", width=latex.figwidth_small_pt)
-kwant.plot(fsys, "tutorial2c_note2.png", width=html.figwidth_small_px)
+# Call the main function if the script gets executed (as opposed to imported).
+# See <http://docs.python.org/library/__main__.html>.
+if __name__ == '__main__':
+    main()

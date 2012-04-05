@@ -11,113 +11,96 @@
 #  - Numpy matrices as values in Builder
 
 import kwant
+
+# For plotting
+import pylab
+
+# For matrix support
 import numpy
 
 import latex, html
 
-# define sigma-matrices for convenience
+# define Pauli-matrices for convenience
 sigma_0 = numpy.eye(2)
 sigma_x = numpy.array([[0, 1], [1, 0]])
 sigma_y = numpy.array([[0, -1j], [1j, 0]])
 sigma_z = numpy.array([[1, 0], [0, -1]])
 
-# First, define the tight-binding system
 
-sys = kwant.Builder()
+def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
+    # Start with an empty tight-binding system and a single square lattice.
+    # `a` is the lattice constant (by default set to 1 for simplicity).
+    lat = kwant.lattice.Square(a)
 
-# Here, we are only working with square lattices
+    sys = kwant.Builder()
+    sys.default_site_group = lat
 
-# for simplicity, take lattice constant = 1
-a = 1
-lat = kwant.lattice.Square(a)
+    #### Define the scattering region. ####
+    sys[((x, y) for x in range(L) for y in range(W))] = 4 * t * sigma_0 + \
+        e_z * sigma_z
+    # hoppings in x-direction
+    sys[sys.possible_hoppings((1, 0), lat, lat)] = - t * sigma_0 - \
+        1j * alpha * sigma_y
+    # hoppings in y-directions
+    sys[sys.possible_hoppings((0, 1), lat, lat)] = - t * sigma_0 + \
+        1j * alpha * sigma_x
 
-t = 1.0
-alpha = 0.5
-e_z = 0.08
-W = 10
-L = 30
+    #### Define the leads. ####
+    # left lead
+    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+    lead0 = kwant.Builder(sym_lead0)
+    lead0.default_site_group = lat
 
-# Define the scattering region
+    lead0[((0, j) for j in xrange(W))] = 4 * t * sigma_0 + e_z * sigma_z
+    # hoppings in x-direction
+    lead0[lead0.possible_hoppings((1, 0), lat, lat)] = - t * sigma_0 - \
+        1j * alpha * sigma_y
+    # hoppings in y-directions
+    lead0[lead0.possible_hoppings((0, 1), lat, lat)] = - t * sigma_0 + \
+        1j * alpha * sigma_x
 
-def rectangle(pos):
-    (x, y) = pos
-    return ( -0.5 < x < L - 0.5 ) and ( -0.5 < y < W - 0.5 )
+    # Then the lead to the right
+    # (again, obtained using reverse()
+    lead1 = lead0.reversed()
 
-sys[lat.shape(rectangle, (0, 0))] = 4 * t * sigma_0 + e_z * sigma_z
-# hoppings in x-direction
-sys[sys.possible_hoppings((1, 0), lat, lat)] = - t * sigma_0 - \
-    1j * alpha * sigma_y
-# hoppings in y-directions
-sys[sys.possible_hoppings((0, 1), lat, lat)] = - t * sigma_0 + \
-    1j * alpha * sigma_x
+    #### Attach the leads and return the finalized system. ####
+    sys.attach_lead(lead0)
+    sys.attach_lead(lead1)
 
-# Then, define the leads:
+    return sys.finalized()
 
-# First the lead to the left
+def plot_conductance(fsys, energies):
+    # Compute conductance
+    data = []
+    for energy in energies:
+        smatrix = kwant.solve(fsys, energy)
+        data.append(smatrix.transmission(1, 0))
 
-# (Note: in the current version, TranslationalSymmetry takes a
-# realspace vector)
-sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
-lead0 = kwant.Builder(sym_lead0)
-lead0.default_site_group = lat
+    pylab.plot(energies, data)
+    pylab.xlabel("energy [in units of t]",
+                 fontsize=latex.mpl_label_size)
+    pylab.ylabel("conductance [in units of e^2/h]",
+                 fontsize=latex.mpl_label_size)
+    fig = pylab.gcf()
+    pylab.setp(fig.get_axes()[0].get_xticklabels(),
+               fontsize=latex.mpl_tick_size)
+    pylab.setp(fig.get_axes()[0].get_yticklabels(),
+               fontsize=latex.mpl_tick_size)
+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
+    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
+    fig.savefig("tutorial2a_result.pdf")
+    fig.savefig("tutorial2a_result.png",
+                dpi=(html.figwidth_px/latex.mpl_width_in))
 
-def lead_shape(pos):
-    (x, y) = pos
-    return (-1 < x < 1) and ( -0.5 < y < W - 0.5 )
 
-lead0[lat.shape(lead_shape, (0, 0))] = 4 * t * sigma_0 + e_z * sigma_z
-# hoppings in x-direction
-lead0[lead0.possible_hoppings((1, 0), lat, lat)] = - t * sigma_0 - \
-    1j * alpha * sigma_y
-# hoppings in y-directions
-lead0[lead0.possible_hoppings((0, 1), lat, lat)] = - t * sigma_0 + \
-    1j * alpha * sigma_x
+def main():
+    fsys = make_system()
 
-# Then the lead to the right
-# there we can use a special function that simply reverses the direction
+    # We should see non-monotonic conductance steps.
+    plot_conductance(fsys, energies=[0.01 * i - 0.3 for i in xrange(100)])
 
-lead1 = lead0.reversed()
 
-# Then attach the leads to the system
-
-sys.attach_lead(lead0)
-sys.attach_lead(lead1)
-
-# finalize the system
-
-fsys = sys.finalized()
-
-# Now that we have the system, we can compute conductance
-
-energies = []
-data = []
-for ie in xrange(100):
-    energy = ie * 0.01 - 0.3
-
-    # compute the scattering matrix at energy energy
-    smatrix = kwant.solvers.sparse.solve(fsys, energy)
-
-    # compute the transmission probability from lead 0 to
-    # lead 1
-    energies.append(energy)
-    data.append(smatrix.transmission(1, 0))
-
-# Use matplotlib to write output
-# We should see conductance steps
-import pylab
-
-pylab.plot(energies, data)
-pylab.xlabel("energy [in units of t]",
-             fontsize=latex.mpl_label_size)
-pylab.ylabel("conductance [in units of e^2/h]",
-             fontsize=latex.mpl_label_size)
-fig = pylab.gcf()
-pylab.setp(fig.get_axes()[0].get_xticklabels(),
-           fontsize=latex.mpl_tick_size)
-pylab.setp(fig.get_axes()[0].get_yticklabels(),
-           fontsize=latex.mpl_tick_size)
-fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
-fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-fig.savefig("tutorial2a_result.pdf")
-fig.savefig("tutorial2a_result.png",
-            dpi=(html.figwidth_px/latex.mpl_width_in))
+# Call the main function if the script gets executed (as opposed to imported).
+# See <http://docs.python.org/library/__main__.html>.
+if __name__ == '__main__':
+    main()
