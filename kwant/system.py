@@ -324,4 +324,4 @@ class Energies():
     def __call__(self, k):
         mat = self.hop * complex(math.cos(k), math.sin(k))
         mat += mat.conjugate().transpose() + self.ham
-        return np.sort(np.linalg.eigvalsh(mat))
+        return np.sort(np.linalg.eigvalsh(mat).real)
