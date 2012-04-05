@@ -24,6 +24,9 @@ Roughly in order of importance.                                     -*-org-*-
 * Benchmark mumps and check whether nested dissection would be useful.
   If yes, implement it.
 
+* Use sparse linear algebra to calculate bands
+  However, scipy's sparse eigenvalues don't seem to work well.
+
 * Provide support for plotting LDOS and other functions
   of the site in the system.  Make a tutorial example for this.
 
@@ -56,13 +59,16 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Implement models module, incorporate units into it.
 
-* Improve handling of systems with important additional degrees of freedom.
-  i.e. spin, or electron-hole (currently two leads need to be introduced per
-  actual lead, in order to calculate Andreev transport).
+* Improve handling of s-matrices with important additional degrees of freedom.
+  i.e. spin, or electron-hole.  Currently, one needs to manually process lead
+  modes and to perform a basis transformation of the scattering matrix.
 
 * Implement automatic search for discrete symmetries of a tight binding model
   and of conservation laws.
 
-* Revisit Symmetry, make it more general (allow for description of other
-  discrete symmetries, potentially also symmetries which change builder
-  values).
+* Revisit Symmetry, make it more general. I.e. allow for description of other
+  discrete symmetries, possibly also symmetries which change site and hopping
+  values (=gauge symmetries).
+
+* It would be nice to have interactive plots of (3d) systems.
+  Perhaps the right way to achieve this is by using matplotlib.
