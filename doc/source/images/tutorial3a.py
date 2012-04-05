@@ -36,7 +36,7 @@ def make_lead(a=1, t=1.0, W=10):
         lead[(1, j), (0, j)] = - t
 
     # return a finalized lead
-    return lead.finalized()
+    return lead
 
 
 def plot_bandstructure(flead, momenta):
@@ -62,7 +62,7 @@ def plot_bandstructure(flead, momenta):
 
 
 def main():
-    flead = make_lead()
+    flead = make_lead().finalized()
 
     # list of momenta at which the bands should be computed
     momenta = np.arange(-pi, pi + .01, 0.02 * pi)

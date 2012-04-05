@@ -44,11 +44,11 @@ def make_system(a=1, t=1.0, W=10, L=30):
     # `lead0` with its direction reversed.
     lead1 = lead0.reversed()
 
-    #### Attach the leads and return the finalized system. ####
+    #### Attach the leads and return the system. ####
     sys.attach_lead(lead0)
     sys.attach_lead(lead1)
 
-    return sys.finalized()
+    return sys
 
 def plot_conductance(fsys, energies):
     # Compute conductance
@@ -64,10 +64,13 @@ def plot_conductance(fsys, energies):
 
 
 def main():
-    fsys = make_system()
+    sys = make_system()
 
     # Check that the system looks as intended.
-    kwant.plot(fsys)
+    kwant.plot(sys)
+
+    # Finalize the system.
+    fsys = sys.finalized()
 
     # We should see conductance steps.
     plot_conductance(fsys, energies=[0.01 * i for i in xrange(100)])

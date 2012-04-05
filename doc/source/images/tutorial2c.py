@@ -80,7 +80,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     sys.attach_lead(lead0)
     sys.attach_lead(lead1)
 
-    return sys.finalized()
+    return sys
 
 
 def make_system_note1(a=1, t=1.0, W=10, r1=10, r2=20):
@@ -104,7 +104,7 @@ def make_system_note1(a=1, t=1.0, W=10, r1=10, r2=20):
     lead1 = lead0.reversed()
     sys.attach_lead(lead0)
     sys.attach_lead(lead1)
-    return sys.finalized()
+    return sys
 
 
 def make_system_note2(a=1, t=1.0, W=10, r1=10, r2=20):
@@ -128,7 +128,7 @@ def make_system_note2(a=1, t=1.0, W=10, r1=10, r2=20):
     lead1 = lead0.reversed()
     sys.attach_lead(lead0)
     sys.attach_lead(lead1, lat(0, 0))
-    return sys.finalized()
+    return sys
 
 
 def plot_conductance(fsys, energy, fluxes):
@@ -162,23 +162,26 @@ def plot_conductance(fsys, energy, fluxes):
 
 
 def main():
-    fsys = make_system()
+    sys = make_system()
 
     # Check that the system looks as intended.
-    kwant.plot(fsys, "tutorial2c_sys.pdf", width=latex.figwidth_pt)
-    kwant.plot(fsys, "tutorial2c_sys.png", width=html.figwidth_px)
+    kwant.plot(sys, "tutorial2c_sys.pdf", width=latex.figwidth_pt)
+    kwant.plot(sys, "tutorial2c_sys.png", width=html.figwidth_px)
+
+    # Finalize the system.
+    fsys = sys.finalized()
 
     # We should see a conductance that is periodic with the flux quantum
     plot_conductance(fsys, energy=0.15, fluxes=[0.01 * i * 3 * 2 * pi
                                                 for i in xrange(100)])
 
     # Finally, some plots needed for the notes
-    fsys = make_system_note1()
-    kwant.plot(fsys, "tutorial2c_note1.pdf", width=latex.figwidth_small_pt)
-    kwant.plot(fsys, "tutorial2c_note1.png", width=html.figwidth_small_px)
-    fsys = make_system_note2()
-    kwant.plot(fsys, "tutorial2c_note2.pdf", width=latex.figwidth_small_pt)
-    kwant.plot(fsys, "tutorial2c_note2.png", width=html.figwidth_small_px)
+    sys = make_system_note1()
+    kwant.plot(sys, "tutorial2c_note1.pdf", width=latex.figwidth_small_pt)
+    kwant.plot(sys, "tutorial2c_note1.png", width=html.figwidth_small_px)
+    sys = make_system_note2()
+    kwant.plot(sys, "tutorial2c_note2.pdf", width=latex.figwidth_small_pt)
+    kwant.plot(sys, "tutorial2c_note2.png", width=html.figwidth_small_px)
 
 
 # Call the main function if the script gets executed (as opposed to imported).

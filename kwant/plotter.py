@@ -275,35 +275,43 @@ def plot(system, filename=defaultname, fmt=None, a=None,
     """Plot two-dimensional systems (or two-dimensional representations
     of a system).
 
-    `plot` can be used to plot both unfinalized systems derived from
-    kwant.builder.Builder, or the corresponding finalized systems.
+    `plot` can be used to plot both unfinalized kwant.builder.Builder
+    instances, and low level systems (i.e. instances of
+    kwant.system.FiniteSystem), including finalized builders.
 
-    The output of `plot` is highly modifyable, as it does not perform
-    any drawing itself, but instead lets objects passed by the user
-    (or as default parameters) do the actual drawing work. `plot`
-    itself does figure out the range of positions occupied by the
-    sites, as well as the smallest distance between two sites which
-    then serves as a reference length, unless the user specifies
-    explicitely a reference length. This reference length is then
-    used so that the sizes of symbols or lines are always given relative
-    to that reference length. This is particularly advantageous for
-    regular lattices, as it makes it easy to specify the area covered
-    by symbols, etc.
+    This function behaves differently for builders and low-level systems:
+    builders are plotted including those of their leads which are builders
+    themselves.  For the leads, several copies of the lead unit cell are
+    plotted (per default 2), and they are gradually faded towards the
+    background color (at least in the default behavior).  For low-level systems
+    the leads are ignored as there is no general way to recover the necessary
+    information about leads for low level systems.
 
-    The objects that determine `plot`'s behavior are symbol_like
-    (symbols representing sites), line_like (lines representing
-    hoppings) and color_like (representing colors). The notes below
-    explain in detail how to implement custom classes. In most cases
-    it is enough to use the predefined standard objects:
+    When arguments to this function are functions themselves, "sites" will be
+    passed to them as arguments.  The meaning of "site" depends on whether the
+    system to be plotted is a builder or a low level system.  For builders, a
+    site is a kwant.builder.Site object.  For low level systems, a site is an
+    integer -- the site number.
+
+    The output of `plot` is highly modifyable, as it does not perform any
+    drawing itself, but instead lets objects passed by the user (or as default
+    parameters) do the actual drawing work. `plot` itself does figure out the
+    range of positions occupied by the sites, as well as the smallest distance
+    between two sites which then serves as a reference length, unless the user
+    specifies explicitely a reference length. This reference length is then
+    used so that the sizes of symbols or lines are always given relative to
+    that reference length. This is particularly advantageous for regular
+    lattices, as it makes it easy to specify the area covered by symbols, etc.
+
+    The objects that determine `plot`'s behavior are symbol_like (symbols
+    representing sites), line_like (lines representing hoppings) and color_like
+    (representing colors). The notes below explain in detail how to implement
+    custom classes. In most cases it is enough to use the predefined standard
+    objects:
 
     - for symbol_like: `Circle` and `Polygon`
     - for line_like: `Line`
     - for color_like: `Color`.
-
-    `plot` draws both system sites, as well as sites corresponding to the
-    leads. For the leads, several copies of the lead unit cell are plotted
-    (per default 2), and they are gradually faded towards the background
-    color (at least in the default behavior).
 
     Parameters
     ----------
@@ -346,44 +354,49 @@ def plot(system, filename=defaultname, fmt=None, a=None,
         maybe [fading to bcol e.g. still makes a white symbol, not a
         transparant symbol], but then again there is no reason for
         having a white box behind everything)
-    pos : callable or None, optional
+    pos : function or None, optional
         When passed a site should return its (2D) position as a sequence of
-        length 2. If None, the method pos() of the site is used.
-        Defaults to None.
-    symbols : {symbol_like, callable, dict, None}, optional
+        length 2. If None, the real space position of the site is used if the
+        system to be plotted is a (finalized) builder.  For other low level
+        systems it is required to specify this argument and an error will be
+        reported if it is missing. Defaults to None.
+    symbols : {symbol_like, function, dict, None}, optional
         Object responsible for drawing the symbols correspodning to sites.
         Either must be a single symbol_like object (the same symbol is drawn
-        for every site, regardless of site group), a callable that
-        returns a symbol_like object when passed a site, a dictionary
-        with site groups as keys and symbol_like as values
-        (allowing to specify different symbols for different site groups),
-        or None (in which case no symbols are drawn). Instead of
-        a symbol_like object the callable or the dict may also return None
-        corresponding to no symbol. Defaults to ``Circle(r=0.3)``.
+        for every site), a function that returns a symbol_like object when
+        passed a site, or None (in which case no symbols are drawn). Instead of
+        a symbol_like object the function may also return None corresponding to
+        no symbol.
 
-        The standard symbols available are `Circle` and
-        `Polygon`.
-    lines : {line_like, callable, dict, None}, optional
-        Object responsible for drawing the lines representing the
-        hoppings between sites. Either a single line_like object
-        (the same type of line is drawn for all hoppings), a callable
-        that returns a line_like object when passed two sites,
-        a dictionary with tuples of two site groups as keys and
-        line_like objects as values (allowing to specify different
-        line styles for different hoppings; note that if the hopping
-        (a, b) is specified, (b, a) needs not be included in the dictionary),
-        or None (in which case no hoppings are drawn). Instead of
-        a line_like object the callable or the dict may also return None
+        If the system is a builder, `symbols` may also be a dictionary with
+        site groups as keys and symbol_like as values.  This allows to specify
+        different symbols for different site groups.
+
+        Defaults to ``Circle(r=0.3)``.
+
+        The standard symbols available are `Circle` and `Polygon`.
+    lines : {line_like, function, dict, None}, optional
+        Object responsible for drawing the lines representing the hoppings
+        between sites. Either a single line_like object (the same type of line
+        is drawn for all hoppings), a function that returns a line_like object
+        when passed two sites, or None (in which case no hoppings are
+        drawn). Instead of a line_like object the function may also return None
         corresponding to no line. Defaults to ``Line(lw=0.1)``.
 
+        If the system is a builder, `lines` may also be a dictionary with
+        tuples of two site groups as keys and line_like objects as values.
+        This allows to specify different line styles for different hoppings.
+        Note that if the hopping (a, b) is specified, (b, a) needs not be
+        included in the dictionary.
+
         The standard line available is `Line`.
-    lead_symbols : {symbol_like, callable, dict, -1, None}, optional
+    lead_symbols : {symbol_like, function, dict, -1, None}, optional
         Symbols to be drawn for the sites in the leads. The special
         value -1 indicates that `symbols` (which is used for system sites)
         should be used also for the leads. The other possible values are
         as for the system `symbols`.
         Defaults to -1.
-    lead_lines : {line_like, callable, dict, -1, None}, optional
+    lead_lines : {line_like, function, dict, -1, None}, optional
         Lines to be drawn for the hoppings in the leads. The special
         value -1 indicates that `lines` (which is used for system hoppings)
         should be used also for the leads. The other possible values are
@@ -506,87 +519,57 @@ def plot(system, filename=defaultname, fmt=None, a=None,
                                sym.act(shift + i - 1, site2),
                                i - 1 + shift1, i - 1 + shift2)
 
-    def iterate_system_sites_builder(system):
+    def iterate_scattreg_sites_builder(system):
         for site in system.sites():
             yield site
 
-    def iterate_system_hoppings_builder(system):
+    def iterate_scattreg_hoppings_builder(system):
         for hopping in system.hoppings():
             yield hopping
 
-    def iterate_lead_sites_llsys(system, lead_copies):
-        for ilead in xrange(len(system.leads)):
-            lead = system.leads[ilead]
-            sym = lead.symmetry
-            shift = sym.which(system.site(system.lead_neighbor_seqs[ilead][0]))
-            shift += 1
+    def empty_generator(*args, **kwds):
+        return
+        yield
 
-            for i in xrange(lead_copies):
-                for isite in xrange(lead.slice_size):
-                        yield sym.act(shift + i, lead.site(isite)), i
+    def iterate_scattreg_sites_llsys(system):
+        return xrange(system.graph.num_nodes)
 
-    def iterate_lead_hoppings_llsys(system, lead_copies):
-        for ilead in xrange(len(system.leads)):
-            lead = system.leads[ilead]
-            sym = lead.symmetry
-            shift = sym.which(system.site(system.lead_neighbor_seqs[ilead][0]))
-            shift += 1
-
-            for i in xrange(lead_copies):
-                for isite in xrange(lead.slice_size):
-                    for jsite in lead.graph.out_neighbors(isite):
-                        # Note: unlike in builder, it is guaranteed
-                        #       in the finalized system that hoppings
-                        #       beyond the unit cell are in the previous
-                        #       "slice"
-                        if jsite < lead.slice_size:
-                            yield (sym.act(shift + i, lead.site(isite)),
-                                   sym.act(shift + i, lead.site(jsite)),
-                                   i, i)
-                        else:
-                            jsite -= lead.slice_size
-                            yield (sym.act(shift + i, lead.site(isite)),
-                                   sym.act(shift + i - 1, lead.site(jsite)),
-                                   i, i - 1)
-
-
-    def iterate_system_sites_llsys(system):
+    def iterate_scattreg_hoppings_llsys(system):
         for i in xrange(system.graph.num_nodes):
-            yield system.site(i)
-
-    def iterate_system_hoppings_llsys(system):
-        for i in xrange(system.graph.num_nodes):
-            site1 = system.site(i)
             for j in system.graph.out_neighbors(i):
                 # Only yield half of the hoppings (as builder does)
                 if i < j:
-                    yield (site1, system.site(j))
+                    yield i, j
 
 
     def iterate_all_sites(system, lead_copies=0):
-        for site in iterate_system_sites(system):
+        for site in iterate_scattreg_sites(system):
             yield site
 
         for site, ucindx in iterate_lead_sites(system, lead_copies):
             yield site
 
     def iterate_all_hoppings(system, lead_copies=0):
-        for site1, site2 in iterate_system_hoppings(system):
+        for site1, site2 in iterate_scattreg_hoppings(system):
             yield site1, site2
 
         for site1, site2, i1, i2 in iterate_lead_hoppings(system, lead_copies):
             yield site1, site2
 
-    if isinstance(system, kwant.builder.Builder):
-        iterate_system_sites = iterate_system_sites_builder
-        iterate_system_hoppings = iterate_system_hoppings_builder
+    is_builder = isinstance(system, kwant.builder.Builder)
+    is_lowlevel = isinstance(system, kwant.system.FiniteSystem)
+    if is_builder:
+        iterate_scattreg_sites = iterate_scattreg_sites_builder
+        iterate_scattreg_hoppings = iterate_scattreg_hoppings_builder
         iterate_lead_sites = iterate_lead_sites_builder
         iterate_lead_hoppings = iterate_lead_hoppings_builder
-    elif isinstance(system, kwant.builder.FiniteSystem):
-        iterate_system_sites = iterate_system_sites_llsys
-        iterate_system_hoppings = iterate_system_hoppings_llsys
-        iterate_lead_sites = iterate_lead_sites_llsys
-        iterate_lead_hoppings = iterate_lead_hoppings_llsys
+    elif is_lowlevel:
+        iterate_scattreg_sites = iterate_scattreg_sites_llsys
+        iterate_scattreg_hoppings = iterate_scattreg_hoppings_llsys
+        # We do not plot leads for low level systems, as there is no general
+        # way to do that.
+        iterate_lead_sites = empty_generator
+        iterate_lead_hoppings = empty_generator
     else:
         raise ValueError("Plotting not suported for given system")
 
@@ -602,7 +585,13 @@ def plot(system, filename=defaultname, fmt=None, a=None,
             raise ValueError("The distance a must be >0")
 
     if pos is None:
-        pos = lambda site: site.pos
+        if is_builder:
+            pos = lambda site: site.pos
+        elif is_lowlevel:
+            pos = lambda i: system.site(i).pos
+        else:
+            raise ValueError("`pos` argument needed when plotting"
+                             " systems which are not (finalized) builders")
 
     if fmt is None and filename is not None:
         # Try to figure out the format from the filename
@@ -618,19 +607,19 @@ def plot(system, filename=defaultname, fmt=None, a=None,
         raise ValueError("The requested functionality requires the "
                          "Python Image Library (PIL)")
 
-    # symbols and lines may be constant, functions or dicts
-    # Here they are wrapped with a function
+    # symbols and lines may be constant or functions
+    # Here they are wrapped as a function
 
     if hasattr(symbols, "__call__"):
         fsymbols = symbols
-    elif hasattr(symbols, "__getitem__"):
+    elif is_builder and hasattr(symbols, "__getitem__"):
         fsymbols = lambda x : symbols[x.group]
     else:
         fsymbols = lambda x : symbols
 
     if hasattr(lines, "__call__"):
         flines = lines
-    elif hasattr(lines, "__getitem__"):
+    elif is_builder and hasattr(lines, "__getitem__"):
         flines = lambda x, y : (lines[x.group, y.group] if (x.group, y.group)
                                 in lines else lines[y.group, x.group])
     else:
@@ -640,7 +629,7 @@ def plot(system, filename=defaultname, fmt=None, a=None,
         flsymbols = fsymbols
     elif hasattr(lead_symbols, "__call__"):
         flsymbols = lead_symbols
-    elif hasattr(lead_symbols, "__getitem__"):
+    elif is_builder and hasattr(lead_symbols, "__getitem__"):
         flsymbols = lambda x : lead_symbols[x.group]
     else:
         flsymbols = lambda x : lead_symbols
@@ -649,15 +638,14 @@ def plot(system, filename=defaultname, fmt=None, a=None,
         fllines = flines
     elif hasattr(lead_lines, "__call__"):
         fllines = lead_lines
-    elif hasattr(lines, "__getitem__"):
+    elif is_builder and hasattr(lines, "__getitem__"):
         fllines = lambda x, y : (lead_lines[x.group, y.group]
                                  if (x.group, y.group) in lead_lines
                                  else lead_lines[y.group ,x.group])
     else:
         fllines = lambda x, y : lead_lines
 
-
-    #Figure out the extent of the system
+    # Figure out the extent of the system
     nsites = 0
     first = True
     for site in iterate_all_sites(system, len(lead_fading)):
@@ -804,7 +792,7 @@ def plot(system, filename=defaultname, fmt=None, a=None,
 
     # The lines for the hoppings
 
-    for site1, site2 in iterate_system_hoppings(system):
+    for site1, site2 in iterate_scattreg_hoppings(system):
         line = flines(site1, site2)
 
         if line is not None:
@@ -846,7 +834,7 @@ def plot(system, filename=defaultname, fmt=None, a=None,
                                      0.5 * add(pos(site1), pos(site2)), dist)
     # the symbols for the sites
 
-    for site in iterate_system_sites(system):
+    for site in iterate_scattreg_sites(system):
         symbol = fsymbols(site)
 
         if symbol is not None:

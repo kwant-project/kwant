@@ -17,11 +17,11 @@ explicitly here to show how to define a new lattice:
 .. literalinclude:: ../../../examples/tutorial4.py
     :lines: 24-27
 
-The first argument to the `make_lattice` function is the list of primitive
-vectors of the lattice; the second one is the coordinates of basis atoms.
-The honeycomb lattice has two basis atoms. Each type of basis atom by itself
-forms a regular lattice of the same type as well, and those *sublattices*
-are referenced as `a` and `b` above.
+The first argument to the `~kwant.lattice.make_lattice` function is the list of
+primitive vectors of the lattice; the second one is the coordinates of basis
+atoms.  The honeycomb lattice has two basis atoms. Each type of basis atom by
+itself forms a regular lattice of the same type as well, and those
+*sublattices* are referenced as `a` and `b` above.
 
 In the next step we define the shape of the scattering region (circle again)
 and add all lattice points using the ``shape()``-functionality:
@@ -71,32 +71,28 @@ as add an additional link:
 Note that the conversion from a tuple `(i,j)` to site
 is done by the sublattices `a` and `b`.
 
-Later, we will compute some eigenvalues of the closed
-scattering region without leads. For that, obtain a finalized
-snapshot of the system:
+The leads are defined as before:
 
 .. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 60
+    :lines: 60-83
 
-Adding leads to the scattering region is done as before:
+Note that the translational vectors ``graphene.vec((-1, 0))`` and
+``graphene.vec((0, 1))`` are *not* orthogonal any more as they would have been
+in a square lattice -- they follow the non-orthogonal primitive vectors defined
+in the beginning.
+
+Later, we will compute some eigenvalues of the closed scattering region without
+leads. This is why we postpone attaching the leads to the system. Instead,
+we return the scattering region and the leads separately.
 
 .. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 64-93
-
-Note here that the translational vectors ``graphene.vec((-1, 0))`` and
-``graphene.vec((0, 1))`` are *not* orthogonal any more as they would
-have been in a square lattice-- they follow the non-orthogonal
-primitive vectors defined in the beginning.
-
-In the end, we return not only the finalized system with leads, but
-also a finalized copy of the closed system (for eigenvalues)
-as well as a finalized lead (for band structure calculations).
+    :lines: 85
 
 The computation of some eigenvalues of the closed system is done
 in the following piece of code:
 
 .. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 96-101, 104-107
+    :lines: 88-93, 96-99
 
 Here we use in contrast to the previous example a sparse matrix and
 the sparse linear algebra functionality of scipy (this requires
@@ -111,45 +107,47 @@ Finally, in the `main()` function we make and
 plot the system:
 
 .. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 135-137, 142-147
+    :lines: 126-129, 138
 
-Here we customize the plotting: `plotter_symbols` is a dictionary
-with the sublattice objects `a` and `b` as keys, and the
-`~kwant.plotter.Circle` objects specify that the sublattice `a` should
-be drawn using a filled black circle, and `b` using a white circle
-with a black outline. The radius of the circle is given in relative
-units: :func:`plot <kwant.plotter.plot>` uses a typical length
-scale as a reference length. By default, the typical length scale is
-the smallest distance between lattice points.  :func:`plot
-<kwant.plotter.plot>` can find this length by itself, but must then go
-through all hoppings. Alternatively, one can specify the typical
-length scale using the argument `a` as in the example (not to be
-confused with the sublattice `a`) which is here set to the distance
-between carbon atoms in the graphene lattice. Specifying ``r=0.3`` in
-`~kwant.plotter.Circle` hence means that the radius of the circle is
-30% of the carbon-carbon distance. Using this relative unit it is
-easy to make good-looking plots where the symbols cover a well-defined
-part of the plot.
+We customize the plotting: `plotter_symbols` is a dictionary with the
+sublattice objects `a` and `b` as keys, and the `~kwant.plotter.Circle` objects
+specify that the sublattice `a` should be drawn using a filled black circle,
+and `b` using a white circle with a black outline.
+
+.. literalinclude:: ../../../examples/tutorial4.py
+    :lines: 132-135
+
+The radius of the circle is given in relative units: `~kwant.plotter.plot` uses
+a typical length scale as a reference length. By default, the typical length
+scale is the smallest distance between lattice points.  `~kwant.plotter.plot`
+can find this length by itself, but must then go through all
+hoppings. Alternatively, one can specify the typical length scale using the
+argument `a` as in the example (not to be confused with the sublattice `a`)
+which is here set to the distance between carbon atoms in the graphene
+lattice. Specifying ``r=0.3`` in `~kwant.plotter.Circle` hence means that the
+radius of the circle is 30% of the carbon-carbon distance. Using this relative
+unit it is easy to make good-looking plots where the symbols cover a
+well-defined part of the plot.
 
 Plotting the closed system gives this result:
 
 .. image:: ../images/tutorial4_sys1.*
 
-and computing the eigenvalues of largest magnitude,
+Computing the eigenvalues of largest magnitude,
 
 .. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 148
+    :lines: 141
 
-should yield two eigenvalues similar to `[ 3.07869311
-+1.02714523e-17j, -3.06233144 -6.68085759e-18j]` (round-off might
-change the imaginary part which should in exact arithmetics be equal
-to zero).
+should yield two eigenvalues similar to `[ 3.07869311 +1.02714523e-17j,
+-3.06233144 -6.68085759e-18j]` (round-off might change the imaginary part which
+would be equal to zero for exact arithmetics).
 
-The remaining code of `main()` plots the system with leads:
+The remaining code of `main()` attaches the leads to the system and plots it
+again:
 
 .. image:: ../images/tutorial4_sys2.*
 
-It computes the band structure of one of the leads:
+It computes the band structure of one of lead 0:
 
 .. image:: ../images/tutorial4_bs.*
 
@@ -174,7 +172,7 @@ an open quantum dot
    `~kwant.plotter.Polygon`'s as predefined symbols. It is also
    easy to define any custom symbol. Furthermore, plotting offers
    many more options to customize plots. See the documentation of
-   :func:`plot <kwant.plotter.plot>` for more details.
+   `~kwant.plotter.plot` for more details.
 
  - In a lattice with more than one basis atom, you can always act either
    on all sublattices at the same time, or on a single sublattice only.

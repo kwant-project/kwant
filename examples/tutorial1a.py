@@ -74,13 +74,13 @@ for j in xrange(W):
 sys.attach_lead(lead0)
 sys.attach_lead(lead1)
 
-# finalize the system
+# Plot it, to make sure it's OK
+
+kwant.plot(sys)
+
+# Finalize the system
 
 fsys = sys.finalized()
-
-# and plot it, to make sure it's proper
-
-kwant.plot(fsys)
 
 # Now that we have the system, we can compute conductance
 

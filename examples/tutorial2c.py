@@ -78,7 +78,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     sys.attach_lead(lead0)
     sys.attach_lead(lead1)
 
-    return sys.finalized()
+    return sys
 
 
 def plot_conductance(fsys, energy, fluxes):
@@ -101,10 +101,13 @@ def plot_conductance(fsys, energy, fluxes):
 
 
 def main():
-    fsys = make_system()
+    sys = make_system()
 
     # Check that the system looks as intended.
-    kwant.plot(fsys)
+    kwant.plot(sys)
+
+    # Finalize the system.
+    fsys = sys.finalized()
 
     # We should see a conductance that is periodic with the flux quantum
     plot_conductance(fsys, energy=0.15, fluxes=[0.01 * i * 3 * 2 * pi

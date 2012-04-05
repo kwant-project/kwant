@@ -102,18 +102,13 @@ attached at the right position using:
 More details about attaching leads can be found in the tutorial
 :ref:`tutorial-abring`.
 
-Now we have finished building our system! We need to finalize it, in
-order to use it for a transport calculation:
+Now we have finished building our system! We plot it, to make sure we didn't
+make any mistakes:
 
 .. literalinclude:: ../../../examples/tutorial1a.py
     :lines: 79
 
-and should plot it, to make sure we didn't make mistakes:
-
-.. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 83
-
-This command should bring up this picture:
+This should bring up this picture:
 
 .. image:: /images/tutorial1a_sys.*
 
@@ -122,6 +117,11 @@ dots represent the lattice points `(i, j)`, and for every
 nonzero hopping element between points there is a line connecting these
 points. From the leads, only a few (default 2) unit cells are shown, with
 fading color.
+
+In order to use our system for a transport calculation, we need to finalize it
+
+.. literalinclude:: ../../../examples/tutorial1a.py
+    :lines: 83
 
 Having successfully created a system, we now can immediately start to compute
 its conductance as a function of energy:
@@ -360,14 +360,14 @@ We collect all statements that should be executed in the script
 in a ``main()``-function:
 
 .. literalinclude:: ../../../examples/tutorial1b.py
-    :lines: 66-73
+    :lines: 66-76
 
 Finally, we use the following python construct [#]_ that executes
 ``main()`` if the program is used as a script (i.e. executed as
 ``python tutorial1b.py``):
 
 .. literalinclude:: ../../../examples/tutorial1b.py
-    :lines: 78-79
+    :lines: 81-82
 
 If the example however is imported using ``import tutorial1b``,
 ``main()`` is not executed automatically. Instead, you can execute it

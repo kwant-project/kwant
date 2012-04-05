@@ -3,6 +3,23 @@ What's New in kwant 0.2
 
 This article explains the user-visible changes in kwant 0.2.
 
+`~kwant.plotter.plot` more useful for low level systems
+-------------------------------------------------------
+The behavior of `~kwant.plotter.plot` has been changed when a `low level system
+<kwant.system.System>` is plotted.  Previously, only low level systems which
+were finalized `builders <kwant.builder.Builder>` were supported and there was
+no difference between plotting a low-level system and a builder.
+
+* Arguments of plot which are functions are given site numbers in place of
+  `~kwant.builder.Site` objects when plotting a low level system.  This
+  provides an easy way to make the appearance of lines and symbols depend on
+  computation results.
+
+* Only the scattering region (without leads) is plotted for low level systems.
+
+* For plotting low level systems, dictionaries with site group keys are no
+  longer supported as plot arguments.
+
 Calculation of the local density of states
 ------------------------------------------
 The new function `kwant.solvers.sparse.ldos` allows the calculation of the

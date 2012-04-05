@@ -47,7 +47,7 @@ def make_system(a=1, t=1.0, r=10):
     sys[sys.possible_hoppings((0, 1), lat, lat)] = - t
 
     # It's a closed system for a change, so no leads
-    return sys.finalized()
+    return sys
 
 
 def plot_spectrum(fsys, Bfields):
@@ -89,7 +89,10 @@ def plot_spectrum(fsys, Bfields):
 
 
 def main():
-    fsys = make_system()
+    sys = make_system()
+
+    # Finalize the system.
+    fsys = sys.finalized()
 
     # We should observe energy levels that flow towards Landau
     # level energies with increasing magnetic field

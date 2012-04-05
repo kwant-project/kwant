@@ -60,7 +60,7 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
     sys.attach_lead(lead0)
     sys.attach_lead(lead1)
 
-    return sys.finalized()
+    return sys
 
 def plot_conductance(fsys, energy, welldepths):
     # We specify that we want to not only read, but also write to a
@@ -83,10 +83,13 @@ def plot_conductance(fsys, energy, welldepths):
 
 
 def main():
-    fsys = make_system()
+    sys = make_system()
 
     # Check that the system looks as intended.
-    kwant.plot(fsys)
+    kwant.plot(sys)
+
+    # Finalize the system.
+    fsys = sys.finalized()
 
     # We should see conductance steps.
     plot_conductance(fsys, energy=0.2,

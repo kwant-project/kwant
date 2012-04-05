@@ -55,10 +55,6 @@ def make_system(r=10, w=2.0, pot=0.1):
     del sys[a(0,0)]
     sys[a(-2,1), b(2, 2)] = -1
 
-    # Keep a copy of the closed system without leads, for
-    # eigenvalue computations
-    closed_fsys = sys.finalized()
-
     #### Define the leads. ####
     # left lead
     sym0 = kwant.TranslationalSymmetry([graphene.vec((-1, 0))])
@@ -72,7 +68,7 @@ def make_system(r=10, w=2.0, pot=0.1):
     for hopping in hoppings:
         lead0[lead0.possible_hoppings(*hopping)] = - 1
 
-    # The second lead, going ot the top right
+    # The second lead, going to the top right
     sym1 = kwant.TranslationalSymmetry([graphene.vec((0, 1))])
 
     def lead1_shape(pos):
@@ -86,11 +82,7 @@ def make_system(r=10, w=2.0, pot=0.1):
     for hopping in hoppings:
         lead1[lead1.possible_hoppings(*hopping)] = - 1
 
-    # Attach the leads
-    sys.attach_lead(lead0)
-    sys.attach_lead(lead1)
-
-    return sys.finalized(), closed_fsys, lead0.finalized()
+    return sys, [lead0, lead1]
 
 
 def compute_evs(sys):
@@ -133,9 +125,7 @@ def plot_bandstructure(flead, momenta):
 
 def main():
     pot = 0.1
-    fsys, closed_fsys, flead = make_system(pot=pot)
-
-    # First, plot the closed system, and compute some eigenvalues
+    sys, leads = make_system(pot=pot)
 
     # To highlight the two sublattices of graphene, we plot one with
     # a filled, and the other one with an open circle:
@@ -144,17 +134,27 @@ def main():
                                                fcol=kwant.plotter.white,
                                                lcol=kwant.plotter.black)}
 
-    kwant.plot(closed_fsys, a=1./sqrt(3.), symbols=plotter_symbols)
-    compute_evs(closed_fsys)
+    # Plot the closed system without leads.
+    kwant.plot(sys, symbols=plotter_symbols)
 
-    # Then, plot the system with leads and compute the band structure
-    # of one of the (zigzag) leads, as well as the conductance
+    # Compute some eigenvalues.
+    compute_evs(sys.finalized())
 
-    kwant.plot(fsys, a=1/sqrt(3.), symbols=plotter_symbols)
+    # Attach the leads to the system.
+    for lead in leads:
+        sys.attach_lead(lead)
 
+    # Then, plot the system with leads.
+    kwant.plot(sys, symbols=plotter_symbols)
+
+    # Finalize the system.
+    fsys = sys.finalized()
+
+    # Compute the band structure of lead 0.
     momenta = np.arange(-pi, pi + .01, 0.1 * pi)
-    plot_bandstructure(flead, momenta)
+    plot_bandstructure(fsys.leads[0], momenta)
 
+    # Plot conductance.
     energies = np.arange(-2 * pot, 2 * pot, pot / 10.5)
     plot_conductance(fsys, energies)
 
