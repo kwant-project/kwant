@@ -319,7 +319,7 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             # 2. Moving infinitesimally away from the degeneracy
             # point, the modes should diagonalize the velocity
             # operator (i.e. when they are non-degenerate any more)
-            # The modes are therefore rotated properly such that the
+            # The modes are therefore rotated properly such that they
             # diagonalize the velocity operator.
             # Note that step 2. does not give a unique result if there are
             # two modes with the same velocity, or if the modes stay
@@ -402,7 +402,7 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
         are not accessed in `general()` and `modes()`) The number of
         eigenvalues is given by twice the number of nonzero singular values of
         `h_hop` (i.e. `2*h_onslice.shape[0]` if `h_hop` is invertible).
-    select : numpy array
+    evanselect : numpy array
         index array of right-decaying modes.
     propselect : numpy array
         index array of propagating modes (both left and right).
@@ -633,6 +633,10 @@ def modes(h_onslice, h_hop, tol=1e6):
     First `nmodes` are incoming, second `nmodes` are reflected, the rest are
     evanescent.
 
+    In order for the linear system to be well-defined, instead of the
+    evanescent modes, an orthogonal basis in the space of evanescent modes is
+    returned.
+
     Propagating modes with the same lambda are orthogonalized. All the
     propagating modes are normalized by current.
 
@@ -661,7 +665,10 @@ def modes(h_onslice, h_hop, tol=1e6):
         n = h_onslice.shape[0]
 
     nprop = np.sum(propselect)
-    evan_vecs = vec_gen(evanselect)
+    nevan = n - nprop // 2
+    evanselect_bool = np.zeros((2 * n), dtype='bool')
+    evanselect_bool[evanselect] = True
+    evan_vecs = ord_schur(evanselect)[:, : nevan]
 
     if nprop > 0:
         # Compute the propagating eigenvectors.
