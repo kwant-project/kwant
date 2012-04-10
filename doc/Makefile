@@ -26,7 +26,9 @@ TUTORIAL2C_IMAGES = source/images/tutorial2c_result.png source/images/tutorial2c
 TUTORIAL3A_IMAGES = source/images/tutorial3a_result.png source/images/tutorial3a_result.pdf
 TUTORIAL3B_IMAGES = source/images/tutorial3b_result.png source/images/tutorial3b_result.pdf source/images/tutorial3b_sys.png source/images/tutorial3b_sys.pdf
 TUTORIAL4_IMAGES = source/images/tutorial4_result.png source/images/tutorial4_result.pdf source/images/tutorial4_sys1.png source/images/tutorial4_sys1.pdf source/images/tutorial4_sys2.png source/images/tutorial4_sys2.pdf source/images/tutorial4_bs.png source/images/tutorial4_bs.pdf
-ALL_TUTORIAL_IMAGES = $(TUTORIAL1A_IMAGES)  $(TUTORIAL2A_IMAGES) $(TUTORIAL2B_IMAGES) $(TUTORIAL2C_IMAGES) $(TUTORIAL3A_IMAGES) $(TUTORIAL3B_IMAGES) $(TUTORIAL4_IMAGES)
+TUTORIAL5A_IMAGES = source/images/tutorial5a_result.png source/images/tutorial5a_result.pdf
+TUTORIAL5B_IMAGES = source/images/tutorial5b_result.png source/images/tutorial5b_result.pdf
+ALL_TUTORIAL_IMAGES = $(TUTORIAL1A_IMAGES)  $(TUTORIAL2A_IMAGES) $(TUTORIAL2B_IMAGES) $(TUTORIAL2C_IMAGES) $(TUTORIAL3A_IMAGES) $(TUTORIAL3B_IMAGES) $(TUTORIAL4_IMAGES) $(TUTORIAL5A_IMAGES) $(TUTORIAL5B_IMAGES)
 
 .PHONY: help clean realclean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
@@ -154,3 +156,15 @@ $(TUTORIAL4_IMAGES): source/images/.tutorial4_flag
 source/images/.tutorial4_flag: source/images/tutorial4.py
 	cd source/images/ && python tutorial4.py
 	touch source/images/.tutorial4_flag
+
+$(TUTORIAL5A_IMAGES): source/images/.tutorial5a_flag
+	@:
+source/images/.tutorial5a_flag: source/images/tutorial5a.py
+	cd source/images/ && python tutorial5a.py
+	touch source/images/.tutorial5a_flag
+
+$(TUTORIAL5B_IMAGES): source/images/.tutorial5b_flag
+	@:
+source/images/.tutorial5b_flag: source/images/tutorial5b.py
+	cd source/images/ && python tutorial5b.py
+	touch source/images/.tutorial5b_flag

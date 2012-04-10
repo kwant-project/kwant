@@ -3,6 +3,10 @@ What's New in kwant 0.2
 
 This article explains the user-visible changes in kwant 0.2.
 
+New tutorial dealing with superconductivity
+-------------------------------------------
+:doc:`../tutorial/tutorial5`
+
 `~kwant.plotter.plot` more useful for low level systems
 -------------------------------------------------------
 The behavior of `~kwant.plotter.plot` has been changed when a `low level system
