@@ -169,9 +169,9 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
                                                            u_out))
                 lead_mat = - ulinv_out
             else:
-                v_sp = sp.csc_matrix(v) * tmp
+                v_sp = tmp
                 vdaguout_sp = tmp.T * sp.csr_matrix(np.dot(v.T.conj(), u_out))
-                lead_mat = - np.dot(v, ulinv_out)
+                lead_mat = - ulinv_out
 
             h_sys = sp.bmat([[h_sys, vdaguout_sp], [v_sp, lead_mat]])
 
@@ -183,7 +183,7 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
                 else:
                     vdaguin_sp = tmp.T * sp.csr_matrix(-np.dot(v.T.conj(),
                                                                u_in))
-                    lead_mat_in = np.dot(v, ulinv_in)
+                    lead_mat_in = ulinv_in
 
                 rhs.append(sp.bmat([[vdaguin_sp], [lead_mat_in]]))
         else:
