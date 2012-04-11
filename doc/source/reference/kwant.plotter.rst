@@ -10,6 +10,8 @@ Plotting routine
    :toctree: generated/
 
    plot
+   show
+   interpolate
 
 Auxilliary types
 ----------------

@@ -1,10 +1,13 @@
 """kwant.plotter docstring"""
 
+from __future__ import division
 from math import sqrt, pi, sin, cos, tan
+import scipy.interpolate
 from numpy import dot, add, subtract
 import numpy as np
 import warnings
 import cairo
+import matplotlib.pyplot as plt
 try:
     import Image
     defaultname = None
@@ -16,7 +19,8 @@ except:
 import kwant
 
 __all__ = ['plot', 'Circle', 'Polygon', 'Line', 'Color', 'LineStyle',
-           'black', 'white', 'red', 'green', 'blue']
+           'black', 'white', 'red', 'green', 'blue',
+           'interpolate', 'show']
 
 class Color(object):
     """RGBA color.
@@ -843,3 +847,137 @@ def plot(system, filename=defaultname, fmt=None, a=None,
                               (surface.get_width(), surface.get_height()),
                               surface.get_data(), "raw", "BGRA", 0, 1)
         im.save(filename, "JPG")
+
+
+def interpolate(system, function, a=None, pos=None,
+                method='nearest', oversampling=3):
+    """Interpolate a scalar function defined for the sites of a system.
+
+    Parameters
+    ----------
+    system : kwant.system.FiniteSystem or kwant.builder.Builder
+        The system for whose sites `function` is to be plotted.
+    function : function or mapping
+        Function which takes a site and returns a number, or a mapping whose
+        keys are sites and whose values are numbers.
+    a : float, optional
+        Reference length. If not given, it is determined as the smallest
+        nonzero distance between sites.
+    pos : function, optional
+        When passed a site should return its (2D) position as a sequence of
+        length 2. If None, the real space position of the site is used if the
+        system to be plotted is a (finalized) builder.  For other low level
+        systems it is required to specify this argument and an error will be
+        reported if it is missing. Defaults to None.
+    method : string, optional
+        Passed to `scipy.interpolate.griddata`: "nearest" (default), "linear",
+        or "cubic"
+    oversampling : integer, optional
+        Number of pixels per reference length.  Defaults to 3.
+
+    Returns
+    -------
+    array : 2d numpy array
+        The interpolated values.
+    min, max : vectors
+        The real space coordinates of the two extreme ([0, 0] and [-1, -1])
+        points of `array`.
+
+    Notes
+    -----
+    - The meaning of "site" depends on whether the system to be plotted is a
+      builder or a low level system.  For builders, a site is a
+      kwant.builder.Site object.  For low level systems, a site is an integer
+      -- the site number.
+
+    - `min` and `max` are chosen such that when plotting a system on a square
+      lattice and `oversampling` is set to an odd integer, each site will lie
+      exactly at the center of a pixel of the output array.
+
+    - When plotting a system on a square lattice and `method` is "nearest", it
+      makes sense to set `oversampling` to ``1`` to minimize the size of the
+      output array.
+    """
+    if isinstance(system, kwant.builder.Builder):
+        iterate_scattreg_sites = iterate_scattreg_sites_builder
+        iterate_scattreg_hoppings = iterate_scattreg_hoppings_builder
+    elif isinstance(system, kwant.system.FiniteSystem):
+        iterate_scattreg_sites = iterate_scattreg_sites_llsys
+        iterate_scattreg_hoppings = iterate_scattreg_hoppings_llsys
+    else:
+        raise ValueError("Plotting not suported for given system.")
+
+    if not hasattr(function, '__call__'):
+        try:
+            function = function.__getitem__
+        except:
+            raise TypeError("`function` must be either callable or a mapping.")
+
+    if pos is None:
+        pos = default_pos(system)
+
+    if a is None:
+        a = typical_distance(pos, iterate_scattreg_hoppings(system),
+                             iterate_scattreg_sites(system))
+    elif a <= 0:
+        raise ValueError("The distance a must be >0")
+
+    points = []
+    values = []
+    for site in iterate_scattreg_sites(system):
+        points.append(pos(site))
+        values.append(function(site))
+    points = np.array(points)
+    values = np.array(values)
+
+    min = points.min(0)
+    max = points.max(0)
+    shape = (((max - min) / a + 1) * oversampling).round()
+    delta = 0.5 * (oversampling - 1) * a / oversampling
+    min -= delta
+    max += delta
+    grid_x, grid_y = np.ogrid[min[0]:max[0]:complex(0, shape[0]),
+                              min[1]:max[1]:complex(0, shape[1])]
+    img = scipy.interpolate.griddata(points, values, (grid_x, grid_y),
+                                     method)
+
+    return img, min, max
+
+def show(system, function, colorbar=True, **kwds):
+    """Show a scalar function defined for the sites of a systems.
+
+    Create a pixmap representation of a function of the sites of a system by
+    calling `~kwant.plotter.interpolate` and show this pixmap using matplotlib.
+
+    Parameters
+    ----------
+    system : kwant.system.FiniteSystem or kwant.builder.Builder
+        The system for whose sites `function` is to be plotted.
+    function : function or mapping
+        Function which takes a site and returns a number, or a mapping whose
+        keys are sites and whose values are numbers.
+    colorbar : bool, optional
+        Whether to show a color bar.  Defaults to `true`.
+    kwds : other arguments
+        All other arguments are passed to `~kwant.plotter.interpolate`.
+
+    Notes
+    -----
+    - See notes of `~kwant.plotter.interpolate`.
+
+    - This function uses matplotlib to show the interpolated function.
+
+    - Matplotlib's interpolation is turned off, if the keyword argument
+      `method` is not set or set to the default value "nearest".
+    """
+    img, min, max = interpolate(system, function, **kwds)
+    border = 0.5 * (max - min) / (np.asarray(img.shape) - 1)
+    min -= border
+    max += border
+    interpolation = 'nearest' if kwds.get('method') in [None, 'nearest'] \
+        else None
+    plt.imshow(img.T, extent=(min[0], max[0], min[1], max[1]), origin='lower',
+               interpolation=interpolation)
+    if colorbar:
+        plt.colorbar()
+    plt.show()

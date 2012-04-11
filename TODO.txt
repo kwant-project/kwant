@@ -27,8 +27,9 @@ Roughly in order of importance.                                     -*-org-*-
 * Use sparse linear algebra to calculate bands
   However, scipy's sparse eigenvalues don't seem to work well.
 
-* Provide support for plotting LDOS and other functions
-  of the site in the system.  Make a tutorial example for this.
+* Show plotting of functions of system in the tutorial.
+
+* Allow easy plotting of functions into files on disk.
 
 * Allow attaching leads with further than nearest slice hoppings.
   The most easy way to do this is increasing the period of the lead.

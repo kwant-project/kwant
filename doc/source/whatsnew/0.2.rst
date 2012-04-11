@@ -25,6 +25,11 @@ Calculation of the local density of states
 The new function `kwant.solvers.sparse.ldos` allows the calculation of the
 local density of states.
 
+Plotting of functions of system sites
+-------------------------------------
+The new function `kwant.plotter.show` plots functions of the system, i.e. the
+potential or the LDOS.
+
 Return value of sparse solver
 -----------------------------
 `kwant.solvers.sparse.solve` now always returns a single instance of

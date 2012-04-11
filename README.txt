@@ -25,14 +25,13 @@ The prerequisites are
 
  - Some incarnation of `LAPACK <http://www.netlib.org/lapack/>`_.
 
-optional:
+optional (needed for plotting and the examples):
 
- - `pycairo <http://cairographics.org/pycairo/>`_ (for plotting)
+ - `pycairo <http://cairographics.org/pycairo/>`_
 
- - `matplotlib <http://matplotlib.sourceforge.net/>`_ (for some of the
-   examples)
+ - `matplotlib <http://matplotlib.sourceforge.net/>`_
 
-kwant can be build and installed using distutils, following standard python
+kwant can be built and installed using distutils, following standard Python
 conventions.  To build and install, run the following commands in the root
 directory of the package. ::
 
