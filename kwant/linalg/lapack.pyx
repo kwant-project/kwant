@@ -57,7 +57,7 @@ def sgetrf(np.ndarray[np.float32_t, ndim=2] A):
     f_lapack.sgetrf_(&M, &N, <float *>A.data, &M,
                      <l_int *>ipiv.data, &info)
 
-    assert(info >= 0, "Argument error in sgetrf")
+    assert info >= 0, "Argument error in sgetrf"
 
     return (A, ipiv, info > 0 or M != N)
 
@@ -74,7 +74,7 @@ def dgetrf(np.ndarray[np.float64_t, ndim=2] A):
     f_lapack.dgetrf_(&M, &N, <double *>A.data, &M,
                      <l_int *>ipiv.data, &info)
 
-    assert(info >= 0, "Argument error in dgetrf")
+    assert info >= 0, "Argument error in dgetrf"
 
     return (A, ipiv, info > 0 or M != N)
 
@@ -91,7 +91,7 @@ def cgetrf(np.ndarray[np.complex64_t, ndim=2] A):
     f_lapack.cgetrf_(&M, &N, <float complex *>A.data, &M,
                      <l_int *>ipiv.data, &info)
 
-    assert(info >= 0, "Argument error in cgetrf")
+    assert info >= 0, "Argument error in cgetrf"
 
     return (A, ipiv, info > 0 or M != N)
 
@@ -108,7 +108,7 @@ def zgetrf(np.ndarray[np.complex128_t, ndim=2] A):
     f_lapack.zgetrf_(&M, &N, <double complex *>A.data, &M,
                      <l_int *>ipiv.data, &info)
 
-    assert(info >= 0, "Argument error in zgetrf")
+    assert info >= 0, "Argument error in zgetrf"
 
     return (A, ipiv, info > 0 or M != N)
 
@@ -140,7 +140,7 @@ def sgetrs(np.ndarray[np.float32_t, ndim=2] LU,
                      <l_int *>IPIV.data, <float *>b.data, &N,
                      &info)
 
-    assert(info == 0, "Argument error in sgetrs")
+    assert info == 0, "Argument error in sgetrs"
 
     return b
 
@@ -170,7 +170,7 @@ def dgetrs(np.ndarray[np.float64_t, ndim=2] LU,
                      <l_int *>IPIV.data, <double *>b.data, &N,
                      &info)
 
-    assert(info == 0, "Argument error in dgetrs")
+    assert info == 0, "Argument error in dgetrs"
 
     return b
 
@@ -200,7 +200,7 @@ def cgetrs(np.ndarray[np.complex64_t, ndim=2] LU,
                      <l_int *>IPIV.data, <float complex *>b.data, &N,
                      &info)
 
-    assert(info == 0, "Argument error in cgetrs")
+    assert info == 0, "Argument error in cgetrs"
 
     return b
 
@@ -230,7 +230,7 @@ def zgetrs(np.ndarray[np.complex128_t, ndim=2] LU,
                      <l_int *>IPIV.data, <double complex *>b.data, &N,
                      &info)
 
-    assert(info == 0, "Argument error in zgetrs")
+    assert info == 0, "Argument error in zgetrs"
 
     return b
 
@@ -253,7 +253,7 @@ def sgecon(np.ndarray[np.float32_t, ndim=2] LU,
                      &rcond, <float *>work.data,
                      <l_int *>iwork.data, &info)
 
-    assert(info == 0, "Argument error in sgecon")
+    assert info == 0, "Argument error in sgecon"
 
     return rcond
 
@@ -274,7 +274,7 @@ def dgecon(np.ndarray[np.float64_t, ndim=2] LU,
                      &rcond, <double *>work.data,
                      <l_int *>iwork.data, &info)
 
-    assert(info == 0, "Argument error in dgecon")
+    assert info == 0, "Argument error in dgecon"
 
     return rcond
 
@@ -295,7 +295,7 @@ def cgecon(np.ndarray[np.complex64_t, ndim=2] LU,
                      &rcond, <float complex *>work.data,
                      <float *>rwork.data, &info)
 
-    assert(info == 0, "Argument error in cgecon")
+    assert info == 0, "Argument error in cgecon"
 
     return rcond
 
@@ -316,7 +316,7 @@ def zgecon(np.ndarray[np.complex128_t, ndim=2] LU,
                      &rcond, <double complex *>work.data,
                      <double *>rwork.data, &info)
 
-    assert(info == 0, "Argument error in zgecon")
+    assert info == 0, "Argument error in zgecon"
 
     return rcond
 
@@ -399,7 +399,7 @@ def sggev(np.ndarray[np.float32_t, ndim=2] A,
                     vl_ptr, &N, vr_ptr, &N,
                     &qwork, &lwork, &info)
 
-    assert(info == 0, "Argument error in sggev")
+    assert info == 0, "Argument error in sggev"
 
     lwork = <l_int>qwork
     work = np.empty(lwork, dtype = np.float32)
@@ -415,7 +415,7 @@ def sggev(np.ndarray[np.float32_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QZ iteration failed to converge in sggev")
 
-    assert(info == 0, "Argument error in sggev")
+    assert info == 0, "Argument error in sggev"
 
     alpha, vl, vr = ggev_postprocess(np.complex64, alphar, alphai, vl_r, vr_r)
 
@@ -466,7 +466,7 @@ def dggev(np.ndarray[np.float64_t, ndim=2] A,
                     vl_ptr, &N, vr_ptr, &N,
                     &qwork, &lwork, &info)
 
-    assert(info == 0, "Argument error in dggev")
+    assert info == 0, "Argument error in dggev"
 
     lwork = <l_int>qwork
     work = np.empty(lwork, dtype = np.float64)
@@ -482,7 +482,7 @@ def dggev(np.ndarray[np.float64_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QZ iteration failed to converge in dggev")
 
-    assert(info == 0, "Argument error in dggev")
+    assert info == 0, "Argument error in dggev"
 
     alpha, vl, vr = ggev_postprocess(np.complex128, alphar, alphai, vl_r, vr_r)
 
@@ -534,7 +534,7 @@ def cggev(np.ndarray[np.complex64_t, ndim=2] A,
                     &qwork, &lwork,
                     <float *>rwork.data, &info)
 
-    assert(info == 0, "Argument error in cggev")
+    assert info == 0, "Argument error in cggev"
 
     lwork = <l_int>qwork.real
 
@@ -551,7 +551,7 @@ def cggev(np.ndarray[np.complex64_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QZ iteration failed to converge in cggev")
 
-    assert(info == 0, "Argument error in cggev")
+    assert info == 0, "Argument error in cggev"
 
     return filter_args((True, True, left, right), (alpha, beta, vl, vr))
 
@@ -601,7 +601,7 @@ def zggev(np.ndarray[np.complex128_t, ndim=2] A,
                     &qwork, &lwork,
                     <double *>rwork.data, &info)
 
-    assert(info == 0, "Argument error in zggev")
+    assert info == 0, "Argument error in zggev"
 
     lwork = <l_int>qwork.real
     work = np.empty(lwork, dtype = np.complex128)
@@ -617,7 +617,7 @@ def zggev(np.ndarray[np.complex128_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QZ iteration failed to converge in zggev")
 
-    assert(info == 0, "Argument error in zggev")
+    assert info == 0, "Argument error in zggev"
 
     return filter_args((True, True, left, right), (alpha, beta, vl, vr))
 
@@ -651,7 +651,7 @@ def sgees(np.ndarray[np.float32_t, ndim=2] A,
                     &sdim, <float *>wr.data, <float *>wi.data, vs_ptr, &N,
                     &qwork, &lwork, NULL, &info)
 
-    assert(info == 0, "Argument error in sgees")
+    assert info == 0, "Argument error in sgees"
 
     lwork = <int>qwork
     work = np.empty(lwork, dtype = np.float32)
@@ -664,7 +664,7 @@ def sgees(np.ndarray[np.float32_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QR iteration failed to converge in sgees")
 
-    assert(info == 0, "Argument error in sgees")
+    assert info == 0, "Argument error in sgees"
 
     if wi.nonzero()[0].size:
         w = wr + 1j * wi
@@ -702,7 +702,7 @@ def dgees(np.ndarray[np.float64_t, ndim=2] A,
                     &sdim, <double *>wr.data, <double *>wi.data, vs_ptr, &N,
                     &qwork, &lwork, NULL, &info)
 
-    assert(info == 0, "Argument error in dgees")
+    assert info == 0, "Argument error in dgees"
 
     lwork = <int>qwork
     work = np.empty(lwork, dtype = np.float64)
@@ -715,7 +715,7 @@ def dgees(np.ndarray[np.float64_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QR iteration failed to converge in dgees")
 
-    assert(info == 0, "Argument error in dgees")
+    assert info == 0, "Argument error in dgees"
 
     if wi.nonzero()[0].size:
         w = wr + 1j * wi
@@ -754,7 +754,7 @@ def cgees(np.ndarray[np.complex64_t, ndim=2] A,
                     &sdim, <float complex *>w.data, vs_ptr, &N,
                     &qwork, &lwork, <float *>rwork.data, NULL, &info)
 
-    assert(info == 0, "Argument error in cgees")
+    assert info == 0, "Argument error in cgees"
 
     lwork = <int>qwork.real
     work = np.empty(lwork, dtype = np.complex64)
@@ -768,7 +768,7 @@ def cgees(np.ndarray[np.complex64_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QR iteration failed to converge in cgees")
 
-    assert(info == 0, "Argument error in cgees")
+    assert info == 0, "Argument error in cgees"
 
     return filter_args((True, calc_q, calc_ev), (A, vs, w))
 
@@ -802,7 +802,7 @@ def zgees(np.ndarray[np.complex128_t, ndim=2] A,
                     &sdim, <double complex *>w.data, vs_ptr, &N,
                     &qwork, &lwork, <double *>rwork.data, NULL, &info)
 
-    assert(info == 0, "Argument error in zgees")
+    assert info == 0, "Argument error in zgees"
 
     lwork = <int>qwork.real
     work = np.empty(lwork, dtype = np.complex128)
@@ -816,7 +816,7 @@ def zgees(np.ndarray[np.complex128_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QR iteration failed to converge in zgees")
 
-    assert(info == 0, "Argument error in zgees")
+    assert info == 0, "Argument error in zgees"
 
     return filter_args((True, calc_q, calc_ev), (A, vs, w))
 
@@ -851,7 +851,7 @@ def strsen(np.ndarray[l_logical] select,
                      <float *>wr.data, <float *>wi.data, &M, NULL, NULL,
                      &qwork, &lwork, &qiwork, &liwork, &info)
 
-    assert(info == 0, "Argument erroŕ in strsen")
+    assert info == 0, "Argument error in strsen"
 
     lwork = <int>qwork
     work = np.empty(lwork, dtype = np.float32)
@@ -865,7 +865,7 @@ def strsen(np.ndarray[l_logical] select,
                      <float *>work.data, &lwork,
                      <int *>iwork.data, &liwork, &info)
 
-    assert(info == 0, "Argument erroŕ in strsen")
+    assert info == 0, "Argument error in strsen"
 
     if wi.nonzero()[0].size:
         w = wr + 1j * wi
@@ -905,7 +905,7 @@ def dtrsen(np.ndarray[l_logical] select,
                      <double *>wr.data, <double *>wi.data, &M, NULL, NULL,
                      &qwork, &lwork, &qiwork, &liwork, &info)
 
-    assert(info == 0, "Argument erroŕ in dtrsen")
+    assert info == 0, "Argument error in dtrsen"
 
     lwork = <int>qwork
     work = np.empty(lwork, dtype = np.float64)
@@ -919,7 +919,7 @@ def dtrsen(np.ndarray[l_logical] select,
                      <double *>work.data, &lwork,
                      <int *>iwork.data, &liwork, &info)
 
-    assert(info == 0, "Argument erroŕ in dtrsen")
+    assert info == 0, "Argument error in dtrsen"
 
     if wi.nonzero()[0].size:
         w = wr + 1j * wi
@@ -957,7 +957,7 @@ def ctrsen(np.ndarray[l_logical] select,
                      <float complex *>w.data, &M, NULL, NULL,
                      &qwork, &lwork, &info)
 
-    assert(info == 0, "Argument erroŕ in ctrsen")
+    assert info == 0, "Argument error in ctrsen"
 
     lwork = <int>qwork.real
     work = np.empty(lwork, dtype = np.complex64)
@@ -968,7 +968,7 @@ def ctrsen(np.ndarray[l_logical] select,
                      <float complex *>w.data, &M, NULL, NULL,
                      <float complex *>work.data, &lwork, &info)
 
-    assert(info == 0, "Argument erroŕ in ctrsen")
+    assert info == 0, "Argument error in ctrsen"
 
     return filter_args((True, Q is not None, calc_ev), (T, Q, w))
 
@@ -1001,7 +1001,7 @@ def ztrsen(np.ndarray[l_logical] select,
                      <double complex *>w.data, &M, NULL, NULL,
                      &qwork, &lwork, &info)
 
-    assert(info == 0, "Argument erroŕ in ztrsen")
+    assert info == 0, "Argument error in ztrsen"
 
     lwork = <int>qwork.real
     work = np.empty(lwork, dtype = np.complex128)
@@ -1012,7 +1012,7 @@ def ztrsen(np.ndarray[l_logical] select,
                      <double complex *>w.data, &M, NULL, NULL,
                      <double complex *>work.data, &lwork, &info)
 
-    assert(info == 0, "Argument erroŕ in ztrsen")
+    assert info == 0, "Argument error in ztrsen"
 
     return filter_args((True, Q is not None, calc_ev), (T, Q, w))
 
@@ -1129,8 +1129,8 @@ def strevc(np.ndarray[np.float32_t, ndim=2] T,
                      vl_r_ptr, &N, vr_r_ptr, &N, &MM, &M,
                      <float *>work.data, &info)
 
-    assert(info == 0, "Argument error in strevc")
-    assert(MM == M, "Unexpected number of eigenvectors returned in strevc")
+    assert info == 0, "Argument error in strevc"
+    assert MM == M, "Unexpected number of eigenvectors returned in strevc"
 
     if select is not None and Q is not None:
         if left:
@@ -1231,8 +1231,8 @@ def dtrevc(np.ndarray[np.float64_t, ndim=2] T,
                      vl_r_ptr, &N, vr_r_ptr, &N, &MM, &M,
                      <double *>work.data, &info)
 
-    assert(info == 0, "Argument error in dtrevc")
-    assert(MM == M, "Unexpected number of eigenvectors returned in dtrevc")
+    assert info == 0, "Argument error in dtrevc"
+    assert MM == M, "Unexpected number of eigenvectors returned in dtrevc"
 
     if select is not None and Q is not None:
         if left:
@@ -1322,8 +1322,8 @@ def ctrevc(np.ndarray[np.complex64_t, ndim=2] T,
                      vl_ptr, &N, vr_ptr, &N, &MM, &M,
                      <float complex *>work.data, <float *>rwork.data, &info)
 
-    assert(info == 0, "Argument error in ctrevc")
-    assert(MM == M, "Unexpected number of eigenvectors returned in ctrevc")
+    assert info == 0, "Argument error in ctrevc"
+    assert MM == M, "Unexpected number of eigenvectors returned in ctrevc"
 
     if select is not None and Q is not None:
         if left:
@@ -1401,8 +1401,8 @@ def ztrevc(np.ndarray[np.complex128_t, ndim=2] T,
                      vl_ptr, &N, vr_ptr, &N, &MM, &M,
                      <double complex *>work.data, <double *>rwork.data, &info)
 
-    assert(info == 0, "Argument error in ztrevc")
-    assert(MM == M, "Unexpected number of eigenvectors returned in ztrevc")
+    assert info == 0, "Argument error in ztrevc"
+    assert MM == M, "Unexpected number of eigenvectors returned in ztrevc"
 
     if select is not None and Q is not None:
         if left:
@@ -1463,7 +1463,7 @@ def sgges(np.ndarray[np.float32_t, ndim=2] A,
                     vsl_ptr, &N, vsr_ptr, &N,
                     &qwork, &lwork, NULL, &info)
 
-    assert(info == 0, "Argument error in zgees")
+    assert info == 0, "Argument error in zgees"
 
     lwork = <int>qwork
     work = np.empty(lwork, dtype = np.float32)
@@ -1480,7 +1480,7 @@ def sgges(np.ndarray[np.float32_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QZ iteration failed to converge in sgges")
 
-    assert(info == 0, "Argument error in zgees")
+    assert info == 0, "Argument error in zgees"
 
     if alphai.nonzero()[0].size:
         alpha = alphar + 1j * alphai
@@ -1535,7 +1535,7 @@ def dgges(np.ndarray[np.float64_t, ndim=2] A,
                     vsl_ptr, &N, vsr_ptr, &N,
                     &qwork, &lwork, NULL, &info)
 
-    assert(info == 0, "Argument error in zgees")
+    assert info == 0, "Argument error in zgees"
 
     lwork = <int>qwork
     work = np.empty(lwork, dtype = np.float64)
@@ -1552,7 +1552,7 @@ def dgges(np.ndarray[np.float64_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QZ iteration failed to converge in dgges")
 
-    assert(info == 0, "Argument error in zgees")
+    assert info == 0, "Argument error in zgees"
 
     if alphai.nonzero()[0].size:
         alpha = alphar + 1j * alphai
@@ -1607,7 +1607,7 @@ def cgges(np.ndarray[np.complex64_t, ndim=2] A,
                     vsl_ptr, &N, vsr_ptr, &N,
                     &qwork, &lwork, <float *>rwork.data, NULL, &info)
 
-    assert(info == 0, "Argument error in zgees")
+    assert info == 0, "Argument error in zgees"
 
     lwork = <int>qwork.real
     work = np.empty(lwork, dtype = np.complex64)
@@ -1624,7 +1624,7 @@ def cgges(np.ndarray[np.complex64_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QZ iteration failed to converge in cgges")
 
-    assert(info == 0, "Argument error in zgees")
+    assert info == 0, "Argument error in zgees"
 
     return filter_args((True, True, calc_q, calc_z, calc_ev, calc_ev),
                        (A, B, vsl, vsr, alpha, beta))
@@ -1674,7 +1674,7 @@ def zgges(np.ndarray[np.complex128_t, ndim=2] A,
                     vsl_ptr, &N, vsr_ptr, &N,
                     &qwork, &lwork, <double *>rwork.data, NULL, &info)
 
-    assert(info == 0, "Argument error in zgees")
+    assert info == 0, "Argument error in zgees"
 
     lwork = <int>qwork.real
     work = np.empty(lwork, dtype = np.complex128)
@@ -1691,7 +1691,7 @@ def zgges(np.ndarray[np.complex128_t, ndim=2] A,
     if info > 0:
         raise LinAlgError("QZ iteration failed to converge in zgges")
 
-    assert(info == 0, "Argument error in zgees")
+    assert info == 0, "Argument error in zgees"
 
     return filter_args((True, True, calc_q, calc_z, calc_ev, calc_ev),
                        (A, B, vsl, vsr, alpha, beta))
@@ -1743,7 +1743,7 @@ def stgsen(np.ndarray[l_logical] select,
                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
                      &qwork, &lwork, &qiwork, &liwork, &info)
 
-    assert(info == 0, "Argument erroŕ in stgsen")
+    assert info == 0, "Argument error in stgsen"
 
     lwork = <int>qwork
     work = np.empty(lwork, dtype = np.float32)
@@ -1763,7 +1763,7 @@ def stgsen(np.ndarray[l_logical] select,
     if info > 0:
         raise LinAlgError("Reordering failed; problem is very ill-conditioned")
 
-    assert(info == 0, "Argument erroŕ in stgsen")
+    assert info == 0, "Argument error in stgsen"
 
     if alphai.nonzero()[0].size:
         alpha = alphar + 1j * alphai
@@ -1820,7 +1820,7 @@ def dtgsen(np.ndarray[l_logical] select,
                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
                      &qwork, &lwork, &qiwork, &liwork, &info)
 
-    assert(info == 0, "Argument erroŕ in dtgsen")
+    assert info == 0, "Argument error in dtgsen"
 
     lwork = <int>qwork
     work = np.empty(lwork, dtype = np.float64)
@@ -1840,7 +1840,7 @@ def dtgsen(np.ndarray[l_logical] select,
     if info > 0:
         raise LinAlgError("Reordering failed; problem is very ill-conditioned")
 
-    assert(info == 0, "Argument erroŕ in dtgsen")
+    assert info == 0, "Argument error in dtgsen"
 
     if alphai.nonzero()[0].size:
         alpha = alphar + 1j * alphai
@@ -1895,7 +1895,7 @@ def ctgsen(np.ndarray[l_logical] select,
                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
                      &qwork, &lwork, &qiwork, &liwork, &info)
 
-    assert(info == 0, "Argument erroŕ in ctgsen")
+    assert info == 0, "Argument error in ctgsen"
 
     lwork = <int>qwork.real
     work = np.empty(lwork, dtype = np.complex64)
@@ -1914,7 +1914,7 @@ def ctgsen(np.ndarray[l_logical] select,
     if info > 0:
         raise LinAlgError("Reordering failed; problem is very ill-conditioned")
 
-    assert(info == 0, "Argument erroŕ in ctgsen")
+    assert info == 0, "Argument error in ctgsen"
 
     return filter_args((True, True, Q is not None, Z is not None,
                         calc_ev, calc_ev),
@@ -1964,7 +1964,7 @@ def ztgsen(np.ndarray[l_logical] select,
                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
                      &qwork, &lwork, &qiwork, &liwork, &info)
 
-    assert(info == 0, "Argument erroŕ in ztgsen")
+    assert info == 0, "Argument error in ztgsen"
 
     lwork = <int>qwork.real
     work = np.empty(lwork, dtype = np.complex128)
@@ -1983,7 +1983,7 @@ def ztgsen(np.ndarray[l_logical] select,
     if info > 0:
         raise LinAlgError("Reordering failed; problem is very ill-conditioned")
 
-    assert(info == 0, "Argument erroŕ in ztgsen")
+    assert info == 0, "Argument error in ztgsen"
 
     return filter_args((True, True, Q is not None, Z is not None,
                         calc_ev, calc_ev),
@@ -2071,8 +2071,8 @@ def stgevc(np.ndarray[np.float32_t, ndim=2] S,
                      vl_r_ptr, &N, vr_r_ptr, &N, &MM, &M,
                      <float *>work.data, &info)
 
-    assert(info == 0, "Argument error in stgevc")
-    assert(MM == M, "Unexpected number of eigenvectors returned in stgevc")
+    assert info == 0, "Argument error in stgevc"
+    assert MM == M, "Unexpected number of eigenvectors returned in stgevc"
 
     if not backtr:
         if left:
@@ -2180,8 +2180,8 @@ def dtgevc(np.ndarray[np.float64_t, ndim=2] S,
                      vl_r_ptr, &N, vr_r_ptr, &N, &MM, &M,
                      <double *>work.data, &info)
 
-    assert(info == 0, "Argument error in dtgevc")
-    assert(MM == M, "Unexpected number of eigenvectors returned in dtgevc")
+    assert info == 0, "Argument error in dtgevc"
+    assert MM == M, "Unexpected number of eigenvectors returned in dtgevc"
 
     if not backtr:
         if left:
@@ -2280,8 +2280,8 @@ def ctgevc(np.ndarray[np.complex64_t, ndim=2] S,
                      vl_ptr, &N, vr_ptr, &N, &MM, &M,
                      <float complex *>work.data, <float *>rwork.data, &info)
 
-    assert(info == 0, "Argument error in ctgevc")
-    assert(MM == M, "Unexpected number of eigenvectors returned in ctgevc")
+    assert info == 0, "Argument error in ctgevc"
+    assert MM == M, "Unexpected number of eigenvectors returned in ctgevc"
 
     if not backtr:
         if left:
@@ -2367,8 +2367,8 @@ def ztgevc(np.ndarray[np.complex128_t, ndim=2] S,
                      vl_ptr, &N, vr_ptr, &N, &MM, &M,
                      <double complex *>work.data, <double *>rwork.data, &info)
 
-    assert(info == 0, "Argument error in ztgevc")
-    assert(MM == M, "Unexpected number of eigenvectors returned in ztgevc")
+    assert info == 0, "Argument error in ztgevc"
+    assert MM == M, "Unexpected number of eigenvectors returned in ztgevc"
 
     if not backtr:
         if left:
