@@ -80,12 +80,12 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
     sys : kwant.system.FiniteSystem
         low level system, containing the leads and the Hamiltonian of a
         scattering region.
-    energy : number
-        excitation energy at which to solve the scattering problem.
+    out_leads : list of integers
+        numbers of leads where current or wave function is extracted
     in_leads : list of integers
         numbers of leads in which current or wave function is injected.
-    out_leads : list of integers
-        numbers of leads where current or wave function is exctracted
+    energy : number
+        excitation energy at which to solve the scattering problem.
     force_realspace : bool
         calculate Green's function between the outermost lead
         sites, instead of lead modes. This is almost always
@@ -94,9 +94,9 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
     Returns
     -------
     (h_sys, rhs, keep_vars) : LinearSys
-        `h_sys` is a numpy.sparse.csc_matrix, containing the right hand side
-        of the system of equations, `rhs` is the list of matrices with the
-        left hand side, `keep_vars` is a list with numbers of variables in the
+        `h_sys` is a numpy.sparse.csc_matrix, containing the left hand side
+        of the system of equations, `rhs` is a list of matrices with the
+        right hand side, `keep_vars` is a list of numbers of variables in the
         solution that have to be stored (typically a small part of the
         complete solution).
     lead_info : list of objects
@@ -107,7 +107,7 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
 
     Notes
     -----
-    Both incomding and outgoing leads can be defined via either self-energy,
+    Both incoming and outgoing leads can be defined via either self-energy,
     or a low-level translationally invariant system.
     The system of equations that is created is described in
     kwant/doc/other/linear_system.pdf
@@ -226,7 +226,7 @@ def solve_linear_sys(a, b, keep_vars=None):
 
     Notes
     -----
-    This function is largely a wrapper to a scipy.sparse.linalg.factorized.
+    This function is largely a wrapper to `factorized`.
     """
     a = sp.csc_matrix(a)
 
@@ -256,10 +256,10 @@ def solve(sys, energy=0, out_leads=None, in_leads=None, force_realspace=False):
         scattering region.
     energy : number
         excitation energy at which to solve the scattering problem.
+    out_leads : list of integers
+        numbers of leads where current or wave function is extracted
     in_leads : list of integers
         numbers of leads in which current or wave function is injected.
-    out_leads : list of integers
-        numbers of leads where current or wave function is exctracted
     force_realspace : bool
         calculate Green's function between the outermost lead
         sites, instead of lead modes. This is almost always
@@ -273,7 +273,7 @@ def solve(sys, energy=0, out_leads=None, in_leads=None, force_realspace=False):
 
     Notes
     -----
-    Both in_leads and out_leads should be sorted and should only contain
+    Both in_leads and out_leads must be sorted and must only contain
     unique entries.
 
     Returns the Green's function elements between in_leads and out_leads. If
