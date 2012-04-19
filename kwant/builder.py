@@ -241,6 +241,12 @@ class Symmetry(object):
 class NoSymmetry(Symmetry):
     """A symmetry with a trivial symmetry group."""
 
+    def __eq__(self, other):
+        return isinstance(other, NoSymmetry)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __repr__(self):
         return 'NoSymmetry()'
 
@@ -875,7 +881,14 @@ class Builder(object):
         `other_sys`.  The leads of `other_sys` are appended to the leads of the
         system being extended.
         """
-        raise NotImplementedError()
+        if self.symmetry != other_sys.symmetry:
+            raise ValueError('System to be added has a different symmetry.')
+        for site, value in other_sys.site_value_pairs():
+            self[site] = value
+        for hop, value in other_sys.hopping_value_pairs():
+            self[hop] = value
+        self.leads.extend(other_sys.leads)
+        return self
 
     def possible_hoppings(self, delta, group_b, group_a):
         """Return all matching possible hoppings between existing sites.

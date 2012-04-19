@@ -465,3 +465,37 @@ def test_neighbors_not_in_single_domain():
     lead[(((0, y), (0, y + 1)) for y in range(2))] = 1
     sr.leads.append(builder.BuilderLead(lead, [lat(i, i) for i in range(3)]))
     assert_raises(ValueError, sr.finalized)
+
+def test_iadd():
+    lat = builder.SimpleSiteGroup()
+
+    sys = builder.Builder()
+    sys[[lat(0,), lat(1,)]] = 1
+    sys[lat(0,), lat(1,)] = 1
+
+    other_sys = builder.Builder()
+    other_sys[[lat(1,), lat(2,)]] = 2
+    other_sys[lat(1,), lat(2,)] = 1
+
+    lead0 = builder.Builder(VerySimpleSymmetry(-1))
+    lead0[lat(0,)] = 1
+    lead0[(lat(0,), lat(1,))] = 1
+    lead0 = builder.BuilderLead(lead0, [lat(0,)])
+    sys.leads.append(lead0)
+
+    lead1 = builder.Builder(VerySimpleSymmetry(1))
+    lead1[lat(2,)] = 1
+    lead1[(lat(2,), lat(1,))] = 1
+    lead1 = builder.BuilderLead(lead1, [lat(2,)])
+    other_sys.leads.append(lead1)
+
+    sys += other_sys
+    assert_equal(sys.leads, [lead0, lead1])
+    expected = sorted([[(0,), 1], [(1,), 2], [(2,), 2]])
+    assert_equal(sorted(((s.tag, v) for s, v in sys.site_value_pairs())), 
+                 expected)
+    expected = sorted([[(0,), (1,), 1], [(1,), (2,), 1]])
+    assert_equal(sorted(((a.tag, b.tag, v)
+                         for (a, b), v in sys.hopping_value_pairs())), 
+                 expected)
+
