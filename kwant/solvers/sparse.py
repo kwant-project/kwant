@@ -235,13 +235,15 @@ def solve_linear_sys(a, b, keep_vars=None):
     slv = factorized(a)
     keeptot = sum(keep_vars, [])
     sols = []
+    vec = np.empty(a.shape[0], complex)
     for mat in b:
-        if mat.shape[1] != 0:
-            mat = sp.csr_matrix(mat)
-            for j in xrange(mat.shape[1]):
-                vec = np.zeros(a.shape[0], complex)
-                vec[: mat.shape[0]] = mat[:, j].todense().flatten()
-                sols.append(slv(vec)[keeptot])
+        if mat.shape[1] == 0:
+            continue
+        mat = sp.csr_matrix(mat)
+        for j in xrange(mat.shape[1]):
+            vec[: mat.shape[0]] = mat[:, j].todense().flatten()
+            vec[mat.shape[0] :] = 0
+            sols.append(slv(vec)[keeptot])
     return np.mat(sols).T
 
 
