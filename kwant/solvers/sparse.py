@@ -68,7 +68,7 @@ def factorized(A, piv_tol=1.0, sym_piv_tol=1.0):
     return solve
 
 
-LinearSys = namedtuple('LinearSys', ['h_sys', 'rhs', 'keep_vars'])
+LinearSys = namedtuple('LinearSys', ['lhs', 'rhs', 'kept_vars'])
 
 
 def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
@@ -93,10 +93,10 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
 
     Returns
     -------
-    (h_sys, rhs, keep_vars) : LinearSys
-        `h_sys` is a numpy.sparse.csc_matrix, containing the left hand side
+    (lhs, rhs, kept_vars) : LinearSys
+        `lhs` is a numpy.sparse.csc_matrix, containing the left hand side
         of the system of equations, `rhs` is a list of matrices with the
-        right hand side, `keep_vars` is a list of numbers of variables in the
+        right hand side, `kept_vars` is a list of numbers of variables in the
         solution that have to be stored (typically a small part of the
         complete solution).
     lead_info : list of objects
@@ -114,12 +114,12 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
     """
     if not sys.lead_neighbor_seqs:
         raise ValueError('System contains no leads.')
-    h_sys, norb = sys.hamiltonian_submatrix(sparse=True)[:2]
-    h_sys = h_sys.tocsc()
-    h_sys = h_sys - energy * sp.identity(h_sys.shape[0], format='csc')
+    lhs, norb = sys.hamiltonian_submatrix(sparse=True)[:2]
+    lhs = lhs.tocsc()
+    lhs = lhs - energy * sp.identity(lhs.shape[0], format='csc')
 
     # Hermiticity check.
-    if np.any(np.abs((h_sys - h_sys.T.conj()).data) > 1e-13):
+    if np.any(np.abs((lhs - lhs.T.conj()).data) > 1e-13):
         raise ValueError('System Hamiltonian is not Hermitian.')
 
     offsets = np.zeros(norb.shape[0] + 1, int)
@@ -127,7 +127,7 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
 
     # Process the leads, generate the eigenvector matrices and lambda vectors.
     # Then create blocks of the linear system and add them step by step.
-    keep_vars = []
+    kept_vars = []
     rhs = []
     lead_info = []
     for leadnum, lead_neighbors in enumerate(sys.lead_neighbor_seqs):
@@ -149,7 +149,7 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
             u, ulinv, nprop, svd = modes
 
             if leadnum in out_leads:
-                keep_vars.append(range(h_sys.shape[0], h_sys.shape[0] + nprop))
+                kept_vars.append(range(lhs.shape[0], lhs.shape[0] + nprop))
 
             u_out, ulinv_out = u[:, nprop:], ulinv[:, nprop:]
             u_in, ulinv_in = u[:, : nprop], ulinv[:, : nprop]
@@ -161,7 +161,7 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
                                     for i in lead_neighbors)]
             coords = np.r_[[np.arange(neighbors.size)], [neighbors]]
             tmp = sp.csc_matrix((np.ones(neighbors.size), coords),
-                                (neighbors.size, h_sys.shape[0]))
+                                (neighbors.size, lhs.shape[0]))
 
             if svd is not None:
                 v_sp = sp.csc_matrix(svd[2].T.conj()) * tmp
@@ -173,7 +173,7 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
                 vdaguout_sp = tmp.T * sp.csr_matrix(np.dot(v.T.conj(), u_out))
                 lead_mat = - ulinv_out
 
-            h_sys = sp.bmat([[h_sys, vdaguout_sp], [v_sp, lead_mat]])
+            lhs = sp.bmat([[lhs, vdaguout_sp], [v_sp, lead_mat]])
 
             if nprop > 0 and leadnum in in_leads:
                 if svd:
@@ -194,19 +194,19 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
             assert sigma.shape == 2 * indices.shape
             y, x = np.meshgrid(indices, indices)
             sig_sparse = sp.coo_matrix((sigma.flat, [x.flat, y.flat]),
-                                       h_sys.shape)
-            h_sys = h_sys + sig_sparse # __iadd__ is not implemented in v0.7
+                                       lhs.shape)
+            lhs = lhs + sig_sparse # __iadd__ is not implemented in v0.7
             if leadnum in out_leads:
-                keep_vars.append(list(indices))
+                kept_vars.append(list(indices))
             if leadnum in in_leads:
                 l = indices.shape[0]
                 rhs.append(sp.coo_matrix((-np.ones(l), [indices,
                                                         np.arange(l)])))
 
-    return LinearSys(h_sys, rhs, keep_vars), lead_info
+    return LinearSys(lhs, rhs, kept_vars), lead_info
 
 
-def solve_linear_sys(a, b, keep_vars=None):
+def solve_linear_sys(a, b, kept_vars=None):
     """
     Solve matrix system of equations a x = b with sparse input.
 
@@ -216,7 +216,7 @@ def solve_linear_sys(a, b, keep_vars=None):
     b : a list of matrices.
         Sizes of these matrices may be smaller than needed, the missing
         entries at the end are padded with zeros.
-    keep_vars : list of lists of integers
+    kept_vars : list of lists of integers
         a list of numbers of variables to keep in the solution
 
     Returns
@@ -230,10 +230,10 @@ def solve_linear_sys(a, b, keep_vars=None):
     """
     a = sp.csc_matrix(a)
 
-    if keep_vars == None:
-        keep_vars = [range(a.shape[1])]
+    if kept_vars == None:
+        kept_vars = [range(a.shape[1])]
     slv = factorized(a)
-    keeptot = sum(keep_vars, [])
+    keeptot = sum(kept_vars, [])
     sols = []
     vec = np.empty(a.shape[0], complex)
     for mat in b:
@@ -308,7 +308,7 @@ def solve(sys, energy=0, out_leads=None, in_leads=None, force_realspace=False):
         raise ValueError('No output is requested.')
     linsys, lead_info = make_linear_sys(sys, out_leads, in_leads, energy,
                                         force_realspace)
-    out_modes = [len(i) for i in linsys.keep_vars]
+    out_modes = [len(i) for i in linsys.kept_vars]
     in_modes = [i.shape[1] for i in linsys.rhs]
     result = BlockResult(solve_linear_sys(*linsys), lead_info)
     result.in_leads = in_leads
@@ -407,7 +407,7 @@ def ldos(fsys, energy=0):
             # TODO: fix this
             msg = 'ldos only works when all leads are tight binding systems.'
             raise ValueError(msg)
-    (h, rhs, keep_vars), lead_info = \
+    (h, rhs, kept_vars), lead_info = \
         make_linear_sys(fsys, [], xrange(len(fsys.leads)), energy)
     Modes = physics.Modes
     num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
