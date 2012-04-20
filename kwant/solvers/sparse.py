@@ -94,11 +94,12 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
     Returns
     -------
     (lhs, rhs, kept_vars) : LinearSys
-        `lhs` is a numpy.sparse.csc_matrix, containing the left hand side
-        of the system of equations, `rhs` is a list of matrices with the
-        right hand side, `kept_vars` is a list of numbers of variables in the
-        solution that have to be stored (typically a small part of the
-        complete solution).
+        `lhs` is a numpy.sparse.csc_matrix, containing the left hand side of
+        the system of equations.  `rhs` is a list of matrices with the right
+        hand side, with each matrix corresponding to one lead mentioned in
+        `in_leads`.  `kept_vars` is a list of numbers of variables in the
+        solution that have to be stored (typically a small part of the complete
+        solution).
     lead_info : list of objects
         Contains one entry for each lead.  For a lead defined as a
         tight-binding system, this is an instance of `kwant.physics.Modes` (as
