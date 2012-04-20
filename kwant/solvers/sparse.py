@@ -385,7 +385,7 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
         ttdag -= np.dot(ttdag, ttdag)
         return np.trace(ttdag).real
 
-def ldos(fsys, e=0):
+def ldos(fsys, energy=0):
     """
     Calculate the local density of states of a system at a given energy.
 
@@ -402,17 +402,27 @@ def ldos(fsys, e=0):
     ldos : a numpy array
         local density of states at each orbital of the system.
     """
+    for lead in fsys.leads:
+        if not isinstance(lead, system.InfiniteSystem):
+            # TODO: fix this
+            msg = 'ldos only works when all leads are tight binding systems.'
+            raise ValueError(msg)
+    (h, rhs, keep_vars), lead_info = \
+        make_linear_sys(fsys, [], xrange(len(fsys.leads)), energy)
     Modes = physics.Modes
-    linsys, lead_info = make_linear_sys(fsys, [], [], e)
-    h = linsys.h_sys
     num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
                          for li in lead_info if isinstance(li, Modes))
     num_orb = h.shape[0] - num_extra_vars
-    vec = np.zeros(h.shape[0], complex)
-    ldos = np.zeros(num_orb, complex)
+    ldos = np.zeros(num_orb, float)
     slv = factorized(h)
-    for i in xrange(num_orb):
-        vec[i] = 1
-        ldos[i] = slv(vec)[i]
-        vec[i] = 0
-    return ldos.imag / np.pi
+    vec = np.empty(h.shape[0], complex)
+    for mat in rhs:
+        if mat.shape[1] == 0:
+            continue
+        mat = sp.csr_matrix(mat)
+        for j in xrange(mat.shape[1]):
+            vec[: mat.shape[0]] = mat[:, j].todense().flatten()
+            vec[mat.shape[0] :] = 0
+            psi = slv(vec)[:num_orb]
+            ldos += abs(psi)**2
+    return ldos * (0.5 / np.pi)
