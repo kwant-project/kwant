@@ -515,6 +515,10 @@ class Lead(object):
     """
     __metaclass__ = abc.ABCMeta
 
+    def check_neighbors(self):
+        if len(self.neighbors) == 0:
+            raise ValueError('Lead is not connected (no neighbors).')
+
     @abc.abstractmethod
     def finalized():
         """Return a finalized version of the lead.
@@ -566,6 +570,7 @@ class BuilderLead(Lead):
     def __init__(self, builder, neighbors):
         self.builder = builder
         self.neighbors = SequenceOfSites(neighbors)
+        self.check_neighbors()
 
     def finalized(self):
         """Return a `kwant.system.InfiniteSystem` corresponding to the
@@ -589,6 +594,7 @@ class SelfEnergy(Lead):
     def __init__(self, self_energy_func, neighbors):
         self.self_energy_func = self_energy_func
         self.neighbors = SequenceOfSites(neighbors)
+        self.check_neighbors()
 
     def finalized(self):
         """Trivial finalization: the object is returned itself."""

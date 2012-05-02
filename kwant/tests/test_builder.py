@@ -449,8 +449,7 @@ def test_attach_lead():
     sys2 = builder.Builder()
     sys2.default_site_group = gr
     sys2[(1,)] = 0
-    sys2.attach_lead(lead0)
-    assert_raises(ValueError, sys2.finalized)
+    assert_raises(ValueError, sys2.attach_lead, lead0)
 
     lead0[(0,), (1,)] = lead0[(0,), (2,)] = 1
     assert_raises(ValueError, sys.attach_lead, lead0)
