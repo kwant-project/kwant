@@ -340,10 +340,12 @@ def extent(pos, sites):
     minx = miny = inf = float('inf')
     maxx = maxy = float('-inf')
     for site in sites:
+        point = pos(site)
         try:
-            x, y = pos(site)
-        except TypeError:
-            raise RuntimeError("Only 2 dimensions are supported by plot")
+            x, y = point
+        except:
+            raise ValueError(
+                "Position must be 2d.  Consider using the `pos` argument.")
         minx = min(x, minx)
         maxx = max(x, maxx)
         miny = min(y, miny)
@@ -925,7 +927,11 @@ def interpolate(system, function, a=None, pos=None,
     points = []
     values = []
     for site in iterate_scattreg_sites(system):
-        points.append(pos(site))
+        point = pos(site)
+        if point.shape != (2,):
+            raise ValueError(
+                'Position must be 2d.  Consider using the `pos` argument.')
+        points.append(point)
         values.append(function(site))
     points = np.array(points)
     values = np.array(values)
