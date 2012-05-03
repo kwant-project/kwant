@@ -8,6 +8,15 @@ import scipy.sparse as sp
 import scipy.sparse.linalg.dsolve.umfpack as umfpack
 from kwant import physics, system
 
+
+# Currently, scipy.sparse does not support matrices with one dimension being
+# zero: http://projects.scipy.org/scipy/ticket/1602 We use numpy dense matrices
+# as a replacement.
+# TODO: Once this issue is fixed, code for the special cases can be removed
+# from make_linear_sys, solve_linear_sys and possibly other places marked by
+# the line "See comment about zero-shaped sparse matrices at the top."
+
+
 # This patches a memory leak in scipy:
 # http://projects.scipy.org/scipy/ticket/1597
 #
@@ -146,6 +155,8 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
             modes = physics.modes(h, v)
             lead_info.append(modes)
             if not np.any(v):
+                # See comment about zero-shaped sparse matrices at the top.
+                rhs.append(np.zeros((lhs.shape[1], 0)))
                 continue
             u, ulinv, nprop, svd = modes
 
@@ -176,17 +187,19 @@ def make_linear_sys(sys, out_leads, in_leads, energy=0, force_realspace=False):
 
             lhs = sp.bmat([[lhs, vdaguout_sp], [v_sp, lead_mat]])
 
-            if nprop > 0 and leadnum in in_leads:
+            if leadnum not in in_leads:
+                continue
+            if nprop > 0:
                 if svd:
-                    vdaguin_sp = tmp.T * sp.csr_matrix(-np.dot(svd[2] * svd[1],
-                                                               u_in))
-                    lead_mat_in = ulinv_in
+                    vdaguin_sp = tmp.T * sp.csr_matrix(
+                        -np.dot(svd[2] * svd[1], u_in))
                 else:
-                    vdaguin_sp = tmp.T * sp.csr_matrix(-np.dot(v.T.conj(),
-                                                               u_in))
-                    lead_mat_in = ulinv_in
-
-                rhs.append(sp.bmat([[vdaguin_sp], [lead_mat_in]]))
+                    vdaguin_sp = tmp.T * sp.csr_matrix(
+                        -np.dot(v.T.conj(), u_in))
+                rhs.append(sp.bmat([[vdaguin_sp], [ulinv_in]]))
+            else:
+                # See comment about zero-shaped sparse matrices at the top.
+                rhs.append(np.zeros((lhs.shape[1], 0)))
         else:
             sigma = lead.self_energy(energy)
             lead_info.append(sigma)
@@ -238,9 +251,9 @@ def solve_linear_sys(a, b, kept_vars=None):
     sols = []
     vec = np.empty(a.shape[0], complex)
     for mat in b:
-        if mat.shape[1] == 0:
-            continue
-        mat = sp.csr_matrix(mat)
+        if mat.shape[1] != 0:
+            # See comment about zero-shaped sparse matrices at the top.
+            mat = sp.csr_matrix(mat)
         for j in xrange(mat.shape[1]):
             vec[: mat.shape[0]] = mat[:, j].todense().flatten()
             vec[mat.shape[0] :] = 0
