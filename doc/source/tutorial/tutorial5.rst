@@ -31,7 +31,7 @@ The most natural way to implement the BdG Hamiltonian is by using a
 2x2 matrix structure for all Hamiltonian matrix elements:
 
 .. literalinclude:: ../../../examples/tutorial5a.py
-    :lines: 21-45
+    :lines: 21-42
 
 As you see, the example is syntactically equivalent to our
 :ref:`spin example <tutorial_spinorbit>`, the only difference

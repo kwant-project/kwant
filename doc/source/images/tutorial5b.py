@@ -80,12 +80,12 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
     lead2[lead2.possible_hoppings((0, 1), lat_h, lat_h)] = t
     lead2[((lat_e(0, j), lat_h(0, j)) for j in xrange(W))] = Delta
 
-    #### Attach the leads and return the finalized system. ####
+    #### Attach the leads and return the system. ####
     sys.attach_lead(lead0)
     sys.attach_lead(lead1)
     sys.attach_lead(lead2)
 
-    return sys.finalized()
+    return sys
 
 def plot_conductance(fsys, energies):
     # Compute conductance
@@ -114,7 +114,7 @@ def plot_conductance(fsys, energies):
 
 
 def main():
-    fsys = make_system()
+    fsys = make_system().finalized()
 
     plot_conductance(fsys, energies=[0.002 * i for i in xrange(100)])
 
