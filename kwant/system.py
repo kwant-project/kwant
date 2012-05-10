@@ -124,16 +124,18 @@ class InfiniteSystem(System):
     """
     __metaclass__ = abc.ABCMeta
 
-    def slice_hamiltonian(self):
+    def slice_hamiltonian(self, sparse=False):
         """Hamiltonian of a single slice of the infinite system."""
         slice_sites = xrange(self.slice_size)
-        return self.hamiltonian_submatrix(slice_sites, slice_sites)[0]
+        return self.hamiltonian_submatrix(slice_sites, slice_sites,
+                                          sparse=sparse)[0]
 
-    def inter_slice_hopping(self):
+    def inter_slice_hopping(self, sparse=False):
         """Hopping Hamiltonian between two slices of the infinite system."""
         slice_sites = xrange(self.slice_size)
         neighbor_sites = xrange(self.slice_size, self.graph.num_nodes)
-        return self.hamiltonian_submatrix(slice_sites, neighbor_sites)[0]
+        return self.hamiltonian_submatrix(slice_sites, neighbor_sites,
+                                          sparse=sparse)[0]
 
     def self_energy(self, energy):
         """Return self-energy of a lead.
