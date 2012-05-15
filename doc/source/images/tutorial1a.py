@@ -93,7 +93,7 @@ for ie in xrange(100):
     energy = ie * 0.01
 
     # compute the scattering matrix at energy energy
-    smatrix = kwant.solvers.sparse.solve(fsys, energy)
+    smatrix = kwant.solve(fsys, energy)
 
     # compute the transmission probability from lead 0 to
     # lead 1

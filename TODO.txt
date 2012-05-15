@@ -17,10 +17,6 @@ Roughly in order of importance.                                     -*-org-*-
 * Provide nice support for graphene double layers
   This could be done by allowing lattices to be shifted, or in some other way.
 
-* Wrap mumps, umfpack, or some other sparse linear algebra library with Cython.
-  Use it directly in sparse solver.  This will allow to fine-tune the solution
-  of sparse systems.
-
 * Benchmark mumps and check whether nested dissection would be useful.
   If yes, implement it.
 

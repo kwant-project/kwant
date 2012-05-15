@@ -20,5 +20,10 @@ except:
 else:
     __all__.extend(['plotter', 'plot'])
 
-from .solvers.sparse import solve
-__all__.append('solve')
+# Mumps usally works best, use scipy_sparse as fallback
+try:
+    from .solvers.mumps import solve
+    __all__.append('solve')
+except ImportError:
+    from .solvers.sparse import solve
+    __all__.append('solve')
