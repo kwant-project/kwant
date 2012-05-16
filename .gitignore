@@ -11,3 +11,4 @@ MANIFEST
 /doc/source/images/*.png
 /doc/source/images/*.pdf
 /doc/source/images/.*_flag
+/build.conf

@@ -4,8 +4,12 @@
 include MANIFEST.in
 include TODO.txt
 
+# We explicitly include both pyx and c files, so that both are shipped in
+# source tarballs independently of whether "setup.py sdist" is run with
+# --no-cython or not.
 recursive-include kwant *.pyx
 recursive-include kwant *.pxd
+recursive-include kwant *.c
 recursive-include kwant *.h
 recursive-include kwant test_*.py
 

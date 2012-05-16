@@ -1,5 +1,6 @@
 Roughly in order of importance.                                     -*-org-*-
 
+* Document site.cfg
 * Document the usage of tinyarray
   Tinyarray is a dependency now.  Should we include it in kwant?
 

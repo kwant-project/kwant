@@ -25,7 +25,10 @@ The prerequisites are
 
  - Some incarnation of `LAPACK <http://www.netlib.org/lapack/>`_.
 
-optional (needed for plotting and the examples):
+Recommended:
+
+ - `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_ will in many cases speed up kwant
+   several times and reduce the memory footprint.
 
  - `pycairo <http://cairographics.org/pycairo/>`_
 
@@ -54,7 +57,7 @@ be sure to tell python where to find it.  This can be done by setting the
 
     export PYTHONPATH=$HOME/lib/python
 
-You can make this setting permanent by adding this line to your the file
+You can make this setting permanent by adding this line to the file
 ``.bashrc`` in your home directory.
 
 To check successful installation try executing some scripts in the ``examples``
@@ -107,9 +110,7 @@ Some conventions to keep in mind:
   <http://www.python.org/dev/peps/pep-0257/>`_.
 
 Several modules are written in `Cython <http://cython.org/>`_ (.pyx file name
-extension).  You will need Cython 0.18 if you want to modify them.  (If Cython
-0.18 is not released yet, try the bleeding-edge version.)  Turn on
-cythonization by passing the option ``--run-cython`` to setup.py.
+extension).  You will need Cython 0.17.1 if you want to modify them.
 
 
 Tests
