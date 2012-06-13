@@ -16,7 +16,7 @@ def make_lattice(prim_vecs, basis=None):
 
     Parameters
     ----------
-    prim_vecs : sequence of floats
+    prim_vecs : sequence of sequences of floats
         Primitive vectors of a Bravais lattice.
     basis : sequence of floats
         Coordinates of the basis sites inside the unit cell.
