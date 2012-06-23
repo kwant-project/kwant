@@ -162,12 +162,10 @@ above the gap. At the gap edge, we observe a resonant Andreev reflection.
       freedom in the scattering matrix, even if one uses matrices for
       these degrees of freedom. In the solve step,
       `~kwant.solvers.sparse.solve` returns an array containing the
-      transverse wave functions of the lead modes, if
-      ``return_modes=True``. By inspecting the wave functions,
-      electron and hole wave functions can be distinguished (they only
-      have entries in either the electron part *or* the hole part. If
-      you encounter modes with entries in both parts, you hit a very
-      unlikely situation in which the standard procedure to compute
-      the modes gave you a superposition of electron and hole
-      modes. That is still OK for computing particle current, but not
-      for electrical current).
+      transverse wave functions of the lead modes. By inspecting the wave
+      functions, electron and hole wave functions can be distinguished (they
+      only have entries in either the electron part *or* the hole part. If you
+      encounter modes with entries in both parts, you hit a very unlikely
+      situation in which the standard procedure to compute the modes gave you
+      a superposition of electron and hole modes. That is still OK for
+      computing particle current, but not for electrical current).
