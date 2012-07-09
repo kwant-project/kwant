@@ -54,6 +54,10 @@ def test_hamiltonian_submatrix():
     sys2 = sys.finalized()
     assert_raises(ValueError, sys2.hamiltonian_submatrix)
     assert_raises(ValueError, sys2.hamiltonian_submatrix, None, None, True)
+    sys[(0,), (2,)] = 1
+    sys2 = sys.finalized()
+    assert_raises(ValueError, sys2.hamiltonian_submatrix)
+    assert_raises(ValueError, sys2.hamiltonian_submatrix, None, None, True)
 
 def test_energies():
     sys = kwant.Builder(kwant.TranslationalSymmetry([(-1, 0)]))

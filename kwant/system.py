@@ -125,12 +125,12 @@ class System(object):
                     n_j = to_coord.get(j)
                     if n_j is None:
                         continue
-                    try:
-                        h_sub[to_off[n_j] : to_off[n_j + 1],
-                              from_off[n_i] : from_off[n_i + 1]] = \
-                              ham(j, i) if j != i else diag[i]
-                    except ValueError:
+                    h = ham(j, i) if j != i else diag[i]
+                    shape = (1, 1) if np.isscalar(h) else h.shape
+                    if shape != (to_norb[n_j], from_norb[n_i]):
                         raise ValueError(msg.format(i, j))
+                    h_sub[to_off[n_j] : to_off[n_j + 1],
+                            from_off[n_i] : from_off[n_i + 1]] = h
             return h_sub
 
         gr = self.graph
