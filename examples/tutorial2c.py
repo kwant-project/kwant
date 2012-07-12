@@ -33,7 +33,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
         return ( r1**2 < rsq < r2**2)
 
     # and add the corresponding lattice points using the `shape`-function
-    sys[lat.shape(ring, (0, 11))] = 4 * t
+    sys[lat.shape(ring, (0, r1+1))] = 4 * t
     for hopping in lat.nearest:
         sys[sys.possible_hoppings(*hopping)] = - t
 
@@ -64,17 +64,17 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
 
     def lead_shape(pos):
         (x, y) = pos
-        return (-1 < x < 1) and ( -W/2 < y < W/2  )
+        return (-1 < x < 1) and (-W/2 < y < W/2)
 
     lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
     for hopping in lat.nearest:
         lead0[lead0.possible_hoppings(*hopping)] = - t
 
     # Then the lead to the right
-    # (again, obtained using reverse()
+    # [again, obtained using reversed()]
     lead1 = lead0.reversed()
 
-    #### Attach the leads and return the finalized system. ####
+    #### Attach the leads and return the system. ####
     sys.attach_lead(lead0)
     sys.attach_lead(lead1)
 
