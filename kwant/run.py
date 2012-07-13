@@ -34,6 +34,8 @@ def randomize():
     else:
         seed = int(seed)
 
+    # numpy.random.seed only uses the lower 32 bits of the seed argument, so we
+    # split our 64 bit seed into two 32 bit numbers.
     assert seed >= 0 and seed < 1<<64
     seed_lo = int((seed & 0xffffffff) - (1<<31))
     seed_hi = int((seed >> 32) - (1<<31))
