@@ -45,7 +45,7 @@ def plot_bandstructure(flead, momenta):
     energy_list = [flead.energies(k) for k in momenta]
 
     pylab.plot(momenta, energy_list)
-    pylab.xlabel("momentum [in untis of (lattice constant)^-1]",
+    pylab.xlabel("momentum [in units of (lattice constant)^-1]",
                  fontsize=latex.mpl_label_size)
     pylab.ylabel("energy [in units of t]",
                  fontsize=latex.mpl_label_size)

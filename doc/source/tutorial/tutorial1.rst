@@ -165,7 +165,8 @@ subbands that increases with energy.
      `~kwant.builder.Builder` automatically adds the other
      direction of the hopping such that the resulting system is Hermitian.
 
-     It however does not hurt the other direction of the hopping, too::
+     However, it does not hurt to define the opposite direction of hopping as
+     well.
 
          sys[(1, 0), (0, 0)] = - t
          sys[(0, 0), (1, 0)] = - t.conj()

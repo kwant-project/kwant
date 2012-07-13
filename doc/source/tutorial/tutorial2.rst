@@ -398,7 +398,7 @@ period of one flux quantum.
     by providing an alternative starting point from where
     the lead is traced back::
 
-        sys.attach_lead(lead1, (0, 0))
+        sys.attach_lead(lead1, lat(0, 0))
 
     starts the trace-back in the middle of the ring, resulting
     in the lead being attached to the inner circle:
