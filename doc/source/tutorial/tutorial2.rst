@@ -244,31 +244,27 @@ oscillatory transmission behavior through resonances in the quantum well.
     In this case, `g()` always uses the local variable inside `f()`
     (unless we would add ``global string`` in `g()`).
 
-  - `~kwant.builder.Builder` does not only accept functions as
-    values, but every python object that can be used as a function.
+  - `~kwant.builder.Builder` in fact accepts not only functions but any python
+    object which is callable.  We can take advantage of the fact that instances
+    of python classes with a `__call__` method can be called just as if they
+    were functions::
 
-    In particular it allows to use a functor::
-
-        class Functor:
-            def __init__(self, x1, x2):
-                self.x1 = x1
-                self.x2 = x2
+        class Well:
+            def __init__(self, a, b=0):
+                self.a = a
+                self.b = b
 
             def __call__(self, site):
                 x, y = site.pos
-                if self.x1 < x < self.x2:
-                    return self.pot
-                else:
-                    return 0
+                return self.a * (x**2 + y**2) + b
 
-        functor = Functor(10, 20)
+        well = Well(3, 4)
 
-        sys[...] = functor
+        sys[...] = well
 
-        functor.pot = ...
+        well.a = ...
 
-    This approach would in principle also avoid the use of
-    a global variable, as the value of the potential could
+    This approach allows to avoid the use of global variables.  Parameters can
     be changed inside the object.
 
 .. _tutorial-abring:
