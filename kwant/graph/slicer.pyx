@@ -17,8 +17,8 @@ def slice(CGraph graph, left, right):
     cdef c_slicer.Slicing *slicing
     cdef int i, j, slc_size
 
-    leftarr = np.array(left, dtype=gint_dtype)
-    rightarr = np.array(right, dtype=gint_dtype)
+    leftarr = np.unique(np.array(left, dtype=gint_dtype))
+    rightarr = np.unique(np.array(right, dtype=gint_dtype))
 
     if leftarr.ndim != 1:
         raise ValueError("Left cannot be interpreted as a 1D array.")
@@ -28,6 +28,11 @@ def slice(CGraph graph, left, right):
 
     if leftarr.size == 0 or rightarr.size == 0:
         raise ValueError("Empty boundary arrays are not supported yet.")
+
+    # slicing only possible if there is no overlap between
+    # left and right slices
+    if np.intersect1d(rightarr, leftarr, assume_unique=True).size:
+        return (tuple(range(graph.num_nodes)), )
 
     slicing = c_slicer.slice(graph.num_nodes,
                              graph.heads_idxs,
