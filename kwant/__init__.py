@@ -2,6 +2,8 @@ __all__ = ['system', 'version', 'builder', 'lattice', 'run']
 for module in __all__:
     exec 'from . import {0}'.format(module)
 
+from .version import version as __version__
+
 from .builder import Builder
 __all__.append('Builder')
 
