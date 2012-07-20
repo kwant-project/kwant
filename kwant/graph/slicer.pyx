@@ -32,7 +32,7 @@ def slice(CGraph graph, left, right):
     # slicing only possible if there is no overlap between
     # left and right slices
     if np.intersect1d(rightarr, leftarr, assume_unique=True).size:
-        return (tuple(range(graph.num_nodes)), )
+        return [tuple(xrange(graph.num_nodes))]
 
     slicing = c_slicer.slice(graph.num_nodes,
                              graph.heads_idxs,
@@ -54,4 +54,4 @@ def slice(CGraph graph, left, right):
 
     c_slicer.freeSlicing(slicing)
 
-    return tuple(slclist)
+    return slclist
