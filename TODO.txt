@@ -24,6 +24,8 @@ Roughly in order of importance.                                     -*-org-*-
 * Benchmark mumps and check whether nested dissection would be useful.
   If yes, implement it.
 
+* Make kwant objects pickleable.
+
 * Use sparse linear algebra to calculate bands
   However, scipy's sparse eigenvalues don't seem to work well.
 
@@ -38,6 +40,20 @@ Roughly in order of importance.                                     -*-org-*-
 * Optionally show site coordinates when plotting a system.
 
 * Add support for easily adding magnetic field to a system.
+
+* "shape" doesn't work for leads when only checking y (and not x)
+  Make it aware of symmetries.
+
+* Improve experience when working with sites in a finalized builder
+  (It should be possible to map sites to nodes efficiently.  Probably, the best
+  way to do it is to sort the sites in finalized builders.)
+  One could than also RLE compress sites in finalized builders.
+
+* Selective plotting (function).
+
+* Do not save packed sites of neighbors.
+
+* Consider (optionally) only saving packed sites for which functions are called
 
 * Generalize InfiniteSystem to multiple directions.
 
