@@ -812,7 +812,12 @@ class Builder(object):
         return chain(self.H, self.hoppings())
 
     def sites(self):
-        """Return a read-only set over all sites."""
+        """Return a read-only set over all sites.
+
+        The sites that are returned belong to the fundamental domain of the
+        `Builder` symmetry, and are not necessarily the ones that were set
+        initially (but always the equivalent ones).
+        """
         try:
             return self.H.viewkeys()
         except AttributeError:
@@ -824,7 +829,12 @@ class Builder(object):
             yield site, hvhv[1]
 
     def hoppings(self):
-        """Return an iterator over all hoppings."""
+        """Return an iterator over all Builder hoppings.
+
+        The hoppings that are returned belong to the fundamental domain of the
+        `Builder` symmetry, and are not necessarily the ones that were set
+        initially (but always the equivalent ones).
+        """
         for tail, hvhv in self.H.iteritems():
             for head, value in edges(hvhv):
                 if value is other: continue

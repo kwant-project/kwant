@@ -225,6 +225,9 @@ class TranslationalSymmetry(builder.Symmetry):
     produced. A certain flexibility in choice of the fundamental domain can be
     achieved by calling manually the `add_site_group` method and providing it
     the `other_vectors` parameter.
+
+    The fundamental domain for hoppings are all hoppings ``(a, b)`` with site
+    `a` in fundamental domain of sites.
     """
     def __init__(self, periods):
         self.periods = ta.array(periods)
