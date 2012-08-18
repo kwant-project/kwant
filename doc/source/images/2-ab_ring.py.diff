@@ -81,11 +81,10 @@
 +               fontsize=latex.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
 +               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("2-ab_ring_result.pdf")
-+    fig.savefig("2-ab_ring_result.png",
-+                dpi=(html.figwidth_px/latex.mpl_width_in))
++    fig.savefig("2-ab_ring_result.png", dpi=html.dpi)
  
  
  def main():
@@ -93,8 +92,9 @@
  
      # Check that the system looks as intended.
 -    kwant.plot(sys)
-+    kwant.plot(sys, "2-ab_ring_sys.pdf", width=latex.figwidth_pt)
-+    kwant.plot(sys, "2-ab_ring_sys.png", width=html.figwidth_px)
++    size = (latex.figwidth_in, latex.figwidth_in)
++    kwant.plot(sys, file="2-ab_ring_sys.pdf", fig_size=size, dpi=html.dpi)
++    kwant.plot(sys, file="2-ab_ring_sys.png", fig_size=size, dpi=html.dpi)
  
      # Finalize the system.
      sys = sys.finalized()
@@ -104,11 +104,11 @@
  
 +    # Finally, some plots needed for the notes
 +    sys = make_system_note1()
-+    kwant.plot(sys, "2-ab_ring_note1.pdf", width=latex.figwidth_small_pt)
-+    kwant.plot(sys, "2-ab_ring_note1.png", width=html.figwidth_small_px)
++    kwant.plot(sys, file="2-ab_ring_note1.pdf", fig_size=size, dpi=html.dpi)
++    kwant.plot(sys, file="2-ab_ring_note1.png", fig_size=size, dpi=html.dpi)
 +    sys = make_system_note2()
-+    kwant.plot(sys, "2-ab_ring_note2.pdf", width=latex.figwidth_small_pt)
-+    kwant.plot(sys, "2-ab_ring_note2.png", width=html.figwidth_small_px)
++    kwant.plot(sys, file="2-ab_ring_note2.pdf", fig_size=size, dpi=html.dpi)
++    kwant.plot(sys, file="2-ab_ring_note2.png", fig_size=size, dpi=html.dpi)
 +
 +
  # Call the main function if the script gets executed (as opposed to imported).

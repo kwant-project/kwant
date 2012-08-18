@@ -151,13 +151,11 @@ def main():
 
     # To highlight the two sublattices of graphene, we plot one with
     # a filled, and the other one with an open circle:
-    plotter_symbols = {a: kwant.plotter.Circle(r=0.3),
-                       b: kwant.plotter.Circle(r=0.3,
-                                               fcol=kwant.plotter.white,
-                                               lcol=kwant.plotter.black)}
+    def group_colors(site):
+        return 0 if site.group == a else 1
 
     # Plot the closed system without leads.
-    kwant.plot(sys, symbols=plotter_symbols)
+    kwant.plot(sys, site_color=group_colors, colorbar=False)
 #HIDDEN_END_itkk
 
     # Compute some eigenvalues.
@@ -170,7 +168,7 @@ def main():
         sys.attach_lead(lead)
 
     # Then, plot the system with leads.
-    kwant.plot(sys, symbols=plotter_symbols)
+    kwant.plot(sys, site_color=group_colors, colorbar=False)
 
     # Finalize the system.
     sys = sys.finalized()

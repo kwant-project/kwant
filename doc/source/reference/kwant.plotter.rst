@@ -10,30 +10,16 @@ Plotting routine
    :toctree: generated/
 
    plot
-   show
-   interpolate
+   map
 
-Auxiliary types
-----------------
+Data-generating functions
+-------------------------
 .. autosummary::
    :toctree: generated/
 
-   Circle
-   Polygon
-   Line
-   LineStyle
-   Color
+   sys_leads_sites
+   sys_leads_hoppings
+   sys_leads_pos
+   sys_leads_hopping_pos
+   mask_interpolate
 
-Pre-defined colors
-------------------
-+------------------------+
-| `~kwant.plotter.black` |
-+------------------------+
-| `~kwant.plotter.white` |
-+------------------------+
-| `~kwant.plotter.red`   |
-+------------------------+
-| `~kwant.plotter.green` |
-+------------------------+
-| `~kwant.plotter.blue`  |
-+------------------------+

@@ -8,7 +8,7 @@
  
  
  def make_system(a=1, t=1.0, r=10):
-@@ -69,18 +70,30 @@
+@@ -69,19 +70,24 @@
          # we only plot the 15 lowest eigenvalues
          energies.append(ev[:15])
  
@@ -25,22 +25,18 @@
 +               fontsize=latex.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
 +               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("3-closed_system_result.pdf")
-+    fig.savefig("3-closed_system_result.png",
-+                dpi=(html.figwidth_px/latex.mpl_width_in))
++    fig.savefig("3-closed_system_result.png", dpi=html.dpi)
  
  
  def main():
      sys = make_system()
  
-     # Check that the system looks as intended.
+-    # Check that the system looks as intended.
 -    kwant.plot(sys)
-+    kwant.plot(sys, filename="3-closed_system_sys.pdf",
-+               width=latex.figwidth_pt)
-+    kwant.plot(sys, filename="3-closed_system_sys.png",
-+               width=html.figwidth_px)
- 
+-
      # Finalize the system.
      sys = sys.finalized()
+ 

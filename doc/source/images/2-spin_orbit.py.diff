@@ -8,7 +8,7 @@
  
  # define Pauli-matrices for convenience
  sigma_0 = numpy.eye(2)
-@@ -73,19 +74,25 @@
+@@ -73,19 +74,24 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(1, 0))
  
@@ -25,11 +25,10 @@
 +               fontsize=latex.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
 +               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("2-spin_orbit_result.pdf")
-+    fig.savefig("2-spin_orbit_result.png",
-+                dpi=(html.figwidth_px/latex.mpl_width_in))
++    fig.savefig("2-spin_orbit_result.png", dpi=html.dpi)
  
  
  def main():

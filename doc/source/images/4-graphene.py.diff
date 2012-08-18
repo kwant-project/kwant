@@ -1,14 +1,15 @@
 --- original
 +++ modified
-@@ -17,6 +17,7 @@
+@@ -17,6 +17,8 @@
  
  # For plotting
  from matplotlib import pyplot
-+import latex, html
++import latex
++import html
  
  
  # Define the graphene lattice
-@@ -63,7 +64,7 @@
+@@ -63,7 +65,7 @@
          return (-1 < x < 1) and (-0.4 * r < y < 0.4 * r)
  
      lead0 = kwant.Builder(sym0)
@@ -17,7 +18,7 @@
      for hopping in hoppings:
          lead0[lead0.possible_hoppings(*hopping)] = -1
  
-@@ -105,11 +106,21 @@
+@@ -105,11 +107,20 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(0, 1))
  
@@ -35,15 +36,14 @@
 +               fontsize=latex.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
 +               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("4-graphene_result.pdf")
-+    fig.savefig("4-graphene_result.png",
-+                dpi=(html.figwidth_px/latex.mpl_width_in))
++    fig.savefig("4-graphene_result.png", dpi=html.dpi)
  
  
  def plot_bandstructure(flead, momenta):
-@@ -117,11 +128,21 @@
+@@ -117,11 +128,20 @@
      # the bandstructure
      energy_list = [flead.energies(k) for k in momenta]
  
@@ -61,37 +61,38 @@
 +               fontsize=latex.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
 +               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("4-graphene_bs.pdf")
-+    fig.savefig("4-graphene_bs.png",
-+                dpi=(html.figwidth_px/latex.mpl_width_in))
++    fig.savefig("4-graphene_bs.png", dpi=html.dpi)
  
  
  def main():
-@@ -136,17 +157,20 @@
-                                                lcol=kwant.plotter.black)}
+@@ -134,17 +154,22 @@
+         return 0 if site.group == a else 1
  
      # Plot the closed system without leads.
--    kwant.plot(sys, symbols=plotter_symbols)
+-    kwant.plot(sys, site_color=group_colors, colorbar=False)
 -
 -    # Compute some eigenvalues.
 -    compute_evs(sys.finalized())
-+    kwant.plot(sys, symbols=plotter_symbols,
-+               filename="4-graphene_sys1.pdf", width=latex.figwidth_pt)
-+    kwant.plot(sys, symbols=plotter_symbols,
-+               filename="4-graphene_sys1.png", width=html.figwidth_px)
++    size = (latex.figwidth_in, latex.figwidth_in)
++    kwant.plot(sys, site_color=group_colors, colorbar=False,
++               file="4-graphene_sys1.pdf", fig_size=size, dpi=html.dpi)
++    kwant.plot(sys, site_color=group_colors, colorbar=False,
++               file="4-graphene_sys1.png", fig_size=size, dpi=html.dpi)
  
      # Attach the leads to the system.
      for lead in leads:
          sys.attach_lead(lead)
  
      # Then, plot the system with leads.
--    kwant.plot(sys, symbols=plotter_symbols)
-+    kwant.plot(sys, symbols=plotter_symbols,
-+               filename="4-graphene_sys2.pdf", width=latex.figwidth_pt)
-+    kwant.plot(sys, symbols=plotter_symbols,
-+               filename="4-graphene_sys2.png", width=html.figwidth_px)
+-    kwant.plot(sys, site_color=group_colors, colorbar=False)
++    size = (latex.figwidth_in, 0.9 * latex.figwidth_in)
++    kwant.plot(sys, site_color=group_colors, colorbar=False,
++               file="4-graphene_sys2.pdf", fig_size=size, dpi=html.dpi)
++    kwant.plot(sys, site_color=group_colors, colorbar=False,
++               file="4-graphene_sys2.png", fig_size=size, dpi=html.dpi)
  
      # Finalize the system.
      sys = sys.finalized()

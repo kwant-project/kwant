@@ -118,27 +118,16 @@ plot the system:
     :start-after: #HIDDEN_BEGIN_itkk
     :end-before: #HIDDEN_END_itkk
 
-We customize the plotting: `plotter_symbols` is a dictionary with the
-sublattice objects `a` and `b` as keys, and the `~kwant.plotter.Circle` objects
-specify that the sublattice `a` should be drawn using a filled black circle,
-and `b` using a white circle with a black outline. ::
+We customize the plotting: we set the `site_colors` argument of
+`~kwant.plotter.plot` to a function which returns 0 for
+sublattice `a` and 1 for sublattice `b`::
 
-    plotter_symbols = {a: kwant.plotter.Circle(r=0.3),
-                       b: kwant.plotter.Circle(r=0.3,
-                                               fcol=kwant.plotter.white,
-                                               lcol=kwant.plotter.black)}
+    def group_colors(site):
+        return 0 if site.group == a else 1
 
-The radius of the circle is given in relative units: `~kwant.plotter.plot` uses
-a typical length scale as a reference length. By default, the typical length
-scale is the smallest distance between lattice points.  `~kwant.plotter.plot`
-can find this length by itself, but must then go through all
-hoppings. Alternatively, one can specify the typical length scale using the
-argument `a` as in the example (not to be confused with the sublattice `a`)
-which is here set to the distance between carbon atoms in the graphene
-lattice. Specifying ``r=0.3`` in `~kwant.plotter.Circle` hence means that the
-radius of the circle is 30% of the carbon-carbon distance. Using this relative
-unit it is easy to make good-looking plots where the symbols cover a
-well-defined part of the plot.
+The function `~kwant.plotter.plot` shows these values using a color scale
+(grayscale by default). The symbol `size` is specified in points, and is
+independent on the overall figure size.
 
 Plotting the closed system gives this result:
 

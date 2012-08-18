@@ -8,6 +8,7 @@
 #  - Making scattering region and leads
 #  - Using the simple sparse solver for computing Landauer conductance
 
+from matplotlib import pyplot
 #HIDDEN_BEGIN_dwhx
 import kwant
 #HIDDEN_END_dwhx
@@ -119,7 +120,6 @@ for ie in xrange(100):
 # Use matplotlib to write output
 # We should see conductance steps
 #HIDDEN_BEGIN_lliv
-from matplotlib import pyplot
 
 pyplot.figure()
 pyplot.plot(energies, data)

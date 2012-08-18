@@ -1,26 +1,29 @@
 --- original
 +++ modified
-@@ -9,6 +9,7 @@
- #  - Using the simple sparse solver for computing Landauer conductance
+@@ -10,6 +10,8 @@
  
+ from matplotlib import pyplot
  import kwant
-+import latex, html
++import latex
++import html
  
  # First, define the tight-binding system
  
-@@ -73,7 +74,8 @@
+@@ -73,8 +75,9 @@
+ sys.attach_lead(lead1)
  
  # Plot it, to make sure it's OK
- 
+-
 -kwant.plot(sys)
-+kwant.plot(sys, "1-quantum_wire_sys.pdf", width=latex.figwidth_pt)
-+kwant.plot(sys, "1-quantum_wire_sys.png", width=html.figwidth_px)
++size = (latex.figwidth_in, 0.3 * latex.figwidth_in)
++kwant.plot(sys, file="1-quantum_wire_sys.pdf", fig_size=size, dpi=html.dpi)
++kwant.plot(sys, file="1-quantum_wire_sys.png", fig_size=size, dpi=html.dpi)
  
  # Finalize the system
  
-@@ -98,8 +100,14 @@
+@@ -98,8 +101,13 @@
+ # Use matplotlib to write output
  # We should see conductance steps
- from matplotlib import pyplot
  
 -pyplot.figure()
 +fig = pyplot.figure()
@@ -32,8 +35,7 @@
 +pyplot.ylabel("conductance [in units of e^2/h]", fontsize=latex.mpl_label_size)
 +pyplot.setp(fig.get_axes()[0].get_xticklabels(), fontsize=latex.mpl_tick_size)
 +pyplot.setp(fig.get_axes()[0].get_yticklabels(), fontsize=latex.mpl_tick_size)
-+fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
 +fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +fig.savefig("1-quantum_wire_result.pdf")
-+fig.savefig("1-quantum_wire_result.png",
-+            dpi=(html.figwidth_px/latex.mpl_width_in))
++fig.savefig("1-quantum_wire_result.png", dpi=html.dpi)

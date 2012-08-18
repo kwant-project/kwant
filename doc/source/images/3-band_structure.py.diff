@@ -8,7 +8,7 @@
  
  
  def make_lead(a=1, t=1.0, W=10):
-@@ -39,11 +40,20 @@
+@@ -39,11 +40,19 @@
      # the bandstructure
      energy_list = [lead.energies(k) for k in momenta]
  
@@ -25,11 +25,10 @@
 +               fontsize=latex.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
 +               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("3-band_structure_result.pdf")
-+    fig.savefig("3-band_structure_result.png",
-+                dpi=(html.figwidth_px/latex.mpl_width_in))
++    fig.savefig("3-band_structure_result.png", dpi=html.dpi)
  
  
  def main():

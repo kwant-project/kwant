@@ -1,83 +1,114 @@
-import tempfile, os
-from nose.tools import assert_raises
-import numpy as np
+import tempfile
+import nose
 import kwant
 from kwant import plotter
-
-lat = kwant.lattice.Square()
-
-def make_ribbon(width, dir, E, t):
-    b = kwant.Builder(kwant.TranslationalSymmetry([(dir, 0)]))
-
-    # Add sites to the builder.
-    for y in xrange(width):
-        b[lat(0, y)] = E
-
-    # Add hoppings to the builder.
-    for y in xrange(width):
-        b[lat(0, y), lat(1, y)] = t
-        if y+1 < width:
-            b[lat(0, y), lat(0, y+1)] = t
-
-    return b
+if plotter._mpl_enabled:
+    from mpl_toolkits import mplot3d
+    from matplotlib import pyplot
 
 
-def make_rectangle(length, width, E, t):
-    b = kwant.Builder()
+def sys_2d(W=3, r1=3, r2=8):
+    a = 1
+    t = 1.0
+    lat = kwant.lattice.Square(a)
+    sys = kwant.Builder()
 
-    # Add sites to the builder.
-    for x in xrange(length):
-        for y in xrange(width):
-            b[lat(x, y)] = E
+    def ring(pos):
+        (x, y) = pos
+        rsq = x ** 2 + y ** 2
+        return r1 ** 2 < rsq < r2 ** 2
 
-    # Add hoppings to the builder.
-    for x in xrange(length):
-        for y in xrange(width):
-            if x+1 < length:
-                b[lat(x, y), lat(x+1, y)] = t
-            if y+1 < width:
-                b[lat(x, y), lat(x, y+1)] = t
+    sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
+    for hopping in lat.nearest:
+        sys[sys.possible_hoppings(*hopping)] = - t
+    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+    lead0 = kwant.Builder(sym_lead0)
 
-    return b
+    def lead_shape(pos):
+        (x, y) = pos
+        return (-1 < x < 1) and (-W / 2 < y < W / 2)
+
+    lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
+    for hopping in lat.nearest:
+        lead0[lead0.possible_hoppings(*hopping)] = - t
+    lead1 = lead0.reversed()
+    sys.attach_lead(lead0)
+    sys.attach_lead(lead1)
+    return sys
+
+
+def sys_3d(W=3, r1=2, r2=4, a=1, t=1.0):
+    lat = kwant.make_lattice(((a, 0, 0), (0, a, 0), (0, 0, a)))
+    lat.nearest = (((1, 0, 0), lat, lat), ((0, 1, 0), lat, lat),
+                   ((0, 0, 1), lat, lat))
+    sys = kwant.Builder()
+
+    def ring(pos):
+        (x, y, z) = pos
+        rsq = x ** 2 + y ** 2
+        return (r1 ** 2 < rsq < r2 ** 2) and abs(z) < 2
+    sys[lat.shape(ring, (0, -r2 + 1, 0))] = 4 * t
+    for hopping in lat.nearest:
+        sys[sys.possible_hoppings(*hopping)] = - t
+    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0, 0))])
+    lead0 = kwant.Builder(sym_lead0)
+
+    def lead_shape(pos):
+        (x, y, z) = pos
+        return (-1 < x < 1) and (-W / 2 < y < W / 2) and abs(z) < 2
+
+    lead0[lat.shape(lead_shape, (0, 0, 0))] = 4 * t
+    for hopping in lat.nearest:
+        lead0[lead0.possible_hoppings(*hopping)] = - t
+    lead1 = lead0.reversed()
+    sys.attach_lead(lead0)
+    sys.attach_lead(lead1)
+    return sys
+
 
 def test_plot():
-    E = 4.0
-    t = -1.0
-    length = 5
-    width = 5
+    plot = plotter.plot
+    if not plotter._mpl_enabled:
+        raise nose.SkipTest
+    sys2d = sys_2d()
+    sys3d = sys_3d()
+    color_opts = ['k', (lambda site: site.tag[0]),
+                  lambda site: (abs(site.tag[0] / 100),
+                                abs(site.tag[1] / 100), 0)]
+    for color in color_opts:
+        for sys in (sys2d, sys3d):
+            fig = plot(sys, site_color=color, cmap='binary', show=False)
+            if color != 'k' and isinstance(color(iter(sys2d.sites()).next()),
+                                           float):
+                assert fig.axes[0].collections[0].get_array() is not None
+            assert len(fig.axes[0].collections) == 4
+    color_opts = ['k', (lambda site, site2: site.tag[0]),
+                  lambda site, site2: (abs(site.tag[0] / 100),
+                                       abs(site.tag[1] / 100), 0)]
+    for color in color_opts:
+        for sys in (sys2d, sys3d):
+            fig = plot(sys2d, hop_color=color, cmap='binary', show=False,
+                       fig_size=(2, 10), dpi=30)
+            if color != 'k' and isinstance(color(iter(sys2d.sites()).next(),
+                                                      None), float):
+                assert fig.axes[0].collections[1].get_array() is not None
 
-    b = make_rectangle(length, width, E, t)
-    b.attach_lead(make_ribbon(width, -1, E, t))
-    b.attach_lead(make_ribbon(width, 1, E, t))
+    assert isinstance(plot(sys3d, show=False).axes[0], mplot3d.axes3d.Axes3D)
 
-    directory = tempfile.mkdtemp()
-    filename = os.path.join(directory, "test.pdf")
+    sys2d.leads = []
+    plot(sys2d, show=False)
+    del sys2d[list(sys2d.hoppings())]
+    plot(sys2d, show=False)
+    with tempfile.TemporaryFile('w+b') as output:
+        plot(sys3d, file=output)
 
-    kwant.plot(b.finalized(), filename=filename,
-               symbols=plotter.Circle(r=0.25, fcol=plotter.red),
-               lines=plotter.Line(lw=0.1, lcol=plotter.red),
-               lead_symbols=plotter.Circle(r=0.25, fcol=plotter.black),
-               lead_lines=plotter.Line(lw=0.1, lcol=plotter.black),
-               lead_fading=[0, 0.2, 0.4, 0.6, 0.8])
 
-    os.unlink(filename)
-    os.rmdir(directory)
-
-def test_non_2d_fails():
-    directory = tempfile.mkdtemp()
-    filename = os.path.join(directory, "test.pdf")
-
-    for d in [1, 2, 3, 15]:
-        b = kwant.Builder()
-        lat = kwant.make_lattice(np.identity(d))
-        site = kwant.builder.Site(lat, (0,) * d)
-        b[site] = 0
-        if d == 2:
-            kwant.plot(b, filename=filename)
-            plotter.interpolate(b, b)
-        else:
-            assert_raises(ValueError, kwant.plot, b)
-            assert_raises(ValueError, plotter.interpolate, b, b)
-
-    os.unlink(filename)
-    os.rmdir(directory)
+def test_map():
+    sys = sys_2d()
+    with tempfile.TemporaryFile('w+b') as output:
+        plotter.map(sys, lambda site: site.tag[0], file=output,
+                          method='linear', a=4, oversampling=4, cmap='flag')
+        plotter.map(sys.finalized(), xrange(len(sys.sites())),
+                          file=output)
+        nose.tools.assert_raises(ValueError, plotter.map,
+                                 sys, xrange(len(sys.sites())), file=output)
