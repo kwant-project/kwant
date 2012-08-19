@@ -3,7 +3,8 @@ __all__ = ['lu_factor', 'lu_solve', 'rcond_from_lu']
 import numpy as np
 from . import lapack
 
-def lu_factor(a, overwrite_a = False):
+
+def lu_factor(a, overwrite_a=False):
     """Compute the LU factorization of a matrix A = P * L * U. The function
     returns a tuple (lu, p, singular), where lu contains the LU factorization
     storing the unit lower triangular matrix L in the strictly lower triangle
@@ -51,6 +52,7 @@ def lu_factor(a, overwrite_a = False):
     else:
         return lapack.cgetrf(a)
 
+
 def lu_solve((lu, ipiv, singular), b):
     """Solve a linear system of equations, a x = b, given the LU
     factorization of a
@@ -74,7 +76,7 @@ def lu_solve((lu, ipiv, singular), b):
                              "are probably unreliable")
 
     ltype, lu, b = lapack.prepare_for_lapack(False, lu, b)
-    ipiv = np.ascontiguousarray(np.asanyarray(ipiv), dtype = lapack.int_dtype)
+    ipiv = np.ascontiguousarray(np.asanyarray(ipiv), dtype=lapack.int_dtype)
 
     if b.ndim > 2:
         raise ValueError("lu_solve: b must be a vector or matrix")
@@ -91,7 +93,8 @@ def lu_solve((lu, ipiv, singular), b):
     else:
         return lapack.cgetrs(lu, ipiv, b)
 
-def rcond_from_lu((lu, ipiv, singular), norm_a, norm = "1"):
+
+def rcond_from_lu((lu, ipiv, singular), norm_a, norm="1"):
     """Compute the reciprocal condition number from the LU decomposition as
     returned from lu_factor(), given additionally the norm of the matrix a in
     norm_a.

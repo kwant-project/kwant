@@ -3,10 +3,13 @@
 from __future__ import division
 __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 
-import abc, math, types
+import abc
+import math
+import types
 import numpy as np
 from kwant import physics
 import _system
+
 
 class System(object):
     """Abstract general low-level system.
@@ -56,7 +59,8 @@ class FiniteSystem(System):
     Instance Variables
     ------------------
     leads : sequence of lead objects
-        Each lead object has to provide at least a method ``self_energy(energy)``.
+        Each lead object has to provide at least a method
+        ``self_energy(energy)``.
     lead_neighbor_seqs : sequence of sequences of integers
         Each sub-sequence contains the indices of the system sites to which the
         lead is connected.
@@ -127,7 +131,6 @@ class InfiniteSystem(System):
 
     def inter_slice_hopping(self):
         """Hopping Hamiltonian between two slices of the infinite system."""
-        slice_size = self.slice_size
         slice_sites = xrange(self.slice_size)
         neighbor_sites = xrange(self.slice_size, self.graph.num_nodes)
         return self.hamiltonian_submatrix(slice_sites, neighbor_sites)[0]
@@ -172,7 +175,7 @@ class InfiniteSystem(System):
         hop = self.inter_slice_hopping()
         result.hop = np.empty(result.ham.shape, dtype=complex)
         result.hop[:, : hop.shape[1]] = hop
-        result.hop[:, hop.shape[1] :] = 0
+        result.hop[:, hop.shape[1]:] = 0
         return result
 
 

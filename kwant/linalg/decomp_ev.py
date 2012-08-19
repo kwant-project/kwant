@@ -2,6 +2,7 @@ __all__ = ['gen_eig']
 
 from . import lapack
 
+
 def gen_eig(a, b, left=False, right=True, overwrite_ab=False):
     """Compute the eigenvalues and -vectors of the matrix pencil (a,b), i.e. of
     the generalized (unsymmetric) eigenproblem a v = lambda b v where a and b

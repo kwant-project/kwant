@@ -3,7 +3,8 @@ from __future__ import division
 __all__ = ['Builder', 'Site', 'SiteGroup', 'SimpleSiteGroup', 'Symmetry',
            'Lead', 'BuilderLead', 'SelfEnergy']
 
-import abc, sys
+import abc
+import sys
 import operator
 from itertools import izip, islice, chain
 from collections import Iterable
@@ -284,6 +285,7 @@ def herm_conj(value):
 class HermConjOfFunc(object):
     """Proxy returning the hermitian conjugate of the original result."""
     __slots__ = ('function')
+
     def __init__(self, function):
         self.function = function
 
@@ -724,8 +726,8 @@ class Builder(object):
                 # These two following lines make sure we do not waste space by
                 # storing different instances of identical sites.  They also
                 # verify that sites a and b already belong to the system.
-                a = self.H[a][0]      # Might fail.
-                b = self.H[b][0]      # Might fail.
+                a = self.H[a][0]                 # Might fail.
+                b = self.H[b][0]                 # Might fail.
                 self._set_edge(a, b, value)      # Will work.
                 self._set_edge(b, a, other)      # Will work.
             else:
@@ -733,8 +735,8 @@ class Builder(object):
                 if b2 not in self.H:
                     raise KeyError()
                 assert not sym.in_fd(a2)
-                self._set_edge(a, b, value)   # Might fail.
-                self._set_edge(b2, a2, other) # Will work.
+                self._set_edge(a, b, value)      # Might fail.
+                self._set_edge(b2, a2, other)    # Will work.
         except KeyError:
             raise KeyError(hoppinglike)
 
@@ -793,7 +795,8 @@ class Builder(object):
         sites = list(site for site in self.H
                      if self._out_degree(site) < 2)
         for site in sites:
-            if site not in self.H: continue
+            if site not in self.H:
+                continue
             while site:
                 pneighbors = tuple(self._out_neighbors(site))
                 if pneighbors:
@@ -837,14 +840,16 @@ class Builder(object):
         """
         for tail, hvhv in self.H.iteritems():
             for head, value in edges(hvhv):
-                if value is other: continue
+                if value is other:
+                    continue
                 yield (tail, head)
 
     def hopping_value_pairs(self):
         """Return an iterator over all (hopping, value) pairs."""
         for tail, hvhv in self.H.iteritems():
             for head, value in edges(hvhv):
-                if value is other: continue
+                if value is other:
+                    continue
                 yield (tail, head), value
 
     def dangling(self):
@@ -1045,10 +1050,11 @@ class Builder(object):
 
         #### Make graph.
         g = graph.Graph()
-        g.num_nodes = len(sites) # Some sites could not appear in any edge.
+        g.num_nodes = len(sites)  # Some sites could not appear in any edge.
         for tail, hvhv in self.H.iteritems():
             for head in islice(hvhv, 2, None, 2):
-                if tail == head: continue
+                if tail == head:
+                    continue
                 g.add_edge(id_by_site[tail], id_by_site[head])
         g = g.compressed()
 
@@ -1091,9 +1097,9 @@ class Builder(object):
 
         #### For each site of the fundamental domain, determine whether it has
         #### neighbors or not.
-        lsites_with = []    # Fund. domain sites with neighbors in prev. dom
-        lsites_without = [] # Remaining sites of the fundamental domain
-        for tail in self.H: # Loop over all sites of the fund. domain.
+        lsites_with = []       # Fund. domain sites with neighbors in prev. dom
+        lsites_without = []    # Remaining sites of the fundamental domain
+        for tail in self.H:    # Loop over all sites of the fund. domain.
             for head in self._out_neighbors(tail):
                 fd = sym.which(head)[0]
                 if fd == 1:

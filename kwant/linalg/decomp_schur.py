@@ -6,6 +6,7 @@ from math import sqrt
 import numpy as np
 from . import lapack
 
+
 def schur(a, calc_q=True, calc_ev=True, overwrite_a=False):
     """Compute the Schur form of a square matrix a.
 
@@ -62,9 +63,10 @@ def schur(a, calc_q=True, calc_ev=True, overwrite_a=False):
     if a.shape[0] != a.shape[1]:
         raise ValueError("Expect square matrix")
 
-    gees = getattr(lapack, ltype+"gees")
+    gees = getattr(lapack, ltype + "gees")
 
     return gees(a, calc_q, calc_ev)
+
 
 def convert_r2c_schur(t, q):
     """Convert a real Schur form (with possibly 2x2 blocks on the diagonal)
@@ -120,10 +122,10 @@ def convert_r2c_schur(t, q):
         y = c
         norm = sqrt(-b * c + c * c)
 
-        U = np.array([[x/norm, -y/norm],[y/norm, -x/norm]])
+        U = np.array([[x / norm, -y / norm], [y / norm, -x / norm]])
 
         t2[i, i] = a + x
-        t2[i+1, i] = 0.0
+        t2[i+1, i] = 0
         t2[i, i+1] = -b - c
         t2[i+1, i+1] = a - x
 
@@ -184,7 +186,7 @@ def order_schur(select, t, q, calc_ev=True, overwrite_tq=False):
 
     ltype, t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
 
-    trsen = getattr(lapack, ltype+"trsen")
+    trsen = getattr(lapack, ltype + "trsen")
 
     # Figure out if select is a function or array.
     isfun = isarray = True
@@ -200,21 +202,21 @@ def order_schur(select, t, q, calc_ev=True, overwrite_tq=False):
     if not (isarray or isfun):
         raise ValueError("select must be either a function or an array")
     elif isarray:
-        select = np.array(select, dtype = lapack.logical_dtype,
-                          order = 'F')
+        select = np.array(select, dtype=lapack.logical_dtype, order='F')
     else:
         select = np.array(np.vectorize(select)(np.arange(t.shape[0])),
-                          dtype= lapack.logical_dtype, order = 'F')
+                          dtype=lapack.logical_dtype, order='F')
 
     # Now check if the reordering can actually be done as desired,
     # if we have a real Schur form (i.e. if the 2x2 blocks would be
     # separated). If this is the case, convert to complex Schur form first.
     for i in np.diagonal(t, -1).nonzero()[0]:
         if bool(select[i]) != bool(select[i+1]):
-            t, q =convert_r2c_schur(t, q)
+            t, q = convert_r2c_schur(t, q)
             return order_schur(select, t, q, calc_ev, True)
 
     return trsen(select, t, q, calc_ev)
+
 
 def evecs_from_schur(t, q, select=None, left=False, right=True,
                      overwrite_tq=False):
@@ -263,7 +265,7 @@ def evecs_from_schur(t, q, select=None, left=False, right=True,
         or t.shape[0] != q.shape[0]):
         raise ValueError("Invalid Schur decomposition as input")
 
-    trevc = getattr(lapack, ltype+"trevc")
+    trevc = getattr(lapack, ltype + "trevc")
 
     # check if select is a function or an array
     if select is not None:
@@ -282,15 +284,16 @@ def evecs_from_schur(t, q, select=None, left=False, right=True,
             raise ValueError("select must be either a function, "
                              "an array or None")
         elif isarray:
-            selectarr = np.array(select, dtype = lapack.logical_dtype,
-                                 order = 'F')
+            selectarr = np.array(select, dtype=lapack.logical_dtype,
+                                 order='F')
         else:
             selectarr = np.array(np.vectorize(select)(np.arange(t.shape[0])),
-                                 dtype= lapack.logical_dtype, order = 'F')
+                                 dtype=lapack.logical_dtype, order='F')
     else:
         selectarr = None
 
     return trevc(t, q, selectarr, left, right)
+
 
 def gen_schur(a, b, calc_q=True, calc_z=True, calc_ev=True,
               overwrite_ab=False):
@@ -365,9 +368,10 @@ def gen_schur(a, b, calc_q=True, calc_z=True, calc_ev=True,
     if a.shape[0] != b.shape[0] or a.shape[0] != b.shape[1]:
         raise ValueError("Shape of b is incompatible to matrix a")
 
-    gges = getattr(lapack, ltype+"gges")
+    gges = getattr(lapack, ltype + "gges")
 
     return gges(a, b, calc_q, calc_z, calc_ev)
+
 
 def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
                     overwrite_stqz=False):
@@ -442,7 +446,7 @@ def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
                             s.shape[0] != z.shape[0]))):
         raise ValueError("Invalid Schur decomposition as input")
 
-    tgsen = getattr(lapack, ltype+"tgsen")
+    tgsen = getattr(lapack, ltype + "tgsen")
 
     # Figure out if select is a function or array.
     isfun = isarray = True
@@ -458,11 +462,10 @@ def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
     if not (isarray or isfun):
         raise ValueError("select must be either a function or an array")
     elif isarray:
-        select = np.array(select, dtype = lapack.logical_dtype,
-                          order = 'F')
+        select = np.array(select, dtype=lapack.logical_dtype, order='F')
     else:
         select = np.array(np.vectorize(select)(np.arange(t.shape[0])),
-                          dtype= lapack.logical_dtype, order = 'F')
+                          dtype=lapack.logical_dtype, order='F')
 
     # Now check if the reordering can actually be done as desired, if we have a
     # real Schur form (i.e. if the 2x2 blocks would be separated). If this is
@@ -477,11 +480,12 @@ def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
             elif z is not None:
                 s, t, z = convert_r2c_gen_schur(s, t, q=None, z=z)
             else:
-                s,t = convert_r2c_gen_schur(s, t)
+                s, t = convert_r2c_gen_schur(s, t)
 
             return order_gen_schur(select, s, t, q, z, calc_ev, True)
 
     return tgsen(select, s, t, q, z, calc_ev)
+
 
 def convert_r2c_gen_schur(s, t, q=None, z=None):
     """Convert a real generallzed Schur form (with possibly 2x2 blocks on the
@@ -563,8 +567,8 @@ def convert_r2c_gen_schur(s, t, q=None, z=None):
         # form. If necessary, order_gen_schur is used to ensure the desired
         # order of eigenvalues.
 
-        sb, tb, qb, zb, alphab, betab = gen_schur(s2[i:i+2,i:i+2],
-                                                  t2[i:i+2,i:i+2])
+        sb, tb, qb, zb, alphab, betab = gen_schur(s2[i:i+2, i:i+2],
+                                                  t2[i:i+2, i:i+2])
 
         # Ensure order of eigenvalues. (betab is positive)
         if alphab[0].imag < alphab[1].imag:
@@ -592,6 +596,7 @@ def convert_r2c_gen_schur(s, t, q=None, z=None):
         return s2, t2, z2
     else:
         return s2, t2
+
 
 def evecs_from_gen_schur(s, t, q=None, z=None, select=None,
                          left=False, right=True, overwrite_qz=False):
@@ -664,7 +669,7 @@ def evecs_from_gen_schur(s, t, q=None, z=None, select=None,
     if right and z is None:
         raise ValueError("Matrix z must be provided for right eigenvectors")
 
-    tgevc = getattr(lapack, ltype+"tgevc")
+    tgevc = getattr(lapack, ltype + "tgevc")
 
     # Check if select is a function or an array.
     if select is not None:
@@ -683,11 +688,11 @@ def evecs_from_gen_schur(s, t, q=None, z=None, select=None,
             raise ValueError("select must be either a function, "
                              "an array or None")
         elif isarray:
-            selectarr = np.array(select, dtype = lapack.logical_dtype,
-                                 order = 'F')
+            selectarr = np.array(select, dtype=lapack.logical_dtype,
+                                 order='F')
         else:
             selectarr = np.array(np.vectorize(select)(np.arange(t.shape[0])),
-                                 dtype= lapack.logical_dtype, order = 'F')
+                                 dtype=lapack.logical_dtype, order='F')
     else:
         selectarr = None
 

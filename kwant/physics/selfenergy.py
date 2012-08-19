@@ -10,6 +10,7 @@ dot = np.dot
 
 __all__ = ['self_energy', 'modes', 'Modes']
 
+
 def setup_linsys(h_onslice, h_hop, tol=1e6):
     """
     Make an eigenvalue problem for eigenvectors of translation operator.
@@ -59,10 +60,10 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
 
         A = np.empty((2*n, 2*n), dtype=np.common_type(h_onslice, h_hop))
 
-        A[0: n, 0: n] = kla.lu_solve(sol, -h_onslice)
-        A[0: n, n: 2*n] = kla.lu_solve(sol, -h_hop.T.conj())
-        A[n: 2*n, 0: n] = np.identity(n)
-        A[n: 2*n, n: 2*n] = 0
+        A[0:n, 0:n] = kla.lu_solve(sol, -h_onslice)
+        A[0:n, n:2*n] = kla.lu_solve(sol, -h_hop.T.conj())
+        A[n:2*n, 0:n] = np.identity(n)
+        A[n:2*n, n:2*n] = 0
 
         return A
     else:
@@ -71,8 +72,8 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
 
         # Recast the svd of h_hop = u s v^dagger such that
         # u, v are matrices with shape n x n_nonsing.
-        u = u[:, : n_nonsing]
-        s = s[: n_nonsing]
+        u = u[:, :n_nonsing]
+        s = s[:n_nonsing]
         # pad v with zeros if necessary
         v = np.zeros((n, n_nonsing), dtype=vh.dtype)
         v[:vh.shape[1], :] = vh[:n_nonsing, :].T.conj()
@@ -113,7 +114,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
             max_h = np.amax(np.abs(h_onslice))
             max_temp = np.amax(np.abs(temp))
 
-            gamma = max_h/max_temp * 1j
+            gamma = max_h / max_temp * 1j
 
             h = h_onslice + gamma * temp
 
@@ -132,9 +133,9 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         def extract_wf(psi, lmbdainv):
             return kla.lu_solve(sol,
                                 gamma * dot(v, psi[: n_nonsing]) +
-                                gamma * dot(u, psi[n_nonsing :] * lmbdainv) -
+                                gamma * dot(u, psi[n_nonsing:] * lmbdainv) -
                                 dot(u * s, psi[: n_nonsing] * lmbdainv) -
-                                dot(v * s, psi[n_nonsing :]))
+                                dot(v * s, psi[n_nonsing:]))
 
         # Project a full wave function back.
 
@@ -147,26 +148,27 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         A = np.empty((2 * n_nonsing, 2 * n_nonsing), np.common_type(h, h_hop))
         B = np.empty((2 * n_nonsing, 2 * n_nonsing), np.common_type(h, h_hop))
 
-        A[: n_nonsing, : n_nonsing] = -np.eye(n_nonsing)
+        A[:n_nonsing, :n_nonsing] = -np.eye(n_nonsing)
 
         B[n_nonsing: 2 * n_nonsing,
           n_nonsing: 2 * n_nonsing] = np.eye(n_nonsing)
 
         temp = kla.lu_solve(sol, v)
         temp2 = dot(u.T.conj(), temp)
-        A[n_nonsing: 2 * n_nonsing, : n_nonsing] = gamma * temp2
-        A[n_nonsing: 2 * n_nonsing, n_nonsing: 2 * n_nonsing] = - temp2 * s
+        A[n_nonsing : 2 * n_nonsing, :n_nonsing] = gamma * temp2
+        A[n_nonsing : 2 * n_nonsing, n_nonsing: 2 * n_nonsing] = - temp2 * s
         temp2 = dot(v.T.conj(), temp)
-        A[: n_nonsing, : n_nonsing] += gamma * temp2
-        A[: n_nonsing, n_nonsing: 2 * n_nonsing] = - temp2 * s
+        A[:n_nonsing, :n_nonsing] += gamma * temp2
+        A[:n_nonsing, n_nonsing : 2 * n_nonsing] = - temp2 * s
 
         temp = kla.lu_solve(sol, u)
         temp2 = dot(u.T.conj(), temp)
-        B[n_nonsing:2*n_nonsing, :n_nonsing] = temp2 * s
-        B[n_nonsing:2*n_nonsing, n_nonsing:2*n_nonsing] -= gamma * temp2
+        B[n_nonsing : 2 * n_nonsing, :n_nonsing] = temp2 * s
+        B[n_nonsing : 2 * n_nonsing, n_nonsing : 2 * n_nonsing] -= \
+            gamma * temp2
         temp2 = dot(v.T.conj(), temp)
         B[:n_nonsing, :n_nonsing] = temp2 * s
-        B[:n_nonsing, n_nonsing:2*n_nonsing] = - gamma * temp2
+        B[:n_nonsing, n_nonsing : 2 * n_nonsing] = - gamma * temp2
 
         # Solving a generalized eigenproblem is about twice as expensive
         # as solving a regular eigenvalue problem.
@@ -182,10 +184,10 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         # I put a more stringent condition here - errors can accumulate
         # from here to the eigenvalue calculation later.
         if rcond > eps * tol**2:
-            return (kla.lu_solve(lu_b, A), (u, s, v[:m,:]),
+            return (kla.lu_solve(lu_b, A), (u, s, v[:m, :]),
                     (extract_wf, project_wf))
         else:
-            return (A, B, (u, s, v[: m]), (extract_wf, project_wf))
+            return (A, B, (u, s, v[:m]), (extract_wf, project_wf))
 
 
 def split_degenerate(evs, tol=1e6):
@@ -291,7 +293,7 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             if extract is not None:
                 full_psi = extract(psi[:, indx], lmbdainv[indx])
             else:
-                full_psi = psi[: n, indx]
+                full_psi = psi[:n, indx]
 
             # Finding the true modes is done in two steps:
 
@@ -313,8 +315,8 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             if project:
                 psi[:, indx] = project(full_psi, lmbdainv[indx])
             else:
-                psi[: n, indx] = full_psi * lmbdainv[indx]
-                psi[n: 2*n, indx] = full_psi
+                psi[:n, indx] = full_psi * lmbdainv[indx]
+                psi[n:2*n, indx] = full_psi
 
             # 2. Moving infinitesimally away from the degeneracy
             # point, the modes should diagonalize the velocity
@@ -328,11 +330,11 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             # as we are happy with any superposition in this case.
 
             if h_hop.ndim == 2:
-                vel_op = -1j * dot(psi[n :, indx].T.conj(),
-                                     dot(h_hop, psi[: m, indx]))
+                vel_op = -1j * dot(psi[n:, indx].T.conj(),
+                                     dot(h_hop, psi[:m, indx]))
             else:
-                vel_op = -1j * dot(psi[n :, indx].T.conj() * h_hop,
-                                     psi[: n, indx])
+                vel_op = -1j * dot(psi[n:, indx].T.conj() * h_hop,
+                                     psi[:n, indx])
 
             vel_op = vel_op + vel_op.T.conj()
 
@@ -367,11 +369,11 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             k = indx[0]
 
             if h_hop.ndim == 2:
-                v[k] = 2 * dot(dot(psi[n: 2*n, k: k + 1].T.conj(), h_hop),
-                               psi[: m, k: k+1]).imag
+                v[k] = 2 * dot(dot(psi[n:2*n, k:k+1].T.conj(), h_hop),
+                               psi[:m, k:k+1]).imag
             else:
-                v[k] = 2 * dot(psi[n: 2*n, k: k + 1].T.conj() * h_hop,
-                               psi[0: n, k: k + 1]).imag
+                v[k] = 2 * dot(psi[n:2*n, k:k+1].T.conj() * h_hop,
+                               psi[0:n, k:k+1]).imag
 
             if v[k] > vel_eps:
                 rightselect[k] = True
@@ -459,7 +461,7 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
                           eps * tol * np.abs(beta))
 
             warning_settings = np.seterr(divide='ignore', invalid='ignore')
-            ev = alpha/beta
+            ev = alpha / beta
             np.seterr(**warning_settings)
             # Note: the division is OK here, as we later only access
             #       eigenvalues close to the unit circle
@@ -571,17 +573,17 @@ def self_energy(h_onslice, h_hop, tol=1e6):
 
         if nprop > 0:
             nmodes = np.sum(rselect)
-            vecs[:, : nmodes] = prop_vecs[:, rselect]
+            vecs[:, :nmodes] = prop_vecs[:, rselect]
         else:
             nmodes = 0
 
         vecs[:, nmodes:] = vec_gen(select)
 
         if v is not None:
-            return dot(v * w, dot(vecs[n :], dot(npl.inv(vecs[: n]),
-                                                 v.T.conj())))
+            return dot(v * w, dot(vecs[n:], dot(npl.inv(vecs[:n]),
+                                                v.T.conj())))
         else:
-            return dot(h_hop.T.conj(), dot(vecs[n :], npl.inv(vecs[: n])))
+            return dot(h_hop.T.conj(), dot(vecs[n:], npl.inv(vecs[:n])))
     else:
         # Reorder all the right-going eigenmodes to the top left part of
         # the Schur decomposition.
@@ -592,12 +594,13 @@ def self_energy(h_onslice, h_hop, tol=1e6):
         z = ord_schur(select)
 
         if v is not None:
-            return dot(v * w, dot(z[n :, : n], dot(npl.inv(z[: n, : n]),
+            return dot(v * w, dot(z[n:, :n], dot(npl.inv(z[:n, :n]),
                                                    v.T.conj())))
         else:
-            return dot(h_hop.T.conj(), dot(z[n:, : n], npl.inv(z[: n, : n])))
+            return dot(h_hop.T.conj(), dot(z[n:, :n], npl.inv(z[:n, :n])))
 
 Modes = namedtuple('Modes', ['vecs', 'vecslmbdainv', 'nmodes', 'svd'])
+
 
 def modes(h_onslice, h_hop, tol=1e6):
     """
@@ -666,9 +669,9 @@ def modes(h_onslice, h_hop, tol=1e6):
 
     nprop = np.sum(propselect)
     nevan = n - nprop // 2
-    evanselect_bool = np.zeros((2 * n), dtype='bool')
+    evanselect_bool = np.zeros((2*n), dtype='bool')
     evanselect_bool[evanselect] = True
-    evan_vecs = ord_schur(evanselect)[:, : nevan]
+    evan_vecs = ord_schur(evanselect)[:, :nevan]
 
     if nprop > 0:
         # Compute the propagating eigenvectors.
@@ -697,12 +700,12 @@ def modes(h_onslice, h_hop, tol=1e6):
         nmodes = np.sum(rprop)
         vecs = np.c_[prop_vecs[n:, lprop], prop_vecs[n:, rprop],
                      evan_vecs[n:]]
-        vecslmbdainv = np.c_[prop_vecs[: n, lprop], prop_vecs[: n, rprop],
-                             evan_vecs[: n]]
+        vecslmbdainv = np.c_[prop_vecs[:n, lprop], prop_vecs[:n, rprop],
+                             evan_vecs[:n]]
 
     else:
         vecs = evan_vecs[n:]
-        vecslmbdainv = evan_vecs[: n]
+        vecslmbdainv = evan_vecs[:n]
         nmodes = 0
 
     svd = None if s is None else (u, s, v)
@@ -739,9 +742,9 @@ def square_self_energy(width, hopping, potential, fermi_energy):
     # Precalculate the integrals of the longitudinal wave functions.
     def f(q):
         if abs(q) <= 2:
-            return q/2 - 1j * sqrt(1 - (q/2)**2)
+            return q/2 - 1j * sqrt(1 - (q / 2) ** 2)
         else:
-            return q/2 - copysign(sqrt((q/2)**2 - 1), q)
+            return q/2 - copysign(sqrt((q / 2) ** 2 - 1), q)
     f_p = np.empty((width,), dtype=complex)
     for p in xrange(width):
         e = 2 * hopping * (1 - cos(factor * (p + 1)))

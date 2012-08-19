@@ -6,6 +6,7 @@ import numpy as np
 from . import core, utils, scotch
 from .defs import gint_dtype
 
+
 def edge_dissection(gr, minimum_size, is_undirected=False):
     """Returns a nested dissection tree (represented as a nested number of
     tuples) for the graph gr, based on edge separators.

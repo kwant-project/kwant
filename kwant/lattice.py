@@ -4,7 +4,6 @@ __all__ = ['make_lattice', 'TranslationalSymmetry',
            'PolyatomicLattice', 'MonatomicLattice']
 
 from math import sqrt
-from itertools import izip, chain
 import numpy as np
 import tinyarray as ta
 from . import builder
@@ -245,6 +244,7 @@ class TranslationalSymmetry(builder.Symmetry):
             the site group which has to be processed.  Be sure to delete the
             previously processed site groups from `site_group_data` if you want
             to modify the cache.
+
         other_vectors : list of lists of integers
             Bravais lattice vectors used to complement the periods in forming
             a basis. The fundamental domain belongs to the linear space
@@ -282,7 +282,7 @@ class TranslationalSymmetry(builder.Symmetry):
         m.T[: num_dir] = bravais_periods
         num_vec = num_dir + len(other_vectors)
         if len(other_vectors) != 0:
-            m.T[num_dir : num_vec] = other_vectors
+            m.T[num_dir:num_vec] = other_vectors
         norms = np.apply_along_axis(np.linalg.norm, 1, m)
         indices = np.argsort(norms)
         for coord in zip(indices, range(num_vec, dim)):

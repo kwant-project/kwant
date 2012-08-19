@@ -1,18 +1,22 @@
 """Support for running functions from the command line"""
 
 from __future__ import division
-import os, struct, sys
-import numpy, scipy
+import os
+import struct
+import sys
+import numpy
+import scipy
 from .version import version
 __all__ = ['randomize', 'exec_argv']
 
 numpy_version = numpy.version.version
 if not numpy.version.release:
-    numpy_version +=  '-non-release'
+    numpy_version += '-non-release'
 
 scipy_version = scipy.version.version
 if not scipy.version.release:
-    scipy_version +=  '-non-release'
+    scipy_version += '-non-release'
+
 
 def randomize():
     """Seed numpy's random generator according to RNG_SEED environment
@@ -36,12 +40,13 @@ def randomize():
 
     # numpy.random.seed only uses the lower 32 bits of the seed argument, so we
     # split our 64 bit seed into two 32 bit numbers.
-    assert seed >= 0 and seed < 1<<64
-    seed_lo = int((seed & 0xffffffff) - (1<<31))
-    seed_hi = int((seed >> 32) - (1<<31))
+    assert seed >= 0 and seed < 1 << 64
+    seed_lo = int((seed & 0xffffffff) - (1 << 31))
+    seed_hi = int((seed >> 32) - (1 << 31))
     numpy.random.seed((seed_lo, seed_hi))
 
     return seed
+
 
 def exec_argv(vars):
     """Execute command line arguments as python statements.

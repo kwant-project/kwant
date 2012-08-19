@@ -1,6 +1,8 @@
-import subprocess, os
+import subprocess
+import os
 
 __all__ = ['version']
+
 
 # When changing this function, remember to also change its twin in ../setup.py.
 def get_version_from_git():
