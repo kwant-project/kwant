@@ -37,21 +37,21 @@ In order to deal with matrices in python, kwant uses the `numpy package
 <numpy.scipy.org>`_. In order to use matrices in our program, we thus also
 have to import that package:
 
-.. literalinclude:: ../../../examples/tutorial2a.py
+.. literalinclude:: ../../../tutorial/2-spin_orbit.py
     :lines: 19
 
 For convenience, we define the Pauli-matrices first (with `sigma_0` the
 unit matrix):
 
-.. literalinclude:: ../../../examples/tutorial2a.py
+.. literalinclude:: ../../../tutorial/2-spin_orbit.py
     :lines: 22-25
 
 Previously, we used numbers as the values of our matrix elements.
 However, `~kwant.builder.Builder` also accepts matrices as values, and
 we can simply write:
 
-.. literalinclude:: ../../../examples/tutorial2a.py
-    :lines: 37-44
+.. literalinclude:: ../../../tutorial/2-spin_orbit.py
+    :lines: 36-43
 
 Note that the Zeeman energy adds to the onsite term, whereas the Rashba
 spin-orbit term adds to the hoppings (due to the derivative operator).
@@ -78,17 +78,17 @@ when specifying `(1, 0)` it is not necessary to specify `(-1, 0)`),
 
 The leads also allow for a matrix structure,
 
-.. literalinclude:: ../../../examples/tutorial2a.py
-    :lines: 52-58
+.. literalinclude:: ../../../tutorial/2-spin_orbit.py
+    :lines: 50-56
 
 The remainder of the code is unchanged, and as a result we should obtain
 the following, clearly non-monotonic conductance steps:
 
-.. image:: ../images/tutorial2a_result.*
+.. image:: ../images/2-spin_orbit_result.*
 
 .. seealso::
      The full source code can be found in
-     :download:`example/tutorial2a.py <../../../examples/tutorial2a.py>`
+     :download:`tutorial/2-spin_orbit.py <../../../tutorial/2-spin_orbit.py>`
 
 .. specialnote:: Technical details
 
@@ -124,8 +124,8 @@ changing the potential then implies the need to build up the system again.
 Instead, we use a python *function* to define the onsite energies. We
 define the potential profile of a quantum well as:
 
-.. literalinclude:: ../../../examples/tutorial2b.py
-    :lines: 16-18, 22, 28-34
+.. literalinclude:: ../../../tutorial/2-quantum_well.py
+    :lines: 16-18, 21-24, 27-33
 
 This function takes one argument which is of type
 `~kwant.builder.Site`, from which you can get the realspace
@@ -140,8 +140,8 @@ the transmission as a function of well depth.
 kwant now allows us to pass a function as a value to
 `~kwant.builder.Builder`:
 
-.. literalinclude:: ../../../examples/tutorial2b.py
-    :lines: 36-41
+.. literalinclude:: ../../../tutorial/2-quantum_well.py
+    :lines: 35-40
 
 For each lattice point, the corresponding site is then passed to the
 function `onsite()`. Note that we had to define `onsite()`, as it is
@@ -155,8 +155,8 @@ of the lead -- this should be kept in mind.
 
 Finally, we compute the transmission probability:
 
-.. literalinclude:: ../../../examples/tutorial2b.py
-    :lines: 65, 68-77
+.. literalinclude:: ../../../tutorial/2-quantum_well.py
+    :lines: 67, 70-82
 
 Since we change the value of the global variable `pot` to vary the
 well depth, python requires us to write ``global pot`` to `enable
@@ -165,14 +165,14 @@ access to it
 Subsequent calls to :func:`kwant.solve <kwant.solvers.sparse.solve>`
 then will use the updated value of pot, and we get the result:
 
-.. image:: ../images/tutorial2b_result.*
+.. image:: ../images/2-quantum_well_result.*
 
 Starting from no potential (well depth = 0), we observe the typical
 oscillatory transmission behavior through resonances in the quantum well.
 
 .. seealso::
      The full source code can be found in
-     :download:`example/tutorial2b.py <../../../examples/tutorial2b.py>`
+     :download:`tutorial/2-quantum_well.py <../../../tutorial/2-quantum_well.py>`
 
 .. warning::
 
@@ -185,9 +185,9 @@ oscillatory transmission behavior through resonances in the quantum well.
   - Functions can also be used for hoppings. In this case, they take
     two `~kwant.builder.Site`'s as arguments.
 
-  - In example/tutorial2b.py, line 16
+  - In tutorial/2-quantum_well.py, line 16
 
-    .. literalinclude:: ../../../examples/tutorial2b.py
+    .. literalinclude:: ../../../tutorial/2-quantum_well.py
         :lines: 16
 
     is not really necessary. If this line was left out, the
@@ -276,7 +276,7 @@ Up to now, we only dealt with simple wire geometries. Now we turn to the case
 of a more complex geometry, namely transport through a quantum ring
 that is pierced by a magnetic flux :math:`\Phi`:
 
-.. image:: ../images/tutorial2c_sketch.*
+.. image:: ../images/2-ab_ring_sketch.*
 
 For a flux line, it is possible to choose a gauge such that a
 charged particle acquires a phase :math:`e\Phi/h` whenever it
@@ -290,8 +290,8 @@ First, define a boolean function defining the desired shape, i.e. a function
 that returns ``True`` whenever a point is inside the shape, and
 ``False`` otherwise:
 
-.. literalinclude:: ../../../examples/tutorial2c.py
-    :lines: 20, 24-27, 30-33
+.. literalinclude:: ../../../tutorial/2-ab_ring.py
+    :lines: 21, 24-27, 31-34
 
 Note that this function takes a realspace position as argument (not a
 `~kwant.builder.Site`).
@@ -300,8 +300,8 @@ We can now simply add all of the lattice points inside this shape at
 once, using the function `~kwant.lattice.Square.shape`
 provided by the lattice:
 
-.. literalinclude:: ../../../examples/tutorial2c.py
-    :lines: 36-38
+.. literalinclude:: ../../../tutorial/2-ab_ring.py
+    :lines: 37-39
 
 Here, ``lat.shape()`` takes as a second parameter a (realspace) point
 that is inside the desired shape. The hoppings can still be added
@@ -311,11 +311,11 @@ Up to now, the system contains constant hoppings and onsite energies,
 and we still need to include the phase shift due to the magnetic flux.
 This is done by **overwriting** the values of hoppings in x-direction
 along the branch cut in the lower arm of the ring. For this we select
-all hoppings in x-direction that are of the form `((1, j), (0, j))`
+all hoppings in x-direction that are of the form `(lat(1, j), lat(0, j))`
 with ``j<0``:
 
-.. literalinclude:: ../../../examples/tutorial2c.py
-    :lines: 46-58
+.. literalinclude:: ../../../tutorial/2-ab_ring.py
+    :lines: 47-59
 
 Here, `crosses_branchcut` is a boolean function that returns ``True`` for
 the desired hoppings. We then use again a generator (this time with
@@ -328,16 +328,16 @@ by the global variable `phi`.
 
 For the leads, we can also use the ``lat.shape()``-functionality:
 
-.. literalinclude:: ../../../examples/tutorial2c.py
-    :lines: 62-71
+.. literalinclude:: ../../../tutorial/2-ab_ring.py
+    :lines: 63-72
 
 Here, the shape must cover *at least* one unit cell of the lead
 (it does not hurt if it covers more unit cells).
 
 Attaching the leads is done as before:
 
-.. literalinclude:: ../../../examples/tutorial2c.py
-    :lines: 78-79
+.. literalinclude:: ../../../tutorial/2-ab_ring.py
+    :lines: 79-80
 
 In fact, attaching leads seems not so simple any more for the current
 structure with a scattering region very much different from the lead
@@ -350,23 +350,23 @@ back (going opposite to the direction of the translational vector)
 until it intersects the scattering region. At this intersection,
 the lead is attached:
 
-.. image:: ../images/tutorial2c_sketch2.*
+.. image:: ../images/2-ab_ring_sketch2.*
 
 After the lead has been attached, the system should look like this:
 
-.. image:: ../images/tutorial2c_sys.*
+.. image:: ../images/2-ab_ring_sys.*
 
 The computation of the conductance goes in the same fashion as before.
 Finally you should get the following result:
 
-.. image:: ../images/tutorial2c_result.*
+.. image:: ../images/2-ab_ring_result.*
 
 where one can observe the conductance oscillations with the
 period of one flux quantum.
 
 .. seealso::
      The full source code can be found in
-     :download:`example/tutorial2c.py <../../../examples/tutorial2c.py>`
+     :download:`tutorial/2-ab_ring.py <../../../tutorial/2-ab_ring.py>`
 
 .. specialnote:: Technical details
 
@@ -384,7 +384,7 @@ period of one flux quantum.
     becomes more apparent if we attach the leads a bit further away
     from the central axis o the ring, as was done in this example:
 
-    .. image:: ../images/tutorial2c_note1.*
+    .. image:: ../images/2-ab_ring_note1.*
 
   - Per default, `~kwant.builder.Builder.attach_lead` attaches
     the lead to the "outside" of the structure, by tracing the
@@ -399,7 +399,7 @@ period of one flux quantum.
     starts the trace-back in the middle of the ring, resulting
     in the lead being attached to the inner circle:
 
-    .. image:: ../images/tutorial2c_note2.*
+    .. image:: ../images/2-ab_ring_note2.*
 
     Note that here the lead is treated as if it would pass over
     the other arm of the ring, without intersecting it.

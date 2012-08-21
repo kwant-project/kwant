@@ -8,11 +8,10 @@
 
 import kwant
 
-import numpy as np
 from math import pi
 
 # For plotting
-import pylab
+from matplotlib import pyplot
 
 
 def make_lead(a=1, t=1.0, W=10):
@@ -21,39 +20,39 @@ def make_lead(a=1, t=1.0, W=10):
 
     sym_lead = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
     lead = kwant.Builder(sym_lead)
-    lead.default_site_group = lat
 
     # build up one unit cell of the lead, and add the hoppings
     # to the next unit cell
     for j in xrange(W):
-        lead[(0, j)] = 4 * t
+        lead[lat(0, j)] = 4 * t
 
         if j > 0:
-            lead[(0, j), (0, j-1)] = - t
+            lead[lat(0, j), lat(0, j - 1)] = -t
 
-        lead[(1, j), (0, j)] = - t
+        lead[lat(1, j), lat(0, j)] = -t
 
     return lead
 
 
-def plot_bandstructure(flead, momenta):
+def plot_bandstructure(lead, momenta):
     # Use the method ``energies`` of the finalized lead to compute
     # the bandstructure
-    energy_list = [flead.energies(k) for k in momenta]
+    energy_list = [lead.energies(k) for k in momenta]
 
-    pylab.plot(momenta, energy_list)
-    pylab.xlabel("momentum [in units of (lattice constant)^-1]")
-    pylab.ylabel("energy [in units of t]")
-    pylab.show()
+    pyplot.figure()
+    pyplot.plot(momenta, energy_list)
+    pyplot.xlabel("momentum [in units of (lattice constant)^-1]")
+    pyplot.ylabel("energy [in units of t]")
+    pyplot.show()
 
 
 def main():
-    flead = make_lead().finalized()
+    lead = make_lead().finalized()
 
     # list of momenta at which the bands should be computed
-    momenta = np.arange(-pi, pi + .01, 0.02 * pi)
+    momenta = [-pi + 0.02 * pi * i for i in xrange(101)]
 
-    plot_bandstructure(flead, momenta)
+    plot_bandstructure(lead, momenta)
 
 
 # Call the main function if the script gets executed (as opposed to imported).

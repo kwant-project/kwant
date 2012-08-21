@@ -19,15 +19,15 @@ IMAGESOURCES    = $(shell find source -name "*.svg")
 GENERATEDPDF    = $(patsubst %.svg, %.pdf, $(IMAGESOURCES))
 
 # Tutorial images.
-TUTORIAL1A_IMAGES = source/images/tutorial1a_result.png source/images/tutorial1a_result.pdf source/images/tutorial1a_sys.png source/images/tutorial1a_sys.pdf
-TUTORIAL2A_IMAGES = source/images/tutorial2a_result.png source/images/tutorial2a_result.pdf
-TUTORIAL2B_IMAGES = source/images/tutorial2b_result.png source/images/tutorial2b_result.pdf
-TUTORIAL2C_IMAGES = source/images/tutorial2c_result.png source/images/tutorial2c_result.pdf source/images/tutorial2c_sys.png source/images/tutorial2c_sys.pdf source/images/tutorial2c_note1.png source/images/tutorial2c_note1.pdf source/images/tutorial2c_note2.png source/images/tutorial2c_note2.pdf
-TUTORIAL3A_IMAGES = source/images/tutorial3a_result.png source/images/tutorial3a_result.pdf
-TUTORIAL3B_IMAGES = source/images/tutorial3b_result.png source/images/tutorial3b_result.pdf source/images/tutorial3b_sys.png source/images/tutorial3b_sys.pdf
-TUTORIAL4_IMAGES = source/images/tutorial4_result.png source/images/tutorial4_result.pdf source/images/tutorial4_sys1.png source/images/tutorial4_sys1.pdf source/images/tutorial4_sys2.png source/images/tutorial4_sys2.pdf source/images/tutorial4_bs.png source/images/tutorial4_bs.pdf
-TUTORIAL5A_IMAGES = source/images/tutorial5a_result.png source/images/tutorial5a_result.pdf
-TUTORIAL5B_IMAGES = source/images/tutorial5b_result.png source/images/tutorial5b_result.pdf
+TUTORIAL1A_IMAGES = source/images/1-quantum_wire_result.png source/images/1-quantum_wire_result.pdf source/images/1-quantum_wire_sys.png source/images/1-quantum_wire_sys.pdf
+TUTORIAL2A_IMAGES = source/images/2-spin_orbit_result.png source/images/2-spin_orbit_result.pdf
+TUTORIAL2B_IMAGES = source/images/2-quantum_well_result.png source/images/2-quantum_well_result.pdf
+TUTORIAL2C_IMAGES = source/images/2-ab_ring_result.png source/images/2-ab_ring_result.pdf source/images/2-ab_ring_sys.png source/images/2-ab_ring_sys.pdf source/images/2-ab_ring_note1.png source/images/2-ab_ring_note1.pdf source/images/2-ab_ring_note2.png source/images/2-ab_ring_note2.pdf
+TUTORIAL3A_IMAGES = source/images/3-band_structure_result.png source/images/3-band_structure_result.pdf
+TUTORIAL3B_IMAGES = source/images/3-closed_system_result.png source/images/3-closed_system_result.pdf source/images/3-closed_system_sys.png source/images/3-closed_system_sys.pdf
+TUTORIAL4_IMAGES = source/images/4-graphene_result.png source/images/4-graphene_result.pdf source/images/4-graphene_sys1.png source/images/4-graphene_sys1.pdf source/images/4-graphene_sys2.png source/images/4-graphene_sys2.pdf source/images/4-graphene_bs.png source/images/4-graphene_bs.pdf
+TUTORIAL5A_IMAGES = source/images/5-superconductor_band_structure_result.png source/images/5-superconductor_band_structure_result.pdf
+TUTORIAL5B_IMAGES = source/images/5-superconductor_transport_result.png source/images/5-superconductor_transport_result.pdf
 ALL_TUTORIAL_IMAGES = $(TUTORIAL1A_IMAGES)  $(TUTORIAL2A_IMAGES) $(TUTORIAL2B_IMAGES) $(TUTORIAL2C_IMAGES) $(TUTORIAL3A_IMAGES) $(TUTORIAL3B_IMAGES) $(TUTORIAL4_IMAGES) $(TUTORIAL5A_IMAGES) $(TUTORIAL5B_IMAGES)
 
 .PHONY: help clean realclean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
@@ -115,56 +115,56 @@ doctest:
 
 # Generation of tutorial images.  This requires some serious make trickery, see
 # http://article.gmane.org/gmane.comp.gnu.make.general/5806
-$(TUTORIAL1A_IMAGES): source/images/.tutorial1a_flag
+$(TUTORIAL1A_IMAGES): source/images/.1-quantum_wire_flag
 	@:
-source/images/.tutorial1a_flag: source/images/tutorial1a.py
-	cd source/images/ && python tutorial1a.py
-	touch source/images/.tutorial1a_flag
+source/images/.1-quantum_wire_flag: source/images/1-quantum_wire.py
+	cd source/images/ && python 1-quantum_wire.py
+	touch source/images/.1-quantum_wire_flag
 
-$(TUTORIAL2A_IMAGES): source/images/.tutorial2a_flag
+$(TUTORIAL2A_IMAGES): source/images/.2-spin_orbit_flag
 	@:
-source/images/.tutorial2a_flag: source/images/tutorial2a.py
-	cd source/images/ && python tutorial2a.py
-	touch source/images/.tutorial2a_flag
+source/images/.2-spin_orbit_flag: source/images/2-spin_orbit.py
+	cd source/images/ && python 2-spin_orbit.py
+	touch source/images/.2-spin_orbit_flag
 
-$(TUTORIAL2B_IMAGES): source/images/.tutorial2b_flag
+$(TUTORIAL2B_IMAGES): source/images/.2-quantum_well_flag
 	@:
-source/images/.tutorial2b_flag: source/images/tutorial2b.py
-	cd source/images/ && python tutorial2b.py
-	touch source/images/.tutorial2b_flag
+source/images/.2-quantum_well_flag: source/images/2-quantum_well.py
+	cd source/images/ && python 2-quantum_well.py
+	touch source/images/.2-quantum_well_flag
 
-$(TUTORIAL2C_IMAGES): source/images/.tutorial2c_flag
+$(TUTORIAL2C_IMAGES): source/images/.2-ab_ring_flag
 	@:
-source/images/.tutorial2c_flag: source/images/tutorial2c.py
-	cd source/images/ && python tutorial2c.py
-	touch source/images/.tutorial2c_flag
+source/images/.2-ab_ring_flag: source/images/2-ab_ring.py
+	cd source/images/ && python 2-ab_ring.py
+	touch source/images/.2-ab_ring_flag
 
-$(TUTORIAL3A_IMAGES): source/images/.tutorial3a_flag
+$(TUTORIAL3A_IMAGES): source/images/.3-band_structure_flag
 	@:
-source/images/.tutorial3a_flag: source/images/tutorial3a.py
-	cd source/images/ && python tutorial3a.py
-	touch source/images/.tutorial3a_flag
+source/images/.3-band_structure_flag: source/images/3-band_structure.py
+	cd source/images/ && python 3-band_structure.py
+	touch source/images/.3-band_structure_flag
 
-$(TUTORIAL3B_IMAGES): source/images/.tutorial3b_flag
+$(TUTORIAL3B_IMAGES): source/images/.3-closed_system_flag
 	@:
-source/images/.tutorial3b_flag: source/images/tutorial3b.py
-	cd source/images/ && python tutorial3b.py
-	touch source/images/.tutorial3b_flag
+source/images/.3-closed_system_flag: source/images/3-closed_system.py
+	cd source/images/ && python 3-closed_system.py
+	touch source/images/.3-closed_system_flag
 
-$(TUTORIAL4_IMAGES): source/images/.tutorial4_flag
+$(TUTORIAL4_IMAGES): source/images/.4-graphene_flag
 	@:
-source/images/.tutorial4_flag: source/images/tutorial4.py
-	cd source/images/ && python tutorial4.py
-	touch source/images/.tutorial4_flag
+source/images/.4-graphene_flag: source/images/4-graphene.py
+	cd source/images/ && python 4-graphene.py
+	touch source/images/.4-graphene_flag
 
-$(TUTORIAL5A_IMAGES): source/images/.tutorial5a_flag
+$(TUTORIAL5A_IMAGES): source/images/.5-superconductor_band_structure_flag
 	@:
-source/images/.tutorial5a_flag: source/images/tutorial5a.py
-	cd source/images/ && python tutorial5a.py
-	touch source/images/.tutorial5a_flag
+source/images/.5-superconductor_band_structure_flag: source/images/5-superconductor_band_structure.py
+	cd source/images/ && python 5-superconductor_band_structure.py
+	touch source/images/.5-superconductor_band_structure_flag
 
-$(TUTORIAL5B_IMAGES): source/images/.tutorial5b_flag
+$(TUTORIAL5B_IMAGES): source/images/.5-superconductor_transport_flag
 	@:
-source/images/.tutorial5b_flag: source/images/tutorial5b.py
-	cd source/images/ && python tutorial5b.py
-	touch source/images/.tutorial5b_flag
+source/images/.5-superconductor_transport_flag: source/images/5-superconductor_transport.py
+	cd source/images/ && python 5-superconductor_transport.py
+	touch source/images/.5-superconductor_transport_flag

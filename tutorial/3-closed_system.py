@@ -16,9 +16,7 @@ import kwant
 import scipy.linalg as la
 
 # For plotting
-import pylab
-
-import latex, html
+from matplotlib import pyplot
 
 
 def make_system(a=1, t=1.0, r=10):
@@ -32,8 +30,8 @@ def make_system(a=1, t=1.0, r=10):
     # Define the quantum dot
     def circle(pos):
         (x, y) = pos
-        rsq = x**2 + y**2
-        return rsq < r**2
+        rsq = x ** 2 + y ** 2
+        return rsq < r ** 2
 
     def hopx(site1, site2):
         # The magnetic field is controlled by the global variable B
@@ -44,13 +42,13 @@ def make_system(a=1, t=1.0, r=10):
     # hoppings in x-direction
     sys[sys.possible_hoppings((1, 0), lat, lat)] = hopx
     # hoppings in y-directions
-    sys[sys.possible_hoppings((0, 1), lat, lat)] = - t
+    sys[sys.possible_hoppings((0, 1), lat, lat)] = -t
 
     # It's a closed system for a change, so no leads
     return sys
 
 
-def plot_spectrum(fsys, Bfields):
+def plot_spectrum(sys, Bfields):
     # global variable B controls the magnetic field
     global B
 
@@ -64,39 +62,32 @@ def plot_spectrum(fsys, Bfields):
         B = Bfield
 
         # Obtain the Hamiltonian as a dense matrix
-        ham_mat = fsys.hamiltonian_submatrix()[0]
+        ham_mat = sys.hamiltonian_submatrix()[0]
 
         ev = la.eigh(ham_mat, eigvals_only=True)
 
         # we only plot the 15 lowest eigenvalues
         energies.append(ev[:15])
 
-    pylab.plot(Bfields, energies)
-    pylab.xlabel("magnetic field [some arbitrary units]",
-                 fontsize=latex.mpl_label_size)
-    pylab.ylabel("energy [in units of t]",
-                 fontsize=latex.mpl_label_size)
-    fig = pylab.gcf()
-    pylab.setp(fig.get_axes()[0].get_xticklabels(),
-               fontsize=latex.mpl_tick_size)
-    pylab.setp(fig.get_axes()[0].get_yticklabels(),
-               fontsize=latex.mpl_tick_size)
-    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
-    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-    fig.savefig("tutorial3b_result.pdf")
-    fig.savefig("tutorial3b_result.png",
-                dpi=(html.figwidth_px/latex.mpl_width_in))
+    pyplot.figure()
+    pyplot.plot(Bfields, energies)
+    pyplot.xlabel("magnetic field [some arbitrary units]")
+    pyplot.ylabel("energy [in units of t]")
+    pyplot.show()
 
 
 def main():
     sys = make_system()
 
+    # Check that the system looks as intended.
+    kwant.plot(sys)
+
     # Finalize the system.
-    fsys = sys.finalized()
+    sys = sys.finalized()
 
     # We should observe energy levels that flow towards Landau
     # level energies with increasing magnetic field
-    plot_spectrum(fsys, [iB * 0.002 for iB in xrange(100)])
+    plot_spectrum(sys, [iB * 0.002 for iB in xrange(100)])
 
 
 # Call the main function if the script gets executed (as opposed to imported).

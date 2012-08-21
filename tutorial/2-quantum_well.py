@@ -9,9 +9,7 @@
 import kwant
 
 # For plotting
-import pylab
-
-import latex, html
+from matplotlib import pyplot
 
 # global variable governing the behavior of potential() in
 # make_system()
@@ -23,7 +21,6 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
     lat = kwant.lattice.Square(a)
 
     sys = kwant.Builder()
-    sys.default_site_group = lat
 
     #### Define the scattering region. ####
     # Potential profile
@@ -38,7 +35,7 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
     def onsite(site):
         return 4 * t + potential(site)
 
-    sys[((x, y) for x in range(L) for y in range(W))] = onsite
+    sys[(lat(x, y) for x in range(L) for y in range(W))] = onsite
     for hopping in lat.nearest:
         sys[sys.possible_hoppings(*hopping)] = -t
 
@@ -48,11 +45,10 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
     # realspace vector)
     sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
     lead0 = kwant.Builder(sym_lead0)
-    lead0.default_site_group = lat
 
-    lead0[((0, j) for j in xrange(W))] = 4 * t
+    lead0[(lat(0, j) for j in xrange(W))] = 4 * t
     for hopping in lat.nearest:
-        lead0[lead0.possible_hoppings(*hopping)] = - t
+        lead0[lead0.possible_hoppings(*hopping)] = -t
 
     # ... then the lead to the right.  We use a method that returns a copy of
     # `lead0` with its direction reversed.
@@ -64,7 +60,8 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
 
     return sys
 
-def plot_conductance(fsys, energy, welldepths):
+
+def plot_conductance(sys, energy, welldepths):
     # We specify that we want to not only read, but also write to a
     # global variable.
     global pot
@@ -75,34 +72,27 @@ def plot_conductance(fsys, energy, welldepths):
         # Set the global variable that defines the potential well depth
         pot = -welldepth
 
-        smatrix = kwant.solve(fsys, energy)
+        smatrix = kwant.solve(sys, energy)
         data.append(smatrix.transmission(1, 0))
 
-    pylab.plot(welldepths, data)
-    pylab.xlabel("well depth [in units of t]",
-                 fontsize=latex.mpl_label_size)
-    pylab.ylabel("conductance [in units of e^2/h]",
-                 fontsize=latex.mpl_label_size)
-    fig = pylab.gcf()
-    pylab.setp(fig.get_axes()[0].get_xticklabels(),
-               fontsize=latex.mpl_tick_size)
-    pylab.setp(fig.get_axes()[0].get_yticklabels(),
-               fontsize=latex.mpl_tick_size)
-    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
-    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-    fig.savefig("tutorial2b_result.pdf")
-    fig.savefig("tutorial2b_result.png",
-                dpi=(html.figwidth_px/latex.mpl_width_in))
+    pyplot.figure()
+    pyplot.plot(welldepths, data)
+    pyplot.xlabel("well depth [in units of t]")
+    pyplot.ylabel("conductance [in units of e^2/h]")
+    pyplot.show()
 
 
 def main():
     sys = make_system()
 
+    # Check that the system looks as intended.
+    kwant.plot(sys)
+
     # Finalize the system.
-    fsys = sys.finalized()
+    sys = sys.finalized()
 
     # We should see conductance steps.
-    plot_conductance(fsys, energy=0.2,
+    plot_conductance(sys, energy=0.2,
                      welldepths=[0.01 * i for i in xrange(100)])
 
 

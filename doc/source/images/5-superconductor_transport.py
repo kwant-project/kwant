@@ -10,10 +10,9 @@
 import kwant
 
 # For plotting
-import pylab
+from matplotlib import pyplot
 
-# For matrix support
-import numpy
+import latex, html
 
 def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
                 mu=0.4, Delta=0.1, Deltapos=4, t=1.0):
@@ -42,7 +41,7 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
 
     # Superconducting order parameter enters as hopping between
     # electrons and holes
-    sys[((lat_e(x,y), lat_h(x, y)) for x in range(Deltapos, L)
+    sys[((lat_e(x, y), lat_h(x, y)) for x in range(Deltapos, L)
          for y in range(W))] = Delta
 
     #### Define the leads. ####
@@ -86,32 +85,39 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
 
     return sys
 
-def plot_conductance(fsys, energies):
+
+def plot_conductance(sys, energies):
     # Compute conductance
     data = []
     for energy in energies:
-        smatrix = kwant.solve(fsys, energy)
+        smatrix = kwant.solve(sys, energy)
         # Conductance is N - R_ee + R_he
         data.append(smatrix.submatrix(0, 0).shape[0] -
                     smatrix.transmission(0, 0) +
                     smatrix.transmission(1, 0))
 
-    pylab.plot(energies, data)
-    pylab.xlabel("energy [in units of t]")
-    pylab.ylabel("conductance [in units of e^2/h]")
-    pylab.show()
+    fig = pyplot.figure()
+    pyplot.plot(energies, data)
+    pyplot.xlabel("energy [in units of t]")
+    pyplot.ylabel("conductance [in units of e^2/h]")
+    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
+               fontsize=latex.mpl_tick_size)
+    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
+               fontsize=latex.mpl_tick_size)
+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
+    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
+    fig.savefig("5-superconductor_transport_result.pdf")
+    fig.savefig("5-superconductor_transport_result.png",
+                dpi=(html.figwidth_px/latex.mpl_width_in))
 
 
 def main():
     sys = make_system()
 
-    # Check that the system looks as intended.
-    kwant.plot(sys)
-
     # Finalize the system.
-    fsys = sys.finalized()
+    sys = sys.finalized()
 
-    plot_conductance(fsys, energies=[0.002 * i for i in xrange(100)])
+    plot_conductance(sys, energies=[0.002 * i for i in xrange(100)])
 
 
 # Call the main function if the script gets executed (as opposed to imported).

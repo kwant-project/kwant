@@ -16,7 +16,7 @@ with a hard wall confinement :math:`V(y)` in y-direction.
 
 In order to use kwant, we need to import it:
 
-.. literalinclude:: ../../../examples/tutorial1a.py
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
     :lines: 11
 
 Enabling kwant is as easy as this [#]_ !
@@ -26,42 +26,40 @@ and leads. For this we make use of the `~kwant.builder.Builder` class
 that allows for a convenient way to define the system. For this we need to
 create an instance of the `~kwant.builder.Builder` class:
 
-.. literalinclude:: ../../../examples/tutorial1a.py
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
     :lines: 15
 
-Next, we tell `~kwant.builder.Builder` that we want to work
-with a square lattice (more about the details of this code snippet in
-the notes below).  For simplicity, we set the lattice constant to
-unity:
+Apart from `~kwant.builder.Builder` we also need to specify
+what kind of sites we want to add to the system. Here we work with
+a square lattice. For simplicity, we set the lattice constant to unity:
 
-.. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 18-20
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
+    :lines: 18-19
 
 Since we work with a square lattice, we label the points with two
 integer coordinates `(i, j)`. `~kwant.builder.Builder` then
 allows us to add matrix elements corresponding to lattice points:
-``sys[(i, j)] = ...`` sets the on-site energy for the point `(i, j)`,
-and ``sys[(i1, j1), (i2, j2)] = ...`` the hopping matrix element
+``sys[lat(i, j)] = ...`` sets the on-site energy for the point `(i, j)`,
+and ``sys[lat(i1, j1), lat(i2, j2)] = ...`` the hopping matrix element
 **from** point `(i2, j2)` **to** point `(i1, j1)`.
+
+Note that we need to specify sites for `~kwant.builder.Builder`
+in the form ``lat(i, j)``. The lattice object `lat` does the
+translation from integer coordinates to proper site format
+needed in Builder (more about that in the technical details below).
 
 We now build a rectangular scattering region that is `W`
 lattice points wide and `L` lattice points long:
 
-.. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 22-24, 27-38
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
+    :lines: 21-23, 26-37
 
 Next, we define the leads. Leads are also constructed using
 `~kwant.builder.Builder`, but in this case, the
 system must have a translational symmetry:
 
-.. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 46-48
-
-.. note::
-
-    Here it is essential that we write ``lead0.default_site_group = lat``
-    instead of ``lead0.default_site_group = kwant.lattice.Square(a)``.
-    For details see the notes below.
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
+    :lines: 45-46
 
 Here, the `~kwant.builder.Builder` takes the translational symmetry
 as an optional parameter. Note that the (real space)
@@ -75,8 +73,8 @@ as the hoppings inside one unit cell and to the next unit cell of the lead.
 For a square lattice, and a lead in y-direction the unit cell is
 simply a vertical line of points:
 
-.. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 50-56
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
+    :lines: 48-54
 
 Note that here it doesn't matter if you add the hoppings to the next or the
 previous unit cell -- the translational symmetry takes care of that.
@@ -85,8 +83,8 @@ We also want to add a lead on the right side. The only difference to
 the left lead is that the vector of the translational
 symmetry must point to the right, the remaining code is the same:
 
-.. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 60-70
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
+    :lines: 57-67
 
 Note that here we added points with x-coordinate 0, just as for the left lead.
 You might object that the right lead should be placed `L`
@@ -96,8 +94,8 @@ you do not need to worry about that. The `~kwant.builder.Builder` with
 infinitely extended. These isolated, infinite leads can then be simply
 attached at the right position using:
 
-.. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 74-75
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
+    :lines: 71-72
 
 More details about attaching leads can be found in the tutorial
 :ref:`tutorial-abring`.
@@ -105,12 +103,12 @@ More details about attaching leads can be found in the tutorial
 Now we have finished building our system! We plot it, to make sure we didn't
 make any mistakes:
 
-.. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 79
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
+    :lines: 76
 
 This should bring up this picture:
 
-.. image:: /images/tutorial1a_sys.*
+.. image:: /images/1-quantum_wire_sys.*
 
 The system is represented in the usual way for tight-binding systems:
 dots represent the lattice points `(i, j)`, and for every
@@ -120,18 +118,18 @@ fading color.
 
 In order to use our system for a transport calculation, we need to finalize it
 
-.. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 83
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
+    :lines: 80
 
 Having successfully created a system, we now can immediately start to compute
 its conductance as a function of energy:
 
- .. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 87-98
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
+    :lines: 84-95
 
-Currently, there is only one algorithm implemented to compute the
-conductance: :func:`kwant.solve <kwant.solvers.sparse.solve>` which computes
-the scattering matrix `smatrix` solving a sparse linear system.
+Currently **CHANGE**, there is only one algorithm implemented to compute the
+conductance: :func:`kwant.solve <kwant.solvers.common.SparseSolver.solve>`
+which computes the scattering matrix `smatrix` solving a sparse linear system.
 `smatrix` itself allows you to directly compute the total
 transmission probability from lead 0 to lead 1 as
 ``smatrix.transmission(1, 0)``.
@@ -140,12 +138,12 @@ Finally we can use `matplotlib` to make a plot of the computed data
 (although writing to file and using an external viewer such as
 gnuplot or xmgrace is just as viable)
 
- .. literalinclude:: ../../../examples/tutorial1a.py
-    :lines: 102-108
+.. literalinclude:: ../../../tutorial/1-quantum_wire.py
+    :lines: 99-105
 
 This should yield the result
 
-.. image:: /images/tutorial1a_result.*
+.. image:: /images/1-quantum_wire_result.*
 
 We see a conductance quantized in units of :math:`e^2/h`,
 increasing in steps as the energy is increased. The
@@ -155,43 +153,35 @@ subbands that increases with energy.
 
 .. seealso::
      The full source code can be found in
-     :download:`example/tutorial1a.py <../../../examples/tutorial1a.py>`
+     :download:`tutorial/1-quantum_wire.py <../../../tutorial/1-quantum_wire.py>`
 
 .. specialnote:: Technical details
 
    - In the example above, when building the system, only one direction
-     of hopping is given, i.e. ``sys[(i, j), (i, j-1)] = ...`` and
-     not also ``sys[(i, j-1), (i, j)] = ...``. The reason is that
+     of hopping is given, i.e. ``sys[lat(i, j), lat(i, j-1)] = ...`` and
+     not also ``sys[lat(i, j-1), lat(i, j)] = ...``. The reason is that
      `~kwant.builder.Builder` automatically adds the other
      direction of the hopping such that the resulting system is Hermitian.
 
      However, it does not hurt to define the opposite direction of hopping as
-     well.
+     well::
 
-         sys[(1, 0), (0, 0)] = - t
-         sys[(0, 0), (1, 0)] = - t.conj()
+         sys[lat(1, 0), lat(0, 0)] = - t
+         sys[lat(0, 0), lat(1, 0)] = - t.conj()
 
      (assuming that `t` is complex) is perfectly fine. However,
      be aware that also
 
      ::
 
-         sys[(1, 0), (0, 0)] = - 1
-         sys[(0, 0), (1, 0)] = - 2
+         sys[lat(1, 0), lat(0, 0)] = - 1
+         sys[lat(0, 0), lat(1, 0)] = - 2
 
-     is valid code. In the latter case, the hopping ``sys[(1, 0), (0, 0)]``
-     is overwritten by the last line and also equals to -2.
+     is valid code. In the latter case, the hopping ``sys[lat(1, 0),
+     lat(0, 0)]`` is overwritten by the last line and also equals to -2.
 
-   - Some more details about
-
-     ::
-
-         lat = kwant.lattices.Square(a)
-         sys.default_site_group = lat
-
-     By setting ``sys.default_site_group = lat`` you specify to
-     `~kwant.builder.Builder` that it should interpret tuples like
-     `(i, j)` as indices in a square lattice.
+   - Some more details the relation between `~kwant.builder.Builder`
+     and the square lattice `lat` in the example:
 
      Technically, `~kwant.builder.Builder` expects
      **sites** as indices. Sites themselves have a certain type, and
@@ -200,48 +190,36 @@ subbands that increases with energy.
      proper `~kwant.builder.Site` object that can be used with
      `~kwant.builder.Builder`.
 
-     In the above example, `lat` is the site group. By specifying it
-     as the `default_site_group`, `~kwant.builder.Builder`
-     knows that it should use `lat` to interpret any input that is not of
-     type `~kwant.builder.Site`. Instead of using
-     `default_site_group`, one could have manually converted the
-     tuples `(i, j)` into sites ``lat(i, j)``::
+     In the above example, `lat` is the site group. ``lat(i, j)``
+     then translates the description of a lattice site in terms of two
+     integer indices (which is the natural way to do here) into
+     a proper `~kwant.builder.Site` object.
 
-         for i in xrange(L):
-             for j in xrange(W):
-                 sys[lat(i, j)] = 4 * t
+     The concept of site groups and sites allows `~kwant.builder.Builder`
+     to mix arbitrary lattices and site groups
 
-                 # hoppig in y-direction
-                 if j > 0 :
-                     sys[lat(i, j), lat(i, j-1)] = - t
+   - In the example, we wrote
 
-                 #hopping in x-direction
-                 if i > 0:
-                     sys[lat(i, j), lat(i-1, j)] = -t
+     ::
 
-     (The concept of site groups and sites allows `~kwant.builder.Builder`
-     to mix arbitrary lattices and site groups)
+         sys = sys.finalized()
 
-   - Note that we wrote::
+     In doing so, we transform the `~kwant.builder.Builder` object (with which
+     we built up the system step by step) into a `~kwant.system.System`
+     that has a fixed structure (which we cannot change any more).
 
-         lat = kwant.lattices.Square(a)
+     Note that this means that we cannot access the `~kwant.builder.Builder`
+     object any more. This is not necesarry any more, as the computational
+     routines all expect finalized systems. It even has the advantage
+     that python is now free to release the memory occupied by the
+     `~kwant.builder.Builder` which, for large systems, can be considerable.
+     Roughly speaking, the above code corresponds to
 
-         sys.default_site_group = lat
-         lead0.default_site_group = lat
+     ::
 
-     instead of::
-
-         sys.default_site_group = kwant.lattices.Square(a)
-         lead0.default_site_group = kwant.lattices.Square(a)
-
-     The reason is that in the latter case, `sys` and `lead0` have two
-     different site groups (although both representing a
-     square lattice), since a site group is represented by a particular
-     instance of the class, not the class itself.
-
-     Hence, the latter example is interpreted as two different
-     square lattices, which will fail when the lead is attached to the
-     system.
+	 fsys = sys.finalized()
+	 del sys
+	 sys = fsys
 
    - Note that the vector passed to the `~kwant.lattice.TranslationalSymmetry`
      (in fact, what is passed is a list of vectors -- there could be more than
@@ -259,7 +237,8 @@ subbands that increases with energy.
      with the lattice symmetry.
 
    - Instead of plotting to the screen (which is standard, if the
-     Python Image Library PIL is installed), :func:`plot <kwant.plotter.plot>`
+     Python Image Library PIL **CHANGE [if plotter is changed]** is installed),
+     :func:`plot <kwant.plotter.plot>`
      can also write to the file specified by the argument `filename`.
      (for details, see the documentation of :func:`plot <kwant.plotter.plot>`.)
 
@@ -288,13 +267,13 @@ We begin the program collecting all imports in the beginning of the
 file and put the build-up of the system into a separate function
 `make_system`:
 
-.. literalinclude:: ../../../examples/tutorial1b.py
+.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
     :lines: 13-24
 
 Previously, the scattering region was build using two ``for``-loops.
 Instead, we now write:
 
-.. literalinclude:: ../../../examples/tutorial1b.py
+.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
     :lines: 27
 
 Here, all lattice points are added at once in the first line.  The
@@ -311,7 +290,7 @@ hoppings. In this case, an iterable like for the lattice
 points becomes a bit cumbersome, and we use instead another
 feature of kwant:
 
-.. literalinclude:: ../../../examples/tutorial1b.py
+.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
     :lines: 28-29
 
 In regular lattices, one has only very few types of different hoppings
@@ -329,8 +308,8 @@ then sets all of those hopping matrix elements at once.
 
 The leads can be constructed in an analogous way:
 
-.. literalinclude:: ../../../examples/tutorial1b.py
-    :lines: 35-41
+.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
+    :lines: 35-40
 
 Note that in the previous example, we essentially used the same code
 for the right and the left lead, the only difference was the direction
@@ -341,34 +320,34 @@ lead, but with it's translational vector reversed.  This can thus be
 used to obtain a lead pointing in the opposite direction, i.e. makes a
 right lead from a left lead:
 
-.. literalinclude:: ../../../examples/tutorial1b.py
-    :lines: 45
+.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
+    :lines: 44
 
 The remainder of the code is identical to the previous example
 (except for a bit of reorganization into functions):
 
-.. literalinclude:: ../../../examples/tutorial1b.py
-    :lines: 48-52
+.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
+    :lines: 47-51
 
 and
 
-.. literalinclude:: ../../../examples/tutorial1b.py
-    :lines: 53-63
+.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
+    :lines: 52-64
 
 Finally, we use a python trick to make our example usable both
 as a script, as well as allowing it to be imported as a module.
 We collect all statements that should be executed in the script
 in a ``main()``-function:
 
-.. literalinclude:: ../../../examples/tutorial1b.py
-    :lines: 66-76
+.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
+    :lines: 67-77
 
 Finally, we use the following python construct [#]_ that executes
 ``main()`` if the program is used as a script (i.e. executed as
 ``python tutorial1b.py``):
 
-.. literalinclude:: ../../../examples/tutorial1b.py
-    :lines: 81-82
+.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
+    :lines: 82-83
 
 If the example however is imported using ``import tutorial1b``,
 ``main()`` is not executed automatically. Instead, you can execute it
@@ -380,13 +359,13 @@ The result of the example should be identical to the previous one.
 
 .. seealso::
     The full source code can be found in
-    :download:`examples/tutorial1b.py <../../../examples/tutorial1b.py>`
+    :download:`tutorial/1-quantum_wire_revisited.py <../../../tutorial/1-quantum_wire_revisited.py>`
 
 .. specialnote:: Technical details
 
    - In
 
-     .. literalinclude:: ../../../examples/tutorial1b.py
+     .. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
        :lines: 28-29
 
      we write ``*hopping`` instead of ``hopping``. The reason is as follows:
@@ -407,9 +386,7 @@ The result of the example should be identical to the previous one.
    - We have seen different ways to add lattice points to a
      `~kwant.builder.Builder`. It allows to
 
-     * add single points, specified as sites (or tuples, if
-       a `default_site_group` is specified as in the previous
-       example).
+     * add single points, specified as sites
      * add several points at once using a generator (as in this example)
      * add several points at once using a list (typically less
        effective compared to a generator)
@@ -418,10 +395,10 @@ The result of the example should be identical to the previous one.
      using a tuple of sites. Hence it is worth noting
      a subtle detail in
 
-     .. literalinclude:: ../../../examples/tutorial1b.py
+     .. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
          :lines: 27
 
-     Note that ``((x, y) for x in range(L) for y in range(W))`` is not
+     Note that ``(lat(x, y) for x in range(L) for y in range(W))`` is not
      a tuple, but a generator.
 
      Let us elaborate a bit more on this using a simpler example:
@@ -453,7 +430,7 @@ The result of the example should be identical to the previous one.
      added at once, these two sites should be encapsulated in a tuple.
      In particular, one must write::
 
-         sys[(((0,j+1), (0, j)) for j in xrange(W-1)] = ...
+         sys[((lat(0,j+1), lat(0, j)) for j in xrange(W-1)] = ...
 
      or::
 

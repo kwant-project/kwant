@@ -15,7 +15,8 @@ from math import pi
 import kwant
 
 # For plotting
-import pylab
+from matplotlib import pyplot
+
 
 def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     # Start with an empty tight-binding system and a single square lattice.
@@ -29,13 +30,13 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     # Now, we aim for a more complex shape, namely a ring (or annulus)
     def ring(pos):
         (x, y) = pos
-        rsq = x**2 + y**2
-        return ( r1**2 < rsq < r2**2)
+        rsq = x ** 2 + y ** 2
+        return (r1 ** 2 < rsq < r2 ** 2)
 
     # and add the corresponding lattice points using the `shape`-function
-    sys[lat.shape(ring, (0, r1+1))] = 4 * t
+    sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
     for hopping in lat.nearest:
-        sys[sys.possible_hoppings(*hopping)] = - t
+        sys[sys.possible_hoppings(*hopping)] = -t
 
     # In order to introduce a flux through the ring, we introduce a phase
     # on the hoppings on the line cut through one of the arms
@@ -51,10 +52,10 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
 
         # possible_hoppings with the argument (1, 0) below
         # returns hoppings ordered as ((i+1, j), (i, j))
-        return iy0 < 0 and ix0 == 1 # ix1 == 0 then implied
+        return iy0 < 0 and ix0 == 1  # ix1 == 0 then implied
 
     # Modify only those hopings in x-direction that cross the branch cut
-    sys[(hop for hop in sys.possible_hoppings((1,0), lat, lat)
+    sys[(hop for hop in sys.possible_hoppings((1, 0), lat, lat)
          if crosses_branchcut(hop))] = fluxphase
 
     #### Define the leads. ####
@@ -64,11 +65,11 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
 
     def lead_shape(pos):
         (x, y) = pos
-        return (-1 < x < 1) and (-W/2 < y < W/2)
+        return (-1 < x < 1) and (-W / 2 < y < W / 2)
 
     lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
     for hopping in lat.nearest:
-        lead0[lead0.possible_hoppings(*hopping)] = - t
+        lead0[lead0.possible_hoppings(*hopping)] = -t
 
     # Then the lead to the right
     # [again, obtained using reversed()]
@@ -81,23 +82,24 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     return sys
 
 
-def plot_conductance(fsys, energy, fluxes):
+def plot_conductance(sys, energy, fluxes):
     # compute conductance
     # global variable phi controls the flux
     global phi
 
-    normalized_fluxes = [flux/(2 * pi) for flux in fluxes]
+    normalized_fluxes = [flux / (2 * pi) for flux in fluxes]
     data = []
     for flux in fluxes:
         phi = flux
 
-        smatrix = kwant.solve(fsys, energy)
+        smatrix = kwant.solve(sys, energy)
         data.append(smatrix.transmission(1, 0))
 
-    pylab.plot(normalized_fluxes, data)
-    pylab.xlabel("flux [in units of the flux quantum]")
-    pylab.ylabel("conductance [in units of e^2/h]")
-    pylab.show()
+    pyplot.figure()
+    pyplot.plot(normalized_fluxes, data)
+    pyplot.xlabel("flux [in units of the flux quantum]")
+    pyplot.ylabel("conductance [in units of e^2/h]")
+    pyplot.show()
 
 
 def main():
@@ -107,10 +109,10 @@ def main():
     kwant.plot(sys)
 
     # Finalize the system.
-    fsys = sys.finalized()
+    sys = sys.finalized()
 
     # We should see a conductance that is periodic with the flux quantum
-    plot_conductance(fsys, energy=0.15, fluxes=[0.01 * i * 3 * 2 * pi
+    plot_conductance(sys, energy=0.15, fluxes=[0.01 * i * 3 * 2 * pi
                                                 for i in xrange(100)])
 
 # Call the main function if the script gets executed (as opposed to imported).

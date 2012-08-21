@@ -14,7 +14,7 @@ We begin by defining the honeycomb lattice of graphene. This is
 in principle already done in `kwant.lattice.Honeycomb`, but we do it
 explicitly here to show how to define a new lattice:
 
-.. literalinclude:: ../../../examples/tutorial4.py
+.. literalinclude:: ../../../tutorial/4-graphene.py
     :lines: 24-27
 
 The first argument to the `~kwant.lattice.make_lattice` function is the list of
@@ -26,12 +26,12 @@ itself forms a regular lattice of the same type as well, and those
 In the next step we define the shape of the scattering region (circle again)
 and add all lattice points using the ``shape()``-functionality:
 
-.. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 30-31, 34-39, 41-46
+.. literalinclude:: ../../../tutorial/4-graphene.py
+    :lines: 29-30, 33-38, 40-45
 
 As you can see, this works exactly the same for any kind of lattice.
 We add the onsite energies using a function describing the p-n junction;
-in contrast to the previous examples, the potential value is this time taken
+in contrast to the previous tutorial, the potential value is this time taken
 from the scope of `make_system()`, since we keep the potential fixed
 in this example.
 
@@ -40,8 +40,8 @@ As a next step we add the hoppings, making use of
 lattice (instead of `kwant.lattice.Honeycomb`), we have to define
 the hoppings ourselves:
 
-.. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 50
+.. literalinclude:: ../../../tutorial/4-graphene.py
+    :lines: 49
 
 The nearest-neighbor model for graphene contains only
 hoppings between different basis atoms. For these type of
@@ -57,24 +57,24 @@ respect to the two primitive vectors ``[(1, 0), (sin_30, cos_30)]``.
 
 Adding the hoppings however still works the same way:
 
-.. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 51-52
+.. literalinclude:: ../../../tutorial/4-graphene.py
+    :lines: 50-51
 
 Modifying the scattering region is also possible as before. Let's
 do something crazy, and remove an atom in sublattice A
 (which removes also the hoppings from/to this site) as well
 as add an additional link:
 
-.. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 55-56
+.. literalinclude:: ../../../tutorial/4-graphene.py
+    :lines: 54-55
 
-Note that the conversion from a tuple `(i,j)` to site
+Note again that the conversion from a tuple `(i,j)` to site
 is done by the sublattices `a` and `b`.
 
 The leads are defined as before:
 
-.. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 60-83
+.. literalinclude:: ../../../tutorial/4-graphene.py
+    :lines: 58-82
 
 Note that the translational vectors ``graphene.vec((-1, 0))`` and
 ``graphene.vec((0, 1))`` are *not* orthogonal any more as they would have been
@@ -85,14 +85,14 @@ Later, we will compute some eigenvalues of the closed scattering region without
 leads. This is why we postpone attaching the leads to the system. Instead,
 we return the scattering region and the leads separately.
 
-.. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 85
+.. literalinclude:: ../../../tutorial/4-graphene.py
+    :lines: 84
 
 The computation of some eigenvalues of the closed system is done
 in the following piece of code:
 
-.. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 88-93, 96-99
+.. literalinclude:: ../../../tutorial/4-graphene.py
+    :lines: 87-91, 95-98
 
 Here we use in contrast to the previous example a sparse matrix and
 the sparse linear algebra functionality of scipy (this requires
@@ -106,16 +106,16 @@ to the previous examples, and needs not be further explained here.
 Finally, in the `main()` function we make and
 plot the system:
 
-.. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 126-129, 138
+.. literalinclude:: ../../../tutorial/4-graphene.py
+    :lines: 127-130, 139
 
 We customize the plotting: `plotter_symbols` is a dictionary with the
 sublattice objects `a` and `b` as keys, and the `~kwant.plotter.Circle` objects
 specify that the sublattice `a` should be drawn using a filled black circle,
 and `b` using a white circle with a black outline.
 
-.. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 132-135
+.. literalinclude:: ../../../tutorial/4-graphene.py
+    :lines: 133-136
 
 The radius of the circle is given in relative units: `~kwant.plotter.plot` uses
 a typical length scale as a reference length. By default, the typical length
@@ -131,12 +131,12 @@ well-defined part of the plot.
 
 Plotting the closed system gives this result:
 
-.. image:: ../images/tutorial4_sys1.*
+.. image:: ../images/4-graphene_sys1.*
 
 Computing the eigenvalues of largest magnitude,
 
-.. literalinclude:: ../../../examples/tutorial4.py
-    :lines: 141
+.. literalinclude:: ../../../tutorial/4-graphene.py
+    :lines: 142
 
 should yield two eigenvalues similar to `[ 3.07869311 +1.02714523e-17j,
 -3.06233144 -6.68085759e-18j]` (round-off might change the imaginary part which
@@ -145,11 +145,11 @@ would be equal to zero for exact arithmetics).
 The remaining code of `main()` attaches the leads to the system and plots it
 again:
 
-.. image:: ../images/tutorial4_sys2.*
+.. image:: ../images/4-graphene_sys2.*
 
 It computes the band structure of one of lead 0:
 
-.. image:: ../images/tutorial4_bs.*
+.. image:: ../images/4-graphene_bs.*
 
 showing all the features of a zigzag lead, including the flat
 edge state bands (note that the band structure is not symmetric around
@@ -157,14 +157,14 @@ zero energy, as we have a potential in the leads).
 
 Finally the transmission through the system is computed,
 
-.. image:: ../images/tutorial4_result.*
+.. image:: ../images/4-graphene_result.*
 
 showing the typical resonance-like transmission probability through
 an open quantum dot
 
 .. seealso::
     The full source code can be found in
-    :download:`examples/tutorial4.py <../../../examples/tutorial4.py>`
+    :download:`tutorial/4-graphene.py <../../../tutorial/4-graphene.py>`
 
 .. specialnote:: Technical details
 

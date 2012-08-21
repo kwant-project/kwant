@@ -13,10 +13,12 @@
 import kwant
 
 # For plotting
-import pylab
+from matplotlib import pyplot
 
 # For matrix support
 import numpy
+
+import latex, html
 
 # define Pauli-matrices for convenience
 sigma_0 = numpy.eye(2)
@@ -31,10 +33,9 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
     lat = kwant.lattice.Square(a)
 
     sys = kwant.Builder()
-    sys.default_site_group = lat
 
     #### Define the scattering region. ####
-    sys[((x, y) for x in range(L) for y in range(W))] = 4 * t * sigma_0 + \
+    sys[(lat(x, y) for x in range(L) for y in range(W))] = 4 * t * sigma_0 + \
         e_z * sigma_z
     # hoppings in x-direction
     sys[sys.possible_hoppings((1, 0), lat, lat)] = - t * sigma_0 - \
@@ -47,9 +48,8 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
     # left lead
     sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
     lead0 = kwant.Builder(sym_lead0)
-    lead0.default_site_group = lat
 
-    lead0[((0, j) for j in xrange(W))] = 4 * t * sigma_0 + e_z * sigma_z
+    lead0[(lat(0, j) for j in xrange(W))] = 4 * t * sigma_0 + e_z * sigma_z
     # hoppings in x-direction
     lead0[lead0.possible_hoppings((1, 0), lat, lat)] = - t * sigma_0 - \
         1j * alpha * sigma_y
@@ -67,30 +67,38 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
 
     return sys
 
-def plot_conductance(fsys, energies):
+def plot_conductance(sys, energies):
     # Compute conductance
     data = []
     for energy in energies:
-        smatrix = kwant.solve(fsys, energy)
+        smatrix = kwant.solve(sys, energy)
         data.append(smatrix.transmission(1, 0))
 
-    pylab.plot(energies, data)
-    pylab.xlabel("energy [in units of t]")
-    pylab.ylabel("conductance [in units of e^2/h]")
-    pylab.show()
+    fig = pyplot.figure()
+    pyplot.plot(energies, data)
+    pyplot.xlabel("energy [in units of t]",
+                 fontsize=latex.mpl_label_size)
+    pyplot.ylabel("conductance [in units of e^2/h]",
+                 fontsize=latex.mpl_label_size)
+    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
+               fontsize=latex.mpl_tick_size)
+    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
+               fontsize=latex.mpl_tick_size)
+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
+    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
+    fig.savefig("2-spin_orbit_result.pdf")
+    fig.savefig("2-spin_orbit_result.png",
+                dpi=(html.figwidth_px/latex.mpl_width_in))
 
 
 def main():
     sys = make_system()
 
-    # Check that the system looks as intended.
-    kwant.plot(sys)
-
     # Finalize the system.
-    fsys = sys.finalized()
+    sys = sys.finalized()
 
     # We should see non-monotonic conductance steps.
-    plot_conductance(fsys, energies=[0.01 * i - 0.3 for i in xrange(100)])
+    plot_conductance(sys, energies=[0.01 * i - 0.3 for i in xrange(100)])
 
 
 # Call the main function if the script gets executed (as opposed to imported).

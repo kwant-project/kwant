@@ -1,5 +1,3 @@
-.. _tutorial-superconductor:
-
 Superconductors: orbital vs lattice degrees of freedom
 ------------------------------------------------------
 
@@ -30,7 +28,7 @@ We begin by computing the band structure of a superconducting wire.
 The most natural way to implement the BdG Hamiltonian is by using a
 2x2 matrix structure for all Hamiltonian matrix elements:
 
-.. literalinclude:: ../../../examples/tutorial5a.py
+.. literalinclude:: ../../../tutorial/5-superconductor_band_structure.py
     :lines: 21-42
 
 As you see, the example is syntactically equivalent to our
@@ -39,14 +37,14 @@ is now that the Pauli matrices act in electron-hole space.
 
 Computing the band structure then yields the result
 
-.. image:: ../images/tutorial5a_result.*
+.. image:: ../images/5-superconductor_band_structure_result.*
 
 We clearly observe the superconducting gap in the spectrum. That was easy,
 he?
 
 .. seealso::
     The full source code can be found in
-    :download:`examples/tutorial5a.py <../../../examples/tutorial5a.py>`
+    :download:`tutorial/5-superconductor_band_structure.py <../../../tutorial/5-superconductor_band_structure.py>`
 
 
 "Lattice description": Using different lattices
@@ -70,21 +68,20 @@ to electrons in the normal lead, and :math:`R_\text{eh}` the total
 probability of reflection from electrons to holes in the normal
 lead. However, the current version of kwant does not allow for an easy
 and elegant partitioning of the scattering matrix in these two degrees
-of freedom (well, there is one since v0.1.3, see the technical notes
-below).
+of freedom [#]_.
 
 In the following, we will circumvent this problem by introducing
 separate "leads" for electrons and holes, making use of different
 lattices. The system we consider consists of a normal lead on the left,
 a superconductor on the right, and a tunnel barrier inbetween:
 
-.. image:: ../images/tutorial5b_sketch.*
+.. image:: ../images/5-superconductor_transport_sketch.*
 
 As already mentioned above, we begin by introducing two different
 square lattices representing electron and hole degrees of freedom:
 
-.. literalinclude:: ../../../examples/tutorial5b.py
-    :lines: 18-19,17,23-24
+.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
+    :lines: 16-17,15,20-21
 
 Any diagonal entry (kinetic energy, potentials, ...) in the BdG
 Hamiltonian then corresponds to on-site energies or hoppings within
@@ -92,8 +89,8 @@ the *same* lattice, whereas any off-diagonal entry (essentially, the
 superconducting order parameter :math:`\Delta`) corresponds
 to a hopping between *different* lattices:
 
-.. literalinclude:: ../../../examples/tutorial5b.py
-    :lines: 25-46
+.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
+    :lines: 23-44
 
 Note that the tunnel barrier is added by overwriting previously set
 on-site matrix elements.
@@ -106,8 +103,8 @@ part. We use this fact to attach purely electron and hole leads
 (comprised of only electron *or* hole lattices) to the
 system:
 
-.. literalinclude:: ../../../examples/tutorial5b.py
-    :lines: 49-65
+.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
+    :lines: 47-63
 
 This separation into two different leads allows us then later to compute the
 reflection probablities between electrons and holes explicitely.
@@ -115,15 +112,15 @@ reflection probablities between electrons and holes explicitely.
 On the superconducting side, we cannot do this separation, and can
 only define a single lead coupling electrons and holes:
 
-.. literalinclude:: ../../../examples/tutorial5b.py
-    :lines: 70-80
+.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
+    :lines: 68-78
 
 We now have on the left side two leads that are sitting in the same
 spatial position, but in different lattice spaces. This ensures that
 we can still attach all leads as before:
 
-.. literalinclude:: ../../../examples/tutorial5b.py
-    :lines: 83-87
+.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
+    :lines: 81-85
 
 When computing the conductance, we can now extract reflection from
 electrons to electrons as ``smatrix.transmission(0, 0)`` (Don't get
@@ -131,8 +128,8 @@ confused by the fact that it says ``transmission`` -- transmission
 into the same lead is reflection), and reflection from electrons to holes
 as ``smatrix.transmission(1, 0)``, by virtue of our electron and hole leads:
 
-.. literalinclude:: ../../../examples/tutorial5b.py
-    :lines: 89-97
+.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
+    :lines: 88-96
 
 Note that ``smatrix.submatrix(0,0)`` returns the block concerning reflection
 within (electron) lead 0, and from its size we can extract the number of modes
@@ -140,7 +137,7 @@ within (electron) lead 0, and from its size we can extract the number of modes
 
 Finally, for the default parameters, we obtain the following result:
 
-.. image:: ../images/tutorial5b_result.*
+.. image:: ../images/5-superconductor_transport_result.*
 
 We a see a conductance that is proportional to the square of the tunneling
 probability within the gap, and proportional to the tunneling probability
@@ -148,7 +145,7 @@ above the gap. At the gap edge, we observe a resonant Andreev reflection.
 
 .. seealso::
     The full source code can be found in
-    :download:`examples/tutorial5b.py <../../../examples/tutorial5b.py>`
+    :download:`tutorial/5-superconductor_transport.py <../../../tutorial/5-superconductor_transport.py>`
 
 .. specialnote:: Technical details
 
@@ -161,11 +158,18 @@ above the gap. At the gap edge, we observe a resonant Andreev reflection.
     - It is in fact possible to separate electron and hole degrees of
       freedom in the scattering matrix, even if one uses matrices for
       these degrees of freedom. In the solve step,
-      `~kwant.solvers.sparse.solve` returns an array containing the
-      transverse wave functions of the lead modes. By inspecting the wave
-      functions, electron and hole wave functions can be distinguished (they
-      only have entries in either the electron part *or* the hole part. If you
-      encounter modes with entries in both parts, you hit a very unlikely
-      situation in which the standard procedure to compute the modes gave you
-      a superposition of electron and hole modes. That is still OK for
+      `~kwant.solvers.common.SparseSolver.solve` returns an array containing
+      the transverse wave functions of the lead modes (in
+      `BlockResult.lead_info <kwant.solvers.common.BlockResult.lead_info>`.
+      By inspecting the wave functions, electron and hole wave
+      functions can be distinguished (they only have entries in either
+      the electron part *or* the hole part. If you encounter modes
+      with entries in both parts, you hit a very unlikely situation in
+      which the standard procedure to compute the modes gave you a
+      superposition of electron and hole modes. That is still OK for
       computing particle current, but not for electrical current).
+
+.. rubric:: Footnotes
+
+.. [#] Well, there is a not so elegant way to do it still. See the technical
+       details

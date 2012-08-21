@@ -15,8 +15,8 @@ tight-binding wire.
 Computing band structures in kwant is easy. Just define a lead in the
 usual way:
 
-.. literalinclude:: ../../../examples/tutorial3a.py
-    :lines: 18-37
+.. literalinclude:: ../../../tutorial/3-band_structure.py
+    :lines: 17-34
 
 "Usual way" means defining a translational symmetry vector, as well
 as one unit cell of the lead, and the hoppings to neighboring
@@ -25,16 +25,17 @@ invariant system needed for band structure calculations.
 
 In contrast to previous usage however, you have to *finalize* the lead.  A
 finalized lead has a method/attribute `~kwant.system.InfiniteSystem.energies`
+***CHANGE [once energies is in its own band structure module] ***
 that allows to compute the eigenenergies of the translational invariant system
 for a given momentum `k`. Computing these eigenenergies for different momenta
 `k` then yields the bandstructure:
 
-.. literalinclude:: ../../../examples/tutorial3a.py
-    :lines: 40 - 57
+.. literalinclude:: ../../../tutorial/3-band_structure.py
+    :lines: 37 - 55
 
 This gives the result:
 
-.. image:: ../images/tutorial3a_result.*
+.. image:: ../images/3-band_structure_result.*
 
 where we observe the cosine-like dispersion of the square lattice. Close
 to ``k=0`` this agrees well with the quadratic dispersion this tight-binding
@@ -42,7 +43,7 @@ Hamiltonian is approximating.
 
 .. seealso::
      The full source code can be found in
-     :download:`example/tutorial3a.py <../../../examples/tutorial3a.py>`
+     :download:`tutorial/3-band_structure.py <../../../tutorial/3-band_structure.py>`
 
 .. specialnote:: Technical details
 
@@ -74,31 +75,31 @@ circular quantum dot as a function of magnetic field
 To compute the eigenenergies, we will make use of the linear algebra
 functionality of `scipy <www.scipy.org>`_:
 
-.. literalinclude:: ../../../examples/tutorial3b.py
+.. literalinclude:: ../../../tutorial/3-closed_system.py
     :lines: 16
 
 We set up the system using the `shape`-function as in
 :ref:`tutorial-abring`, but do not add any leads:
 
-.. literalinclude:: ../../../examples/tutorial3b.py
-    :lines: 30-47
+.. literalinclude:: ../../../tutorial/3-closed_system.py
+    :lines: 26-48
 
 We add the magnetic field using a function and a global variable as we
-did in the two previous examples. (Here, the gauge is chosen such that
+did in the two previous tutorial. (Here, the gauge is chosen such that
 :math:`A_x(y) = - B y` and :math:`A_y=0`.)
 
 The spectrum can be obtained by diagonalizing the Hamiltonian of the
 system, which in turn can be obtained from the finalized
 system using `~kwant.system.System.hamiltonian_submatrix`:
 
-.. literalinclude:: ../../../examples/tutorial3b.py
-    :lines: 50, 52, 58-69
+.. literalinclude:: ../../../tutorial/3-closed_system.py
+    :lines: 51, 53, 60-76
 
 In this toy model we use dense matrices and dense matrix algebra since
 the system is very small. (In a real application one would probably
 want to use sparse matrix methods.) Finally, we obtain the result:
 
-.. image:: ../images/tutorial3b_result.*
+.. image:: ../images/3-closed_system_result.*
 
 At zero magnetic field several energy levels are degenerate (since our
 quantum dot is rather symmetric). These degeneracies are split
@@ -107,7 +108,7 @@ Landau level energies at higher magnetic fields [#]
 
 .. seealso::
     The full source code can be found in
-    :download:`examples/tutorial3b.py <../../../examples/tutorial3b.py>`
+    :download:`tutorial/3-closed_system.py <../../../tutorial/3-closed_system.py>`
 
 .. specialnote:: Technical details
 
