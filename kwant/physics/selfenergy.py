@@ -624,6 +624,15 @@ def modes(h_onslice, h_hop, tol=1e6):
         holding the singular value decomposition of the hopping matrix, or a
         single None if `h_hop` is invertible.
 
+        The first `nmodes` columns in `vecs` correspond to incoming modes
+        (coming from the lead into the system), the following `nmodes`
+        columns correspond to outgoing modes (going into the lead,
+        away from the system). The remaining columns are evanescent modes,
+        decaying away from the system. The propagating modes are sorted
+        according to their k-vector, with outgoing modes having k sorted in
+        ascending order, and incoming modes having k sorted in descending
+        order.
+
     Notes
     -----
     Only propagating modes and modes decaying away from the system
@@ -698,9 +707,23 @@ def modes(h_onslice, h_hop, tol=1e6):
 
         lprop = np.logical_not(rprop)
         nmodes = np.sum(rprop)
-        vecs = np.c_[prop_vecs[n:, lprop], prop_vecs[n:, rprop],
+
+        # Sort modes according to their k-vector (1/lambda = e^{-ik}):
+        # - right-going modes: sort that k is in ascending order
+        # - left-going modes: sort that k is in descending order
+        # (note that k can be positive or negative). With this convention,
+        # the modes of a simple square lattice strip are ordered as
+        # expected (lowest subband first, etc.)
+
+        prop_ev = ev[propselect]
+        rsort = np.argsort((1j * np.log(prop_ev[rprop])).real)
+        lsort = np.argsort((-1j * np.log(prop_ev[lprop])).real)
+
+        vecs = np.c_[prop_vecs[n:, lprop][:, lsort],
+                     prop_vecs[n:, rprop][:, rsort],
                      evan_vecs[n:]]
-        vecslmbdainv = np.c_[prop_vecs[:n, lprop], prop_vecs[:n, rprop],
+        vecslmbdainv = np.c_[prop_vecs[:n, lprop][:, lsort],
+                             prop_vecs[:n, rprop][:, rsort],
                              evan_vecs[:n]]
 
     else:
