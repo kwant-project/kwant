@@ -7,6 +7,7 @@ import struct
 from math import sqrt
 from itertools import izip, chain
 import numpy as np
+import tinyarray as ta
 from . import builder
 
 
@@ -65,12 +66,12 @@ class PolyatomicLattice(object):
 
     """
     def __init__(self, prim_vecs, basis):
-        prim_vecs = np.asarray(prim_vecs, dtype=float)
+        prim_vecs = ta.array(prim_vecs, float)
         dim = prim_vecs.shape[1]
         if prim_vecs.shape[0] > dim:
             raise ValueError('Number of primitive vectors exceeds '
                              'the space dimensionality.')
-        basis = np.asarray(basis, dtype=float)
+        basis = ta.array(basis, float)
         if basis.shape[1] != dim:
             raise ValueError('Basis dimensionality does not match '
                              'the space dimensionality.')
@@ -79,13 +80,13 @@ class PolyatomicLattice(object):
         # Sequence of primitive vectors of the lattice.
         self.prim_vecs = prim_vecs
 
-    # TODO (Anton): Currently speed of shape does not seem to cause problem,
-    # but memory usage is excessive. This function might be changed to work
-    # with Builder, so that examined sites are already stored in Builder, and
-    # not in an additional list.
+    # TODO (Anton): Currently the speed of shape does not seem to cause
+    # problem, but memory usage is excessive. This function might be changed to
+    # work with Builder, so that examined sites are already stored in Builder,
+    # and not in an additional list.
     def shape(self, function, start):
         """
-        Yield all the lattice site which belong to a certain shape.
+        Yield all the lattice sites which belong to a certain shape.
 
         Parameters
         ----------
@@ -123,7 +124,7 @@ class PolyatomicLattice(object):
             if tag in examined: continue
             examined.add(tag)
 
-            vec = np.dot(tag, self.prim_vecs)
+            vec = ta.dot(tag, self.prim_vecs)
             any_hits = False
             for sl in sls:
                 if not function(vec + sl.offset): continue
@@ -141,7 +142,7 @@ class PolyatomicLattice(object):
 
     def vec(self, int_vec):
         """
-        Return coordinates of a Bravais lattice vector in real space.
+        Return the coordinates of a Bravais lattice vector in real space.
 
         Parameters
         ----------
@@ -151,7 +152,7 @@ class PolyatomicLattice(object):
         -------
         output : real vector
         """
-        return np.dot(int_vec, self.prim_vecs)
+        return ta.dot(int_vec, self.prim_vecs)
 
 
 class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
@@ -175,21 +176,21 @@ class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
     del dim_end, pack_fmt_prefix, pack_letter, i
 
     def __init__(self, prim_vecs, offset=None):
-        prim_vecs = np.asarray(prim_vecs, dtype=float)
+        prim_vecs = ta.array(prim_vecs, float)
         dim = prim_vecs.shape[1]
         if prim_vecs.shape[0] > dim:
             raise ValueError('Number of primitive vectors exceeds '
                              'the space dimensionality.')
         if offset is None:
-            offset = np.zeros(dim)
+            offset = ta.zeros(dim)
         else:
-            offset = np.asarray(offset, dtype=float)
+            offset = ta.array(offset, float)
             if offset.shape != (dim,):
                 raise ValueError('Dimensionality of offset does not match '
                                  'that of the space.')
         self.sublattices = [self]
         self.prim_vecs = prim_vecs
-        self.inv_pv = np.linalg.pinv(prim_vecs)
+        self.inv_pv = ta.array(np.linalg.pinv(prim_vecs))
         self.offset = offset
 
         assert 0 < dim < len(self._pack_fmts)
@@ -201,7 +202,7 @@ class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
         return struct.pack(self._pack_fmts[len(tag)], *tag)
 
     def normalize_tag(self, tag):
-        tag = tuple(int(i) for i in tag)
+        tag = ta.array(tag, int)
         if len(tag) != self.dim:
             raise ValueError("Dimensionality mismatch.")
         return tag
@@ -214,13 +215,11 @@ class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
 
     def closest(self, pos):
         """Find the site closest to position `pos`."""
-        return tuple(np.asarray(
-                np.round(np.dot(pos - self.offset, self.inv_pv)),
-                dtype=int))
+        return ta.array(ta.round(ta.dot(pos - self.offset, self.inv_pv)), int)
 
     def pos(self, tag):
         """Return the real space position of the site with a given tag."""
-        return np.dot(tag, self.prim_vecs) + self.offset
+        return ta.dot(tag, self.prim_vecs) + self.offset
 
 
 # The following class is designed such that it should avoid floating
@@ -247,7 +246,7 @@ class TranslationalSymmetry(builder.Symmetry):
     the `other_vectors` parameter.
     """
     def __init__(self, periods):
-        self.periods = np.array(periods)
+        self.periods = ta.array(periods)
         # A dictionary containing cached data required for applying the
         # symmetry to different site groups.
         self.site_group_data = {}
@@ -277,8 +276,7 @@ class TranslationalSymmetry(builder.Symmetry):
         if gr in self.site_group_data:
             raise KeyError('Group already processed, delete it from '
                            'site_group_data first.')
-        inv = gr.prim_vecs.copy()
-        inv = np.linalg.pinv(inv)
+        inv = np.linalg.pinv(gr.prim_vecs)
         bravais_periods = [np.dot(i, inv) for i in self.periods]
         if not np.allclose(bravais_periods, np.round(bravais_periods),
                            rtol=0, atol=1e-8) or \
@@ -316,7 +314,9 @@ class TranslationalSymmetry(builder.Symmetry):
 
         det_x_inv_m_part = det_x_inv_m[:num_dir, :]
         m_part = m[:, :num_dir]
-        self.site_group_data[gr] = (det_x_inv_m_part, m_part, det_m)
+        self.site_group_data[gr] = (ta.array(det_x_inv_m_part),
+                                    ta.array(m_part),
+                                    det_m)
 
     @property
     def num_directions(self):
@@ -328,7 +328,7 @@ class TranslationalSymmetry(builder.Symmetry):
         except KeyError:
             self.add_site_group(site.group)
             return self.which(site)
-        return np.dot(det_x_inv_m_part, site.tag) // det_m
+        return ta.dot(det_x_inv_m_part, site.tag) // det_m
 
     def act(self, element, a, b=None):
         try:
@@ -337,7 +337,7 @@ class TranslationalSymmetry(builder.Symmetry):
             self.add_site_group(gr)
             return self.act(element, a, b)
         try:
-            delta = np.dot(m_part, element)
+            delta = ta.dot(m_part, element)
         except ValueError:
             msg = 'Expecting a {0}-tuple group element, but got `{1}` instead.'
             raise ValueError(msg.format(self.num_directions, element))
@@ -365,8 +365,7 @@ class TranslationalSymmetry(builder.Symmetry):
             else:
                 det_x_inv_m_part = -det_x_inv_m_part
             m_part = -m_part
-            result.site_group_data[gr] = (det_x_inv_m_part.copy(), m_part,
-                                          det_m)
+            result.site_group_data[gr] = (det_x_inv_m_part, m_part, det_m)
         return result
 
 

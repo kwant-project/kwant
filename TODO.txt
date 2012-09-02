@@ -1,9 +1,9 @@
 Roughly in order of importance.                                     -*-org-*-
 
-* Define a few benchmarks and check performance.  Optimize the code.
+* Document the usage of tinyarray
+  Tinyarray is a dependency now.  Should we include it in kwant?
 
-* Write a fast tiny array module.
-  This should speed up many operations in kwant.
+* Mention the optimizations in the what's new document
 
 * Take care of mutable default arguments (mostly in plotter)
   This should also allow to solve the problem with unreadable function

@@ -3,7 +3,7 @@ from random import Random
 from StringIO import StringIO
 from nose.tools import assert_raises, assert_not_equal
 from numpy.testing import assert_equal
-import numpy as np
+import tinyarray as ta
 import kwant
 from kwant import builder
 
@@ -137,13 +137,13 @@ def test_construction_and_indexing():
 def test_hermitian_conjugation():
     def f(i, j):
         if j[0] == i[0] + 1:
-            return np.array([[1, 2j], [3 + 1j, 4j]])
+            return ta.array([[1, 2j], [3 + 1j, 4j]])
         else:
             raise ValueError
 
     sys = builder.Builder()
     sys.default_site_group = builder.SimpleSiteGroup()
-    sys[0,] = sys[1,] = np.identity(2)
+    sys[0,] = sys[1,] = ta.identity(2)
 
     sys[(0,), (1,)] = f
     assert sys[(0,), (1,)] is f
@@ -156,7 +156,7 @@ def test_hermitian_conjugation():
 
 
 def test_value_equality_and_identity():
-    m = np.array([[1, 2], [3j, 4j]])
+    m = ta.array([[1, 2], [3j, 4j]])
     sys = builder.Builder()
     sys.default_site_group = builder.SimpleSiteGroup()
 
@@ -262,7 +262,7 @@ def test_finalization():
 
     # Build scattering region from blueprint and test it.
     sys = builder.Builder()
-    sys.default_site_group = sg = kwant.make_lattice(np.identity(2))
+    sys.default_site_group = sg = kwant.make_lattice(ta.identity(2))
     for site, value in sr_sites.iteritems():
         sys[site] = value
     for hop, value in sr_hops.iteritems():
@@ -372,7 +372,7 @@ def test_dangling():
 
 
 def test_builder_with_symmetry():
-    g = kwant.make_lattice(np.identity(3))
+    g = kwant.make_lattice(ta.identity(3))
     sym = kwant.TranslationalSymmetry([(0, 0, 3), (0, 2, 0)])
     bob = builder.Builder(sym)
     bob.default_site_group = g
@@ -392,14 +392,17 @@ def test_builder_with_symmetry():
     bob[(a for a, b in hoppings)] = V
     bob[hoppings] = t
 
-    assert_equal(sorted(site.tag for site in bob.sites()),
+    # TODO: Once tinyarray supports "<" the conversion to tuple can be removed.
+    assert_equal(sorted(tuple(site.tag) for site in bob.sites()),
                  sorted(set(a for a, b in hoppings_fd)))
     for sites in hoppings_fd:
         for site in sites:
             assert site in bob
             assert_equal(bob[site], V)
 
-    assert_equal(sorted((a.tag, b.tag) for a, b in bob.hoppings()),
+    # TODO: Once tinyarray supports "<" the conversion to tuple can be removed.
+    assert_equal(sorted((tuple(a.tag), tuple(b.tag))
+                        for a, b in bob.hoppings()),
                  sorted(hoppings_fd))
     for hop in hoppings_fd:
         rhop = hop[1], hop[0]
@@ -425,7 +428,7 @@ class VerySimpleSymmetry(builder.Symmetry):
         return 1
 
     def which(self, site):
-        return (site.tag[0] // self.period,)
+        return ta.array((site.tag[0] // self.period,), int)
 
     def act(self, element, a, b=None):
         delta = (self.period * element[0],) + (len(a.tag) - 1) * (0,)

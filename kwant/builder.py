@@ -6,6 +6,7 @@ __all__ = ['Builder', 'Site', 'SiteGroup', 'SimpleSiteGroup', 'Symmetry',
 import struct, abc, sys
 from itertools import izip, islice, chain
 from collections import Iterable, Sequence
+import tinyarray as ta
 import numpy as np
 from kwant import graph
 from . import system
@@ -83,15 +84,12 @@ class Site(object):
         Notes
         -----
         This method *works* only if the site for which it is called has a tag
-        which is a sequences of integers.  It *make sense* only when this sites
-        lives on a regular lattice, like one provided by `kwant.lattice`.
+        which is a sequences of integers.  It *makes sense* only when this
+        sites lives on a regular lattice, like one provided by `kwant.lattice`.
         """
         if group is None:
             group = self.group
-        tag = self.tag
-        if len(tag) != len(delta):
-            raise ValueError('Dimensionality mismatch')
-        return group(*tuple(a + b for a, b in izip(tag, delta)))
+        return Site(group, ta.add(self.tag, delta))
 
     def __hash__(self):
         return self.group.group_id ^ hash(self.tag)
@@ -295,8 +293,7 @@ class Symmetry(object):
 
         This default implementation works but may be not efficient.
         """
-        group_element = tuple(-x for x in self.which(a))
-        return self.act(group_element, a, b)
+        return self.act(-self.which(a), a, b)
 
     def in_fd(self, site):
         """Tell whether `site` lies within the fundamental domain."""
@@ -316,8 +313,10 @@ class NoSymmetry(Symmetry):
     def num_directions(self):
         return 0
 
+    _empty_array = ta.array((), int)
+
     def which(self, site):
-        return ()
+        return self._empty_array
 
     def act(self, element, a, b=None):
         if element:
@@ -1055,7 +1054,7 @@ class Builder(object):
         hoppings : Iterator over hoppings
            All matching possible hoppings
         """
-        d = tuple(-x for x in delta)
+        d = -ta.array(delta, int)
         for site0 in self.sites():
             if site0.group is not group_a:
                 continue
