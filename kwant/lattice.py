@@ -200,17 +200,11 @@ class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
         assert len(tag) == self.dim
         return struct.pack(self._pack_fmts[len(tag)], *tag)
 
-    def verify_tag(self, tag):
-        try:
-            l = len(tag)
-        except:
-            raise ValueError('The tag must be a sequence.')
-        if l != self.dim:
-            return False
-        elif not [isinstance(i, int) for i in tag]:
-            return False
-        else:
-            return True
+    def normalize_tag(self, tag):
+        tag = tuple(int(i) for i in tag)
+        if len(tag) != self.dim:
+            raise ValueError("Dimensionality mismatch.")
+        return tag
 
     def unpack_tag(self, ptag):
         d = len(ptag)

@@ -3,7 +3,7 @@ from __future__ import division
 __all__ = ['Builder', 'Site', 'SiteGroup', 'SimpleSiteGroup', 'Symmetry',
            'Lead', 'BuilderLead', 'SelfEnergy']
 
-import struct, abc
+import struct, abc, sys
 from itertools import izip, islice, chain
 from collections import Iterable, Sequence
 import numpy as np
@@ -51,10 +51,12 @@ class Site(object):
 
     def __init__(self, group, tag):
         self.group = group
-        if not group.verify_tag(tag):
-            msg = 'Tag {0} is not an allowed tag for site group {1}.'
-            raise ValueError(msg.format(repr(tag), repr(group)))
-        self.tag = tag
+        try:
+            self.tag = group.normalize_tag(tag)
+        except (TypeError, ValueError):
+            t, v, tb = sys.exc_info()
+            msg = 'Tag {0} is not allowed for site group {1}: {2}'
+            raise t(msg.format(repr(tag), repr(group), v))
 
     def packed(self):
         """Create a string storing all the site data."""
@@ -148,8 +150,11 @@ class SiteGroup(object):
         pass
 
     @abc.abstractmethod
-    def verify_tag(self, tag):
-        """Verify if the tag is a legitimate tag for this site group."""
+    def normalize_tag(self, tag):
+        """Return a normalized version of the tag.
+
+        Raises TypeError or ValueError if the tag is not acceptable.
+        """
         pass
 
     def __call__(self, *tag):
@@ -184,8 +189,15 @@ class SimpleSiteGroup(SiteGroup):
     def unpack_tag(self, ptag):
         return eval(ptag)
 
-    def verify_tag(self, tag):
-        return eval(repr(tag)) == tag
+    def normalize_tag(self, tag):
+        tag = tuple(tag)
+        try:
+            if eval(repr(tag)) != tag:
+                raise RuntimeError()
+        except:
+            raise TypeError('It must be possible to recreate the tag from '
+                            'its representation.')
+        return tag
 
 
 # This is used for packing and unpacking group ids (gids).
