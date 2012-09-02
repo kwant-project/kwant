@@ -4,6 +4,7 @@ __all__ = ['Builder', 'Site', 'SiteGroup', 'SimpleSiteGroup', 'Symmetry',
            'Lead', 'BuilderLead', 'SelfEnergy']
 
 import struct, abc, sys
+import operator
 from itertools import izip, islice, chain
 from collections import Iterable, Sequence
 import tinyarray as ta
@@ -14,7 +15,7 @@ from . import system
 
 ################ Sites and site groups
 
-class Site(object):
+class Site(tuple):
     """A site, member of a `SiteGroup`.
 
     Sites are the vertices of the graph which describes the tight binding
@@ -48,16 +49,19 @@ class Site(object):
     variables under the same names.  Given a site ``site``, common things to
     query are thus ``site.group``, ``site.tag``, and ``site.pos``.
     """
-    __slots__ = ['group', 'tag']
+    __slots__ = ()
 
-    def __init__(self, group, tag):
-        self.group = group
+    group = property(operator.itemgetter(0))
+    tag = property(operator.itemgetter(1))
+
+    def __new__(cls, group, tag):
         try:
-            self.tag = group.normalize_tag(tag)
+            tag = group.normalize_tag(tag)
         except (TypeError, ValueError):
             t, v, tb = sys.exc_info()
             msg = 'Tag {0} is not allowed for site group {1}: {2}'
             raise t(msg.format(repr(tag), repr(group), v))
+        return tuple.__new__(cls, (group, tag))
 
     def packed(self):
         """Create a string storing all the site data."""
@@ -90,15 +94,6 @@ class Site(object):
         if group is None:
             group = self.group
         return Site(group, ta.add(self.tag, delta))
-
-    def __hash__(self):
-        return self.group.group_id ^ hash(self.tag)
-
-    def __eq__(self, other):
-        return self.group is other.group and self.tag == other.tag
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def __repr__(self):
         return 'Site({0}, {1})'.format(repr(self.group), repr(self.tag))
@@ -136,6 +131,9 @@ class SiteGroup(object):
     def __repr__(self):
         return '<{0} object: Site group {1}>'.format(
             self.__class__.__name__, self.group_id)
+
+    def __hash__(self):
+        return self.group_id
 
     @abc.abstractmethod
     def pack_tag(self, tag):
