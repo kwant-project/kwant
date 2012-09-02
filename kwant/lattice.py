@@ -3,7 +3,6 @@ from __future__ import division
 __all__ = ['make_lattice', 'TranslationalSymmetry',
            'PolyatomicLattice', 'MonatomicLattice']
 
-import struct
 from math import sqrt
 from itertools import izip, chain
 import numpy as np
@@ -165,13 +164,6 @@ class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
         Displacement of the lattice origin from the real space
         coordinates origin.
     """
-    dim_end = 100
-    pack_fmt_prefix = '='
-    pack_letter = 'i'
-    _pack_item_size = struct.calcsize(pack_fmt_prefix + pack_letter)
-    _pack_fmts = [pack_fmt_prefix + pack_letter * i
-                  for i in xrange(dim_end)]
-    del dim_end, pack_fmt_prefix, pack_letter, i
 
     def __init__(self, prim_vecs, offset=None):
         prim_vecs = ta.array(prim_vecs, float)
@@ -191,25 +183,14 @@ class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
         self.inv_pv = ta.array(np.linalg.pinv(prim_vecs))
         self.offset = offset
 
-        assert 0 < dim < len(self._pack_fmts)
         builder.SiteGroup.__init__(self)
         self.dim = dim
-
-    def pack_tag(self, tag):
-        assert len(tag) == self.dim
-        return struct.pack(self._pack_fmts[len(tag)], *tag)
 
     def normalize_tag(self, tag):
         tag = ta.array(tag, int)
         if len(tag) != self.dim:
             raise ValueError("Dimensionality mismatch.")
         return tag
-
-    def unpack_tag(self, ptag):
-        d = len(ptag)
-        assert(d % self._pack_item_size == 0)
-        d //= self._pack_item_size
-        return struct.unpack(self._pack_fmts[d], ptag)
 
     def closest(self, pos):
         """Find the site closest to position `pos`."""

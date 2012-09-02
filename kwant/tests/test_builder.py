@@ -55,7 +55,6 @@ def test_graph():
 
 def test_site_groups():
     sys = builder.Builder()
-    assert_equal(sys._group_by_pgid, {})
     sg = builder.SimpleSiteGroup()
     osg = builder.SimpleSiteGroup()
 
@@ -70,39 +69,48 @@ def test_site_groups():
     assert_equal(sys[sg(1)], 123)
     assert_raises(KeyError, sys.__getitem__, osg(1))
 
-    assert_equal(sys._group_by_pgid, {sg.packed_group_id : sg})
-    sys[osg(1)] = 321
-    assert_equal(sys._group_by_pgid, {sg.packed_group_id : sg,
-                                      osg.packed_group_id : osg})
-    assert_equal(sys[osg(1)], 321)
-
     assert_equal(sg(-5).shifted((-2,), osg), osg(-7))
 
 
-def test_sequence_of_sites():
-    sg = builder.SimpleSiteGroup()
-    sites = [sg(1, 2, 3), sg('aa'), sg(12, 'bb')]
-    assert_equal(sites, list(builder.SequenceOfSites(sites)))
+class VerySimpleSymmetry(builder.Symmetry):
+    def __init__(self, period):
+        self.period = period
+
+    @property
+    def num_directions(self):
+        return 1
+
+    def which(self, site):
+        return ta.array((site.tag[0] // self.period,), int)
+
+    def act(self, element, a, b=None):
+        delta = (self.period * element[0],) + (len(a.tag) - 1) * (0,)
+        if b is None:
+            return a.shifted(delta)
+        else:
+            return a.shifted(delta), b.shifted(delta)
 
 
-def test_construction_and_indexing():
-    sites = [(0, 0), (0, 1), (1, 0)]
-    hoppings = [((0, 0), (0, 1)),
-                ((0, 1), (1, 0)),
-                ((1, 0), (0, 0))]
-    sys = builder.Builder()
-    sys.default_site_group = sg = builder.SimpleSiteGroup()
+# The hoppings have to form a ring.  Some other implicit assumptions are also
+# made.
+def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
+                                    failing_hoppings, sym=None):
+    sys = builder.Builder(sym)
+    sys.default_site_group = builder.SimpleSiteGroup()
     t, V = 1.0j, 0.0
     sys[sites] = V
-    sys[sites[0]] = V
+    for site in sites:
+        sys[site] = V
     sys[hoppings] = t
-    sys[hoppings[0]] = t
-    assert_raises(KeyError, sys.__setitem__, ((0, 1), (7, 8)), t)
-    assert_raises(KeyError, sys.__setitem__, ((12, 14), (0, 1)), t)
+    for hopping in hoppings:
+        sys[hopping] = t
 
-    assert (123, 5) not in sys
-    assert ((0, 0), (123, 1)) not in sys
-    assert ((7, 8), (0, 0)) not in sys
+    for hopping in failing_hoppings:
+        assert_raises(KeyError, sys.__setitem__, hopping, t)
+
+    assert (5, 123) not in sys
+    assert (sites[0], (5, 123)) not in sys
+    assert ((7, 8), sites[0]) not in sys
     for site in sites:
         assert site in sys
         assert_equal(sys[site], V)
@@ -113,25 +121,56 @@ def test_construction_and_indexing():
         assert_equal(sys[hop], t)
         assert_equal(sys[rev_hop], t.conjugate())
 
-    assert_equal(sys.degree((0, 0)), 2)
-    assert_equal(sorted((s.group,) + s.tag for s in sys.neighbors((0, 0))),
-                 sorted([(sg, 0, 1), (sg, 1, 0)]))
+    assert_equal(sys.degree(sites[0]), 2)
+    assert_equal(sorted(s.tag for s in sys.neighbors(sites[0])),
+                 sorted([sites[1], sites[-1]]))
 
     del sys[hoppings]
     assert_equal(list(sys.hoppings()), [])
     sys[hoppings] = t
 
-    del sys[0, 0]
-    assert_equal(sorted((s.group,) + s.tag for s in sys.sites()),
-                 sorted([(sg, 0, 1), (sg, 1, 0)]))
-    assert_equal(list(((a.group,) + a.tag, (sys.group,) + sys.tag)
-                      for a, sys in sys.hoppings()),
-                 [((sg, 0, 1), (sg, 1, 0))])
+    del sys[sites[0]]
+    assert_equal(sorted(tuple(s.tag)
+                        for s in sys.sites()), sorted(sites_fd[1:]))
+    assert_equal(sorted((tuple(a.tag), tuple(b.tag))
+                        for a, b in sys.hoppings()),
+                 sorted(hoppings_fd[1:-1]))
 
-    assert_equal(list(sys.site_value_pairs()),
-                 [(site, sys[site]) for site in sys.sites()])
-    assert_equal(list(sys.hopping_value_pairs()),
-                 [(hopping, sys[hopping]) for hopping in sys.hoppings()])
+    assert_equal(sorted((tuple(site.tag), value)
+                        for site, value in sys.site_value_pairs()),
+                 sorted((tuple(site.tag), sys[site]) for site in sys.sites()))
+    assert_equal(sorted((tuple(a.tag), tuple(b.tag), value)
+                        for (a, b), value in sys.hopping_value_pairs()),
+                 sorted((tuple(a.tag), tuple(b.tag), sys[a, b])
+                        for a, b in sys.hoppings()))
+
+def test_construction_and_indexing():
+    # Without symmetry
+    sites = [(0, 0), (0, 1), (1, 0)]
+    hoppings = [((0, 0), (0, 1)),
+                ((0, 1), (1, 0)),
+                ((1, 0), (0, 0))]
+    failing_hoppings = [((0, 1), (7, 8)), ((12, 14), (0, 1))]
+    check_construction_and_indexing(sites, sites, hoppings, hoppings,
+                                    failing_hoppings)
+
+    # With symmetry
+    sites = [(0, 0), (1, 1), (2, 1), (4, 2)]
+    sites_fd = [(0, 0), (1, 1), (0, 1), (0, 2)]
+    hoppings = [((0, 0), (1, 1)),
+                ((1, 1), (2, 1)),
+                ((2, 1), (4, 2)),
+                ((4, 2), (0, 0))]
+    hoppings_fd = [((0, 0), (1, 1)),
+                   ((1, 1), (2, 1)),
+                   ((0, 1), (2, 2)),
+                   ((0, 2), (-4, 0))]
+    failing_hoppings = [((0, 0), (0, 3)), ((0, 4), (0, 0)),
+                        ((0, 0), (2, 3)), ((2, 4), (0, 0)),
+                        ((4, 2), (6, 3)), ((6, 4), (4, 2))]
+    sym = VerySimpleSymmetry(2)
+    check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
+                                    failing_hoppings, sym)
 
 
 def test_hermitian_conjugation():
@@ -418,24 +457,6 @@ def test_builder_with_symmetry():
     assert_equal(list((a.tag, b.tag) for a, b in bob.hoppings()),
                  [((0, 0, 2), (5, 0, -3))])
 
-
-class VerySimpleSymmetry(builder.Symmetry):
-    def __init__(self, period):
-        self.period = period
-
-    @property
-    def num_directions(self):
-        return 1
-
-    def which(self, site):
-        return ta.array((site.tag[0] // self.period,), int)
-
-    def act(self, element, a, b=None):
-        delta = (self.period * element[0],) + (len(a.tag) - 1) * (0,)
-        if b is None:
-            return a.shifted(delta)
-        else:
-            return a.shifted(delta), b.shifted(delta)
 
 def test_attach_lead():
     gr = builder.SimpleSiteGroup()

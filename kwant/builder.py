@@ -3,10 +3,10 @@ from __future__ import division
 __all__ = ['Builder', 'Site', 'SiteGroup', 'SimpleSiteGroup', 'Symmetry',
            'Lead', 'BuilderLead', 'SelfEnergy']
 
-import struct, abc, sys
+import abc, sys
 import operator
 from itertools import izip, islice, chain
-from collections import Iterable, Sequence
+from collections import Iterable
 import tinyarray as ta
 import numpy as np
 from kwant import graph
@@ -63,11 +63,6 @@ class Site(tuple):
             raise t(msg.format(repr(tag), repr(group), v))
         return tuple.__new__(cls, (group, tag))
 
-    def packed(self):
-        """Create a string storing all the site data."""
-        group = self.group
-        return group.packed_group_id + group.pack_tag(self.tag)
-
     def shifted(self, delta, group=None):
         """Return a copy of the site, displaced by delta.
 
@@ -113,8 +108,7 @@ class SiteGroup(object):
     Abstract base class for site groups.
 
     A site group is a 'type' of sites.  All the site groups must inherit from
-    this basic one.  They have to define the following methods `pack_tag`,
-    `unpack_tag` and `verify_tag`.
+    this basic one.  They have to define the method `verify_tag`.
 
     Site groups which are intended for use with plotting should also provide a
     method `pos(tag)`, which returns a vector with real space coordinates of
@@ -126,7 +120,6 @@ class SiteGroup(object):
         global next_group_id
         self.group_id = next_group_id
         next_group_id += 1
-        self.packed_group_id = struct.pack(gid_pack_fmt, self.group_id)
 
     def __repr__(self):
         return '<{0} object: Site group {1}>'.format(
@@ -134,16 +127,6 @@ class SiteGroup(object):
 
     def __hash__(self):
         return self.group_id
-
-    @abc.abstractmethod
-    def pack_tag(self, tag):
-        """Return a string storing tag data."""
-        pass
-
-    @abc.abstractmethod
-    def unpack_tag(self, ptag):
-        """Create a tag given a string with its packed content."""
-        pass
 
     @abc.abstractmethod
     def normalize_tag(self, tag):
@@ -179,12 +162,6 @@ class SimpleSiteGroup(SiteGroup):
     Due to its low storage efficiency for numbers it is not recommended to use
     `SimpleSiteGroup` when `kwant.lattice.MonatomicLattice` would also work.
     """
-    def pack_tag(self, tag):
-        return repr(tag)
-
-    def unpack_tag(self, ptag):
-        return eval(ptag)
-
     def normalize_tag(self, tag):
         tag = tuple(tag)
         try:
@@ -194,48 +171,6 @@ class SimpleSiteGroup(SiteGroup):
             raise TypeError('It must be possible to recreate the tag from '
                             'its representation.')
         return tag
-
-
-# This is used for packing and unpacking group ids (gids).
-gid_pack_fmt = '@P'
-gid_pack_size = len(struct.pack(gid_pack_fmt, 0))
-
-
-# The reason why this is a global function and not a method of Builder is that
-# this functionality is also needed by finalized systems.
-def unpack(psite, group_by_pgid):
-    """Unpack a complete site (packed site group + packed tag).
-
-    This function is for internal use in `builder` module.
-    """
-    pgid = psite[:gid_pack_size]
-    try:
-        group = group_by_pgid[pgid]
-    except:
-        raise RuntimeError('Unknown site group id.')
-    return Site(group, group.unpack_tag(psite[gid_pack_size:]))
-
-
-class SequenceOfSites(Sequence):
-    """An immutable sequence of sites.
-
-    The sites are stored packed, but this is invisible to the user.
-    """
-    def __init__(self, sites):
-        self.group_by_pgid = {}
-        self.psites = []
-        for site in sites:
-            psite = site.packed()
-            pgid = psite[:gid_pack_size]
-            if pgid not in self.group_by_pgid:
-                self.group_by_pgid[pgid] = site.group
-            self.psites.append(psite)
-
-    def __getitem__(self, index):
-        return unpack(self.psites[index], self.group_by_pgid)
-
-    def __len__(self):
-        return len(self.psites)
 
 
 ################ Symmetries
@@ -396,14 +331,13 @@ class Graph(object):
         tail, head = edge
         hvhv = self.hvhv_by_tail[tail]
         heads = hvhv[2::2]
-        try:
+        if head in heads:
             i = 2 + 2 * heads.index(head)
-        except ValueError:
-            hvhv.append(head)
-            hvhv.append(value)
-        else:
             hvhv[i] = head
             hvhv[i + 1] = value
+        else:
+            hvhv.append(head)
+            hvhv.append(value)
 
     def delitem_tail(self, tail):
         """Delete a tail."""
@@ -455,12 +389,12 @@ class Graph(object):
 
     def tails(self):
         """
-        Return a view of (python2: iterator over) all the tails of the graph.
+        Return a view (< python 2.7: frozenset) of all the tails of the graph.
         """
         try:
             return self.hvhv_by_tail.viewkeys()
         except AttributeError:
-            return iter(self.hvhv_by_tail)
+            return frozenset(self.hvhv_by_tail)
 
     def tail_value_pairs(self):
         """Return an iterator over all ``(tails, value)`` pairs. """
@@ -578,7 +512,7 @@ class BuilderLead(Lead):
     """
     def __init__(self, builder, neighbors):
         self.builder = builder
-        self.neighbors = SequenceOfSites(neighbors)
+        self.neighbors = tuple(neighbors)
         self.check_neighbors()
 
     def finalized(self):
@@ -602,7 +536,7 @@ class SelfEnergy(Lead):
     """
     def __init__(self, self_energy_func, neighbors):
         self.self_energy_func = self_energy_func
-        self.neighbors = SequenceOfSites(neighbors)
+        self.neighbors = tuple(neighbors)
         self.check_neighbors()
 
     def finalized(self):
@@ -763,7 +697,6 @@ class Builder(object):
         self.default_site_group = None
         self.leads = []
         self._ham = Graph()
-        self._group_by_pgid = {}
 
     def reversed(self):
         """Return a shallow copy of the builder with the symmetry reversed.
@@ -779,7 +712,6 @@ class Builder(object):
             raise ValueError('System to be reversed may not have leads.')
         result.leads = []
         result._ham = self._ham
-        result._group_by_pgid = self._group_by_pgid
         return result
 
     def _to_site(self, sitelike):
@@ -800,9 +732,9 @@ class Builder(object):
         return bool(self._ham)
 
     def _get_site(self, sitelike):
-        psite = self.symmetry.to_fd(self._to_site(sitelike)).packed()
+        site = self.symmetry.to_fd(self._to_site(sitelike))
         try:
-            return self._ham.getitem_tail(psite)
+            return self._ham.getitem_tail(site)
         except KeyError:
             raise KeyError(sitelike)
 
@@ -815,16 +747,14 @@ class Builder(object):
             raise KeyError(hoppinglike)
         try:
             a, b = sym.to_fd(ts(a), ts(b))
-            pa, pb = a.packed(), b.packed()
-            value = self._ham.getitem_edge((pa, pb))
+            value = self._ham.getitem_edge((a, b))
         except KeyError:
             raise KeyError(hoppinglike)
         if value is other:
             if not sym.in_fd(b):
                 b, a = sym.to_fd(b, a)
                 assert not sym.in_fd(a)
-                pb, pa = b.packed(), a.packed()
-            value = self._ham.getitem_edge((pb, pa))
+            value = self._ham.getitem_edge((b, a))
             if hasattr(value, '__call__'):
                 assert not isinstance(value, HermConjOfFunc)
                 value = HermConjOfFunc(value)
@@ -849,21 +779,17 @@ class Builder(object):
             raise KeyError(key)
         if isl:
             site = self.symmetry.to_fd(self._to_site(key))
-            return self._ham.has_tail(site.packed())
+            return self._ham.has_tail(site)
         else:
             ts = self._to_site
             a, b = key
             a, b = self.symmetry.to_fd(ts(a), ts(b))
-            return self._ham.has_edge((a.packed(), b.packed()))
+            return self._ham.has_edge((a, b))
 
     def _set_site(self, sitelike, value):
         """Set a single site."""
         site = self.symmetry.to_fd(self._to_site(sitelike))
-        psite = site.packed()
-        pgid = psite[:gid_pack_size]
-        if pgid not in self._group_by_pgid:
-            self._group_by_pgid[pgid] = site.group
-        self._ham.setitem_tail(psite, value)
+        self._ham.setitem_tail(site, value)
 
     def _set_hopping(self, hoppinglike, value):
         """Set a single hopping."""
@@ -877,23 +803,26 @@ class Builder(object):
             value = value.function
 
         ham = self._ham
-        gkt = ham.getkey_tail
         ts = self._to_site
         sym = self.symmetry
 
         try:
             a, b = sym.to_fd(ts(a), ts(b))
             if sym.in_fd(b):
-                pa, pb = gkt(a.packed()), gkt(b.packed())
-                ham.setitem_edge((pa, pb), value)
-                ham.setitem_edge((pb, pa), other)
+                # The invocations of gkt make sure we do not waste space by
+                # storing different instances of identical sites.  They also
+                # verify that sites a and b already belong to the system.
+                gkt = ham.getkey_tail
+                a, b = gkt(a), gkt(b)           # Might fail.
+                ham.setitem_edge((a, b), value) # Will work.
+                ham.setitem_edge((b, a), other) # Will work.
             else:
-                pa, pb = gkt(a.packed()), b.packed()
-                ham.setitem_edge((pa, pb), value)
-                b, a = sym.to_fd(b, a)
-                assert not sym.in_fd(a)
-                pb, pa = gkt(b.packed()), a.packed()
-                ham.setitem_edge((pb, pa), other)
+                b2, a2 = sym.to_fd(b, a)
+                if not ham.has_tail(b2):
+                    raise KeyError()
+                assert not sym.in_fd(a2)
+                ham.setitem_edge((a, b), value)   # Might fail.
+                ham.setitem_edge((b2, a2), other) # Will work.
         except KeyError:
             raise KeyError(hoppinglike)
 
@@ -908,24 +837,21 @@ class Builder(object):
         tfd = self.symmetry.to_fd
         ham = self._ham
         site = tfd(self._to_site(sitelike))
-        psite = site.packed()
         try:
-            for pneighbor in ham.out_neighbors(psite):
-                if ham.has_tail(pneighbor):
-                    ham.delitem_edge((pneighbor, psite))
+            for neighbor in ham.out_neighbors(site):
+                if ham.has_tail(neighbor):
+                    ham.delitem_edge((neighbor, site))
                 else:
-                    neighbor = unpack(pneighbor, self._group_by_pgid)
                     assert not self.symmetry.in_fd(neighbor)
                     a, b = tfd(neighbor, site)
-                    ham.delitem_edge((a.packed(), b.packed()))
+                    ham.delitem_edge((a, b))
         except KeyError:
             raise KeyError(sitelike)
-        ham.delitem_tail(psite)
+        ham.delitem_tail(site)
 
     def _del_hopping(self, hoppinglike):
         """Delete a single hopping."""
         ham = self._ham
-        gkt = ham.getkey_tail
         ts = self._to_site
         sym = self.symmetry
 
@@ -936,16 +862,13 @@ class Builder(object):
         try:
             a, b = sym.to_fd(ts(a), ts(b))
             if sym.in_fd(b):
-                pa, pb = a.packed(), b.packed()
-                ham.delitem_edge((pa, pb))
-                ham.delitem_edge((pb, pa))
+                ham.delitem_edge((a, b))
+                ham.delitem_edge((b, a))
             else:
-                pa, pb = a.packed(), b.packed()
-                ham.delitem_edge((pa, pb))
+                ham.delitem_edge((a, b))
                 b, a = sym.to_fd(b, a)
                 assert not sym.in_fd(a)
-                pb, pa = b.packed(), a.packed()
-                ham.delitem_edge((pb, pa))
+                ham.delitem_edge((b, a))
         except KeyError:
             raise KeyError(hoppinglike)
 
@@ -958,71 +881,62 @@ class Builder(object):
     def eradicate_dangling(self):
         """Keep deleting dangling sites until none are left."""
         ham = self._ham
-        psites = list(psite for psite in ham.tails()
-                      if ham.out_degree(psite) < 2)
-        for psite in psites:
-            if not ham.has_tail(psite): continue
-            while psite:
-                pneighbors = tuple(ham.out_neighbors(psite))
+        sites = list(site for site in ham.tails() if ham.out_degree(site) < 2)
+        for site in sites:
+            if not ham.has_tail(site): continue
+            while site:
+                pneighbors = tuple(ham.out_neighbors(site))
                 if pneighbors:
                     assert len(pneighbors) == 1
                     pneighbor = pneighbors[0]
-                    ham.delitem_edge((pneighbor, psite))
+                    ham.delitem_edge((pneighbor, site))
                     if ham.out_degree(pneighbor) > 1:
                         pneighbor = False
                 else:
                     pneighbor = False
-                ham.delitem_tail(psite)
-                psite = pneighbor
+                ham.delitem_tail(site)
+                site = pneighbor
 
     def __iter__(self):
         """Return an iterator over all sites and hoppings."""
         return chain(self.sites(), self.hoppings())
 
     def sites(self):
-        """Return an iterator over all sites."""
-        for psite in self._ham.tails():
-            yield unpack(psite, self._group_by_pgid)
+        """Return a read-only set over all sites."""
+        return self._ham.tails()
 
     def site_value_pairs(self):
         """Return an iterator over all (site, value) pairs."""
-        for psite, value in self._ham.tail_value_pairs():
-            yield unpack(psite, self._group_by_pgid), value
+        return self._ham.tail_value_pairs()
 
     def hoppings(self):
         """Return an iterator over all hoppings."""
-        gbp = self._group_by_pgid
-        for phopp, value in self._ham.edge_value_pairs():
+        for hopp, value in self._ham.edge_value_pairs():
             if value is other: continue
-            pa, pb = phopp
-            yield (unpack(pa, gbp), unpack(pb, gbp))
+            yield hopp
 
     def hopping_value_pairs(self):
         """Return an iterator over all (hopping, value) pairs."""
-        gbp = self._group_by_pgid
-        for phopp, value in self._ham.edge_value_pairs():
+        for hopp, value in self._ham.edge_value_pairs():
             if value is other: continue
-            pa, pb = phopp
-            yield (unpack(pa, gbp), unpack(pb, gbp)), value
+            yield hopp, value
 
     def dangling(self):
         """Return an iterator over all dangling sites."""
         ham = self._ham
-        for psite in ham.tails():
-            if ham.out_degree(psite) < 2:
-                yield unpack(psite, self._group_by_pgid)
+        for site in ham.tails():
+            if ham.out_degree(site) < 2:
+                yield site
 
     def degree(self, sitelike):
         """Return the number of neighbors of a site."""
-        psite = self.symmetry.to_fd(self._to_site(sitelike)).packed()
-        return self._ham.out_degree(psite)
+        site = self.symmetry.to_fd(self._to_site(sitelike))
+        return self._ham.out_degree(site)
 
     def neighbors(self, sitelike):
         """Return an iterator over all neighbors of a site."""
-        gbp = self._group_by_pgid
-        pa = self.symmetry.to_fd(self._to_site(sitelike)).packed()
-        return (unpack(pb, gbp)
-                for pb in self._ham.out_neighbors(pa))
+        a = self.symmetry.to_fd(self._to_site(sitelike))
+        return self._ham.out_neighbors(a)
 
     def __iadd__(self, other_sys):
         """Add `other_sys` to the system.
@@ -1052,12 +966,14 @@ class Builder(object):
         hoppings : Iterator over hoppings
            All matching possible hoppings
         """
+        hamhastail = self._ham.has_tail
+        symtofd = self.symmetry.to_fd
         d = -ta.array(delta, int)
         for site0 in self.sites():
             if site0.group is not group_a:
                 continue
             site1 = site0.shifted(d, group_b)
-            if site1 in self:
+            if hamhastail(symtofd(site1)): # if site1 in self
                 yield site0, site1
 
     def attach_lead(self, lead_builder, origin=None):
@@ -1094,25 +1010,28 @@ class Builder(object):
                       'nearest-slice hoppings are allowed ' +\
                       '(consider increasing the lead period).'
                 raise ValueError(msg.format(hopping))
-        try:
-            lead_builder.sites().next()
-        except StopIteration:
+        if not lead_builder.sites():
             raise ValueError('Lead to be attached contains no sites.')
 
         # Check if site groups of the lead are present in the system (catches
         # a common and a hard to find bug).
-        groups = set(self._group_by_pgid.values())
-        for site in lead_builder.sites():
-            if site.group not in groups:
-                msg = 'Sites with site group {0} do not appear in the ' +\
-                      'system, hence the system does not interrupt the ' +\
-                      'lead. Note that different lattice instances with ' +\
-                      'the same parameters are different site groups. ' +\
-                      'See tutorial for more details.'
-                raise ValueError(msg.format(site.group))
+        groups = set(site.group for site in lead_builder.sites())
+        for site in self.sites():
+            groups.discard(site.group)
+            if not groups:
+                break
+        else:
+            msg = 'Sites with site groups {0} do not appear in the system, ' \
+                'hence the system does not interrupt the lead. Note that ' \
+                'different lattice instances with the same parameters are ' \
+                'different site groups. See tutorial for more details.'
+            raise ValueError(msg.format(tuple(groups)))
 
+
+        lbhht = lead_builder._ham.has_tail
         all_doms = list(sym.which(site)[0]
-                        for site in self.sites() if site in lead_builder)
+                        for site in self.sites()
+                        if lbhht(sym.to_fd(site))) # if site in lead_builder
         if origin is not None:
             orig_dom = sym.which(origin)[0]
             all_doms = [dom for dom in all_doms if dom <= orig_dom]
@@ -1196,19 +1115,17 @@ class Builder(object):
         ham = self._ham
 
         #### Make translation tables.
-        id_by_psite = {}
-        psites = []
-        for psite in ham.tails(): # Loop over all packed sites.
-            psite_id = len(psites)
-            psites.append(psite)
-            id_by_psite[psite] = psite_id
+        sites = list(ham.tails())
+        id_by_site = {}
+        for site_id, site in enumerate(sites):
+            id_by_site[site] = site_id
 
         #### Make graph.
         g = graph.Graph()
-        g.num_nodes = len(psites) # Some sites could not appear in any edge.
+        g.num_nodes = len(sites) # Some sites could not appear in any edge.
         for tail, head in ham.edges():
             if tail == head: continue
-            g.add_edge(id_by_psite[tail], id_by_psite[head])
+            g.add_edge(id_by_site[tail], id_by_site[head])
         g = g.compressed()
 
         #### Connect leads.
@@ -1221,21 +1138,17 @@ class Builder(object):
                 msg = 'Problem finalizing lead {0}:'
                 e.args = (' '.join((msg.format(lead_nr),) + e.args),)
                 raise
-            lns = [id_by_psite[neighbor.packed()]
-                   for neighbor in lead.neighbors]
+            lns = [id_by_site[neighbor] for neighbor in lead.neighbors]
             lead_neighbor_seqs.append(np.array(lns))
 
         #### Assemble and return result.
         result = FiniteSystem()
         result.graph = g
-        result.psites_idxs = np.cumsum([0] + [len(psite) for psite in psites])
-        result.psites = "".join(psites)
-        result.group_by_pgid = self._group_by_pgid
+        result.sites = sites
         result.leads = finalized_leads
-        result.hoppings = [ham.getitem_edge((psites[tail], psites[head]))
+        result.hoppings = [ham.getitem_edge((sites[tail], sites[head]))
                            for tail, head in g]
-        result.onsite_hamiltonians = [ham.getitem_tail(psite)
-                                      for psite in psites]
+        result.onsite_hamiltonians = [ham.getitem_tail(site) for site in sites]
         result.lead_neighbor_seqs = lead_neighbor_seqs
         result.symmetry = self.symmetry
         return result
@@ -1251,49 +1164,47 @@ class Builder(object):
         """
         ham = self._ham
         sym = self.symmetry
-        gbp = self._group_by_pgid
         assert sym.num_directions == 1
 
         #### For each site of the fundamental domain, determine whether it has
         #### neighbors or not.
-        plsites_with = []    # Fund. domain sites with neighbors in prev. dom
-        plsites_without = [] # Remaining sites of the fundamental domain
-        for ptail in ham.tails(): # Loop over all sites of the fund. domain.
-            for phead in ham.out_neighbors(ptail):
-                head = unpack(phead, gbp)
+        lsites_with = []    # Fund. domain sites with neighbors in prev. dom
+        lsites_without = [] # Remaining sites of the fundamental domain
+        for tail in ham.tails(): # Loop over all sites of the fund. domain.
+            for head in ham.out_neighbors(tail):
                 fd = sym.which(head)[0]
                 if fd == 1:
                     # Tail belongs to fund. domain, head to the next domain.
-                    plsites_with.append(ptail)
+                    lsites_with.append(tail)
                     break
             else:
                 # Tail is a fund. domain site not connected to prev. domain.
-                plsites_without.append(ptail)
-        slice_size = len(plsites_with) + len(plsites_without)
+                lsites_without.append(tail)
+        slice_size = len(lsites_with) + len(lsites_without)
 
-        if not plsites_with:
+        if not lsites_with:
             raise ValueError('Infinite system with disconnected slices.')
 
-        ### Create list of packed sites `psites` and a lookup table
+        ### Create list of sites and a lookup table
+        minus_one = ta.array((-1,))
+        plus_one = ta.array((1,))
         if order_of_neighbors is None:
-            pneighbors = [sym.act((-1,), unpack(s, gbp)).packed()
-                          for s in plsites_with]
+            neighbors = [sym.act(minus_one, s) for s in lsites_with]
         else:
-            shift = (-sym.which(order_of_neighbors[0])[0] - 1,)
-            plsites_with_set = set(plsites_with)
-            plsites_with = []
-            pneighbors = []
+            shift = ta.array((-sym.which(order_of_neighbors[0])[0] - 1,))
+            lsites_with_set = set(lsites_with)
+            lsites_with = []
+            neighbors = []
             for out_of_place_neighbor in order_of_neighbors:
                 # Shift the neighbor domain before the fundamental domain.
                 # That's the right place for the neighbors of a lead to be, but
                 # the neighbors in order_of_neighbors might live in a different
                 # domain.
                 neighbor = sym.act(shift, out_of_place_neighbor)
-                pneighbor = neighbor.packed()
-                plsite = sym.act((1,), neighbor).packed()
+                lsite = sym.act(plus_one, neighbor)
 
                 try:
-                    plsites_with_set.remove(plsite)
+                    lsites_with_set.remove(lsite)
                 except KeyError:
                     if (-sym.which(out_of_place_neighbor)[0] - 1,) != shift:
                         raise ValueError(
@@ -1302,37 +1213,35 @@ class Builder(object):
                     else:
                         raise ValueError('A site in order_of_neighbors is '
                                          'not a neighbor:\n' + str(neighbor))
-                pneighbors.append(pneighbor)
-                plsites_with.append(plsite)
-            if plsites_with_set:
+                neighbors.append(neighbor)
+                lsites_with.append(lsite)
+            if lsites_with_set:
                 raise ValueError(
                     'order_of_neighbors did not contain all neighbors.')
-            del plsites_with_set
+            del lsites_with_set
 
-        psites = plsites_with + plsites_without + pneighbors
-        del plsites_with
-        del plsites_without
-        del pneighbors
-        id_by_psite = {}
-        for site_id, psite in enumerate(psites):
-            id_by_psite[psite] = site_id
+        sites = lsites_with + lsites_without + neighbors
+        del lsites_with
+        del lsites_without
+        del neighbors
+        id_by_site = {}
+        for site_id, site in enumerate(sites):
+            id_by_site[site] = site_id
 
         #### Make graph and extract onsite Hamiltonians.
         g = graph.Graph()
         onsite_hamiltonians = []
-        for tail_id, ptail in enumerate(psites[:slice_size]):
-            onsite_hamiltonians.append(ham.getitem_tail(ptail))
-            for phead in ham.out_neighbors(ptail):
-                head_id = id_by_psite.get(phead)
+        for tail_id, tail in enumerate(sites[:slice_size]):
+            onsite_hamiltonians.append(ham.getitem_tail(tail))
+            for head in ham.out_neighbors(tail):
+                head_id = id_by_site.get(head)
                 if head_id is None:
                     # Head belongs neither to the fundamental domain nor to the
                     # previous domain.  Check that it belongs to the next
                     # domain and ignore it otherwise as an edge corresponding
                     # to this one has been added already or will be added.
-                    head = unpack(phead, gbp)
                     fd = sym.which(head)[0]
                     if fd != 1:
-                        tail = unpack(ptail, gbp)
                         msg = 'Further-than-nearest-neighbor slices ' \
                               'are connected by hopping\n{0}.'
                         raise ValueError(msg.format((tail, head)))
@@ -1342,28 +1251,24 @@ class Builder(object):
                     # correspond to one left out just above.
                     g.add_edge(head_id, tail_id)
                 g.add_edge(tail_id, head_id)
-        del id_by_psite
+        del id_by_site
         g = g.compressed()
 
         #### Extract hoppings.
         hoppings = []
         for tail_id, head_id in g:
-            ptail = psites[tail_id]
-            phead = psites[head_id]
+            tail = sites[tail_id]
+            head = sites[head_id]
             if tail_id >= slice_size:
                 # The tail belongs to the previous domain.  Find the
                 # corresponding hopping with the tail in the fund. domain.
-                t, h = sym.to_fd(unpack(ptail, gbp), unpack(phead, gbp))
-                ptail = t.packed()
-                phead = h.packed()
-            hoppings.append(ham.getitem_edge((ptail, phead)))
+                tail, head = sym.to_fd(tail, head)
+            hoppings.append(ham.getitem_edge((tail, head)))
 
         #### Assemble and return result.
         result = InfiniteSystem()
         result.slice_size = slice_size
-        result.psites_idxs = np.cumsum([0] + [len(psite) for psite in psites])
-        result.psites = "".join(psites)
-        result.group_by_pgid = self._group_by_pgid
+        result.sites = sites
         result.graph = g
         result.hoppings = hoppings
         result.onsite_hamiltonians = onsite_hamiltonians
@@ -1403,11 +1308,10 @@ class FiniteSystem(system.FiniteSystem):
             return value
 
     def site(self, i):
-        a, b = self.psites_idxs[i : i + 2]
-        return unpack(self.psites[a : b], self.group_by_pgid)
+        return self.sites[i]
 
     def pos(self, i):
-        return self.site(i).pos
+        return self.sites[i].pos
 
 
 class InfiniteSystem(system.InfiniteSystem):
@@ -1437,8 +1341,7 @@ class InfiniteSystem(system.InfiniteSystem):
             return value
 
     def site(self, i):
-        a, b = self.psites_idxs[i : i + 2]
-        return unpack(self.psites[a : b], self.group_by_pgid)
+        return self.sites[i]
 
     def pos(self, i):
-        return self.site(i).pos
+        return self.sites[i].pos
