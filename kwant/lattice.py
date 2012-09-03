@@ -80,10 +80,6 @@ class PolyatomicLattice(object):
         # Sequence of primitive vectors of the lattice.
         self.prim_vecs = prim_vecs
 
-    # TODO (Anton): Currently the speed of shape does not seem to cause
-    # problem, but memory usage is excessive. This function might be changed to
-    # work with Builder, so that examined sites are already stored in Builder,
-    # and not in an additional list.
     def shape(self, function, start):
         """
         Yield all the lattice sites which belong to a certain shape.
@@ -106,6 +102,9 @@ class PolyatomicLattice(object):
             raise ValueError('Dimensionality of start position does not match'
                              ' the space dimensionality.')
         sls = self.sublattices
+        deltas = [ta.array(i * (0,) + (1,) + (dim - 1 - i) * (0,))
+                  for i in xrange(dim)]
+        deltas += [-delta for delta in deltas]
 
         # Check if no sites are going to be added, to catch a common error.
         empty = True
@@ -117,28 +116,27 @@ class PolyatomicLattice(object):
             raise ValueError(msg.format(start))
 
         # Continue to flood fill.
-        pending = [sl.closest(start) for sl in sls]
-        examined = set([])
-        while pending:
-            tag = pending.pop()
-            if tag in examined: continue
-            examined.add(tag)
-
-            vec = ta.dot(tag, self.prim_vecs)
-            any_hits = False
-            for sl in sls:
-                if not function(vec + sl.offset): continue
-                yield sl(*tag)
-                any_hits = True
-
-            if not any_hits: continue
-            tag = list(tag)
-            for i in xrange(dim):
-                tag[i] += 1
-                pending.append(tuple(tag))
-                tag[i] -= 2
-                pending.append(tuple(tag))
-                tag[i] += 1
+        outer_shell = set(sl.closest(start) for sl in sls)
+        inner_shell = set()
+        while outer_shell:
+            tmp = set()
+            for tag in outer_shell:
+                vec = ta.dot(tag, self.prim_vecs)
+                any_hits = False
+                for sl in sls:
+                    if not function(vec + sl.offset):
+                        continue
+                    yield sl(*tag)
+                    any_hits = True
+                if not any_hits:
+                    continue
+                for shift in deltas:
+                    new_tag = tag + shift
+                    if new_tag not in inner_shell and \
+                       new_tag not in outer_shell:
+                        tmp.add(new_tag)
+            inner_shell = outer_shell
+            outer_shell = tmp
 
     def vec(self, int_vec):
         """

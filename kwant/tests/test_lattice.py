@@ -29,20 +29,21 @@ def test_pack_unpack():
 
 def test_shape():
     def in_circle(pos):
-        return pos[0]**2 + pos[1]**2 < 3
+        return pos[0] ** 2 + pos[1] ** 2 < 3
 
-    lat = lattice.make_lattice(((1, 0), (0.5, sqrt(3)/2)),
-                               ((0, 0), (0, 1/sqrt(3))))
-    sites = set(lat.shape(in_circle, (0, 0)))
-    sites_alt = set()
+    lat = lattice.make_lattice(((1, 0), (0.5, sqrt(3) / 2)),
+                               ((0, 0), (0, 1 / sqrt(3))))
+    sites = list(lat.shape(in_circle, (0, 0)))
+    sites_alt = list()
     sl0, sl1 = lat.sublattices
     for x in xrange(-2, 3):
         for y in xrange(-2, 3):
             tag = (x, y)
             for site in (sl0(*tag), sl1(*tag)):
                 if in_circle(site.pos):
-                    sites_alt.add(site)
-    assert_equal(sites, sites_alt)
+                    sites_alt.append(site)
+    assert len(sites) == len(sites_alt)
+    assert_equal(set(sites), set(sites_alt))
     assert_raises(ValueError, lat.shape(in_circle, (10, 10)).next)
 
 
