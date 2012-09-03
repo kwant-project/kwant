@@ -8,51 +8,6 @@ import kwant
 from kwant import builder
 
 
-def test_graph():
-    graph = builder.Graph()
-    assert not graph
-
-    a = 'a'
-    graph.setitem_tail(a, 'node a')
-    graph.setitem_edge(('a', 'a'), 0)
-    graph.setitem_edge(('a', 'b'), 1)
-    assert graph.has_tail('a')
-    assert not graph.has_tail('b')
-    assert graph.getkey_tail('a') is a
-    assert_raises(KeyError, graph.getkey_tail, 'b')
-    assert_raises(KeyError, graph.setitem_edge, ('b', 'a'), 1)
-    graph.setitem_tail('b', 'node b')
-    graph.setitem_tail('c', 'node c')
-    graph.setitem_edge(('b', 'c'), 2)
-    graph.setitem_edge(('c', 'a'), 3)
-    graph.setitem_edge(('a', 'c'), 4)
-    graph.setitem_edge(('a', 'b'), graph.getitem_edge(('a', 'b')) - 1)
-    graph.setitem_edge(('b', 'a'), -1)
-    assert_equal(graph.pop_edge(('c', 'a')), 3)
-    graph.delitem_edge(('a', 'c'))
-    graph.setitem_edge(('b', 'c'), 2) # Overwrite with same value
-    edges_should_be = [('a', 'a'), ('a', 'b'), ('b', 'c'), ('b', 'a')]
-    edges_should_be.sort()
-
-    assert graph
-    assert_equal(graph.getitem_tail('b'), 'node b')
-    assert_raises(KeyError, graph.getitem_tail, 'x')
-    assert_equal(graph.getitem_edge(('a', 'b')), 0)
-    assert_equal(graph.getitem_edge(('b', 'c')), 2)
-    assert_raises(KeyError, graph.getitem_edge, ('c', 'a'))
-    assert_raises(KeyError, graph.getitem_edge, ('x', 'z'))
-
-    edges = list(graph.edges())
-    edges.sort()
-    assert_equal(edges, edges_should_be)
-    for edge in edges_should_be:
-        assert graph.has_edge(edge)
-    assert not graph.has_edge(('x', 'y'))
-
-    assert graph.has_tail('a')
-    assert not graph.has_tail('x')
-
-
 def test_site_groups():
     sys = builder.Builder()
     sg = builder.SimpleSiteGroup()

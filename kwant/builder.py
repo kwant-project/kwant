@@ -262,164 +262,6 @@ class NoSymmetry(Symmetry):
         return True
 
 
-################ In-place modifiable graph
-
-def edges(seq):
-    iter = izip(islice(seq, 0, None, 2), islice(seq, 1, None, 2))
-    next(iter)                  # Skip the special loop edge.
-    return iter
-
-
-class Graph(object):
-    """A directed graph optimized for efficient querying and modification.
-
-    The nodes are labeled by python objects which must be usable as dictionary
-    keys.  Each edge, specified by a ``(tail, head)`` pair of nodes, holds an
-    object as a value.  Likewise, each tail which occurs in the graph also
-    holds a value.  (Nodes which only occur as heads are not required to have
-    values.)
-
-    This class is made for internal use.
-    """
-    def __init__(self):
-        # The graph is stored in this dictionary.  For a given `tail`,
-        # self.hvhv_by_tail[tail] is a list alternately storing heads and
-        # values.  (The heads occupy even locations followed by the values at
-        # odd locations.)  Each pair of entries thus describes a single
-        # directed edge of the graph.
-        #
-        # The first pair of entries in each list is special: it always
-        # corresponds to a loop edge.  (The head is equal to the tail.)  This
-        # special edge has two purposes: It is used to store the value
-        # associated with the tail node itself, and it is necessary for the
-        # method getkey_tail which helps to conserve memory by storing equal
-        # node label only once.
-        self.hvhv_by_tail = {}
-
-    def __nonzero__(self):
-        return bool(self.hvhv_by_tail)
-
-    def getkey_tail(self, tail):
-        """Return the object equal to `tail` which is already referenced.
-
-        This method can be used to save memory by avoiding storing several
-        copies of equal node labels."""
-        return self.hvhv_by_tail[tail][0]
-
-    def getitem_tail(self, tail):
-        """Return the value of a tail."""
-        return self.hvhv_by_tail[tail][1]
-
-    def getitem_edge(self, edge):
-        """Return the value of an edge."""
-        tail, head = edge
-        for h, value in edges(self.hvhv_by_tail[tail]):
-            if h == head:
-                return value
-        raise KeyError(edge)
-
-    def setitem_tail(self, tail, value):
-        """Set the value of a tail."""
-        hvhv = self.hvhv_by_tail.setdefault(tail, [])
-        if hvhv:
-            hvhv[1] = value
-        else:
-            hvhv[:] = [tail, value]
-
-    def setitem_edge(self, edge, value):
-        """Set the value of an edge."""
-        tail, head = edge
-        hvhv = self.hvhv_by_tail[tail]
-        heads = hvhv[2::2]
-        if head in heads:
-            i = 2 + 2 * heads.index(head)
-            hvhv[i] = head
-            hvhv[i + 1] = value
-        else:
-            hvhv.append(head)
-            hvhv.append(value)
-
-    def delitem_tail(self, tail):
-        """Delete a tail."""
-        del self.hvhv_by_tail[tail]
-
-    def pop_tail(self, tail):
-        """Delete a tail and return its value."""
-        return self.hvhv_by_tail.pop(tail)[1]
-
-    def delitem_edge(self, edge):
-        """Delete an edge."""
-        tail, head = edge
-        hvhv = self.hvhv_by_tail[tail]
-        heads = hvhv[2::2]
-        try:
-            i = 2 + 2 * heads.index(head)
-        except ValueError:
-            raise KeyError(edge)
-        del hvhv[i : i + 2]
-
-    def pop_edge(self, edge):
-        """Delete an edge and return its value."""
-        tail, head = edge
-        hvhv = self.hvhv_by_tail[tail]
-        heads = hvhv[2::2]
-        try:
-            i = 2 + 2 * heads.index(head)
-        except ValueError:
-            raise KeyError(edge)
-        value = hvhv[i + 1]
-        del hvhv[i : i + 2]
-        return value
-
-    def num_edges(self):
-        return sum(len(hvhv) - 2
-                   for hvhv in self.hvhv_by_tail.itervalues()) // 2
-
-    def edges(self):
-        """Return an iterator over all edges."""
-        for tail, hvhv in self.hvhv_by_tail.iteritems():
-            for head in islice(hvhv, 2, None, 2):
-                yield tail, head
-
-    def edge_value_pairs(self):
-        """Return an iterator over all ``(edge, value)`` pairs."""
-        for tail, hvhv in self.hvhv_by_tail.iteritems():
-            for head, value in edges(hvhv):
-                yield (tail, head), value
-
-    def tails(self):
-        """
-        Return a view (< python 2.7: frozenset) of all the tails of the graph.
-        """
-        try:
-            return self.hvhv_by_tail.viewkeys()
-        except AttributeError:
-            return frozenset(self.hvhv_by_tail)
-
-    def tail_value_pairs(self):
-        """Return an iterator over all ``(tails, value)`` pairs. """
-        for tail, hvhv in self.hvhv_by_tail.iteritems():
-            yield tail, hvhv[1]
-
-    def has_tail(self, tail):
-        """Return whether the graph contains a certain tail."""
-        return tail in self.hvhv_by_tail
-
-    def has_edge(self, edge):
-        """Return whether the graph contains a certain edge."""
-        tail, head = edge
-        hvhv = self.hvhv_by_tail.get(tail, [])
-        return head in islice(hvhv, 2, None, 2)
-
-    def out_neighbors(self, tail):
-        hvhv = self.hvhv_by_tail.get(tail, [])
-        return islice(hvhv, 2, None, 2)
-
-    def out_degree(self, tail):
-        hvhv = self.hvhv_by_tail.get(tail, [])
-        return len(hvhv) // 2 - 1
-
-
 ################ Support for Hermitian conjugation
 
 def herm_conj(value):
@@ -604,6 +446,13 @@ def for_each_in_key(key, f_site, f_hopp):
 # conjugate the value of the hopping (j, i).  Used by Builder and System.
 other = []
 
+def edges(seq):
+    # izip, when given the same iterator twice, turns a sequence into a
+    # sequence of pairs.
+    seq_iter = iter(seq)
+    result = izip(seq_iter, seq_iter)
+    next(result)                # Skip the special loop edge.
+    return result
 
 class Builder(object):
     """A tight binding system defined on a graph.
@@ -690,13 +539,70 @@ class Builder(object):
     >>> del builder[site3]
 
     """
+
     def __init__(self, symmetry=None):
         if symmetry is None:
             symmetry = NoSymmetry()
         self.symmetry = symmetry
         self.default_site_group = None
         self.leads = []
-        self._ham = Graph()
+        self.H = {}
+
+    #### Note on H ####
+    #
+    # This dictionary stores a directed graph optimized for efficient querying
+    # and modification.  The nodes are instances of `Site`.
+    #
+    # Each edge, specified by a ``(tail, head)`` pair of nodes, holds an object
+    # as a value.  Likewise, each tail which occurs in the graph also holds a
+    # value.  (Nodes which only occur as heads are not required to have
+    # values.)
+    #
+    # For a given `tail` site, H[tail] is a list alternately storing
+    # heads and values.  (The heads occupy even locations followed by the
+    # values at odd locations.)  Each pair of entries thus describes a single
+    # directed edge of the graph.
+    #
+    # The first pair of entries in each list is special: it always
+    # corresponds to a loop edge.  (The head is equal to the tail.)  This
+    # special edge has two purposes: It is used to store the value
+    # associated with the tail node itself, and it is necessary for the
+    # method getkey_tail which helps to conserve memory by storing equal
+    # node label only once.
+
+    def _get_edge(self, tail, head):
+        for h, value in edges(self.H[tail]):
+            if h == head:
+                return value
+        raise KeyError(edge)
+
+    def _set_edge(self, tail, head, value):
+        hvhv = self.H[tail]
+        heads = hvhv[2::2]
+        if head in heads:
+            i = 2 + 2 * heads.index(head)
+            hvhv[i] = head
+            hvhv[i + 1] = value
+        else:
+            hvhv.append(head)
+            hvhv.append(value)
+
+    def _del_edge(self, tail, head):
+        hvhv = self.H[tail]
+        heads = hvhv[2::2]
+        try:
+            i = 2 + 2 * heads.index(head)
+        except ValueError:
+            raise KeyError(edge)
+        del hvhv[i : i + 2]
+
+    def _out_neighbors(self, tail):
+        hvhv = self.H.get(tail, ())
+        return islice(hvhv, 2, None, 2)
+
+    def _out_degree(self, tail):
+        hvhv = self.H.get(tail, ())
+        return len(hvhv) // 2 - 1
 
     def reversed(self):
         """Return a shallow copy of the builder with the symmetry reversed.
@@ -711,7 +617,7 @@ class Builder(object):
         if self.leads:
             raise ValueError('System to be reversed may not have leads.')
         result.leads = []
-        result._ham = self._ham
+        result.H = self.H
         return result
 
     def _to_site(self, sitelike):
@@ -729,12 +635,12 @@ class Builder(object):
         raise KeyError(sitelike)
 
     def __nonzero__(self):
-        return bool(self._ham)
+        return bool(self.H)
 
     def _get_site(self, sitelike):
         site = self.symmetry.to_fd(self._to_site(sitelike))
         try:
-            return self._ham.getitem_tail(site)
+            return self.H[site][1]
         except KeyError:
             raise KeyError(sitelike)
 
@@ -747,14 +653,14 @@ class Builder(object):
             raise KeyError(hoppinglike)
         try:
             a, b = sym.to_fd(ts(a), ts(b))
-            value = self._ham.getitem_edge((a, b))
+            value = self._get_edge(a, b)
         except KeyError:
             raise KeyError(hoppinglike)
         if value is other:
             if not sym.in_fd(b):
                 b, a = sym.to_fd(b, a)
                 assert not sym.in_fd(a)
-            value = self._ham.getitem_edge((b, a))
+            value = self._get_edge(b, a)
             if hasattr(value, '__call__'):
                 assert not isinstance(value, HermConjOfFunc)
                 value = HermConjOfFunc(value)
@@ -779,17 +685,22 @@ class Builder(object):
             raise KeyError(key)
         if isl:
             site = self.symmetry.to_fd(self._to_site(key))
-            return self._ham.has_tail(site)
+            return site in self.H
         else:
             ts = self._to_site
             a, b = key
             a, b = self.symmetry.to_fd(ts(a), ts(b))
-            return self._ham.has_edge((a, b))
+            hvhv = self.H.get(a, ())
+            return b in islice(hvhv, 2, None, 2)
 
     def _set_site(self, sitelike, value):
         """Set a single site."""
         site = self.symmetry.to_fd(self._to_site(sitelike))
-        self._ham.setitem_tail(site, value)
+        hvhv = self.H.setdefault(site, [])
+        if hvhv:
+            hvhv[1] = value
+        else:
+            hvhv[:] = [site, value]
 
     def _set_hopping(self, hoppinglike, value):
         """Set a single hopping."""
@@ -802,27 +713,26 @@ class Builder(object):
             a, b = b, a
             value = value.function
 
-        ham = self._ham
         ts = self._to_site
         sym = self.symmetry
 
         try:
             a, b = sym.to_fd(ts(a), ts(b))
             if sym.in_fd(b):
-                # The invocations of gkt make sure we do not waste space by
+                # These two following lines make sure we do not waste space by
                 # storing different instances of identical sites.  They also
                 # verify that sites a and b already belong to the system.
-                gkt = ham.getkey_tail
-                a, b = gkt(a), gkt(b)           # Might fail.
-                ham.setitem_edge((a, b), value) # Will work.
-                ham.setitem_edge((b, a), other) # Will work.
+                a = self.H[a][0]      # Might fail.
+                b = self.H[b][0]      # Might fail.
+                self._set_edge(a, b, value)      # Will work.
+                self._set_edge(b, a, other)      # Will work.
             else:
                 b2, a2 = sym.to_fd(b, a)
-                if not ham.has_tail(b2):
+                if b2 not in self.H:
                     raise KeyError()
                 assert not sym.in_fd(a2)
-                ham.setitem_edge((a, b), value)   # Might fail.
-                ham.setitem_edge((b2, a2), other) # Will work.
+                self._set_edge(a, b, value)   # Might fail.
+                self._set_edge(b2, a2, other) # Will work.
         except KeyError:
             raise KeyError(hoppinglike)
 
@@ -835,23 +745,21 @@ class Builder(object):
     def _del_site(self, sitelike):
         """Delete a single site and all associated hoppings."""
         tfd = self.symmetry.to_fd
-        ham = self._ham
         site = tfd(self._to_site(sitelike))
         try:
-            for neighbor in ham.out_neighbors(site):
-                if ham.has_tail(neighbor):
-                    ham.delitem_edge((neighbor, site))
+            for neighbor in self._out_neighbors(site):
+                if neighbor in self.H:
+                    self._del_edge(neighbor, site)
                 else:
                     assert not self.symmetry.in_fd(neighbor)
                     a, b = tfd(neighbor, site)
-                    ham.delitem_edge((a, b))
+                    self._del_edge(a, b)
         except KeyError:
             raise KeyError(sitelike)
-        ham.delitem_tail(site)
+        del self.H[site]
 
     def _del_hopping(self, hoppinglike):
         """Delete a single hopping."""
-        ham = self._ham
         ts = self._to_site
         sym = self.symmetry
 
@@ -862,13 +770,13 @@ class Builder(object):
         try:
             a, b = sym.to_fd(ts(a), ts(b))
             if sym.in_fd(b):
-                ham.delitem_edge((a, b))
-                ham.delitem_edge((b, a))
+                self._del_edge(a, b)
+                self._del_edge(b, a)
             else:
-                ham.delitem_edge((a, b))
+                self._del_edge(a, b)
                 b, a = sym.to_fd(b, a)
                 assert not sym.in_fd(a)
-                ham.delitem_edge((b, a))
+                self._del_edge(b, a)
         except KeyError:
             raise KeyError(hoppinglike)
 
@@ -880,63 +788,68 @@ class Builder(object):
 
     def eradicate_dangling(self):
         """Keep deleting dangling sites until none are left."""
-        ham = self._ham
-        sites = list(site for site in ham.tails() if ham.out_degree(site) < 2)
+        sites = list(site for site in self.H
+                     if self._out_degree(site) < 2)
         for site in sites:
-            if not ham.has_tail(site): continue
+            if site not in self.H: continue
             while site:
-                pneighbors = tuple(ham.out_neighbors(site))
+                pneighbors = tuple(self._out_neighbors(site))
                 if pneighbors:
                     assert len(pneighbors) == 1
                     pneighbor = pneighbors[0]
-                    ham.delitem_edge((pneighbor, site))
-                    if ham.out_degree(pneighbor) > 1:
+                    self._del_edge(pneighbor, site)
+                    if self._out_degree(pneighbor) > 1:
                         pneighbor = False
                 else:
                     pneighbor = False
-                ham.delitem_tail(site)
+                del self.H[site]
                 site = pneighbor
 
     def __iter__(self):
         """Return an iterator over all sites and hoppings."""
-        return chain(self.sites(), self.hoppings())
+        return chain(self.H, self.hoppings())
 
     def sites(self):
         """Return a read-only set over all sites."""
-        return self._ham.tails()
+        try:
+            return self.H.viewkeys()
+        except AttributeError:
+            return frozenset(self.H)
 
     def site_value_pairs(self):
         """Return an iterator over all (site, value) pairs."""
-        return self._ham.tail_value_pairs()
+        for site, hvhv in self.H.iteritems():
+            yield site, hvhv[1]
 
     def hoppings(self):
         """Return an iterator over all hoppings."""
-        for hopp, value in self._ham.edge_value_pairs():
-            if value is other: continue
-            yield hopp
+        for tail, hvhv in self.H.iteritems():
+            for head, value in edges(hvhv):
+                if value is other: continue
+                yield (tail, head)
 
     def hopping_value_pairs(self):
         """Return an iterator over all (hopping, value) pairs."""
-        for hopp, value in self._ham.edge_value_pairs():
-            if value is other: continue
-            yield hopp, value
+        for tail, hvhv in self.H.iteritems():
+            for head, value in edges(hvhv):
+                if value is other: continue
+                yield (tail, head), value
 
     def dangling(self):
         """Return an iterator over all dangling sites."""
-        ham = self._ham
-        for site in ham.tails():
-            if ham.out_degree(site) < 2:
+        for site in self.H:
+            if self._out_degree(site) < 2:
                 yield site
 
     def degree(self, sitelike):
         """Return the number of neighbors of a site."""
         site = self.symmetry.to_fd(self._to_site(sitelike))
-        return self._ham.out_degree(site)
+        return self._out_degree(site)
 
     def neighbors(self, sitelike):
         """Return an iterator over all neighbors of a site."""
         a = self.symmetry.to_fd(self._to_site(sitelike))
-        return self._ham.out_neighbors(a)
+        return self._out_neighbors(a)
 
     def __iadd__(self, other_sys):
         """Add `other_sys` to the system.
@@ -966,14 +879,14 @@ class Builder(object):
         hoppings : Iterator over hoppings
            All matching possible hoppings
         """
-        hamhastail = self._ham.has_tail
+        H = self.H
         symtofd = self.symmetry.to_fd
         d = -ta.array(delta, int)
-        for site0 in self.sites():
+        for site0 in self.H:
             if site0.group is not group_a:
                 continue
             site1 = site0.shifted(d, group_b)
-            if hamhastail(symtofd(site1)): # if site1 in self
+            if symtofd(site1) in H: # if site1 in self
                 yield site0, site1
 
     def attach_lead(self, lead_builder, origin=None):
@@ -1001,6 +914,7 @@ class Builder(object):
         no guarantee that the system stayed unaltered.
         """
         sym = lead_builder.symmetry
+        H = lead_builder.H
 
         if sym.num_directions != 1:
             raise ValueError('Only builders with a 1D symmetry are allowed.')
@@ -1010,13 +924,13 @@ class Builder(object):
                       'nearest-slice hoppings are allowed ' +\
                       '(consider increasing the lead period).'
                 raise ValueError(msg.format(hopping))
-        if not lead_builder.sites():
+        if not H:
             raise ValueError('Lead to be attached contains no sites.')
 
         # Check if site groups of the lead are present in the system (catches
         # a common and a hard to find bug).
-        groups = set(site.group for site in lead_builder.sites())
-        for site in self.sites():
+        groups = set(site.group for site in H)
+        for site in self.H:
             groups.discard(site.group)
             if not groups:
                 break
@@ -1028,10 +942,8 @@ class Builder(object):
             raise ValueError(msg.format(tuple(groups)))
 
 
-        lbhht = lead_builder._ham.has_tail
         all_doms = list(sym.which(site)[0]
-                        for site in self.sites()
-                        if lbhht(sym.to_fd(site))) # if site in lead_builder
+                        for site in self.H if sym.to_fd(site) in H)
         if origin is not None:
             orig_dom = sym.which(origin)[0]
             all_doms = [dom for dom in all_doms if dom <= orig_dom]
@@ -1045,7 +957,7 @@ class Builder(object):
         neighbors = set()
         added = set()
         # Initialize flood-fill: create the outermost sites.
-        for site in lead_builder.sites():
+        for site in H:
             for neighbor in lead_builder.neighbors(site):
                 neighbor = sym.act((max_dom + 1,), neighbor)
                 if sym.which(neighbor)[0] == max_dom:
@@ -1112,10 +1024,9 @@ class Builder(object):
 
     def _finalized_finite(self):
         assert self.symmetry.num_directions == 0
-        ham = self._ham
 
         #### Make translation tables.
-        sites = list(ham.tails())
+        sites = tuple(self.H)
         id_by_site = {}
         for site_id, site in enumerate(sites):
             id_by_site[site] = site_id
@@ -1123,9 +1034,10 @@ class Builder(object):
         #### Make graph.
         g = graph.Graph()
         g.num_nodes = len(sites) # Some sites could not appear in any edge.
-        for tail, head in ham.edges():
-            if tail == head: continue
-            g.add_edge(id_by_site[tail], id_by_site[head])
+        for tail, hvhv in self.H.iteritems():
+            for head in islice(hvhv, 2, None, 2):
+                if tail == head: continue
+                g.add_edge(id_by_site[tail], id_by_site[head])
         g = g.compressed()
 
         #### Connect leads.
@@ -1146,9 +1058,9 @@ class Builder(object):
         result.graph = g
         result.sites = sites
         result.leads = finalized_leads
-        result.hoppings = [ham.getitem_edge((sites[tail], sites[head]))
+        result.hoppings = [self._get_edge(sites[tail], sites[head])
                            for tail, head in g]
-        result.onsite_hamiltonians = [ham.getitem_tail(site) for site in sites]
+        result.onsite_hamiltonians = [self.H[site][1] for site in sites]
         result.lead_neighbor_seqs = lead_neighbor_seqs
         result.symmetry = self.symmetry
         return result
@@ -1162,7 +1074,6 @@ class Builder(object):
         finalized system will be arbitrary.  If order_of_neighbors is set to a
         sequence of neighbor sites, this order will be kept.
         """
-        ham = self._ham
         sym = self.symmetry
         assert sym.num_directions == 1
 
@@ -1170,8 +1081,8 @@ class Builder(object):
         #### neighbors or not.
         lsites_with = []    # Fund. domain sites with neighbors in prev. dom
         lsites_without = [] # Remaining sites of the fundamental domain
-        for tail in ham.tails(): # Loop over all sites of the fund. domain.
-            for head in ham.out_neighbors(tail):
+        for tail in self.H: # Loop over all sites of the fund. domain.
+            for head in self._out_neighbors(tail):
                 fd = sym.which(head)[0]
                 if fd == 1:
                     # Tail belongs to fund. domain, head to the next domain.
@@ -1232,8 +1143,8 @@ class Builder(object):
         g = graph.Graph()
         onsite_hamiltonians = []
         for tail_id, tail in enumerate(sites[:slice_size]):
-            onsite_hamiltonians.append(ham.getitem_tail(tail))
-            for head in ham.out_neighbors(tail):
+            onsite_hamiltonians.append(self.H[tail][1])
+            for head in self._out_neighbors(tail):
                 head_id = id_by_site.get(head)
                 if head_id is None:
                     # Head belongs neither to the fundamental domain nor to the
@@ -1263,7 +1174,7 @@ class Builder(object):
                 # The tail belongs to the previous domain.  Find the
                 # corresponding hopping with the tail in the fund. domain.
                 tail, head = sym.to_fd(tail, head)
-            hoppings.append(ham.getitem_edge((tail, head)))
+            hoppings.append(self._get_edge(tail, head))
 
         #### Assemble and return result.
         result = InfiniteSystem()
