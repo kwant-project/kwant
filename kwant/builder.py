@@ -54,7 +54,9 @@ class Site(tuple):
     group = property(operator.itemgetter(0))
     tag = property(operator.itemgetter(1))
 
-    def __new__(cls, group, tag):
+    def __new__(cls, group, tag, _i_know_what_i_do=False):
+        if _i_know_what_i_do:
+            return tuple.__new__(cls, (group, tag))
         try:
             tag = group.normalize_tag(tag)
         except (TypeError, ValueError):
@@ -885,7 +887,7 @@ class Builder(object):
         for site0 in self.H:
             if site0.group is not group_a:
                 continue
-            site1 = site0.shifted(d, group_b)
+            site1 = Site(group_b, site0.tag + d, True)
             if symtofd(site1) in H: # if site1 in self
                 yield site0, site1
 
