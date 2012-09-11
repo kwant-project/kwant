@@ -3,11 +3,10 @@
 from __future__ import division
 __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 
-import abc, math
+import abc, math, types
 import numpy as np
-from scipy import sparse as sp
-from itertools import chain
 from kwant import physics
+import _system
 
 class System(object):
     """Abstract general low-level system.
@@ -46,152 +45,9 @@ class System(object):
         """
         pass
 
-    def hamiltonian_submatrix(self, to_sites=None, from_sites=None,
-                              sparse=False):
-        """Return a submatrix of the system Hamiltonian.
-
-        Parameters
-        ----------
-        to_sites : sequence of sites or None (default)
-        from_sites : sequence of sites or None (default)
-        sparse : bool
-            Whether to return a sparse or a dense matrix. Defaults to `False`.
-
-        Returns
-        -------
-        hamiltonian_part : numpy.ndarray or scipy.sparse.coo_matrix
-            Submatrix of Hamiltonian of the system.
-        to_norb : array of integers
-            Numbers of orbitals on each site in to_sites.
-        from_norb : array of integers
-            Numbers of orbitals on each site in from_sites.
-
-        Notes
-        -----
-        The returned submatrix contains all the Hamiltonian matrix elements
-        from `from_sites` to `to_sites`.  The default for `from_sites` and
-        `to_sites` is `None` which means to use all sites of the system in the
-        order in which they appear.
-        """
-        msg = 'Hopping from site {0} to site {1} does not match the ' \
-              'dimensions of onsite Hamiltonians of these sites.'
-
-        def make_sparse():
-            # Calculate the data size.
-            num_entries = 0
-            for n_i, i in enumerate(from_sites):
-                for j in chain((i,), gr.out_neighbors(i)):
-                    if j in to_coord:
-                        n_j = to_coord[j]
-                        num_entries += to_norb[n_j] * from_norb[n_i]
-
-            ij = np.empty((2, num_entries), dtype=int)
-            data = np.empty(num_entries, dtype=complex)
-
-            pos = 0
-            for n_i, i in enumerate(from_sites):
-                for j in chain((i,), gr.out_neighbors(i)):
-                    n_j = to_coord.get(j)
-                    if n_j is None:
-                        continue
-                    h = ham(j, i) if j != i else diag[i]
-                    # The shape check is here to prevent data corruption.
-                    shape = (1, 1) if np.isscalar(h) else h.shape
-                    if shape != (to_norb[n_j], from_norb[n_i]):
-                        raise ValueError(msg.format(i, j))
-                    if np.isscalar(h):
-                        data[pos] = h
-                        ij[0, pos] = n_j
-                        ij[1, pos] = n_i
-                        pos += 1
-                    else:
-                        h = np.ravel(h, order='F')
-                        coord = slice(pos, pos + h.size)
-                        data[coord] = h
-                        jtmp = np.arange(to_norb[n_j]) + to_off[n_j]
-                        itmp = np.arange(from_norb[n_i]) + from_off[n_i]
-                        jtmp, itmp = np.meshgrid(jtmp, itmp)
-                        ij[0, coord] = jtmp.ravel()
-                        ij[1, coord] = itmp.ravel()
-                        pos += h.shape[0]
-            return sp.coo_matrix((data, ij), shape=result_shape)
-
-        def make_dense():
-            # Shape checks of arrays are performed by numpy upon subblock
-            # assignment.
-            h_sub = np.zeros(result_shape, dtype='complex')
-            for n_i, i in enumerate(from_sites):
-                for j in chain((i,), gr.out_neighbors(i)):
-                    n_j = to_coord.get(j)
-                    if n_j is None:
-                        continue
-                    h = ham(j, i) if j != i else diag[i]
-                    shape = (1, 1) if np.isscalar(h) else h.shape
-                    if shape != (to_norb[n_j], from_norb[n_i]):
-                        raise ValueError(msg.format(i, j))
-                    h_sub[to_off[n_j] : to_off[n_j + 1],
-                            from_off[n_i] : from_off[n_i + 1]] = h
-            return h_sub
-
-        gr = self.graph
-        ham = self.hamiltonian
-        n = self.graph.num_nodes
-
-        if not ((from_sites is None or
-                 all(0 <= site < n for site in from_sites)) and
-                (to_sites is None or
-                 all(0 <= site < n for site in to_sites))):
-            raise IndexError('Site number out of range.')
-
-        # Cache diagonal entries.
-        isscalar = np.isscalar
-        if from_sites is None or to_sites is None:
-            # np.fromiter does not work with dtype=object.
-            diag = np.array([ham(i, i) for i in xrange(n)], dtype=object)
-            norb = np.fromiter(
-                (1 if isscalar(h) else h.shape[0] for h in diag), int, n)
-        else:
-            if (max(len(from_sites), len(to_sites)) < n // 4 > 4):
-                diag = {}
-                get = diag.get
-            else:
-                diag = np.empty(n, dtype=object)
-                get = diag.__getitem__
-
-        # Make from_norb and from_off.
-        if from_sites is None:
-            from_sites = xrange(n)
-            from_norb = norb
-        else:
-            from_norb = np.empty(len(from_sites), dtype=int)
-            for n_i, i in enumerate(from_sites):
-                h = get(i)
-                if h is None:
-                    diag[i] = h = ham(i, i)
-                from_norb[n_i] = 1 if isscalar(h) else h.shape[0]
-        from_off = np.zeros(from_norb.shape[0] + 1, int)
-        from_off[1 :] = np.cumsum(from_norb)
-
-        # Make to_norb and to_off.
-        if to_sites is None:
-            to_sites = xrange(n)
-            to_norb = norb
-        else:
-            to_norb = np.empty(len(to_sites), dtype=int)
-            for n_i, i in enumerate(to_sites):
-                h = get(i)
-                if h is None:
-                    diag[i] = h = ham(i, i)
-                to_norb[n_i] = 1 if isscalar(h) else h.shape[0]
-        to_off = np.zeros(to_norb.shape[0] + 1, int)
-        to_off[1 :] = np.cumsum(to_norb)
-
-        # Instead of doing a double loop over from_sites and to_sites it is
-        # more efficient to check if neighbors of from_sites are in to_sites.
-        to_coord = dict((i[1], i[0]) for i in enumerate(to_sites))
-        result_shape = (to_off[-1], from_off[-1])
-
-        return make_sparse() if sparse else make_dense(), to_norb, from_norb
+# Add a C-implemented function as an unbound method to class System.
+System.hamiltonian_submatrix = types.MethodType(
+    _system.hamiltonian_submatrix, None, System)
 
 
 class FiniteSystem(System):

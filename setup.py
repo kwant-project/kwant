@@ -66,6 +66,8 @@ else:
 # replacing ".pyx" with ".c" if Cython is not to be used.
 extensions = [ # (["kwant.graph.scotch", ["kwant/graph/scotch.pyx"]],
                #  {"libraries" : ["scotch", "scotcherr"]}),
+               (["kwant._system", ["kwant/_system.pyx"]],
+                {"include_dirs" : ["kwant/graph"]}),
                (["kwant.graph.core", ["kwant/graph/core.pyx"]],
                 {"depends" : ["kwant/graph/core.pxd", "kwant/graph/defs.h",
                               "kwant/graph/defs.pxd"]}),
