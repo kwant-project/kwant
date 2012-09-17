@@ -16,7 +16,7 @@ cdef class Graph:
     cdef _add_edges_ndarray_int32(self, np.ndarray[np.int32_t, ndim=2] edges)
 
 cdef class gintArraySlice:
-    cdef gint *begin, *end
+    cdef gint *data, size
 
 cdef class CGraph:
     cdef readonly bint twoway, edge_nr_translation
@@ -24,6 +24,9 @@ cdef class CGraph:
     cdef gint *heads_idxs, *heads
     cdef gint *tails_idxs, *tails, *edge_ids
     cdef gint *edge_ids_by_edge_nr, edge_nr_end
+
+    cpdef gintArraySlice out_neighbors(self, gint node)
+
 
 cdef class CGraph_malloc(CGraph):
     pass

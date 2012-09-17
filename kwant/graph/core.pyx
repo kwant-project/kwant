@@ -271,17 +271,17 @@ cdef class Graph:
 
 cdef class gintArraySlice:
     def __len__(self):
-        return self.end - self.begin
+        return self.size
 
     def __getitem__(self, gint key):
-        cdef gint *result_ptr
+        cdef gint index
         if key >= 0:
-            result_ptr = self.begin + key
+            index = key
         else:
-            result_ptr = self.end + key
-        if result_ptr < self.begin or result_ptr >= self.end:
+            index = self.size + key
+        if index < 0 or index >= self.size:
             raise IndexError('Index out of range.')
-        return result_ptr[0]
+        return self.data[index]
 
 cdef class EdgeIterator:
     def __iter__(self):
@@ -331,7 +331,7 @@ cdef class CGraph:
     def has_dangling_edges(self):
         return not self.num_edges == self.num_px_edges == self.num_xp_edges
 
-    def out_neighbors(self, gint node):
+    cpdef gintArraySlice out_neighbors(self, gint node):
         """Return the nodes a node points to.
 
         Parameters
@@ -349,8 +349,8 @@ cdef class CGraph:
         if node < 0 or node >= self.num_nodes:
             raise NodeDoesNotExistError()
         cdef gintArraySlice result = gintArraySlice()
-        result.begin = &self.heads[self.heads_idxs[node]]
-        result.end = &self.heads[self.heads_idxs[node + 1]]
+        result.data = &self.heads[self.heads_idxs[node]]
+        result.size = &self.heads[self.heads_idxs[node + 1]] - result.data
         return result
 
     def out_edge_ids(self, gint node):
@@ -394,8 +394,8 @@ cdef class CGraph:
         if node < 0 or node >= self.num_nodes:
             raise NodeDoesNotExistError()
         cdef gintArraySlice result = gintArraySlice()
-        result.begin = &self.tails[self.tails_idxs[node]]
-        result.end = &self.tails[self.tails_idxs[node + 1]]
+        result.data = &self.tails[self.tails_idxs[node]]
+        result.size = &self.tails[self.tails_idxs[node + 1]] - result.data
         return result
 
     def in_edge_ids(self, gint node):
@@ -420,8 +420,8 @@ cdef class CGraph:
         if node < 0 or node >= self.num_nodes:
             raise NodeDoesNotExistError()
         cdef gintArraySlice result = gintArraySlice()
-        result.begin = &self.edge_ids[self.tails_idxs[node]]
-        result.end = &self.edge_ids[self.tails_idxs[node + 1]]
+        result.data = &self.edge_ids[self.tails_idxs[node]]
+        result.size = &self.edge_ids[self.tails_idxs[node + 1]] - result.data
         return result
 
     def has_edge(self, gint tail, gint head):
