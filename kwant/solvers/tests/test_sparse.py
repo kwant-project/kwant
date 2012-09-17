@@ -22,8 +22,8 @@ def test_output():
     right_lead = kwant.Builder(kwant.TranslationalSymmetry([(1,)]))
     for b, site in [(system, chain(0)), (system, chain(1)),
                  (left_lead, chain(0)), (right_lead, chain(0))]:
-        h = np.asmatrix(np.random.rand(n, n) + 1j * np.random.rand(n, n))
-        h += h.H
+        h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        h += h.conjugate().transpose()
         b[site] = h
     for b, hopp in [(system, (chain(0), chain(1))),
                     (left_lead, (chain(0), chain(1))),
@@ -36,11 +36,11 @@ def test_output():
     result1 = solve(fsys)
     s, modes1 = result1
     assert s.shape == 2 * (sum(i[2] for i in modes1),)
-    s1 = np.asmatrix(result1.submatrix(1, 0))
+    s1 = result1.submatrix(1, 0)
     s2, modes2 = solve(fsys, 0, [1], [0])
     assert s2.shape == (modes2[1][2], modes2[0][2])
     assert_almost_equal(s1, s2)
-    assert_almost_equal(s.H * s, np.identity(s.shape[0]))
+    assert_almost_equal(s.conjugate().transpose() * s, np.identity(s.shape[0]))
     assert_raises(ValueError, solve, fsys, 0, [])
     modes = solve(fsys)[1]
     h = fsys.leads[0].slice_hamiltonian()
@@ -60,8 +60,8 @@ def test_one_lead():
     lead = kwant.Builder(kwant.TranslationalSymmetry([(-1,)]))
     for b, site in [(system, chain(0)), (system, chain(1)), (system, chain(2)),
                     (lead, chain(0))]:
-        h = np.asmatrix(np.random.rand(n, n) + 1j * np.random.rand(n, n))
-        h += h.H
+        h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        h += h.conjugate().transpose()
         b[site] = h
     for b, hopp in [(system, (chain(0), chain(1))),
                     (system, (chain(1), chain(2))),
@@ -70,8 +70,8 @@ def test_one_lead():
     system.attach_lead(lead)
     fsys = system.finalized()
 
-    s = np.asmatrix(solve(fsys)[0])
-    assert_almost_equal(s.H * s, np.identity(s.shape[0]))
+    s = solve(fsys)[0]
+    assert_almost_equal(s.conjugate().transpose() * s, np.identity(s.shape[0]))
 
 
 # Test that a translationally invariant system with two leads has only
@@ -79,7 +79,7 @@ def test_one_lead():
 def test_two_equal_leads():
     def check_fsys():
         s, leads = solve(fsys)[: 2]
-        assert_almost_equal(s.H * s, np.identity(s.shape[0]))
+        assert_almost_equal(s.conjugate().transpose() * s, np.identity(s.shape[0]))
         n_modes = leads[0][2]
         assert leads[1][2] == n_modes
         assert_almost_equal(s[: n_modes, : n_modes], 0)
@@ -91,10 +91,10 @@ def test_two_equal_leads():
     np.random.seed(11)
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry([(1,)]))
-    h = np.asmatrix(np.random.rand(n, n) + 1j * np.random.rand(n, n))
-    h += h.H
+    h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+    h += h.conjugate().transpose()
     h *= 0.8
-    t = 4 * np.asmatrix(np.random.rand(n, n) + 4j * np.random.rand(n, n))
+    t = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
     lead[chain(0)] = system[chain(0)] = h
     lead[chain(0), chain(1)] = t
     system.attach_lead(lead)
@@ -119,11 +119,11 @@ def test_graph_system():
     lead = kwant.Builder(kwant.TranslationalSymmetry([(-1, 0)]))
     lead.default_site_group = system.default_site_group = square
 
-    h = np.asmatrix(np.random.rand(n, n) + 1j * np.random.rand(n, n))
-    h += h.H
+    h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+    h += h.conjugate().transpose()
     h *= 0.8
-    t = 4 * np.asmatrix(np.random.rand(n, n) + 4j * np.random.rand(n, n))
-    t1 = 4 * np.asmatrix(np.random.rand(n, n) + 4j * np.random.rand(n, n))
+    t = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
+    t1 = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
     lead[0, 0] = system[[(0, 0), (1, 0)]] = h
     lead[0, 1] = system[[(0, 1), (1, 1)]] = 4 * h
     for builder in [system, lead]:
@@ -135,7 +135,7 @@ def test_graph_system():
     fsys = system.finalized()
 
     s, leads = solve(fsys)[: 2]
-    assert_almost_equal(s.H * s, np.identity(s.shape[0]))
+    assert_almost_equal(s.conjugate().transpose() * s, np.identity(s.shape[0]))
     n_modes = leads[0][2]
     assert_equal(leads[1][2], n_modes)
     assert_almost_equal(s[: n_modes, : n_modes], 0)
@@ -152,11 +152,11 @@ def test_singular_graph_system():
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry([(-1, 0)]))
     lead.default_site_group = system.default_site_group = square
-    h = np.asmatrix(np.random.rand(n, n) + 1j * np.random.rand(n, n))
-    h += h.H
+    h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+    h += h.conjugate().transpose()
     h *= 0.8
-    t = 4 * np.asmatrix(np.random.rand(n, n) + 4j * np.random.rand(n, n))
-    t1 = 4 * np.asmatrix(np.random.rand(n, n) + 4j * np.random.rand(n, n))
+    t = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
+    t1 = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
     lead[0, 0] = system[[(0, 0), (1, 0)]] = h
     lead[0, 1] = system[[(0, 1), (1, 1)]] = 4 * h
     for builder in [system, lead]:
@@ -167,7 +167,7 @@ def test_singular_graph_system():
     fsys = system.finalized()
 
     s, leads = solve(fsys)[: 2]
-    assert_almost_equal(s.H * s, np.identity(s.shape[0]))
+    assert_almost_equal(s.conjugate().transpose() * s, np.identity(s.shape[0]))
     n_modes = leads[0][2]
     assert leads[1][2] == n_modes
     assert_almost_equal(s[: n_modes, : n_modes], 0)
@@ -205,8 +205,8 @@ def test_tricky_singular_hopping():
     system.leads.append(kwant.builder.BuilderLead(lead, neighbors))
     fsys = system.finalized()
 
-    s = np.asmatrix(solve(fsys, -1.3)[0])
-    assert_almost_equal(s.H * s, np.identity(s.shape[0]))
+    s = solve(fsys, -1.3)[0]
+    assert_almost_equal(s.conjugate().transpose() * s, np.identity(s.shape[0]))
 
 
 # Test equivalence between self-energy and scattering matrix representations.
@@ -226,8 +226,8 @@ def test_self_energy():
     right_lead = kwant.Builder(kwant.TranslationalSymmetry([(1,)]))
     for b, site in [(system, chain(0)), (system, chain(1)),
                  (left_lead, chain(0)), (right_lead, chain(0))]:
-        h = np.asmatrix(np.random.rand(n, n) + 1j * np.random.rand(n, n))
-        h += h.H
+        h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        h += h.conjugate().transpose()
         b[site] = h
     for b, hopp in [(system, (chain(0), chain(1))),
                     (left_lead, (chain(0), chain(1))),
@@ -238,7 +238,7 @@ def test_self_energy():
     fsys = system.finalized()
 
     t = solve(fsys, 0, [1], [0]).data
-    eig_should_be = np.linalg.eigvals(t * t.H)
+    eig_should_be = np.linalg.eigvals(t * t.conjugate().transpose())
     n_eig = len(eig_should_be)
 
     fsys.leads[1] = LeadWithOnlySelfEnergy(fsys.leads[1])
