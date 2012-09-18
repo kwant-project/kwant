@@ -1202,7 +1202,7 @@ class FiniteSystem(system.FiniteSystem):
         if i == j:
             value = self.onsite_hamiltonians[i]
             if hasattr(value, '__call__'):
-                value = value(self.symmetry.to_fd(self.site(i)))
+                value = value(self.symmetry.to_fd(self.sites[i]))
             return value
         else:
             edge_id = self.graph.first_edge_id(i, j)
@@ -1213,8 +1213,8 @@ class FiniteSystem(system.FiniteSystem):
                 edge_id = self.graph.first_edge_id(i, j)
                 value = self.hoppings[edge_id]
             if hasattr(value, '__call__'):
-                site_i = self.site(i)
-                site_j = self.site(j)
+                site_i = self.sites[i]
+                site_j = self.sites[j]
                 value = value(*self.symmetry.to_fd(site_i, site_j))
             if conj:
                 value = herm_conj(value)
@@ -1235,7 +1235,7 @@ class InfiniteSystem(system.InfiniteSystem):
                 i -= self.slice_size
             value = self.onsite_hamiltonians[i]
             if hasattr(value, '__call__'):
-                value = value(self.symmetry.to_fd(self.site(i)))
+                value = value(self.symmetry.to_fd(self.sites[i]))
             return value
         else:
             edge_id = self.graph.first_edge_id(i, j)
@@ -1246,8 +1246,8 @@ class InfiniteSystem(system.InfiniteSystem):
                 edge_id = self.graph.first_edge_id(i, j)
                 value = self.hoppings[edge_id]
             if hasattr(value, '__call__'):
-                site_i = self.site(i)
-                site_j = self.site(j)
+                site_i = self.sites[i]
+                site_j = self.sites[j]
                 value = value(*self.symmetry.to_fd(site_i, site_j))
             if conj:
                 value = herm_conj(value)
