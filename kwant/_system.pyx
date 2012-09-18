@@ -40,7 +40,7 @@ def make_sparse(ham, CGraph gr, diag, gint [:] from_sites, n_by_to_site,
     rows_cols = np.empty((2, num_entries), gint_dtype)
     data = np.empty(num_entries, complex)
 
-    cdef gint pos = 0
+    cdef gint k = 0
     for n_fs in xrange(len(from_sites)):
         fs = from_sites[n_fs]
         if fs in n_by_to_site:
@@ -50,10 +50,10 @@ def make_sparse(ham, CGraph gr, diag, gint [:] from_sites, n_by_to_site,
                 raise ValueError(msg.format(fs, fs))
             for i in xrange(h.shape[0]):
                 for j in xrange(h.shape[1]):
-                    data[pos] = h[i, j]
-                    rows_cols[0, pos] = i + to_off[n_ts]
-                    rows_cols[1, pos] = j + from_off[n_fs]
-                    pos += 1
+                    data[k] = h[i, j]
+                    rows_cols[0, k] = i + to_off[n_ts]
+                    rows_cols[1, k] = j + from_off[n_fs]
+                    k += 1
 
         nbors = gr.out_neighbors(fs)
         for ts in nbors.data[:nbors.size]:
@@ -65,10 +65,10 @@ def make_sparse(ham, CGraph gr, diag, gint [:] from_sites, n_by_to_site,
                 raise ValueError(msg.format(fs, ts))
             for i in xrange(h.shape[0]):
                 for j in xrange(h.shape[1]):
-                    data[pos] = h[i, j]
-                    rows_cols[0, pos] = i + to_off[n_ts]
-                    rows_cols[1, pos] = j + from_off[n_fs]
-                    pos += 1
+                    data[k] = h[i, j]
+                    rows_cols[0, k] = i + to_off[n_ts]
+                    rows_cols[1, k] = j + from_off[n_fs]
+                    k += 1
 
     return sp.coo_matrix((data, rows_cols), shape=(to_off[-1], from_off[-1]))
 
@@ -94,34 +94,38 @@ def make_sparse_full(ham, CGraph gr, diag,
         num_entries += from_norb[fs] * from_norb[fs]
         nbors = gr.out_neighbors(fs)
         for ts in nbors.data[:nbors.size]:
-            num_entries += to_norb[ts] * from_norb[fs]
+            if fs < ts:
+                num_entries += 2 * to_norb[ts] * from_norb[fs]
 
     rows_cols = np.empty((2, num_entries), gint_dtype)
     data = np.empty(num_entries, complex)
 
-    cdef gint pos = 0
+    cdef gint k = 0
     for fs in xrange(n):
         h = diag[fs]
         if not (h.shape[0] == h.shape[1] == from_norb[fs]):
             raise ValueError(msg.format(fs, fs))
         for i in xrange(h.shape[0]):
             for j in xrange(h.shape[1]):
-                data[pos] = h[i, j]
-                rows_cols[0, pos] = i + to_off[fs]
-                rows_cols[1, pos] = j + from_off[fs]
-                pos += 1
+                data[k] = h[i, j]
+                rows_cols[0, k] = i + to_off[fs]
+                rows_cols[1, k] = j + from_off[fs]
+                k += 1
 
         nbors = gr.out_neighbors(fs)
         for ts in nbors.data[:nbors.size]:
+            if ts < fs:
+                continue
             h = matrix(ham(ts, fs), complex)
             if h.shape[0] != to_norb[ts] or h.shape[1] != from_norb[fs]:
                 raise ValueError(msg.format(fs, ts))
             for i in xrange(h.shape[0]):
                 for j in xrange(h.shape[1]):
-                    data[pos] = h[i, j]
-                    rows_cols[0, pos] = i + to_off[ts]
-                    rows_cols[1, pos] = j + from_off[fs]
-                    pos += 1
+                    data[k] = h[i, j]
+                    data[k + 1] = h[i, j].conjugate()
+                    rows_cols[1, k + 1] = rows_cols[0, k] = i + to_off[ts]
+                    rows_cols[0, k + 1] = rows_cols[1, k] = j + from_off[fs]
+                    k += 2
 
     return sp.coo_matrix((data, rows_cols), shape=(to_off[-1], from_off[-1]))
 
@@ -170,7 +174,7 @@ def make_dense_full(ham, CGraph gr, diag,
     """For internal use by hamiltonian_submatrix."""
     cdef gintArraySlice nbors
     cdef gint n, fs, ts
-    cdef complex [:, :] h_sub_view, h
+    cdef complex [:, :] h_sub_view, h, h_herm
 
     matrix = ta.matrix
     n = gr.num_nodes
@@ -186,11 +190,16 @@ def make_dense_full(ham, CGraph gr, diag,
 
         nbors = gr.out_neighbors(fs)
         for ts in nbors.data[:nbors.size]:
-            h = matrix(ham(ts, fs), complex)
+            if ts < fs:
+                continue
+            h = mat = matrix(ham(ts, fs), complex)
+            h_herm = mat.transpose().conjugate()
             if h.shape[0] != to_norb[ts] or h.shape[1] != from_norb[fs]:
                 raise ValueError(msg.format(fs, ts))
             h_sub_view[to_off[ts] : to_off[ts + 1],
                        from_off[fs] : from_off[fs + 1]] = h
+            h_sub_view[from_off[fs] : from_off[fs + 1],
+                       to_off[ts] : to_off[ts + 1]] = h_herm
     return h_sub
 
 
