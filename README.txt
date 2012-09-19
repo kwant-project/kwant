@@ -19,9 +19,9 @@ The prerequisites are
  - More or less current versions of `Python <http://python.org>`_ and `SciPy
    <http://scipy.org>`_.  Python 2.6 and scipy 0.7.2 should be enough.
 
- - An environment which allows to compile Python extensions written in C.  This
-   includes a C compiler and Python C headers.  The latter might be provided in
-   a separate package like ``python-dev``.
+ - An environment which allows to compile Python extensions written in C and
+   C++.  This includes a C/C++ compiler and Python C headers.  The latter might
+   be provided in a separate package like ``python-dev``.
 
  - Some incarnation of `LAPACK <http://www.netlib.org/lapack/>`_.
 
@@ -95,17 +95,21 @@ somewhere in the Python search path to the the package subdirectory.
 
 Some conventions to keep in mind:
 
-* Please keep the code consistent by adhering to the already used naming and
-  formatting conventions.  We generally follow the `"Style Guide for Python
-  Code" <http://www.python.org/dev/peps/pep-0008/>`_ and the `"Docstring
-  Conventions" <http://www.python.org/dev/peps/pep-0257/>`_.
-
 * Write tests for all the important functionality you add.  Be sure not to
   break existing tests.
 
+* Please keep the code consistent by adhering to the prevailing naming and
+  formatting conventions.  We generally follow the `"Style Guide for Python
+  Code" <http://www.python.org/dev/peps/pep-0008/>`_ For docstrings, we follow
+  `NumPy's "Docstring Standard"
+  <http://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_ and
+  `Python's "Docstring Conventions"
+  <http://www.python.org/dev/peps/pep-0257/>`_.
+
 Several modules are written in `Cython <http://cython.org/>`_ (.pyx file name
-extension).  You will need Cython (>= 0.15) if you want to modify them.  Turn
-on cythonization by passing the option ``--run-cython`` to setup.py.
+extension).  You will need Cython 0.18 if you want to modify them.  (If Cython
+0.18 is not released yet, try the bleeding-edge version.)  Turn on
+cythonization by passing the option ``--run-cython`` to setup.py.
 
 
 Tests
