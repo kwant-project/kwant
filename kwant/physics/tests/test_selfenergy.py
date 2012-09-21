@@ -232,7 +232,7 @@ def test_singular_h_and_t():
 
 def test_modes():
     h, t = .3, .7
-    vecs, vecslinv, nrpop, svd = se.modes(np.mat(h), np.mat(t))
+    vecs, vecslinv, nrpop, svd = se.modes(np.array([[h]]), np.array([[t]]))
     l = (np.sqrt(h**2 - 4 * t**2 + 0j) - h) / (2 * t)
     current = np.sqrt(4 * t**2 - h**2)
     assert nrpop == 1

@@ -111,8 +111,8 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
 
             temp = dot(u, u.T.conj()) + dot(v, v.T.conj())
 
-            max_h = np.amax(np.abs(h_onslice))
-            max_temp = np.amax(np.abs(temp))
+            max_h = np.amax(abs(h_onslice))
+            max_temp = np.amax(abs(temp))
 
             gamma = max_h / max_temp * 1j
 
@@ -440,9 +440,9 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
             t, z, ev = kla.schur(linsys[0])
 
             # Right-decaying modes.
-            select = np.abs(ev) > 1 + eps * tol
+            select = abs(ev) > 1 + eps * tol
             # Propagating modes.
-            propselect = np.abs(np.abs(ev) - 1) < eps * tol
+            propselect = abs(abs(ev) - 1) < eps * tol
 
             u, w, v = linsys[1]
             extract, project = linsys[2]
@@ -455,10 +455,10 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
                                                  calc_q=False)
 
             # Right-decaying modes.
-            select = np.abs(alpha) > (1 + eps * tol) * np.abs(beta)
+            select = abs(alpha) > (1 + eps * tol) * abs(beta)
             # Propagating modes.
-            propselect = (np.abs(np.abs(alpha) - np.abs(beta)) <
-                          eps * tol * np.abs(beta))
+            propselect = (abs(abs(alpha) - abs(beta)) <
+                          eps * tol * abs(beta))
 
             warning_settings = np.seterr(divide='ignore', invalid='ignore')
             ev = alpha / beta
@@ -479,9 +479,9 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
         t, z, ev = kla.schur(linsys)
 
         # Right-decaying modes.
-        select = np.abs(ev) > 1 + eps * tol
+        select = abs(ev) > 1 + eps * tol
         # Propagating modes.
-        propselect = np.abs(np.abs(ev) - 1) < eps * tol
+        propselect = abs(abs(ev) - 1) < eps * tol
 
         # Signal that we are in the regular case.
         u = v = w = None
@@ -696,13 +696,13 @@ def modes(h_onslice, h_hop, tol=1e6):
                 make_proper_modes(ev[propselect], prop_vecs, h_hop)
 
         # Normalize propagating eigenvectors by velocities.
-        prop_vecs /= np.sqrt(np.abs(vel))
+        prop_vecs /= np.sqrt(abs(vel))
 
         # Fix phase factor - make maximum of transverse wave function real
         # TODO (Anton): Take care of multiple maxima when normalizing.
-        maxnode = prop_vecs[n + np.argmax(np.abs(prop_vecs[n:, :]), axis=0),
+        maxnode = prop_vecs[n + np.argmax(abs(prop_vecs[n:, :]), axis=0),
                             np.arange(prop_vecs.shape[1])]
-        maxnode /= np.abs(maxnode)
+        maxnode /= abs(maxnode)
         prop_vecs /= maxnode
 
         lprop = np.logical_not(rprop)
