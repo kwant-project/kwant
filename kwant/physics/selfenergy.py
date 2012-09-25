@@ -40,7 +40,9 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
 
     # Inter-slice hopping is zero.  The current algorithm is not suited to
     # treat this extremely singular case.
-    assert np.any(h_hop)
+    # Note: np.any(h_hop) returns (at least from numpy 1.6.1 - 1.8-devel)
+    #       False if h_hop is purely imaginary
+    assert np.any(h_hop.real) or np.any(h_hop.imag)
 
     eps = np.finfo(np.common_type(h_onslice, h_hop)).eps
 
@@ -524,7 +526,9 @@ def self_energy(h_onslice, h_hop, tol=1e6):
 
     m = h_hop.shape[1]
 
-    if not np.any(h_hop):
+    # Note: np.any(h_hop) returns (at least from numpy 1.6.1 - 1.8-devel)
+    #       False if h_hop is purely imaginary
+    if not (np.any(h_hop.real) or np.any(h_hop.imag)):
         return np.zeros((m, m))
 
     if (h_onslice.shape[0] != h_onslice.shape[1] or
@@ -662,7 +666,9 @@ def modes(h_onslice, h_hop, tol=1e6):
         h_onslice.shape[0] != h_hop.shape[0]):
         raise ValueError("Incompatible matrix sizes for h_onslice and h_hop.")
 
-    if not np.any(h_hop):
+    # Note: np.any(h_hop) returns (at least from numpy 1.6.1 - 1.8-devel)
+    #       False if h_hop is purely imaginary
+    if not (np.any(h_hop.real) or np.any(h_hop.imag)):
         n = h_hop.shape[0]
         svd = (np.empty((n, 0)), np.empty((0, 0)), np.empty((0, m)))
         return Modes(np.empty((0, 0)), np.empty((0, 0)), 0, svd)

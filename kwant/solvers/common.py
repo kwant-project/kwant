@@ -169,7 +169,11 @@ class SparseSolver(object):
                 v = lead.inter_slice_hopping()
                 modes = physics.modes(h, v)
                 lead_info.append(modes)
-                if not np.any(v):
+
+                # Note: np.any(v) returns (at least from numpy
+                #       1.6.1 - 1.8-devel) False if v is purely
+                #       imaginary
+                if not (np.any(v.real) or np.any(v.imag)):
                     # See comment about zero-shaped sparse matrices at the top.
                     rhs.append(np.zeros((lhs.shape[1], 0)))
                     continue
