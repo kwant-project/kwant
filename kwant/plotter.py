@@ -16,7 +16,7 @@ except:
     defaultname = "plot.pdf"
     has_pil = False
 
-import kwant
+from . import builder, system
 
 __all__ = ['plot', 'Circle', 'Polygon', 'Line', 'Color', 'LineStyle',
            'black', 'white', 'red', 'green', 'blue',
@@ -272,9 +272,9 @@ class Polygon(object):
             ctx.stroke()
 
 
-def iterate_lead_sites_builder(system, lead_copies):
-    for lead in system.leads:
-        if not isinstance(lead, kwant.builder.BuilderLead):
+def iterate_lead_sites_builder(syst, lead_copies):
+    for lead in syst.leads:
+        if not isinstance(lead, builder.BuilderLead):
             continue
         sym = lead.builder.symmetry
         shift = sym.which(lead.neighbors[0]) + 1
@@ -284,9 +284,9 @@ def iterate_lead_sites_builder(system, lead_copies):
                 yield sym.act(shift + i, site), i
 
 
-def iterate_lead_hoppings_builder(system, lead_copies):
-    for lead in system.leads:
-        if not isinstance(lead, kwant.builder.BuilderLead):
+def iterate_lead_hoppings_builder(syst, lead_copies):
+    for lead in syst.leads:
+        if not isinstance(lead, builder.BuilderLead):
             continue
         sym = lead.builder.symmetry
         shift = sym.which(lead.neighbors[0]) + 1
@@ -308,13 +308,13 @@ def iterate_lead_hoppings_builder(system, lead_copies):
                            i - 1 + shift1, i - 1 + shift2)
 
 
-def iterate_scattreg_sites_builder(system):
-    for site in system.sites():
+def iterate_scattreg_sites_builder(syst):
+    for site in syst.sites():
         yield site
 
 
-def iterate_scattreg_hoppings_builder(system):
-    for hopping in system.hoppings():
+def iterate_scattreg_hoppings_builder(syst):
+    for hopping in syst.hoppings():
         yield hopping
 
 
@@ -323,13 +323,13 @@ def empty_generator(*args, **kwds):
     yield
 
 
-def iterate_scattreg_sites_llsys(system):
-    return xrange(system.graph.num_nodes)
+def iterate_scattreg_sites_llsys(syst):
+    return xrange(syst.graph.num_nodes)
 
 
-def iterate_scattreg_hoppings_llsys(system):
-    for i in xrange(system.graph.num_nodes):
-        for j in system.graph.out_neighbors(i):
+def iterate_scattreg_hoppings_llsys(syst):
+    for i in xrange(syst.graph.num_nodes):
+        for j in syst.graph.out_neighbors(i):
             # Only yield half of the hoppings (as builder does)
             if i < j:
                 yield i, j
@@ -384,17 +384,17 @@ def typical_distance(pos, hoppings, sites):
     return sqrt(min_sq_dist) if min_sq_dist != inf else 1
 
 
-def default_pos(system):
-    if isinstance(system, kwant.builder.Builder):
+def default_pos(syst):
+    if isinstance(syst, builder.Builder):
         return lambda site: site.pos
-    elif isinstance(system, kwant.builder.FiniteSystem):
-        return lambda i: system.site(i).pos
+    elif isinstance(syst, builder.FiniteSystem):
+        return lambda i: syst.site(i).pos
     else:
         raise ValueError("`pos` argument needed when plotting"
                          " systems which are not (finalized) builders")
 
 
-def plot(system, filename=defaultname, fmt=None, a=None,
+def plot(syst, filename=defaultname, fmt=None, a=None,
          width=600, height=None, border=0.1, bcol=white, pos=None,
          symbols=Circle(r=0.3), lines=Line(lw=0.1),
          lead_symbols=-1, lead_lines=-1,
@@ -442,7 +442,7 @@ def plot(system, filename=defaultname, fmt=None, a=None,
 
     Parameters
     ----------
-    system : (un)finalized system
+    syst : (un)finalized system
         System to plot. Either an unfinalized Builder
         (instance of `kwant.builder.Builder`)
         or a finalized builder (instance of
@@ -612,22 +612,22 @@ def plot(system, filename=defaultname, fmt=None, a=None,
       and `blue`.
     """
 
-    def iterate_all_sites(system, lead_copies=0):
-        for site in iterate_scattreg_sites(system):
+    def iterate_all_sites(syst, lead_copies=0):
+        for site in iterate_scattreg_sites(syst):
             yield site
 
-        for site, ucindx in iterate_lead_sites(system, lead_copies):
+        for site, ucindx in iterate_lead_sites(syst, lead_copies):
             yield site
 
-    def iterate_all_hoppings(system, lead_copies=0):
-        for site1, site2 in iterate_scattreg_hoppings(system):
+    def iterate_all_hoppings(syst, lead_copies=0):
+        for site1, site2 in iterate_scattreg_hoppings(syst):
             yield site1, site2
 
-        for site1, site2, i1, i2 in iterate_lead_hoppings(system, lead_copies):
+        for site1, site2, i1, i2 in iterate_lead_hoppings(syst, lead_copies):
             yield site1, site2
 
-    is_builder = isinstance(system, kwant.builder.Builder)
-    is_lowlevel = isinstance(system, kwant.system.FiniteSystem)
+    is_builder = isinstance(syst, builder.Builder)
+    is_lowlevel = isinstance(syst, system.FiniteSystem)
     if is_builder:
         iterate_scattreg_sites = iterate_scattreg_sites_builder
         iterate_scattreg_hoppings = iterate_scattreg_hoppings_builder
@@ -647,7 +647,7 @@ def plot(system, filename=defaultname, fmt=None, a=None,
         raise ValueError("One of width and height must be not None")
 
     if pos is None:
-        pos = default_pos(system)
+        pos = default_pos(syst)
 
     if fmt is None and filename is not None:
         # Try to figure out the format from the filename
@@ -700,15 +700,15 @@ def plot(system, filename=defaultname, fmt=None, a=None,
         fllines = lambda x, y : lead_lines
 
     minx, maxx, miny, maxy = \
-        extent(pos, iterate_all_sites(system, len(lead_fading)))
+        extent(pos, iterate_all_sites(syst, len(lead_fading)))
 
     # If the user gave no typical distance between sites, we need to figure it
     # out ourselves
     # (Note: it is enough to consider one copy of the lead unit cell for
     #        figuring out distances, because of the translational symmetry)
     if a is None:
-        a = typical_distance(pos, iterate_all_hoppings(system, lead_copies=1),
-                             iterate_all_sites(system, lead_copies=1))
+        a = typical_distance(pos, iterate_all_hoppings(syst, lead_copies=1),
+                             iterate_all_sites(syst, lead_copies=1))
     elif a <= 0:
         raise ValueError("The distance a must be >0")
 
@@ -779,14 +779,14 @@ def plot(system, filename=defaultname, fmt=None, a=None,
     ctx.translate(-minx, -miny)
 
     #### Draw the lines for the hoppings.
-    for site1, site2 in iterate_scattreg_hoppings(system):
+    for site1, site2 in iterate_scattreg_hoppings(syst):
         line = flines(site1, site2)
 
         if line is not None:
             line._draw_cairo(ctx, pos(site1), pos(site2), a)
 
     for site1, site2, ucindx1, ucindx2 in \
-            iterate_lead_hoppings(system, len(lead_fading)):
+            iterate_lead_hoppings(syst, len(lead_fading)):
         if ucindx1 == ucindx2:
             line = fllines(site1, site2)
 
@@ -821,13 +821,13 @@ def plot(system, filename=defaultname, fmt=None, a=None,
                                      0.5 * add(pos(site1), pos(site2)), a)
 
     #### Draw the symbols for the sites.
-    for site in iterate_scattreg_sites(system):
+    for site in iterate_scattreg_sites(syst):
         symbol = fsymbols(site)
 
         if symbol is not None:
             symbol._draw_cairo(ctx, pos(site), a)
 
-    for site, ucindx in iterate_lead_sites(system,
+    for site, ucindx in iterate_lead_sites(syst,
                                            lead_copies=len(lead_fading)):
         symbol = flsymbols(site)
 
@@ -851,13 +851,13 @@ def plot(system, filename=defaultname, fmt=None, a=None,
         im.save(filename, "JPG")
 
 
-def interpolate(system, function, a=None, pos=None,
+def interpolate(syst, function, a=None, pos=None,
                 method='nearest', oversampling=3):
     """Interpolate a scalar function defined for the sites of a system.
 
     Parameters
     ----------
-    system : kwant.system.FiniteSystem or kwant.builder.Builder
+    syst : kwant.system.FiniteSystem or kwant.builder.Builder
         The system for whose sites `function` is to be plotted.
     function : function or mapping
         Function which takes a site and returns a number, or a mapping whose
@@ -900,10 +900,10 @@ def interpolate(system, function, a=None, pos=None,
       makes sense to set `oversampling` to ``1`` to minimize the size of the
       output array.
     """
-    if isinstance(system, kwant.builder.Builder):
+    if isinstance(syst, builder.Builder):
         iterate_scattreg_sites = iterate_scattreg_sites_builder
         iterate_scattreg_hoppings = iterate_scattreg_hoppings_builder
-    elif isinstance(system, kwant.system.FiniteSystem):
+    elif isinstance(syst, system.FiniteSystem):
         iterate_scattreg_sites = iterate_scattreg_sites_llsys
         iterate_scattreg_hoppings = iterate_scattreg_hoppings_llsys
     else:
@@ -916,17 +916,17 @@ def interpolate(system, function, a=None, pos=None,
             raise TypeError("`function` must be either callable or a mapping.")
 
     if pos is None:
-        pos = default_pos(system)
+        pos = default_pos(syst)
 
     if a is None:
-        a = typical_distance(pos, iterate_scattreg_hoppings(system),
-                             iterate_scattreg_sites(system))
+        a = typical_distance(pos, iterate_scattreg_hoppings(syst),
+                             iterate_scattreg_sites(syst))
     elif a <= 0:
         raise ValueError("The distance a must be >0")
 
     points = []
     values = []
-    for site in iterate_scattreg_sites(system):
+    for site in iterate_scattreg_sites(syst):
         point = pos(site)
         if point.shape != (2,):
             raise ValueError(
@@ -949,7 +949,7 @@ def interpolate(system, function, a=None, pos=None,
 
     return img, min, max
 
-def show(system, function, colorbar=True, **kwds):
+def show(syst, function, colorbar=True, **kwds):
     """Show a scalar function defined for the sites of a systems.
 
     Create a pixmap representation of a function of the sites of a system by
@@ -957,7 +957,7 @@ def show(system, function, colorbar=True, **kwds):
 
     Parameters
     ----------
-    system : kwant.system.FiniteSystem or kwant.builder.Builder
+    syst : kwant.system.FiniteSystem or kwant.builder.Builder
         The system for whose sites `function` is to be plotted.
     function : function or mapping
         Function which takes a site and returns a number, or a mapping whose
@@ -976,7 +976,7 @@ def show(system, function, colorbar=True, **kwds):
     - Matplotlib's interpolation is turned off, if the keyword argument
       `method` is not set or set to the default value "nearest".
     """
-    img, min, max = interpolate(system, function, **kwds)
+    img, min, max = interpolate(syst, function, **kwds)
     border = 0.5 * (max - min) / (np.asarray(img.shape) - 1)
     min -= border
     max += border

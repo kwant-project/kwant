@@ -21,10 +21,11 @@ __all__ = ['solve', 'ldos', 'options', 'Solver']
 
 import numpy as np
 import scipy.sparse as sp
-import kwant.solvers.common
-import kwant.linalg.mumps as mumps
+from . import common
+from ..linalg import mumps
 
-class Solver(kwant.solvers.common.SparseSolver):
+
+class Solver(common.SparseSolver):
     """Sparse Solver class based on the sparse direct solver MUMPS.
     """
 

@@ -10,8 +10,7 @@ from itertools import izip, islice, chain
 from collections import Iterable
 import tinyarray as ta
 import numpy as np
-from kwant import graph
-from . import system
+from . import system, graph
 
 
 ################ Sites and site groups

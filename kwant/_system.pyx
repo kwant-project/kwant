@@ -6,7 +6,7 @@ from itertools import chain
 
 from kwant.graph.core cimport CGraph, gintArraySlice
 from kwant.graph.defs cimport gint
-from kwant.graph.defs import gint_dtype
+from .graph.defs import gint_dtype
 
 msg = 'Hopping from site {0} to site {1} does not match the ' \
     'dimensions of onsite Hamiltonians of these sites.'

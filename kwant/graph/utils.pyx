@@ -3,15 +3,15 @@
 __all__ = ['make_undirected', 'remove_duplicates', 'induced_subgraph',
            'print_graph']
 
+import numpy as np
+cimport numpy as np
 from libc.stdlib cimport malloc, realloc, free
 from libc.string cimport memset
 cimport cython
-cimport numpy as np
-import numpy as np
 from kwant.graph.defs cimport gint
-from kwant.graph.defs import gint_dtype
+from .defs import gint_dtype
 from kwant.graph.core cimport CGraph, CGraph_malloc
-from kwant.graph.core import CGraph, CGraph_malloc
+from .core import CGraph, CGraph_malloc
 
 @cython.boundscheck(False)
 def make_undirected(CGraph gr, remove_dups=True, calc_weights=False):

@@ -6,7 +6,7 @@ cimport libc.stdio
 import numpy as np
 cimport numpy as np
 from kwant.graph cimport core
-from kwant.graph import core, defs
+from . import core, defs
 from kwant.graph.c_scotch cimport *
 
 DEF SCOTCH_STRATQUALITY = 1

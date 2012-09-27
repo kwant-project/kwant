@@ -15,17 +15,16 @@ __all__ = ['solve', 'ldos', 'Solver']
 
 from functools import reduce
 import warnings
-import kwant.solvers.common
 import numpy as np
 import scipy.sparse as sp
+from . import common
 
 # Note: previous code would have failed if umfpack was provided by scikit
 import scipy.sparse.linalg.dsolve.linsolve as linsolve
 umfpack = linsolve.umfpack
 uses_umfpack = linsolve.isUmfpack
 
-import kwant.system as system
-import kwant.physics as physics
+from .. import system, physics
 
 # check if we are actually using umfpack or rather SuperLU
 
@@ -99,7 +98,7 @@ else:
     factorized = linsolve.factorized
 
 
-class Solver(kwant.solvers.common.SparseSolver):
+class Solver(common.SparseSolver):
     """Sparse Solver class based on the sparse direct solvers provided
     by scipy.
     """

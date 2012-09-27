@@ -7,8 +7,7 @@ import abc
 import math
 import types
 import numpy as np
-from kwant import physics
-import _system
+from . import physics, _system
 
 
 class System(object):

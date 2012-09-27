@@ -20,6 +20,9 @@ Roughly in order of importance.                                     -*-org-*-
 * Benchmark mumps and check whether nested dissection would be useful.
   If yes, implement it.
 
+* Make kwant importable under other names
+  This requires support for relative cimports in Cython
+
 * Make kwant objects pickleable.
 
 * Use sparse linear algebra to calculate bands

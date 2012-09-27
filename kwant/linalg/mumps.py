@@ -6,8 +6,8 @@ __all__ = ['MUMPSContext', 'schur_complement', 'AnalysisStatistics',
 import time
 import numpy as np
 import scipy.sparse
-import _mumps
-from fortran_helpers import prepare_for_fortran
+from . import _mumps
+from .fortran_helpers import prepare_for_fortran
 
 orderings = { 'amd' : 0, 'amf' : 2, 'scotch' : 3, 'pord' : 4, 'metis' : 5,
               'qamd' : 6, 'auto' : 7 }

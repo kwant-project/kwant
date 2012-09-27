@@ -4,7 +4,7 @@ from collections import namedtuple
 import numpy as np
 import numpy.linalg as npl
 import scipy.linalg as la
-import kwant.linalg as kla
+from .. import linalg as kla
 
 dot = np.dot
 
