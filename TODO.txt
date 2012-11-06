@@ -1,17 +1,5 @@
 Roughly in order of importance.                                     -*-org-*-
 
-* Document site.cfg
-* Document the usage of tinyarray
-  Tinyarray is a dependency now.  Should we include it in kwant?
-
-* Mention the optimizations in the what's new document
-
-* Take care of mutable default arguments (mostly in plotter)
-  This should also allow to solve the problem with unreadable function
-  prototypes in the documentation.
-
-* Allow plotting of finalized infinite systems.
-
 * Enhance the line argument of kwant.plotter.plot
   It could understand "hopping kinds" in the same way possible_hoppings does.
 
@@ -21,17 +9,10 @@ Roughly in order of importance.                                     -*-org-*-
 * Benchmark mumps and check whether nested dissection would be useful.
   If yes, implement it.
 
-* Make kwant importable under other names
-  This requires support for relative cimports in Cython
-
 * Make kwant objects pickleable.
 
 * Use sparse linear algebra to calculate bands
   However, scipy's sparse eigenvalues don't seem to work well.
-
-* Show plotting of functions of system in the tutorial.
-
-* Allow easy plotting of functions into files on disk.
 
 * Allow attaching leads with further than nearest slice hoppings.
   The most easy way to do this is increasing the period of the lead.
@@ -71,9 +52,6 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Wrap TB_SIM as a solver.
 
-* Implement time domain propagation solver, or coordinate with Kruckl, who
-  wanted to implement it.
-
 * Implement models module, incorporate units into it.
 
 * Improve handling of s-matrices with important additional degrees of freedom.
@@ -86,6 +64,3 @@ Roughly in order of importance.                                     -*-org-*-
 * Revisit Symmetry, make it more general. I.e. allow for description of other
   discrete symmetries, possibly also symmetries which change site and hopping
   values (=gauge symmetries).
-
-* It would be nice to have interactive plots of (3d) systems.
-  Perhaps the right way to achieve this is by using matplotlib.
