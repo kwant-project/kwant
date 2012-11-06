@@ -277,7 +277,7 @@ def iterate_lead_sites_builder(syst, lead_copies):
         if not isinstance(lead, builder.BuilderLead):
             continue
         sym = lead.builder.symmetry
-        shift = sym.which(lead.neighbors[0]) + 1
+        shift = sym.which(lead.interface[0]) + 1
 
         for i in xrange(lead_copies):
             for site in lead.builder.sites():
@@ -289,7 +289,7 @@ def iterate_lead_hoppings_builder(syst, lead_copies):
         if not isinstance(lead, builder.BuilderLead):
             continue
         sym = lead.builder.symmetry
-        shift = sym.which(lead.neighbors[0]) + 1
+        shift = sym.which(lead.interface[0]) + 1
 
         for i in xrange(lead_copies):
             for site1, site2 in lead.builder.hoppings():

@@ -41,8 +41,8 @@ def test_rectangle():
         fsys = sys.finalized()
 
         slices = slicer.slice(fsys.graph,
-                              fsys.lead_neighbor_seqs[0],
-                              fsys.lead_neighbor_seqs[1])
+                              fsys.lead_interfaces[0],
+                              fsys.lead_interfaces[1])
 
         # In the rectangle case, the slicing is very constricted and
         # we know that all slices must have the same shape.

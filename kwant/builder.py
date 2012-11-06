@@ -299,13 +299,13 @@ class Lead(object):
 
     Instance Variables
     ------------------
-    neighbors : sequence of sites
+    interface : sequence of sites
     """
     __metaclass__ = abc.ABCMeta
 
-    def check_neighbors(self):
-        if len(self.neighbors) == 0:
-            raise ValueError('Lead is not connected (no neighbors).')
+    def check_interface(self):
+        if len(self.interface) == 0:
+            raise ValueError('Lead is not connected (no interface sites).')
 
     @abc.abstractmethod
     def finalized():
@@ -324,7 +324,8 @@ class Lead(object):
         The method ``self_energy`` of the finalized lead must return a square
         matrix of appropriate size.
 
-        The order of neighbors is assumed to be preserved during finalization.
+        The order of interface sites is assumed to be preserved during
+        finalization.
         """
         pass
 
@@ -338,7 +339,7 @@ class BuilderLead(Lead):
         The tight-binding system of a lead. It has to possess appropriate
         symmetry, and it may not contain hoppings between further than
         neighboring lead slices.
-    neighbors : sequence of `Site` instances
+    interface : sequence of `Site` instances
         Sequence of sites in the scattering region to which the lead is
         attached.
 
@@ -349,24 +350,24 @@ class BuilderLead(Lead):
     the symmetry vector (i.e. the lead is 'leaving' the system and starts
     with a hopping).
 
-    The given order of neighbors is preserved throughout finalization.
+    The given order of interface sites is preserved throughout finalization.
 
     Every system has an attribute `leads`, which stores a list of
     `BuilderLead` objects with all the information about the leads that are
     attached.
     """
-    def __init__(self, builder, neighbors):
+    def __init__(self, builder, interface):
         self.builder = builder
-        self.neighbors = tuple(neighbors)
-        self.check_neighbors()
+        self.interface = tuple(interface)
+        self.check_interface()
 
     def finalized(self):
         """Return a `kwant.system.InfiniteSystem` corresponding to the
         compressed lead.
 
-        The order of neighbors is kept during finalization.
+        The order of interface sites is kept during finalization.
         """
-        return self.builder._finalized_infinite(self.neighbors)
+        return self.builder._finalized_infinite(self.interface)
 
 
 class SelfEnergy(Lead):
@@ -375,14 +376,14 @@ class SelfEnergy(Lead):
     Parameters
     ----------
     self_energy_func : function
-        Function which returns the self energy matrix for the neighbors given
-        the energy.
-    neighbors : sequence of `Site` instances
+        Function which returns the self energy matrix for the interface sites
+        given the energy.
+    interface : sequence of `Site` instances
     """
-    def __init__(self, self_energy_func, neighbors):
+    def __init__(self, self_energy_func, interface):
         self.self_energy_func = self_energy_func
-        self.neighbors = tuple(neighbors)
-        self.check_neighbors()
+        self.interface = tuple(interface)
+        self.check_interface()
 
     def finalized(self):
         """Trivial finalization: the object is returned itself."""
@@ -508,9 +509,9 @@ class Builder(object):
     The behavior of builders with a symmetry is slightly more sophisticated.
     First of all, it is implicitly assumed throughout kwant that **every**
     function assigned as a value to a builder with a symmetry possesses the
-    same symmetry.  Secondly, all keys are mapped to the fundamental before
-    storing them.  This may produce confusing results when neighbors of a site
-    are queried.
+    same symmetry.  Secondly, all keys are mapped to the fundamental domain
+    before storing them.  This may produce confusing results when neighbors of
+    a site are queried.
 
     The methods `possible_hoppings` and `attach_lead` *work* only if the sites
     affected by them have tags which are sequences of integers.  They *make
@@ -797,17 +798,17 @@ class Builder(object):
             if site not in self.H:
                 continue
             while site:
-                pneighbors = tuple(self._out_neighbors(site))
-                if pneighbors:
-                    assert len(pneighbors) == 1
-                    pneighbor = pneighbors[0]
-                    self._del_edge(pneighbor, site)
-                    if self._out_degree(pneighbor) > 1:
-                        pneighbor = False
+                neighbors = tuple(self._out_neighbors(site))
+                if neighbors:
+                    assert len(neighbors) == 1
+                    neighbor = neighbors[0]
+                    self._del_edge(neighbor, site)
+                    if self._out_degree(neighbor) > 1:
+                        neighbor = False
                 else:
-                    pneighbor = False
+                    neighbor = False
                 del self.H[site]
-                site = pneighbor
+                site = neighbor
 
     def __iter__(self):
         """Return an iterator over all sites and hoppings."""
@@ -970,7 +971,7 @@ class Builder(object):
         min_dom = min(all_doms)
         del all_doms
 
-        neighbors = set()
+        interface = set()
         added = set()
         # Initialize flood-fill: create the outermost sites.
         for site in H:
@@ -980,7 +981,7 @@ class Builder(object):
                     if neighbor not in self:
                         self[neighbor] = lead_builder[neighbor]
                         added.add(neighbor)
-                    neighbors.add(neighbor)
+                    interface.add(neighbor)
 
         # Do flood-fill.
         covered = True
@@ -1006,7 +1007,7 @@ class Builder(object):
                     self[site_new, site] = lead_builder[site_new, site]
             added = added2
 
-        self.leads.append(BuilderLead(lead_builder, list(neighbors)))
+        self.leads.append(BuilderLead(lead_builder, tuple(interface)))
         return len(self.leads) - 1
 
     def finalized(self):
@@ -1059,7 +1060,7 @@ class Builder(object):
 
         #### Connect leads.
         finalized_leads = []
-        lead_neighbor_seqs = []
+        lead_interfaces = []
         for lead_nr, lead in enumerate(self.leads):
             try:
                 finalized_leads.append(lead.finalized())
@@ -1067,8 +1068,8 @@ class Builder(object):
                 msg = 'Problem finalizing lead {0}:'
                 e.args = (' '.join((msg.format(lead_nr),) + e.args),)
                 raise
-            lns = [id_by_site[neighbor] for neighbor in lead.neighbors]
-            lead_neighbor_seqs.append(np.array(lns))
+            interface = [id_by_site[isite] for isite in lead.interface]
+            lead_interfaces.append(np.array(interface))
 
         #### Assemble and return result.
         result = FiniteSystem()
@@ -1078,24 +1079,24 @@ class Builder(object):
         result.hoppings = [self._get_edge(sites[tail], sites[head])
                            for tail, head in g]
         result.onsite_hamiltonians = [self.H[site][1] for site in sites]
-        result.lead_neighbor_seqs = lead_neighbor_seqs
+        result.lead_interfaces = lead_interfaces
         result.symmetry = self.symmetry
         return result
 
-    def _finalized_infinite(self, order_of_neighbors=None):
+    def _finalized_infinite(self, interface_order=None):
         """
         Finalize this builder instance which has to have exactly a single
         symmetry direction.
 
-        If order_of_neighbors is not set, the order of the neighbors in the
-        finalized system will be arbitrary.  If order_of_neighbors is set to a
-        sequence of neighbor sites, this order will be kept.
+        If interface_order is not set, the order of the interface sites in the
+        finalized system will be arbitrary.  If interface_order is set to a
+        sequence of interface sites, this order will be kept.
         """
         sym = self.symmetry
         assert sym.num_directions == 1
 
         #### For each site of the fundamental domain, determine whether it has
-        #### neighbors or not.
+        #### neighbors in the previous domain or not.
         lsites_with = []       # Fund. domain sites with neighbors in prev. dom
         lsites_without = []    # Remaining sites of the fundamental domain
         for tail in self.H:    # Loop over all sites of the fund. domain.
@@ -1116,42 +1117,42 @@ class Builder(object):
         ### Create list of sites and a lookup table
         minus_one = ta.array((-1,))
         plus_one = ta.array((1,))
-        if order_of_neighbors is None:
-            neighbors = [sym.act(minus_one, s) for s in lsites_with]
+        if interface_order is None:
+            interface = [sym.act(minus_one, s) for s in lsites_with]
         else:
-            shift = ta.array((-sym.which(order_of_neighbors[0])[0] - 1,))
+            shift = ta.array((-sym.which(interface_order[0])[0] - 1,))
             lsites_with_set = set(lsites_with)
             lsites_with = []
-            neighbors = []
-            for out_of_place_neighbor in order_of_neighbors:
-                # Shift the neighbor domain before the fundamental domain.
-                # That's the right place for the neighbors of a lead to be, but
-                # the neighbors in order_of_neighbors might live in a different
+            interface = []
+            for shifted_iface_site in interface_order:
+                # Shift the interface domain before the fundamental domain.
+                # That's the right place for the interface of a lead to be, but
+                # the sites of interface_order might live in a different
                 # domain.
-                neighbor = sym.act(shift, out_of_place_neighbor)
-                lsite = sym.act(plus_one, neighbor)
+                iface_site = sym.act(shift, shifted_iface_site)
+                lsite = sym.act(plus_one, iface_site)
 
                 try:
                     lsites_with_set.remove(lsite)
                 except KeyError:
-                    if (-sym.which(out_of_place_neighbor)[0] - 1,) != shift:
+                    if (-sym.which(shifted_iface_site)[0] - 1,) != shift:
                         raise ValueError(
-                            'The sites in order_of_neighbors do not all '
+                            'The sites in interface_order do not all '
                             'belong to the same lead slice.')
                     else:
-                        raise ValueError('A site in order_of_neighbors is '
-                                         'not a neighbor:\n' + str(neighbor))
-                neighbors.append(neighbor)
+                        raise ValueError('A site in interface_order is not an '
+                                         'interface site:\n' + str(iface_site))
+                interface.append(iface_site)
                 lsites_with.append(lsite)
             if lsites_with_set:
                 raise ValueError(
-                    'order_of_neighbors did not contain all neighbors.')
+                    'interface_order did not contain all interface sites.')
             del lsites_with_set
 
-        sites = lsites_with + lsites_without + neighbors
+        sites = lsites_with + lsites_without + interface
         del lsites_with
         del lsites_without
-        del neighbors
+        del interface
         id_by_site = {}
         for site_id, site in enumerate(sites):
             id_by_site[site] = site_id

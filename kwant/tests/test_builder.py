@@ -288,8 +288,8 @@ def test_finalization():
     sys.leads.append(builder.BuilderLead(
             lead, (builder.Site(sg, n) for n in neighbors)))
     fsys = sys.finalized()
-    assert_equal(len(fsys.lead_neighbor_seqs), 1)
-    assert_equal([fsys.site(i).tag for i in fsys.lead_neighbor_seqs[0]],
+    assert_equal(len(fsys.lead_interfaces), 1)
+    assert_equal([fsys.site(i).tag for i in fsys.lead_interfaces[0]],
                  neighbors)
 
     # Add a hopping to the lead which couples two next-nearest slices and check
@@ -442,13 +442,13 @@ def test_attach_lead():
     sys[(0,)] = 1
     sys.attach_lead(lead0)
     assert_equal(len(list(sys.sites())), 3)
-    assert_equal(set(sys.leads[0].neighbors), set([gr(-1), gr(0)]))
+    assert_equal(set(sys.leads[0].interface), set([gr(-1), gr(0)]))
     sys[(-10,)] = sys[(-11,)] = 0
     sys.attach_lead(lead0)
-    assert_equal(set(sys.leads[1].neighbors), set([gr(-10), gr(-11)]))
+    assert_equal(set(sys.leads[1].interface), set([gr(-10), gr(-11)]))
     assert_equal(len(list(sys.sites())), 5)
     sys.attach_lead(lead0, gr(-5))
-    assert_equal(set(sys.leads[0].neighbors), set([gr(-1), gr(0)]))
+    assert_equal(set(sys.leads[0].interface), set([gr(-1), gr(0)]))
     sys.finalized()
 
 

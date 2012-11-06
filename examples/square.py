@@ -20,10 +20,6 @@ class Lead(object):
                                   fermi_energy)
 
 class System(kwant.system.FiniteSystem):
-    # Override abstract attributes.
-    graph = None
-    lead_neighbor_seqs = None
-
     def __init__(self, shape, hopping,
                  potential=0, lead_potentials=(0, 0),
                  return_scalars_as_matrix=True):
@@ -64,13 +60,13 @@ class System(kwant.system.FiniteSystem):
                 g.add_edges(edges)
         self.graph = g.compressed()
 
-        self.lead_neighbor_seqs = []
+        self.lead_interfaces = []
         for x in [0, shape[0] - 1]:
             # We have to use list here, as numpy.array does not understand
             # generators.
-            lead_neighbors = list(self.nodeid_from_pos((x, y))
-                              for y in xrange(shape[1]))
-            self.lead_neighbor_seqs.append(np.array(lead_neighbors))
+            interface = list(self.nodeid_from_pos((x, y))
+                             for y in xrange(shape[1]))
+            self.lead_interfaces.append(np.array(interface))
 
         self.leads = [Lead(shape[1], hopping, lead_potentials[i])
                       for i in range(2)]

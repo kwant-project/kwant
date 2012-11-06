@@ -28,9 +28,9 @@ def test_hamiltonian():
 
 def test_self_energy():
     sys = square.System((2, 4), 1)
-    for lead in xrange(len(sys.lead_neighbor_seqs)):
+    for lead in xrange(len(sys.lead_interfaces)):
         n_orb = sum(
-            sys.num_orbitals(site) for site in sys.lead_neighbor_seqs[lead])
+            sys.num_orbitals(site) for site in sys.lead_interfaces[lead])
         se = sys.self_energy(lead, 0)
         assert_equal(len(se.shape), 2)
         assert_equal(se.shape[0], se.shape[1])

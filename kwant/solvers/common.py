@@ -135,10 +135,10 @@ class SparseSolver(object):
         splhsmat = getattr(sp, self.lhsformat + '_matrix')
         sprhsmat = getattr(sp, self.rhsformat + '_matrix')
 
-        if not sys.lead_neighbor_seqs:
+        if not sys.lead_interfaces:
             raise ValueError('System contains no leads.')
-        lhs, norb = sys.hamiltonian_submatrix(
-            sparse=True, return_norb=True)[:2]
+        lhs, norb = sys.hamiltonian_submatrix(sparse=True,
+                                              return_norb=True)[:2]
         lhs = getattr(lhs, 'to' + self.lhsformat)()
         lhs = lhs - energy * sp.identity(lhs.shape[0], format=self.lhsformat)
 
@@ -146,7 +146,8 @@ class SparseSolver(object):
             if np.any(abs((lhs - lhs.T.conj()).data) > 1e-13):
                 raise ValueError('System Hamiltonian is not Hermitian.')
 
-        offsets = np.zeros(norb.shape[0] + 1, int)
+        offsets = np.empty(norb.shape[0] + 1, int)
+        offsets[0] = 0
         offsets[1 :] = np.cumsum(norb)
 
         # Process the leads, generate the eigenvector matrices and lambda
@@ -155,7 +156,7 @@ class SparseSolver(object):
         kept_vars = []
         rhs = []
         lead_info = []
-        for leadnum, lead_neighbors in enumerate(sys.lead_neighbor_seqs):
+        for leadnum, interface in enumerate(sys.lead_interfaces):
             lead = sys.leads[leadnum]
             if isinstance(lead, system.InfiniteSystem) and not force_realspace:
                 h = lead.slice_hamiltonian()
@@ -189,21 +190,21 @@ class SparseSolver(object):
                 # Construct a matrix of 1's that translates the
                 # inter-slice hopping to a proper hopping
                 # from the system to the lead.
-                neighbors = np.r_[tuple(np.arange(offsets[i], offsets[i + 1])
-                                        for i in lead_neighbors)]
-                coords = np.r_[[np.arange(neighbors.size)], [neighbors]]
-                tmp = sp.csc_matrix((np.ones(neighbors.size), coords),
-                                    shape=(neighbors.size, lhs.shape[0]))
+                iface_orbs = np.r_[tuple(slice(offsets[i], offsets[i + 1])
+                                        for i in interface)]
+                coords = np.r_[[np.arange(iface_orbs.size)], [iface_orbs]]
+                transf = sp.csc_matrix((np.ones(iface_orbs.size), coords),
+                                       shape=(iface_orbs.size, lhs.shape[0]))
 
                 if svd is not None:
-                    v_sp = sp.csc_matrix(svd[2].T.conj()) * tmp
-                    vdaguout_sp = tmp.T * sp.csc_matrix(np.dot(svd[2] * svd[1],
-                                                               u_out))
+                    v_sp = sp.csc_matrix(svd[2].T.conj()) * transf
+                    vdaguout_sp = transf.T * \
+                        sp.csc_matrix(np.dot(svd[2] * svd[1], u_out))
                     lead_mat = - ulinv_out
                 else:
-                    v_sp = tmp
-                    vdaguout_sp = tmp.T * sp.csc_matrix(np.dot(v.T.conj(),
-                                                               u_out))
+                    v_sp = transf
+                    vdaguout_sp = transf.T * sp.csc_matrix(np.dot(v.T.conj(),
+                                                                  u_out))
                     lead_mat = - ulinv_out
 
                 lhs = sp.bmat([[lhs, vdaguout_sp], [v_sp, lead_mat]],
@@ -211,10 +212,10 @@ class SparseSolver(object):
 
                 if leadnum in in_leads and nprop > 0:
                     if svd:
-                        vdaguin_sp = tmp.T * sp.csc_matrix(
+                        vdaguin_sp = transf.T * sp.csc_matrix(
                             -np.dot(svd[2] * svd[1], u_in))
                     else:
-                        vdaguin_sp = tmp.T * sp.csc_matrix(
+                        vdaguin_sp = transf.T * sp.csc_matrix(
                             -np.dot(v.T.conj(), u_in))
 
                     # defer formation of the real matrix until the proper
@@ -226,8 +227,8 @@ class SparseSolver(object):
             else:
                 sigma = lead.self_energy(energy)
                 lead_info.append(sigma)
-                indices = np.r_[tuple(range(offsets[i], offsets[i + 1]) for i
-                                      in lead_neighbors)]
+                indices = np.r_[tuple(slice(offsets[i], offsets[i + 1])
+                                      for i in interface)]
                 assert sigma.shape == 2 * indices.shape
                 y, x = np.meshgrid(indices, indices)
                 sig_sparse = splhsmat((sigma.flat, [x.flat, y.flat]),
@@ -321,7 +322,7 @@ class SparseSolver(object):
         expensive and can be less stable.
         """
 
-        n = len(sys.lead_neighbor_seqs)
+        n = len(sys.lead_interfaces)
         if in_leads is None:
             in_leads = range(n)
         if out_leads is None:

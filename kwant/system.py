@@ -60,21 +60,21 @@ class FiniteSystem(System):
     leads : sequence of lead objects
         Each lead object has to provide at least a method
         ``self_energy(energy)``.
-    lead_neighbor_seqs : sequence of sequences of integers
+    lead_interfaces : sequence of sequences of integers
         Each sub-sequence contains the indices of the system sites to which the
         lead is connected.
 
     Notes
     -----
-    The length of `leads` must be equal to the length of `lead_neighbor_seqs`.
+    The length of `leads` must be equal to the length of `lead_interfaces`.
 
     For lead ``n``, the method leads[n].self_energy must return a square matrix
     whose size is ``sum(self.num_orbitals(neighbor) for neighbor in
-    self.lead_neighbor_seqs[n])``.
+    self.lead_interfaces[n])``.
 
     Often, the elements of `leads` will be instances of `InfiniteSystem`.  If
-    this is the case for lead ``n``, the sites ``lead_neighbor_seqs[n]`` match
-    the first ``len(lead_neighbor_seqs[n])`` sites of the InfiniteSystem.
+    this is the case for lead ``n``, the sites ``lead_interfaces[n]`` match
+    the first ``len(lead_interfaces[n])`` sites of the InfiniteSystem.
     """
     __metaclass__ = abc.ABCMeta
 
@@ -100,7 +100,7 @@ class InfiniteSystem(System):
     previous slice.  They are included so that hoppings between slices can be
     represented.  The N sites of the previous slice correspond to the first `N`
     sites of the fully included slice.  When an InfiniteSystem is used as a
-    lead, `N` acts also as the number of neighbors to which it must be
+    lead, `N` acts also as the number of interface sites to which it must be
     connected.
 
     The drawing shows three slices of an infinite system.  Each slice consists

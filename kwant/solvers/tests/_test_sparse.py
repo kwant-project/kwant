@@ -229,10 +229,10 @@ def test_tricky_singular_hopping(solve):
     lead = kwant.Builder(kwant.TranslationalSymmetry([(4, 0)]))
     lead.default_site_group = system.default_site_group = square
 
-    neighbors = []
+    interface = []
     for i in xrange(n):
         site = square(-1, i)
-        neighbors.append(site)
+        interface.append(site)
         system[site] = 0
         for j in xrange(4):
             lead[j, i] = 0
@@ -245,7 +245,7 @@ def test_tricky_singular_hopping(solve):
             lead[(j, i), (j+1, i)] = -1
     del lead[(1, 0), (2, 0)]
 
-    system.leads.append(kwant.builder.BuilderLead(lead, neighbors))
+    system.leads.append(kwant.builder.BuilderLead(lead, interface))
     fsys = system.finalized()
 
     s = solve(fsys, -1.3)[0]
