@@ -12,7 +12,7 @@ def test_hamiltonian_submatrix():
         sys[(i,), (i + 1,)] = 1j * (i + 1)
 
     sys2 = sys.finalized()
-    mat = sys2.hamiltonian_submatrix()[0]
+    mat = sys2.hamiltonian_submatrix()
     assert mat.shape == (3, 3)
     # Sorting is required due to unknown compression order of builder.
     perm = np.argsort(sys2.onsite_hamiltonians)
@@ -22,17 +22,17 @@ def test_hamiltonian_submatrix():
     mat = mat[:, perm]
     np.testing.assert_array_equal(mat, mat_should_be)
 
-    mat = sys2.hamiltonian_submatrix(sparse=True)[0]
+    mat = sys2.hamiltonian_submatrix(sparse=True)
     assert sparse.isspmatrix_coo(mat)
     mat = mat.todense()
     mat = mat[perm, :]
     mat = mat[:, perm]
     np.testing.assert_array_equal(mat, mat_should_be)
 
-    mat = sys2.hamiltonian_submatrix(perm[[0, 1]], perm[[2]])[0]
+    mat = sys2.hamiltonian_submatrix(perm[[0, 1]], perm[[2]])
     np.testing.assert_array_equal(mat, mat_should_be[:2, 2:3])
 
-    mat = sys2.hamiltonian_submatrix(perm[[0, 1]], perm[[2]], sparse=True)[0]
+    mat = sys2.hamiltonian_submatrix(perm[[0, 1]], perm[[2]], sparse=True)
     mat = mat.todense()
     np.testing.assert_array_equal(mat, mat_should_be[:2, 2:3])
 
@@ -45,8 +45,8 @@ def test_hamiltonian_submatrix():
     sys[(1,), (0,)] = np.array([[1, 2j]])
     sys[(2,), (1,)] = np.array([[3j]])
     sys2 = sys.finalized()
-    mat_dense = sys2.hamiltonian_submatrix()[0]
-    mat_sp = sys2.hamiltonian_submatrix(sparse=True)[0].todense()
+    mat_dense = sys2.hamiltonian_submatrix()
+    mat_sp = sys2.hamiltonian_submatrix(sparse=True).todense()
     np.testing.assert_array_equal(mat_sp, mat_dense)
 
     # Test for shape errors.

@@ -62,7 +62,7 @@ def plot_spectrum(sys, Bfields):
         B = Bfield
 
         # Obtain the Hamiltonian as a dense matrix
-        ham_mat = sys.hamiltonian_submatrix()[0]
+        ham_mat = sys.hamiltonian_submatrix()
 
         ev = la.eigh(ham_mat, eigvals_only=True)
 

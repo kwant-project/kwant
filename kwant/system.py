@@ -127,14 +127,14 @@ class InfiniteSystem(System):
         """Hamiltonian of a single slice of the infinite system."""
         slice_sites = xrange(self.slice_size)
         return self.hamiltonian_submatrix(slice_sites, slice_sites,
-                                          sparse=sparse)[0]
+                                          sparse=sparse)
 
     def inter_slice_hopping(self, sparse=False):
         """Hopping Hamiltonian between two slices of the infinite system."""
         slice_sites = xrange(self.slice_size)
         neighbor_sites = xrange(self.slice_size, self.graph.num_nodes)
         return self.hamiltonian_submatrix(slice_sites, neighbor_sites,
-                                          sparse=sparse)[0]
+                                          sparse=sparse)
 
     def self_energy(self, energy):
         """Return self-energy of a lead.

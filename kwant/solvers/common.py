@@ -137,7 +137,8 @@ class SparseSolver(object):
 
         if not sys.lead_neighbor_seqs:
             raise ValueError('System contains no leads.')
-        lhs, norb = sys.hamiltonian_submatrix(sparse=True)[:2]
+        lhs, norb = sys.hamiltonian_submatrix(
+            sparse=True, return_norb=True)[:2]
         lhs = getattr(lhs, 'to' + self.lhsformat)()
         lhs = lhs - energy * sp.identity(lhs.shape[0], format=self.lhsformat)
 

@@ -204,7 +204,7 @@ def make_dense_full(ham, CGraph gr, diag,
 
 
 def hamiltonian_submatrix(self, to_sites=None, from_sites=None,
-                          sparse=False):
+                          sparse=False, return_norb=False):
     """Return a submatrix of the system Hamiltonian.
 
     Parameters
@@ -213,15 +213,19 @@ def hamiltonian_submatrix(self, to_sites=None, from_sites=None,
     from_sites : sequence of sites or None (default)
     sparse : bool
         Whether to return a sparse or a dense matrix. Defaults to `False`.
+    return_norb : bool
+        Whether to return arrays of numbers of orbitals.  Defaults to `False`.
 
     Returns
     -------
     hamiltonian_part : numpy.ndarray or scipy.sparse.coo_matrix
         Submatrix of Hamiltonian of the system.
     to_norb : array of integers
-        Numbers of orbitals on each site in to_sites.
+        Numbers of orbitals on each site in to_sites.  Only returned when
+        `return_norb` is true.
     from_norb : array of integers
-        Numbers of orbitals on each site in from_sites.
+        Numbers of orbitals on each site in from_sites.  Only returned when
+        `return_norb` is true.
 
     Notes
     -----
@@ -295,4 +299,4 @@ def hamiltonian_submatrix(self, to_sites=None, from_sites=None,
         func = make_sparse if sparse else make_dense
         mat = func(ham, self.graph, diag, from_sites, n_by_to_site,
                    to_norb, to_off, from_norb, from_off)
-    return mat, to_norb, from_norb
+    return (mat, to_norb, from_norb) if return_norb else mat

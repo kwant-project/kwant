@@ -70,7 +70,7 @@ def test_error_minus_9(r=10):
     for hopping in hoppings:
         sys[sys.possible_hoppings(*hopping)] = - 1
 
-    ham = sys.finalized().hamiltonian_submatrix(sparse=True)[0]
+    ham = sys.finalized().hamiltonian_submatrix(sparse=True)
 
     # No need to check result, it's enough if no exception is raised
     MUMPSContext().factor(ham)
