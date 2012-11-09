@@ -32,21 +32,23 @@ class SparseSolver(object):
     - `solve`: Compute a scattering matrix or Green's function
     - `ldos`: Compute the local density of states
 
-    `SparseSolver` is an abstract base class. In particular, a derived class
-    must implement a function that does the actual linear solve step. To be
-    more precise, a derived class must implement the method
+    `SparseSolver` is an abstract base class.  It cannot be instantiated as it
+    does not specify the actual linear solve step.  In order to be directly
+    usable, a derived class must implement the method
 
     - `solve_linear_sys`, that solves a linear system of equations
 
-    and the properties
+    and the following properties:
 
-    - `lhsformat`, `rhsformat` that give the sparse matrix format of
-       left and right hand sides of the linear system, repsectively;
-    - `nrhs` which determines how many right hand side vectors should be
-       solved at once for efficiency.
+    - `lhsformat`, `rhsformat`: Sparse matrix format of left and right hand
+       sides of the linear system, respectively.  Must be one of {'coo', 'csc',
+       'csr'}.
 
-    For details see the documentation of the respective abstract methods and
-    properties.
+    - `nrhs`: Number of right hand side vectors that should be solved at once
+      in a call to `solve_linear_sys`, when the full solution is computed (i.e.
+      kept_vars covers all entries in the solution). This should be not too big
+      too avoid excessive memory usage, but for some solvers not too small for
+      performance reasons.  Only used for `ldos` in this class.
     """
     __metaclass__ = abc.ABCMeta
 
@@ -60,31 +62,6 @@ class SparseSolver(object):
         provide an implementation of this abstract method.
         """
         pass
-
-    @abc.abstractproperty
-    def lhsformat(self):
-        """Sparse matrix format of the left hand side in the sparse linear
-        system. Must be one of {'coo', 'csc', 'csr'}.
-        """
-        pass
-
-    @abc.abstractproperty
-    def rhsformat(self):
-        """Sparse matrix format of the right hand side in the sparse linear
-        system. Must be one of {'coo', 'csc', 'csr'}.
-        """
-        pass
-
-    @abc.abstractproperty
-    def nrhs(self):
-        """Number of rhs vectors that should be solved at once in a call
-        to `solve_linear_sys`, when the full solution is computed (i.e.
-        kept_vars covers all entries in the solution). This should be not too
-        big too avoid excessive memory usage, but for some solvers not too
-        small for performance reasons. Only used for `ldos`.
-        """
-        pass
-
 
     def make_linear_sys(self, sys, out_leads, in_leads, energy=0,
                         force_realspace=False, check_hermiticity=True):
@@ -241,7 +218,6 @@ class SparseSolver(object):
                     # size is known
                     rhs.append((indices, ))
 
-
         # Resize the right-hand sides to be compatible with the full lhs
         for i, mats in enumerate(rhs):
             if isinstance(mats, tuple):
@@ -264,7 +240,6 @@ class SparseSolver(object):
                     rhs[i] = sp.bmat(bmat, format=self.rhsformat)
 
         return LinearSys(lhs, rhs, kept_vars), lead_info
-
 
     def solve(self, sys, energy=0, out_leads=None, in_leads=None,
               force_realspace=False, check_hermiticity=True):
