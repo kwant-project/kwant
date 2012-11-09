@@ -13,7 +13,7 @@ Plotting routine
    show
    interpolate
 
-Auxilliary types
+Auxiliary types
 ----------------
 .. autosummary::
    :toctree: generated/

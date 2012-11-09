@@ -65,7 +65,7 @@ edges which connect two negative nodes do not make sense and are never allowed.
 The range of values used for the negative node numbers does not influence the
 required storage space in any way.
 
-Compressed graphs have the readonly attributes `~kwant.CGraph.num_nodes` and
+Compressed graphs have the read-only attributes `~kwant.CGraph.num_nodes` and
 `~kwant.CGraph.num_edges`.
 
 Graph types

@@ -22,7 +22,12 @@ All of the solver modules implement the following functions:
 - `~kwant.solvers.common.SparseSolver.ldos`: Compute the local density of
   states of the system.
 
-For details see the respective function.
+For details see the respective function. (You might note that the above links
+lead to the documentation of a method in a class, rather than a function
+in the solver module. For details, see :ref:`below <details_of_solver>`.
+In a nutshell, all of the solver functionality can be
+accessed by functions on the module-level; internally they are encapsulated in
+a class)
 
 Due to the common interface you can thus write code that allows you to
 switch solvers by changing one `import`-line::
@@ -46,6 +51,10 @@ look like this::
 
     smatrix - solver.solve(fsys)
 
+
+Summary of solver modules in kwant:
+-----------------------------------
+
 Right now, the following solvers are implemented in kwant:
 
 - `~kwant.solvers.sparse`: A solver based on solving a sparse linear
@@ -54,7 +63,44 @@ Right now, the following solvers are implemented in kwant:
   system using the direct sparse solver MUMPS. To use it, the MUMPS
   library must be installed on the system. This solver typically
   gives the best performance of all sparse solvers for a single core.
-  it allows for various solve options using `~kwant.solvers.mumps.options`.
+  It allows for various solve options using `~kwant.solvers.mumps.options`.
+
+
+.. _details_of_solver:
+
+Details of the internal structure of a solver
+---------------------------------------------
+
+Each solver module implements a class `Solver` (e.g.
+`kwant.solvers.sparse.Solver`), with methods implementing the solve
+functionality of the solvers. This encapsulation in a class allows to
+use solvers with different options concurrently.
+
+Typically, one however does not need this flexibility, and will not want to
+bother with the `Solver` class itself. For this reason, every solver module has
+a default instance of the `Solver` class. Its methods are then made available
+as functions on the module level.
+
+In particular, the following::
+
+    import kwant.solvers.sparse as slv
+
+    ...
+
+    smatrix = slv.solve(sys, energy=...)
+    dos = slv.ldos(sys, energy=...)
+
+is equivalent to::
+
+    import kwant.solvers.sparse as slv
+
+    ...
+
+    smatrix = slv.default_solver.solve(sys, energy=...)
+    dos = slv.default_solver.ldos(sys, energy=...)
+
+where ``default_solver`` is an instance of `kwant.solvers.sparse.Solver`.
+
 
 The default solver
 ------------------
@@ -66,7 +112,8 @@ available solvers. You can see by calling
 
 >>> help(kwant.solve)
 
-from whoch module it has been imported.
+from which module it has been imported.
+
 
 List of solver modules
 ----------------------
