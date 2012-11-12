@@ -3,6 +3,28 @@ What's New in kwant 0.2
 
 This article explains the user-visible changes in kwant 0.2.
 
+Improved performance
+--------------------
+This has been the main focus of this release.  Through optimization a level of
+performance has been reached that we consider satisfactory: runs of kwant for
+mid-sized (100x100 say) systems now typically spend most time in higly
+optimized libraries and not anymore in Python-implemented code.  For large,
+truly performance-critical systems almost all time is now spent in optimized
+libraries.
+
+An important optimization has been replacing NumPy for most uses within kwant
+by tinyarray.  tinyarray provides a subset of NumPy's functionality in a way
+that is highly optimized for small arrays such as the tags of sites in kwant.
+
+New MUMPS-based solver
+----------------------
+The code for sparse matrix solvers has been reorganized and a new solver has
+been added next to `kwant.solvers.sparse`: `kwant.solvers.mumps`.  The new
+solver uses the `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_ software package and
+is much (often 2-3 times and more) faster than the UMFPACK-based old solver.
+In addition, MUMPS uses considerably less memory for a given system while at
+the same time it is able to take advantage of more than 2 GiB of RAM.
+
 New tutorial dealing with superconductivity
 -------------------------------------------
 :doc:`../tutorial/tutorial5`
@@ -26,8 +48,8 @@ no difference between plotting a low-level system and a builder.
 
 Calculation of the local density of states
 ------------------------------------------
-The new function `kwant.solvers.sparse.ldos` allows the calculation of the
-local density of states.
+The new function of sparse solvers `~kwant.solvers.common.SparseSolver.ldos`
+allows the calculation of the local density of states.
 
 Plotting of functions of system sites
 -------------------------------------
@@ -36,9 +58,10 @@ potential or the LDOS.
 
 Return value of sparse solver
 -----------------------------
-`kwant.solvers.sparse.solve` now always returns a single instance of
-`~kwant.solvers.sparse.BlockResult`.  The latter has been generalized to
-include more information for leads defined as infinite systems.
+The function `~kwant.solvers.common.SparseSolver.solve` of sparse solvers now
+always returns a single instance of `~kwant.solvers.common.BlockResult`.  The
+latter has been generalized to include more information for leads defined as
+infinite systems.
 
 Return value of `~kwant.solvers.sparse.make_linear_sys` has changed
 -------------------------------------------------------------------
