@@ -2,10 +2,18 @@
 kwant documentation
 ===================
 
+.. include:: ../../README.txt
+   :end-before: See the file INSTALL.txt
+
 .. toctree::
    :maxdepth: 1
 
-   README file (includes installation instructions) <readme>
+   Installation instructions <install>
+
+.. toctree::
+   :maxdepth: 1
+
+   license
 
 .. toctree::
    :maxdepth: 1

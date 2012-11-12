@@ -1,0 +1,7 @@
+License
+=======
+
+This software (kwant) is NOT TO BE DISTRIBUTED, neither in part nor as a whole.
+
+The only exception to this is the ``doc/sphinxext`` subdirectory, which is free
+software.  (See the file ``LICENSE.txt`` in that subdirectory.)

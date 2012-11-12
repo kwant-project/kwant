@@ -1,12 +1,6 @@
 Introduction
 ============
 
-kwant is currently suitable for calculating Landauer transport and
-calculating dispersions of various tight binding systems.  Possible future
-extensions are calculations of local density of states, supercurrent, of
-various transport properties like Wigner-Smith delay time or Goos-Hänchen
-shift, Boltzmann transport, etc.
-
 There are two steps in obtaining a numerical solution to a problem: The first
 is defining the problem in a computer-accessible way, the second solving it.
 The aim of a software package like kwant is to make both steps easier.
