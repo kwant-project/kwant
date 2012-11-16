@@ -2,7 +2,7 @@
 # in addition to the default ones.
 
 include MANIFEST.in
-include TODO.txt
+include INSTALL.txt LICENSE.txt TODO.txt
 
 # We explicitly include both pyx and c files, so that both are shipped in
 # source tarballs independently of whether "setup.py sdist" is run with
@@ -14,6 +14,7 @@ recursive-include kwant *.h
 recursive-include kwant test_*.py
 
 recursive-include examples *.py
+recursive-include tutorial *.py
 
 include doc/other/*[a-zA-Z]
 include doc/Makefile
