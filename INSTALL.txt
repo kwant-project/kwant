@@ -27,11 +27,6 @@ The following software is highly recommended though not strictly required:
    that will in many cases speed up kwant several times and reduce the memory
    footprint.
 
-Suggested:
-
- - The `nose <http://nose.readthedocs.org/>`_ testing framework is required to
-   run the extensive tests included with kwant.
-
 Generic instructions
 ====================
 
@@ -50,12 +45,6 @@ subdirectory, e.g.::
 
     cd tutorial
     python 1-quantum_wire_revisited.py
-
-If "nose" is installed, you can also run the tests ::
-
-    python -c 'import kwant; kwant.test()'
-
-from some directory *other* than the kwant distribution's root directory.
 
 
 System-specific instructions
@@ -262,5 +251,4 @@ extension).  You will need Cython 0.17.1 if you want to modify them.
 kwant includes extensive unit tests which are supposed to cover all of its
 functionality.  We use the `nose <http://nose.readthedocs.org/>`_ testing
 framework.  To run the tests, execute the command ``nosetests`` from the root
-directory of the package after it has been built in place.  You can also
-``import kwant`` inside Python and run ``kwant.test()``.
+directory of the package after it has been built in place.
