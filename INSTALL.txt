@@ -67,7 +67,8 @@ Unix-like systems (Linux)
 1. Install the required software.  On Debian/Ubuntu-like systems this can be
    done by running ::
 
-       sudo apt-get install python-dev scipy-dev g++ libmumps-scotch-dev python-matplotlib python-nose
+       sudo apt-get install python-dev python-scipy python-matplotlib \
+       g++ gfortran libopenblas-dev liblapack-dev libmumps-scotch-dev
 
 2. Unpack tinyarray, enter its directory, build and install. ::
 
