@@ -2,6 +2,7 @@
 MANIFEST
 *.pyc
 *.so
+/kwant/*.c
 /kwant/*/*.c
 /kwant/_static_version.py
 /build
