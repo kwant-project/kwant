@@ -6,29 +6,29 @@ Prerequisites
 =============
 
 Building kwant requires
-
- - `Python <http://python.org>`_ 2.6 or newer;
-
- - `SciPy <http://scipy.org>`_ 0.7.2 or newer;
-
- - `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_;
-
- - tinyarray, a NumPy-like Python package optimized for very small arrays;
-
- - An environment which allows to compile Python extensions written in C and
+ * `Python <http://python.org>`_ 2.6 or newer,
+ * `SciPy <http://scipy.org>`_ 0.7.2 or newer,
+ * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
+   (For best performance we recommend the free `OpenBLAS
+   <http://xianyi.github.com/OpenBLAS/>`_ or the unfree `MKL
+   <http://software.intel.com/en-us/intel-mkl>`_.)
+ * tinyarray, a NumPy-like Python package optimized for very small arrays,
+ * An environment which allows to compile Python extensions written in C and
    C++.
 
 The following software is highly recommended though not strictly required:
-
- - `matplotlib <http://matplotlib.sourceforge.net/>`_, for kwant's plotting
-   module and the tutorial;
-
- - `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
+ * `matplotlib <http://matplotlib.sourceforge.net/>`_, for kwant's plotting
+   module and the tutorial,
+ * `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
    that will in many cases speed up kwant several times and reduce the memory
-   footprint.
+   footprint.  (kwant uses only the sequential, single core version
+   of MUMPS.  The advantages due to MUMPS as used by kwant are thus independent
+   of the number of CPU cores of the machine on which kwant runs.)
 
 Generic instructions
 ====================
+
+Please note the `System-specific instructions`_ below.
 
 kwant can be built and installed following the `usual Python conventions
 <http://docs.python.org/install/index.html>`_ by running the following commands
@@ -53,13 +53,17 @@ System-specific instructions
 Unix-like systems (Linux)
 -------------------------
 
-1. Install the required software.  On Debian/Ubuntu-like systems this can be
-   done by running ::
+kwant should run on all recent Unix-like systems.  The following instructions
+have been verified to work on Debian 6 (Squeeze) or newer, and on Ubuntu 12.04
+or newer.  For other systems step 1 will likely have to be adapted.  If
+``sudo`` is not available, the respective command must be run as root.
+
+1. Install the required packages by running the command ::
 
        sudo apt-get install python-dev python-scipy python-matplotlib \
        g++ gfortran libopenblas-dev liblapack-dev libmumps-scotch-dev
 
-2. Unpack tinyarray, enter its directory, build and install. ::
+2. Unpack tinyarray, enter its directory. To build and install, run ::
 
        python setup.py build
        sudo python setup.py install
@@ -99,8 +103,10 @@ open-source software packages.  There exist also other ways to install the
 required libraries.
 
 Following these instructions will install kwant without `MUMPS
-<http://graal.ens-lyon.fr/MUMPS/>`_.  With MUMPS kwant will run several times
-faster and will use less memory.
+<http://graal.ens-lyon.fr/MUMPS/>`_.  It is well possible to use MUMPS uder OS
+X - most likely you will have to install it from source.  The section `Build
+configuration`_ explains how to tell kwant where to find your self-compiled
+MUMPS.
 
 These instructions were verified in November 2011 under Mac OS X 10.6.8.
 
@@ -192,7 +198,8 @@ Example ``build.conf`` for linking kwant against a self-compiled MUMPS, `SCOTCH
 <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_::
 
     [mumps]
-    libraries = zmumps mumps_common pord metis esmumps scotch scotcherr mpiseq gfortran
+    libraries = zmumps mumps_common pord metis esmumps scotch scotcherr mpiseq
+        gfortran
 
 Example ``build.conf`` for linking kwant with Intel MKL.::
 
@@ -200,6 +207,10 @@ Example ``build.conf`` for linking kwant with Intel MKL.::
     libraries = mkl_intel_lp64 mkl_sequential mkl_core mkl_def
     library_dirs = /opt/intel/mkl/lib/intel64
     extra_link_args = -Wl,-rpath=/opt/intel/mkl/lib/intel64
+
+The detailed syntax of ``build.conf`` is explained in the `documentation of
+Python's configparser module
+<http://docs.python.org/3/library/configparser.html#supported-ini-file-structure>`_.
 
 
 Building the documentation
