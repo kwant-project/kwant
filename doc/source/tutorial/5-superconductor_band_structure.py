@@ -1,20 +1,29 @@
 # Physics background
 # ------------------
-#  band structure of a simple quantum wire in tight-binding approximation
+#  band structure of a superconducting quantum wire in tight-binding
+#  approximation
 #
 # Kwant features highlighted
 # --------------------------
-#  - Computing the band structure of a finalized lead.
+#  - Repetition of previously used concepts (band structure calculations,
+#    matrices as values in Builder).
+#  - Main motivation is to contrast to the implementation of superconductivity
+#    in tutorial5b.py
 
 import kwant
 
+import numpy as np
 from math import pi
 
 # For plotting
 from matplotlib import pyplot
 
+#HIDDEN_BEGIN_nbvn
+tau_x = np.array([[0, 1], [1, 0]])
+tau_z = np.array([[1, 0], [0, -1]])
 
-def make_lead(a=1, t=1.0, W=10):
+
+def make_lead(a=1, t=1.0, mu=0.7, Delta=0.1, W=10):
     # Start with an empty lead with a single square lattice
     lat = kwant.lattice.Square(a)
 
@@ -24,14 +33,15 @@ def make_lead(a=1, t=1.0, W=10):
     # build up one unit cell of the lead, and add the hoppings
     # to the next unit cell
     for j in xrange(W):
-        lead[lat(0, j)] = 4 * t
+        lead[lat(0, j)] = (4 * t - mu) * tau_z + Delta * tau_x
 
         if j > 0:
-            lead[lat(0, j), lat(0, j - 1)] = -t
+            lead[lat(0, j), lat(0, j - 1)] = -t * tau_z
 
-        lead[lat(1, j), lat(0, j)] = -t
+        lead[lat(1, j), lat(0, j)] = -t * tau_z
 
     return lead
+#HIDDEN_END_nbvn
 
 
 def plot_bandstructure(lead, momenta):
@@ -41,16 +51,18 @@ def plot_bandstructure(lead, momenta):
 
     pyplot.figure()
     pyplot.plot(momenta, energy_list)
-    pyplot.xlabel("momentum [in units of (lattice constant)^-1]")
+    pyplot.xlabel("momentum [in untis of (lattice constant)^-1]")
     pyplot.ylabel("energy [in units of t]")
+    pyplot.ylim([-0.8, 0.8])
     pyplot.show()
 
 
 def main():
+    # Make system and finalize it right away.
     lead = make_lead().finalized()
 
     # list of momenta at which the bands should be computed
-    momenta = [-pi + 0.02 * pi * i for i in xrange(101)]
+    momenta = np.linspace(-1.5, 1.5, 201)
 
     plot_bandstructure(lead, momenta)
 

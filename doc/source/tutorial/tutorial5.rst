@@ -28,8 +28,9 @@ We begin by computing the band structure of a superconducting wire.
 The most natural way to implement the BdG Hamiltonian is by using a
 2x2 matrix structure for all Hamiltonian matrix elements:
 
-.. literalinclude:: ../../../tutorial/5-superconductor_band_structure.py
-    :lines: 21-42
+.. literalinclude:: 5-superconductor_band_structure.py
+    :start-after: #HIDDEN_BEGIN_nbvn
+    :end-before: #HIDDEN_END_nbvn
 
 As you see, the example is syntactically equivalent to our
 :ref:`spin example <tutorial_spinorbit>`, the only difference
@@ -80,8 +81,9 @@ a superconductor on the right, and a tunnel barrier inbetween:
 As already mentioned above, we begin by introducing two different
 square lattices representing electron and hole degrees of freedom:
 
-.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
-    :lines: 16-17,15,20-21
+.. literalinclude:: 5-superconductor_transport.py
+    :start-after: #HIDDEN_BEGIN_zuuw
+    :end-before: #HIDDEN_END_zuuw
 
 Any diagonal entry (kinetic energy, potentials, ...) in the BdG
 Hamiltonian then corresponds to on-site energies or hoppings within
@@ -89,8 +91,9 @@ the *same* lattice, whereas any off-diagonal entry (essentially, the
 superconducting order parameter :math:`\Delta`) corresponds
 to a hopping between *different* lattices:
 
-.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
-    :lines: 23-44
+.. literalinclude:: 5-superconductor_transport.py
+    :start-after: #HIDDEN_BEGIN_pqmp
+    :end-before: #HIDDEN_END_pqmp
 
 Note that the tunnel barrier is added by overwriting previously set
 on-site matrix elements.
@@ -103,8 +106,9 @@ part. We use this fact to attach purely electron and hole leads
 (comprised of only electron *or* hole lattices) to the
 system:
 
-.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
-    :lines: 47-63
+.. literalinclude:: 5-superconductor_transport.py
+    :start-after: #HIDDEN_BEGIN_ttth
+    :end-before: #HIDDEN_END_ttth
 
 This separation into two different leads allows us then later to compute the
 reflection probablities between electrons and holes explicitely.
@@ -112,15 +116,17 @@ reflection probablities between electrons and holes explicitely.
 On the superconducting side, we cannot do this separation, and can
 only define a single lead coupling electrons and holes:
 
-.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
-    :lines: 68-78
+.. literalinclude:: 5-superconductor_transport.py
+    :start-after: #HIDDEN_BEGIN_mhiw
+    :end-before: #HIDDEN_END_mhiw
 
 We now have on the left side two leads that are sitting in the same
 spatial position, but in different lattice spaces. This ensures that
 we can still attach all leads as before:
 
-.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
-    :lines: 81-85
+.. literalinclude:: 5-superconductor_transport.py
+    :start-after: #HIDDEN_BEGIN_ozsr
+    :end-before: #HIDDEN_END_ozsr
 
 When computing the conductance, we can now extract reflection from
 electrons to electrons as ``smatrix.transmission(0, 0)`` (Don't get
@@ -128,8 +134,9 @@ confused by the fact that it says ``transmission`` -- transmission
 into the same lead is reflection), and reflection from electrons to holes
 as ``smatrix.transmission(1, 0)``, by virtue of our electron and hole leads:
 
-.. literalinclude:: ../../../tutorial/5-superconductor_transport.py
-    :lines: 88-96
+.. literalinclude:: 5-superconductor_transport.py
+    :start-after: #HIDDEN_BEGIN_jbjt
+    :end-before: #HIDDEN_END_jbjt
 
 Note that ``smatrix.submatrix(0,0)`` returns the block concerning reflection
 within (electron) lead 0, and from its size we can extract the number of modes

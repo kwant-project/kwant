@@ -21,11 +21,14 @@ from matplotlib import pyplot
 
 # Define the graphene lattice
 sin_30, cos_30 = (1 / 2, sqrt(3) / 2)
+#HIDDEN_BEGIN_hnla
 graphene = kwant.make_lattice([(1, 0), (sin_30, cos_30)],
                               [(0, 0), (0, 1 / sqrt(3))])
 a, b = graphene.sublattices
 
+#HIDDEN_END_hnla
 
+#HIDDEN_BEGIN_shzy
 def make_system(r=10, w=2.0, pot=0.1):
 
     #### Define the scattering region. ####
@@ -43,18 +46,26 @@ def make_system(r=10, w=2.0, pot=0.1):
         return pot * tanh(d / w)
 
     sys[graphene.shape(circle, (0, 0))] = potential
+#HIDDEN_END_shzy
 
     # specify the hoppings of the graphene lattice in the
     # format expected by possibe_hoppings()
+#HIDDEN_BEGIN_hsmc
     hoppings = (((0, 0), b, a), ((0, 1), b, a), ((-1, 1), b, a))
+#HIDDEN_END_hsmc
+#HIDDEN_BEGIN_bfwb
     for hopping in hoppings:
         sys[sys.possible_hoppings(*hopping)] = -1
+#HIDDEN_END_bfwb
 
     # Modify the scattering region
+#HIDDEN_BEGIN_efut
     del sys[a(0, 0)]
     sys[a(-2, 1), b(2, 2)] = -1
+#HIDDEN_END_efut
 
     #### Define the leads. ####
+#HIDDEN_BEGIN_aakh
     # left lead
     sym0 = kwant.TranslationalSymmetry([graphene.vec((-1, 0))])
 
@@ -80,10 +91,14 @@ def make_system(r=10, w=2.0, pot=0.1):
     lead1[graphene.shape(lead1_shape, (0, 0))] = pot
     for hopping in hoppings:
         lead1[lead1.possible_hoppings(*hopping)] = -1
+#HIDDEN_END_aakh
 
+#HIDDEN_BEGIN_kmmw
     return sys, [lead0, lead1]
+#HIDDEN_END_kmmw
 
 
+#HIDDEN_BEGIN_zydk
 def compute_evs(sys):
     # Compute some eigenvalues of the closed system
     sparse_mat = sys.hamiltonian_submatrix(sparse=True)
@@ -96,6 +111,7 @@ def compute_evs(sys):
         print evs
     except:
         pass
+#HIDDEN_END_zydk
 
 
 def plot_conductance(sys, energies):
@@ -124,6 +140,11 @@ def plot_bandstructure(flead, momenta):
     pyplot.show()
 
 
+#HIDDEN The part of the following code block which begins with plotter_symbols
+#HIDDEN is included verbatim in the tutorial text because nested code examples
+#HIDDEN are not supported.  Remember to update the tutorial text when you
+#HIDDEN modify this block.
+#HIDDEN_BEGIN_itkk
 def main():
     pot = 0.1
     sys, leads = make_system(pot=pot)
@@ -137,9 +158,12 @@ def main():
 
     # Plot the closed system without leads.
     kwant.plot(sys, symbols=plotter_symbols)
+#HIDDEN_END_itkk
 
     # Compute some eigenvalues.
+#HIDDEN_BEGIN_jmbi
     compute_evs(sys.finalized())
+#HIDDEN_END_jmbi
 
     # Attach the leads to the system.
     for lead in leads:

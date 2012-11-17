@@ -16,8 +16,9 @@ with a hard wall confinement :math:`V(y)` in y-direction.
 
 In order to use kwant, we need to import it:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 11
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_dwhx
+    :end-before: #HIDDEN_END_dwhx
 
 Enabling kwant is as easy as this [#]_ !
 
@@ -26,15 +27,17 @@ and leads. For this we make use of the `~kwant.builder.Builder` class
 that allows for a convenient way to define the system. For this we need to
 create an instance of the `~kwant.builder.Builder` class:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 15
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_goiq
+    :end-before: #HIDDEN_END_goiq
 
 Apart from `~kwant.builder.Builder` we also need to specify
 what kind of sites we want to add to the system. Here we work with
 a square lattice. For simplicity, we set the lattice constant to unity:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 18-19
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_suwo
+    :end-before: #HIDDEN_END_suwo
 
 Since we work with a square lattice, we label the points with two
 integer coordinates `(i, j)`. `~kwant.builder.Builder` then
@@ -51,15 +54,17 @@ needed in Builder (more about that in the technical details below).
 We now build a rectangular scattering region that is `W`
 lattice points wide and `L` lattice points long:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 21-23, 26-37
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_zfvr
+    :end-before: #HIDDEN_END_zfvr
 
 Next, we define the leads. Leads are also constructed using
 `~kwant.builder.Builder`, but in this case, the
 system must have a translational symmetry:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 45-46
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_xcmc
+    :end-before: #HIDDEN_END_xcmc
 
 Here, the `~kwant.builder.Builder` takes the translational symmetry
 as an optional parameter. Note that the (real space)
@@ -73,8 +78,9 @@ as the hoppings inside one unit cell and to the next unit cell of the lead.
 For a square lattice, and a lead in y-direction the unit cell is
 simply a vertical line of points:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 48-54
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_ndez
+    :end-before: #HIDDEN_END_ndez
 
 Note that here it doesn't matter if you add the hoppings to the next or the
 previous unit cell -- the translational symmetry takes care of that.
@@ -83,8 +89,9 @@ We also want to add a lead on the right side. The only difference to
 the left lead is that the vector of the translational
 symmetry must point to the right, the remaining code is the same:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 57-67
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_xhqc
+    :end-before: #HIDDEN_END_xhqc
 
 Note that here we added points with x-coordinate 0, just as for the left lead.
 You might object that the right lead should be placed `L`
@@ -94,8 +101,9 @@ you do not need to worry about that. The `~kwant.builder.Builder` with
 infinitely extended. These isolated, infinite leads can then be simply
 attached at the right position using:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 71-72
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_fskr
+    :end-before: #HIDDEN_END_fskr
 
 More details about attaching leads can be found in the tutorial
 :ref:`tutorial-abring`.
@@ -103,8 +111,9 @@ More details about attaching leads can be found in the tutorial
 Now we have finished building our system! We plot it, to make sure we didn't
 make any mistakes:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 76
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_wsgh
+    :end-before: #HIDDEN_END_wsgh
 
 This should bring up this picture:
 
@@ -118,14 +127,16 @@ fading color.
 
 In order to use our system for a transport calculation, we need to finalize it
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 80
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_dngj
+    :end-before: #HIDDEN_END_dngj
 
 Having successfully created a system, we now can immediately start to compute
 its conductance as a function of energy:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 84-95
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_buzn
+    :end-before: #HIDDEN_END_buzn
 
 Currently **CHANGE**, there is only one algorithm implemented to compute the
 conductance: :func:`kwant.solve <kwant.solvers.common.SparseSolver.solve>`
@@ -138,8 +149,9 @@ Finally we can use `matplotlib` to make a plot of the computed data
 (although writing to file and using an external viewer such as
 gnuplot or xmgrace is just as viable)
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire.py
-    :lines: 99-105
+.. literalinclude:: 1-quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_lliv
+    :end-before: #HIDDEN_END_lliv
 
 This should yield the result
 
@@ -217,9 +229,9 @@ subbands that increases with energy.
 
      ::
 
-	 fsys = sys.finalized()
-	 del sys
-	 sys = fsys
+         fsys = sys.finalized()
+         del sys
+         sys = fsys
 
    - Note that the vector passed to the `~kwant.lattice.TranslationalSymmetry`
      (in fact, what is passed is a list of vectors -- there could be more than
@@ -267,14 +279,16 @@ We begin the program collecting all imports in the beginning of the
 file and put the build-up of the system into a separate function
 `make_system`:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-    :lines: 13-24
+.. literalinclude:: 1-quantum_wire_revisited.py
+    :start-after: #HIDDEN_BEGIN_xkzy
+    :end-before: #HIDDEN_END_xkzy
 
 Previously, the scattering region was build using two ``for``-loops.
 Instead, we now write:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-    :lines: 27
+.. literalinclude:: 1-quantum_wire_revisited.py
+    :start-after: #HIDDEN_BEGIN_vvjt
+    :end-before: #HIDDEN_END_vvjt
 
 Here, all lattice points are added at once in the first line.  The
 construct ``((i, j) for i in xrange(L) for j in xrange(W))`` is a
@@ -290,8 +304,9 @@ hoppings. In this case, an iterable like for the lattice
 points becomes a bit cumbersome, and we use instead another
 feature of kwant:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-    :lines: 28-29
+.. literalinclude:: 1-quantum_wire_revisited.py
+    :start-after: #HIDDEN_BEGIN_nooi
+    :end-before: #HIDDEN_END_nooi
 
 In regular lattices, one has only very few types of different hoppings
 (by one lattice point in x or y-direction in the case of a square
@@ -308,8 +323,9 @@ then sets all of those hopping matrix elements at once.
 
 The leads can be constructed in an analogous way:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-    :lines: 35-40
+.. literalinclude:: 1-quantum_wire_revisited.py
+    :start-after: #HIDDEN_BEGIN_iepx
+    :end-before: #HIDDEN_END_iepx
 
 Note that in the previous example, we essentially used the same code
 for the right and the left lead, the only difference was the direction
@@ -320,34 +336,39 @@ lead, but with it's translational vector reversed.  This can thus be
 used to obtain a lead pointing in the opposite direction, i.e. makes a
 right lead from a left lead:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-    :lines: 44
+.. literalinclude:: 1-quantum_wire_revisited.py
+    :start-after: #HIDDEN_BEGIN_xkdo
+    :end-before: #HIDDEN_END_xkdo
 
 The remainder of the code is identical to the previous example
 (except for a bit of reorganization into functions):
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-    :lines: 47-51
+.. literalinclude:: 1-quantum_wire_revisited.py
+    :start-after: #HIDDEN_BEGIN_yxot
+    :end-before: #HIDDEN_END_yxot
 
 and
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-    :lines: 52-64
+.. literalinclude:: 1-quantum_wire_revisited.py
+    :start-after: #HIDDEN_BEGIN_ayuk
+    :end-before: #HIDDEN_END_ayuk
 
 Finally, we use a python trick to make our example usable both
 as a script, as well as allowing it to be imported as a module.
 We collect all statements that should be executed in the script
 in a ``main()``-function:
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-    :lines: 67-77
+.. literalinclude:: 1-quantum_wire_revisited.py
+    :start-after: #HIDDEN_BEGIN_cjel
+    :end-before: #HIDDEN_END_cjel
 
 Finally, we use the following python construct [#]_ that executes
 ``main()`` if the program is used as a script (i.e. executed as
 ``python tutorial1b.py``):
 
-.. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-    :lines: 82-83
+.. literalinclude:: 1-quantum_wire_revisited.py
+    :start-after: #HIDDEN_BEGIN_ypbj
+    :end-before: #HIDDEN_END_ypbj
 
 If the example however is imported using ``import tutorial1b``,
 ``main()`` is not executed automatically. Instead, you can execute it
@@ -365,8 +386,9 @@ The result of the example should be identical to the previous one.
 
    - In
 
-     .. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-       :lines: 28-29
+     .. literalinclude:: 1-quantum_wire_revisited.py
+       :start-after: #HIDDEN_BEGIN_nooi
+       :end-before: #HIDDEN_END_nooi
 
      we write ``*hopping`` instead of ``hopping``. The reason is as follows:
      `~kwant.builder.Builder.possible_hoppings` expects the hopping to
@@ -395,8 +417,9 @@ The result of the example should be identical to the previous one.
      using a tuple of sites. Hence it is worth noting
      a subtle detail in
 
-     .. literalinclude:: ../../../tutorial/1-quantum_wire_revisited.py
-         :lines: 27
+     .. literalinclude:: 1-quantum_wire_revisited.py
+         :start-after: #HIDDEN_BEGIN_vvjt
+         :end-before: #HIDDEN_END_vvjt
 
      Note that ``(lat(x, y) for x in range(L) for y in range(W))`` is not
      a tuple, but a generator.

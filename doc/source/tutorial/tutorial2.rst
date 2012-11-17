@@ -37,21 +37,24 @@ In order to deal with matrices in python, kwant uses the `numpy package
 <numpy.scipy.org>`_. In order to use matrices in our program, we thus also
 have to import that package:
 
-.. literalinclude:: ../../../tutorial/2-spin_orbit.py
-    :lines: 19
+.. literalinclude:: 2-spin_orbit.py
+    :start-after: #HIDDEN_BEGIN_xumz
+    :end-before: #HIDDEN_END_xumz
 
 For convenience, we define the Pauli-matrices first (with `sigma_0` the
 unit matrix):
 
-.. literalinclude:: ../../../tutorial/2-spin_orbit.py
-    :lines: 22-25
+.. literalinclude:: 2-spin_orbit.py
+    :start-after: #HIDDEN_BEGIN_hwbt
+    :end-before: #HIDDEN_END_hwbt
 
 Previously, we used numbers as the values of our matrix elements.
 However, `~kwant.builder.Builder` also accepts matrices as values, and
 we can simply write:
 
-.. literalinclude:: ../../../tutorial/2-spin_orbit.py
-    :lines: 36-43
+.. literalinclude:: 2-spin_orbit.py
+    :start-after: #HIDDEN_BEGIN_uxrm
+    :end-before: #HIDDEN_END_uxrm
 
 Note that the Zeeman energy adds to the onsite term, whereas the Rashba
 spin-orbit term adds to the hoppings (due to the derivative operator).
@@ -78,8 +81,9 @@ when specifying `(1, 0)` it is not necessary to specify `(-1, 0)`),
 
 The leads also allow for a matrix structure,
 
-.. literalinclude:: ../../../tutorial/2-spin_orbit.py
-    :lines: 50-56
+.. literalinclude:: 2-spin_orbit.py
+    :start-after: #HIDDEN_BEGIN_yliu
+    :end-before: #HIDDEN_END_yliu
 
 The remainder of the code is unchanged, and as a result we should obtain
 the following, clearly non-monotonic conductance steps:
@@ -124,8 +128,9 @@ changing the potential then implies the need to build up the system again.
 Instead, we use a python *function* to define the onsite energies. We
 define the potential profile of a quantum well as:
 
-.. literalinclude:: ../../../tutorial/2-quantum_well.py
-    :lines: 16-18, 21-24, 27-33
+.. literalinclude:: 2-quantum_well.py
+    :start-after: #HIDDEN_BEGIN_ehso
+    :end-before: #HIDDEN_END_ehso
 
 This function takes one argument which is of type
 `~kwant.builder.Site`, from which you can get the realspace
@@ -140,8 +145,9 @@ the transmission as a function of well depth.
 kwant now allows us to pass a function as a value to
 `~kwant.builder.Builder`:
 
-.. literalinclude:: ../../../tutorial/2-quantum_well.py
-    :lines: 35-40
+.. literalinclude:: 2-quantum_well.py
+    :start-after: #HIDDEN_BEGIN_coid
+    :end-before: #HIDDEN_END_coid
 
 For each lattice point, the corresponding site is then passed to the
 function `onsite()`. Note that we had to define `onsite()`, as it is
@@ -155,8 +161,9 @@ of the lead -- this should be kept in mind.
 
 Finally, we compute the transmission probability:
 
-.. literalinclude:: ../../../tutorial/2-quantum_well.py
-    :lines: 67, 70-82
+.. literalinclude:: 2-quantum_well.py
+    :start-after: #HIDDEN_BEGIN_sqvr
+    :end-before: #HIDDEN_END_sqvr
 
 Since we change the value of the global variable `pot` to vary the
 well depth, python requires us to write ``global pot`` to `enable
@@ -185,10 +192,9 @@ oscillatory transmission behavior through resonances in the quantum well.
   - Functions can also be used for hoppings. In this case, they take
     two `~kwant.builder.Site`'s as arguments.
 
-  - In tutorial/2-quantum_well.py, line 16
+  - In tutorial/2-quantum_well.py, the line ::
 
-    .. literalinclude:: ../../../tutorial/2-quantum_well.py
-        :lines: 16
+        pot = 0
 
     is not really necessary. If this line was left out, the
     global variable `pot` would in fact be created by the
@@ -290,8 +296,9 @@ First, define a boolean function defining the desired shape, i.e. a function
 that returns ``True`` whenever a point is inside the shape, and
 ``False`` otherwise:
 
-.. literalinclude:: ../../../tutorial/2-ab_ring.py
-    :lines: 21, 24-27, 31-34
+.. literalinclude:: 2-ab_ring.py
+    :start-after: #HIDDEN_BEGIN_eusz
+    :end-before: #HIDDEN_END_eusz
 
 Note that this function takes a realspace position as argument (not a
 `~kwant.builder.Site`).
@@ -300,8 +307,9 @@ We can now simply add all of the lattice points inside this shape at
 once, using the function `~kwant.lattice.Square.shape`
 provided by the lattice:
 
-.. literalinclude:: ../../../tutorial/2-ab_ring.py
-    :lines: 37-39
+.. literalinclude:: 2-ab_ring.py
+    :start-after: #HIDDEN_BEGIN_lcak
+    :end-before: #HIDDEN_END_lcak
 
 Here, ``lat.shape()`` takes as a second parameter a (realspace) point
 that is inside the desired shape. The hoppings can still be added
@@ -314,8 +322,9 @@ along the branch cut in the lower arm of the ring. For this we select
 all hoppings in x-direction that are of the form `(lat(1, j), lat(0, j))`
 with ``j<0``:
 
-.. literalinclude:: ../../../tutorial/2-ab_ring.py
-    :lines: 47-59
+.. literalinclude:: 2-ab_ring.py
+    :start-after: #HIDDEN_BEGIN_lvkt
+    :end-before: #HIDDEN_END_lvkt
 
 Here, `crosses_branchcut` is a boolean function that returns ``True`` for
 the desired hoppings. We then use again a generator (this time with
@@ -328,16 +337,18 @@ by the global variable `phi`.
 
 For the leads, we can also use the ``lat.shape()``-functionality:
 
-.. literalinclude:: ../../../tutorial/2-ab_ring.py
-    :lines: 63-72
+.. literalinclude:: 2-ab_ring.py
+    :start-after: #HIDDEN_BEGIN_qwgr
+    :end-before: #HIDDEN_END_qwgr
 
 Here, the shape must cover *at least* one unit cell of the lead
 (it does not hurt if it covers more unit cells).
 
 Attaching the leads is done as before:
 
-.. literalinclude:: ../../../tutorial/2-ab_ring.py
-    :lines: 79-80
+.. literalinclude:: 2-ab_ring.py
+    :start-after: #HIDDEN_BEGIN_skbz
+    :end-before: #HIDDEN_END_skbz
 
 In fact, attaching leads seems not so simple any more for the current
 structure with a scattering region very much different from the lead

@@ -5,14 +5,19 @@ STATIC_VERSION_FILE = 'kwant/_static_version.py'
 REQUIRED_CYTHON_VERSION = (0, 17, 1)
 MUMPS_DEBIAN_PACKAGE = 'libmumps-scotch-dev'
 NO_CYTHON_OPTION = '--no-cython'
+TUT_DIR = 'tutorial'
+TUT_GLOB = 'doc/source/tutorial/*.py'
+TUT_HIDDEN_PREFIX = '#HIDDEN'
 
 import sys
 import os
+import glob
 import subprocess
 import ConfigParser
-from distutils.core import setup
+from distutils.core import setup, Command
 from distutils.extension import Extension
 from distutils.errors import DistutilsError, CCompilerError
+from distutils.command.build import build as distutils_build
 import numpy
 
 try:
@@ -52,6 +57,36 @@ Build configuration was:
             raise
         print '**************** Build summary ****************'
         print build_summary
+
+
+class build_tut(Command):
+    description = "build the tutorial scripts"
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        if not os.path.exists(TUT_DIR):
+            os.mkdir(TUT_DIR)
+        for in_fname in glob.glob(TUT_GLOB):
+            out_fname = os.path.join(TUT_DIR, os.path.basename(in_fname))
+            with open(in_fname) as in_file, open(out_fname, 'w') as out_file:
+                for line in in_file:
+                    if not line.startswith(TUT_HIDDEN_PREFIX):
+                        out_file.write(line)
+
+
+# Our version of the "build" command also makes sure the tutorial is made.
+# Even though the tutorial is not necessary for installation, and "build" is
+# supposed to make everything needed to install, this is a robust way to ensure
+# that the tutorial is present.
+class kwant_build(distutils_build):
+    sub_commands = [('build_tut', None)] + distutils_build.sub_commands
+    pass
 
 
 # This is an exact copy of the function from kwant/version.py.  We can't import
@@ -279,7 +314,9 @@ def main():
           license="not to be distributed",
           packages=["kwant", "kwant.graph", "kwant.linalg", "kwant.physics",
                     "kwant.solvers"],
-          cmdclass={'build_ext': kwant_build_ext},
+          cmdclass={'build': kwant_build,
+                    'build_ext': kwant_build_ext,
+                    'build_tut': build_tut},
           ext_modules=ext_modules(extensions()),
           include_dirs=[numpy.get_include()])
 

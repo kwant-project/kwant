@@ -12,9 +12,7 @@ recursive-include kwant *.pxd
 recursive-include kwant *.c
 recursive-include kwant *.h
 recursive-include kwant test_*.py
-
 recursive-include examples *.py
-recursive-include tutorial *.py
 
 include doc/other/*[a-zA-Z]
 include doc/Makefile

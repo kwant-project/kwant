@@ -13,7 +13,9 @@ from cmath import exp
 import kwant
 
 # For eigenvalue computation
+#HIDDEN_BEGIN_tibv
 import scipy.linalg as la
+#HIDDEN_END_tibv
 
 # For plotting
 from matplotlib import pyplot
@@ -23,6 +25,7 @@ def make_system(a=1, t=1.0, r=10):
     # Start with an empty tight-binding system and a single square lattice.
     # `a` is the lattice constant (by default set to 1 for simplicity).
 
+#HIDDEN_BEGIN_qlyd
     lat = kwant.lattice.Square(a)
 
     sys = kwant.Builder()
@@ -46,8 +49,10 @@ def make_system(a=1, t=1.0, r=10):
 
     # It's a closed system for a change, so no leads
     return sys
+#HIDDEN_END_qlyd
 
 
+#HIDDEN_BEGIN_yvri
 def plot_spectrum(sys, Bfields):
     # global variable B controls the magnetic field
     global B
@@ -74,6 +79,7 @@ def plot_spectrum(sys, Bfields):
     pyplot.xlabel("magnetic field [some arbitrary units]")
     pyplot.ylabel("energy [in units of t]")
     pyplot.show()
+#HIDDEN_END_yvri
 
 
 def main():

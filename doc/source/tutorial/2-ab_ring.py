@@ -18,6 +18,7 @@ import kwant
 from matplotlib import pyplot
 
 
+#HIDDEN_BEGIN_eusz
 def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     # Start with an empty tight-binding system and a single square lattice.
     # `a` is the lattice constant (by default set to 1 for simplicity).
@@ -32,11 +33,14 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
         (x, y) = pos
         rsq = x ** 2 + y ** 2
         return (r1 ** 2 < rsq < r2 ** 2)
+#HIDDEN_END_eusz
 
     # and add the corresponding lattice points using the `shape`-function
+#HIDDEN_BEGIN_lcak
     sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
     for hopping in lat.nearest:
         sys[sys.possible_hoppings(*hopping)] = -t
+#HIDDEN_END_lcak
 
     # In order to introduce a flux through the ring, we introduce a phase
     # on the hoppings on the line cut through one of the arms
@@ -44,6 +48,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     # since we want to change the flux without modifying Builder repeatedly,
     # we define the modified hoppings as a function that takes the flux
     # through the global variable phi.
+#HIDDEN_BEGIN_lvkt
     def fluxphase(site1, site2):
         return exp(1j * phi)
 
@@ -57,9 +62,11 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     # Modify only those hopings in x-direction that cross the branch cut
     sys[(hop for hop in sys.possible_hoppings((1, 0), lat, lat)
          if crosses_branchcut(hop))] = fluxphase
+#HIDDEN_END_lvkt
 
     #### Define the leads. ####
     # left lead
+#HIDDEN_BEGIN_qwgr
     sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
     lead0 = kwant.Builder(sym_lead0)
 
@@ -70,14 +77,17 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
     for hopping in lat.nearest:
         lead0[lead0.possible_hoppings(*hopping)] = -t
+#HIDDEN_END_qwgr
 
     # Then the lead to the right
     # [again, obtained using reversed()]
     lead1 = lead0.reversed()
 
     #### Attach the leads and return the system. ####
+#HIDDEN_BEGIN_skbz
     sys.attach_lead(lead0)
     sys.attach_lead(lead1)
+#HIDDEN_END_skbz
 
     return sys
 

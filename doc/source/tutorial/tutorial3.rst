@@ -15,8 +15,9 @@ tight-binding wire.
 Computing band structures in kwant is easy. Just define a lead in the
 usual way:
 
-.. literalinclude:: ../../../tutorial/3-band_structure.py
-    :lines: 17-34
+.. literalinclude:: 3-band_structure.py
+    :start-after: #HIDDEN_BEGIN_zxip
+    :end-before: #HIDDEN_END_zxip
 
 "Usual way" means defining a translational symmetry vector, as well
 as one unit cell of the lead, and the hoppings to neighboring
@@ -30,8 +31,9 @@ that allows to compute the eigenenergies of the translational invariant system
 for a given momentum `k`. Computing these eigenenergies for different momenta
 `k` then yields the bandstructure:
 
-.. literalinclude:: ../../../tutorial/3-band_structure.py
-    :lines: 37 - 55
+.. literalinclude:: 3-band_structure.py
+    :start-after: #HIDDEN_BEGIN_pejz
+    :end-before: #HIDDEN_END_pejz
 
 This gives the result:
 
@@ -75,14 +77,16 @@ circular quantum dot as a function of magnetic field
 To compute the eigenenergies, we will make use of the linear algebra
 functionality of `scipy <www.scipy.org>`_:
 
-.. literalinclude:: ../../../tutorial/3-closed_system.py
-    :lines: 16
+.. literalinclude:: 3-closed_system.py
+    :start-after: #HIDDEN_BEGIN_tibv
+    :end-before: #HIDDEN_END_tibv
 
 We set up the system using the `shape`-function as in
 :ref:`tutorial-abring`, but do not add any leads:
 
-.. literalinclude:: ../../../tutorial/3-closed_system.py
-    :lines: 26-48
+.. literalinclude:: 3-closed_system.py
+    :start-after: #HIDDEN_BEGIN_qlyd
+    :end-before: #HIDDEN_END_qlyd
 
 We add the magnetic field using a function and a global variable as we
 did in the two previous tutorial. (Here, the gauge is chosen such that
@@ -92,8 +96,9 @@ The spectrum can be obtained by diagonalizing the Hamiltonian of the
 system, which in turn can be obtained from the finalized
 system using `~kwant.system.System.hamiltonian_submatrix`:
 
-.. literalinclude:: ../../../tutorial/3-closed_system.py
-    :lines: 51, 53, 60-76
+.. literalinclude:: 3-closed_system.py
+    :start-after: #HIDDEN_BEGIN_yvri
+    :end-before: #HIDDEN_END_yvri
 
 In this toy model we use dense matrices and dense matrix algebra since
 the system is very small. (In a real application one would probably

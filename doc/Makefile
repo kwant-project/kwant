@@ -119,8 +119,9 @@ doctest:
 
 
 # Make the image generation scripts by patching tutorial scipts.
+.SECONDARY:
 %.py: %.py.diff
-	@cp ../tutorial/$(notdir $@) $(dir $@)
+	@grep -v '^#HIDDEN' source/tutorial/$(notdir $@) >$@
 	@patch $@ $<
 
 # Generation of tutorial images.  This requires some make trickery, see

@@ -13,6 +13,10 @@ from matplotlib import pyplot
 
 # global variable governing the behavior of potential() in
 # make_system()
+#HIDDEN The following code line is included verbatim in the tutorial text
+#HIDDEN because nested code examples are not supported.  Remember to update
+#HIDDEN the tutorial text when you modify this line.
+#HIDDEN_BEGIN_ehso
 pot = 0
 
 def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
@@ -31,13 +35,16 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
             return pot
         else:
             return 0
+#HIDDEN_END_ehso
 
+#HIDDEN_BEGIN_coid
     def onsite(site):
         return 4 * t + potential(site)
 
     sys[(lat(x, y) for x in range(L) for y in range(W))] = onsite
     for hopping in lat.nearest:
         sys[sys.possible_hoppings(*hopping)] = -t
+#HIDDEN_END_coid
 
     #### Define the leads. ####
     # First the lead to the left, ...
@@ -64,6 +71,7 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
 def plot_conductance(sys, energy, welldepths):
     # We specify that we want to not only read, but also write to a
     # global variable.
+#HIDDEN_BEGIN_sqvr
     global pot
 
     # Compute conductance
@@ -80,6 +88,7 @@ def plot_conductance(sys, energy, welldepths):
     pyplot.xlabel("well depth [in units of t]")
     pyplot.ylabel("conductance [in units of e^2/h]")
     pyplot.show()
+#HIDDEN_END_sqvr
 
 
 def main():

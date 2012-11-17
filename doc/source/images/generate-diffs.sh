@@ -6,5 +6,6 @@
 for f in [0-9]-*.py; do
     # We use custom labels to suppress the time stamps which are unnecessary
     # here and would only lead to noise in version control.
-    diff -u --label original --label modified ../../../tutorial/$f $f >$f.diff
+    grep -v '#HIDDEN' ../tutorial/$f |
+    diff -u --label original --label modified - $f >$f.diff
 done

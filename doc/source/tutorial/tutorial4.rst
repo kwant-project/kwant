@@ -14,8 +14,9 @@ We begin by defining the honeycomb lattice of graphene. This is
 in principle already done in `kwant.lattice.Honeycomb`, but we do it
 explicitly here to show how to define a new lattice:
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 24-27
+.. literalinclude:: 4-graphene.py
+    :start-after: #HIDDEN_BEGIN_hnla
+    :end-before: #HIDDEN_END_hnla
 
 The first argument to the `~kwant.lattice.make_lattice` function is the list of
 primitive vectors of the lattice; the second one is the coordinates of basis
@@ -26,8 +27,9 @@ itself forms a regular lattice of the same type as well, and those
 In the next step we define the shape of the scattering region (circle again)
 and add all lattice points using the ``shape()``-functionality:
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 29-30, 33-38, 40-45
+.. literalinclude:: 4-graphene.py
+    :start-after: #HIDDEN_BEGIN_shzy
+    :end-before: #HIDDEN_END_shzy
 
 As you can see, this works exactly the same for any kind of lattice.
 We add the onsite energies using a function describing the p-n junction;
@@ -40,8 +42,9 @@ As a next step we add the hoppings, making use of
 lattice (instead of `kwant.lattice.Honeycomb`), we have to define
 the hoppings ourselves:
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 49
+.. literalinclude:: 4-graphene.py
+    :start-after: #HIDDEN_BEGIN_hsmc
+    :end-before: #HIDDEN_END_hsmc
 
 The nearest-neighbor model for graphene contains only
 hoppings between different basis atoms. For these type of
@@ -57,24 +60,27 @@ respect to the two primitive vectors ``[(1, 0), (sin_30, cos_30)]``.
 
 Adding the hoppings however still works the same way:
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 50-51
+.. literalinclude:: 4-graphene.py
+    :start-after: #HIDDEN_BEGIN_bfwb
+    :end-before: #HIDDEN_END_bfwb
 
 Modifying the scattering region is also possible as before. Let's
 do something crazy, and remove an atom in sublattice A
 (which removes also the hoppings from/to this site) as well
 as add an additional link:
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 54-55
+.. literalinclude:: 4-graphene.py
+    :start-after: #HIDDEN_BEGIN_efut
+    :end-before: #HIDDEN_END_efut
 
 Note again that the conversion from a tuple `(i,j)` to site
 is done by the sublattices `a` and `b`.
 
 The leads are defined as before:
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 58-82
+.. literalinclude:: 4-graphene.py
+    :start-after: #HIDDEN_BEGIN_aakh
+    :end-before: #HIDDEN_END_aakh
 
 Note that the translational vectors ``graphene.vec((-1, 0))`` and
 ``graphene.vec((0, 1))`` are *not* orthogonal any more as they would have been
@@ -85,14 +91,16 @@ Later, we will compute some eigenvalues of the closed scattering region without
 leads. This is why we postpone attaching the leads to the system. Instead,
 we return the scattering region and the leads separately.
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 84
+.. literalinclude:: 4-graphene.py
+    :start-after: #HIDDEN_BEGIN_kmmw
+    :end-before: #HIDDEN_END_kmmw
 
 The computation of some eigenvalues of the closed system is done
 in the following piece of code:
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 87-91, 95-98
+.. literalinclude:: 4-graphene.py
+    :start-after: #HIDDEN_BEGIN_zydk
+    :end-before: #HIDDEN_END_zydk
 
 Here we use in contrast to the previous example a sparse matrix and
 the sparse linear algebra functionality of scipy (this requires
@@ -106,16 +114,19 @@ to the previous examples, and needs not be further explained here.
 Finally, in the `main()` function we make and
 plot the system:
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 127-130, 139
+.. literalinclude:: 4-graphene.py
+    :start-after: #HIDDEN_BEGIN_itkk
+    :end-before: #HIDDEN_END_itkk
 
 We customize the plotting: `plotter_symbols` is a dictionary with the
 sublattice objects `a` and `b` as keys, and the `~kwant.plotter.Circle` objects
 specify that the sublattice `a` should be drawn using a filled black circle,
-and `b` using a white circle with a black outline.
+and `b` using a white circle with a black outline. ::
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 133-136
+    plotter_symbols = {a: kwant.plotter.Circle(r=0.3),
+                       b: kwant.plotter.Circle(r=0.3,
+                                               fcol=kwant.plotter.white,
+                                               lcol=kwant.plotter.black)}
 
 The radius of the circle is given in relative units: `~kwant.plotter.plot` uses
 a typical length scale as a reference length. By default, the typical length
@@ -135,8 +146,9 @@ Plotting the closed system gives this result:
 
 Computing the eigenvalues of largest magnitude,
 
-.. literalinclude:: ../../../tutorial/4-graphene.py
-    :lines: 142
+.. literalinclude:: 4-graphene.py
+    :start-after: #HIDDEN_BEGIN_jmbi
+    :end-before: #HIDDEN_END_jmbi
 
 should yield two eigenvalues similar to `[ 3.07869311 +1.02714523e-17j,
 -3.06233144 -6.68085759e-18j]` (round-off might change the imaginary part which

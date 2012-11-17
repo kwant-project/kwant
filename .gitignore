@@ -5,6 +5,7 @@ MANIFEST
 /kwant/*.c
 /kwant/*/*.c
 /kwant/_static_version.py
+/tutorial
 /build
 /dist
 /doc/build
