@@ -1,1 +1,1 @@
-.. include:: ../../INSTALL.txt
+.. include:: ../../INSTALL

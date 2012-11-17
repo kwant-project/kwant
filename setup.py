@@ -43,7 +43,7 @@ class kwant_build_ext(build_ext):
             print >>sys.stderr, \
 """{0}
 The compilation of kwant has failed.  Please examine the error message
-above and consult the installation instructions in README.txt.
+above and consult the installation instructions in README.
 You might have to customize {1}.
 {0}
 Build configuration was:

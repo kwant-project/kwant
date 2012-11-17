@@ -2,8 +2,8 @@
 kwant documentation
 ===================
 
-.. include:: ../../README.txt
-   :end-before: See the file INSTALL.txt
+.. include:: ../../README
+   :end-before: See the file INSTALL
 
 .. toctree::
    :maxdepth: 1

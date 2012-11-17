@@ -5,6 +5,6 @@ suitable for calculations of Landauer transport (conductance, noise),
 dispersion relations, modes, wavefunctions, various Green functions, local
 density of states.
 
-See the file INSTALL.txt for installation instructions and LICENSE.txt for
-legal information.  Complete reference documentation and a tutorial are also
+See the file INSTALL for installation instructions and LICENSE for legal
+information.  Complete reference documentation and a tutorial are also
 available.
