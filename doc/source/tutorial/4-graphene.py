@@ -67,7 +67,7 @@ def make_system(r=10, w=2.0, pot=0.1):
     #### Define the leads. ####
 #HIDDEN_BEGIN_aakh
     # left lead
-    sym0 = kwant.TranslationalSymmetry([graphene.vec((-1, 0))])
+    sym0 = kwant.TranslationalSymmetry(graphene.vec((-1, 0)))
 
     def lead0_shape(pos):
         x, y = pos
@@ -79,7 +79,7 @@ def make_system(r=10, w=2.0, pot=0.1):
         lead0[lead0.possible_hoppings(*hopping)] = -1
 
     # The second lead, going to the top right
-    sym1 = kwant.TranslationalSymmetry([graphene.vec((0, 1))])
+    sym1 = kwant.TranslationalSymmetry(graphene.vec((0, 1)))
 
     def lead1_shape(pos):
         x, y = pos
@@ -140,7 +140,7 @@ def plot_bandstructure(flead, momenta):
     pyplot.show()
 
 
-#HIDDEN The part of the following code block which begins with plotter_symbols
+#HIDDEN The part of the following code block which begins with group_colors
 #HIDDEN is included verbatim in the tutorial text because nested code examples
 #HIDDEN are not supported.  Remember to update the tutorial text when you
 #HIDDEN modify this block.

@@ -49,19 +49,18 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
 
     #### Define the leads. ####
 #HIDDEN_BEGIN_ttth
-    # left electron lead
-    sym_lead0 = kwant.TranslationalSymmetry([lat_e.vec((-1, 0))])
-    lead0 = kwant.Builder(sym_lead0)
+    # Symmetry for the left leads.
+    sym_left = kwant.TranslationalSymmetry((-a, 0))
 
+    # left electron lead
+    lead0 = kwant.Builder(sym_left)
     lead0[(lat_e(0, j) for j in xrange(W))] = 4 * t - mu
     # hoppings in x and y-direction
     lead0[lead0.possible_hoppings((1, 0), lat_e, lat_e)] = -t
     lead0[lead0.possible_hoppings((0, 1), lat_e, lat_e)] = -t
 
     # left hole lead
-    sym_lead1 = kwant.TranslationalSymmetry([lat_h.vec((-1, 0))])
-    lead1 = kwant.Builder(sym_lead1)
-
+    lead1 = kwant.Builder(sym_left)
     lead1[(lat_h(0, j) for j in xrange(W))] = mu - 4 * t
     # hoppings in x and y-direction
     lead1[lead1.possible_hoppings((1, 0), lat_h, lat_h)] = t
@@ -72,8 +71,8 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
     # this one is superconducting and thus is comprised of electrons
     # AND holes
 #HIDDEN_BEGIN_mhiw
-    sym_lead2 = kwant.TranslationalSymmetry([lat_e.vec((1, 0))])
-    lead2 = kwant.Builder(sym_lead2)
+    sym_right = kwant.TranslationalSymmetry((a, 0))
+    lead2 = kwant.Builder(sym_right)
 
     lead2[(lat_e(0, j) for j in xrange(W))] = 4 * t - mu
     lead2[(lat_h(0, j) for j in xrange(W))] = mu - 4 * t

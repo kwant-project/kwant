@@ -66,12 +66,11 @@ system must have a translational symmetry:
     :start-after: #HIDDEN_BEGIN_xcmc
     :end-before: #HIDDEN_END_xcmc
 
-Here, the `~kwant.builder.Builder` takes the translational symmetry
-as an optional parameter. Note that the (real space)
-vector ``lat.vec((-1, 0))`` defining the translational symmetry
-must point in a direction *away* from the scattering region, *into*
-the lead -- hence, lead 0 [#]_ will be the left lead, extending to
-infinity to the left.
+Here, the `~kwant.builder.Builder` takes a translational symmetry as the
+optional parameter. Note that the (real space) vector ``(-a, 0)`` defining the
+translational symmetry must point in a direction *away* from the scattering
+region, *into* the lead -- hence, lead 0 [#]_ will be the left lead, extending
+to infinity to the left.
 
 For the lead itself it is enough to add the points of one unit cell as well
 as the hoppings inside one unit cell and to the next unit cell of the lead.
@@ -233,20 +232,11 @@ subbands that increases with energy.
          del sys
          sys = fsys
 
-   - Note that the vector passed to the `~kwant.lattice.TranslationalSymmetry`
-     (in fact, what is passed is a list of vectors -- there could be more than
-     on periodic direction. However, for a lead there is only one.) is
-     a realspace vector: ``lat.vec((1,0))``. Here, ``lat.vec``
-     converts the integer indices `(1,0)` into a realspace vector. In
-     this particular example, this is trivial (even more as ``a=1``),
-     but it is not so any more for more complicated lattices.
-
-     Even though the translational symmetry vector is specified in
-     realspace, it must be compatible with the lattice symmetries
-     (in principle, there could be more than one lattice). Hence,
-     it will be typically specified using ``lat.vec``, as this
-     is guaranteed to be a proper lattice vector, compatible
-     with the lattice symmetry.
+   - Even though the vector passed to the
+     `~kwant.lattice.TranslationalSymmetry` is specified in real space, it must
+     be compatible with the lattice symmetries.  A single lead can consists of
+     sites belonging to more than one lattice, but of course the translational
+     symmetry of the lead has to be shared by all of them.
 
    - Instead of plotting to the screen (which is standard)
      `~kwant.plotter.plot` can also write to a file specified by the argument

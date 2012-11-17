@@ -213,8 +213,8 @@ class TranslationalSymmetry(builder.Symmetry):
 
     Parameters
     ----------
-    periods : list of lists of real-valued variables
-        list of symmetry periods in real space.
+    p0, p1, p2, ... : sequences of real numbers
+        The symmetry periods in real space.
 
     Notes
     -----
@@ -228,8 +228,14 @@ class TranslationalSymmetry(builder.Symmetry):
     The fundamental domain for hoppings are all hoppings ``(a, b)`` with site
     `a` in fundamental domain of sites.
     """
-    def __init__(self, periods):
+    def __init__(self, *periods):
         self.periods = ta.array(periods)
+        if self.periods.ndim != 2:
+            # TODO: remove the second part of the following message once
+            # everybody got used to it.
+            msg = "TranslationalSymmetry takes 1d sequences as parameters.\n" \
+                "See What's new in kwant 0.2 in the documentation."
+            raise ValueError(msg)
         # A dictionary containing cached data required for applying the
         # symmetry to different site groups.
         self.site_group_data = {}
@@ -342,7 +348,7 @@ class TranslationalSymmetry(builder.Symmetry):
         domain.
         """
         periods = [[-i for i in j] for j in self.periods]
-        result = TranslationalSymmetry(periods)
+        result = TranslationalSymmetry(*periods)
         for gr in self.site_group_data:
             det_x_inv_m_part, m_part, det_m = self.site_group_data[gr]
             if self.num_directions % 2:

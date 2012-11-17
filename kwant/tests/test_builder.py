@@ -266,7 +266,7 @@ def test_finalization():
     check_hoppings(fsys, sr_hops)
 
     # Build lead from blueprint and test it.
-    lead = builder.Builder(kwant.TranslationalSymmetry([(size, 0)]))
+    lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)))
     lead.default_site_group = sg
     for site, value in lead_sites.iteritems():
         shift = rng.randrange(-5, 6) * size
@@ -367,7 +367,7 @@ def test_dangling():
 
 def test_builder_with_symmetry():
     g = kwant.make_lattice(ta.identity(3))
-    sym = kwant.TranslationalSymmetry([(0, 0, 3), (0, 2, 0)])
+    sym = kwant.TranslationalSymmetry((0, 0, 3), (0, 2, 0))
     bob = builder.Builder(sym)
     bob.default_site_group = g
 

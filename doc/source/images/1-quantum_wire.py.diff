@@ -9,7 +9,7 @@
  
  # First, define the tight-binding system
  
-@@ -73,8 +75,9 @@
+@@ -72,8 +74,9 @@
  sys.attach_lead(lead1)
  
  # Plot it, to make sure it's OK
@@ -21,7 +21,7 @@
  
  # Finalize the system
  
-@@ -98,8 +101,13 @@
+@@ -97,8 +100,13 @@
  # Use matplotlib to write output
  # We should see conductance steps
  

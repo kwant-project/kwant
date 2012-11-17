@@ -67,7 +67,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     #### Define the leads. ####
     # left lead
 #HIDDEN_BEGIN_qwgr
-    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
     lead0 = kwant.Builder(sym_lead0)
 
     def lead_shape(pos):

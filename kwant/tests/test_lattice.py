@@ -41,31 +41,31 @@ def test_translational_symmetry():
     g2 = lattice.make_lattice(np.identity(2))
     g3 = lattice.make_lattice(np.identity(3))
 
-    sym = ts([(0, 0, 4), (0, 5, 0), (0, 0, 2)])
+    sym = ts((0, 0, 4), (0, 5, 0), (0, 0, 2))
     assert_raises(ValueError, sym.add_site_group, g3)
-    sym = ts([(3.3, 0)])
+    sym = ts((3.3, 0))
     assert_raises(ValueError, sym.add_site_group, g2)
 
     # Test lattices with dimension smaller than dimension of space.
 
     g2in3 = lattice.make_lattice([[4, 4, 0], [4, -4, 0]])
-    sym = ts([(8, 0, 0)])
+    sym = ts((8, 0, 0))
     sym.add_site_group(g2in3)
-    sym = ts([(8, 0, 1)])
+    sym = ts((8, 0, 1))
     assert_raises(ValueError, sym.add_site_group, g2in3)
 
     # Test automatic fill-in of transverse vectors.
-    sym = ts([(1, 2)])
+    sym = ts((1, 2))
     sym.add_site_group(g2)
     assert_not_equal(sym.site_group_data[g2][2], 0)
-    sym = ts([(1, 0, 2), (3, 0, 2)])
+    sym = ts((1, 0, 2), (3, 0, 2))
     sym.add_site_group(g3)
     assert_not_equal(sym.site_group_data[g3][2], 0)
 
     transl_vecs = np.array([[10, 0], [7, 7]], dtype=int)
-    sym = ts(transl_vecs)
+    sym = ts(*transl_vecs)
     assert_equal(sym.num_directions, 2)
-    sym2 = ts(transl_vecs[: 1, :])
+    sym2 = ts(*transl_vecs[: 1, :])
     sym2.add_site_group(g2, transl_vecs[1:, :])
     for site in [g2(0, 0), g2(4, 0), g2(2, 1), g2(5, 5), g2(15, 6)]:
         assert sym.in_fd(site)
@@ -103,12 +103,12 @@ def test_translational_symmetry_reversed():
               ([(3, 1, 1), (1, 4, 1)], [(1, 1, 5)]),
               ([(3, 1, 1)], [(1, 4, 1), (1, 1, 5)])]
     for periods, other_vectors in params:
-        sym = lattice.TranslationalSymmetry(periods)
+        sym = lattice.TranslationalSymmetry(*periods)
         gr = lattice.make_lattice(np.identity(len(periods[0])))
         sym.add_site_group(gr, other_vectors)
         rsym = sym.reversed()
         assert_equal_symmetry(sym, rsym.reversed())
         rperiods = -np.array(periods, dtype=int)
-        rsym2 = lattice.TranslationalSymmetry(rperiods)
+        rsym2 = lattice.TranslationalSymmetry(*rperiods)
         rsym2.add_site_group(gr, other_vectors)
         assert_equal_symmetry(rsym, rsym2)

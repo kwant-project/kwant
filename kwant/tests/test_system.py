@@ -60,7 +60,7 @@ def test_hamiltonian_submatrix():
     assert_raises(ValueError, sys2.hamiltonian_submatrix, None, None, True)
 
 def test_energies():
-    sys = kwant.Builder(kwant.TranslationalSymmetry([(-1, 0)]))
+    sys = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
     sys.default_site_group = kwant.lattice.Square()
     sys[[(0, 0), (0, 1)]] = complex(0)
     sys[[((0, 0), (0, 1)),

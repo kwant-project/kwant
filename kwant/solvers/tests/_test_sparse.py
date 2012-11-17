@@ -14,8 +14,8 @@ square = kwant.lattice.Square()
 def test_output(solve):
     np.random.seed(3)
     system = kwant.Builder()
-    left_lead = kwant.Builder(kwant.TranslationalSymmetry([(-1,)]))
-    right_lead = kwant.Builder(kwant.TranslationalSymmetry([(1,)]))
+    left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
+    right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
     for b, site in [(system, chain(0)), (system, chain(1)),
                     (left_lead, chain(0)), (right_lead, chain(0))]:
         h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
@@ -54,7 +54,7 @@ def test_output(solve):
 def test_one_lead(solve):
     np.random.seed(3)
     system = kwant.Builder()
-    lead = kwant.Builder(kwant.TranslationalSymmetry([(-1,)]))
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     for b, site in [(system, chain(0)), (system, chain(1)),
                     (system, chain(2)), (lead, chain(0))]:
         h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
@@ -76,8 +76,8 @@ def test_one_lead(solve):
 # 0x0 S-matrix.
 def test_smatrix_shape(solve):
     system = kwant.Builder()
-    lead0 = kwant.Builder(kwant.TranslationalSymmetry([(-1,)]))
-    lead1 = kwant.Builder(kwant.TranslationalSymmetry([(1,)]))
+    lead0 = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
+    lead1 = kwant.Builder(kwant.TranslationalSymmetry((1,)))
     for b, site in [(system, chain(0)), (system, chain(1)),
                     (system, chain(2))]:
         b[site] = 2
@@ -131,7 +131,7 @@ def test_two_equal_leads(solve):
         assert_almost_equal(sol.transmission(1,0), n_modes)
     np.random.seed(11)
     system = kwant.Builder()
-    lead = kwant.Builder(kwant.TranslationalSymmetry([(1,)]))
+    lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
     h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
     h += h.conjugate().transpose()
     h *= 0.8
@@ -157,7 +157,7 @@ def test_two_equal_leads(solve):
 def test_graph_system(solve):
     np.random.seed(11)
     system = kwant.Builder()
-    lead = kwant.Builder(kwant.TranslationalSymmetry([(-1, 0)]))
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
     lead.default_site_group = system.default_site_group = square
 
     h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
@@ -192,7 +192,7 @@ def test_singular_graph_system(solve):
     np.random.seed(11)
 
     system = kwant.Builder()
-    lead = kwant.Builder(kwant.TranslationalSymmetry([(-1, 0)]))
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
     lead.default_site_group = system.default_site_group = square
     h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
     h += h.conjugate().transpose()
@@ -226,7 +226,7 @@ def test_singular_graph_system(solve):
 
 def test_tricky_singular_hopping(solve):
     system = kwant.Builder()
-    lead = kwant.Builder(kwant.TranslationalSymmetry([(4, 0)]))
+    lead = kwant.Builder(kwant.TranslationalSymmetry((4, 0)))
     lead.default_site_group = system.default_site_group = square
 
     interface = []
@@ -266,8 +266,8 @@ def test_self_energy(solve):
 
     np.random.seed(4)
     system = kwant.Builder()
-    left_lead = kwant.Builder(kwant.TranslationalSymmetry([(-1,)]))
-    right_lead = kwant.Builder(kwant.TranslationalSymmetry([(1,)]))
+    left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
+    right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
     for b, site in [(system, chain(0)), (system, chain(1)),
                  (left_lead, chain(0)), (right_lead, chain(0))]:
         h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
@@ -315,7 +315,7 @@ def test_self_energy_reflection(solve):
 
     np.random.seed(4)
     system = kwant.Builder()
-    left_lead = kwant.Builder(kwant.TranslationalSymmetry([(-1,)]))
+    left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     for b, site in [(system, chain(0)), (system, chain(1)),
                  (left_lead, chain(0))]:
         h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
@@ -337,8 +337,8 @@ def test_self_energy_reflection(solve):
 def test_very_singular_leads(solve):
     sys = kwant.Builder()
     gr = kwant.lattice.Chain()
-    left_lead = kwant.Builder(kwant.TranslationalSymmetry([(-1,)]))
-    right_lead = kwant.Builder(kwant.TranslationalSymmetry([(1,)]))
+    left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
+    right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
     sys.default_site_group = gr
     left_lead.default_site_group = right_lead.default_site_group = gr
     sys[(0,)] = left_lead[(0,)] = right_lead[(0,)] = np.identity(2)
@@ -353,7 +353,7 @@ def test_very_singular_leads(solve):
 def test_ldos(ldos):
     sys = kwant.Builder()
     gr = kwant.lattice.Chain()
-    lead = kwant.Builder(kwant.TranslationalSymmetry((gr.vec((1,)),)))
+    lead = kwant.Builder(kwant.TranslationalSymmetry(gr.vec((1,))))
     sys.default_site_group = lead.default_site_group = gr
     sys[(0,)] = sys[(1,)] = lead[(0,)] = 0
     sys[(0,), (1,)] = lead[(0,), (1,)] = 1

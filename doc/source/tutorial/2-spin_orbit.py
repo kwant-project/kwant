@@ -50,7 +50,7 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
 
     #### Define the leads. ####
     # left lead
-    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
     lead0 = kwant.Builder(sym_lead0)
 
 #HIDDEN_BEGIN_yliu

@@ -49,9 +49,7 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
 
     #### Define the leads. ####
     # First the lead to the left, ...
-    # (Note: in the current version, TranslationalSymmetry takes a
-    # realspace vector)
-    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
     lead0 = kwant.Builder(sym_lead0)
 
     lead0[(lat(0, j) for j in xrange(W))] = 4 * t

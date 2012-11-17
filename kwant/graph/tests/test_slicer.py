@@ -29,7 +29,7 @@ def test_rectangle():
 
     for l in [1, 2, 5, 10]:
         sys = kwant.Builder()
-        lead = kwant.Builder(kwant.TranslationalSymmetry([(-1, 0)]))
+        lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
         lat = kwant.lattice.Square()
         lead[(lat(0, i) for i in xrange(w))] = 0
         sys[(lat(j, i) for j in xrange(l) for i in xrange(w))] = 0

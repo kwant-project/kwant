@@ -10,7 +10,7 @@ chain = kwant.lattice.Chain()
 def _twoterminal_system():
     np.random.seed(11)
     system = kwant.Builder()
-    lead = kwant.Builder(kwant.TranslationalSymmetry([(1,)]))
+    lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
     h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
     h += h.conjugate().transpose()
     h *= 0.8

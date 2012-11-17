@@ -49,6 +49,22 @@ A new function `~kwant.plotter.map` was implemented. It allows to show a map of
 spatial dependence of a function of a system site (e.g. density of states)
 without showing the sites themselves.
 
+`~kwant.lattice.TranslationalSymmetry` is used differently
+----------------------------------------------------------
+When constructing an instance of `~kwant.lattice.TranslationalSymmetry` a sole
+parameter used to be expected: A sequence of sequences of 1d real space
+vectors.  Now ``TranslationalSymmetry`` can take an arbitrary number of
+parameters, each of them a 1d real space vector.  This reduced the number of
+parantheses necessary in the common case where there is just a single parameter
+
+Example of old usage::
+
+    sym = kwant.TranslationalSymmetry([(-1, 0)])
+
+New usage::
+
+    sym = kwant.TranslationalSymmetry((-1, 0))
+
 Calculation of the local density of states
 ------------------------------------------
 The new function of sparse solvers `~kwant.solvers.common.SparseSolver.ldos`

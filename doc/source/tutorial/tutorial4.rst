@@ -76,13 +76,19 @@ as add an additional link:
 Note again that the conversion from a tuple `(i,j)` to site
 is done by the sublattices `a` and `b`.
 
-The leads are defined as before:
+The leads are defined almost as before:
 
 .. literalinclude:: 4-graphene.py
     :start-after: #HIDDEN_BEGIN_aakh
     :end-before: #HIDDEN_END_aakh
 
-Note that the translational vectors ``graphene.vec((-1, 0))`` and
+Note the method `~kwant.lattice.PolyatomicLattice.vec` used in calculating the
+parameter for `~kwant.lattice.TranslationalSymmetry`.  The latter expects a
+real space symmetry vector, but for many lattices symmetry vectors are more
+easily expressed in the natural coordinate system of the lattice.  The ``vec``
+method of lattices maps a lattice vector to a real space vector.
+
+Observe also that the translational vectors ``graphene.vec((-1, 0))`` and
 ``graphene.vec((0, 1))`` are *not* orthogonal any more as they would have been
 in a square lattice -- they follow the non-orthogonal primitive vectors defined
 in the beginning.

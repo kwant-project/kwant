@@ -611,6 +611,7 @@ class Builder(object):
         hvhv = self.H.get(tail, ())
         return len(hvhv) // 2 - 1
 
+    # TODO: write a test for this method.
     def reversed(self):
         """Return a shallow copy of the builder with the symmetry reversed.
 

@@ -49,10 +49,9 @@ for i in xrange(L):
 
 # First the lead to the left
 
-# (Note: in the current version, TranslationalSymmetry takes a
-# realspace vector)
+# (Note: TranslationalSymmetry takes a real space vector)
 #HIDDEN_BEGIN_xcmc
-sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
 lead0 = kwant.Builder(sym_lead0)
 #HIDDEN_END_xcmc
 
@@ -69,7 +68,7 @@ for j in xrange(W):
 # Then the lead to the right
 #HIDDEN_BEGIN_xhqc
 
-sym_lead1 = kwant.TranslationalSymmetry([lat.vec((1, 0))])
+sym_lead1 = kwant.TranslationalSymmetry((a, 0))
 lead1 = kwant.Builder(sym_lead1)
 
 for j in xrange(W):

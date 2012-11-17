@@ -26,7 +26,7 @@ def make_lead(a=1, t=1.0, mu=0.7, Delta=0.1, W=10):
     # Start with an empty lead with a single square lattice
     lat = kwant.lattice.Square(a)
 
-    sym_lead = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+    sym_lead = kwant.TranslationalSymmetry((-a, 0))
     lead = kwant.Builder(sym_lead)
 
     # build up one unit cell of the lead, and add the hoppings

@@ -21,7 +21,7 @@ def sys_2d(W=3, r1=3, r2=8):
     sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
     for hopping in lat.nearest:
         sys[sys.possible_hoppings(*hopping)] = - t
-    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
+    sym_lead0 = kwant.TranslationalSymmetry(lat.vec((-1, 0)))
     lead0 = kwant.Builder(sym_lead0)
 
     def lead_shape(pos):
@@ -50,7 +50,7 @@ def sys_3d(W=3, r1=2, r2=4, a=1, t=1.0):
     sys[lat.shape(ring, (0, -r2 + 1, 0))] = 4 * t
     for hopping in lat.nearest:
         sys[sys.possible_hoppings(*hopping)] = - t
-    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0, 0))])
+    sym_lead0 = kwant.TranslationalSymmetry(lat.vec((-1, 0, 0)))
     lead0 = kwant.Builder(sym_lead0)
 
     def lead_shape(pos):
