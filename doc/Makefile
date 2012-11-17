@@ -18,17 +18,21 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) sou
 IMAGESOURCES    = $(shell find source -name "*.svg")
 GENERATEDPDF    = $(patsubst %.svg, %.pdf, $(IMAGESOURCES))
 
-# Tutorial images.
-TUTORIAL1A_IMAGES = source/images/1-quantum_wire_result.png source/images/1-quantum_wire_result.pdf source/images/1-quantum_wire_sys.png source/images/1-quantum_wire_sys.pdf
-TUTORIAL2A_IMAGES = source/images/2-spin_orbit_result.png source/images/2-spin_orbit_result.pdf
-TUTORIAL2B_IMAGES = source/images/2-quantum_well_result.png source/images/2-quantum_well_result.pdf
-TUTORIAL2C_IMAGES = source/images/2-ab_ring_result.png source/images/2-ab_ring_result.pdf source/images/2-ab_ring_sys.png source/images/2-ab_ring_sys.pdf source/images/2-ab_ring_note1.png source/images/2-ab_ring_note1.pdf source/images/2-ab_ring_note2.png source/images/2-ab_ring_note2.pdf
-TUTORIAL3A_IMAGES = source/images/3-band_structure_result.png source/images/3-band_structure_result.pdf
-TUTORIAL3B_IMAGES = source/images/3-closed_system_result.png source/images/3-closed_system_result.pdf source/images/3-closed_system_sys.png source/images/3-closed_system_sys.pdf
-TUTORIAL4_IMAGES = source/images/4-graphene_result.png source/images/4-graphene_result.pdf source/images/4-graphene_sys1.png source/images/4-graphene_sys1.pdf source/images/4-graphene_sys2.png source/images/4-graphene_sys2.pdf source/images/4-graphene_bs.png source/images/4-graphene_bs.pdf
-TUTORIAL5A_IMAGES = source/images/5-superconductor_band_structure_result.png source/images/5-superconductor_band_structure_result.pdf
-TUTORIAL5B_IMAGES = source/images/5-superconductor_transport_result.png source/images/5-superconductor_transport_result.pdf
-ALL_TUTORIAL_IMAGES = $(TUTORIAL1A_IMAGES)  $(TUTORIAL2A_IMAGES) $(TUTORIAL2B_IMAGES) $(TUTORIAL2C_IMAGES) $(TUTORIAL3A_IMAGES) $(TUTORIAL3B_IMAGES) $(TUTORIAL4_IMAGES) $(TUTORIAL5A_IMAGES) $(TUTORIAL5B_IMAGES)
+expand = $(foreach name, $(foreach fig, $(2), $(1)_$(fig)), \
+source/images/$(name).png source/images/$(name).pdf)
+
+# Generated images.
+1_IMAGES = $(call expand, 1-quantum_wire, result sys)
+2A_IMAGES = $(call expand, 2-spin_orbit, result)
+2B_IMAGES = $(call expand, 2-quantum_well, result)
+2C_IMAGES = $(call expand, 2-ab_ring, result sys note1 note2)
+3A_IMAGES = $(call expand, 3-band_structure, result)
+3B_IMAGES = $(call expand, 3-closed_system, result sys)
+4_IMAGES = $(call expand, 4-graphene, result sys1 sys2 bs)
+5A_IMAGES = $(call expand, 5-superconductor_band_structure, result)
+5B_IMAGES = $(call expand, 5-superconductor_transport, result)
+ALL_IMAGES = $(1_IMAGES)  $(2A_IMAGES) $(2B_IMAGES) $(2C_IMAGES) $(3A_IMAGES) \
+$(3B_IMAGES) $(4_IMAGES) $(5A_IMAGES) $(5B_IMAGES)
 
 .PHONY: help clean realclean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
@@ -50,35 +54,35 @@ clean:
 	-rm -rf source/reference/generated
 
 realclean: clean
-	-rm -f $(ALL_TUTORIAL_IMAGES) source/images/.*_flag
+	-rm -f $(ALL_IMAGES) source/images/.*_flag
 
-html:	$(ALL_TUTORIAL_IMAGES)
+html:	$(ALL_IMAGES)
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
-dirhtml: $(ALL_TUTORIAL_IMAGES)
+dirhtml: $(ALL_IMAGES)
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
-pickle: $(ALL_TUTORIAL_IMAGES)
+pickle: $(ALL_IMAGES)
 	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) $(BUILDDIR)/pickle
 	@echo
 	@echo "Build finished; now you can process the pickle files."
 
-json:   $(ALL_TUTORIAL_IMAGES)
+json:   $(ALL_IMAGES)
 	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(BUILDDIR)/json
 	@echo
 	@echo "Build finished; now you can process the JSON files."
 
-htmlhelp: $(ALL_TUTORIAL_IMAGES)
+htmlhelp: $(ALL_IMAGES)
 	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(BUILDDIR)/htmlhelp
 	@echo
 	@echo "Build finished; now you can run HTML Help Workshop with the" \
 	      ".hhp project file in $(BUILDDIR)/htmlhelp."
 
-qthelp: $(ALL_TUTORIAL_IMAGES)
+qthelp: $(ALL_IMAGES)
 	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) $(BUILDDIR)/qthelp
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
@@ -87,7 +91,7 @@ qthelp: $(ALL_TUTORIAL_IMAGES)
 	@echo "To view the help file:"
 	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/kwant.qhc"
 
-latex:  $(GENERATEDPDF) $(ALL_TUTORIAL_IMAGES)
+latex:  $(GENERATEDPDF) $(ALL_IMAGES)
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo
 	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
@@ -113,58 +117,37 @@ doctest:
 %.pdf: %.svg
 	inkscape --export-pdf=$@ $<
 
+
 # Generation of tutorial images.  This requires some serious make trickery, see
 # http://article.gmane.org/gmane.comp.gnu.make.general/5806
-$(TUTORIAL1A_IMAGES): source/images/.1-quantum_wire_flag
-	@:
-source/images/.1-quantum_wire_flag: source/images/1-quantum_wire.py
-	cd source/images/ && python 1-quantum_wire.py
-	touch source/images/.1-quantum_wire_flag
 
-$(TUTORIAL2A_IMAGES): source/images/.2-spin_orbit_flag
-	@:
-source/images/.2-spin_orbit_flag: source/images/2-spin_orbit.py
-	cd source/images/ && python 2-spin_orbit.py
-	touch source/images/.2-spin_orbit_flag
+.%_flag: %.py
+	cd $(dir $<) && python $(notdir $<)
+	@touch $@
 
-$(TUTORIAL2B_IMAGES): source/images/.2-quantum_well_flag
+$(1_IMAGES): source/images/.1-quantum_wire_flag
 	@:
-source/images/.2-quantum_well_flag: source/images/2-quantum_well.py
-	cd source/images/ && python 2-quantum_well.py
-	touch source/images/.2-quantum_well_flag
 
-$(TUTORIAL2C_IMAGES): source/images/.2-ab_ring_flag
+$(2A_IMAGES): source/images/.2-spin_orbit_flag
 	@:
-source/images/.2-ab_ring_flag: source/images/2-ab_ring.py
-	cd source/images/ && python 2-ab_ring.py
-	touch source/images/.2-ab_ring_flag
 
-$(TUTORIAL3A_IMAGES): source/images/.3-band_structure_flag
+$(2B_IMAGES): source/images/.2-quantum_well_flag
 	@:
-source/images/.3-band_structure_flag: source/images/3-band_structure.py
-	cd source/images/ && python 3-band_structure.py
-	touch source/images/.3-band_structure_flag
 
-$(TUTORIAL3B_IMAGES): source/images/.3-closed_system_flag
+$(2C_IMAGES): source/images/.2-ab_ring_flag
 	@:
-source/images/.3-closed_system_flag: source/images/3-closed_system.py
-	cd source/images/ && python 3-closed_system.py
-	touch source/images/.3-closed_system_flag
 
-$(TUTORIAL4_IMAGES): source/images/.4-graphene_flag
+$(3A_IMAGES): source/images/.3-band_structure_flag
 	@:
-source/images/.4-graphene_flag: source/images/4-graphene.py
-	cd source/images/ && python 4-graphene.py
-	touch source/images/.4-graphene_flag
 
-$(TUTORIAL5A_IMAGES): source/images/.5-superconductor_band_structure_flag
+$(3B_IMAGES): source/images/.3-closed_system_flag
 	@:
-source/images/.5-superconductor_band_structure_flag: source/images/5-superconductor_band_structure.py
-	cd source/images/ && python 5-superconductor_band_structure.py
-	touch source/images/.5-superconductor_band_structure_flag
 
-$(TUTORIAL5B_IMAGES): source/images/.5-superconductor_transport_flag
+$(4_IMAGES): source/images/.4-graphene_flag
 	@:
-source/images/.5-superconductor_transport_flag: source/images/5-superconductor_transport.py
-	cd source/images/ && python 5-superconductor_transport.py
-	touch source/images/.5-superconductor_transport_flag
+
+$(5A_IMAGES): source/images/.5-superconductor_band_structure_flag
+	@:
+
+$(5B_IMAGES): source/images/.5-superconductor_transport_flag
+	@:
