@@ -1,0 +1,46 @@
+--- original
++++ modified
+@@ -17,6 +17,7 @@
+ 
+ # For plotting
+ from matplotlib import pyplot
++import latex, html
+ 
+ 
+ def make_system(a=1, t=1.0, r=10):
+@@ -69,18 +70,30 @@
+         # we only plot the 15 lowest eigenvalues
+         energies.append(ev[:15])
+ 
+-    pyplot.figure()
++    fig = pyplot.figure()
+     pyplot.plot(Bfields, energies)
+-    pyplot.xlabel("magnetic field [some arbitrary units]")
+-    pyplot.ylabel("energy [in units of t]")
+-    pyplot.show()
++    pyplot.xlabel("magnetic field [some arbitrary units]",
++                 fontsize=latex.mpl_label_size)
++    pyplot.ylabel("energy [in units of t]", fontsize=latex.mpl_label_size)
++    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
++               fontsize=latex.mpl_tick_size)
++    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
++               fontsize=latex.mpl_tick_size)
++    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
++    fig.savefig("3-closed_system_result.pdf")
++    fig.savefig("3-closed_system_result.png",
++                dpi=(html.figwidth_px/latex.mpl_width_in))
+ 
+ 
+ def main():
+     sys = make_system()
+ 
+     # Check that the system looks as intended.
+-    kwant.plot(sys)
++    kwant.plot(sys, filename="3-closed_system_sys.pdf",
++               width=latex.figwidth_pt)
++    kwant.plot(sys, filename="3-closed_system_sys.png",
++               width=html.figwidth_px)
+ 
+     # Finalize the system.
+     sys = sys.finalized()

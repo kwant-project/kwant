@@ -54,7 +54,7 @@ clean:
 	-rm -rf source/reference/generated
 
 realclean: clean
-	-rm -f $(ALL_IMAGES) source/images/.*_flag
+	-rm -f $(ALL_IMAGES) source/images/.*_flag source/images/[0-9]-*.py
 
 html:	$(ALL_IMAGES)
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
@@ -118,7 +118,12 @@ doctest:
 	inkscape --export-pdf=$@ $<
 
 
-# Generation of tutorial images.  This requires some serious make trickery, see
+# Make the image generation scripts by patching tutorial scipts.
+%.py: %.py.diff
+	@cp ../tutorial/$(notdir $@) $(dir $@)
+	@patch $@ $<
+
+# Generation of tutorial images.  This requires some make trickery, see
 # http://article.gmane.org/gmane.comp.gnu.make.general/5806
 
 .%_flag: %.py

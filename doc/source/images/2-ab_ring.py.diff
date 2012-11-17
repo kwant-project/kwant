@@ -1,0 +1,116 @@
+--- original
++++ modified
+@@ -16,6 +16,7 @@
+ 
+ # For plotting
+ from matplotlib import pyplot
++import latex, html
+ 
+ 
+ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
+@@ -82,6 +83,54 @@
+     return sys
+ 
+ 
++def make_system_note1(a=1, t=1.0, W=10, r1=10, r2=20):
++    lat = kwant.lattice.Square(a)
++    sys = kwant.Builder()
++    def ring(pos):
++        (x, y) = pos
++        rsq = x**2 + y**2
++        return ( r1**2 < rsq < r2**2)
++    sys[lat.shape(ring, (0, 11))] = 4 * t
++    for hopping in lat.nearest:
++        sys[sys.possible_hoppings(*hopping)] = -t
++    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
++    lead0 = kwant.Builder(sym_lead0)
++    def lead_shape(pos):
++        (x, y) = pos
++        return (-1 < x < 1) and ( 0.5 * W < y < 1.5 * W )
++    lead0[lat.shape(lead_shape, (0, W))] = 4 * t
++    for hopping in lat.nearest:
++        lead0[lead0.possible_hoppings(*hopping)] = -t
++    lead1 = lead0.reversed()
++    sys.attach_lead(lead0)
++    sys.attach_lead(lead1)
++    return sys
++
++
++def make_system_note2(a=1, t=1.0, W=10, r1=10, r2=20):
++    lat = kwant.lattice.Square(a)
++    sys = kwant.Builder()
++    def ring(pos):
++        (x, y) = pos
++        rsq = x**2 + y**2
++        return ( r1**2 < rsq < r2**2)
++    sys[lat.shape(ring, (0, 11))] = 4 * t
++    for hopping in lat.nearest:
++        sys[sys.possible_hoppings(*hopping)] = -t
++    sym_lead0 = kwant.TranslationalSymmetry([lat.vec((-1, 0))])
++    lead0 = kwant.Builder(sym_lead0)
++    def lead_shape(pos):
++        (x, y) = pos
++        return (-1 < x < 1) and ( -W/2 < y < W/2  )
++    lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
++    for hopping in lat.nearest:
++        lead0[lead0.possible_hoppings(*hopping)] = -t
++    lead1 = lead0.reversed()
++    sys.attach_lead(lead0)
++    sys.attach_lead(lead1, lat(0, 0))
++    return sys
++
++
+ def plot_conductance(sys, energy, fluxes):
+     # compute conductance
+     # global variable phi controls the flux
+@@ -95,18 +144,29 @@
+         smatrix = kwant.solve(sys, energy)
+         data.append(smatrix.transmission(1, 0))
+ 
+-    pyplot.figure()
++    fig = pyplot.figure()
+     pyplot.plot(normalized_fluxes, data)
+-    pyplot.xlabel("flux [in units of the flux quantum]")
+-    pyplot.ylabel("conductance [in units of e^2/h]")
+-    pyplot.show()
++    pyplot.xlabel("flux [in units of the flux quantum]",
++                 fontsize=latex.mpl_label_size)
++    pyplot.ylabel("conductance [in units of e^2/h]",
++                 fontsize=latex.mpl_label_size)
++    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
++               fontsize=latex.mpl_tick_size)
++    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
++               fontsize=latex.mpl_tick_size)
++    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
++    fig.savefig("2-ab_ring_result.pdf")
++    fig.savefig("2-ab_ring_result.png",
++                dpi=(html.figwidth_px/latex.mpl_width_in))
+ 
+ 
+ def main():
+     sys = make_system()
+ 
+     # Check that the system looks as intended.
+-    kwant.plot(sys)
++    kwant.plot(sys, "2-ab_ring_sys.pdf", width=latex.figwidth_pt)
++    kwant.plot(sys, "2-ab_ring_sys.png", width=html.figwidth_px)
+ 
+     # Finalize the system.
+     sys = sys.finalized()
+@@ -115,6 +175,15 @@
+     plot_conductance(sys, energy=0.15, fluxes=[0.01 * i * 3 * 2 * pi
+                                                 for i in xrange(100)])
+ 
++    # Finally, some plots needed for the notes
++    sys = make_system_note1()
++    kwant.plot(sys, "2-ab_ring_note1.pdf", width=latex.figwidth_small_pt)
++    kwant.plot(sys, "2-ab_ring_note1.png", width=html.figwidth_small_px)
++    sys = make_system_note2()
++    kwant.plot(sys, "2-ab_ring_note2.pdf", width=latex.figwidth_small_pt)
++    kwant.plot(sys, "2-ab_ring_note2.png", width=html.figwidth_small_px)
++
++
+ # Call the main function if the script gets executed (as opposed to imported).
+ # See <http://docs.python.org/library/__main__.html>.
+ if __name__ == '__main__':

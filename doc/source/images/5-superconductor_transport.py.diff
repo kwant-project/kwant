@@ -1,0 +1,40 @@
+--- original
++++ modified
+@@ -11,6 +11,7 @@
+ 
+ # For plotting
+ from matplotlib import pyplot
++import latex, html
+ 
+ 
+ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
+@@ -95,19 +96,24 @@
+                     smatrix.transmission(0, 0) +
+                     smatrix.transmission(1, 0))
+ 
+-    pyplot.figure()
++    fig = pyplot.figure()
+     pyplot.plot(energies, data)
+     pyplot.xlabel("energy [in units of t]")
+     pyplot.ylabel("conductance [in units of e^2/h]")
+-    pyplot.show()
++    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
++               fontsize=latex.mpl_tick_size)
++    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
++               fontsize=latex.mpl_tick_size)
++    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
++    fig.savefig("5-superconductor_transport_result.pdf")
++    fig.savefig("5-superconductor_transport_result.png",
++                dpi=(html.figwidth_px/latex.mpl_width_in))
+ 
+ 
+ def main():
+     sys = make_system()
+ 
+-    # Check that the system looks as intended.
+-    kwant.plot(sys)
+-
+     # Finalize the system.
+     sys = sys.finalized()
+ 

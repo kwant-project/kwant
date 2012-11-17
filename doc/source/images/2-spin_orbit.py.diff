@@ -1,0 +1,43 @@
+--- original
++++ modified
+@@ -17,6 +17,7 @@
+ 
+ # For matrix support
+ import numpy
++import latex, html
+ 
+ # define Pauli-matrices for convenience
+ sigma_0 = numpy.eye(2)
+@@ -72,19 +73,25 @@
+         smatrix = kwant.solve(sys, energy)
+         data.append(smatrix.transmission(1, 0))
+ 
+-    pyplot.figure()
++    fig = pyplot.figure()
+     pyplot.plot(energies, data)
+-    pyplot.xlabel("energy [in units of t]")
+-    pyplot.ylabel("conductance [in units of e^2/h]")
+-    pyplot.show()
++    pyplot.xlabel("energy [in units of t]", fontsize=latex.mpl_label_size)
++    pyplot.ylabel("conductance [in units of e^2/h]",
++                 fontsize=latex.mpl_label_size)
++    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
++               fontsize=latex.mpl_tick_size)
++    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
++               fontsize=latex.mpl_tick_size)
++    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in*3./4.)
++    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
++    fig.savefig("2-spin_orbit_result.pdf")
++    fig.savefig("2-spin_orbit_result.png",
++                dpi=(html.figwidth_px/latex.mpl_width_in))
+ 
+ 
+ def main():
+     sys = make_system()
+ 
+-    # Check that the system looks as intended.
+-    kwant.plot(sys)
+-
+     # Finalize the system.
+     sys = sys.finalized()
+ 

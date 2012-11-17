@@ -36,7 +36,7 @@ def make_system(a=1, t=1.0, r=10):
     def hopx(site1, site2):
         # The magnetic field is controlled by the global variable B
         y = site1.pos[1]
-        return - t * exp(-1j * B * y)
+        return -t * exp(-1j * B * y)
 
     sys[lat.shape(circle, (0, 0))] = 4 * t
     # hoppings in x-direction
