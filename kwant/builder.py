@@ -584,7 +584,7 @@ class Builder(object):
         for h, value in edges(self.H[tail]):
             if h == head:
                 return value
-        raise KeyError(edge)
+        raise ValueError(tail, head)
 
     def _set_edge(self, tail, head, value):
         hvhv = self.H[tail]
@@ -600,10 +600,7 @@ class Builder(object):
     def _del_edge(self, tail, head):
         hvhv = self.H[tail]
         heads = hvhv[2::2]
-        try:
-            i = 2 + 2 * heads.index(head)
-        except ValueError:
-            raise KeyError(edge)
+        i = 2 + 2 * heads.index(head)
         del hvhv[i : i + 2]
 
     def _out_neighbors(self, tail):
@@ -664,7 +661,7 @@ class Builder(object):
         try:
             a, b = sym.to_fd(ts(a), ts(b))
             value = self._get_edge(a, b)
-        except KeyError:
+        except ValueError:
             raise KeyError(hoppinglike)
         if value is other:
             if not sym.in_fd(b):
@@ -764,7 +761,7 @@ class Builder(object):
                     assert not self.symmetry.in_fd(neighbor)
                     a, b = tfd(neighbor, site)
                     self._del_edge(a, b)
-        except KeyError:
+        except ValueError:
             raise KeyError(sitelike)
         del self.H[site]
 
@@ -787,7 +784,7 @@ class Builder(object):
                 b, a = sym.to_fd(b, a)
                 assert not sym.in_fd(a)
                 self._del_edge(b, a)
-        except KeyError:
+        except ValueError:
             raise KeyError(hoppinglike)
 
     def __delitem__(self, key):
