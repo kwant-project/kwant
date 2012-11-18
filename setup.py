@@ -18,6 +18,7 @@ from distutils.core import setup, Command
 from distutils.extension import Extension
 from distutils.errors import DistutilsError, CCompilerError
 from distutils.command.build import build as distutils_build
+from distutils.command.sdist import sdist as distutils_sdist
 import numpy
 
 try:
@@ -86,6 +87,15 @@ class build_tut(Command):
 # that the tutorial is present.
 class kwant_build(distutils_build):
     sub_commands = [('build_tut', None)] + distutils_build.sub_commands
+    pass
+
+
+# Make the command "sdist" depend on "build".  This verifies that the
+# distribution in the current state actually builds.  It also makes sure that
+# the Cython-made C files and the tutorial will be included in the source
+# distribution and that they will be up-to-date.
+class kwant_sdist(distutils_sdist):
+    sub_commands = [('build', None)] + distutils_sdist.sub_commands
     pass
 
 
@@ -315,6 +325,7 @@ def main():
           packages=["kwant", "kwant.graph", "kwant.linalg", "kwant.physics",
                     "kwant.solvers"],
           cmdclass={'build': kwant_build,
+                    'sdist': kwant_sdist,
                     'build_ext': kwant_build_ext,
                     'build_tut': build_tut},
           ext_modules=ext_modules(extensions()),
