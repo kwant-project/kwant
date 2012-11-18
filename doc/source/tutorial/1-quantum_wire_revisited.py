@@ -59,10 +59,10 @@ def make_system(a=1, t=1.0, W=10, L=30):
     sys.attach_lead(lead1)
 
     return sys
-
 #HIDDEN_END_yxot
-#HIDDEN_BEGIN_ayuk
 
+
+#HIDDEN_BEGIN_ayuk
 def plot_conductance(sys, energies):
     # Compute conductance
     data = []

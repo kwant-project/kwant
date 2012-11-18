@@ -50,10 +50,10 @@
 -    pyplot.figure()
 +    fig = pyplot.figure()
      pyplot.plot(momenta, energy_list)
--    pyplot.xlabel("momentum [in untis of (lattice constant)^-1]")
+-    pyplot.xlabel("momentum [in units of (lattice constant)^-1]")
 -    pyplot.ylabel("energy [in units of t]")
 -    pyplot.show()
-+    pyplot.xlabel("momentum [in untis of (lattice constant)^-1]",
++    pyplot.xlabel("momentum [in units of (lattice constant)^-1]",
 +                 fontsize=latex.mpl_label_size)
 +    pyplot.ylabel("energy [in units of t]",
 +                 fontsize=latex.mpl_label_size)

@@ -19,6 +19,7 @@ from matplotlib import pyplot
 #HIDDEN_BEGIN_ehso
 pot = 0
 
+
 def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
     # Start with an empty tight-binding system and a single square lattice.
     # `a` is the lattice constant (by default set to 1 for simplicity.

@@ -25,8 +25,8 @@ sin_30, cos_30 = (1 / 2, sqrt(3) / 2)
 graphene = kwant.make_lattice([(1, 0), (sin_30, cos_30)],
                               [(0, 0), (0, 1 / sqrt(3))])
 a, b = graphene.sublattices
-
 #HIDDEN_END_hnla
+
 
 #HIDDEN_BEGIN_shzy
 def make_system(r=10, w=2.0, pot=0.1):
@@ -135,7 +135,7 @@ def plot_bandstructure(flead, momenta):
 
     pyplot.figure()
     pyplot.plot(momenta, energy_list)
-    pyplot.xlabel("momentum [in untis of (lattice constant)^-1]")
+    pyplot.xlabel("momentum [in units of (lattice constant)^-1]")
     pyplot.ylabel("energy [in units of t]")
     pyplot.show()
 

@@ -1,6 +1,6 @@
 --- original
 +++ modified
-@@ -17,6 +17,7 @@
+@@ -16,6 +16,7 @@
  
  # For plotting
  from matplotlib import pyplot
@@ -8,7 +8,7 @@
  
  tau_x = np.array([[0, 1], [1, 0]])
  tau_z = np.array([[1, 0], [0, -1]])
-@@ -47,12 +48,20 @@
+@@ -46,12 +47,20 @@
      # the bandstructure
      energy_list = [lead.energies(k) for k in momenta]
  

@@ -13,7 +13,6 @@
 import kwant
 
 import numpy as np
-from math import pi
 
 # For plotting
 from matplotlib import pyplot

@@ -8,7 +8,7 @@
  
  # global variable governing the behavior of potential() in
  # make_system()
-@@ -75,19 +76,26 @@
+@@ -76,19 +77,26 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(1, 0))
  

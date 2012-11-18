@@ -8,7 +8,7 @@
  
  # define Pauli-matrices for convenience
  sigma_0 = numpy.eye(2)
-@@ -72,19 +73,25 @@
+@@ -73,19 +74,25 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(1, 0))
  

@@ -73,6 +73,7 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
 
     return sys
 
+
 def plot_conductance(sys, energies):
     # Compute conductance
     data = []
