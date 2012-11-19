@@ -169,12 +169,6 @@ an open quantum dot
 
 .. specialnote:: Technical details
 
- - Apart from circles, the `kwant.plotter` module also has regular
-   `~kwant.plotter.Polygon`'s as predefined symbols. It is also
-   easy to define any custom symbol. Furthermore, plotting offers
-   many more options to customize plots. See the documentation of
-   `~kwant.plotter.plot` for more details.
-
  - In a lattice with more than one basis atom, you can always act either
    on all sublattices at the same time, or on a single sublattice only.
 
