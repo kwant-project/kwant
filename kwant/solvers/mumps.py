@@ -63,7 +63,7 @@ class Solver(common.SparseSolver):
             and memory impact of the solve phase. Typically the nested
             dissection orderings 'metis' and 'scotch' are most suited for
             physical systems. Default is 'kwant_decides'
-         sparse_rhs : True or False
+        sparse_rhs : True or False
             whether to use a sparse right hand side in the solve phase of
             MUMPS. Preliminary tests have not shown a significant performance
             increase when this feature is used, but this needs more looking
