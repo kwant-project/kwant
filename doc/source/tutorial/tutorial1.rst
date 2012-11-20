@@ -177,16 +177,16 @@ subbands that increases with energy.
      However, it does not hurt to define the opposite direction of hopping as
      well::
 
-         sys[lat(1, 0), lat(0, 0)] = - t
-         sys[lat(0, 0), lat(1, 0)] = - t.conj()
+         sys[lat(1, 0), lat(0, 0)] = -t
+         sys[lat(0, 0), lat(1, 0)] = -t.conj()
 
      (assuming that `t` is complex) is perfectly fine. However,
      be aware that also
 
      ::
 
-         sys[lat(1, 0), lat(0, 0)] = - 1
-         sys[lat(0, 0), lat(1, 0)] = - 2
+         sys[lat(1, 0), lat(0, 0)] = -1
+         sys[lat(0, 0), lat(1, 0)] = -2
 
      is valid code. In the latter case, the hopping ``sys[lat(1, 0),
      lat(0, 0)]`` is overwritten by the last line and also equals to -2.
