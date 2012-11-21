@@ -11,14 +11,15 @@ from . import builder
 
 def make_lattice(prim_vecs, basis=None):
     """
-    Create a Bravais lattice, which may have more than one basis site.
+    Create a Bravais lattice of any dimensionality, with any number of basis
+    sites.
 
     Parameters
     ----------
     prim_vecs : sequence of sequences of floats
-        Primitive vectors of a Bravais lattice.
+        The primitive vectors of the Bravais lattice.
     basis : sequence of floats
-        Coordinates of the basis sites inside the unit cell.
+        The coordinates of the basis sites inside the unit cell.
 
     Returns
     -------
