@@ -23,6 +23,7 @@ from .. import physics, system
 
 LinearSys = namedtuple('LinearSys', ['lhs', 'rhs', 'kept_vars'])
 
+
 class SparseSolver(object):
     """Solver class for computing physical quantities based on solving
     a liner system of equations.
@@ -210,7 +211,7 @@ class SparseSolver(object):
                 y, x = np.meshgrid(indices, indices)
                 sig_sparse = splhsmat((sigma.flat, [x.flat, y.flat]),
                                       lhs.shape)
-                lhs = lhs + sig_sparse # __iadd__ is not implemented in v0.7
+                lhs = lhs + sig_sparse  # __iadd__ is not implemented in v0.7
                 if leadnum in out_leads:
                     kept_vars.extend(list(indices))
                 if leadnum in in_leads:
@@ -321,7 +322,6 @@ class SparseSolver(object):
 
         return result
 
-
     def ldos(self, fsys, energy=0):
         """
         Calculate the local density of states of a system at a given energy.
@@ -431,23 +431,23 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
         """Return transmission from lead_in to lead_out."""
         if isinstance(self.lead_info[lead_out], tuple) and \
            isinstance(self.lead_info[lead_in], tuple):
-            return np.linalg.norm(self.submatrix(lead_out, lead_in))**2
+            return np.linalg.norm(self.submatrix(lead_out, lead_in)) ** 2
         else:
             result = np.trace(self._a_ttdagger_a_inv(lead_out, lead_in)).real
             if lead_out == lead_in:
                 # For reflection we have to be more careful
-                 gamma = 1j * (self.lead_info[lead_in] -
-                               self.lead_info[lead_in].conj().T)
-                 gf = self.submatrix(lead_out, lead_in)
+                gamma = 1j * (self.lead_info[lead_in] -
+                              self.lead_info[lead_in].conj().T)
+                gf = self.submatrix(lead_out, lead_in)
 
-                 # The number of channels is given by the number of
-                 # nonzero eigenvalues of Gamma
-                 # rationale behind the threshold from
-                 # Golub; van Loan, chapter 5.5.8
-                 eps = np.finfo(gamma.dtype).eps * 1000
-                 N = np.sum(np.linalg.eigvalsh(gamma) >
-                            eps * np.linalg.norm(gamma, np.inf))
+                # The number of channels is given by the number of
+                # nonzero eigenvalues of Gamma
+                # rationale behind the threshold from
+                # Golub; van Loan, chapter 5.5.8
+                eps = np.finfo(gamma.dtype).eps * 1000
+                N = np.sum(np.linalg.eigvalsh(gamma) >
+                           eps * np.linalg.norm(gamma, np.inf))
 
-                 result += 2 * np.trace(np.dot(gamma, gf)).imag + N
+                result += 2 * np.trace(np.dot(gamma, gf)).imag + N
 
             return result
