@@ -33,7 +33,7 @@ class Site(tuple):
     Attributes
     ----------
     pos : sequence of numbers
-        The real space position of the site.  Used for plotting, for example.
+        The real-space position of the site.  Used for plotting, for example.
 
     Raises
     ------
@@ -113,7 +113,7 @@ class SiteGroup(object):
     this basic one.  They have to define the method `verify_tag`.
 
     Site groups which are intended for use with plotting should also provide a
-    method `pos(tag)`, which returns a vector with real space coordinates of
+    method `pos(tag)`, which returns a vector with real-space coordinates of
     the site belonging to this group with a given tag.
     """
     __metaclass__ = abc.ABCMeta

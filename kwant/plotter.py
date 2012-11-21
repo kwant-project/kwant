@@ -710,7 +710,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
     array : 2d numpy array
         The interpolated values.
     min, max : vectors
-        The real space coordinates of the two extreme ([0, 0] and [-1, -1])
+        The real-space coordinates of the two extreme ([0, 0] and [-1, -1])
         points of `array`.
 
     Notes

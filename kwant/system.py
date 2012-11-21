@@ -24,7 +24,7 @@ class System(object):
     ``self.graph.num_nodes - 1``.
 
     Optionally, a class derived from `System` can provide a method `pos` which
-    is assumed to return the real space position of a site given its index.
+    is assumed to return the real-space position of a site given its index.
     """
     __metaclass__ = abc.ABCMeta
 

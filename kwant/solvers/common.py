@@ -280,7 +280,7 @@ class SparseSolver(object):
 
         Returns the Green's function elements between in_leads and
         out_leads. If the leads are defined as a self-energy, the result is
-        just the real space retarded Green's function between from in_leads
+        just the real-space retarded Green's function between from in_leads
         to out_leads. If the leads are defined as tight-binding systems,
         then Green's function from incoming to outgoing modes is
         returned. Also returned is a list containing the output of

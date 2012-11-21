@@ -49,7 +49,7 @@ for i in xrange(L):
 
 # First the lead to the left
 
-# (Note: TranslationalSymmetry takes a real space vector)
+# (Note: TranslationalSymmetry takes a real-space vector)
 #HIDDEN_BEGIN_xcmc
 sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
 lead0 = kwant.Builder(sym_lead0)

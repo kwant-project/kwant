@@ -84,9 +84,9 @@ The leads are defined almost as before:
 
 Note the method `~kwant.lattice.PolyatomicLattice.vec` used in calculating the
 parameter for `~kwant.lattice.TranslationalSymmetry`.  The latter expects a
-real space symmetry vector, but for many lattices symmetry vectors are more
+real-space symmetry vector, but for many lattices symmetry vectors are more
 easily expressed in the natural coordinate system of the lattice.  The ``vec``
-method of lattices maps a lattice vector to a real space vector.
+method of lattices maps a lattice vector to a real-space vector.
 
 Observe also that the translational vectors ``graphene.vec((-1, 0))`` and
 ``graphene.vec((0, 1))`` are *not* orthogonal any more as they would have been

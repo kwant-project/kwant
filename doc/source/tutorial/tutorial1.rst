@@ -67,7 +67,7 @@ system must have a translational symmetry:
     :end-before: #HIDDEN_END_xcmc
 
 Here, the `~kwant.builder.Builder` takes a translational symmetry as the
-optional parameter. Note that the (real space) vector ``(-a, 0)`` defining the
+optional parameter. Note that the (real-space) vector ``(-a, 0)`` defining the
 translational symmetry must point in a direction *away* from the scattering
 region, *into* the lead -- hence, lead 0 [#]_ will be the left lead, extending
 to infinity to the left.

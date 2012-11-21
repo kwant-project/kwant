@@ -84,7 +84,7 @@ class PolyatomicLattice(object):
 
         Parameters
         ----------
-        function : a boolean function of real space coordinates
+        function : a boolean function of real-space coordinates
             A function which evaluates to True inside the desired shape.
         start : real-valued vector
             The starting point to the flood-fill algorithm.  If the site
@@ -198,7 +198,7 @@ class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
         return ta.array(ta.round(ta.dot(pos - self.offset, self.inv_pv)), int)
 
     def pos(self, tag):
-        """Return the real space position of the site with a given tag."""
+        """Return the real-space position of the site with a given tag."""
         return ta.dot(tag, self.prim_vecs) + self.offset
 
 

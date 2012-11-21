@@ -117,9 +117,9 @@ the following, clearly non-monotonic conductance steps:
     lattice indices, i.e. relative to the Bravais lattice vectors.
     For a square lattice, the Bravais lattice vectors are simply
     :math:`(a,0)` and :math:`(0,a)`, and hence the mapping from
-    lattice indices `(i,j)` to realspace and back is trivial.
+    lattice indices `(i,j)` to real space and back is trivial.
     This becomes more involved in more complicated lattices, where
-    the realspace directions corresponding to, for example, `(1,0)`
+    the real-space directions corresponding to, for example, `(1,0)`
     and `(0,1)` need not be orthogonal any more
     (see :ref:`tutorial-graphene`).
 
@@ -149,7 +149,7 @@ define the potential profile of a quantum well as:
     :end-before: #HIDDEN_END_ehso
 
 This function takes one argument which is of type
-`~kwant.builder.Site`, from which you can get the realspace
+`~kwant.builder.Site`, from which you can get the real-space
 coordinates using ``site.pos``. Note that we use several global
 variables to define the behavior of `potential()`: `L` and `L_well`
 are variables taken from the namespace of `make_system`, the variable `pot`
@@ -216,9 +216,8 @@ oscillatory transmission behavior through resonances in the quantum well.
     global variable `pot` would in fact be created by the
     first assignment in `plot_conductance()`.
 
-  - Apart from the realspace position `pos`, `~kwant.builder.Site`
-    has also an attribute `tag` containing the lattice indices
-    of the site.
+  - Apart from the real-space position `pos`, `~kwant.builder.Site` has also an
+    attribute `tag` containing the lattice indices of the site.
 
   - Since we use a global variable to change the value of the
     potential, let us briefly reflect on how python determines
@@ -316,7 +315,7 @@ that returns ``True`` whenever a point is inside the shape, and
     :start-after: #HIDDEN_BEGIN_eusz
     :end-before: #HIDDEN_END_eusz
 
-Note that this function takes a realspace position as argument (not a
+Note that this function takes a real-space position as argument (not a
 `~kwant.builder.Site`).
 
 We can now simply add all of the lattice points inside this shape at
@@ -327,9 +326,9 @@ provided by the lattice:
     :start-after: #HIDDEN_BEGIN_lcak
     :end-before: #HIDDEN_END_lcak
 
-Here, ``lat.shape()`` takes as a second parameter a (realspace) point
-that is inside the desired shape. The hoppings can still be added
-using `~kwant.builder.Builder.possible_hoppings` as before.
+Here, ``lat.shape()`` takes as a second parameter a (real-space) point that is
+inside the desired shape. The hoppings can still be added using
+`~kwant.builder.Builder.possible_hoppings` as before.
 
 Up to now, the system contains constant hoppings and onsite energies,
 and we still need to include the phase shift due to the magnetic flux.
@@ -369,7 +368,7 @@ Attaching the leads is done as before:
 In fact, attaching leads seems not so simple any more for the current
 structure with a scattering region very much different from the lead
 shapes. However, the choice of unit cell together with the
-translational vector allows to place the lead unambiguously in realspace --
+translational vector allows to place the lead unambiguously in real space --
 the unit cell is repeated infinitely many times in the direction and
 opposite to the direction of the translational vector.
 kwant examines the lead starting from infinity and traces it
