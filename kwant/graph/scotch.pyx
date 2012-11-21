@@ -18,7 +18,7 @@ DEF SCOTCH_STRATSCALABILITY = 16
 def bisect(core.CGraph gr,
            double bal=0.0):
     """Compute a bisection of a CGraph using SCOTCH, minimizing the number of
-    edges that are cut in the process. The bisection is returned as a numpy
+    edges that are cut in the process. The bisection is returned as a NumPy
     array (with a size given by the number of nodes in graph) indicating
     whether a node i is in part 0 or 1.
 

@@ -478,7 +478,7 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
 
     Returns
     -------
-    coords : (end_site, start_site): tuple of numpy arrays of floats
+    coords : (end_site, start_site): tuple of NumPy arrays of floats
         Array of coordinates of the hoppings.  The first half of coordinates
         in each array entry are those of the first site in the hopping, the
         last half are those of the second site.
@@ -707,7 +707,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
 
     Returns
     -------
-    array : 2d numpy array
+    array : 2d NumPy array
         The interpolated values.
     min, max : vectors
         The real-space coordinates of the two extreme ([0, 0] and [-1, -1])

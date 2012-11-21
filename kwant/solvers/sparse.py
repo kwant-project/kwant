@@ -2,10 +2,10 @@
 provided by `scipy.sparse.linalg
 <http://docs.scipy.org/doc/scipy/reference/sparse.linalg.html>`.
 
-Scipy currently uses internally either the direct sparse solver Umfpack or if
-that is not installed, SuperLU. Often, scipy's SuperLU will give quite poor
+SciPy currently uses internally either the direct sparse solver UMFPACK or if
+that is not installed, SuperLU. Often, SciPy's SuperLU will give quite poor
 performance and you will be warned if only SuperLU is found.  The module
-variable `uses_umfpack` can be checked to determine if Umfpack is being used.
+variable `uses_umfpack` can be checked to determine if UMFPACK is being used.
 
 `sparse` does not introduce any additional options as compared to the generic
 sparse solver framework.
@@ -19,17 +19,17 @@ import numpy as np
 import scipy.sparse as sp
 from . import common
 
-# Note: previous code would have failed if umfpack was provided by scikit
+# Note: previous code would have failed if UMFPACK was provided by scikit
 import scipy.sparse.linalg.dsolve.linsolve as linsolve
 umfpack = linsolve.umfpack
 uses_umfpack = linsolve.isUmfpack
 
 from .. import system, physics
 
-# check if we are actually using umfpack or rather SuperLU
+# check if we are actually using UMFPACK or rather SuperLU
 
 if uses_umfpack:
-    # This patches a memory leak in scipy:
+    # This patches a memory leak in SciPy:
     # http://projects.scipy.org/scipy/ticket/1597
     #
     # TODO: Remove this code once it is likely that the official bug fix has
@@ -56,11 +56,11 @@ if uses_umfpack:
             matrix to be factorized
         piv_tol : float, 0 <= piv_tol <= 1.0
         sym_piv_tol : float, 0 <= piv_tol <= 1.0
-            thresholds used by umfpack for pivoting. 0 means no pivoting, 1.0
+            thresholds used by UMFPACK for pivoting. 0 means no pivoting, 1.0
             means full pivoting as in dense matrices (guaranteeing stability,
-            but reducing possibly sparsity). Defaults of umfpack are 0.1 and
+            but reducing possibly sparsity). Defaults of UMFPACK are 0.1 and
             0.001 respectively. Whether piv_tol or sym_piv_tol are used is
-            decided internally by umfpack, depending on whether the matrix is
+            decided internally by UMFPACK, depending on whether the matrix is
             "symmetric" enough.
         """
 
@@ -89,10 +89,10 @@ if uses_umfpack:
 
         return solve
 else:
-    # no Umfpack found. SuperLU is being used, but usually abysmally slow
-    # (SuperLu is not bad per se, somehow the scipy version isn't good)
-    warnings.warn("The installed scipy does not use Umfpack. Instead, "
-                  "scipy will use the version of SuperLu it is shipped with. "
+    # no UMFPACK found. SuperLU is being used, but usually abysmally slow
+    # (SuperLu is not bad per se, somehow the SciPy version isn't good)
+    warnings.warn("The installed SciPy does not use UMFPACK. Instead, "
+                  "SciPy will use the version of SuperLu it is shipped with. "
                   "Performance can be very poor in this case.", RuntimeWarning)
 
     factorized = linsolve.factorized
@@ -100,7 +100,7 @@ else:
 
 class Solver(common.SparseSolver):
     """Sparse Solver class based on the sparse direct solvers provided
-    by scipy.
+    by SciPy.
     """
 
     lhsformat = 'csc'
@@ -110,7 +110,7 @@ class Solver(common.SparseSolver):
     def solve_linear_sys(self, a, b, kept_vars=None, factored=None):
         """
         Solve matrix system of equations a x = b with sparse input,
-        using UMFPACK.
+        using the sparse direct solver provided by SciPy.
 
         Parameters
         ----------
@@ -123,7 +123,7 @@ class Solver(common.SparseSolver):
 
         Returns
         -------
-        output : a numpy matrix
+        output : a NumPy matrix
             solution to the system of equations.
 
         Notes

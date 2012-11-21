@@ -109,10 +109,10 @@ in the following piece of code:
     :end-before: #HIDDEN_END_zydk
 
 Here we use in contrast to the previous example a sparse matrix and
-the sparse linear algebra functionality of scipy (this requires
-scipy version >= 0.9.0; since the remaining part of the example does not
+the sparse linear algebra functionality of SciPy (this requires
+SciPy version >= 0.9.0; since the remaining part of the example does not
 depend on this eigenenergy calculation, a ``try``-block simply skips this
-calculation if a lower scipy version is installed.)
+calculation if a lower SciPy version is installed.)
 
 The code for computing the band structure and the conductance is identical
 to the previous examples, and needs not be further explained here.

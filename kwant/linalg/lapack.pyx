@@ -35,7 +35,7 @@ def filter_args(select, args):
     return tuple([arg for sel, arg in zip(select, args) if sel])
 
 def assert_fortran_mat(*mats):
-    # This is a workaround for a bug in numpy version < 2.0,
+    # This is a workaround for a bug in NumPy version < 2.0,
     # where 1x1 matrices do not have the F_Contiguous flag set correctly.
     for mat in mats:
         if (mat is not None and (mat.shape[0] > 1 or mat.shape[1] > 1) and
@@ -121,11 +121,11 @@ def sgetrs(np.ndarray[np.float32_t, ndim=2] LU,
 
     assert_fortran_mat(LU)
 
-    # again: workaround for 1x1-Fortran bug in numpy < v2.0
+    # again: workaround for 1x1-Fortran bug in NumPy < v2.0
     if (not isinstance(B, np.ndarray) or
         (B.ndim == 2 and (B.shape[0] > 1 or B.shape[1] > 1) and
          not B.flags["F_CONTIGUOUS"])):
-        raise ValueError("In dgetrs: B must be a Fortran ordered numpy array")
+        raise ValueError("In dgetrs: B must be a Fortran ordered NumPy array")
 
     b = B
     N = LU.shape[0]
@@ -151,11 +151,11 @@ def dgetrs(np.ndarray[np.float64_t, ndim=2] LU,
 
     assert_fortran_mat(LU)
 
-    # again: workaround for 1x1-Fortran bug in numpy < v2.0
+    # again: workaround for 1x1-Fortran bug in NumPy < v2.0
     if (not isinstance(B, np.ndarray) or
         (B.ndim == 2 and (B.shape[0] > 1 or B.shape[1] > 1) and
          not B.flags["F_CONTIGUOUS"])):
-        raise ValueError("In dgetrs: B must be a Fortran ordered numpy array")
+        raise ValueError("In dgetrs: B must be a Fortran ordered NumPy array")
 
     b = B
     N = LU.shape[0]
@@ -181,11 +181,11 @@ def cgetrs(np.ndarray[np.complex64_t, ndim=2] LU,
 
     assert_fortran_mat(LU)
 
-    # again: workaround for 1x1-Fortran bug in numpy < v2.0
+    # again: workaround for 1x1-Fortran bug in NumPy < v2.0
     if (not isinstance(B, np.ndarray) or
         (B.ndim == 2 and (B.shape[0] > 1 or B.shape[1] > 1) and
          not B.flags["F_CONTIGUOUS"])):
-        raise ValueError("In dgetrs: B must be a Fortran ordered numpy array")
+        raise ValueError("In dgetrs: B must be a Fortran ordered NumPy array")
 
     b = B
     N = LU.shape[0]
@@ -211,11 +211,11 @@ def zgetrs(np.ndarray[np.complex128_t, ndim=2] LU,
 
     assert_fortran_mat(LU)
 
-    # again: workaround for 1x1-Fortran bug in numpy < v2.0
+    # again: workaround for 1x1-Fortran bug in NumPy < v2.0
     if (not isinstance(B, np.ndarray) or
         (B.ndim == 2 and (B.shape[0] > 1 or B.shape[1] > 1) and
          not B.flags["F_CONTIGUOUS"])):
-        raise ValueError("In dgetrs: B must be a Fortran ordered numpy array")
+        raise ValueError("In dgetrs: B must be a Fortran ordered NumPy array")
 
     b = B
     N = LU.shape[0]
@@ -2389,17 +2389,17 @@ def prepare_for_lapack(overwrite, *args):
 
     This function takes a number of array objects in `args` and converts them
     to a format that can be directly passed to a Fortran function (Fortran
-    contiguous numpy array). If the arrays have different data type, they
-    converted arrays are cast to a common compatible data type (one of numpy's
+    contiguous NumPy array). If the arrays have different data type, they
+    converted arrays are cast to a common compatible data type (one of NumPy's
     `float32`, `float64`, `complex64`, `complex128` data types).
 
-    If `overwrite` is ``False``, an numpy array that would already be in the
+    If `overwrite` is ``False``, an NumPy array that would already be in the
     correct format (Fortran contiguous, right data type) is neverthelessed
     copied. (Hence, overwrite = True does not imply that acting on the
     converted array in the return values will overwrite the original array in
     all cases -- it does only so if the original array was already in the
     correct format. The conversions require copying. In fact, that's the same
-    behavior as in scipy, it's just not explicitly stated there)
+    behavior as in SciPy, it's just not explicitly stated there)
 
     If an argument is ``None``, it is just passed through and not used to
     determine the proper LAPACK type.
@@ -2408,7 +2408,7 @@ def prepare_for_lapack(overwrite, *args):
     type ('s', 'd', 'c', 'z') and a list of properly converted arrays.
     """
 
-    # Make sure we have numpy arrays
+    # Make sure we have NumPy arrays
     mats = [None]*len(args)
     for i in xrange(len(args)):
         if args[i] is not None:

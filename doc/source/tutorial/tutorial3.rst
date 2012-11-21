@@ -119,8 +119,8 @@ Landau level energies at higher magnetic fields [#]
 
   - `~kwant.system.System.hamiltonian_submatrix` can also return a sparse
     matrix, if the optional argument ``sparse=True``. The sparse matrix is in
-    scipy's `scipy.sparse.coo_matrix` format, which can be easily be converted
-    to various other sparse matrix formats (see `scipy's documentation
+    SciPy's `scipy.sparse.coo_matrix` format, which can be easily be converted
+    to various other sparse matrix formats (see `SciPy's documentation
     <http://docs.scipy.org/doc/scipy/reference/>`_).
 
 .. rubric:: Footnotes

@@ -104,8 +104,8 @@ def compute_evs(sys):
     sparse_mat = sys.hamiltonian_submatrix(sparse=True)
 
     try:
-        # This requires scipy version >= 0.9.0
-        # Failure (i.e. insufficient scipy version) is not critical
+        # This requires SciPy version >= 0.9.0
+        # Failure (i.e. insufficient SciPy version) is not critical
         # for the remainder of the tutorial, hence the try-block
         evs = sla.eigs(sparse_mat, 2)[0]
         print evs

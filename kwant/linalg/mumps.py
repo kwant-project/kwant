@@ -182,7 +182,7 @@ class MUMPSContext(object):
         Parameters
         ----------
 
-        a : sparse scipy matrix
+        a : sparse SciPy matrix
             input matrix. Internally, the matrix is converted to `coo` format
             (so passing this format is best for performance)
         ordering : { 'auto', 'amd', 'amf', 'scotch', 'pord', 'metis', 'qamd' }
@@ -240,7 +240,7 @@ class MUMPSContext(object):
         Parameters
         ----------
 
-        a : sparse scipy matrix
+        a : sparse SciPy matrix
             input matrix. Internally, the matrix is converted to `coo` format
             (so passing this format is best for performance)
         ordering : { 'auto', 'amd', 'amf', 'scotch', 'pord', 'metis', 'qamd' }
@@ -375,7 +375,7 @@ class MUMPSContext(object):
         Parameters
         ----------
 
-        b : dense (numpy) matrix or vector or sparse (scipy) matrix
+        b : dense (NumPy) matrix or vector or sparse (SciPy) matrix
             the right hand side to solve. Accepts both dense and sparse input;
             if the input is sparse 'csc' format is used internally (so passing
             a 'csc' matrix gives best performance).
@@ -386,7 +386,7 @@ class MUMPSContext(object):
         Returns
         -------
 
-        x : numpy array
+        x : NumPy array
             the solution to the linear system as a dense matrix (a vector is
             returned if b was a vector, otherwise a matrix is returned).
         """
@@ -433,7 +433,7 @@ def schur_complement(a, indices, ordering='auto', ooc=False, pivot_tol=0.01,
     Returns
     -------
 
-    s : numpy array
+    s : NumPy array
         Schur complement block
     factor_stats: `FactorizationStatistics`
         statistics of the factorization as collected by MUMPS.  Only returned
@@ -441,7 +441,7 @@ def schur_complement(a, indices, ordering='auto', ooc=False, pivot_tol=0.01,
     """
 
     if not scipy.sparse.isspmatrix(a):
-        raise ValueError("a must be a sparse scipy matrix!")
+        raise ValueError("a must be a sparse SciPy matrix!")
 
     a = a.tocoo()
 

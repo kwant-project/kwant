@@ -58,7 +58,7 @@ Summary of solver modules in kwant:
 Right now, the following solvers are implemented in kwant:
 
 - `~kwant.solvers.sparse`: A solver based on solving a sparse linear
-  system, using the direct sparse solvers provided by scipy.
+  system, using the direct sparse solvers provided by SciPy.
 - `~kwant.solvers.mumps`: A solver based on solving a sparse linear
   system using the direct sparse solver MUMPS. To use it, the MUMPS
   library must be installed on the system. This solver typically

@@ -14,7 +14,7 @@ def lu_factor(a, overwrite_a=False):
 
     NOTE: This function mimics the behavior of scipy.linalg.lu_factor (except
     that it has in addition the flag singular). The main reason is that
-    lu_factor in scipy has a bug that depending on the type of numpy matrix
+    lu_factor in SciPy has a bug that depending on the type of NumPy matrix
     passed to it, it would not return what was descirbed in the
     documentation. This bug will be (probably) fixed in 0.10.0 but until this
     is standard, this version is better to use.

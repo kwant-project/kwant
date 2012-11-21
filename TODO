@@ -6,13 +6,13 @@ Roughly in order of importance.                                     -*-org-*-
 * Provide nice support for graphene double layers
   This could be done by allowing lattices to be shifted, or in some other way.
 
-* Benchmark mumps and check whether nested dissection would be useful.
+* Benchmark MUMPS and check whether nested dissection would be useful.
   If yes, implement it.
 
 * Make kwant objects pickleable.
 
 * Use sparse linear algebra to calculate bands
-  However, scipy's sparse eigenvalues don't seem to work well.
+  However, SciPy's sparse eigenvalues don't seem to work well.
 
 * Allow attaching leads with further than nearest slice hoppings.
   The most easy way to do this is increasing the period of the lead.

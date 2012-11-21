@@ -180,7 +180,7 @@ def induced_subgraph(CGraph gr, select,
                      np.ndarray[gint, ndim=1] edge_weights=None):
     """Return a subgraph of the CGraph gr by picking all nodes
     [0:gr.num_nodes] for which select is True. select can be either a
-    numpy array, or a function that takes the node number as
+    NumPy array, or a function that takes the node number as
     input. This function returns a CGraph as well.
 
     The nodes in the new graph are again numbered sequentially from 0

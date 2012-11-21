@@ -118,7 +118,7 @@ class Solver(common.SparseSolver):
 
         Returns
         -------
-        output : a numpy matrix
+        output : a NumPy matrix
             solution to the system of equations.
         factored : factorized lhs. Can be reused in later solves with
             the same lhs, but different rhs.

@@ -17,9 +17,9 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
 
     Parameters
     ----------
-    h_onslice : numpy array with shape (n, n)
+    h_onslice : NumPy array with shape (n, n)
         Hamiltonian of a single lead slice.
-    h_hop : numpy array with shape (n, m), m <= n
+    h_hop : NumPy array with shape (n, m), m <= n
         Hopping Hamiltonian from the slice to the next one.
 
     Returns
@@ -40,7 +40,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
 
     # Inter-slice hopping is zero.  The current algorithm is not suited to
     # treat this extremely singular case.
-    # Note: np.any(h_hop) returns (at least from numpy 1.6.1 - 1.8-devel)
+    # Note: np.any(h_hop) returns (at least from NumPy 1.6.1 - 1.8-devel)
     #       False if h_hop is purely imaginary
     assert np.any(h_hop.real) or np.any(h_hop.imag)
 
@@ -308,7 +308,7 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             # The modes are therefore orthogonalized:
 
             # Note: Here's a workaround for the fact that the interface
-            # to qr changed from scipy 0.8.0 to 0.9.0
+            # to qr changed from SciPy 0.8.0 to 0.9.0
             try:
                 full_psi = la.qr(full_psi, econ=True, mode='qr')[0]
             except TypeError:
@@ -401,14 +401,14 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
 
     Returns
     -------
-    ev : numpy array
+    ev : NumPy array
         an array of eigenvalues (can contain NaNs and Infs, but those
         are not accessed in `general()` and `modes()`) The number of
         eigenvalues is given by twice the number of nonzero singular values of
         `h_hop` (i.e. `2*h_onslice.shape[0]` if `h_hop` is invertible).
-    evanselect : numpy array
+    evanselect : NumPy array
         index array of right-decaying modes.
-    propselect : numpy array
+    propselect : NumPy array
         index array of propagating modes (both left and right).
     vec_gen(select) : function
         a function that computes the eigenvectors chosen by the array select.
@@ -505,15 +505,15 @@ def self_energy(h_onslice, h_hop, tol=1e6):
 
     Parameters
     ----------
-    h_onslice : numpy array, real or complex, shape (N,N) The unit cell
+    h_onslice : NumPy array, real or complex, shape (N,N) The unit cell
         Hamiltonian of the lead slice.
-    h_hop : numpy array, real or complex, shape (N,M)
+    h_hop : NumPy array, real or complex, shape (N,M)
         the hopping matrix from a lead slice to the one on which self-energy
         has to be calculated (and any other hopping in the same direction).
 
     Returns
     -------
-    Sigma : numpy array, real or complex, shape (M,M)
+    Sigma : NumPy array, real or complex, shape (M,M)
         The computed self-energy. Note that even if `h_onslice` and `h_hop`
         are both real, `Sigma` will typically be complex. (More precisely, if
         there is a propagating mode, `Sigma` will definitely be complex.)
@@ -526,7 +526,7 @@ def self_energy(h_onslice, h_hop, tol=1e6):
 
     m = h_hop.shape[1]
 
-    # Note: np.any(h_hop) returns (at least from numpy 1.6.1 - 1.8-devel)
+    # Note: np.any(h_hop) returns (at least from NumPy 1.6.1 - 1.8-devel)
     #       False if h_hop is purely imaginary
     if not (np.any(h_hop.real) or np.any(h_hop.imag)):
         return np.zeros((m, m))
@@ -612,9 +612,9 @@ def modes(h_onslice, h_hop, tol=1e6):
 
     Parameters
     ----------
-    h_onslice : numpy array, real or complex, shape (N,N) The unit cell
+    h_onslice : NumPy array, real or complex, shape (N,N) The unit cell
         Hamiltonian of the lead slice.
-    h_hop : numpy array, real or complex, shape (N,M)
+    h_hop : NumPy array, real or complex, shape (N,M)
         the hopping matrix from a lead slice to the one on which self-energy
         has to be calculated (and any other hopping in the same direction).
 
@@ -666,7 +666,7 @@ def modes(h_onslice, h_hop, tol=1e6):
         h_onslice.shape[0] != h_hop.shape[0]):
         raise ValueError("Incompatible matrix sizes for h_onslice and h_hop.")
 
-    # Note: np.any(h_hop) returns (at least from numpy 1.6.1 - 1.8-devel)
+    # Note: np.any(h_hop) returns (at least from NumPy 1.6.1 - 1.8-devel)
     #       False if h_hop is purely imaginary
     if not (np.any(h_hop.real) or np.any(h_hop.imag)):
         n = h_hop.shape[0]

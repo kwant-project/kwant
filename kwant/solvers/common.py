@@ -13,7 +13,7 @@ import scipy.sparse as sp
 from .. import physics, system
 
 # Currently, scipy.sparse does not support matrices with one dimension being
-# zero: http://projects.scipy.org/scipy/ticket/1602 We use numpy dense matrices
+# zero: http://projects.scipy.org/scipy/ticket/1602 We use NumPy dense matrices
 # as a replacement.
 # TODO: Once this issue is fixed, code for the special cases can be removed
 # from make_linear_sys, solve_linear_sys and possibly other places marked by
@@ -150,9 +150,8 @@ class SparseSolver(object):
                 modes = physics.modes(h, v)
                 lead_info.append(modes)
 
-                # Note: np.any(v) returns (at least from numpy
-                #       1.6.1 - 1.8-devel) False if v is purely
-                #       imaginary
+                # Note: np.any(v) returns (at least from NumPy 1.6.1 -
+                #       1.8-devel) False if v is purely imaginary
                 if not (np.any(v.real) or np.any(v.imag)):
                     # See comment about zero-shaped sparse matrices at the top.
                     rhs.append(np.zeros((lhs.shape[1], 0)))
@@ -336,7 +335,7 @@ class SparseSolver(object):
 
         Returns
         -------
-        ldos : a numpy array
+        ldos : a NumPy array
             local density of states at each orbital of the system.
         """
         for lead in fsys.leads:
@@ -382,7 +381,7 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
 
     Instance Variables
     ------------------
-    data : numpy matrix
+    data : NumPy matrix
         a matrix containing all the requested matrix elements of Green's
         function.
     lead_info : list of data
