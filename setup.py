@@ -75,10 +75,11 @@ class build_tut(Command):
             os.mkdir(TUT_DIR)
         for in_fname in glob.glob(TUT_GLOB):
             out_fname = os.path.join(TUT_DIR, os.path.basename(in_fname))
-            with open(in_fname) as in_file, open(out_fname, 'w') as out_file:
-                for line in in_file:
-                    if not line.startswith(TUT_HIDDEN_PREFIX):
-                        out_file.write(line)
+            with open(in_fname) as in_file:
+                with open(out_fname, 'w') as out_file:
+                    for line in in_file:
+                        if not line.startswith(TUT_HIDDEN_PREFIX):
+                            out_file.write(line)
 
 
 # Our version of the "build" command also makes sure the tutorial is made.
