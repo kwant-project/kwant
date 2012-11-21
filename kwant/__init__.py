@@ -1,4 +1,4 @@
-__all__ = ['system', 'version', 'builder', 'lattice', 'run']
+__all__ = ['system', 'version', 'builder', 'lattice']
 for module in __all__:
     exec 'from . import {0}'.format(module)
 

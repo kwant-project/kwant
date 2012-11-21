@@ -12,7 +12,6 @@ relevance.
    kwant.lattice
    kwant.plotter
    kwant.solvers
-   kwant.run
    kwant.system
    kwant.graph
    kwant.physics
