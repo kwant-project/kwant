@@ -31,12 +31,12 @@ New tutorial dealing with superconductivity
 
 New `~kwant.plotter` module
 ---------------------------
-`~kwant.plotter` has been rewritten using `matplotlib`, which allows
+`~kwant.plotter` has been rewritten using matplotlib, which allows
 plot post-processing, basic 3D plotting and many other features. Due to the
-possibility to easily modify a `matplotlib` plot after it has been generated,
+possibility to easily modify a matplotlib plot after it has been generated,
 function `~kwant.plotter.plot` has much fewer input parameters, and is less
 flexible than its previous implementation. Its interface is also much more
-similar to that of `matplotlib`. For the detailed interface and input
+similar to that of matplotlib. For the detailed interface and input
 description check `~kwant.plotter.plot` documentation.
 
 The behavior of `~kwant.plotter.plot` with low level systems has changed.

@@ -116,7 +116,7 @@ the following, clearly non-monotonic conductance steps:
     `~kwant.builder.Builder.possible_hoppings` is given in terms of
     lattice indices, i.e. relative to the Bravais lattice vectors.
     For a square lattice, the Bravais lattice vectors are simply
-    :math:`(a,0)` and :math:`(0,a)`, and hence the mapping from
+    `(a,0)` and `(0,a)`, and hence the mapping from
     lattice indices `(i,j)` to real space and back is trivial.
     This becomes more involved in more complicated lattices, where
     the real-space directions corresponding to, for example, `(1,0)`

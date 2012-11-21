@@ -28,7 +28,7 @@ The following software is highly recommended though not strictly required:
 Generic instructions
 ====================
 
-Please note the `System-specific instructions`_ below.
+Please note the `system-specific instructions`_ below.
 
 kwant can be built and installed following the `usual Python conventions
 <http://docs.python.org/install/index.html>`_ by running the following commands
