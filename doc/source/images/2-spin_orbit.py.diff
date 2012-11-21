@@ -3,11 +3,11 @@
 @@ -17,6 +17,7 @@
  
  # For matrix support
- import numpy
+ import tinyarray
 +import latex, html
  
  # define Pauli-matrices for convenience
- sigma_0 = numpy.eye(2)
+ sigma_0 = tinyarray.array([[1, 0], [0, 1]])
 @@ -73,19 +74,24 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(1, 0))

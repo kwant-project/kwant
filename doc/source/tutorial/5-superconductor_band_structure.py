@@ -13,13 +13,14 @@
 import kwant
 
 import numpy as np
+import tinyarray
 
 # For plotting
 from matplotlib import pyplot
 
 #HIDDEN_BEGIN_nbvn
-tau_x = np.array([[0, 1], [1, 0]])
-tau_z = np.array([[1, 0], [0, -1]])
+tau_x = tinyarray.array([[0, 1], [1, 0]])
+tau_z = tinyarray.array([[1, 0], [0, -1]])
 
 
 def make_lead(a=1, t=1.0, mu=0.7, Delta=0.1, W=10):

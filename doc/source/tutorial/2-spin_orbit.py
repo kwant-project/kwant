@@ -17,15 +17,15 @@ from matplotlib import pyplot
 
 # For matrix support
 #HIDDEN_BEGIN_xumz
-import numpy
+import tinyarray
 #HIDDEN_END_xumz
 
 # define Pauli-matrices for convenience
 #HIDDEN_BEGIN_hwbt
-sigma_0 = numpy.eye(2)
-sigma_x = numpy.array([[0, 1], [1, 0]])
-sigma_y = numpy.array([[0, -1j], [1j, 0]])
-sigma_z = numpy.array([[1, 0], [0, -1]])
+sigma_0 = tinyarray.array([[1, 0], [0, 1]])
+sigma_x = tinyarray.array([[0, 1], [1, 0]])
+sigma_y = tinyarray.array([[0, -1j], [1j, 0]])
+sigma_z = tinyarray.array([[1, 0], [0, -1]])
 #HIDDEN_END_hwbt
 
 

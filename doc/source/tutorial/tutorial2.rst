@@ -31,11 +31,11 @@ we will show that a very simple extension of our previous examples will
 exactly show this behavior (Note though that no care was taken to choose
 realistic parameters).
 
-The tight-binding model corresponding to the Rashba-Hamiltonian
-naturally exhibits a 2x2-matrix structure of onsite energies and hoppings.
-In order to deal with matrices in python, kwant uses the `numpy package
-<numpy.scipy.org>`_. In order to use matrices in our program, we thus also
-have to import that package:
+The tight-binding model corresponding to the Rashba-Hamiltonian naturally
+exhibits a 2x2-matrix structure of onsite energies and hoppings.  In order to
+use matrices in our program, we import the tinyarray package.  (`NumPy
+<http://numpy.scipy.org/>`_ would work as well, but tinyarray is much faster
+for small arrays.)
 
 .. literalinclude:: 2-spin_orbit.py
     :start-after: #HIDDEN_BEGIN_xumz
@@ -95,6 +95,22 @@ the following, clearly non-monotonic conductance steps:
      :download:`tutorial/2-spin_orbit.py <../../../tutorial/2-spin_orbit.py>`
 
 .. specialnote:: Technical details
+
+  - The tinyarray package, one of the dependencies of kwant, implements
+    efficient small arrays.  It is used internally in kwant for storing small
+    vectors and matrices.  For performance, it is preferable to define small
+    arrays that are going to be used with kwant using tinyarray.  However,
+    NumPy would work as well::
+
+        import numpy
+        sigma_0 = numpy.array([[1, 0], [0, 1]])
+        sigma_x = numpy.array([[0, 1], [1, 0]])
+        sigma_y = numpy.array([[0, -1j], [1j, 0]])
+        sigma_z = numpy.array([[1, 0], [0, -1]])
+
+    tinyarray arrays behave for most purposes like NumPy arrays except that
+    they are immutable: they cannot be changed once created.  This is important
+    for kwant: it allows them to be used directly as dictionary keys.
 
   - It should be emphasized that the relative hopping used for
     `~kwant.builder.Builder.possible_hoppings` is given in terms of
