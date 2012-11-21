@@ -25,6 +25,11 @@ The following software is highly recommended though not strictly required:
    of MUMPS.  The advantages due to MUMPS as used by kwant are thus independent
    of the number of CPU cores of the machine on which kwant runs.)
 
+In addition, to build a copy of kwant that has been checked-out directly from
+version control (git), you will also need `Cython <http://cython.org/>`_ 0.17.1
+or newer.  You do not need Cython to build kwant that has been unpacked from a
+source .tar.gz-file.
+
 Generic instructions
 ====================
 
@@ -103,7 +108,7 @@ open-source software packages.  There exist also other ways to install the
 required libraries.
 
 Following these instructions will install kwant without `MUMPS
-<http://graal.ens-lyon.fr/MUMPS/>`_.  It is well possible to use MUMPS uder OS
+<http://graal.ens-lyon.fr/MUMPS/>`_.  It is well possible to use MUMPS under OS
 X - most likely you will have to install it from source.  The section `Build
 configuration`_ explains how to tell kwant where to find your self-compiled
 MUMPS.
@@ -257,7 +262,7 @@ Some conventions to keep in mind:
   <http://www.python.org/dev/peps/pep-0257/>`_.
 
 Several modules are written in `Cython <http://cython.org/>`_ (.pyx file name
-extension).  You will need Cython 0.17.1 if you want to modify them.
+extension).  You will need Cython if you want to modify them.
 
 kwant includes extensive unit tests which are supposed to cover all of its
 functionality.  We use the `nose <http://nose.readthedocs.org/>`_ testing
