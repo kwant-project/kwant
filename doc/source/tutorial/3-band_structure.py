@@ -13,7 +13,6 @@ from math import pi
 # For plotting
 from matplotlib import pyplot
 
-
 #HIDDEN_BEGIN_zxip
 def make_lead(a=1, t=1.0, W=10):
     # Start with an empty lead with a single square lattice
@@ -38,9 +37,8 @@ def make_lead(a=1, t=1.0, W=10):
 
 #HIDDEN_BEGIN_pejz
 def plot_bandstructure(lead, momenta):
-    # Use the method ``energies`` of the finalized lead to compute
-    # the bandstructure
-    energy_list = [lead.energies(k) for k in momenta]
+    energies = kwant.physics.Bands(lead)
+    energy_list = [energies(k) for k in momenta]
 
     pyplot.figure()
     pyplot.plot(momenta, energy_list)

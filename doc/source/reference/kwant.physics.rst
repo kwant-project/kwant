@@ -8,5 +8,6 @@ Leads
 .. autosummary::
    :toctree: generated/
 
+   Bands
    modes
    self_energy

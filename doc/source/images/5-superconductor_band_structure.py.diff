@@ -8,9 +8,9 @@
  
  tau_x = tinyarray.array([[0, 1], [1, 0]])
  tau_z = tinyarray.array([[1, 0], [0, -1]])
-@@ -47,12 +48,19 @@
-     # the bandstructure
-     energy_list = [lead.energies(k) for k in momenta]
+@@ -46,12 +47,19 @@
+     energies = kwant.physics.Bands(lead)
+     energy_list = [energies(k) for k in momenta]
  
 -    pyplot.figure()
 +    fig = pyplot.figure()

@@ -4,7 +4,6 @@ from __future__ import division
 __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 
 import abc
-import math
 import types
 import numpy as np
 from . import physics, _system
@@ -148,39 +147,3 @@ class InfiniteSystem(System):
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
         return physics.self_energy(ham, self.inter_slice_hopping())
-
-    @property
-    def energies(self):
-        """
-        A callable object which returns the energies at wave vector `k`
-
-        Because the value of this property is a callable object, it can be used
-        as if it were a method:
-
-        >>> for k in arange(-pi, pi, 0.1):
-        >>>     for e in infsys.energies(k):
-        >>>         print k, e
-
-        But it is more efficient to evaluate the property only once:
-
-        >>> energies = infsys.energies
-        >>> for k in arange(-pi, pi, 0.1):
-        >>>     for e in energies(k):
-        >>>         print k, e
-        """
-        result = Energies()
-        result.ham = self.slice_hamiltonian()
-        if not np.allclose(result.ham, result.ham.T.conj()):
-            raise ValueError('The slice Hamiltonian is not Hermitian.')
-        hop = self.inter_slice_hopping()
-        result.hop = np.empty(result.ham.shape, dtype=complex)
-        result.hop[:, : hop.shape[1]] = hop
-        result.hop[:, hop.shape[1]:] = 0
-        return result
-
-
-class Energies():
-    def __call__(self, k):
-        mat = self.hop * complex(math.cos(k), math.sin(k))
-        mat += mat.conjugate().transpose() + self.ham
-        return np.sort(np.linalg.eigvalsh(mat).real)

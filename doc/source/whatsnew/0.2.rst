@@ -65,6 +65,13 @@ New usage::
 
     sym = kwant.TranslationalSymmetry((-1, 0))
 
+Band structure functionality has been moved
+-------------------------------------------
+The functionality that used to be provided by the method ``energies`` of
+`kwant.system.InfiniteSystem` has been moved to the `kwant.physics` package.
+See the documentation of `kwant.physics.Bands` and
+:doc:`../tutorial/tutorial3`.
+
 Calculation of the local density of states
 ------------------------------------------
 The new function of sparse solvers `~kwant.solvers.common.SparseSolver.ldos`

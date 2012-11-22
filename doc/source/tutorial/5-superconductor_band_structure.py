@@ -45,9 +45,8 @@ def make_lead(a=1, t=1.0, mu=0.7, Delta=0.1, W=10):
 
 
 def plot_bandstructure(lead, momenta):
-    # Use the method ``energies`` of the finalized lead to compute
-    # the bandstructure
-    energy_list = [lead.energies(k) for k in momenta]
+    energies = kwant.physics.Bands(lead)
+    energy_list = [energies(k) for k in momenta]
 
     pyplot.figure()
     pyplot.plot(momenta, energy_list)

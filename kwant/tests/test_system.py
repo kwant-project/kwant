@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import sparse
-from nose.tools import assert_raises, assert_almost_equal
+from nose.tools import assert_raises
 import kwant
 
 def test_hamiltonian_submatrix():
@@ -58,12 +58,3 @@ def test_hamiltonian_submatrix():
     sys2 = sys.finalized()
     assert_raises(ValueError, sys2.hamiltonian_submatrix)
     assert_raises(ValueError, sys2.hamiltonian_submatrix, None, None, True)
-
-def test_energies():
-    sys = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
-    sys.default_site_group = kwant.lattice.Square()
-    sys[[(0, 0), (0, 1)]] = complex(0)
-    sys[[((0, 0), (0, 1)),
-         ((0, 0), (1, 0))]] = complex(0, 1)
-    for e in sys.finalized().energies(0):
-        assert_almost_equal(abs(e), 1)

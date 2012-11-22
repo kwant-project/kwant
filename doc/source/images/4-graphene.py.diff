@@ -18,7 +18,7 @@
      for hopping in hoppings:
          lead0[lead0.possible_hoppings(*hopping)] = -1
  
-@@ -105,11 +107,20 @@
+@@ -105,22 +107,40 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(0, 1))
  
@@ -43,9 +43,8 @@
  
  
  def plot_bandstructure(flead, momenta):
-@@ -117,11 +128,20 @@
-     # the bandstructure
-     energy_list = [flead.energies(k) for k in momenta]
+     energies = kwant.physics.Bands(flead)
+     energy_list = [energies(k) for k in momenta]
  
 -    pyplot.figure()
 +    fig = pyplot.figure()
@@ -68,7 +67,7 @@
  
  
  def main():
-@@ -134,17 +154,22 @@
+@@ -133,17 +153,22 @@
          return 0 if site.group == a else 1
  
      # Plot the closed system without leads.

@@ -129,9 +129,8 @@ def plot_conductance(sys, energies):
 
 
 def plot_bandstructure(flead, momenta):
-    # Use the method ``energies`` of the finalized lead to compute
-    # the bandstructure
-    energy_list = [flead.energies(k) for k in momenta]
+    energies = kwant.physics.Bands(flead)
+    energy_list = [energies(k) for k in momenta]
 
     pyplot.figure()
     pyplot.plot(momenta, energy_list)

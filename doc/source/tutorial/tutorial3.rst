@@ -24,12 +24,18 @@ as one unit cell of the lead, and the hoppings to neighboring
 unit cells. This information is enough to make the infinite, translationally
 invariant system needed for band structure calculations.
 
-In contrast to previous usage however, you have to *finalize* the lead.  A
-finalized lead has a method/attribute `~kwant.system.InfiniteSystem.energies`
-***CHANGE [once energies is in its own band structure module] ***
-that allows to compute the eigenenergies of the translational invariant system
-for a given momentum `k`. Computing these eigenenergies for different momenta
-`k` then yields the bandstructure:
+In the previous examples `~kwant.builder.Builder` instances like the one
+created above were attached as leads to the ``Builder`` instance of the
+scattering region and the latter was finalized.  The thus created system
+contained implicitly finalized versions of the attached leads.  But now we are
+working with a single lead and there is no scattering region.  So we have to
+finalized the ``Builder`` of our sole lead explicitly.
+
+That finalized lead is then passed as to `kwant.physics.Bands`.  This
+creates an object that behaves just like a function: when called with a
+momentum ``k`` as parameter it returns the eigenenergies of the translational
+invariant system for that momentum.  Computing these eigenenergies for a range
+of momenta then yields the bandstructure:
 
 .. literalinclude:: 3-band_structure.py
     :start-after: #HIDDEN_BEGIN_pejz
@@ -46,22 +52,6 @@ Hamiltonian is approximating.
 .. seealso::
      The full source code can be found in
      :download:`tutorial/3-band_structure.py <../../../tutorial/3-band_structure.py>`
-
-.. specialnote:: Technical details
-
-  - Note that we have used `~kwant.system.InfiniteSystem.energies` as if it
-    were a function. In fact, `~kwant.system.InfiniteSystem.energies` is a
-    so-called callable object, i.e. an object that can be used just as a
-    function. We could also have written::
-
-        Energies = flead.energies
-        energy_list = [Energies(k) for k in momenta]
-
-    In fact, this would even be a little bit more efficient, as the object
-    `Energies` would only need to setup the Hamiltonian matrices once (the
-    efficiency difference is small however, as the eigenenergy calculation
-    dominates). For more details, see `~kwant.system.InfiniteSystem.energies`.
-
 
 Closed systems
 ..............
