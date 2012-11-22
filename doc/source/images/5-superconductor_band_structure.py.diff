@@ -4,7 +4,7 @@
  
  # For plotting
  from matplotlib import pyplot
-+import latex, html
++import defs
  
  tau_x = tinyarray.array([[0, 1], [1, 0]])
  tau_z = tinyarray.array([[1, 0], [0, -1]])
@@ -20,13 +20,13 @@
      pyplot.ylim([-0.8, 0.8])
 -    pyplot.show()
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
-+               fontsize=latex.mpl_tick_size)
++               fontsize=defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
-+               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
++               fontsize=defs.mpl_tick_size)
++    fig.set_size_inches(defs.mpl_width_in, defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("5-superconductor_band_structure_result.pdf")
-+    fig.savefig("5-superconductor_band_structure_result.png", dpi=html.dpi)
++    fig.savefig("5-superconductor_band_structure_result.png", dpi=defs.dpi)
  
  
  def main():

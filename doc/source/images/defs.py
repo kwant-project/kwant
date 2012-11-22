@@ -12,3 +12,6 @@ figwidth_small_in = figwidth_small_pt * pt_to_in
 mpl_width_in = figwidth_pt * pt_to_in
 mpl_label_size = None  # font sizes in points
 mpl_tick_size = None
+
+# dpi for conversion from inches
+dpi = 90

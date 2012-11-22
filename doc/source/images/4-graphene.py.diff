@@ -1,15 +1,14 @@
 --- original
 +++ modified
-@@ -17,6 +17,8 @@
+@@ -17,6 +17,7 @@
  
  # For plotting
  from matplotlib import pyplot
-+import latex
-+import html
++import defs
  
  
  # Define the graphene lattice
-@@ -63,7 +65,7 @@
+@@ -63,7 +64,7 @@
          return (-1 < x < 1) and (-0.4 * r < y < 0.4 * r)
  
      lead0 = kwant.Builder(sym0)
@@ -18,7 +17,7 @@
      for hopping in hoppings:
          lead0[lead0.possible_hoppings(*hopping)] = -1
  
-@@ -105,22 +107,40 @@
+@@ -105,22 +106,40 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(0, 1))
  
@@ -29,17 +28,17 @@
 -    pyplot.ylabel("conductance [in units of e^2/h]")
 -    pyplot.show()
 +    pyplot.xlabel("energy [in units of t]",
-+                 fontsize=latex.mpl_label_size)
++                 fontsize=defs.mpl_label_size)
 +    pyplot.ylabel("conductance [in units of e^2/h]",
-+                 fontsize=latex.mpl_label_size)
++                 fontsize=defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
-+               fontsize=latex.mpl_tick_size)
++               fontsize=defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
-+               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
++               fontsize=defs.mpl_tick_size)
++    fig.set_size_inches(defs.mpl_width_in, defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("4-graphene_result.pdf")
-+    fig.savefig("4-graphene_result.png", dpi=html.dpi)
++    fig.savefig("4-graphene_result.png", dpi=defs.dpi)
  
  
  def plot_bandstructure(flead, momenta):
@@ -53,21 +52,21 @@
 -    pyplot.ylabel("energy [in units of t]")
 -    pyplot.show()
 +    pyplot.xlabel("momentum [in units of (lattice constant)^-1]",
-+                 fontsize=latex.mpl_label_size)
++                 fontsize=defs.mpl_label_size)
 +    pyplot.ylabel("energy [in units of t]",
-+                 fontsize=latex.mpl_label_size)
++                 fontsize=defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
-+               fontsize=latex.mpl_tick_size)
++               fontsize=defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
-+               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
++               fontsize=defs.mpl_tick_size)
++    fig.set_size_inches(defs.mpl_width_in, defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("4-graphene_bs.pdf")
-+    fig.savefig("4-graphene_bs.png", dpi=html.dpi)
++    fig.savefig("4-graphene_bs.png", dpi=defs.dpi)
  
  
  def main():
-@@ -133,17 +153,22 @@
+@@ -133,17 +152,22 @@
          return 0 if site.group == a else 1
  
      # Plot the closed system without leads.
@@ -75,11 +74,11 @@
 -
 -    # Compute some eigenvalues.
 -    compute_evs(sys.finalized())
-+    size = (latex.figwidth_in, latex.figwidth_in)
++    size = (defs.figwidth_in, defs.figwidth_in)
 +    kwant.plot(sys, site_color=group_colors, colorbar=False,
-+               file="4-graphene_sys1.pdf", fig_size=size, dpi=html.dpi)
++               file="4-graphene_sys1.pdf", fig_size=size, dpi=defs.dpi)
 +    kwant.plot(sys, site_color=group_colors, colorbar=False,
-+               file="4-graphene_sys1.png", fig_size=size, dpi=html.dpi)
++               file="4-graphene_sys1.png", fig_size=size, dpi=defs.dpi)
  
      # Attach the leads to the system.
      for lead in leads:
@@ -87,11 +86,11 @@
  
      # Then, plot the system with leads.
 -    kwant.plot(sys, site_color=group_colors, colorbar=False)
-+    size = (latex.figwidth_in, 0.9 * latex.figwidth_in)
++    size = (defs.figwidth_in, 0.9 * defs.figwidth_in)
 +    kwant.plot(sys, site_color=group_colors, colorbar=False,
-+               file="4-graphene_sys2.pdf", fig_size=size, dpi=html.dpi)
++               file="4-graphene_sys2.pdf", fig_size=size, dpi=defs.dpi)
 +    kwant.plot(sys, site_color=group_colors, colorbar=False,
-+               file="4-graphene_sys2.png", fig_size=size, dpi=html.dpi)
++               file="4-graphene_sys2.png", fig_size=size, dpi=defs.dpi)
  
      # Finalize the system.
      sys = sys.finalized()

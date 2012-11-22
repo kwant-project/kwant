@@ -4,7 +4,7 @@
  
  # For matrix support
  import tinyarray
-+import latex, html
++import defs
  
  # define Pauli-matrices for convenience
  sigma_0 = tinyarray.array([[1, 0], [0, 1]])
@@ -18,17 +18,17 @@
 -    pyplot.xlabel("energy [in units of t]")
 -    pyplot.ylabel("conductance [in units of e^2/h]")
 -    pyplot.show()
-+    pyplot.xlabel("energy [in units of t]", fontsize=latex.mpl_label_size)
++    pyplot.xlabel("energy [in units of t]", fontsize=defs.mpl_label_size)
 +    pyplot.ylabel("conductance [in units of e^2/h]",
-+                 fontsize=latex.mpl_label_size)
++                 fontsize=defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
-+               fontsize=latex.mpl_tick_size)
++               fontsize=defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
-+               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
++               fontsize=defs.mpl_tick_size)
++    fig.set_size_inches(defs.mpl_width_in, defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("2-spin_orbit_result.pdf")
-+    fig.savefig("2-spin_orbit_result.png", dpi=html.dpi)
++    fig.savefig("2-spin_orbit_result.png", dpi=defs.dpi)
  
  
  def main():

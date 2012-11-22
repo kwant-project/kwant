@@ -4,7 +4,7 @@
  
  # For plotting
  from matplotlib import pyplot
-+import latex, html
++import defs
  
  def make_lead(a=1, t=1.0, W=10):
      # Start with an empty lead with a single square lattice
@@ -19,16 +19,16 @@
 -    pyplot.ylabel("energy [in units of t]")
 -    pyplot.show()
 +    pyplot.xlabel("momentum [in units of (lattice constant)^-1]",
-+                 fontsize=latex.mpl_label_size)
-+    pyplot.ylabel("energy [in units of t]", fontsize=latex.mpl_label_size)
++                 fontsize=defs.mpl_label_size)
++    pyplot.ylabel("energy [in units of t]", fontsize=defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
-+               fontsize=latex.mpl_tick_size)
++               fontsize=defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
-+               fontsize=latex.mpl_tick_size)
-+    fig.set_size_inches(latex.mpl_width_in, latex.mpl_width_in * 3. / 4.)
++               fontsize=defs.mpl_tick_size)
++    fig.set_size_inches(defs.mpl_width_in, defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("3-band_structure_result.pdf")
-+    fig.savefig("3-band_structure_result.png", dpi=html.dpi)
++    fig.savefig("3-band_structure_result.png", dpi=defs.dpi)
  
  
  def main():
