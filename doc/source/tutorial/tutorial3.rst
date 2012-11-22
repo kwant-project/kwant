@@ -31,7 +31,7 @@ contained implicitly finalized versions of the attached leads.  But now we are
 working with a single lead and there is no scattering region.  So we have to
 finalized the ``Builder`` of our sole lead explicitly.
 
-That finalized lead is then passed as to `kwant.physics.Bands`.  This
+That finalized lead is then passed to `kwant.physics.Bands`.  This
 creates an object that behaves just like a function: when called with a
 momentum ``k`` as parameter it returns the eigenenergies of the translational
 invariant system for that momentum.  Computing these eigenenergies for a range
