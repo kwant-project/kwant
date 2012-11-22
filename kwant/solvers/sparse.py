@@ -13,7 +13,6 @@ sparse solver framework.
 
 __all__ = ['solve', 'ldos', 'Solver']
 
-from functools import reduce
 import warnings
 import numpy as np
 import scipy.sparse as sp
@@ -23,8 +22,6 @@ from . import common
 import scipy.sparse.linalg.dsolve.linsolve as linsolve
 umfpack = linsolve.umfpack
 uses_umfpack = linsolve.isUmfpack
-
-from .. import system, physics
 
 # check if we are actually using UMFPACK or rather SuperLU
 
@@ -68,24 +65,24 @@ if uses_umfpack:
             A = sp.csc_matrix(A)
 
         A.sort_indices()
-        A = A.asfptype()  #upcast to a floating point format
+        A = A.asfptype()  # upcast to a floating point format
 
         if A.dtype.char not in 'dD':
             raise ValueError("convert matrix data to double, please, using"
                              " .astype()")
 
-        family = {'d' : 'di', 'D' : 'zi'}
-        umf = umfpack.UmfpackContext( family[A.dtype.char] )
+        family = {'d': 'di', 'D': 'zi'}
+        umf = umfpack.UmfpackContext(family[A.dtype.char])
 
         # adjust pivot thresholds
         umf.control[umfpack.UMFPACK_PIVOT_TOLERANCE] = piv_tol
         umf.control[umfpack.UMFPACK_SYM_PIVOT_TOLERANCE] = sym_piv_tol
 
         # Make LU decomposition.
-        umf.numeric( A )
+        umf.numeric(A)
 
-        def solve( b ):
-            return umf.solve( umfpack.UMFPACK_A, A, b, autoTranspose = True )
+        def solve(b):
+            return umf.solve(umfpack.UMFPACK_A, A, b, autoTranspose=True)
 
         return solve
 else:
@@ -132,7 +129,7 @@ class Solver(common.SparseSolver):
         """
         a = sp.csc_matrix(a)
 
-        if kept_vars == None:
+        if kept_vars is None:
             kept_vars = [range(a.shape[1])]
 
         if not factored:

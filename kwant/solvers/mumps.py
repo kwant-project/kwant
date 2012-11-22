@@ -124,7 +124,7 @@ class Solver(common.SparseSolver):
             the same lhs, but different rhs.
         """
 
-        if kept_vars == None:
+        if kept_vars is None:
             kept_vars = [range(a.shape[1])]
 
         sols = []
