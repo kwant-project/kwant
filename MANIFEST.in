@@ -16,8 +16,9 @@ recursive-include examples *.py
 
 include doc/other/*[a-zA-Z]
 include doc/Makefile
-recursive-include doc/source *.rst *.py *.svg
+recursive-include doc/source *.rst *.py *.svg *.sh *.diff
 recursive-include doc/source/_static *[a-zA-Z]
+recursive-exclude doc/source/images [0-9]-*.py
 recursive-include doc/templates *[a-zA-Z]
 prune doc/source/reference/generated
 recursive-include doc/sphinxext *.py *.txt *.in
