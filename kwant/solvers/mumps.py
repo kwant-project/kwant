@@ -26,12 +26,10 @@ from ..linalg import mumps
 
 
 class Solver(common.SparseSolver):
-    """Sparse Solver class based on the sparse direct solver MUMPS.
-    """
+    """Sparse Solver class based on the sparse direct solver MUMPS."""
 
     lhsformat = 'coo'
     rhsformat = 'csc'
-    nrhs = 1     # later governed by options(), reset_options()
 
     def __init__(self):
         self.nrhs = self.ordering = self.sparse_rhs = None
@@ -101,15 +99,32 @@ class Solver(common.SparseSolver):
 
         return old_opts
 
-    def solve_linear_sys(self, a, b, kept_vars=None, factored=None):
+    def factorize(self, a):
+        """
+        Factorize a matrix, so it can be used with `solve_linear_sys`.
 
+        Parameters
+        ----------
+        a : a scipy.sparse.coo_matrix sparse matrix.
+
+        Returns
+        -------
+        factorized : object
+            factorized lhs to be used with `solve_linear_sys`.
+        """
+        inst = mumps.MUMPSContext()
+        inst.factor(a, ordering=self.ordering)
+        return inst, a.shape
+
+    def solve_linear_sys(self, factorized, b, kept_vars=None):
         """
         Solve matrix system of equations a x = b with sparse input,
         using MUMPS.
 
         Parameters
         ----------
-        a : a scipy.sparse.coo_matrix sparse matrix.
+        factorized : object
+            The result of calling factorized for the matrix a.
         b : a list of scipy.sparse.csc_matrices.
         kept_vars : list of integers
             a list of numbers of variables to keep in the solution.
@@ -118,22 +133,15 @@ class Solver(common.SparseSolver):
 
         Returns
         -------
-        output : a NumPy matrix
-            solution to the system of equations.
-        factored : factorized lhs. Can be reused in later solves with
-            the same lhs, but different rhs.
+        output : NumPy matrix
+            Solution to the system of equations.
         """
+        inst, a_shape = factorized
 
         if kept_vars is None:
-            kept_vars = [range(a.shape[1])]
+            kept_vars = [range(a_shape[1])]
 
         sols = []
-
-        if not factored:
-            inst = mumps.MUMPSContext()
-            inst.factor(a, ordering=self.ordering)
-        else:
-            inst = factored
 
         for mat in b:
             if mat.shape[1] != 0:
@@ -151,9 +159,9 @@ class Solver(common.SparseSolver):
                                 [kept_vars, :])
 
         if len(sols):
-            return np.concatenate(sols, axis=1), inst
+            return np.concatenate(sols, axis=1)
         else:
-            return np.zeros(shape=(len(kept_vars), 0)), inst
+            return np.zeros(shape=(len(kept_vars), 0))
 
 
 default_solver = Solver()

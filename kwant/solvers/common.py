@@ -18,7 +18,7 @@ from .. import physics, system
 # TODO: Once this issue is fixed, code for the special cases can be removed
 # from make_linear_sys, solve_linear_sys and possibly other places marked by
 # the line "See comment about zero-shaped sparse matrices at the top of
-# _sparse.py".
+# common.py".
 
 
 LinearSys = namedtuple('LinearSys', ['lhs', 'rhs', 'kept_vars'])
@@ -54,7 +54,11 @@ class SparseSolver(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def solve_linear_sys(self, a, b, kept_vars, factored=None):
+    def factorize(self, a):
+        pass
+
+    @abc.abstractmethod
+    def solve_linear_sys(self, factored, b, kept_vars):
         """
         Solve the linar system `a x = b`, returning the part of
         the result indicated in kept_vars.
@@ -96,11 +100,12 @@ class SparseSolver(object):
             with the right hand side, with each matrix corresponding to one
             lead mentioned in `in_leads`. `kept_vars` is a list of numbers
             of variables in the solution that have to be stored (typically
-            a small part of the complete solution).  lead_info : list of
-            objects Contains one entry for each lead.  For a lead defined
-            as a tight-binding system, this is an instance of
-            `kwant.physics.Modes` (as returned by `kwant.physics.modes`),
-            otherwise the lead self-energy matrix.
+            a small part of the complete solution).
+        lead_info : list of objects
+            Contains one entry for each lead.  For a lead defined as a
+            tight-binding system, this is an instance of `kwant.physics.Modes`
+            (as returned by `kwant.physics.modes`), otherwise the lead
+            self-energy matrix.
 
         Notes
         -----
@@ -314,7 +319,9 @@ class SparseSolver(object):
                                                  energy, force_realspace,
                                                  check_hermiticity)
 
-        result = BlockResult(self.solve_linear_sys(*linsys)[0], lead_info)
+        flhs = self.factorize(linsys.lhs)
+        data = self.solve_linear_sys(flhs, linsys.rhs, linsys.kept_vars)
+        result = BlockResult(data, lead_info)
 
         result.in_leads = in_leads
         result.out_leads = out_leads
@@ -355,17 +362,15 @@ class SparseSolver(object):
         ldos = np.zeros(num_orb, float)
         factored = None
 
+        factored = self.factorize(h)
         for mat in rhs:
             if mat.shape[1] == 0:
                 continue
 
             for j in xrange(0, mat.shape[1], self.nrhs):
                 jend = min(j + self.nrhs, mat.shape[1])
-
-                psi, factored = self.solve_linear_sys(h, [mat[:, j:jend]],
-                                                      slice(num_orb),
-                                                      factored)
-
+                psi = self.solve_linear_sys(factored, [mat[:, j:jend]],
+                                            slice(num_orb))
                 ldos += np.sum(np.square(abs(psi)), axis=1)
 
         return ldos * (0.5 / np.pi)
