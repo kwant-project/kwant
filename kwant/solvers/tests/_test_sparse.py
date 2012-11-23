@@ -8,6 +8,7 @@ n = 5
 chain = kwant.lattice.Chain()
 square = kwant.lattice.Square()
 
+
 # Test output sanity: that an error is raised if no output is requested,
 # and that solving for a subblock of a scattering matrix is the same as taking
 # a subblock of the full scattering matrix.
@@ -112,6 +113,7 @@ def test_smatrix_shape(solve):
     lead1_val = 4
     s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0])[0]
     assert s.shape == (0, 1)
+
 
 # Test that a translationally invariant system with two leads has only
 # transmission and that transmission does not mix modes.
@@ -223,7 +225,6 @@ def test_singular_graph_system(solve):
 # This test features inside the onslice Hamiltonian a hopping matrix with more
 # zero eigenvalues than the lead hopping matrix. The previous version of the
 # sparse solver failed here.
-
 def test_tricky_singular_hopping(solve):
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((4, 0)))
@@ -255,7 +256,6 @@ def test_tricky_singular_hopping(solve):
 
 # Test equivalence between self-energy and scattering matrix representations.
 # Also check that transmission works.
-
 def test_self_energy(solve):
     class LeadWithOnlySelfEnergy(object):
         def __init__(self, lead):
@@ -305,6 +305,7 @@ def test_self_energy(solve):
                         np.sort(eig_should_be.real))
     assert_almost_equal(t_should_be, sol.transmission(1, 0))
 
+
 def test_self_energy_reflection(solve):
     class LeadWithOnlySelfEnergy(object):
         def __init__(self, lead):
@@ -334,6 +335,7 @@ def test_self_energy_reflection(solve):
 
     assert_almost_equal(sol.transmission(0,0), t.transmission(0,0))
 
+
 def test_very_singular_leads(solve):
     sys = kwant.Builder()
     gr = kwant.lattice.Chain()
@@ -349,6 +351,7 @@ def test_very_singular_leads(solve):
     fsys = sys.finalized()
     result = solve(fsys)
     assert [i[2] for i in result[1]] == [0, 2]
+
 
 def test_ldos(ldos):
     sys = kwant.Builder()
