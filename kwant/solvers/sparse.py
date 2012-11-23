@@ -43,9 +43,9 @@ if uses_umfpack:
         pre-factorized.
 
         Example:
-        solve = factorized( A ) # Makes LU decomposition.
-        x1 = solve( rhs1 ) # Uses the LU factors.
-        x2 = solve( rhs2 ) # Uses again the LU factors.
+        solve = factorized(A) # Makes LU decomposition.
+        x1 = solve(rhs1) # Uses the LU factors.
+        x2 = solve(rhs2) # Uses again the LU factors.
 
         Parameters
         ----------
@@ -101,9 +101,9 @@ class Solver(common.SparseSolver):
     rhsformat = 'csc'
     nrhs = 1
 
-    def factorize(self, a):
+    def _factorized(self, a):
         """
-        Factorize a matrix, so it can be used with `solve_linear_sys`.
+        Factorize a matrix, so it can be used with `_solve_linear_sys`.
 
         Parameters
         ----------
@@ -111,13 +111,13 @@ class Solver(common.SparseSolver):
 
         Returns
         -------
-        factorized : object
-            factorized lhs to be used with `solve_linear_sys`.
+        factorized_a : object
+            factorized lhs to be used with `_solve_linear_sys`.
         """
         a = sp.csc_matrix(a)
         return factorized(a), a.shape
 
-    def solve_linear_sys(self, factorized, b, kept_vars=None):
+    def _solve_linear_sys(self, factorized_a, b, kept_vars=None):
         """
         Solve matrix system of equations a x = b with sparse input,
         using the sparse direct solver provided by SciPy.
@@ -125,7 +125,7 @@ class Solver(common.SparseSolver):
         Parameters
         ----------
         factorized : object
-            The result of calling factorized for the matrix a.
+            The result of calling `_factorized` for the matrix a.
         b : a list of matrices.
             Sizes of these matrices may be smaller than needed, the missing
             entries at the end are padded with zeros.
@@ -137,7 +137,7 @@ class Solver(common.SparseSolver):
         output : NumPy matrix
             Solution to the system of equations.
         """
-        slv, a_shape = factorized
+        slv, a_shape = factorized_a
 
         if kept_vars is None:
             kept_vars = [range(a_shape[1])]

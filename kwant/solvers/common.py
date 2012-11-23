@@ -16,7 +16,7 @@ from .. import physics, system
 # zero: http://projects.scipy.org/scipy/ticket/1602 We use NumPy dense matrices
 # as a replacement.
 # TODO: Once this issue is fixed, code for the special cases can be removed
-# from make_linear_sys, solve_linear_sys and possibly other places marked by
+# from _make_linear_sys, _solve_linear_sys and possibly other places marked by
 # the line "See comment about zero-shaped sparse matrices at the top of
 # common.py".
 
@@ -54,21 +54,23 @@ class SparseSolver(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def factorize(self, a):
+    def _factorized(self, a):
+        """Return a preprocessed version of a matrix for the use with
+        `solve_linear_sys`."""
         pass
 
     @abc.abstractmethod
-    def solve_linear_sys(self, factored, b, kept_vars):
+    def _solve_linear_sys(self, factorized_a, b, kept_vars):
         """
         Solve the linar system `a x = b`, returning the part of
         the result indicated in kept_vars.
 
-        A particular implementation of a sparse solver must
-        provide an implementation of this abstract method.
+        `factorized_a` is expected to be the result of `_factorize` for the
+        matrix a.
         """
         pass
 
-    def make_linear_sys(self, sys, out_leads, in_leads, energy=0,
+    def _make_linear_sys(self, sys, out_leads, in_leads, energy=0,
                         force_realspace=False, check_hermiticity=True):
         """
         Make a sparse linear system of equations defining a scattering
@@ -315,12 +317,12 @@ class SparseSolver(object):
         if len(in_leads) == 0 or len(out_leads) == 0:
             raise ValueError("No output is requested.")
 
-        linsys, lead_info = self.make_linear_sys(sys, out_leads, in_leads,
-                                                 energy, force_realspace,
-                                                 check_hermiticity)
+        linsys, lead_info = self._make_linear_sys(sys, out_leads, in_leads,
+                                                  energy, force_realspace,
+                                                  check_hermiticity)
 
-        flhs = self.factorize(linsys.lhs)
-        data = self.solve_linear_sys(flhs, linsys.rhs, linsys.kept_vars)
+        flhs = self._factorized(linsys.lhs)
+        data = self._solve_linear_sys(flhs, linsys.rhs, linsys.kept_vars)
         result = BlockResult(data, lead_info)
 
         result.in_leads = in_leads
@@ -352,7 +354,7 @@ class SparseSolver(object):
                                  "tight binding systems.")
 
         (h, rhs, kept_vars), lead_info = \
-            self.make_linear_sys(fsys, [], xrange(len(fsys.leads)), energy)
+            self._make_linear_sys(fsys, [], xrange(len(fsys.leads)), energy)
 
         Modes = physics.Modes
         num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
@@ -362,15 +364,15 @@ class SparseSolver(object):
         ldos = np.zeros(num_orb, float)
         factored = None
 
-        factored = self.factorize(h)
+        factored = self._factorized(h)
         for mat in rhs:
             if mat.shape[1] == 0:
                 continue
 
             for j in xrange(0, mat.shape[1], self.nrhs):
                 jend = min(j + self.nrhs, mat.shape[1])
-                psi = self.solve_linear_sys(factored, [mat[:, j:jend]],
-                                            slice(num_orb))
+                psi = self._solve_linear_sys(factored, [mat[:, j:jend]],
+                                             slice(num_orb))
                 ldos += np.sum(np.square(abs(psi)), axis=1)
 
         return ldos * (0.5 / np.pi)

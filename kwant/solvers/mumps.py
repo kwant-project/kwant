@@ -99,9 +99,9 @@ class Solver(common.SparseSolver):
 
         return old_opts
 
-    def factorize(self, a):
+    def _factorized(self, a):
         """
-        Factorize a matrix, so it can be used with `solve_linear_sys`.
+        Factorize a matrix, so it can be used with `_solve_linear_sys`.
 
         Parameters
         ----------
@@ -109,34 +109,34 @@ class Solver(common.SparseSolver):
 
         Returns
         -------
-        factorized : object
-            factorized lhs to be used with `solve_linear_sys`.
+        factorized_a : object
+            factorized lhs to be used with `_solve_linear_sys`.
         """
         inst = mumps.MUMPSContext()
         inst.factor(a, ordering=self.ordering)
         return inst, a.shape
 
-    def solve_linear_sys(self, factorized, b, kept_vars=None):
+    def _solve_linear_sys(self, factorized_a, b, kept_vars=None):
         """
         Solve matrix system of equations a x = b with sparse input,
         using MUMPS.
 
         Parameters
         ----------
-        factorized : object
-            The result of calling factorized for the matrix a.
+        factorized_a : object
+            The result of calling `factorized` for the matrix a.
         b : a list of scipy.sparse.csc_matrices.
         kept_vars : list of integers
             a list of numbers of variables to keep in the solution.
         factored : a factorized lhs as returned by a previous call
-            to solve_linear_sys with the same lhs.
+            to `_solve_linear_sys` with the same lhs.
 
         Returns
         -------
         output : NumPy matrix
             Solution to the system of equations.
         """
-        inst, a_shape = factorized
+        inst, a_shape = factorized_a
 
         if kept_vars is None:
             kept_vars = [range(a_shape[1])]
