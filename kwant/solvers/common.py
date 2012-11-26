@@ -377,6 +377,48 @@ class SparseSolver(object):
 
         return ldos * (0.5 / np.pi)
 
+    def wave_func(self, sys, energy=0):
+        """
+        Return a callable object for the computation of the wave function
+        inside the scattering region.
+
+        Parameters
+        ----------
+        sys : `kwant.system.FiniteSystem`
+            The low level system for which the wave functions are to be
+            calculated.
+
+        Notes
+        -----
+        The returned object can be itself called like a function.  Given a lead
+        number, it returns a 2d NumPy array containing the wave function within
+        the scattering region due to each mode of the given lead.  Index 0 is
+        the mode number, index 1 is the orbital number.
+        """
+        return WaveFunc(self, sys, energy)
+
+
+class WaveFunc(object):
+    def __init__(self, solver, sys, energy=0):
+        for lead in sys.leads:
+            if not isinstance(lead, system.InfiniteSystem):
+                # TODO: fix this
+                msg = 'All leads must be tight binding systems.'
+                raise ValueError(msg)
+        (h, self.rhs, kept_vars), lead_info = \
+            solver._make_linear_sys(sys, [], xrange(len(sys.leads)), energy)
+        Modes = physics.Modes
+        num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
+                             for li in lead_info if isinstance(li, Modes))
+        self.solver = solver
+        self.num_orb = h.shape[0] - num_extra_vars
+        self.factorized_h = solver._factorized(h)
+
+    def __call__(self, lead):
+        result = self.solver._solve_linear_sys(
+            self.factorized_h, [self.rhs[lead]], slice(self.num_orb))
+        return result.transpose()
+
 
 class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
     """

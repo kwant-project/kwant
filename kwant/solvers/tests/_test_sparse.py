@@ -365,3 +365,39 @@ def test_ldos(ldos):
     fsys = sys.finalized()
     assert_almost_equal(ldos(fsys, 0),
                         np.array([1, 1]) / (2 * np.pi))
+
+
+def test_wavefunc_ldos_consistency(wave_func, ldos):
+    L = 2
+    W = 3
+    energy = 0
+
+    np.random.seed(31)
+    sys = kwant.Builder()
+    left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+    top_lead = kwant.Builder(kwant.TranslationalSymmetry((1, 0)))
+    for b, sites in [(sys, [square(x, y)
+                               for x in range(L) for y in range(W)]),
+                     (left_lead, [square(0, y) for y in range(W)]),
+                     (top_lead, [square(x, 0) for x in range(L)])]:
+        for site in sites:
+            h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+            h += h.conjugate().transpose()
+            b[site] = h
+        for kind in square.nearest:
+            for hop in b.possible_hoppings(*kind):
+                b[hop] = 10 * np.random.rand(n, n) + 1j * np.random.rand(n, n)
+    sys.attach_lead(left_lead)
+    sys.attach_lead(top_lead)
+    sys = sys.finalized()
+
+    wf = wave_func(sys, energy)
+    ldos2 = np.zeros(wf.num_orb, float)
+    for lead in xrange(len(sys.leads)):
+        temp = abs(wf(lead))
+        temp **= 2
+        print type(temp), temp.shape
+        ldos2 += temp.sum(axis=0)
+    ldos2 *= (0.5 / np.pi)
+
+    assert_almost_equal(ldos2, ldos(sys, energy))

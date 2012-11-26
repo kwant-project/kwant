@@ -17,7 +17,7 @@ control options that may affect performance:
 For more details see `~Solver.options`.
 """
 
-__all__ = ['solve', 'ldos', 'options', 'Solver']
+__all__ = ['solve', 'ldos', 'wave_func', 'options', 'Solver']
 
 import numpy as np
 import scipy.sparse as sp
@@ -179,5 +179,6 @@ default_solver = Solver()
 
 solve = default_solver.solve
 ldos = default_solver.ldos
+wave_func = default_solver.wave_func
 options = default_solver.options
 reset_options = default_solver.reset_options

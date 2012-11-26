@@ -1,5 +1,5 @@
 from nose.plugins.skip import Skip, SkipTest
-from  kwant.solvers.sparse import solve, ldos
+from  kwant.solvers.sparse import solve, ldos, wave_func
 import kwant.solvers.sparse
 import _test_sparse
 
@@ -50,5 +50,10 @@ def test_umfpack_del():
     else:
         raise SkipTest
 
+
 def test_ldos():
     _test_sparse.test_ldos(ldos)
+
+
+def test_wavefunc_ldos_consistency():
+    _test_sparse.test_wavefunc_ldos_consistency(wave_func, ldos)

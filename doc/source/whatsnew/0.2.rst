@@ -77,6 +77,12 @@ Calculation of the local density of states
 The new function of sparse solvers `~kwant.solvers.common.SparseSolver.ldos`
 allows the calculation of the local density of states.
 
+Calculation of wave functions in the scattering region
+------------------------------------------------------
+The new function of sparse solvers
+`~kwant.solvers.common.SparseSolver.wave_func` allows the calculation of the
+wave function in the scattering region due to any mode of any lead.
+
 Return value of sparse solver
 -----------------------------
 The function `~kwant.solvers.common.SparseSolver.solve` of sparse solvers now

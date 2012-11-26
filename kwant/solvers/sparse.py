@@ -11,7 +11,7 @@ variable `uses_umfpack` can be checked to determine if UMFPACK is being used.
 sparse solver framework.
 """
 
-__all__ = ['solve', 'ldos', 'Solver']
+__all__ = ['solve', 'ldos', 'wave_func', 'Solver']
 
 import warnings
 import numpy as np
@@ -163,3 +163,4 @@ default_solver = Solver()
 
 solve = default_solver.solve
 ldos = default_solver.ldos
+wave_func = default_solver.wave_func
