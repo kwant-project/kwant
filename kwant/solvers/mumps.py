@@ -150,7 +150,7 @@ class Solver(common.SparseSolver):
         inst, a_shape = factorized_a
 
         if kept_vars is None:
-            kept_vars = [range(a_shape[1])]
+            kept_vars = slice(a_shape[1])
 
         sols = []
 

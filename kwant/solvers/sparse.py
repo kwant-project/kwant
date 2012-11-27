@@ -140,7 +140,7 @@ class Solver(common.SparseSolver):
         slv, a_shape = factorized_a
 
         if kept_vars is None:
-            kept_vars = [range(a_shape[1])]
+            kept_vars = slice(a_shape[1])
 
         sols = []
         vec = np.empty(a_shape[0], complex)
