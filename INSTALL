@@ -6,7 +6,7 @@ Prerequisites
 =============
 
 Building kwant requires
- * `Python <http://python.org>`_ 2.6 or newer,
+ * `Python <http://python.org>`_ 2.6 or 2.7 (Python 3 is not supported yet),
  * `SciPy <http://scipy.org>`_ 0.7.2 or newer,
  * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
