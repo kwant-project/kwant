@@ -33,10 +33,8 @@ From `kwant.plotter`
 
    plot
 
-.. currentmodule:: kwant.solvers.sparse
-
-From `kwant.solvers.sparse`
----------------------------
+From ``kwant.solvers.default``
+------------------------------
 .. autosummary::
 
-   solve
+   ~kwant.solvers.common.SparseSolver.solve

@@ -1,4 +1,4 @@
-__all__ = ['system', 'version', 'builder', 'lattice']
+__all__ = ['system', 'version', 'builder', 'lattice', 'solvers']
 for module in __all__:
     exec 'from . import {0}'.format(module)
 
@@ -10,6 +10,10 @@ __all__.append('Builder')
 from .lattice import make_lattice, TranslationalSymmetry
 __all__.extend(['make_lattice', 'TranslationalSymmetry'])
 
+# Make kwant.solvers.default.solve available as kwant.solve.
+solve = solvers.default.solve
+__all__.extend(['solvers', 'solve'])
+
 # Importing plotter might not work, but this does not have to be a problem --
 # only no plotting will be available.
 try:
@@ -19,11 +23,3 @@ except:
     pass
 else:
     __all__.extend(['plotter', 'plot'])
-
-# Mumps usally works best, use sparse as fallback
-try:
-    from .solvers.mumps import solve
-    __all__.append('solve')
-except ImportError:
-    from .solvers.sparse import solve
-    __all__.append('solve')
