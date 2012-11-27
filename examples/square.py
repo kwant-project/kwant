@@ -4,6 +4,7 @@ kwant.Builder.
 
 from __future__ import division
 import numpy as np
+from matplotlib import pyplot
 import kwant
 from kwant.physics.selfenergy import square_self_energy
 
@@ -105,11 +106,10 @@ def main():
     data = [kwant.solve(sys, energy).transmission(1, 0)
             for energy in energies]
 
-    import pylab
-    pylab.plot(energies, data)
-    pylab.xlabel("energy [in units of t]")
-    pylab.ylabel("conductance [in units of e^2/h]")
-    pylab.show()
+    pyplot.plot(energies, data)
+    pyplot.xlabel("energy [in units of t]")
+    pyplot.ylabel("conductance [in units of e^2/h]")
+    pyplot.show()
 
 
 if __name__ == '__main__':
