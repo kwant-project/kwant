@@ -36,11 +36,13 @@ class Solver(common.SparseSolver):
         self.reset_options()
 
     def reset_options(self):
-        """Set the options to default values."""
-        self.options(nrhs=6, ordering='kwant_decides', sparse_rhs=False)
+        """Set the options to default values.  Return the old options."""
+        return self.options(nrhs=6, ordering='kwant_decides', sparse_rhs=False)
 
     def options(self, nrhs=None, ordering=None, sparse_rhs=None):
         """
+        Modify some options.  Return the old options.
+
         Parameters
         ----------
         nrhs : number
@@ -71,6 +73,15 @@ class Solver(common.SparseSolver):
         -------
         old_options: dict
             dictionary containing the previous options.
+
+        Notes
+        -----
+        Thanks to this method returning the old options as a dictionary it is
+        easy to change some options temporarily:
+
+        >>> saved_options = kwant.solvers.mumps.options(nrhs=12)
+        >>> some_code()
+        >>> kwant.solvers.mumps.options(**saved_options)
         """
 
         old_opts = {'nrhs': self.nrhs,
