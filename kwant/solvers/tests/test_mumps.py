@@ -1,7 +1,7 @@
 from nose.plugins.skip import Skip, SkipTest
 from numpy.testing.decorators import skipif
 try:
-    from  kwant.solvers.mumps import solve, ldos, options
+    from  kwant.solvers.mumps import solve, ldos, options, reset_options
     import _test_sparse
     _no_mumps = False
 except ImportError:
@@ -19,6 +19,7 @@ opt_list=[{},
 @skipif(_no_mumps)
 def test_output():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_output(solve)
 
@@ -26,6 +27,7 @@ def test_output():
 @skipif(_no_mumps)
 def test_one_lead():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_one_lead(solve)
 
@@ -33,6 +35,7 @@ def test_one_lead():
 @skipif(_no_mumps)
 def test_smatrix_shape():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_smatrix_shape(solve)
 
@@ -40,12 +43,14 @@ def test_smatrix_shape():
 @skipif(_no_mumps)
 def test_two_equal_leads():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_two_equal_leads(solve)
 
 @skipif(_no_mumps)
 def test_graph_system():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_graph_system(solve)
 
@@ -53,6 +58,7 @@ def test_graph_system():
 @skipif(_no_mumps)
 def test_singular_graph_system():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_singular_graph_system(solve)
 
@@ -60,6 +66,7 @@ def test_singular_graph_system():
 @skipif(_no_mumps)
 def test_tricky_singular_hopping():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_tricky_singular_hopping(solve)
 
@@ -67,6 +74,7 @@ def test_tricky_singular_hopping():
 @skipif(_no_mumps)
 def test_self_energy():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_self_energy(solve)
 
@@ -74,6 +82,7 @@ def test_self_energy():
 @skipif(_no_mumps)
 def test_self_energy_reflection():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_self_energy_reflection(solve)
 
@@ -81,6 +90,7 @@ def test_self_energy_reflection():
 @skipif(_no_mumps)
 def test_very_singular_leads():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_very_singular_leads(solve)
 
@@ -88,5 +98,6 @@ def test_very_singular_leads():
 @skipif(_no_mumps)
 def test_ldos():
     for opts in opt_list:
+        reset_options()
         options(**opts)
         _test_sparse.test_ldos(ldos)
