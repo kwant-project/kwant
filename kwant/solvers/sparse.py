@@ -1,16 +1,3 @@
-"""Implementation of the sparse solver framework using the direct sparse solver
-provided by `scipy.sparse.linalg
-<http://docs.scipy.org/doc/scipy/reference/sparse.linalg.html>`.
-
-SciPy currently uses internally either the direct sparse solver UMFPACK or if
-that is not installed, SuperLU. Often, SciPy's SuperLU will give quite poor
-performance and you will be warned if only SuperLU is found.  The module
-variable `uses_umfpack` can be checked to determine if UMFPACK is being used.
-
-`sparse` does not introduce any additional options as compared to the generic
-sparse solver framework.
-"""
-
 __all__ = ['solve', 'ldos', 'wave_func', 'Solver']
 
 import warnings

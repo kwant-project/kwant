@@ -1,9 +1,3 @@
-"""Collection of things commonly used by the different solvers.
-
-Typically needs not be called by the user, but is rather used by the
-individual solver modules
-"""
-
 __all__ = ['SparseSolver', 'BlockResult']
 
 from collections import namedtuple
