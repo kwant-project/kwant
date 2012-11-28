@@ -215,3 +215,23 @@ autosummary_generate = True
 
 autoclass_content = "both"
 autodoc_default_flags = ['show-inheritance']
+
+# -- Teach Sphinx to document bound methods like functions ---------------------
+import types
+from sphinx.ext import autodoc
+
+class BoundMethodDocumenter(autodoc.FunctionDocumenter):
+    objtype = "boundmethod"
+    directivetype = 'function'
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):
+        # Return True iff `member` is a bound method.  Taken from
+        # <http://stackoverflow.com/a/1260881>.
+        return (isinstance(member, types.MethodType) and
+                member.im_self is not None and
+                not issubclass(member.im_class, type) and
+                member.im_class is not types.ClassType)
+
+def setup(app):
+    app.add_autodocumenter(BoundMethodDocumenter)

@@ -89,41 +89,10 @@ class Solver(common.SparseSolver):
     nrhs = 1
 
     def _factorized(self, a):
-        """
-        Factorize a matrix, so it can be used with `_solve_linear_sys`.
-
-        Parameters
-        ----------
-        a : a scipy.sparse.coo_matrix sparse matrix.
-
-        Returns
-        -------
-        factorized_a : object
-            factorized lhs to be used with `_solve_linear_sys`.
-        """
         a = sp.csc_matrix(a)
         return factorized(a), a.shape
 
     def _solve_linear_sys(self, factorized_a, b, kept_vars=None):
-        """
-        Solve matrix system of equations a x = b with sparse input,
-        using the sparse direct solver provided by SciPy.
-
-        Parameters
-        ----------
-        factorized : object
-            The result of calling `_factorized` for the matrix a.
-        b : a list of matrices.
-            Sizes of these matrices may be smaller than needed, the missing
-            entries at the end are padded with zeros.
-        kept_vars : slice object or list of integers
-            a list of numbers of variables to keep in the solution
-
-        Returns
-        -------
-        output : NumPy matrix
-            Solution to the system of equations.
-        """
         slv, a_shape = factorized_a
 
         if kept_vars is None:

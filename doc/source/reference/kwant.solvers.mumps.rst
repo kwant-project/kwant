@@ -3,24 +3,18 @@
 
 .. module:: kwant.solvers.mumps
 
-A sparse solver that uses `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_.  (Only
-the sequential, single core version is used.)
+This solver uses `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_.  (Only the
+sequential, single core version of MUMPS is used.)  MUMPS is a very efficient
+direct sparse solver that can take advantage of memory beyond 3GiB for the
+solution of large problems.  Furthermore, it offers a choice of several
+orderings of the input matrix some of which can speed up a calculation
+significantly.
 
-MUMPS is a very efficient direct sparse solver that can take advantage of
-memory beyond 3GB for the solution of large problems.  Furthermore, it offers a
-choice of several orderings of the input matrix from which can speed up a
-calculation significantly.
+Compared with the :mod:`default solver <kwant.solvers.default>`, this module
+adds several options that may be used to fine-tune performance.  Otherwise the
+interface is identical.  These options can be set and queried with the
+following functions.
 
-Compared to the generic sparse solver framework, `mumps` adds the following
-control options that may affect performance:
+.. autofunction:: options
 
-- `ordering`: a fill-in reducing ordering of the matrix
-- `nrhs`: number of right hand sides that should be solved simultaneously
-- `sparse_rhs`: whether to use dense or sparse right hand sides
-
-For more details see `~Solver.options`.
-
-.. autosummary::
-   :toctree: generated/
-
-   Solver
+.. autofunction:: reset_options

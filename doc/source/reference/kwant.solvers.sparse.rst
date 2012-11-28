@@ -3,18 +3,13 @@
 
 .. module:: kwant.solvers.sparse
 
-A sparse solver that uses `scipy.sparse.linalg
-<http://docs.scipy.org/doc/scipy/reference/sparse.linalg.html>`_.
+This solver uses SciPy's `scipy.sparse.linalg
+<http://docs.scipy.org/doc/scipy/reference/sparse.linalg.html>`_.  The
+interface is identical to that of the :mod:`default solver
+<kwant.solvers.default>`.
 
-SciPy currently uses internally either the direct sparse solver UMFPACK or if
-that is not installed, SuperLU. Often, SciPy's SuperLU will give quite poor
-performance and you will be warned if only SuperLU is found.  The module
-variable `uses_umfpack` can be checked to determine if UMFPACK is being used.
-
-`sparse` does not introduce any additional options as compared to the generic
-sparse solver framework.
-
-.. autosummary::
-   :toctree: generated/
-
-   Solver
+``scipy.sparse.linalg`` currently uses internally either the direct sparse
+solver UMFPACK or if that is not installed, SuperLU. Often, SciPy's SuperLU
+will give quite poor performance and you will be warned if only SuperLU is
+found.  The module variable ``uses_umfpack`` can be checked to determine if
+UMFPACK is being used.

@@ -1,132 +1,77 @@
 :mod:`kwant.solvers` -- Library of solvers
 ==========================================
 
-Overview of the solver infrastructure
--------------------------------------
+Overview
+--------
 
-kwant offers a variety of solvers for computing the solution
-to a quantum transport problem. These different solvers may either
-depend on different external libraries, or use very different internal
-algorithms for doing the actual computation.
-
-Fortunately, all these different solvers still use the same interface
-conventions. Thus, all solvers can be used without explicit knowledge
-of the internals. On the other hand, many solvers allow for some
-controls that can affect performance.
-
-All of the solver modules implement the following functions:
-
-- `~kwant.solvers.common.SparseSolver.solve`: Compute the Scattering matrix
-  or Green's function between different leads. Can be used to compute
-  conductances
-- `~kwant.solvers.common.SparseSolver.ldos`: Compute the local density of
-  states of the system.
-
-For details see the respective function. (You might note that the above links
-lead to the documentation of a method in a class, rather than a function
-in the solver module. For details, see :ref:`below <details_of_solver>`.
-In a nutshell, all of the solver functionality can be
-accessed by functions on the module-level; internally they are encapsulated in
-a class)
-
-Due to the common interface you can thus write code that allows you to
-switch solvers by changing one `import`-line::
-
-    from kwant.solvers.some_solver import solve
-
-    ...
-
-    smatrix = solve(fsys)
-
-In addition to the common interface, some solvers allow for additional
-control parameters for performance-tuning. In this case they
-have a function `options` on the module level. Code could then
-look like this::
-
-    import kwant.solvers.some_solver as solver
-
-    solver.options(...)
-
-    ...
-
-    smatrix - solver.solve(fsys)
+kwant offers several modules for computing the solutions to quantum transport
+problems, the so-called solvers. Each of these solvers may use different
+internal algorithms and/or depend on different external libraries.  If the
+libraries needed by one solver are not installed, trying to import it will
+raise an ``ImportError`` exception.  The :doc:`Installation instructions
+<../install>` list all the libraries that are required or can be used by kwant
+and its solvers.
 
 
-Summary of solver modules in kwant:
------------------------------------
+:mod:`kwant.solvers.default` -- The default solver
+--------------------------------------------------
 
-Right now, the following solvers are implemented in kwant:
+.. module:: kwant.solvers.default
 
-- `~kwant.solvers.sparse`: A solver based on solving a sparse linear
-  system, using the direct sparse solvers provided by SciPy.
-- `~kwant.solvers.mumps`: A solver based on solving a sparse linear
-  system using the direct sparse solver MUMPS. To use it, the MUMPS
-  library must be installed on the system. This solver typically
-  gives the best performance of all sparse solvers for a single core.
-  It allows for various solve options using `~kwant.solvers.mumps.options`.
+There is one solver, `kwant.solvers.default` that is always available.  For
+each kwant installation it combines the best functionality of the *available*
+solvers into a single module.  We recommend to use it unless there are specific
+reasons to use another.  The following functions are provided.
 
+.. autosummary::
+   :toctree: generated/
 
-.. _details_of_solver:
+   solve
+   wave_func
+   ldos
 
-Details of the internal structure of a solver
----------------------------------------------
-
-Each solver module implements a class `Solver` (e.g.
-`kwant.solvers.sparse.Solver`), with methods implementing the solve
-functionality of the solvers. This encapsulation in a class allows to
-use solvers with different options concurrently.
-
-Typically, one however does not need this flexibility, and will not want to
-bother with the `Solver` class itself. For this reason, every solver module has
-a default instance of the `Solver` class. Its methods are then made available
-as functions on the module level.
-
-In particular, the following::
-
-    import kwant.solvers.sparse as slv
-
-    ...
-
-    smatrix = slv.solve(sys, energy=...)
-    dos = slv.ldos(sys, energy=...)
-
-is equivalent to::
-
-    import kwant.solvers.sparse as slv
-
-    ...
-
-    smatrix = slv.default_solver.solve(sys, energy=...)
-    dos = slv.default_solver.ldos(sys, energy=...)
-
-where ``default_solver`` is an instance of `kwant.solvers.sparse.Solver`.
-
-
-The default solver
-------------------
-
-Since computing conductance is the most basic task of kwant, the
-`solve`-function of one of the solvers is provided via `kwant.solve`.
-kwant chooses the solver which it considers best amongst the
-available solvers. You can see by calling
-
->>> help(kwant.solve)
-
-from which module it has been imported.
-
-
-List of solver modules
-----------------------
-
-The modules of the solver package are listed in detail below. Note
-that the solvers (with the exception of the module providing
-`kwant.solve`) have to be imported explicitly.
+`solve` returns an object of the following type:
 
 .. module:: kwant.solvers
+
+.. autosummary::
+   :toctree: generated/
+
+   kwant.solvers.common.BlockResult
+
+Being just a thin wrapper around other solvers, the default solver selectively
+imports their functionality.  To find out the origin of any function in this
+module, use Python's ``help``.  For example
+
+>>> help(kwant.solvers.default.ldos)
+
+
+Other solver modules
+--------------------
+
+Unlike the default one, other solvers have to be imported manually.  They
+provide, whenever possible, exactly the same interface as the default.  Some
+allow for specific tuning that can improve performance.  The differences to the
+default solver are listed in the documentation of each module.
 
 .. toctree::
    :maxdepth: 1
 
    kwant.solvers.sparse
    kwant.solvers.mumps
-   kwant.solvers.common
+
+For kwant-experts: detail of the internal structure of a solver
+---------------------------------------------------------------
+
+Each solver module (except the default one) contains a class ``Solver`` (e.g.
+``kwant.solvers.sparse.Solver``), that actually implements that solver's
+functionality.  For each module-level function provided by the solver, there is
+a correspondent method in the ``Solver`` class.  The module-level functions are
+simply the methods of a hidden ``Solver`` instance that is present in each
+solver module.
+
+The encapsulation in a class allows different solvers to easily share common
+code.  It also makes it possible to use solvers with different options
+concurrently.  Typically, one does not need this flexibility, and will not want
+to bother with the ``Solver`` class itself.  Instead, one will use the
+module-level functions as explained in the previous sections.

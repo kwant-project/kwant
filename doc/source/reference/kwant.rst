@@ -33,8 +33,10 @@ From `kwant.plotter`
 
    plot
 
+.. currentmodule:: kwant.solvers.default
+
 From ``kwant.solvers.default``
 ------------------------------
 .. autosummary::
 
-   ~kwant.solvers.common.SparseSolver.solve
+   solve

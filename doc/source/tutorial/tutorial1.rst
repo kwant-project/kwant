@@ -22,14 +22,21 @@ In order to use kwant, we need to import it:
 
 Enabling kwant is as easy as this [#]_ !
 
-The first step is now the definition of the system with scattering region
-and leads. For this we make use of the `~kwant.builder.Builder` class
-that allows for a convenient way to define the system. For this we need to
-create an instance of the `~kwant.builder.Builder` class:
+The first step is now the definition of the system with scattering region and
+leads. For this we make use of the `~kwant.builder.Builder` type that allows to
+define a system in a convenient way. We need to create an instance of it:
 
 .. literalinclude:: 1-quantum_wire.py
     :start-after: #HIDDEN_BEGIN_goiq
     :end-before: #HIDDEN_END_goiq
+
+Observe that we just accessed `~kwant.builder.Builder` by the name
+``kwant.Builder``.  We could have just as well written
+``kwant.builder.Builder`` instead.  kwant consists of a number of sub-packages
+that are all covered in the :doc:`reference documentation
+<../reference/index>`.  For convenience, some of the most widely-used members
+of the sub-packages are also accessible directly through the top-level `kwant`
+package.
 
 Apart from `~kwant.builder.Builder` we also need to specify
 what kind of sites we want to add to the system. Here we work with
@@ -137,12 +144,11 @@ its conductance as a function of energy:
     :start-after: #HIDDEN_BEGIN_buzn
     :end-before: #HIDDEN_END_buzn
 
-Currently **CHANGE**, there is only one algorithm implemented to compute the
-conductance: :func:`kwant.solve <kwant.solvers.common.SparseSolver.solve>`
-which computes the scattering matrix `smatrix` solving a sparse linear system.
-`smatrix` itself allows you to directly compute the total
-transmission probability from lead 0 to lead 1 as
-``smatrix.transmission(1, 0)``.
+We use ``kwant.solve`` which is a short name for `kwant.solvers.default.solve`
+of the default solver module `kwant.solvers.default`.  ``kwant.solve`` computes
+the scattering matrix ``smatrix`` solving a sparse linear system.  ``smatrix``
+itself allows to directly compute the total transmission probability from lead
+0 to lead 1 as ``smatrix.transmission(1, 0)``.
 
 Finally we can use `matplotlib` to make a plot of the computed data
 (although writing to file and using an external viewer such as

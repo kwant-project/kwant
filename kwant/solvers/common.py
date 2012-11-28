@@ -22,16 +22,12 @@ class SparseSolver(object):
     """Solver class for computing physical quantities based on solving
     a liner system of equations.
 
-    `SparseSolver` provides the following functionality:
-
-    - `solve`: Compute a scattering matrix or Green's function
-    - `ldos`: Compute the local density of states
-
     `SparseSolver` is an abstract base class.  It cannot be instantiated as it
     does not specify the actual linear solve step.  In order to be directly
-    usable, a derived class must implement the method
+    usable, a derived class must implement the methods
 
-    - `solve_linear_sys`, that solves a linear system of equations
+    - `_factorize` and `_solve_linear_sys`, that solve a linear system of
+      equations
 
     and the following properties:
 
@@ -43,14 +39,25 @@ class SparseSolver(object):
       in a call to `solve_linear_sys`, when the full solution is computed (i.e.
       kept_vars covers all entries in the solution). This should be not too big
       too avoid excessive memory usage, but for some solvers not too small for
-      performance reasons.  Only used for `ldos` in this class.
+      performance reasons.
     """
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def _factorized(self, a):
-        """Return a preprocessed version of a matrix for the use with
-        `solve_linear_sys`."""
+        """
+        Return a preprocessed version of a matrix for the use with
+        `solve_linear_sys`.
+
+        Parameters
+        ----------
+        a : a scipy.sparse.coo_matrix sparse matrix.
+
+        Returns
+        -------
+        factorized_a : object
+            factorized lhs to be used with `_solve_linear_sys`.
+        """
         pass
 
     @abc.abstractmethod
@@ -59,8 +66,20 @@ class SparseSolver(object):
         Solve the linar system `a x = b`, returning the part of
         the result indicated in kept_vars.
 
-        `factorized_a` is expected to be the result of `_factorize` for the
-        matrix a.
+        Parameters
+        ----------
+        factorized : object
+            The result of calling `_factorized` for the matrix a.
+        b : a sequence of matrices.
+            Sizes of these matrices may be smaller than needed, the missing
+            entries at the end are padded with zeros.
+        kept_vars : slice object or sequence of integers
+            A sequence of numbers of variables to keep in the solution
+
+        Returns
+        -------
+        output : NumPy matrix
+            Solution to the system of equations.
         """
         pass
 
@@ -73,20 +92,20 @@ class SparseSolver(object):
         Parameters
         ----------
         sys : kwant.system.FiniteSystem
-            low level system, containing the leads and the Hamiltonian of a
+            Low level system, containing the leads and the Hamiltonian of a
             scattering region.
-        out_leads : list of integers
-            numbers of leads where current or wave function is extracted
-        in_leads : list of integers
-            numbers of leads in which current or wave function is injected.
+        out_leads : sequence of integers
+            Numbers of leads where current or wave function is extracted
+        in_leads : sequence of integers
+            Numbers of leads in which current or wave function is injected.
         energy : number
-            excitation energy at which to solve the scattering problem.
+            Excitation energy at which to solve the scattering problem.
         force_realspace : bool
-            calculate Green's function between the outermost lead
+            Calculate Green's function between the outermost lead
             sites, instead of lead modes. This is almost always
             more computationally expensive and less stable.
         check_hermiticity : bool
-            check if Hamiltonian matrices are in fact Hermitian.
+            Check if Hamiltonian matrices are in fact Hermitian.
 
         Returns
         -------
@@ -250,28 +269,28 @@ class SparseSolver(object):
         Parameters
         ----------
         sys : `kwant.system.FiniteSystem`
-            low level system, containing the leads and the Hamiltonian of a
+            Low level system, containing the leads and the Hamiltonian of a
             scattering region.
         energy : number
-            excitation energy at which to solve the scattering problem.
-        out_leads : list of integers or None
-            numbers of leads where current or wave function is extracted.
+            Excitation energy at which to solve the scattering problem.
+        out_leads : sequence of integers or None
+            Numbers of leads where current or wave function is extracted.
             None is interpreted as all leads. Default is None.
-        in_leads : list of integers or None
-            numbers of leads in which current or wave function is injected.
+        in_leads : sequence of integers or None
+            Numbers of leads in which current or wave function is injected.
             None is interpreted as all leads. Default is None.
         force_realspace : bool
-            calculate Green's function between the outermost lead
+            Calculate Green's function between the outermost lead
             sites, instead of lead modes. This is almost always
             more computationally expensive and less stable.
         check_hermiticity : bool
-            check if the Hamiltonian matrices are Hermitian.
+            Check if the Hamiltonian matrices are Hermitian.
 
         Returns
         -------
-        output : `BlockResult`
-            see notes below and `BlockResult` docstring for more
-            information about the output format.
+        output : `~kwant.solvers.common.BlockResult`
+            See the notes below and `~kwant.solvers.common.BlockResult`
+            documentation.
 
         Notes
         -----
@@ -331,15 +350,15 @@ class SparseSolver(object):
         Parameters
         ----------
         sys : `kwant.system.FiniteSystem`
-            low level system, containing the leads and the Hamiltonian of the
+            Low level system, containing the leads and the Hamiltonian of the
             scattering region.
         energy : number
-            excitation energy at which to solve the scattering problem.
+            Excitation energy at which to solve the scattering problem.
 
         Returns
         -------
         ldos : a NumPy array
-            local density of states at each orbital of the system.
+            Local density of states at each orbital of the system.
         """
         for lead in fsys.leads:
             if not isinstance(lead, system.InfiniteSystem):
