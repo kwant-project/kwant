@@ -19,6 +19,14 @@ class Bands(object):
     (currently this must be a scalar as all infinite systems are quasi-1-d), it
     returns a NumPy array containing the eigenenergies of all modes at this
     momentum
+
+    Examples
+    --------
+    >>> bands = kwant.physics.Bands(some_sys)
+    >>> momenta = numpy.linspace(-numpy.pi, numpy.pi, 101)
+    >>> energies = [bands(k) for k in momenta]
+    >>> pyplot.plot(momenta, energies)
+    >>> pyplot.show()
     """
 
     def __init__(self, sys):
