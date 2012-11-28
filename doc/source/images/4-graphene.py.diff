@@ -42,12 +42,12 @@
  
  
  def plot_bandstructure(flead, momenta):
-     energies = kwant.physics.Bands(flead)
-     energy_list = [energies(k) for k in momenta]
+     bands = kwant.physics.Bands(flead)
+     energies = [bands(k) for k in momenta]
  
 -    pyplot.figure()
 +    fig = pyplot.figure()
-     pyplot.plot(momenta, energy_list)
+     pyplot.plot(momenta, energies)
 -    pyplot.xlabel("momentum [in units of (lattice constant)^-1]")
 -    pyplot.ylabel("energy [in units of t]")
 -    pyplot.show()

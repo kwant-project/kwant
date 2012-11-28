@@ -37,11 +37,11 @@ def make_lead(a=1, t=1.0, W=10):
 
 #HIDDEN_BEGIN_pejz
 def plot_bandstructure(lead, momenta):
-    energies = kwant.physics.Bands(lead)
-    energy_list = [energies(k) for k in momenta]
+    bands = kwant.physics.Bands(lead)
+    energies = [bands(k) for k in momenta]
 
     pyplot.figure()
-    pyplot.plot(momenta, energy_list)
+    pyplot.plot(momenta, energies)
     pyplot.xlabel("momentum [in units of (lattice constant)^-1]")
     pyplot.ylabel("energy [in units of t]")
     pyplot.show()
