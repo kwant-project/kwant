@@ -342,12 +342,9 @@ class SparseSolver(object):
 
         flhs = self._factorized(linsys.lhs)
         data = self._solve_linear_sys(flhs, linsys.rhs, linsys.kept_vars)
-        result = BlockResult(data, lead_info)
 
-        result.in_leads = in_leads
-        result.out_leads = out_leads
+        return BlockResult(data, lead_info, out_leads, in_leads)
 
-        return result
 
     def ldos(self, fsys, energy=0):
         """
@@ -444,12 +441,11 @@ class WaveFunc(object):
         return result.transpose()
 
 
-class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
+class BlockResult(object):
     """
     Solution of a transport problem, subblock of retarded Green's function.
 
-    This class is derived from ``namedtuple('BlockResultTuple', ['data',
-    'lead_info'])``. In addition to direct access to `data` and `lead_info`,
+    In addition to direct access to `data` and `lead_info`,
     this class also supports a higher level interface via its methods.
 
     Instance Variables
@@ -460,28 +456,53 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
     lead_info : list of data
         a list with output of `kwant.physics.modes` for each lead defined as a
         builder, and self-energy for each lead defined as self-energy term.
+    out_leads : list of integers
+    in_leads : list of integers
+        indices of the leads where current is extracted (out) or injected (in).
+        Only those are listed for which BlockResult contains the calculated
+        result.
     """
+
+    def __init__(self, data, lead_info, out_leads, in_leads):
+        self.data = data
+        self.lead_info = lead_info
+        self.out_leads = out_leads
+        self.in_leads = in_leads
+
+        sizes = []
+        for i in self.lead_info:
+            if isinstance(i, tuple):
+                sizes.append(i[2])
+            else:
+                sizes.append(i.shape[0])
+        self._sizes = np.array(sizes)
+
+        self._in_offsets = np.zeros(len(self.in_leads) + 1, int)
+        self._in_offsets[1 :] = np.cumsum(self._sizes[self.in_leads])
+        self._out_offsets = np.zeros(len(self.out_leads) + 1, int)
+        self._out_offsets[1 :] = np.cumsum(self._sizes[self.out_leads])
+
     def block_coords(self, lead_out, lead_in):
         """
         Return slices corresponding to the block from lead_in to lead_out.
         """
+        return self.out_block_coords(lead_out), self.in_block_coords(lead_in)
+
+    def out_block_coords(self, lead_out):
+        """Return a slice corresponding to the rows in the block corresponding
+        to lead_out
+        """
         lead_out = self.out_leads.index(lead_out)
-        lead_in = self.in_leads.index(lead_in)
-        if not hasattr(self, '_sizes'):
-            sizes = []
-            for i in self.lead_info:
-                if isinstance(i, tuple):
-                    sizes.append(i[2])
-                else:
-                    sizes.append(i.shape[0])
-            self._sizes = np.array(sizes)
-            self._in_offsets = np.zeros(len(self.in_leads) + 1, int)
-            self._in_offsets[1 :] = np.cumsum(self._sizes[self.in_leads])
-            self._out_offsets = np.zeros(len(self.out_leads) + 1, int)
-            self._out_offsets[1 :] = np.cumsum(self._sizes[self.out_leads])
         return slice(self._out_offsets[lead_out],
-                     self._out_offsets[lead_out + 1]), \
-               slice(self._in_offsets[lead_in], self._in_offsets[lead_in + 1])
+                     self._out_offsets[lead_out + 1])
+
+    def in_block_coords(self, lead_in):
+        """Return a slice corresponding to the columns in the block
+        corresponding to lead_in
+        """
+        lead_in = self.in_leads.index(lead_in)
+        return slice(self._in_offsets[lead_in],
+                     self._in_offsets[lead_in + 1])
 
     def submatrix(self, lead_out, lead_in):
         """Return the matrix elements from lead_in to lead_out."""
@@ -523,3 +544,8 @@ class BlockResult(namedtuple('BlockResultTuple', ['data', 'lead_info'])):
                 result += 2 * np.trace(np.dot(gamma, gf)).imag + N
 
             return result
+
+    def __repr__(self):
+        return "BlockResult(data=%r, lead_info=%r, " \
+            "out_leads=%r, in_leads=%r)" % (self.data, self.lead_info,
+                                            self.out_leads, self.in_leads)

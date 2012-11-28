@@ -31,16 +31,17 @@ def test_output(solve):
     fsys = system.finalized()
 
     result1 = solve(fsys)
-    s, modes1 = result1
+    s, modes1 = result1.data, result1.lead_info
     assert s.shape == 2 * (sum(i[2] for i in modes1),)
     s1 = result1.submatrix(1, 0)
-    s2, modes2 = solve(fsys, 0, [1], [0])
+    result2 = solve(fsys, 0, [1], [0])
+    s2, modes2 = result2.data, result2.lead_info
     assert s2.shape == (modes2[1][2], modes2[0][2])
     assert_almost_equal(s1, s2)
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
     assert_raises(ValueError, solve, fsys, 0, [])
-    modes = solve(fsys)[1]
+    modes = solve(fsys).lead_info
     h = fsys.leads[0].slice_hamiltonian()
     t = fsys.leads[0].inter_slice_hopping()
     modes1 = kwant.physics.modes(h, t)
@@ -68,7 +69,7 @@ def test_one_lead(solve):
     system.attach_lead(lead)
     fsys = system.finalized()
 
-    s = solve(fsys)[0]
+    s = solve(fsys).data
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
 
@@ -96,22 +97,22 @@ def test_smatrix_shape(solve):
 
     lead0_val = 4
     lead1_val = 4
-    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0])[0]
+    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0]).data
     assert s.shape == (0, 0)
 
     lead0_val = 2
     lead1_val = 2
-    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0])[0]
+    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0]).data
     assert s.shape == (1, 1)
 
     lead0_val = 4
     lead1_val = 2
-    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0])[0]
+    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0]).data
     assert s.shape == (1, 0)
 
     lead0_val = 2
     lead1_val = 4
-    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0])[0]
+    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0]).data
     assert s.shape == (0, 1)
 
 
@@ -120,7 +121,7 @@ def test_smatrix_shape(solve):
 def test_two_equal_leads(solve):
     def check_fsys():
         sol = solve(fsys)
-        s, leads = sol[:2]
+        s, leads = sol.data, sol.lead_info
         assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                             np.identity(s.shape[0]))
         n_modes = leads[0][2]
@@ -177,7 +178,8 @@ def test_graph_system(solve):
     system.attach_lead(lead.reversed())
     fsys = system.finalized()
 
-    s, leads = solve(fsys)[: 2]
+    result = solve(fsys)
+    s, leads = result.data, result.lead_info
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
     n_modes = leads[0][2]
@@ -210,7 +212,8 @@ def test_singular_graph_system(solve):
     system.attach_lead(lead.reversed())
     fsys = system.finalized()
 
-    s, leads = solve(fsys)[: 2]
+    result = solve(fsys)
+    s, leads = result.data, result.lead_info
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
     n_modes = leads[0][2]
@@ -223,7 +226,7 @@ def test_singular_graph_system(solve):
 
 
 # This test features inside the onslice Hamiltonian a hopping matrix with more
-# zero eigenvalues than the lead hopping matrix. The previous version of the
+# zero eigenvalues than the lead hopping matrix. Older version of the
 # sparse solver failed here.
 def test_tricky_singular_hopping(solve):
     system = kwant.Builder()
@@ -249,7 +252,7 @@ def test_tricky_singular_hopping(solve):
     system.leads.append(kwant.builder.BuilderLead(lead, interface))
     fsys = system.finalized()
 
-    s = solve(fsys, -1.3)[0]
+    s = solve(fsys, -1.3).data
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
 
@@ -349,8 +352,8 @@ def test_very_singular_leads(solve):
     sys.attach_lead(left_lead)
     sys.attach_lead(right_lead)
     fsys = sys.finalized()
-    result = solve(fsys)
-    assert [i[2] for i in result[1]] == [0, 2]
+    leads = solve(fsys).lead_info
+    assert [i[2] for i in leads] == [0, 2]
 
 
 def test_ldos(ldos):
