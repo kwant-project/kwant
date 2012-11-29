@@ -26,9 +26,10 @@ class Site(tuple):
     Parameters
     ----------
     group : an instance of `SiteGroup`
-        the 'type' of the site.
+        The 'type' of the site.
     tag : a hashable python object
-        the personal idenifier of the site e. g. its number.
+        The unique identifier of the site within the site group, typically a
+        vector of integers.
 
     Attributes
     ----------
@@ -38,7 +39,7 @@ class Site(tuple):
     Raises
     ------
     ValueError
-        If ``tag`` is not a proper tag for ``group``.
+        If `tag` is not a proper tag for `group`.
 
     Notes
     -----
