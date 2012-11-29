@@ -264,7 +264,7 @@ class SparseSolver(object):
     def solve(self, sys, energy=0, out_leads=None, in_leads=None,
               force_realspace=False, check_hermiticity=True):
         """
-        Calculate a Green's function of a system.
+        Compute the scattering matrix or Green's function between leads.
 
         Parameters
         ----------
@@ -273,17 +273,19 @@ class SparseSolver(object):
             scattering region.
         energy : number
             Excitation energy at which to solve the scattering problem.
-        out_leads : sequence of integers or None
-            Numbers of leads where current or wave function is extracted.
-            None is interpreted as all leads. Default is None.
-        in_leads : sequence of integers or None
+        out_leads : sequence of integers or ``None``
+            Numbers of leads where current or wave function is extracted.  None
+            is interpreted as all leads. Default is ``None`` and means "all
+            leads".
+        in_leads : sequence of integers or ``None``
             Numbers of leads in which current or wave function is injected.
-            None is interpreted as all leads. Default is None.
-        force_realspace : bool
+            None is interpreted as all leads. Default is ``None`` and means
+            "all leads".
+        force_realspace : ``bool``
             Calculate Green's function between the outermost lead
             sites, instead of lead modes. This is almost always
             more computationally expensive and less stable.
-        check_hermiticity : bool
+        check_hermiticity : ``bool``
             Check if the Hamiltonian matrices are Hermitian.
 
         Returns
@@ -294,27 +296,31 @@ class SparseSolver(object):
 
         Notes
         -----
-        Both in_leads and out_leads must be sorted and must only contain
+        This function can be used to calculate the conductance and other
+        transport properties of a system.  See the documentation for its output
+        type, `~kwant.solvers.common.BlockResult`.
+
+        It returns an object encapsulating the Green's function elements
+        between the desired leads. For leads defined as a self-energy, the
+        result is just the real-space retarded Green's function between the
+        system sites interfacing the leads in `in_leads` and those interfacing
+        the leads in `out_leads`. If, as is usually the case, the leads are
+        defined as tight-binding systems, then the Green's function from
+        incoming to outgoing modes is returned (more commonly known as the
+        scattering matrix).  If some leads are defined via a self-energy, and
+        some as tight-binding systems, the result has Green's function's
+        elements between modes and sites.  The returned object also contains
+        information about the modes or self-energies of the leads.
+
+        If `force_realspace` is set to ``True`` all leads will be treated as if
+        they would be defined in terms of self energies.  The returned Green's
+        function will be thus the retarded Green's function between sites in
+        real space, just like if the tradidional RGF algorithm would have been
+        used.  Enabling this option is more computationally expensive and can
+        be less stable.
+
+        Both `in_leads` and `out_leads` must be sorted and may only contain
         unique entries.
-
-        Returns the Green's function elements between in_leads and
-        out_leads. If the leads are defined as a self-energy, the result is
-        just the real-space retarded Green's function between from in_leads
-        to out_leads. If the leads are defined as tight-binding systems,
-        then Green's function from incoming to outgoing modes is
-        returned. Also returned is a list containing the output of
-        `kwant.physics.modes` for the leads which are defined as builders,
-        and self-energies for leads defined via self-energy. This list
-        allows to split the Green's function into blocks corresponding to
-        different leads. The Green's function elements between incoming and
-        outgoing modes form the scattering matrix of the system. If some
-        leads are defined via self-energy, and some as tight-binding
-        systems, result has Green's function's elements between modes and
-        sites.
-
-        Alternatively, if force_realspace=True is used, G^R is returned
-        always in real space, however this option is more computationally
-        expensive and can be less stable.
         """
 
         n = len(sys.lead_interfaces)
