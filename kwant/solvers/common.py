@@ -443,10 +443,22 @@ class WaveFunc(object):
 
 class BlockResult(object):
     """
-    Solution of a transport problem, subblock of retarded Green's function.
+    Solution of a transport problem, subblock of retarded Green's function
+    or scattering matrix.
 
-    In addition to direct access to `data` and `lead_info`,
-    this class also supports a higher level interface via its methods.
+    Transport properties can be easily accessed using the
+    `~BlockResult.transmission` method (don't be fooled by the name,
+    it can also compute reflection, which is just transmission from one
+    lead back into the same lead.)
+
+    `BlockResult` however also allows for a more direct access to the result:
+    The data stored in `BlockResult` is either a real-space Green's
+    function (e.g. if ``force_realspace=True`` in
+    `~kwant.solvers.default.solve`) or a scattering matrix with respect to
+    lead modes. The details of this data can be directly accessed through
+    the instance variables `data` and `lead_info`. Subblocks of data
+    corresponding to particular leads are conveniently obtained by
+    `~BlockResult.submatrix`.
 
     Instance Variables
     ------------------
@@ -454,13 +466,13 @@ class BlockResult(object):
         a matrix containing all the requested matrix elements of Green's
         function.
     lead_info : list of data
-        a list with output of `kwant.physics.modes` for each lead defined as a
-        builder, and self-energy for each lead defined as self-energy term.
-    out_leads : list of integers
-    in_leads : list of integers
-        indices of the leads where current is extracted (out) or injected (in).
-        Only those are listed for which BlockResult contains the calculated
-        result.
+        a list with output of `kwant.physics.modes` for each lead
+        defined as a builder, and self-energy for each lead defined as
+        self-energy term.
+    out_leads, in_leads : list of integers
+        indices of the leads where current is extracted (out) or injected
+        (in). Only those are listed for which BlockResult contains the
+        calculated result.
     """
 
     def __init__(self, data, lead_info, out_leads, in_leads):
