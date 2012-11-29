@@ -1,15 +1,30 @@
 Roughly in order of importance.                                     -*-org-*-
 
-* Enhance the line argument of kwant.plotter.plot
-  It could understand "hopping kinds" in the same way possible_hoppings does.
+* Rethink site group equivalence
 
-* Provide nice support for graphene double layers
-  This could be done by allowing lattices to be shifted, or in some other way.
+* Make kwant run on windows
 
-* Benchmark MUMPS and check whether nested dissection would be useful.
-  If yes, implement it.
+* Implement "lead freezing"
 
-* Make kwant objects pickleable.
+* Add calculation of current density
+
+* Consider making the b parameter of _solve_linear_sys a matrix instead of a
+  list of matrices
+
+* Find a nice way to organize / deal with ldos or wave_func output when the
+  number of orbitals per site varies
+
+* Add a (tutorial?) example with kwant.plotter.map
+
+* fix physics.noise (docstring, __all__, etc.)
+
+* Verify that selective plotting works.
+
+* Write an RGF solver that uses graph/slicer.
+
+* Add support for easily adding magnetic field to a system.
+
+* Allow plotting of infinite systems
 
 * Use sparse linear algebra to calculate bands
   However, SciPy's sparse eigenvalues don't seem to work well.
@@ -18,9 +33,10 @@ Roughly in order of importance.                                     -*-org-*-
   The most easy way to do this is increasing the period of the lead.
   Alternatively, generalize modes and InfiniteSystem format.
 
-* Optionally show site coordinates when plotting a system.
+* Benchmark MUMPS and check whether nested dissection would be useful.
+  If yes, implement it.
 
-* Add support for easily adding magnetic field to a system.
+* Make kwant objects pickleable.
 
 * "shape" doesn't work for leads when only checking y (and not x)
   Make it aware of symmetries.
@@ -30,23 +46,16 @@ Roughly in order of importance.                                     -*-org-*-
   way to do it is to sort the sites in finalized builders.)
   One could than also RLE compress sites in finalized builders.
 
-* Selective plotting (function).
-
-* Do not save packed sites of neighbors.
-
-* Consider (optionally) only saving packed sites for which functions are called
+* In finalized leads, only keep the sites of the slice.
 
 * Generalize InfiniteSystem to multiple directions.
 
 * Add support for optimization of lead fundamental domains.
 
 * Write a module to generate "functional" random numbers.
-  This is a good starting point:
-  http://www.cs.umbc.edu/~olano/papers/GPUTEA.pdf
+  That module should probably use (hardware accelerated) AES encryption.
 
 * Incorprorate efficient correlated disorder using scipy.spatial.
-
-* Write an RGF/SM solver which uses graph/slicer.
 
 * Implement the C solver interface.
 
