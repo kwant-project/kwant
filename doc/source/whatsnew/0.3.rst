@@ -1,0 +1,4 @@
+What's New in kwant 0.3
+=======================
+
+This article explains the user-visible changes in kwant 0.3.
