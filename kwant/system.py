@@ -1,4 +1,4 @@
-"""Low-level interface of tight binding systems"""
+"""Low-level interface of systems"""
 
 from __future__ import division
 __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']

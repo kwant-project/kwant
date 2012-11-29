@@ -1,5 +1,5 @@
-:mod:`kwant.system` -- Low-level interface of tight binding systems
-*******************************************************************
+:mod:`kwant.system` -- Low-level interface of systems
+*****************************************************
 
 .. currentmodule:: kwant.system
 

@@ -3,9 +3,9 @@
 
 .. module:: kwant
 
-Along with the various modules documented in this reference, the top-level
-kwant package provides short names for a few widely used objects from
-several modules.
+The top-level kwant package serves as a container for sub-packages and does not
+have any functions of its own.  For convenience, short names are provided for a
+few widely used objects from the sub-packages:
 
 .. currentmodule:: kwant.builder
 
