@@ -3,41 +3,10 @@
 
 .. module:: kwant.linalg
 
-LU decomposition
-----------------
-.. autosummary::
-   :toctree: generated/
+This package wraps some selected LAPACK functionality not available via NumPy
+and also contains a Python-wrapper for MUMPS.  It is meant for internal use by
+kwant itself, but of course nothing prevents you from using it directly.
 
-   lu_factor
-   lu_solve
-   rcond_from_lu
-
-Schur decomposition
--------------------
-.. autosummary::
-   :toctree: generated/
-
-   convert_r2c_gen_schur
-   convert_r2c_schur
-   evecs_from_gen_schur
-   evecs_from_schur
-   gen_schur
-   order_gen_schur
-   order_schur
-   schur
-
-Eigendecomposition
-------------------
-.. autosummary::
-   :toctree: generated/
-
-   gen_eig
-
-
-Submodules
-----------
-.. toctree::
-   :maxdepth: 1
-
-
-   kwant.linalg.lapack
+The documentation of this package is not included here on purpose in order not
+to add too many things to this reference.  Please consult the source code
+directly.
