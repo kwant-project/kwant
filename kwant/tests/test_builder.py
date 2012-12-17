@@ -492,10 +492,47 @@ def test_iadd():
     sys += other_sys
     assert_equal(sys.leads, [lead0, lead1])
     expected = sorted([[(0,), 1], [(1,), 2], [(2,), 2]])
-    assert_equal(sorted(((s.tag, v) for s, v in sys.site_value_pairs())), 
+    assert_equal(sorted(((s.tag, v) for s, v in sys.site_value_pairs())),
                  expected)
     expected = sorted([[(0,), (1,), 1], [(1,), (2,), 1]])
     assert_equal(sorted(((a.tag, b.tag, v)
-                         for (a, b), v in sys.hopping_value_pairs())), 
+                         for (a, b), v in sys.hopping_value_pairs())),
                  expected)
 
+# y=0:    y=1:
+#
+# hhhh    hhhh
+# gggh    gggh
+# hhgh    hhgh
+# ghgh    hhgh
+#
+def test_possible_hoppings():
+    g = kwant.make_lattice(ta.identity(3))
+    h = kwant.make_lattice(ta.identity(3))
+    sym = kwant.TranslationalSymmetry((0, 2, 0))
+    sys = builder.Builder(sym)
+    sys[((h if max(x, y, z) % 2 else g)(x, y, z)
+         for x in range(4) for y in range(2) for z in range(4))] = None
+    for delta, group_a, group_b, n in [((1, 0, 0), g, h, 4),
+                                       ((1, 0, 0), h, g, 7),
+                                       ((0, 1, 0), g, h, 1),
+                                       ((0, 4, 0), h, h, 21),
+                                       ((0, 0, 1), g, h, 4)
+                                       ]:
+        ph = list(sys.possible_hoppings(delta, group_a, group_b))
+        assert_equal(len(ph), n)
+        ph = set(ph)
+        assert_equal(len(ph), n)
+
+        ph2 = list((
+                sym.to_fd(b, a) for a, b in
+                sys.possible_hoppings(ta.negative(delta), group_b, group_a)))
+        assert_equal(len(ph2), n)
+        ph2 = set(ph2)
+        assert_equal(ph2, ph)
+
+        for a, b in ph:
+            assert a.group is group_a
+            assert b.group is group_b
+            assert sym.to_fd(a) == a
+            assert_equal(a.tag - b.tag, delta)

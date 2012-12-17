@@ -889,12 +889,15 @@ class Builder(object):
         self.leads.extend(other_sys.leads)
         return self
 
-    def possible_hoppings(self, delta, group_b, group_a):
+    def possible_hoppings(self, delta, group_a, group_b):
         """Return all matching possible hoppings between existing sites.
 
         A hopping ``(a, b)`` matches precisely when the site group of ``a`` is
-        `group_a` and that of ``b`` is `group_b` and ``(a.tag - b.tag)``
-        (interpreted as vectors) equals to `delta`.
+        `group_a` and that of ``b`` is `group_b` and ``(a.tag - b.tag)`` is
+        equal to `delta`.
+
+        In other words, the matching hoppings have the form:
+        ``(group_a(x + delta), group_b(x))``
 
         Parameters
         ----------
@@ -910,13 +913,13 @@ class Builder(object):
         """
         H = self.H
         symtofd = self.symmetry.to_fd
-        d = -ta.array(delta, int)
-        for site0 in self.H:
-            if site0.group is not group_a:
+        delta = ta.array(delta, int)
+        for a in self.H:
+            if a.group is not group_a:
                 continue
-            site1 = Site(group_b, site0.tag + d, True)
-            if symtofd(site1) in H: # if site1 in self
-                yield site0, site1
+            b = Site(group_b, a.tag - delta, True)
+            if symtofd(b) in H:
+                yield a, b
 
     def attach_lead(self, lead_builder, origin=None):
         """Attach a lead to the builder, possibly adding missing sites.
