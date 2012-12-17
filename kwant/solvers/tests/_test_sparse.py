@@ -399,7 +399,6 @@ def test_wavefunc_ldos_consistency(wave_func, ldos):
     for lead in xrange(len(sys.leads)):
         temp = abs(wf(lead))
         temp **= 2
-        print type(temp), temp.shape
         ldos2 += temp.sum(axis=0)
     ldos2 *= (0.5 / np.pi)
 
