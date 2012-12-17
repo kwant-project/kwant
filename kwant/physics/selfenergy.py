@@ -722,8 +722,8 @@ def modes(h_onslice, h_hop, tol=1e6):
         # expected (lowest subband first, etc.)
 
         prop_ev = ev[propselect]
-        rsort = np.argsort((1j * np.log(prop_ev[rprop])).real)
-        lsort = np.argsort((-1j * np.log(prop_ev[lprop])).real)
+        rsort = np.argsort((-1j * np.log(prop_ev[rprop])).real)
+        lsort = np.argsort((1j * np.log(prop_ev[lprop])).real)
 
         vecs = np.c_[prop_vecs[n:, lprop][:, lsort],
                      prop_vecs[n:, rprop][:, rsort],
