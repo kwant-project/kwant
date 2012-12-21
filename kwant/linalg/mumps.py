@@ -57,11 +57,26 @@ def possible_orderings():
     return _possible_orderings
 
 
+_error_messages = {
+    -5 : "Not enough memory during analysis phase",
+    -6 : "Matrix is singular in structure",
+    -7 : "Not enough memory during analysis phase",
+    -10 : "Matrix is numerically singular",
+    -11 : "That's an error the Mumps programmers would like to hear about",
+    -12 : "That's an error the Mumps programmers would like to hear about",
+    -13 : "Not enough memory"
+}
+
 class MUMPSError(RuntimeError):
-    def __init__(self, error):
-        self.error = error
-        RuntimeError.__init__(self, "MUMPS failed with error " +
-                              str(error))
+    def __init__(self, infog):
+        self.error = infog[1]
+        if self.error in _error_messages:
+            msg = _error_messages[self.error] + \
+                " (Mumps error " + str(self.error) +")"
+        else:
+            msg = "MUMPS failed with error " + str(self.error)
+
+        RuntimeError.__init__(self, msg)
 
 
 class AnalysisStatistics(object):
@@ -224,7 +239,7 @@ class MUMPSContext(object):
         self.factored = False
 
         if self.mumps_instance.infog[1] < 0:
-            raise MUMPSError(self.mumps_instance.infog[1])
+            raise MUMPSError(self.mumps_instance.infog)
 
         self.analysis_stats = AnalysisStatistics(self.mumps_instance,
                                                  t2 - t1)
@@ -309,10 +324,10 @@ class MUMPSContext(object):
             self.mumps_instance.call()
             t2 = time.clock()
 
-            # error -9 (not enough allocated memory) is treated
+            # error -8, -9 (not enough allocated memory) is treated
             # specially, by increasing the memory relaxation parameter
             if self.mumps_instance.infog[1] < 0:
-                if self.mumps_instance.infog[1] == -9:
+                if self.mumps_instance.infog[1] in (-8, -9):
                     # double the additional memory
                     self.mumps_instance.icntl[14] *= 2
                 else:
