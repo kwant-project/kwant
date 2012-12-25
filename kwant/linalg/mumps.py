@@ -57,24 +57,24 @@ def possible_orderings():
     return _possible_orderings
 
 
-_error_messages = {
+error_messages = {
     -5 : "Not enough memory during analysis phase",
     -6 : "Matrix is singular in structure",
     -7 : "Not enough memory during analysis phase",
     -10 : "Matrix is numerically singular",
-    -11 : "That's an error the Mumps programmers would like to hear about",
-    -12 : "That's an error the Mumps programmers would like to hear about",
+    -11 : "The authors of MUMPS would like to hear about this",
+    -12 : "The authors of MUMPS would like to hear about this",
     -13 : "Not enough memory"
 }
 
 class MUMPSError(RuntimeError):
     def __init__(self, infog):
         self.error = infog[1]
-        if self.error in _error_messages:
-            msg = _error_messages[self.error] + \
-                " (Mumps error " + str(self.error) +")"
+        if self.error in error_messages:
+            msg = "{}. (MUMPS error {})".format(
+                error_messages[self.error], self.error)
         else:
-            msg = "MUMPS failed with error " + str(self.error)
+            msg = "MUMPS failed with error {}.".format(self.error)
 
         RuntimeError.__init__(self, msg)
 
