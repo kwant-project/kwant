@@ -52,6 +52,9 @@ After installation, tests can be run with::
 
     python -c 'import kwant; kwant.test()'
 
+The tutorial examples can be found in the directory ``tutorial`` inside the root
+directory of the kwant source distribution.
+
 
 System-specific instructions
 ============================
@@ -189,12 +192,86 @@ steps 3 and 5.
 Microsoft Windows
 -----------------
 
-It should be possible to run kwant under Microsoft Windows but so far no one
-has tried hard enough.  We will happily include Windows-specific installation
-instructions in this document once someone contributes them.
+This describes one way to build a 32 bit (win32) version of kwant without MUMPS
+on Windows using free software only.  These instructions were verified in April
+2013 with the following software versions: Windows XP SP3, Python 2.7.4,
+scipy-stack 13.4.9, mingw-get-inst-20120426, OpenBLAS 0.2.6.
 
-A good starting point should be the `free edition of the Enthought Python
-Distribution <http://www.enthought.com/products/epd_free.php>`_.
+32-bit kwant without MUMPS will be limited to rather small systems and will run
+significantly slower than a kwant with MUMPS.  Volunteers who would like to
+improve these instructions are welcome.
+
+1. Install the official win32 Python 2.7 distribution from `the official Python
+   download page <http://python.org/download/>`_.  See the point "Python 2.7.x
+   Windows Installer" there.
+
+2. Install the Python packages required by kwant (NumPy, SciPy, matplotlib).  An
+   easy way to do so is to install the `scipy-stack package
+   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy-stack>`_ (win32-py2.7)
+   kindly provided by Christoph Gohlke.  Please also note the instructions at
+   the top of that page.
+
+3. Install `MinGW <http://mingw.org/wiki/Getting_Started>`_, the "Minimalist GNU
+   for Windows" (look for "mingw-get-inst" on that page).  This is a version of
+   the GNU Compiler Collection (GCC) for Windows.  Check the boxes for the C,
+   C++, and Fortran compilers and the "MSYS Basic System" when asked about which
+   components to install.  Follow the instructions on the web page linked above
+   (section "Environment Settings") to append ``;C:\MinGW\bin`` to the value of
+   the PATH environment variable (or to create it).
+
+4. Make MinGW the default compiler for distutils: Create the file
+   ``c:\python27\lib\distutils\distutils.cfg`` (The exact path depends on where
+   Python has been installed) with the following contents:
+
+       [build]
+       compiler=mingw32
+
+5. Until this `bug in distutils's support for MinGW
+   <http://bugs.python.org/issue12641>`_ is fixed, work around it by editing
+   ``c:\python27/lib/distutils/cygwinccompiler.py`` and removing all the five
+   occurrences of the string ``-mno-cygwin``.
+
+   Now you have a complete environment for compiling Python extensions.  To be
+   able to build kwant, we need to install the required linear algebra
+   libraries.
+
+6. Download `OpenBLAS <http://xianyi.github.com/OpenBLAS/>`_ (the download link
+   is at the bottom of the page).  Unpack the archive and launch the "MinGW
+   shell".  Inside the shell, the command ``mount`` will inform about how the
+   "drives" of windows are mounted into the single file system of MSYS.
+   Typically, drive C will be /c/.
+
+   Go to the root directory of the OpenBLAS distribution and execute
+
+       mingw-get install msys-wget
+       mingw-get install msys-perl
+       make USE_THREAD=0
+
+   (If you do not want to forcefully disable threading for OpenBLAS, simply use
+   ``make``.)
+
+   This should create a file named like ``libopenblas_nehalem-r0.2.6.lib``
+   where the name of the architecture (here: nehalem) and the version might
+   differ in your case.  Copy this file as ``openblas.lib`` into the library
+   directory of MinGW:
+
+      cp libopenblas_nehalem-r0.2.6.lib /c/MinGW/lib/openblas.lib
+
+7. Unpack tinyarray, enter its directory. To build and install, run ::
+
+       c:\python27\python setup.py build
+       c:\python27\python setup.py install
+
+8. Inside the kwant source distribution's root directory create a file
+   ``build.conf`` with the following contents.::
+
+       [lapack]
+       libraries = openblas gfortran
+
+   Finally, build and install kwant::
+
+       c:\python27\python setup.py build
+       c:\python27\python setup.py install
 
 
 Build configuration
