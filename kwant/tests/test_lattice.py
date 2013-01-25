@@ -9,9 +9,10 @@
 from __future__ import division
 from math import sqrt
 import numpy as np
+import tinyarray as ta
 from nose.tools import assert_raises, assert_not_equal
 from numpy.testing import assert_equal
-from kwant import lattice, builder
+from kwant import lattice
 
 
 def test_make_lattice():
@@ -48,6 +49,7 @@ def test_translational_symmetry():
     ts = lattice.TranslationalSymmetry
     g2 = lattice.make_lattice(np.identity(2))
     g3 = lattice.make_lattice(np.identity(3))
+    shifted = lambda site, delta: site.group(*ta.add(site.tag, delta))
 
     sym = ts((0, 0, 4), (0, 5, 0), (0, 0, 2))
     assert_raises(ValueError, sym.add_site_group, g3)
@@ -81,7 +83,7 @@ def test_translational_symmetry():
         assert_equal(sym.which(site), (0, 0))
         assert_equal(sym2.which(site), (0,))
         for v in [(1, 0), (0, 1), (-1, 0), (0, -1), (5, 10), (-111, 573)]:
-            site2 = site.shifted(np.dot(v, transl_vecs))
+            site2 = shifted(site, np.dot(v, transl_vecs))
             assert not sym.in_fd(site2)
             assert (v[0] != 0) != sym2.in_fd(site2)
             assert_equal(sym.to_fd(site2), site)
@@ -90,8 +92,8 @@ def test_translational_symmetry():
             assert_equal(sym2.which(site2), v[:1])
 
             for hop in [(0, 0), (100, 0), (0, 5), (-2134, 3213)]:
-                assert_equal(sym.to_fd(site2, site2.shifted(hop)),
-                             (site, site.shifted(hop)))
+                assert_equal(sym.to_fd(site2, shifted(site2, hop)),
+                             (site, shifted(site, hop)))
 
 
 def test_translational_symmetry_reversed():

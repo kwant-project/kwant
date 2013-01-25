@@ -32,8 +32,6 @@ def test_site_groups():
     assert_equal(sys[sg(1)], 123)
     assert_raises(KeyError, sys.__getitem__, osg(1))
 
-    assert_equal(sg(-5).shifted((-2,), osg), osg(-7))
-
 
 class VerySimpleSymmetry(builder.Symmetry):
     def __init__(self, period):
@@ -47,11 +45,12 @@ class VerySimpleSymmetry(builder.Symmetry):
         return ta.array((site.tag[0] // self.period,), int)
 
     def act(self, element, a, b=None):
+        shifted = lambda site, delta: site.group(*ta.add(site.tag, delta))
         delta = (self.period * element[0],) + (len(a.tag) - 1) * (0,)
         if b is None:
-            return a.shifted(delta)
+            return shifted(a, delta)
         else:
-            return a.shifted(delta), b.shifted(delta)
+            return shifted(a, delta), shifted(b, delta)
 
 
 # The hoppings have to form a ring.  Some other implicit assumptions are also

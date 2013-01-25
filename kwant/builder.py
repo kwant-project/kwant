@@ -74,33 +74,6 @@ class Site(tuple):
             raise t(msg.format(repr(tag), repr(group), v))
         return tuple.__new__(cls, (group, tag))
 
-    def shifted(self, delta, group=None):
-        """Return a copy of the site, displaced by delta.
-
-        Parameters
-        ----------
-        delta : sequence of integers
-            The vector by which to displace the site.
-        group : `SiteGroup`
-            Site group of the returned site.  If no site group is provided, the
-            original one is kept.
-
-        Returns
-        -------
-        new_site : `Site`
-            A site shifted by `delta` with site group optionally set to
-            `group`.
-
-        Notes
-        -----
-        This method *works* only if the site for which it is called has a tag
-        which is a sequences of integers.  It *makes sense* only when this
-        sites lives on a regular lattice, like one provided by `kwant.lattice`.
-        """
-        if group is None:
-            group = self.group
-        return Site(group, ta.add(self.tag, delta))
-
     def __repr__(self):
         return 'Site({0}, {1})'.format(repr(self.group), repr(self.tag))
 
