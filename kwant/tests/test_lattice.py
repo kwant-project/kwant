@@ -52,7 +52,6 @@ def test_translational_symmetry():
     assert_raises(ValueError, sym.add_site_group, g2)
 
     # Test lattices with dimension smaller than dimension of space.
-
     g2in3 = lattice.make_lattice([[4, 4, 0], [4, -4, 0]])
     sym = ts((8, 0, 0))
     sym.add_site_group(g2in3)
@@ -89,6 +88,12 @@ def test_translational_symmetry():
             for hop in [(0, 0), (100, 0), (0, 5), (-2134, 3213)]:
                 assert_equal(sym.to_fd(site2, site2.shifted(hop)),
                              (site, site.shifted(hop)))
+
+    # Test act for hoppings belonging to different lattices.
+    g2p = lattice.make_lattice(2 * np.identity(2))
+    sym = ts(*(2 * np.identity(2)))
+    assert sym.act((1, 1), g2(0, 0), g2p(0, 0)) == (g2(2, 2), g2p(1, 1))
+    assert sym.act((1, 1), g2p(0, 0), g2(0, 0)) == (g2p(1, 1), g2(2, 2))
 
 
 def test_translational_symmetry_reversed():

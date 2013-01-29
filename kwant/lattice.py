@@ -334,9 +334,19 @@ class TranslationalSymmetry(builder.Symmetry):
             raise ValueError(msg.format(self.num_directions, element))
         if b is None:
             return builder.Site(a.group, a.tag + delta, True)
-        else:
+        elif b.group is a.group:
             return builder.Site(a.group, a.tag + delta, True), \
                 builder.Site(b.group, b.tag + delta, True)
+        else:
+            m_part = self._get_site_group_data(b.group)[0]
+            try:
+                delta2 = ta.dot(m_part, element)
+            except ValueError:
+                msg = 'Expecting a {0}-tuple group element, ' + \
+                      'but got `{1}` instead.'
+                raise ValueError(msg.format(self.num_directions, element))
+            return builder.Site(a.group, a.tag + delta, True), \
+                builder.Site(b.group, b.tag + delta2, True)
 
     def to_fd(self, a, b=None):
         return self.act(-self.which(a), a, b)
