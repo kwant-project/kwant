@@ -954,7 +954,6 @@ class Builder(object):
                 'different site groups. See tutorial for more details.'
             raise ValueError(msg.format(tuple(groups)))
 
-
         all_doms = list(sym.which(site)[0]
                         for site in self.H if sym.to_fd(site) in H)
         if origin is not None:
