@@ -15,9 +15,9 @@ from numpy.testing import assert_equal
 from kwant import lattice
 
 
-def test_make_lattice():
-    for lat in (lattice.make_lattice(((1, 0), (0.5, 0.5))),
-                lattice.make_lattice(((1, 0), (0.5, sqrt(3)/2)),
+def test_general():
+    for lat in (lattice.general(((1, 0), (0.5, 0.5))),
+                lattice.general(((1, 0), (0.5, sqrt(3)/2)),
                                      ((0, 0), (0, 1/sqrt(3))))):
         for sl in lat.sublattices:
             tag = (-5, 33)
@@ -29,7 +29,7 @@ def test_shape():
     def in_circle(pos):
         return pos[0] ** 2 + pos[1] ** 2 < 3
 
-    lat = lattice.make_lattice(((1, 0), (0.5, sqrt(3) / 2)),
+    lat = lattice.general(((1, 0), (0.5, sqrt(3) / 2)),
                                ((0, 0), (0, 1 / sqrt(3))))
     sites = list(lat.shape(in_circle, (0, 0)))
     sites_alt = list()
@@ -47,8 +47,8 @@ def test_shape():
 
 def test_translational_symmetry():
     ts = lattice.TranslationalSymmetry
-    g2 = lattice.make_lattice(np.identity(2))
-    g3 = lattice.make_lattice(np.identity(3))
+    g2 = lattice.general(np.identity(2))
+    g3 = lattice.general(np.identity(3))
     shifted = lambda site, delta: site.group(*ta.add(site.tag, delta))
 
     sym = ts((0, 0, 4), (0, 5, 0), (0, 0, 2))
@@ -57,7 +57,7 @@ def test_translational_symmetry():
     assert_raises(ValueError, sym.add_site_group, g2)
 
     # Test lattices with dimension smaller than dimension of space.
-    g2in3 = lattice.make_lattice([[4, 4, 0], [4, -4, 0]])
+    g2in3 = lattice.general([[4, 4, 0], [4, -4, 0]])
     sym = ts((8, 0, 0))
     sym.add_site_group(g2in3)
     sym = ts((8, 0, 1))
@@ -66,10 +66,10 @@ def test_translational_symmetry():
     # Test automatic fill-in of transverse vectors.
     sym = ts((1, 2))
     sym.add_site_group(g2)
-    assert_not_equal(sym.site_group_data[g2][2], 0)
+    assert_not_equal(sym.site_group_data[g2.canonical_repr][2], 0)
     sym = ts((1, 0, 2), (3, 0, 2))
     sym.add_site_group(g3)
-    assert_not_equal(sym.site_group_data[g3][2], 0)
+    assert_not_equal(sym.site_group_data[g3.canonical_repr][2], 0)
 
     transl_vecs = np.array([[10, 0], [7, 7]], dtype=int)
     sym = ts(*transl_vecs)
@@ -95,7 +95,7 @@ def test_translational_symmetry():
                              (site, shifted(site, hop)))
 
     # Test act for hoppings belonging to different lattices.
-    g2p = lattice.make_lattice(2 * np.identity(2))
+    g2p = lattice.general(2 * np.identity(2))
     sym = ts(*(2 * np.identity(2)))
     assert sym.act((1, 1), g2(0, 0), g2p(0, 0)) == (g2(2, 2), g2p(1, 1))
     assert sym.act((1, 1), g2p(0, 0), g2(0, 0)) == (g2p(1, 1), g2(2, 2))
@@ -119,7 +119,7 @@ def test_translational_symmetry_reversed():
               ([(3, 1, 1)], [(1, 4, 1), (1, 1, 5)])]
     for periods, other_vectors in params:
         sym = lattice.TranslationalSymmetry(*periods)
-        gr = lattice.make_lattice(np.identity(len(periods[0])))
+        gr = lattice.general(np.identity(len(periods[0])))
         sym.add_site_group(gr, other_vectors)
         rsym = sym.reversed()
         assert_equal_symmetry(sym, rsym.reversed())
@@ -127,3 +127,10 @@ def test_translational_symmetry_reversed():
         rsym2 = lattice.TranslationalSymmetry(*rperiods)
         rsym2.add_site_group(gr, other_vectors)
         assert_equal_symmetry(rsym, rsym2)
+
+
+def test_monatomic_lattice():
+    lat = lattice.square()
+    lat2 = lattice.general(np.identity(2))
+    lat3 = lattice.square(name='no')
+    assert len(set([lat, lat2, lat3, lat(0, 0), lat2(0, 0), lat3(0, 0)])) == 4

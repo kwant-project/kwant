@@ -13,8 +13,8 @@ from numpy.testing import assert_equal, assert_almost_equal
 import kwant
 
 n = 5
-chain = kwant.lattice.Chain()
-square = kwant.lattice.Square()
+chain = kwant.lattice.chain()
+square = kwant.lattice.square()
 
 
 # Test output sanity: that an error is raised if no output is requested,
@@ -349,7 +349,7 @@ def test_self_energy_reflection(solve):
 
 def test_very_singular_leads(solve):
     sys = kwant.Builder()
-    gr = kwant.lattice.Chain()
+    gr = kwant.lattice.chain()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
     sys.default_site_group = gr
@@ -366,7 +366,7 @@ def test_very_singular_leads(solve):
 
 def test_ldos(ldos):
     sys = kwant.Builder()
-    gr = kwant.lattice.Chain()
+    gr = kwant.lattice.chain()
     lead = kwant.Builder(kwant.TranslationalSymmetry(gr.vec((1,))))
     sys.default_site_group = lead.default_site_group = gr
     sys[(0,)] = sys[(1,)] = lead[(0,)] = 0

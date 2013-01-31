@@ -8,7 +8,7 @@ General
 .. autosummary::
    :toctree: generated/
 
-   make_lattice
+   general
    TranslationalSymmetry
    MonatomicLattice
    PolyatomicLattice
@@ -18,6 +18,6 @@ Library of lattices
 .. autosummary::
    :toctree: generated/
 
-   Chain
-   Honeycomb
-   Square
+   chain
+   honeycomb
+   square

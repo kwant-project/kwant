@@ -77,14 +77,13 @@ class Site(tuple):
     def __repr__(self):
         return 'Site({0}, {1})'.format(repr(self.group), repr(self.tag))
 
+    def __str__(self):
+        return '{1} of {0}'.format(str(self.group), str(self.tag))
+
     @property
     def pos(self):
         """Real space position of the site."""
         return self.group.pos(self.tag)
-
-
-# Counter used to give each newly created group an unique id.
-next_group_id = 0
 
 
 class SiteGroup(object):
@@ -92,7 +91,15 @@ class SiteGroup(object):
     Abstract base class for site groups.
 
     A site group is a 'type' of sites.  All the site groups must inherit from
-    this basic one.  They have to define the method `verify_tag`.
+    this basic one.  Site groups must be immutable and fully defined by their
+    initial arguments.  One of these arguments should be `name`, used to
+    distinguish otherwise identical site groups.  Every site group must have
+    an attribute `name` and an attribute `canonical_repr` which uniquely
+    identifies the group, and is also used for `repr(group)`. For efficiency
+    `canonical_repr` should be an interned string.
+
+    All site groups must define the method `normalize_tag` which brings a tag
+    to the format standard for this site group.
 
     Site groups which are intended for use with plotting should also provide a
     method `pos(tag)`, which returns a vector with real-space coordinates of
@@ -100,17 +107,26 @@ class SiteGroup(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self):
-        global next_group_id
-        self.group_id = next_group_id
-        next_group_id += 1
-
     def __repr__(self):
-        return '<{0} object: Site group {1}>'.format(
-            self.__class__.__name__, self.group_id)
+        return self.canonical_repr
+
+    def __str__(self):
+        return '{0} object {1}'.format(self.__class__, self.name)
 
     def __hash__(self):
-        return self.group_id
+        return hash(self.canonical_repr)
+
+    def __eq__(self, other):
+        try:
+            return self.canonical_repr == other.canonical_repr
+        except AttributeError:
+            return False
+
+    def __neq__(self, other):
+        try:
+            return self.canonical_repr != other.canonical_repr
+        except AttributeError:
+            return False
 
     @abc.abstractmethod
     def normalize_tag(self, tag):
@@ -146,6 +162,10 @@ class SimpleSiteGroup(SiteGroup):
     Due to its low storage efficiency for numbers it is not recommended to use
     `SimpleSiteGroup` when `kwant.lattice.MonatomicLattice` would also work.
     """
+
+    def __init__(self, name=None):
+        self.canonical_repr = '{0}({1})'.format(self.__class__, repr(name))
+
     def normalize_tag(self, tag):
         tag = tuple(tag)
         try:
@@ -873,9 +893,9 @@ class Builder(object):
     def possible_hoppings(self, delta, group_a, group_b):
         """Return all matching possible hoppings between existing sites.
 
-        A hopping ``(a, b)`` matches precisely when the site group of ``a`` is
-        `group_a` and that of ``b`` is `group_b` and ``(a.tag - b.tag)`` is
-        equal to `delta`.
+        A hopping ``(a, b)`` matches precisely when the site group of ``a``
+        equals `group_a` and that of ``b`` equals `group_b` and
+        ``(a.tag - b.tag)`` is equal to `delta`.
 
         In other words, the matching hoppings have the form:
         ``(group_a(x + delta), group_b(x))``
@@ -896,7 +916,7 @@ class Builder(object):
         symtofd = self.symmetry.to_fd
         delta = ta.array(delta, int)
         for a in self.H:
-            if a.group is not group_a:
+            if a.group != group_a:
                 continue
             b = Site(group_b, a.tag - delta, True)
             if symtofd(b) in H:

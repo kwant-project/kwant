@@ -26,7 +26,7 @@ def make_system(a=1, t=1.0, r=10):
     # `a` is the lattice constant (by default set to 1 for simplicity).
 
 #HIDDEN_BEGIN_qlyd
-    lat = kwant.lattice.Square(a)
+    lat = kwant.lattice.square(a)
 
     sys = kwant.Builder()
 

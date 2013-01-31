@@ -12,7 +12,7 @@ try:
 except ImportError:
     _no_mumps = True
 
-from kwant.lattice import Honeycomb
+from kwant.lattice import honeycomb
 from kwant import Builder
 from nose.tools import assert_equal, assert_true
 from numpy.testing.decorators import skipif
@@ -65,7 +65,7 @@ def test_schur_complement_with_dense():
 def test_error_minus_9(r=10):
     """Test if MUMPSError -9 is properly caught by increasing memory"""
 
-    graphene = Honeycomb()
+    graphene = honeycomb()
     a, b = graphene.sublattices
 
     def circle(pos):

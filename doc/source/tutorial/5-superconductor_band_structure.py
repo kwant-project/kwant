@@ -25,7 +25,7 @@ tau_z = tinyarray.array([[1, 0], [0, -1]])
 
 def make_lead(a=1, t=1.0, mu=0.7, Delta=0.1, W=10):
     # Start with an empty lead with a single square lattice
-    lat = kwant.lattice.Square(a)
+    lat = kwant.lattice.square(a)
 
     sym_lead = kwant.TranslationalSymmetry((-a, 0))
     lead = kwant.Builder(sym_lead)

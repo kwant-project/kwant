@@ -18,7 +18,7 @@ if plotter._mpl_enabled:
 def sys_2d(W=3, r1=3, r2=8):
     a = 1
     t = 1.0
-    lat = kwant.lattice.Square(a)
+    lat = kwant.lattice.square(a)
     sys = kwant.Builder()
 
     def ring(pos):
@@ -46,7 +46,7 @@ def sys_2d(W=3, r1=3, r2=8):
 
 
 def sys_3d(W=3, r1=2, r2=4, a=1, t=1.0):
-    lat = kwant.make_lattice(((a, 0, 0), (0, a, 0), (0, 0, a)))
+    lat = kwant.lattice.general(((a, 0, 0), (0, a, 0), (0, 0, a)))
     lat.nearest = (((1, 0, 0), lat, lat), ((0, 1, 0), lat, lat),
                    ((0, 0, 1), lat, lat))
     sys = kwant.Builder()

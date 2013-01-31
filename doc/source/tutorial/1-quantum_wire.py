@@ -22,7 +22,7 @@ sys = kwant.Builder()
 # Here, we are only working with square lattices
 #HIDDEN_BEGIN_suwo
 a = 1
-lat = kwant.lattice.Square(a)
+lat = kwant.lattice.square(a)
 #HIDDEN_END_suwo
 
 #HIDDEN_BEGIN_zfvr

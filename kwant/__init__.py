@@ -15,8 +15,8 @@ from .version import version as __version__
 from .builder import Builder
 __all__.append('Builder')
 
-from .lattice import make_lattice, TranslationalSymmetry
-__all__.extend(['make_lattice', 'TranslationalSymmetry'])
+from .lattice import TranslationalSymmetry
+__all__.extend(['TranslationalSymmetry'])
 
 # Make kwant.solvers.default.solve available as kwant.solve.
 solve = solvers.default.solve

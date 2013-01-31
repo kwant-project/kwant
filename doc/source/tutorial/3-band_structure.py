@@ -16,7 +16,7 @@ from matplotlib import pyplot
 #HIDDEN_BEGIN_zxip
 def make_lead(a=1, t=1.0, W=10):
     # Start with an empty lead with a single square lattice
-    lat = kwant.lattice.Square(a)
+    lat = kwant.lattice.square(a)
 
     sym_lead = kwant.TranslationalSymmetry((-a, 0))
     lead = kwant.Builder(sym_lead)

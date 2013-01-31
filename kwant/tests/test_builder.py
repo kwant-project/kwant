@@ -20,17 +20,20 @@ def test_site_groups():
     sys = builder.Builder()
     sg = builder.SimpleSiteGroup()
     osg = builder.SimpleSiteGroup()
+    yasg = builder.SimpleSiteGroup('another_name')
 
     assert_raises(KeyError, sys.__setitem__, (0, ), 7)
     sys[sg(0)] = 7
     assert_equal(sys[sg(0)], 7)
     assert_raises(KeyError, sys.__getitem__, (0, ))
 
+    assert len(set([sg, osg, sg('a'), osg('a'), yasg])) == 3
     sys.default_site_group = sg
     sys[1,] = 123
     assert_equal(sys[1,], 123)
     assert_equal(sys[sg(1)], 123)
-    assert_raises(KeyError, sys.__getitem__, osg(1))
+    assert_equal(sys[osg(1)], 123)
+    assert_raises(KeyError, sys.__getitem__, yasg(1))
 
 
 class VerySimpleSymmetry(builder.Symmetry):
@@ -263,7 +266,7 @@ def test_finalization():
 
     # Build scattering region from blueprint and test it.
     sys = builder.Builder()
-    sys.default_site_group = sg = kwant.make_lattice(ta.identity(2))
+    sys.default_site_group = sg = kwant.lattice.general(ta.identity(2))
     for site, value in sr_sites.iteritems():
         sys[site] = value
     for hop, value in sr_hops.iteritems():
@@ -373,7 +376,7 @@ def test_dangling():
 
 
 def test_builder_with_symmetry():
-    g = kwant.make_lattice(ta.identity(3))
+    g = kwant.lattice.general(ta.identity(3))
     sym = kwant.TranslationalSymmetry((0, 0, 3), (0, 2, 0))
     bob = builder.Builder(sym)
     bob.default_site_group = g
@@ -514,8 +517,8 @@ def test_iadd():
 # ghgh    hhgh
 #
 def test_possible_hoppings():
-    g = kwant.make_lattice(ta.identity(3))
-    h = kwant.make_lattice(ta.identity(3))
+    g = kwant.lattice.general(ta.identity(3), name='some_lattice')
+    h = kwant.lattice.general(ta.identity(3), name='another_lattice')
     sym = kwant.TranslationalSymmetry((0, 2, 0))
     sys = builder.Builder(sym)
     sys[((h if max(x, y, z) % 2 else g)(x, y, z)
@@ -539,7 +542,7 @@ def test_possible_hoppings():
         assert_equal(ph2, ph)
 
         for a, b in ph:
-            assert a.group is group_a
-            assert b.group is group_b
+            assert a.group == group_a
+            assert b.group == group_b
             assert sym.to_fd(a) == a
             assert_equal(a.tag - b.tag, delta)

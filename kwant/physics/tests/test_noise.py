@@ -13,7 +13,7 @@ import kwant
 from kwant.physics.noise import two_terminal_shotnoise
 
 n = 5
-chain = kwant.lattice.Chain()
+chain = kwant.lattice.chain()
 
 def _twoterminal_system():
     np.random.seed(11)

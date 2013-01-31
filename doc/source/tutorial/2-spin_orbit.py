@@ -32,7 +32,7 @@ sigma_z = tinyarray.array([[1, 0], [0, -1]])
 def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
     # Start with an empty tight-binding system and a single square lattice.
     # `a` is the lattice constant (by default set to 1 for simplicity).
-    lat = kwant.lattice.Square(a)
+    lat = kwant.lattice.square(a)
 
     sys = kwant.Builder()
 

@@ -13,7 +13,7 @@ import kwant
 
 def test_hamiltonian_submatrix():
     sys = kwant.Builder()
-    sys.default_site_group = kwant.lattice.Chain()
+    sys.default_site_group = kwant.lattice.chain()
     for i in xrange(3):
         sys[(i,)] = 0.5 * i
     for i in xrange(2):
@@ -46,7 +46,7 @@ def test_hamiltonian_submatrix():
 
     # Test for correct treatment of matrix input.
     sys = kwant.Builder()
-    sys.default_site_group = kwant.lattice.Chain()
+    sys.default_site_group = kwant.lattice.chain()
     sys[(0,)] = np.array([[0, 1j], [-1j, 0]])
     sys[(1,)] = np.array([[1]])
     sys[(2,)] = np.array([[2]])

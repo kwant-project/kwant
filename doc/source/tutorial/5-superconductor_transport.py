@@ -18,8 +18,8 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
                 mu=0.4, Delta=0.1, Deltapos=4, t=1.0):
     # Start with an empty tight-binding system and two square lattices,
     # corresponding to electron and hole degree of freedom
-    lat_e = kwant.lattice.Square(a)
-    lat_h = kwant.lattice.Square(a)
+    lat_e = kwant.lattice.square(a, name='e')
+    lat_h = kwant.lattice.square(a, name='h')
 #HIDDEN_END_zuuw
 
 #HIDDEN_BEGIN_pqmp

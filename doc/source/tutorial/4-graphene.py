@@ -22,8 +22,8 @@ from matplotlib import pyplot
 # Define the graphene lattice
 sin_30, cos_30 = (1 / 2, sqrt(3) / 2)
 #HIDDEN_BEGIN_hnla
-graphene = kwant.make_lattice([(1, 0), (sin_30, cos_30)],
-                              [(0, 0), (0, 1 / sqrt(3))])
+graphene = kwant.lattice.general([(1, 0), (sin_30, cos_30)],
+                                 [(0, 0), (0, 1 / sqrt(3))])
 a, b = graphene.sublattices
 #HIDDEN_END_hnla
 

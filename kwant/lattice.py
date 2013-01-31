@@ -8,7 +8,7 @@
 
 from __future__ import division
 
-__all__ = ['make_lattice', 'TranslationalSymmetry',
+__all__ = ['general', 'TranslationalSymmetry',
            'PolyatomicLattice', 'MonatomicLattice']
 
 from math import sqrt
@@ -17,10 +17,9 @@ import tinyarray as ta
 from . import builder
 
 
-def make_lattice(prim_vecs, basis=None):
+def general(prim_vecs, basis=None, name=''):
     """
-    Create a Bravais lattice of any dimensionality, with any number of basis
-    sites.
+    Create a Bravais lattice of any dimensionality, with any number of sites.
 
     Parameters
     ----------
@@ -28,6 +27,10 @@ def make_lattice(prim_vecs, basis=None):
         The primitive vectors of the Bravais lattice.
     basis : sequence of floats
         The coordinates of the basis sites inside the unit cell.
+    name : string or sequence of strings
+        Name of the lattice, or the list of names of all of the sublattices.
+        If the name of the lattice is given, the names of sublattices (if any)
+        are obtained by appending their number to the name of the lattice.
 
     Returns
     -------
@@ -40,9 +43,9 @@ def make_lattice(prim_vecs, basis=None):
     lattices.
     """
     if basis is None:
-        return MonatomicLattice(prim_vecs)
+        return MonatomicLattice(prim_vecs, name=name)
     else:
-        return PolyatomicLattice(prim_vecs, basis)
+        return PolyatomicLattice(prim_vecs, basis, name=name)
 
 
 class PolyatomicLattice(object):
@@ -57,6 +60,10 @@ class PolyatomicLattice(object):
         Primitive vectors of a Bravais lattice.
     basis : sequence of floats
         Coordinates of the basis sites inside the unit cell.
+    name : string or sequence of strings
+        Name of the lattice, or the list of names of all of the sublattices.
+        If the name of the lattice is given, the names of sublattices are
+        obtained by appending their number to the name of the lattice.
 
     Instance Variables
     ------------------
@@ -72,9 +79,13 @@ class PolyatomicLattice(object):
     -----
 
     """
-    def __init__(self, prim_vecs, basis):
+    def __init__(self, prim_vecs, basis, name=''):
         prim_vecs = ta.array(prim_vecs, float)
         dim = prim_vecs.shape[1]
+        if name is None:
+            name = ''
+        if isinstance(name, str):
+            name = [name + str(i) for i in range(len(basis))]
         if prim_vecs.shape[0] > dim:
             raise ValueError('Number of primitive vectors exceeds '
                              'the space dimensionality.')
@@ -82,8 +93,8 @@ class PolyatomicLattice(object):
         if basis.shape[1] != dim:
             raise ValueError('Basis dimensionality does not match '
                              'the space dimensionality.')
-        self.sublattices = [MonatomicLattice(prim_vecs, offset)
-                            for offset in basis]
+        self.sublattices = [MonatomicLattice(prim_vecs, offset, sname)
+                            for offset, sname in zip(basis, name)]
         # Sequence of primitive vectors of the lattice.
         self.prim_vecs = prim_vecs
 
@@ -162,7 +173,7 @@ class PolyatomicLattice(object):
         return ta.dot(int_vec, self.prim_vecs)
 
 
-class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
+class MonatomicLattice(builder.SiteGroup, PolyatomicLattice):
     """
     A site group of sites belonging to a Bravais lattice.
 
@@ -175,9 +186,12 @@ class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
         coordinates origin.
     """
 
-    def __init__(self, prim_vecs, offset=None):
+    def __init__(self, prim_vecs, offset=None, name=''):
         prim_vecs = ta.array(prim_vecs, float)
         dim = prim_vecs.shape[1]
+        if name is None:
+            name = ''
+        self.name = name
         if prim_vecs.shape[0] > dim:
             raise ValueError('Number of primitive vectors exceeds '
                              'the space dimensionality.')
@@ -193,8 +207,34 @@ class MonatomicLattice(PolyatomicLattice, builder.SiteGroup):
         self.inv_pv = ta.array(np.linalg.pinv(prim_vecs))
         self.offset = offset
 
-        builder.SiteGroup.__init__(self)
+        def short_array_repr(array):
+            full = ' '.join([i.lstrip() for i in repr(array).split('\n')])
+            return full[6 : -1]
+
+        msg = '{0}({1}, {2}, {3})'
+        cl = self.__module__ + '.' + self.__class__.__name__
+        self.canonical_repr = msg.format(cl, short_array_repr(self.prim_vecs),
+                                         short_array_repr(self.offset),
+                                         repr(self.name))
+        intern(self.canonical_repr)
         self.dim = dim
+
+        def short_array_str(array):
+            full = ', '.join([i.lstrip() for i in str(array).split('\n')])
+            return full[1 : -1]
+
+        if self.name != '':
+            msg = "MonoatomicLattice {0}, vectors {1}, origin {2}"
+            self.cached_str = msg.format(self.name,
+                                         short_array_str(self.prim_vecs),
+                                         short_array_str(self.offset))
+        else:
+            msg = "unnamed MonoatomicLattice, vectors {0}, origin [{1}]"
+            self.cached_str = msg.format(short_array_str(self.prim_vecs),
+                                         short_array_str(self.offset))
+
+    def __str__(self):
+        return self.cached_str
 
     def normalize_tag(self, tag):
         tag = ta.array(tag, int)
@@ -272,7 +312,7 @@ class TranslationalSymmetry(builder.Symmetry):
         ValueError
             If lattice shape of `gr` cannot have the given `periods`.
         """
-        if gr in self.site_group_data:
+        if gr.canonical_repr in self.site_group_data:
             raise KeyError('Group already processed, delete it from '
                            'site_group_data first.')
         inv = np.linalg.pinv(gr.prim_vecs)
@@ -313,7 +353,7 @@ class TranslationalSymmetry(builder.Symmetry):
 
         det_x_inv_m_part = det_x_inv_m[:num_dir, :]
         m_part = m[:, :num_dir]
-        self.site_group_data[gr] = (ta.array(m_part),
+        self.site_group_data[gr.canonical_repr] = (ta.array(m_part),
                                     ta.array(det_x_inv_m_part), det_m)
 
     @property
@@ -322,10 +362,10 @@ class TranslationalSymmetry(builder.Symmetry):
 
     def _get_site_group_data(self, group):
         try:
-            return self.site_group_data[group]
+            return self.site_group_data[group.canonical_repr]
         except KeyError:
             self.add_site_group(group)
-            return self.site_group_data[group]
+            return self.site_group_data[group.canonical_repr]
 
     def which(self, site):
         det_x_inv_m_part, det_m = self._get_site_group_data(site.group)[-2:]
@@ -340,7 +380,7 @@ class TranslationalSymmetry(builder.Symmetry):
             raise ValueError(msg.format(self.num_directions, element))
         if b is None:
             return builder.Site(a.group, a.tag + delta, True)
-        elif b.group is a.group:
+        elif b.group == a.group:
             return builder.Site(a.group, a.tag + delta, True), \
                 builder.Site(b.group, b.tag + delta, True)
         else:
@@ -366,39 +406,40 @@ class TranslationalSymmetry(builder.Symmetry):
         """
         periods = [[-i for i in j] for j in self.periods]
         result = TranslationalSymmetry(*periods)
-        for gr in self.site_group_data:
-            m_part, det_x_inv_m_part, det_m = self.site_group_data[gr]
+        for can_rep in self.site_group_data:
+            m_part, det_x_inv_m_part, det_m = self.site_group_data[can_rep]
             if self.num_directions % 2:
                 det_m = -det_m
             else:
                 det_x_inv_m_part = -det_x_inv_m_part
             m_part = -m_part
-            result.site_group_data[gr] = (m_part, det_x_inv_m_part, det_m)
+            result.site_group_data[can_rep] = (m_part, det_x_inv_m_part, det_m)
         return result
 
 
 ################ Library of lattices (to be extended)
 
-class Chain(MonatomicLattice):
-    def __init__(self, a=1):
-        MonatomicLattice.__init__(self, ((a,),))
-        self.nearest = [((1,), self, self)]
+def chain(a=1, name=''):
+    """Create a one-dimensional lattice."""
+    lat = MonatomicLattice(((a,),), name=name)
+    lat.nearest = [((1,), lat, lat)]
+    return lat
 
 
-class Square(MonatomicLattice):
-    def __init__(self, a=1):
-        MonatomicLattice.__init__(self, ((a, 0), (0, a)))
-        self.nearest = [((1, 0), self, self),
-                        ((0, 1), self, self)]
+def square(a=1, name=''):
+    """Create a square lattice."""
+    lat = MonatomicLattice(((a, 0), (0, a)), name=name)
+    lat.nearest = [((1, 0), lat, lat),
+                    ((0, 1), lat, lat)]
+    return lat
 
 
-class Honeycomb(PolyatomicLattice):
-    def __init__(self, a=1):
-        PolyatomicLattice.__init__(
-            self,
-            ((a, 0), (0.5 * a, 0.5 * a * sqrt(3))),
-            ((0, 0), (0, a / sqrt(3))))
-        self.a, self.b = self.sublattices
-        self.nearest = [((0, 0), self.b, self.a),
-                        ((0, 1), self.b, self.a),
-                        ((-1, 1), self.b, self.a)]
+def honeycomb(a=1, name=''):
+    """Create a honeycomb lattice."""
+    lat = PolyatomicLattice(((a, 0), (0.5 * a, 0.5 * a * sqrt(3))),
+                            ((0, 0), (0, a / sqrt(3))), name=name)
+    lat.a, lat.b = lat.sublattices
+    lat.nearest = [((0, 0), lat.b, lat.a),
+                    ((0, 1), lat.b, lat.a),
+                    ((-1, 1), lat.b, lat.a)]
+    return lat

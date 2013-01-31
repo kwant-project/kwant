@@ -18,7 +18,7 @@ explicitly here to show how to define a new lattice:
     :start-after: #HIDDEN_BEGIN_hnla
     :end-before: #HIDDEN_END_hnla
 
-The first argument to the `~kwant.lattice.make_lattice` function is the list of
+The first argument to the `~kwant.lattice.general` function is the list of
 primitive vectors of the lattice; the second one is the coordinates of basis
 atoms.  The honeycomb lattice has two basis atoms. Each type of basis atom by
 itself forms a regular lattice of the same type as well, and those
