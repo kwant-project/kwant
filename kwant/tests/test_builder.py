@@ -8,8 +8,7 @@
 
 from __future__ import division
 from random import Random
-from StringIO import StringIO
-from nose.tools import assert_raises, assert_not_equal
+from nose.tools import assert_raises
 from numpy.testing import assert_equal
 import tinyarray as ta
 import kwant
@@ -109,6 +108,7 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
                  sorted((tuple(a.tag), tuple(b.tag), sys[a, b])
                         for a, b in sys.hoppings()))
 
+
 def test_construction_and_indexing():
     # Without symmetry
     sites = [(0, 0), (0, 1), (1, 0)]
@@ -180,8 +180,10 @@ def test_value_equality_and_identity():
 def random_onsite_hamiltonian(rng):
     return 2 * rng.random() - 1
 
+
 def random_hopping_integral(rng):
     return complex(2 * rng.random() - 1, 2 * rng.random() - 1)
+
 
 def check_onsite(fsys, sites, subset=False, check_values=True):
     freq = {}
@@ -198,6 +200,7 @@ def check_onsite(fsys, sites, subset=False, check_values=True):
     for site in sites:
         assert_equal(freq[site], 1)
 
+
 def check_hoppings(fsys, hops):
     assert_equal(fsys.graph.num_edges, 2 * len(hops))
     for edge_id, edge in enumerate(fsys.graph):
@@ -210,6 +213,7 @@ def check_hoppings(fsys, hops):
         else:
             assert (tail, head) in hops
             assert value is hops[tail, head]
+
 
 def test_finalization():
     """Test the finalization of finite and infinite systems.
@@ -366,7 +370,8 @@ def test_dangling():
     sys1 = make_system()
     while True:
         dangling = list(sys1.dangling())
-        if not dangling: break
+        if not dangling:
+            break
         del sys1[dangling]
 
     assert_equal(sorted(site.tag for site in sys0.sites()),
@@ -476,6 +481,7 @@ def test_neighbors_not_in_single_domain():
     sr.leads.append(builder.BuilderLead(lead, [lat(i, i) for i in range(3)]))
     assert_raises(ValueError, sr.finalized)
 
+
 def test_iadd():
     lat = builder.SimpleSiteGroup()
 
@@ -508,6 +514,7 @@ def test_iadd():
     assert_equal(sorted(((a.tag, b.tag, v)
                          for (a, b), v in sys.hopping_value_pairs())),
                  expected)
+
 
 # y=0:    y=1:
 #
