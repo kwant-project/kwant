@@ -27,9 +27,7 @@ def test_site_groups():
     assert_raises(KeyError, sys.__getitem__, (0, ))
 
     assert len(set([sg, osg, sg('a'), osg('a'), yasg])) == 3
-    sys.default_site_group = sg
-    sys[1,] = 123
-    assert_equal(sys[1,], 123)
+    sys[sg(1)] = 123
     assert_equal(sys[sg(1)], 123)
     assert_equal(sys[osg(1)], 123)
     assert_raises(KeyError, sys.__getitem__, yasg(1))
@@ -59,8 +57,8 @@ class VerySimpleSymmetry(builder.Symmetry):
 # made.
 def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
                                     failing_hoppings, sym=None):
+    gr = builder.SimpleSiteGroup()
     sys = builder.Builder(sym)
-    sys.default_site_group = builder.SimpleSiteGroup()
     t, V = 1.0j, 0.0
     sys[sites] = V
     for site in sites:
@@ -72,9 +70,9 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
     for hopping in failing_hoppings:
         assert_raises(KeyError, sys.__setitem__, hopping, t)
 
-    assert (5, 123) not in sys
-    assert (sites[0], (5, 123)) not in sys
-    assert ((7, 8), sites[0]) not in sys
+    assert (gr(5), gr(123)) not in sys
+    assert (sites[0], gr(5, 123)) not in sys
+    assert (gr(7, 8), sites[0]) not in sys
     for site in sites:
         assert site in sys
         assert_equal(sys[site], V)
@@ -86,7 +84,7 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
         assert_equal(sys[rev_hop], t.conjugate())
 
     assert_equal(sys.degree(sites[0]), 2)
-    assert_equal(sorted(s.tag for s in sys.neighbors(sites[0])),
+    assert_equal(sorted(s for s in sys.neighbors(sites[0])),
                  sorted([sites[1], sites[-1]]))
 
     del sys[hoppings]
@@ -94,9 +92,9 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
     sys[hoppings] = t
 
     del sys[sites[0]]
-    assert_equal(sorted(tuple(s.tag)
+    assert_equal(sorted(tuple(s)
                         for s in sys.sites()), sorted(sites_fd[1:]))
-    assert_equal(sorted((tuple(a.tag), tuple(b.tag))
+    assert_equal(sorted((a, b)
                         for a, b in sys.hoppings()),
                  sorted(hoppings_fd[1:-1]))
 
@@ -111,28 +109,29 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
 
 def test_construction_and_indexing():
     # Without symmetry
-    sites = [(0, 0), (0, 1), (1, 0)]
-    hoppings = [((0, 0), (0, 1)),
-                ((0, 1), (1, 0)),
-                ((1, 0), (0, 0))]
-    failing_hoppings = [((0, 1), (7, 8)), ((12, 14), (0, 1))]
+    gr = builder.SimpleSiteGroup()
+    sites = [gr(0, 0), gr(0, 1), gr(1, 0)]
+    hoppings = [(gr(0, 0), gr(0, 1)),
+                (gr(0, 1), gr(1, 0)),
+                (gr(1, 0), gr(0, 0))]
+    failing_hoppings = [(gr(0, 1), gr(7, 8)), (gr(12, 14), gr(0, 1))]
     check_construction_and_indexing(sites, sites, hoppings, hoppings,
                                     failing_hoppings)
 
     # With symmetry
-    sites = [(0, 0), (1, 1), (2, 1), (4, 2)]
-    sites_fd = [(0, 0), (1, 1), (0, 1), (0, 2)]
-    hoppings = [((0, 0), (1, 1)),
-                ((1, 1), (2, 1)),
-                ((2, 1), (4, 2)),
-                ((4, 2), (0, 0))]
-    hoppings_fd = [((0, 0), (1, 1)),
-                   ((1, 1), (2, 1)),
-                   ((0, 1), (2, 2)),
-                   ((0, 2), (-4, 0))]
-    failing_hoppings = [((0, 0), (0, 3)), ((0, 4), (0, 0)),
-                        ((0, 0), (2, 3)), ((2, 4), (0, 0)),
-                        ((4, 2), (6, 3)), ((6, 4), (4, 2))]
+    sites = [gr(0, 0), gr(1, 1), gr(2, 1), gr(4, 2)]
+    sites_fd = [gr(0, 0), gr(1, 1), gr(0, 1), gr(0, 2)]
+    hoppings = [(gr(0, 0), gr(1, 1)),
+                (gr(1, 1), gr(2, 1)),
+                (gr(2, 1), gr(4, 2)),
+                (gr(4, 2), gr(0, 0))]
+    hoppings_fd = [(gr(0, 0), gr(1, 1)),
+                   (gr(1, 1), gr(2, 1)),
+                   (gr(0, 1), gr(2, 2)),
+                   (gr(0, 2), gr(-4, 0))]
+    failing_hoppings = [(gr(0, 0), gr(0, 3)), (gr(0, 4), gr(0, 0)),
+                        (gr(0, 0), gr(2, 3)), (gr(2, 4), gr(0, 0)),
+                        (gr(4, 2), gr(6, 3)), (gr(6, 4), gr(4, 2))]
     sym = VerySimpleSymmetry(2)
     check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
                                     failing_hoppings, sym)
@@ -140,41 +139,42 @@ def test_construction_and_indexing():
 
 def test_hermitian_conjugation():
     def f(i, j):
+        i, j = i.tag, j.tag
         if j[0] == i[0] + 1:
             return ta.array([[1, 2j], [3 + 1j, 4j]])
         else:
             raise ValueError
 
     sys = builder.Builder()
-    sys.default_site_group = builder.SimpleSiteGroup()
-    sys[0,] = sys[1,] = ta.identity(2)
+    sg = builder.SimpleSiteGroup()
+    sys[sg(0)] = sys[sg(1)] = ta.identity(2)
 
-    sys[(0,), (1,)] = f
-    assert sys[(0,), (1,)] is f
-    assert isinstance(sys[(1,), (0,)], builder.HermConjOfFunc)
-    assert_equal(sys[(1,), (0,)]((1,), (0,)),
-                 sys[(0,), (1,)]((0,), (1,)).conjugate().transpose())
-    sys[(0,), (1,)] = sys[(1,), (0,)]
-    assert isinstance(sys[(0,), (1,)], builder.HermConjOfFunc)
-    assert sys[(1,), (0,)] is f
+    sys[sg(0), sg(1)] = f
+    assert sys[sg(0), sg(1)] is f
+    assert isinstance(sys[sg(1), sg(0)], builder.HermConjOfFunc)
+    assert_equal(sys[sg(1), sg(0)](sg(1), sg(0)),
+                 sys[sg(0), sg(1)](sg(0), sg(1)).conjugate().transpose())
+    sys[sg(0), sg(1)] = sys[sg(1), sg(0)]
+    assert isinstance(sys[sg(0), sg(1)], builder.HermConjOfFunc)
+    assert sys[sg(1), sg(0)] is f
 
 
 def test_value_equality_and_identity():
     m = ta.array([[1, 2], [3j, 4j]])
     sys = builder.Builder()
-    sys.default_site_group = builder.SimpleSiteGroup()
+    sg = builder.SimpleSiteGroup()
 
-    sys[0,] = m
-    sys[1,] = m
-    assert sys[1,] is m
+    sys[sg(0)] = m
+    sys[sg(1)] = m
+    assert sys[sg(1)] is m
 
-    sys[(0,), (1,)] = m
-    assert_equal(sys[(1,), (0,)], m.transpose().conjugate())
-    assert sys[(0,), (1,)] is m
+    sys[sg(0), sg(1)] = m
+    assert_equal(sys[sg(1), sg(0)], m.transpose().conjugate())
+    assert sys[sg(0), sg(1)] is m
 
-    sys[(1,), (0,)] = m
-    assert_equal(sys[(0,), (1,)], m.transpose().conjugate())
-    assert sys[(1,), (0,)] is m
+    sys[sg(1), sg(0)] = m
+    assert_equal(sys[sg(0), sg(1)], m.transpose().conjugate())
+    assert sys[sg(1), sg(0)] is m
 
 
 def random_onsite_hamiltonian(rng):
@@ -270,27 +270,26 @@ def test_finalization():
 
     # Build scattering region from blueprint and test it.
     sys = builder.Builder()
-    sys.default_site_group = sg = kwant.lattice.general(ta.identity(2))
+    sg = kwant.lattice.general(ta.identity(2))
     for site, value in sr_sites.iteritems():
-        sys[site] = value
+        sys[sg(*site)] = value
     for hop, value in sr_hops.iteritems():
-        sys[hop] = value
+        sys[sg(*hop[0]), sg(*hop[1])] = value
     fsys = sys.finalized()
     check_onsite(fsys, sr_sites)
     check_hoppings(fsys, sr_hops)
 
     # Build lead from blueprint and test it.
     lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)))
-    lead.default_site_group = sg
     for site, value in lead_sites.iteritems():
         shift = rng.randrange(-5, 6) * size
         site = site[0] + shift, site[1]
-        lead[site] = value
+        lead[sg(*site)] = value
     for (a, b), value in lead_hops.iteritems():
         shift = rng.randrange(-5, 6) * size
         a = a[0] + shift, a[1]
         b = b[0] + shift, b[1]
-        lead[a, b] = value
+        lead[sg(*a), sg(*b)] = value
     flead = lead.finalized()
     all_sites = list(lead_sites)
     all_sites.extend((x - size, y) for (x, y) in neighbors)
@@ -311,7 +310,7 @@ def test_finalization():
     a = rng.choice(lead_sites_list)
     b = rng.choice(possible_neighbors)
     b = b[0] + 2 * size, b[1]
-    lead[a, b] = random_hopping_integral(rng)
+    lead[sg(*a), sg(*b)] = random_hopping_integral(rng)
     assert_raises(ValueError, lead.finalized)
 
 
@@ -327,10 +326,10 @@ def test_hamiltonian_evaluation():
     edges = [(0, 1), (0, 2), (0, 3), (1, 2)]
 
     sys = builder.Builder()
-    sys.default_site_group = sg = builder.SimpleSiteGroup()
+    sg = builder.SimpleSiteGroup()
     sites = [sg(*tag) for tag in tags]
-    sys[tags] = f_onsite
-    sys[((tags[i], tags[j]) for (i, j) in edges)] = f_hopping
+    sys[(sg(*tag) for tag in tags)] = f_onsite
+    sys[((sg(*tags[i]), sg(*tags[j])) for (i, j) in edges)] = f_hopping
     fsys = sys.finalized()
 
     assert_equal(fsys.graph.num_nodes, len(tags))
@@ -355,11 +354,11 @@ def test_dangling():
         #       / \
         #    3-0---2-4-5  6-7  8
         sys = builder.Builder()
-        sys.default_site_group = builder.SimpleSiteGroup()
-        sys[((i,) for i in range(9))] = None
-        sys[[((0,), (1,)), ((1,), (2,)), ((2,), (0,))]] = None
-        sys[[((0,), (3,)), ((2,), (4,)), ((4,), (5,))]] = None
-        sys[(6,), (7,)] = None
+        sg = builder.SimpleSiteGroup()
+        sys[(sg(i) for i in range(9))] = None
+        sys[[(sg(0), sg(1)), (sg(1), sg(2)), (sg(2), sg(0))]] = None
+        sys[[(sg(0), sg(3)), (sg(2), sg(4)), (sg(4), sg(5))]] = None
+        sys[sg(6), sg(7)] = None
         return sys
 
     sys0 = make_system()
@@ -383,48 +382,47 @@ def test_dangling():
 def test_builder_with_symmetry():
     g = kwant.lattice.general(ta.identity(3))
     sym = kwant.TranslationalSymmetry((0, 0, 3), (0, 2, 0))
-    bob = builder.Builder(sym)
-    bob.default_site_group = g
+    sys = builder.Builder(sym)
 
     t, V = 1.0j, 0.0
-    hoppings = [((5, 0, 0), (0, 5, 0)),
-                ((0, 5, 0), (0, 0, 5)),
-                ((0, 0, 5), (5, 0, 0)),
-                ((0, 3, 0), (0, 0, 5)),
-                ((0, 7, -6), (5, 6, -6))]
-    hoppings_fd = [((5, 0, 0), (0, 5, 0)),
-                   ((0, 1, 0), (0, -4, 5)),
-                   ((0, 0, 2), (5, 0, -3)),
-                   ((0, 1, 0), (0, -2, 5)),
-                   ((0, 1, 0), (5, 0, 0))]
+    hoppings = [(g(5, 0, 0), g(0, 5, 0)),
+                (g(0, 5, 0), g(0, 0, 5)),
+                (g(0, 0, 5), g(5, 0, 0)),
+                (g(0, 3, 0), g(0, 0, 5)),
+                (g(0, 7, -6), g(5, 6, -6))]
+    hoppings_fd = [(g(5, 0, 0), g(0, 5, 0)),
+                   (g(0, 1, 0), g(0, -4, 5)),
+                   (g(0, 0, 2), g(5, 0, -3)),
+                   (g(0, 1, 0), g(0, -2, 5)),
+                   (g(0, 1, 0), g(5, 0, 0))]
 
-    bob[(a for a, b in hoppings)] = V
-    bob[hoppings] = t
+    sys[(a for a, b in hoppings)] = V
+    sys[hoppings] = t
 
     # TODO: Once tinyarray supports "<" the conversion to tuple can be removed.
-    assert_equal(sorted(tuple(site.tag) for site in bob.sites()),
-                 sorted(set(a for a, b in hoppings_fd)))
+    assert_equal(sorted(tuple(site.tag) for site in sys.sites()),
+                 sorted(set(tuple(a.tag) for a, b in hoppings_fd)))
     for sites in hoppings_fd:
         for site in sites:
-            assert site in bob
-            assert_equal(bob[site], V)
+            assert site in sys
+            assert_equal(sys[site], V)
 
     # TODO: Once tinyarray supports "<" the conversion to tuple can be removed.
     assert_equal(sorted((tuple(a.tag), tuple(b.tag))
-                        for a, b in bob.hoppings()),
-                 sorted(hoppings_fd))
+                        for a, b in sys.hoppings()),
+                 sorted((tuple(a.tag), tuple(b.tag)) for a, b in hoppings_fd))
     for hop in hoppings_fd:
         rhop = hop[1], hop[0]
-        assert hop in bob
-        assert rhop in bob
-        assert_equal(bob[hop], t)
-        assert_equal(bob[rhop], t.conjugate())
+        assert hop in sys
+        assert rhop in sys
+        assert_equal(sys[hop], t)
+        assert_equal(sys[rhop], t.conjugate())
 
-    del bob[(0, 6, -4), (0, 11, -9)]
-    assert ((0, 1, 0), (0, -4, 5)) not in bob
+    del sys[g(0, 6, -4), g(0, 11, -9)]
+    assert (g(0, 1, 0), g(0, -4, 5)) not in sys
 
-    del bob[0, 3, -3]
-    assert_equal(list((a.tag, b.tag) for a, b in bob.hoppings()),
+    del sys[g(0, 3, -3)]
+    assert_equal(list((a.tag, b.tag) for a, b in sys.hoppings()),
                  [((0, 0, 2), (5, 0, -3))])
 
 
@@ -432,33 +430,31 @@ def test_attach_lead():
     gr = builder.SimpleSiteGroup()
 
     sys = builder.Builder()
-    sys.default_site_group = gr
-    sys[(1,)] = 0
+    sys[gr(1)] = 0
     lead0 = builder.Builder(VerySimpleSymmetry(-2))
     assert_raises(ValueError, sys.attach_lead, lead0)
 
     lead0.default_site_group = gr
-    lead0[(0,)] = lead0[(1,)] = 1
+    lead0[gr(0)] = lead0[gr(1)] = 1
 
     sys2 = builder.Builder()
     sys2.default_site_group = gr
-    sys2[(1,)] = 0
+    sys2[gr(1)] = 0
     assert_raises(ValueError, sys2.attach_lead, lead0)
 
-    lead0[(0,), (1,)] = lead0[(0,), (2,)] = 1
+    lead0[gr(0), gr(1)] = lead0[gr(0), gr(2)] = 1
     assert_raises(ValueError, sys.attach_lead, lead0)
 
-    sys[(0,)] = 1
+    sys[gr(0)] = 1
     assert_raises(ValueError, sys.attach_lead, lead0, gr(5))
 
     sys = builder.Builder()
-    sys.default_site_group = gr
-    sys[(1,)] = 0
-    sys[(0,)] = 1
+    sys[gr(1)] = 0
+    sys[gr(0)] = 1
     sys.attach_lead(lead0)
     assert_equal(len(list(sys.sites())), 3)
     assert_equal(set(sys.leads[0].interface), set([gr(-1), gr(0)]))
-    sys[(-10,)] = sys[(-11,)] = 0
+    sys[gr(-10)] = sys[gr(-11)] = 0
     sys.attach_lead(lead0)
     assert_equal(set(sys.leads[1].interface), set([gr(-10), gr(-11)]))
     assert_equal(len(list(sys.sites())), 5)
@@ -470,15 +466,14 @@ def test_attach_lead():
 def test_neighbors_not_in_single_domain():
     sr = builder.Builder()
     lead = builder.Builder(VerySimpleSymmetry(-1))
-    lat = builder.SimpleSiteGroup()
-    sr.default_site_group = lead.default_site_group = lat
-    sr[((x, y) for x in range(3) for y in range(3) if x >= y)] = 0
-    sr[sr.possible_hoppings((1, 0), lat, lat)] = 1
-    sr[sr.possible_hoppings((0, 1), lat, lat)] = 1
-    lead[((0, y) for y in range(3))] = 0
-    lead[(((0, y), (1, y)) for y in range(3))] = 1
-    lead[(((0, y), (0, y + 1)) for y in range(2))] = 1
-    sr.leads.append(builder.BuilderLead(lead, [lat(i, i) for i in range(3)]))
+    gr = builder.SimpleSiteGroup()
+    sr[(gr(x, y) for x in range(3) for y in range(3) if x >= y)] = 0
+    sr[sr.possible_hoppings((1, 0), gr, gr)] = 1
+    sr[sr.possible_hoppings((0, 1), gr, gr)] = 1
+    lead[(gr(0, y) for y in range(3))] = 0
+    lead[((gr(0, y), gr(1, y)) for y in range(3))] = 1
+    lead[((gr(0, y), gr(0, y + 1)) for y in range(2))] = 1
+    sr.leads.append(builder.BuilderLead(lead, [gr(i, i) for i in range(3)]))
     assert_raises(ValueError, sr.finalized)
 
 

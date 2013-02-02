@@ -13,11 +13,11 @@ import kwant
 
 def test_hamiltonian_submatrix():
     sys = kwant.Builder()
-    sys.default_site_group = kwant.lattice.chain()
+    gr = kwant.lattice.chain()
     for i in xrange(3):
-        sys[(i,)] = 0.5 * i
+        sys[gr(i)] = 0.5 * i
     for i in xrange(2):
-        sys[(i,), (i + 1,)] = 1j * (i + 1)
+        sys[gr(i), gr(i + 1)] = 1j * (i + 1)
 
     sys2 = sys.finalized()
     mat = sys2.hamiltonian_submatrix()
@@ -46,23 +46,22 @@ def test_hamiltonian_submatrix():
 
     # Test for correct treatment of matrix input.
     sys = kwant.Builder()
-    sys.default_site_group = kwant.lattice.chain()
-    sys[(0,)] = np.array([[0, 1j], [-1j, 0]])
-    sys[(1,)] = np.array([[1]])
-    sys[(2,)] = np.array([[2]])
-    sys[(1,), (0,)] = np.array([[1, 2j]])
-    sys[(2,), (1,)] = np.array([[3j]])
+    sys[gr(0)] = np.array([[0, 1j], [-1j, 0]])
+    sys[gr(1)] = np.array([[1]])
+    sys[gr(2)] = np.array([[2]])
+    sys[gr(1), gr(0)] = np.array([[1, 2j]])
+    sys[gr(2), gr(1)] = np.array([[3j]])
     sys2 = sys.finalized()
     mat_dense = sys2.hamiltonian_submatrix()
     mat_sp = sys2.hamiltonian_submatrix(sparse=True).todense()
     np.testing.assert_array_equal(mat_sp, mat_dense)
 
     # Test for shape errors.
-    sys[(0,), (2,)] = np.array([[1, 2]])
+    sys[gr(0), gr(2)] = np.array([[1, 2]])
     sys2 = sys.finalized()
     assert_raises(ValueError, sys2.hamiltonian_submatrix)
     assert_raises(ValueError, sys2.hamiltonian_submatrix, None, None, True)
-    sys[(0,), (2,)] = 1
+    sys[gr(0), gr(2)] = 1
     sys2 = sys.finalized()
     assert_raises(ValueError, sys2.hamiltonian_submatrix)
     assert_raises(ValueError, sys2.hamiltonian_submatrix, None, None, True)

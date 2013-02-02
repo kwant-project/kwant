@@ -403,53 +403,35 @@ class SelfEnergy(Lead):
 
 ################ Builder class
 
-def is_sitelike(key):
-    """Determine whether key is similar to a site.
-
-    Returns True if `key` is potentially sitelike, False if `key` is
-    potentially hoppinglike, None if it is neither."""
-    if isinstance(key, Site):
-        return True
-    if not isinstance(key, tuple):
-        return None
-    if not key:
-        raise KeyError(key)
-    first = key[0]
-    return not (isinstance(first, Site) or isinstance(first, tuple))
-
 
 def for_each_in_key(key, f_site, f_hopp):
     """Perform an operation on each site or hopping in key.
 
     Key may be
-    * a single sitelike or hoppinglike object,
-    * a non-tuple iterable of sitelike objects,
-    * a non-tuple iterable of hoppinglike objects.
+    * a single site or hopping object,
+    * a non-tuple iterable of sites,
+    * a non-tuple iterable of hoppings.
     """
-    isl = is_sitelike(key)
-    if isl is not None:
-        if isl:
-            f_site(key)
-        else:
+    if isinstance(key, Site):
+        f_site(key)
+    elif isinstance(key, tuple):
             f_hopp(key)
-    elif isinstance(key, Iterable) and not isinstance(key, tuple):
+    elif isinstance(key, Iterable):
         ikey = iter(key)
         try:
             first = next(ikey)
         except StopIteration:
             return
-        isl = is_sitelike(first)
-        if isl is None:
-            raise KeyError(first)
+        if isinstance(first, Site):
+            f_site(first)
+            for site in ikey:
+                f_site(site)
+        elif isinstance(first, tuple):
+            f_hopp(first)
+            for hopping in ikey:
+                f_hopp(hopping)
         else:
-            if isl:
-                f_site(first)
-                for sitelike in ikey:
-                    f_site(sitelike)
-            else:
-                f_hopp(first)
-                for hoppinglike in ikey:
-                    f_hopp(hoppinglike)
+            raise KeyError(first)
     else:
         raise KeyError(key)
 
@@ -458,6 +440,7 @@ def for_each_in_key(key, f_site, f_hopp):
 # conjugate the value of the hopping (j, i).  Used by Builder and System.
 other = []
 
+
 def edges(seq):
     # izip, when given the same iterator twice, turns a sequence into a
     # sequence of pairs.
@@ -465,6 +448,7 @@ def edges(seq):
     result = izip(seq_iter, seq_iter)
     next(result)                # Skip the special loop edge.
     return result
+
 
 class Builder(object):
     """A tight binding system defined on a graph.
@@ -494,19 +478,8 @@ class Builder(object):
     symmetry : `Symmetry` or `None`
         The symmetry of the system.
 
-    Instance Variables
-    ------------------
-    default_site_group : `SiteGroup` or `None`
-        Defaults falue is `None`
-
     Notes
     -----
-    The instance variable `default_site_group` can be set to a `SiteGroup`
-    instance.  Then, whenever a `Site` would have been acceptable as parameter
-    to the methods of the builder, a non-site ``tag`` object will be also
-    accepted.  The ``tag`` will be converted into a site in the following way:
-    ``Site(default_site_group, tag)``.
-
     Builder instances automatically ensure that every hopping is Hermitian, so
     that if ``builder[a, b]`` has been set, there is no need to set
     ``builder[b, a]``.
@@ -556,7 +529,6 @@ class Builder(object):
         if symmetry is None:
             symmetry = NoSymmetry()
         self.symmetry = symmetry
-        self.default_site_group = None
         self.leads = []
         self.H = {}
 
@@ -623,49 +595,33 @@ class Builder(object):
         """
         result = object.__new__(Builder)
         result.symmetry = self.symmetry.reversed()
-        result.default_site_group = self.default_site_group
         if self.leads:
             raise ValueError('System to be reversed may not have leads.')
         result.leads = []
         result.H = self.H
         return result
 
-    def _to_site(self, sitelike):
-        """Convert `sitelike` to a site.
-
-        Sitelike can be
-        * a site, (It is returned unmodified.)
-        * a tag. (Works only if self.default_site_group is not None.)
-        """
-        if isinstance(sitelike, Site):
-            return sitelike
-        dsg = self.default_site_group
-        if dsg is not None:
-            return Site(dsg, sitelike)
-        raise KeyError(sitelike)
-
     def __nonzero__(self):
         return bool(self.H)
 
-    def _get_site(self, sitelike):
-        site = self.symmetry.to_fd(self._to_site(sitelike))
+    def _get_site(self, site):
+        site = self.symmetry.to_fd(site)
         try:
             return self.H[site][1]
         except KeyError:
-            raise KeyError(sitelike)
+            raise KeyError(site)
 
-    def _get_hopping(self, hoppinglike):
-        ts = self._to_site
+    def _get_hopping(self, hopping):
         sym = self.symmetry
         try:
-            a, b = hoppinglike
+            a, b = hopping
         except:
-            raise KeyError(hoppinglike)
+            raise KeyError(hopping)
         try:
-            a, b = sym.to_fd(ts(a), ts(b))
+            a, b = sym.to_fd(a, b)
             value = self._get_edge(a, b)
         except ValueError:
-            raise KeyError(hoppinglike)
+            raise KeyError(hopping)
         if value is other:
             if not sym.in_fd(b):
                 b, a = sym.to_fd(b, a)
@@ -680,54 +636,50 @@ class Builder(object):
 
     def __getitem__(self, key):
         """Get the value of a single site or hopping."""
-        isl = is_sitelike(key)
-        if isl is None:
-            raise KeyError(key)
-        if isl:
+        if isinstance(key, Site):
             return self._get_site(key)
-        else:
+        elif isinstance(key, tuple):
             return self._get_hopping(key)
+        else:
+            raise KeyError(key)
 
     def __contains__(self, key):
         """Tell whether the system contains a site or hopping."""
-        isl = is_sitelike(key)
-        if isl is None:
-            raise KeyError(key)
-        if isl:
-            site = self.symmetry.to_fd(self._to_site(key))
+        if isinstance(key, Site):
+            site = self.symmetry.to_fd(key)
             return site in self.H
-        else:
-            ts = self._to_site
+        elif isinstance(key, tuple):
             a, b = key
-            a, b = self.symmetry.to_fd(ts(a), ts(b))
+            a, b = self.symmetry.to_fd(a, b)
             hvhv = self.H.get(a, ())
             return b in islice(hvhv, 2, None, 2)
+        else:
+            raise KeyError(key)
 
-    def _set_site(self, sitelike, value):
+    def _set_site(self, site, value):
         """Set a single site."""
-        site = self.symmetry.to_fd(self._to_site(sitelike))
+        site = self.symmetry.to_fd(site)
         hvhv = self.H.setdefault(site, [])
         if hvhv:
             hvhv[1] = value
         else:
             hvhv[:] = [site, value]
 
-    def _set_hopping(self, hoppinglike, value):
+    def _set_hopping(self, hopping, value):
         """Set a single hopping."""
         # Avoid nested HermConjOfFunc instances.
         try:
-            a, b = hoppinglike
+            a, b = hopping
         except:
-            raise KeyError(hoppinglike)
+            raise KeyError(hopping)
         if isinstance(value, HermConjOfFunc):
             a, b = b, a
             value = value.function
 
-        ts = self._to_site
         sym = self.symmetry
 
         try:
-            a, b = sym.to_fd(ts(a), ts(b))
+            a, b = sym.to_fd(a, b)
             if sym.in_fd(b):
                 # These two following lines make sure we do not waste space by
                 # storing different instances of identical sites.  They also
@@ -744,7 +696,7 @@ class Builder(object):
                 self._set_edge(a, b, value)      # Might fail.
                 self._set_edge(b2, a2, other)    # Will work.
         except KeyError:
-            raise KeyError(hoppinglike)
+            raise KeyError(hopping)
 
     def __setitem__(self, key, value):
         """Set a single site/hopping or an iterable of them."""
@@ -752,10 +704,10 @@ class Builder(object):
                         lambda s: self._set_site(s, value),
                         lambda h: self._set_hopping(h, value))
 
-    def _del_site(self, sitelike):
+    def _del_site(self, site):
         """Delete a single site and all associated hoppings."""
         tfd = self.symmetry.to_fd
-        site = tfd(self._to_site(sitelike))
+        site = tfd(site)
         try:
             for neighbor in self._out_neighbors(site):
                 if neighbor in self.H:
@@ -765,20 +717,19 @@ class Builder(object):
                     a, b = tfd(neighbor, site)
                     self._del_edge(a, b)
         except ValueError:
-            raise KeyError(sitelike)
+            raise KeyError(site)
         del self.H[site]
 
-    def _del_hopping(self, hoppinglike):
+    def _del_hopping(self, hopping):
         """Delete a single hopping."""
-        ts = self._to_site
         sym = self.symmetry
 
         try:
-            a, b = hoppinglike
+            a, b = hopping
         except:
-            raise KeyError(hoppinglike)
+            raise KeyError(hopping)
         try:
-            a, b = sym.to_fd(ts(a), ts(b))
+            a, b = sym.to_fd(a, b)
             if sym.in_fd(b):
                 self._del_edge(a, b)
                 self._del_edge(b, a)
@@ -788,7 +739,7 @@ class Builder(object):
                 assert not sym.in_fd(a)
                 self._del_edge(b, a)
         except ValueError:
-            raise KeyError(hoppinglike)
+            raise KeyError(hopping)
 
     def __delitem__(self, key):
         """Delete a single site/hopping or an iterable of them."""
@@ -864,14 +815,14 @@ class Builder(object):
             if self._out_degree(site) < 2:
                 yield site
 
-    def degree(self, sitelike):
+    def degree(self, site):
         """Return the number of neighbors of a site."""
-        site = self.symmetry.to_fd(self._to_site(sitelike))
+        site = self.symmetry.to_fd(site)
         return self._out_degree(site)
 
-    def neighbors(self, sitelike):
+    def neighbors(self, site):
         """Return an iterator over all neighbors of a site."""
-        a = self.symmetry.to_fd(self._to_site(sitelike))
+        a = self.symmetry.to_fd(site)
         return self._out_neighbors(a)
 
     def __iadd__(self, other_sys):

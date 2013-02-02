@@ -14,7 +14,7 @@ import kwant
 
 n = 5
 chain = kwant.lattice.chain()
-square = kwant.lattice.square()
+sq = square = kwant.lattice.square()
 
 
 # Test output sanity: that an error is raised if no output is requested,
@@ -169,19 +169,17 @@ def test_graph_system(solve):
     np.random.seed(11)
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
-    lead.default_site_group = system.default_site_group = square
-
     h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
     h += h.conjugate().transpose()
     h *= 0.8
     t = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
     t1 = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
-    lead[0, 0] = system[[(0, 0), (1, 0)]] = h
-    lead[0, 1] = system[[(0, 1), (1, 1)]] = 4 * h
+    lead[sq(0, 0)] = system[[sq(0, 0), sq(1, 0)]] = h
+    lead[sq(0, 1)] = system[[sq(0, 1), sq(1, 1)]] = 4 * h
     for builder in [system, lead]:
-        builder[(0, 0), (1, 0)] = t
-        builder[(0, 1), (1, 0)] = t1
-        builder[(0, 1), (1, 1)] = 1.1j * t1
+        builder[sq(0, 0), sq(1, 0)] = t
+        builder[sq(0, 1), sq(1, 0)] = t1
+        builder[sq(0, 1), sq(1, 1)] = 1.1j * t1
     system.attach_lead(lead)
     system.attach_lead(lead.reversed())
     fsys = system.finalized()
@@ -193,7 +191,7 @@ def test_graph_system(solve):
     n_modes = leads[0][2]
     assert_equal(leads[1][2], n_modes)
     assert_almost_equal(s[: n_modes, : n_modes], 0)
-    t_elements = np.sort(abs(np.asarray(s[n_modes :, : n_modes])),
+    t_elements = np.sort(abs(np.asarray(s[n_modes:, :n_modes])),
                          axis=None)
     t_el_should_be = n_modes * (n_modes - 1) * [0] + n_modes * [1]
     assert_almost_equal(t_elements, t_el_should_be)
@@ -205,17 +203,16 @@ def test_singular_graph_system(solve):
 
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
-    lead.default_site_group = system.default_site_group = square
     h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
     h += h.conjugate().transpose()
     h *= 0.8
     t = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
     t1 = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
-    lead[0, 0] = system[[(0, 0), (1, 0)]] = h
-    lead[0, 1] = system[[(0, 1), (1, 1)]] = 4 * h
+    lead[sq(0, 0)] = system[[sq(0, 0), sq(1, 0)]] = h
+    lead[sq(0, 1)] = system[[sq(0, 1), sq(1, 1)]] = 4 * h
     for builder in [system, lead]:
-        builder[(0, 0), (1, 0)] = t
-        builder[(0, 1), (1, 0)] = t1
+        builder[sq(0, 0), sq(1, 0)] = t
+        builder[sq(0, 1), sq(1, 0)] = t1
     system.attach_lead(lead)
     system.attach_lead(lead.reversed())
     fsys = system.finalized()
@@ -239,23 +236,22 @@ def test_singular_graph_system(solve):
 def test_tricky_singular_hopping(solve):
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((4, 0)))
-    lead.default_site_group = system.default_site_group = square
 
     interface = []
     for i in xrange(n):
-        site = square(-1, i)
+        site = sq(-1, i)
         interface.append(site)
         system[site] = 0
         for j in xrange(4):
-            lead[j, i] = 0
+            lead[sq(j, i)] = 0
     for i in xrange(n-1):
-        system[(-1, i), (-1, i+1)] = -1
+        system[sq(-1, i), sq(-1, i+1)] = -1
         for j in xrange(4):
-            lead[(j, i), (j, i+1)] = -1
+            lead[sq(j, i), sq(j, i+1)] = -1
     for i in xrange(n):
         for j in xrange(4):
-            lead[(j, i), (j+1, i)] = -1
-    del lead[(1, 0), (2, 0)]
+            lead[sq(j, i), sq(j+1, i)] = -1
+    del lead[sq(1, 0), sq(2, 0)]
 
     system.leads.append(kwant.builder.BuilderLead(lead, interface))
     fsys = system.finalized()
@@ -302,7 +298,7 @@ def test_self_energy(solve):
     eig_are = np.linalg.eigvals(ttdagnew)
     t_should_be = np.sum(eig_are)
     assert_almost_equal(eig_are.imag, 0)
-    assert_almost_equal(np.sort(eig_are.real)[-n_eig :],
+    assert_almost_equal(np.sort(eig_are.real)[-n_eig:],
                         np.sort(eig_should_be.real))
     assert_almost_equal(t_should_be, sol.transmission(1, 0))
 
@@ -352,11 +348,9 @@ def test_very_singular_leads(solve):
     gr = kwant.lattice.chain()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
-    sys.default_site_group = gr
-    left_lead.default_site_group = right_lead.default_site_group = gr
-    sys[(0,)] = left_lead[(0,)] = right_lead[(0,)] = np.identity(2)
-    left_lead[(0,), (1,)] = np.zeros((2, 2))
-    right_lead[(0,), (1,)] = np.identity(2)
+    sys[gr(0)] = left_lead[gr(0)] = right_lead[gr(0)] = np.identity(2)
+    left_lead[gr(0), gr(1)] = np.zeros((2, 2))
+    right_lead[gr(0), gr(1)] = np.identity(2)
     sys.attach_lead(left_lead)
     sys.attach_lead(right_lead)
     fsys = sys.finalized()
@@ -369,8 +363,8 @@ def test_ldos(ldos):
     gr = kwant.lattice.chain()
     lead = kwant.Builder(kwant.TranslationalSymmetry(gr.vec((1,))))
     sys.default_site_group = lead.default_site_group = gr
-    sys[(0,)] = sys[(1,)] = lead[(0,)] = 0
-    sys[(0,), (1,)] = lead[(0,), (1,)] = 1
+    sys[gr(0)] = sys[gr(1)] = lead[gr(0)] = 0
+    sys[gr(0), gr(1)] = lead[gr(0), gr(1)] = 1
     sys.attach_lead(lead)
     sys.attach_lead(lead.reversed())
     fsys = sys.finalized()
