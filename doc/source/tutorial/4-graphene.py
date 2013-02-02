@@ -51,7 +51,7 @@ def make_system(r=10, w=2.0, pot=0.1):
     # specify the hoppings of the graphene lattice in the
     # format expected by possibe_hoppings()
 #HIDDEN_BEGIN_hsmc
-    hoppings = (((0, 0), b, a), ((0, 1), b, a), ((-1, 1), b, a))
+    hoppings = (((0, 0), a, b), ((0, 1), a, b), ((-1, 1), a, b))
 #HIDDEN_END_hsmc
 #HIDDEN_BEGIN_bfwb
     for hopping in hoppings:
