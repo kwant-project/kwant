@@ -85,6 +85,8 @@ square lattices representing electron and hole degrees of freedom:
     :start-after: #HIDDEN_BEGIN_zuuw
     :end-before: #HIDDEN_END_zuuw
 
+Note that since these two lattices have identical spatial parameters, the
+argument `name` to `~kwant.lattice.square` has to be different for two lattices.
 Any diagonal entry (kinetic energy, potentials, ...) in the BdG
 Hamiltonian then corresponds to on-site energies or hoppings within
 the *same* lattice, whereas any off-diagonal entry (essentially, the

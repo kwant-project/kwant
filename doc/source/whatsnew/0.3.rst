@@ -2,3 +2,20 @@ What's New in kwant 0.3
 =======================
 
 This article explains the user-visible changes in kwant 0.3.
+
+Immutable site groups
+---------------------
+In order to make naming more consistent, `kwant.make_lattice` was renamed and
+can be found now as `~kwant.lattice.general`. Classes `Chain`, `Square`, and
+`Honeycomb` from `~kwant.lattice` were made functions `~kwant.lattice.chain`,
+`~kwant.lattice.square`, and `~kwant.lattice.honeycomb`.
+
+In previous versions if one executed `a = kwant.lattice.square();
+b = kwant.lattice.square()` then `a` and `b` were
+actually different lattices. This often led to confusions in more convoluted
+use cases, so this behavior was changed. Now two site groups created with the
+same parameters are actually indistinguishable by `kwant`. If it is desired to
+make two site groups which have the same geometry, but mean different things,
+as for instance in :doc:`../tutorial/tutorial5`, then the `name` argument has
+to be used when creating a lattice, e.g. `a = kwant.lattice.square(name='a');
+b = kwant.lattice.square(name='b')`.
