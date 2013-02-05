@@ -23,3 +23,13 @@ except:
     pass
 else:
     __all__.extend(['plotter', 'plot'])
+
+
+def test(verbose=1):
+    from nose.core import run
+    import os.path
+
+    return run(argv=[__file__, os.path.dirname(os.path.abspath(__file__)),
+                     "-s", "--verbosity="+str(verbose)])
+
+test.__test__ = False
