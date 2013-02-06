@@ -7,6 +7,5 @@ various Green's functions, and local density of states.  Being extensible and
 modular, kwant has been designed to be useful for other computations involving
 tight-binding Hamiltonians as well.
 
-See the file INSTALL for installation instructions and LICENSE for legal
-information.  A tutorial for new users and complete reference documentation are
-available.
+See also the files INSTALL, LICENSE, AUTHORS, and ACKNOWLEDGEMENTS in this
+directory.

@@ -1,0 +1,23 @@
+================
+Authors of kwant
+================
+
+The principal developers of kwant are (in alphabetic order)
+
+* Anton R. Akhmerov <anton.akhmerov@gmail.com>
+* Christoph W. Groth <christoph.groth@cea.fr>
+* Xavier Waintal <xavier.waintal@cea.fr>
+* Michael Wimmer <wimmer@lorentz.leidenuniv.nl>
+
+The contributions of Christoph and Xavier are part of their work at `CEA
+<http://cea.fr>`_, the French Commissariat à l'énergie atomique et aux énergies
+alternatives.
+
+Other people that have contributed to kwant include
+
+* Daniel Jaschke
+
+-------------------------------------------------------------
+
+To find out who exactly wrote a certain part of kwant, please use the "blame"
+feature of `git <http://git-scm.com/>`_, the version control system.

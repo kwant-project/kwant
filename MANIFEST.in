@@ -2,7 +2,7 @@
 # in addition to the default ones.
 
 include MANIFEST.in
-include INSTALL LICENSE TODO
+include INSTALL LICENSE AUTHORS ACKNOWLEDGEMENTS TODO
 
 # We explicitly include both pyx and c files, so that both are shipped in
 # source tarballs independently of whether "setup.py sdist" is run with
