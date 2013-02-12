@@ -15,7 +15,6 @@ import abc
 import sys
 import operator
 from itertools import izip, islice, chain
-from collections import Iterable
 import tinyarray as ta
 import numpy as np
 from . import system, graph
@@ -415,9 +414,12 @@ def for_each_in_key(key, f_site, f_hopp):
     if isinstance(key, Site):
         f_site(key)
     elif isinstance(key, tuple):
-            f_hopp(key)
-    elif isinstance(key, Iterable):
-        ikey = iter(key)
+        f_hopp(key)
+    else:
+        try:
+            ikey = iter(key)
+        except:
+            raise KeyError(key)
         try:
             first = next(ikey)
         except StopIteration:
