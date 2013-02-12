@@ -9,10 +9,14 @@ Roughly in order of importance.                                     -*-org-*-
 * Consider making the b parameter of _solve_linear_sys a matrix instead of a
   list of matrices
 
-* Find a nice way to organize / deal with ldos or wave_func output when the
-  number of orbitals per site varies
+* Implement "inhomogeneous arrays" for ldos and wavefunc
+  The point is to have ldos or wavefunc return objects that behave like 2d
+  arrays, where the site index and orbital index are separate.  However, this
+  must work in the general case where the number of orbitals per site varies.
 
 * Add a (tutorial?) example with kwant.plotter.map
+
+* Plotter: show site upon click
 
 * fix physics.noise (docstring, __all__, etc.)
 
@@ -23,6 +27,8 @@ Roughly in order of importance.                                     -*-org-*-
 * Add support for easily adding magnetic field to a system.
 
 * Allow plotting of infinite systems
+
+* Consider additional optional parameters to value functions
 
 * Use sparse linear algebra to calculate bands
   However, SciPy's sparse eigenvalues don't seem to work well.
