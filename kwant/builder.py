@@ -672,6 +672,8 @@ class Builder(object):
             a, b = hopping
         except:
             raise KeyError(hopping)
+        if a == b:
+            raise KeyError(hopping)
         if isinstance(value, HermConjOfFunc):
             a, b = b, a
             value = value.function

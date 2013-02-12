@@ -114,7 +114,9 @@ def test_construction_and_indexing():
     hoppings = [(gr(0, 0), gr(0, 1)),
                 (gr(0, 1), gr(1, 0)),
                 (gr(1, 0), gr(0, 0))]
-    failing_hoppings = [(gr(0, 1), gr(7, 8)), (gr(12, 14), gr(0, 1))]
+    failing_hoppings = [(gr(0, 1), gr(0, 1)),
+                        (gr(0, 1), gr(7, 8)),
+                        (gr(12, 14), gr(0, 1))]
     check_construction_and_indexing(sites, sites, hoppings, hoppings,
                                     failing_hoppings)
 
