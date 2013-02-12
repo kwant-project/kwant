@@ -208,7 +208,7 @@ def check_hoppings(fsys, hops):
         tail = fsys.site(tail).tag
         head = fsys.site(head).tag
         value = fsys.hoppings[edge_id]
-        if value is builder.other:
+        if value is builder.Other:
             assert (head, tail) in hops
         else:
             assert (tail, head) in hops

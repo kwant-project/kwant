@@ -432,13 +432,11 @@ def for_each_in_key(key, f_site, f_hopp):
                 f_hopp(hopping)
         else:
             raise KeyError(first)
-    else:
-        raise KeyError(key)
 
 
-# Marker which means for hopping (i, j): this value is given by the Hermitian
+# A marker, meaning for hopping (i, j): this value is given by the Hermitian
 # conjugate the value of the hopping (j, i).  Used by Builder and System.
-other = []
+Other = type('Other', (object,), {'__repr__': lambda s: 'Other'})()
 
 
 def edges(seq):
@@ -622,7 +620,7 @@ class Builder(object):
             value = self._get_edge(a, b)
         except ValueError:
             raise KeyError(hopping)
-        if value is other:
+        if value is Other:
             if not sym.in_fd(b):
                 b, a = sym.to_fd(b, a)
                 assert not sym.in_fd(a)
@@ -687,14 +685,14 @@ class Builder(object):
                 a = self.H[a][0]                 # Might fail.
                 b = self.H[b][0]                 # Might fail.
                 self._set_edge(a, b, value)      # Will work.
-                self._set_edge(b, a, other)      # Will work.
+                self._set_edge(b, a, Other)      # Will work.
             else:
                 b2, a2 = sym.to_fd(b, a)
                 if b2 not in self.H:
                     raise KeyError()
                 assert not sym.in_fd(a2)
                 self._set_edge(a, b, value)      # Might fail.
-                self._set_edge(b2, a2, other)    # Will work.
+                self._set_edge(b2, a2, Other)    # Will work.
         except KeyError:
             raise KeyError(hopping)
 
@@ -797,7 +795,7 @@ class Builder(object):
         """
         for tail, hvhv in self.H.iteritems():
             for head, value in edges(hvhv):
-                if value is other:
+                if value is Other:
                     continue
                 yield (tail, head)
 
@@ -805,7 +803,7 @@ class Builder(object):
         """Return an iterator over all (hopping, value) pairs."""
         for tail, hvhv in self.H.iteritems():
             for head, value in edges(hvhv):
-                if value is other:
+                if value is Other:
                     continue
                 yield (tail, head), value
 
@@ -1189,7 +1187,7 @@ class FiniteSystem(system.FiniteSystem):
         else:
             edge_id = self.graph.first_edge_id(i, j)
             value = self.hoppings[edge_id]
-            conj = value is other
+            conj = value is Other
             if conj:
                 i, j = j, i
                 edge_id = self.graph.first_edge_id(i, j)
@@ -1222,7 +1220,7 @@ class InfiniteSystem(system.InfiniteSystem):
         else:
             edge_id = self.graph.first_edge_id(i, j)
             value = self.hoppings[edge_id]
-            conj = value is other
+            conj = value is Other
             if conj:
                 i, j = j, i
                 edge_id = self.graph.first_edge_id(i, j)
