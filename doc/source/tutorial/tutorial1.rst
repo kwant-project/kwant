@@ -10,7 +10,7 @@ model representing the two-dimensional Schroedinger equation
 
 .. math::
 
-    H = \frac{\hbar^2}{2 m} (\partial_x^2+\partial_y^2) + V(y)
+    H = \frac{-\hbar^2}{2 m} (\partial_x^2+\partial_y^2) + V(y)
 
 with a hard wall confinement :math:`V(y)` in y-direction.
 
