@@ -6,5 +6,8 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['rmt']
-from . import rmt
+"""This package contains various sub-packages that are useful with kwant, but
+are not considered to be part of kwant.
+
+The sub-packages have to be imported explicitly.
+"""
