@@ -164,6 +164,12 @@ def version():
     return version
 
 
+def packages():
+    return [root.replace('/', '.')
+            for root, dnames, fnames in os.walk('kwant')
+            if '__init__.py' in fnames or root.endswith('/tests')]
+
+
 def debian_mumps():
     """Return the configuration for debian-provided MUMPS if it is available,
     or an empty dictionary otherwise."""
@@ -332,11 +338,7 @@ def main():
           "quantum transport calculations.",
           url="http://kwant-project.org/",
           license="BSD",
-          packages=["kwant", "kwant.graph", "kwant.linalg", "kwant.physics",
-                    "kwant.solvers", "kwant.contrib",
-                    "kwant.tests", "kwant.graph.tests", "kwant.linalg.tests",
-                    "kwant.physics.tests", "kwant.solvers.tests",
-                    "kwant.contrib.tests"],
+          packages=packages(),
           cmdclass={'build': kwant_build,
                     'sdist': kwant_sdist,
                     'build_ext': kwant_build_ext,
