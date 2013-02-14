@@ -83,6 +83,21 @@ def plot_spectrum(sys, Bfields):
 #HIDDEN_END_yvri
 
 
+#HIDDEN_BEGIN_wave
+def plot_wave_function(sys):
+    # We reset the magnetic field to equal to 0.
+    global B
+    B = 0.
+
+    # Calculate the wave functions in the system.
+    ham_mat = sys.hamiltonian_submatrix(sparse=True)
+    evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
+
+    # Plot the probability density of the 10th eigenmode.
+    kwant.plotter.map(sys, np.abs(evecs[:, 9])**2, colorbar=False)
+#HIDDEN_END_wave
+
+
 def main():
     sys = make_system()
 
@@ -96,6 +111,10 @@ def main():
     # level energies with increasing magnetic field
     plot_spectrum(sys, [iB * 0.002 for iB in xrange(100)])
 
+    # Plot an eigenmode of a circular dot. Here we create a larger system for
+    # better spatial resolution.
+    sys = make_system(r=30).finalized()
+    plot_wave_function(sys)
 
 # Call the main function if the script gets executed (as opposed to imported).
 # See <http://docs.python.org/library/__main__.html>.

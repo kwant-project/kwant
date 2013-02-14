@@ -101,6 +101,17 @@ quantum dot is rather symmetric). These degeneracies are split
 by the magnetic field, and the eigenenergies flow towards the
 Landau level energies at higher magnetic fields [#]
 
+The eigenvectors are obtained very similarly, and can be plotted directly
+using `~kwant.plotter.map`:
+
+.. literalinclude:: closed_system.py
+    :start-after: #HIDDEN_BEGIN_wave
+    :end-before: #HIDDEN_END_wave
+
+This yields the result:
+
+.. image:: ../images/closed_system_eigenvector.*
+
 .. seealso::
     The full source code can be found in
     :download:`tutorial/closed_system.py <../../../tutorial/closed_system.py>`
