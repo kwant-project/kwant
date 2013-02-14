@@ -56,16 +56,17 @@ Hamiltonian is approximating.
 Closed systems
 ..............
 
-Although kwant is (currently) mainly aimed towards transport problem, it
+Although kwant is (currently) mainly aimed towards transport problema, it
 can also easily be used to compute properties of closed systems -- after
 all, a closed system is nothing more than a scattering region without leads!
 
-In this example, we compute the spectrum of a closed, (approximately)
-circular quantum dot as a function of magnetic field
-(Fock-Darwin spectrum).
+In this example, we compute the wave functions of a closed, (approximately)
+circular quantum dot and its spectrum as a function
+of magnetic field (Fock-Darwin spectrum).
 
-To compute the eigenenergies, we will make use of the linear algebra
-functionality of `scipy <www.scipy.org>`_:
+To compute the eigenenergies and eigenstates, we will make use of the sparse
+linear algebra functionality of `scipy <www.scipy.org>`_, which interfaces
+the ARPACK package:
 
 .. literalinclude:: closed_system.py
     :start-after: #HIDDEN_BEGIN_tibv
@@ -90,9 +91,8 @@ system using `~kwant.system.System.hamiltonian_submatrix`:
     :start-after: #HIDDEN_BEGIN_yvri
     :end-before: #HIDDEN_END_yvri
 
-In this toy model we use dense matrices and dense matrix algebra since
-the system is very small. (In a real application one would probably
-want to use sparse matrix methods.) Finally, we obtain the result:
+Note that we use sparse linear algebra to efficiently calculate only a
+few lowest eigenvalues. Finally, we obtain the result:
 
 .. image:: ../images/closed_system_result.*
 

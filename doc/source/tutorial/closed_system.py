@@ -10,11 +10,12 @@
 
 
 from cmath import exp
+import numpy as np
 import kwant
 
 # For eigenvalue computation
 #HIDDEN_BEGIN_tibv
-import scipy.linalg as la
+import scipy.sparse.linalg as sla
 #HIDDEN_END_tibv
 
 # For plotting
@@ -67,12 +68,12 @@ def plot_spectrum(sys, Bfields):
         B = Bfield
 
         # Obtain the Hamiltonian as a dense matrix
-        ham_mat = sys.hamiltonian_submatrix()
+        ham_mat = sys.hamiltonian_submatrix(sparse=True)
 
-        ev = la.eigh(ham_mat, eigvals_only=True)
+        # we only calculate the 15 lowest eigenvalues
+        ev = sla.eigsh(ham_mat, k=15, which='SM', return_eigenvectors=False)
 
-        # we only plot the 15 lowest eigenvalues
-        energies.append(ev[:15])
+        energies.append(ev)
 
     pyplot.figure()
     pyplot.plot(Bfields, energies)
