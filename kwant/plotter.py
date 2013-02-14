@@ -757,7 +757,8 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
 
 
 def map(sys, value, colorbar=True, cmap=None,
-         a=None, method='nearest', oversampling=3, file=None, show=True):
+         a=None, method='nearest', oversampling=3, file=None, show=True,
+         dpi=None, fig_size=None):
     """Show interpolated map of a function defined for the sites of a system.
 
     Create a pixmap representation of a function of the sites of a system by
@@ -814,6 +815,11 @@ def map(sys, value, colorbar=True, cmap=None,
     min -= border
     max += border
     fig = Figure()
+    if dpi is not None:
+        fig.set_dpi(dpi)
+    if fig_size is not None:
+        fig.set_figwidth(fig_size[0])
+        fig.set_figheight(fig_size[1])
     ax = fig.add_subplot(111, aspect='equal')
     if method != 'nearest':
         method = 'bi' + method
