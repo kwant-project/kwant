@@ -4,7 +4,7 @@
  
  # For plotting
  from matplotlib import pyplot
-+import defs
++import _defs
  
  
  def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
@@ -19,13 +19,13 @@
      pyplot.ylabel("conductance [in units of e^2/h]")
 -    pyplot.show()
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
-+               fontsize=defs.mpl_tick_size)
++               fontsize=_defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
-+               fontsize=defs.mpl_tick_size)
-+    fig.set_size_inches(defs.mpl_width_in, defs.mpl_width_in * 3. / 4.)
++               fontsize=_defs.mpl_tick_size)
++    fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-+    fig.savefig("5-superconductor_transport_result.pdf")
-+    fig.savefig("5-superconductor_transport_result.png", dpi=defs.dpi)
++    fig.savefig("superconductor_transport_result.pdf")
++    fig.savefig("superconductor_transport_result.png", dpi=_defs.dpi)
  
  
  def main():

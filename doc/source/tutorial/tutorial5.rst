@@ -28,7 +28,7 @@ We begin by computing the band structure of a superconducting wire.
 The most natural way to implement the BdG Hamiltonian is by using a
 2x2 matrix structure for all Hamiltonian matrix elements:
 
-.. literalinclude:: 5-superconductor_band_structure.py
+.. literalinclude:: superconductor_band_structure.py
     :start-after: #HIDDEN_BEGIN_nbvn
     :end-before: #HIDDEN_END_nbvn
 
@@ -38,14 +38,14 @@ is now that the Pauli matrices act in electron-hole space.
 
 Computing the band structure then yields the result
 
-.. image:: ../images/5-superconductor_band_structure_result.*
+.. image:: ../images/superconductor_band_structure_result.*
 
 We clearly observe the superconducting gap in the spectrum. That was easy,
 he?
 
 .. seealso::
     The full source code can be found in
-    :download:`tutorial/5-superconductor_band_structure.py <../../../tutorial/5-superconductor_band_structure.py>`
+    :download:`tutorial/superconductor_band_structure.py <../../../tutorial/superconductor_band_structure.py>`
 
 
 "Lattice description": Using different lattices
@@ -76,12 +76,12 @@ separate "leads" for electrons and holes, making use of different
 lattices. The system we consider consists of a normal lead on the left,
 a superconductor on the right, and a tunnel barrier inbetween:
 
-.. image:: ../images/5-superconductor_transport_sketch.*
+.. image:: ../images/superconductor_transport_sketch.*
 
 As already mentioned above, we begin by introducing two different
 square lattices representing electron and hole degrees of freedom:
 
-.. literalinclude:: 5-superconductor_transport.py
+.. literalinclude:: superconductor_transport.py
     :start-after: #HIDDEN_BEGIN_zuuw
     :end-before: #HIDDEN_END_zuuw
 
@@ -93,7 +93,7 @@ the *same* lattice, whereas any off-diagonal entry (essentially, the
 superconducting order parameter :math:`\Delta`) corresponds
 to a hopping between *different* lattices:
 
-.. literalinclude:: 5-superconductor_transport.py
+.. literalinclude:: superconductor_transport.py
     :start-after: #HIDDEN_BEGIN_pqmp
     :end-before: #HIDDEN_END_pqmp
 
@@ -108,7 +108,7 @@ part. We use this fact to attach purely electron and hole leads
 (comprised of only electron *or* hole lattices) to the
 system:
 
-.. literalinclude:: 5-superconductor_transport.py
+.. literalinclude:: superconductor_transport.py
     :start-after: #HIDDEN_BEGIN_ttth
     :end-before: #HIDDEN_END_ttth
 
@@ -118,7 +118,7 @@ reflection probablities between electrons and holes explicitely.
 On the superconducting side, we cannot do this separation, and can
 only define a single lead coupling electrons and holes:
 
-.. literalinclude:: 5-superconductor_transport.py
+.. literalinclude:: superconductor_transport.py
     :start-after: #HIDDEN_BEGIN_mhiw
     :end-before: #HIDDEN_END_mhiw
 
@@ -126,7 +126,7 @@ We now have on the left side two leads that are sitting in the same
 spatial position, but in different lattice spaces. This ensures that
 we can still attach all leads as before:
 
-.. literalinclude:: 5-superconductor_transport.py
+.. literalinclude:: superconductor_transport.py
     :start-after: #HIDDEN_BEGIN_ozsr
     :end-before: #HIDDEN_END_ozsr
 
@@ -136,7 +136,7 @@ confused by the fact that it says ``transmission`` -- transmission
 into the same lead is reflection), and reflection from electrons to holes
 as ``smatrix.transmission(1, 0)``, by virtue of our electron and hole leads:
 
-.. literalinclude:: 5-superconductor_transport.py
+.. literalinclude:: superconductor_transport.py
     :start-after: #HIDDEN_BEGIN_jbjt
     :end-before: #HIDDEN_END_jbjt
 
@@ -146,7 +146,7 @@ within (electron) lead 0, and from its size we can extract the number of modes
 
 Finally, for the default parameters, we obtain the following result:
 
-.. image:: ../images/5-superconductor_transport_result.*
+.. image:: ../images/superconductor_transport_result.*
 
 We a see a conductance that is proportional to the square of the tunneling
 probability within the gap, and proportional to the tunneling probability
@@ -154,7 +154,7 @@ above the gap. At the gap edge, we observe a resonant Andreev reflection.
 
 .. seealso::
     The full source code can be found in
-    :download:`tutorial/5-superconductor_transport.py <../../../tutorial/5-superconductor_transport.py>`
+    :download:`tutorial/superconductor_transport.py <../../../tutorial/superconductor_transport.py>`
 
 .. specialnote:: Technical details
 

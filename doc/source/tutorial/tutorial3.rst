@@ -15,7 +15,7 @@ tight-binding wire.
 Computing band structures in kwant is easy. Just define a lead in the
 usual way:
 
-.. literalinclude:: 3-band_structure.py
+.. literalinclude:: band_structure.py
     :start-after: #HIDDEN_BEGIN_zxip
     :end-before: #HIDDEN_END_zxip
 
@@ -37,13 +37,13 @@ momentum ``k`` as parameter it returns the eigenenergies of the translational
 invariant system for that momentum.  Computing these eigenenergies for a range
 of momenta then yields the bandstructure:
 
-.. literalinclude:: 3-band_structure.py
+.. literalinclude:: band_structure.py
     :start-after: #HIDDEN_BEGIN_pejz
     :end-before: #HIDDEN_END_pejz
 
 This gives the result:
 
-.. image:: ../images/3-band_structure_result.*
+.. image:: ../images/band_structure_result.*
 
 where we observe the cosine-like dispersion of the square lattice. Close
 to ``k=0`` this agrees well with the quadratic dispersion this tight-binding
@@ -51,7 +51,7 @@ Hamiltonian is approximating.
 
 .. seealso::
      The full source code can be found in
-     :download:`tutorial/3-band_structure.py <../../../tutorial/3-band_structure.py>`
+     :download:`tutorial/band_structure.py <../../../tutorial/band_structure.py>`
 
 Closed systems
 ..............
@@ -67,14 +67,14 @@ circular quantum dot as a function of magnetic field
 To compute the eigenenergies, we will make use of the linear algebra
 functionality of `scipy <www.scipy.org>`_:
 
-.. literalinclude:: 3-closed_system.py
+.. literalinclude:: closed_system.py
     :start-after: #HIDDEN_BEGIN_tibv
     :end-before: #HIDDEN_END_tibv
 
 We set up the system using the `shape`-function as in
 :ref:`tutorial-abring`, but do not add any leads:
 
-.. literalinclude:: 3-closed_system.py
+.. literalinclude:: closed_system.py
     :start-after: #HIDDEN_BEGIN_qlyd
     :end-before: #HIDDEN_END_qlyd
 
@@ -86,7 +86,7 @@ The spectrum can be obtained by diagonalizing the Hamiltonian of the
 system, which in turn can be obtained from the finalized
 system using `~kwant.system.System.hamiltonian_submatrix`:
 
-.. literalinclude:: 3-closed_system.py
+.. literalinclude:: closed_system.py
     :start-after: #HIDDEN_BEGIN_yvri
     :end-before: #HIDDEN_END_yvri
 
@@ -94,7 +94,7 @@ In this toy model we use dense matrices and dense matrix algebra since
 the system is very small. (In a real application one would probably
 want to use sparse matrix methods.) Finally, we obtain the result:
 
-.. image:: ../images/3-closed_system_result.*
+.. image:: ../images/closed_system_result.*
 
 At zero magnetic field several energy levels are degenerate (since our
 quantum dot is rather symmetric). These degeneracies are split
@@ -103,7 +103,7 @@ Landau level energies at higher magnetic fields [#]
 
 .. seealso::
     The full source code can be found in
-    :download:`tutorial/3-closed_system.py <../../../tutorial/3-closed_system.py>`
+    :download:`tutorial/closed_system.py <../../../tutorial/closed_system.py>`
 
 .. specialnote:: Technical details
 

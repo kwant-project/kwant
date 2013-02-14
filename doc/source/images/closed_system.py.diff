@@ -4,7 +4,7 @@
  
  # For plotting
  from matplotlib import pyplot
-+import defs
++import _defs
  
  
  def make_system(a=1, t=1.0, r=10):
@@ -19,16 +19,16 @@
 -    pyplot.ylabel("energy [in units of t]")
 -    pyplot.show()
 +    pyplot.xlabel("magnetic field [some arbitrary units]",
-+                 fontsize=defs.mpl_label_size)
-+    pyplot.ylabel("energy [in units of t]", fontsize=defs.mpl_label_size)
++                 fontsize=_defs.mpl_label_size)
++    pyplot.ylabel("energy [in units of t]", fontsize=_defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
-+               fontsize=defs.mpl_tick_size)
++               fontsize=_defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
-+               fontsize=defs.mpl_tick_size)
-+    fig.set_size_inches(defs.mpl_width_in, defs.mpl_width_in * 3. / 4.)
++               fontsize=_defs.mpl_tick_size)
++    fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-+    fig.savefig("3-closed_system_result.pdf")
-+    fig.savefig("3-closed_system_result.png", dpi=defs.dpi)
++    fig.savefig("closed_system_result.pdf")
++    fig.savefig("closed_system_result.png", dpi=_defs.dpi)
  
  
  def main():

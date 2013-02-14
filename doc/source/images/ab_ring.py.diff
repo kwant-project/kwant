@@ -1,17 +1,17 @@
 --- original
 +++ modified
 @@ -16,6 +16,7 @@
-
+ 
  # For plotting
  from matplotlib import pyplot
-+import defs
-
-
++import _defs
+ 
+ 
  def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
 @@ -82,6 +83,54 @@
      return sys
-
-
+ 
+ 
 +def make_system_note1(a=1, t=1.0, W=10, r1=10, r2=20):
 +    lat = kwant.lattice.square(a)
 +    sys = kwant.Builder()
@@ -66,7 +66,7 @@
 @@ -95,18 +144,29 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(1, 0))
-
+ 
 -    pyplot.figure()
 +    fig = pyplot.figure()
      pyplot.plot(normalized_fluxes, data)
@@ -74,41 +74,41 @@
 -    pyplot.ylabel("conductance [in units of e^2/h]")
 -    pyplot.show()
 +    pyplot.xlabel("flux [in units of the flux quantum]",
-+                 fontsize=defs.mpl_label_size)
++                 fontsize=_defs.mpl_label_size)
 +    pyplot.ylabel("conductance [in units of e^2/h]",
-+                 fontsize=defs.mpl_label_size)
++                 fontsize=_defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
-+               fontsize=defs.mpl_tick_size)
++               fontsize=_defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
-+               fontsize=defs.mpl_tick_size)
-+    fig.set_size_inches(defs.mpl_width_in, defs.mpl_width_in * 3. / 4.)
++               fontsize=_defs.mpl_tick_size)
++    fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-+    fig.savefig("2-ab_ring_result.pdf")
-+    fig.savefig("2-ab_ring_result.png", dpi=defs.dpi)
-
-
++    fig.savefig("ab_ring_result.pdf")
++    fig.savefig("ab_ring_result.png", dpi=_defs.dpi)
+ 
+ 
  def main():
      sys = make_system()
-
+ 
      # Check that the system looks as intended.
 -    kwant.plot(sys)
-+    size = (defs.figwidth_in, defs.figwidth_in)
-+    kwant.plot(sys, file="2-ab_ring_sys.pdf", fig_size=size, dpi=defs.dpi)
-+    kwant.plot(sys, file="2-ab_ring_sys.png", fig_size=size, dpi=defs.dpi)
-
++    size = (_defs.figwidth_in, _defs.figwidth_in)
++    kwant.plot(sys, file="ab_ring_sys.pdf", fig_size=size, dpi=_defs.dpi)
++    kwant.plot(sys, file="ab_ring_sys.png", fig_size=size, dpi=_defs.dpi)
+ 
      # Finalize the system.
      sys = sys.finalized()
 @@ -115,6 +175,15 @@
      plot_conductance(sys, energy=0.15, fluxes=[0.01 * i * 3 * 2 * pi
                                                  for i in xrange(100)])
-
+ 
 +    # Finally, some plots needed for the notes
 +    sys = make_system_note1()
-+    kwant.plot(sys, file="2-ab_ring_note1.pdf", fig_size=size, dpi=defs.dpi)
-+    kwant.plot(sys, file="2-ab_ring_note1.png", fig_size=size, dpi=defs.dpi)
++    kwant.plot(sys, file="ab_ring_note1.pdf", fig_size=size, dpi=_defs.dpi)
++    kwant.plot(sys, file="ab_ring_note1.png", fig_size=size, dpi=_defs.dpi)
 +    sys = make_system_note2()
-+    kwant.plot(sys, file="2-ab_ring_note2.pdf", fig_size=size, dpi=defs.dpi)
-+    kwant.plot(sys, file="2-ab_ring_note2.png", fig_size=size, dpi=defs.dpi)
++    kwant.plot(sys, file="ab_ring_note2.pdf", fig_size=size, dpi=_defs.dpi)
++    kwant.plot(sys, file="ab_ring_note2.png", fig_size=size, dpi=_defs.dpi)
 +
 +
  # Call the main function if the script gets executed (as opposed to imported).

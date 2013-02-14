@@ -13,5 +13,5 @@ MANIFEST
 /doc/source/images/*.png
 /doc/source/images/*.pdf
 /doc/source/images/.*_flag
-/doc/source/images/[0-9]-*.py
+/doc/source/images/[a-zA-Z]*.py
 /build.conf

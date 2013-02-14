@@ -29,15 +29,15 @@ expand = $(foreach name, $(foreach fig, $(2), $(1)_$(fig)), \
 source/images/$(name).png source/images/$(name).pdf)
 
 # Generated images.
-1_IMAGES = $(call expand, 1-quantum_wire, result sys)
-2A_IMAGES = $(call expand, 2-spin_orbit, result)
-2B_IMAGES = $(call expand, 2-quantum_well, result)
-2C_IMAGES = $(call expand, 2-ab_ring, result sys note1 note2)
-3A_IMAGES = $(call expand, 3-band_structure, result)
-3B_IMAGES = $(call expand, 3-closed_system, result sys)
-4_IMAGES = $(call expand, 4-graphene, result sys1 sys2 bs)
-5A_IMAGES = $(call expand, 5-superconductor_band_structure, result)
-5B_IMAGES = $(call expand, 5-superconductor_transport, result)
+1_IMAGES = $(call expand, quantum_wire, result sys)
+2A_IMAGES = $(call expand, spin_orbit, result)
+2B_IMAGES = $(call expand, quantum_well, result)
+2C_IMAGES = $(call expand, ab_ring, result sys note1 note2)
+3A_IMAGES = $(call expand, band_structure, result)
+3B_IMAGES = $(call expand, closed_system, result sys)
+4_IMAGES = $(call expand, graphene, result sys1 sys2 bs)
+5A_IMAGES = $(call expand, superconductor_band_structure, result)
+5B_IMAGES = $(call expand, superconductor_transport, result)
 ALL_IMAGES = $(1_IMAGES)  $(2A_IMAGES) $(2B_IMAGES) $(2C_IMAGES) $(3A_IMAGES) \
 $(3B_IMAGES) $(4_IMAGES) $(5A_IMAGES) $(5B_IMAGES)
 
@@ -61,7 +61,7 @@ clean:
 	-rm -rf source/reference/generated
 
 realclean: clean
-	-rm -f $(ALL_IMAGES) source/images/.*_flag source/images/[0-9]-*.py
+	-rm -f $(ALL_IMAGES) source/images/.*_flag source/images/[a-zA-Z]*.py
 
 html:	$(ALL_IMAGES)
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
@@ -138,29 +138,29 @@ doctest:
 	cd $(dir $<) && python $(notdir $<)
 	@touch $@
 
-$(1_IMAGES): source/images/.1-quantum_wire_flag
+$(1_IMAGES): source/images/.quantum_wire_flag
 	@:
 
-$(2A_IMAGES): source/images/.2-spin_orbit_flag
+$(2A_IMAGES): source/images/.spin_orbit_flag
 	@:
 
-$(2B_IMAGES): source/images/.2-quantum_well_flag
+$(2B_IMAGES): source/images/.quantum_well_flag
 	@:
 
-$(2C_IMAGES): source/images/.2-ab_ring_flag
+$(2C_IMAGES): source/images/.ab_ring_flag
 	@:
 
-$(3A_IMAGES): source/images/.3-band_structure_flag
+$(3A_IMAGES): source/images/.band_structure_flag
 	@:
 
-$(3B_IMAGES): source/images/.3-closed_system_flag
+$(3B_IMAGES): source/images/.closed_system_flag
 	@:
 
-$(4_IMAGES): source/images/.4-graphene_flag
+$(4_IMAGES): source/images/.graphene_flag
 	@:
 
-$(5A_IMAGES): source/images/.5-superconductor_band_structure_flag
+$(5A_IMAGES): source/images/.superconductor_band_structure_flag
 	@:
 
-$(5B_IMAGES): source/images/.5-superconductor_transport_flag
+$(5B_IMAGES): source/images/.superconductor_transport_flag
 	@:
