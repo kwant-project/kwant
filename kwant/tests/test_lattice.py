@@ -15,6 +15,11 @@ def test_make_lattice():
             site = sl(*tag)
             assert_equal(tag, sl.closest(site.pos))
 
+    # Test 2D lattice with 1 vector.
+    lat = lattice.make_lattice([[1, 0]])
+    site = lat(0)
+    assert_raises(ValueError, lat, 0, 1)
+
 
 def test_shape():
     def in_circle(pos):
