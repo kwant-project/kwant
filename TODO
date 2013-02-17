@@ -77,3 +77,6 @@ Roughly in order of importance.                                     -*-org-*-
 * Revisit Symmetry, make it more general. I.e. allow for description of other
   discrete symmetries, possibly also symmetries which change site and hopping
   values (=gauge symmetries).
+
+* Make an option for plotting hoppings as arcs, in order for overlapping
+  hoppings to be distinguishable. Also potentially add arrows to the hoppings.
