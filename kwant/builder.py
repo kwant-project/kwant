@@ -181,23 +181,27 @@ class SimpleSiteGroup(SiteGroup):
 class Symmetry(object):
     """Abstract base class for spatial symmetries.
 
-    Many physical systems possess discrete spatial symmetry, which results in
-    special properties of these systems.  This class is a standard tool to
-    describe discrete spatial symmetries in kwant, where the symmetry of a
-    `Builder` is specified at its creation.  The most important kind of the
-    symmetry is translational symmetry, used to define scattering leads.  This
-    class is designed with translational symmetry in mind, and will possibly be
-    modified/extended in future.
+    Many physical systems possess a discrete spatial symmetry, which results in
+    special properties of these systems.  This class is the standard way to
+    describe discrete spatial symmetries in kwant.  An instance of this class
+    can be passed to a `Builder` instance at its creation.  The most important
+    kind of symmetry is translational symmetry, used to define scattering
+    leads.
 
     Each symmetry has a fundamental domain -- a set of sites and hoppings,
     generating all the possible sites and hoppings upon action of symmetry
-    group elements.  The class derived from `Symmetry` has to implement mapping
-    of any site or hopping (a tuple of two sites) into the fundamental domain,
-    applying a symmetry group element to a site or a hopping, and a method
-    `which` to determine the group element bringing some site from the
-    fundamental domain to the requested one.  Additionally, it has to have a
-    property `num_directions` returning the number of independent symmetry
-    group generators (number of elementary periods for translational symmetry).
+    group elements.  A class derived from `Symmetry` has to implement mapping
+    of any site or hopping into the fundamental domain, applying a symmetry
+    group element to a site or a hopping, and a method `which` to determine the
+    group element bringing some site from the fundamental domain to the
+    requested one.  Additionally, it has to have a property `num_directions`
+    returning the number of independent symmetry group generators (number of
+    elementary periods for translational symmetry).
+
+    A ``ValueError`` must be raised by the symmetry class whenever a symmetry
+    is used together with sites whose site group is not compatible with it.  A
+    typical example of this is when the vector defining a translational
+    symmetry is not a lattice vector.
     """
     __metaclass__ = abc.ABCMeta
 
