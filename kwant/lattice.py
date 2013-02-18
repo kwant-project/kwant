@@ -118,12 +118,13 @@ class PolyatomicLattice(object):
         Site = builder.Site
 
         dim = len(start)
+        num_vecs = len(self.prim_vecs)
         if dim != self.prim_vecs.shape[1]:
             raise ValueError('Dimensionality of start position does not match'
                              ' the space dimensionality.')
         sls = self.sublattices
-        deltas = [ta.array(i * (0,) + (1,) + (dim - 1 - i) * (0,))
-                  for i in xrange(dim)]
+        deltas = [ta.array(i * (0,) + (1,) + (num_vecs - 1 - i) * (0,))
+                  for i in xrange(num_vecs)]
         deltas += [-delta for delta in deltas]
 
         # Check if no sites are going to be added, to catch a common error.
@@ -218,6 +219,7 @@ class MonatomicLattice(builder.SiteGroup, PolyatomicLattice):
                                          repr(self.name))
         intern(self.canonical_repr)
         self.dim = dim
+        self._lattice_dim = len(prim_vecs)
 
         def short_array_str(array):
             full = ', '.join([i.lstrip() for i in str(array).split('\n')])
@@ -238,7 +240,7 @@ class MonatomicLattice(builder.SiteGroup, PolyatomicLattice):
 
     def normalize_tag(self, tag):
         tag = ta.array(tag, int)
-        if len(tag) != self.dim:
+        if len(tag) != self._lattice_dim:
             raise ValueError("Dimensionality mismatch.")
         return tag
 

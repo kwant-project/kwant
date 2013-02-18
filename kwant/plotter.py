@@ -201,7 +201,7 @@ def lines3d(axes, x0, x1, y0, y1, z0, z1,
 
     if len(x0) == 0:
         coll = mplot3d.art3d.Line3DCollection([], linestyles=linestyles)
-        axes.add_collection(coll)
+        axes.add_collection3d(coll)
         return coll
 
     segments = [(i[: 3], i[3:]) for
@@ -209,7 +209,7 @@ def lines3d(axes, x0, x1, y0, y1, z0, z1,
     coll = mplot3d.art3d.Line3DCollection(segments, linestyles=linestyles)
     set_edge_colors(colors, coll, cmap, norm)
     coll.update(kwargs)
-    axes.add_collection(coll)
+    axes.add_collection3d(coll)
 
     min_max = lambda a, b: np.array(min(a.min(), b.min()),
                                     max(a.max(), b.max()))
@@ -249,9 +249,6 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
 
     Notes
     -----
-    For IPython with inline plotting, automatic mode selects 'return', since
-    there is a better way to show a figure by just calling `display(figure)`.
-
     The behavior of this function producing a file is different from that of
     matplotlib in that the `dpi` attribute of the figure is used by defaul
     instead of the matplotlib config setting.
@@ -263,11 +260,8 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
             output_mode = 'file'
         else:
             try:
-                if matplotlib.pyplot.get_backend() != \
-                     'module://IPython.zmq.pylab.backend_inline':
-                    output_mode = 'pyplot'
-                else:
-                    output_mode = 'return'
+                matplotlib.pyplot.get_backend()
+                output_mode = 'pyplot'
             except AttributeError:
                 output_mode = 'pyplot'
     if output_mode == 'pyplot':
@@ -670,7 +664,9 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
                        cmap='gist_yarg_r', s=size ** 2,
                        norm=matplotlib.colors.Normalize(-1, n_lead_copies + 1))
         else:
-            ax.add_collection(mplot3d.art3d.Patch3DCollection([]))
+            col = mplot3d.art3d.Patch3DCollection([])
+            col.set_3d_properties([], 'z')
+            ax.add_collection3d(col)
         lead_hop_colors = np.array([i[2] for i in
                                      hops if i[1] is not None], dtype=float)
         lead_hop_colors = 1 / np.sqrt(1. + lead_hop_colors)
