@@ -573,6 +573,11 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
         Figure size `(width, height)` in inches.  If not set, the default
         `matplotlib` value is used.
 
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output.
+
     Notes
     -----
     - The meaning of "site" depends on whether the system to be plotted is a
@@ -787,6 +792,11 @@ def map(sys, value, colorbar=True, cmap=None,
     show : bool
         Whether `matplotlib.pyplot.show()` is to be called, and the output is
         to be shown immediately.  Defaults to `True`.
+
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output.
 
     Notes
     -----
