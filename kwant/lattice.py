@@ -239,6 +239,9 @@ class TranslationalSymmetry(builder.Symmetry):
             msg = "TranslationalSymmetry takes 1d sequences as parameters.\n" \
                 "See What's new in kwant 0.2 in the documentation."
             raise ValueError(msg)
+        if np.linalg.matrix_rank(periods) < len(periods):
+            raise ValueError("Translational symmetry periods must be "
+                             "linearly independent")
         # A dictionary containing cached data required for applying the
         # symmetry to different site groups.
         self.site_group_data = {}

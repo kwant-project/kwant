@@ -46,8 +46,7 @@ def test_translational_symmetry():
     g2 = lattice.make_lattice(np.identity(2))
     g3 = lattice.make_lattice(np.identity(3))
 
-    sym = ts((0, 0, 4), (0, 5, 0), (0, 0, 2))
-    assert_raises(ValueError, sym.add_site_group, g3)
+    assert_raises(ValueError, ts, (0, 0, 4), (0, 5, 0), (0, 0, 2))
     sym = ts((3.3, 0))
     assert_raises(ValueError, sym.add_site_group, g2)
 
