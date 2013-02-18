@@ -37,8 +37,8 @@ def make_system(a=1, t=1.0, r=10):
         rsq = x ** 2 + y ** 2
         return rsq < r ** 2
 
-    def hopx(site1, site2):
-        # The magnetic field is controlled by the global variable B
+    def hopx(site1, site2, B):
+        # The magnetic field is controlled by the parameter B
         y = site1.pos[1]
         return -t * exp(-1j * B * y)
 
@@ -55,8 +55,6 @@ def make_system(a=1, t=1.0, r=10):
 
 #HIDDEN_BEGIN_yvri
 def plot_spectrum(sys, Bfields):
-    # global variable B controls the magnetic field
-    global B
 
     # In the following, we compute the spectrum of the quantum dot
     # using dense matrix methods. This works in this toy example, as
@@ -64,11 +62,9 @@ def plot_spectrum(sys, Bfields):
     # sparse matrix methods
 
     energies = []
-    for Bfield in Bfields:
-        B = Bfield
-
+    for B in Bfields:
         # Obtain the Hamiltonian as a dense matrix
-        ham_mat = sys.hamiltonian_submatrix(sparse=True)
+        ham_mat = sys.hamiltonian_submatrix(sparse=True, kwargs={'B': B})
 
         # we only calculate the 15 lowest eigenvalues
         ev = sla.eigsh(ham_mat, k=15, which='SM', return_eigenvectors=False)
@@ -85,12 +81,8 @@ def plot_spectrum(sys, Bfields):
 
 #HIDDEN_BEGIN_wave
 def plot_wave_function(sys):
-    # We reset the magnetic field to equal to 0.
-    global B
-    B = 0.
-
     # Calculate the wave functions in the system.
-    ham_mat = sys.hamiltonian_submatrix(sparse=True)
+    ham_mat = sys.hamiltonian_submatrix(sparse=True, kwargs={'B': 0})
     evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
 
     # Plot the probability density of the 10th eigenmode.

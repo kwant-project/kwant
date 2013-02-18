@@ -11,15 +11,7 @@ import kwant
 # For plotting
 from matplotlib import pyplot
 
-# global variable governing the behavior of potential() in
-# make_system()
-#HIDDEN The following code line is included verbatim in the tutorial text
-#HIDDEN because nested code examples are not supported.  Remember to update
-#HIDDEN the tutorial text when you modify this line.
 #HIDDEN_BEGIN_ehso
-pot = 0
-
-
 def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
     # Start with an empty tight-binding system and a single square lattice.
     # `a` is the lattice constant (by default set to 1 for simplicity.
@@ -29,18 +21,17 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
 
     #### Define the scattering region. ####
     # Potential profile
-    def potential(site):
+    def potential(site, pot):
         (x, y) = site.pos
         if (L - L_well) / 2 < x < (L + L_well) / 2:
-            # The potential value is provided using a global variable
             return pot
         else:
             return 0
 #HIDDEN_END_ehso
 
 #HIDDEN_BEGIN_coid
-    def onsite(site):
-        return 4 * t + potential(site)
+    def onsite(site, pot=0):
+        return 4 * t + potential(site, pot)
 
     sys[(lat(x, y) for x in range(L) for y in range(W))] = onsite
     for hopping in lat.nearest:
@@ -68,18 +59,12 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
 
 
 def plot_conductance(sys, energy, welldepths):
-    # We specify that we want to not only read, but also write to a
-    # global variable.
 #HIDDEN_BEGIN_sqvr
-    global pot
 
     # Compute conductance
     data = []
     for welldepth in welldepths:
-        # Set the global variable that defines the potential well depth
-        pot = -welldepth
-
-        smatrix = kwant.solve(sys, energy)
+        smatrix = kwant.solve(sys, energy, kwargs={'pot': -welldepth})
         data.append(smatrix.transmission(1, 0))
 
     pyplot.figure()

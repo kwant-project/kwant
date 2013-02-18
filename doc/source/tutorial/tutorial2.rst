@@ -148,15 +148,12 @@ define the potential profile of a quantum well as:
     :start-after: #HIDDEN_BEGIN_ehso
     :end-before: #HIDDEN_END_ehso
 
-This function takes one argument which is of type
+This function takes two arguments: the first which is of type
 `~kwant.builder.Site`, from which you can get the real-space
-coordinates using ``site.pos``. Note that we use several global
+coordinates using ``site.pos``, and the value of the potential as a
+second argument. Note that we can use global
 variables to define the behavior of `potential()`: `L` and `L_well`
-are variables taken from the namespace of `make_system`, the variable `pot`
-is taken from the global module namespace. By this one can change the
-behavior of `potential()` at another place, for example by setting
-`pot` to a different value. We will use this later to compute
-the transmission as a function of well depth.
+are variables taken from the namespace of `make_system`.
 
 kwant now allows us to pass a function as a value to
 `~kwant.builder.Builder`:
@@ -165,8 +162,11 @@ kwant now allows us to pass a function as a value to
     :start-after: #HIDDEN_BEGIN_coid
     :end-before: #HIDDEN_END_coid
 
-For each lattice point, the corresponding site is then passed to the
-function `onsite()`. Note that we had to define `onsite()`, as it is
+For each lattice point, the corresponding site is then passed as the
+first argument to the function `onsite()`. The values of any additional
+parameters, which can be used to alter the Hamiltonian matrix elements
+at a later stage, are specified later during the call to `solve()`.
+Note that we had to define `onsite()`, as it is
 not possible to mix values and functions as in ``sys[...] = 4 * t +
 potential``.
 
@@ -181,12 +181,11 @@ Finally, we compute the transmission probability:
     :start-after: #HIDDEN_BEGIN_sqvr
     :end-before: #HIDDEN_END_sqvr
 
-Since we change the value of the global variable `pot` to vary the
-well depth, python requires us to write ``global pot`` to `enable
-access to it
-<http://docs.python.org/faq/programming.html#what-are-the-rules-for-local-and-global-variables-in-python>`_.
-Subsequent calls to :func:`kwant.solve <kwant.solvers.sparse.solve>`
-then will use the updated value of pot, and we get the result:
+``kwant.solve`` allows us to specify a dictionary, `kwargs`, that will
+be passed as additional keyword arguments to the function that evaluates the
+Hamiltonian matrix elements.  In this example we are able to solve the system
+for different depths of the potential well by passing the keyword argument
+`pot`. We obtain the result:
 
 .. image:: ../images/quantum_well_result.*
 
@@ -206,87 +205,11 @@ oscillatory transmission behavior through resonances in the quantum well.
 .. specialnote:: Technical details
 
   - Functions can also be used for hoppings. In this case, they take
-    two `~kwant.builder.Site`'s as arguments.
-
-  - In tutorial/quantum_well.py, the line ::
-
-        pot = 0
-
-    is not really necessary. If this line was left out, the
-    global variable `pot` would in fact be created by the
-    first assignment in `plot_conductance()`.
+    two `~kwant.builder.Site`'s as arguments and then an arbitrary number
+    of additional arguments.
 
   - Apart from the real-space position `pos`, `~kwant.builder.Site` has also an
     attribute `tag` containing the lattice indices of the site.
-
-  - Since we use a global variable to change the value of the
-    potential, let us briefly reflect on how python determines
-    which variable to use.
-
-    In our example, the function `potential()` uses the variable
-    `pot` which is not defined in the function itself. In this case,
-    python looks for the variable in the enclosing scopes, i.e.
-    inside the functions/modules/scripts that enclose the
-    corresponding piece of code. For example, in
-
-    >>> def f():
-    ...     def g():
-    ...         print string
-    ...     return g
-    ...
-    >>> g = f()
-    >>> string = "global"
-    >>> g()
-    global
-
-    function `g()` defined inside `f()` uses the global variable
-    `string` (which was actually created only *after* the
-    definition of `g()`!). Note that this only works as long as
-    one only reads `string`; if `g()` was to write to string,
-    it would need to add ``global string`` to `g()`, as we
-    did in `plot_conductance()`.
-
-    Things change if the function `f()` also contains a variable
-    of the same name:
-
-    >>> def f():
-    ...     def g():
-    ...         print string
-    ...     string = "local"
-    ...     return g
-    ...
-    >>> g = f()
-    >>> g()
-    local
-    >>> string = "global"
-    >>> g()
-    local
-
-    In this case, `g()` always uses the local variable inside `f()`
-    (unless we would add ``global string`` in `g()`).
-
-  - `~kwant.builder.Builder` in fact accepts not only functions but any python
-    object which is callable.  We can take advantage of the fact that instances
-    of python classes with a `__call__` method can be called just as if they
-    were functions::
-
-        class Well:
-            def __init__(self, a, b=0):
-                self.a = a
-                self.b = b
-
-            def __call__(self, site):
-                x, y = site.pos
-                return self.a * (x**2 + y**2) + b
-
-        well = Well(3, 4)
-
-        sys[...] = well
-
-        well.a = ...
-
-    This approach allows to avoid the use of global variables.  Parameters can
-    be changed inside the object.
 
 .. _tutorial-abring:
 
@@ -348,7 +271,7 @@ the branch cut to `fluxphase`. The rationale
 behind using a function instead of a constant value for the hopping
 is again that we want to vary the flux through the ring, without
 constantly rebuilding the system -- instead the flux is governed
-by the global variable `phi`.
+by the parameter `phi`.
 
 For the leads, we can also use the ``lat.shape()``-functionality:
 

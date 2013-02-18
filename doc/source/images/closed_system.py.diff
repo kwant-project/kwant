@@ -8,7 +8,7 @@
  
  
  def make_system(a=1, t=1.0, r=10):
-@@ -70,32 +71,43 @@
+@@ -66,28 +67,40 @@
  
          energies.append(ev)
  
@@ -19,12 +19,12 @@
 -    pyplot.ylabel("energy [in units of t]")
 -    pyplot.show()
 +    pyplot.xlabel("magnetic field [some arbitrary units]",
-+                 fontsize=_defs.mpl_label_size)
++                  fontsize=_defs.mpl_label_size)
 +    pyplot.ylabel("energy [in units of t]", fontsize=_defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
-+               fontsize=_defs.mpl_tick_size)
++                fontsize=_defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
-+               fontsize=_defs.mpl_tick_size)
++                fontsize=_defs.mpl_tick_size)
 +    fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("closed_system_result.pdf")
@@ -32,13 +32,10 @@
  
  
  def plot_wave_function(sys):
-     # We reset the magnetic field to equal to 0.
-     global B
-     B = 0.
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
- 
++
      # Calculate the wave functions in the system.
-     ham_mat = sys.hamiltonian_submatrix(sparse=True)
+     ham_mat = sys.hamiltonian_submatrix(sparse=True, kwargs={'B': 0})
      evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
  
      # Plot the probability density of the 10th eigenmode.
@@ -60,7 +57,7 @@
      # Finalize the system.
      sys = sys.finalized()
  
-@@ -108,6 +120,7 @@
+@@ -100,6 +113,7 @@
      sys = make_system(r=30).finalized()
      plot_wave_function(sys)
  

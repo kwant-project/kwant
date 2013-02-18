@@ -1186,11 +1186,12 @@ class FiniteSystem(system.FiniteSystem):
 
     Usable as input for the solvers in `kwant.solvers`.
     """
-    def hamiltonian(self, i, j):
+    def hamiltonian(self, i, j, *args, **kwargs):
         if i == j:
             value = self.onsite_hamiltonians[i]
             if hasattr(value, '__call__'):
-                value = value(self.symmetry.to_fd(self.sites[i]))
+                value = value(self.symmetry.to_fd(self.sites[i]),
+                                                  *args, **kwargs)
             return value
         else:
             edge_id = self.graph.first_edge_id(i, j)
@@ -1203,7 +1204,8 @@ class FiniteSystem(system.FiniteSystem):
             if hasattr(value, '__call__'):
                 site_i = self.sites[i]
                 site_j = self.sites[j]
-                value = value(*self.symmetry.to_fd(site_i, site_j))
+                site_i, site_j = self.symmetry.to_fd(site_i,site_j)
+                value = value(site_i, site_j, *args, **kwargs)
             if conj:
                 value = herm_conj(value)
             return value
@@ -1217,13 +1219,14 @@ class FiniteSystem(system.FiniteSystem):
 
 class InfiniteSystem(system.InfiniteSystem):
     """Finalized infinite system, extracted from a `Builder`."""
-    def hamiltonian(self, i, j):
+    def hamiltonian(self, i, j, *args, **kwargs):
         if i == j:
             if i >= self.slice_size:
                 i -= self.slice_size
             value = self.onsite_hamiltonians[i]
             if hasattr(value, '__call__'):
-                value = value(self.symmetry.to_fd(self.sites[i]))
+                value = value(self.symmetry.to_fd(self.sites[i]),
+                                                  *args, **kwargs)
             return value
         else:
             edge_id = self.graph.first_edge_id(i, j)
@@ -1236,7 +1239,8 @@ class InfiniteSystem(system.InfiniteSystem):
             if hasattr(value, '__call__'):
                 site_i = self.sites[i]
                 site_j = self.sites[j]
-                value = value(*self.symmetry.to_fd(site_i, site_j))
+                site_i, site_j = self.symmetry.to_fd(site_i,site_j)
+                value = value(site_i, site_j, *args, **kwargs)
             if conj:
                 value = herm_conj(value)
             return value

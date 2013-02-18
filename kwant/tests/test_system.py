@@ -65,3 +65,24 @@ def test_hamiltonian_submatrix():
     sys2 = sys.finalized()
     assert_raises(ValueError, sys2.hamiltonian_submatrix)
     assert_raises(ValueError, sys2.hamiltonian_submatrix, None, None, True)
+
+    # Test for passing parameters to hamiltonian matrix elements
+    def onsite(site, p1, p2=0):
+        return site.pos + p1 + p2
+
+    def hopping(site1, site2, p1, p2=0):
+        return p1 - p2
+
+    sys = kwant.Builder()
+    sys[(gr(i) for i in xrange(3))] = onsite
+    sys[((gr(i), gr(i + 1)) for i in xrange(2))] = hopping
+    sys2 = sys.finalized()
+    mat = sys2.hamiltonian_submatrix(args=(2,), kwargs={'p2': 1})
+    mat_should_be = [[5, 1, 0], [1, 4, 1.], [0, 1, 3]]
+
+    # Sorting is required due to unknown compression order of builder.
+    onsite_hamiltonians = mat.flat[::3]
+    perm = np.argsort(onsite_hamiltonians)
+    mat = mat[perm, :]
+    mat = mat[:, perm]
+    np.testing.assert_array_equal(mat, mat_should_be)

@@ -19,3 +19,55 @@ make two site groups which have the same geometry, but mean different things,
 as for instance in :doc:`../tutorial/tutorial5`, then the `name` argument has
 to be used when creating a lattice, e.g. `a = kwant.lattice.square(name='a');
 b = kwant.lattice.square(name='b')`.
+
+Parameters to Hamiltonian
+-------------------------
+kwant now allows the Hamiltonian matrix elements to be described with functions
+that depend on an arbitrary number of parameters in addition to the sites on
+which they are defined.
+
+Previously, functions defining the Hamiltonian matrix elements had to have the
+following prototypes::
+
+    def onsite(site):
+        ...
+
+    def hopping(site1, site2):
+        ...
+
+If the Hamiltonian elements need to depend on some other external parameters
+(e.g. magnetic field) then those had to be provided by some other means than
+regular function parameters (e.g. global variables).
+
+Now the value functions may accept arbitrary arguments after the `Site`
+arguments.  These extra arguments can be specified when
+`~kwant.solvers.default.solve` is called by setting the keyword arguments:
+
+args
+    A tuple of values to be passed as the positional arguments to the
+    Hamiltonian value functions (not including the `Site` arguments).
+
+kwargs
+    A dictionary of keyword-value pairs to be passed as the keyword
+    arguments to the Hamiltonian value functions.
+
+For example, if the hopping and onsite Hamiltonian value functions have
+the following prototype::
+
+    def onsite(site, t, B, pot):
+        ...
+
+    def hopping(site1, site2, t, B, pot):
+        ...
+
+then the values of `t`, `B` and `pot` for which to solve the system can be
+passed to `solve` like this::
+
+    time = 2
+    magnetic_field = 3
+    potential = 4
+    kwant.solve(sys, energy,
+                args=(time,), kwargs={'B': magnetic_field, 'pot': potential})
+
+Arguments can be passed in an equivalent way in calls to
+`~kwant.solvers.default.wave_func` and `~kwant.solvers.default.ldos`.

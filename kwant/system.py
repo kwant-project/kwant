@@ -45,12 +45,15 @@ class System(object):
         return 1 if np.isscalar(ham) else ham.shape[0]
 
     @abc.abstractmethod
-    def hamiltonian(self, i, j):
+    def hamiltonian(self, i, j, *args, **kwargs):
         """Return the hamiltonian matrix element for sites `i` and `j`.
 
         If ``i == j``, return the on-site Hamiltonian of site `i`.
 
         if ``i != j``, return the hopping between site `i` and `j`.
+
+        Hamiltonians may depend (optionally) on positional and
+        keyword arguments
         """
         pass
 
@@ -129,29 +132,30 @@ class InfiniteSystem(System):
     """
     __metaclass__ = abc.ABCMeta
 
-    def slice_hamiltonian(self, sparse=False):
+    def slice_hamiltonian(self, sparse=False, args=(), kwargs={}):
         """Hamiltonian of a single slice of the infinite system."""
         slice_sites = xrange(self.slice_size)
         return self.hamiltonian_submatrix(slice_sites, slice_sites,
-                                          sparse=sparse)
+                                          sparse=sparse, kwargs=kwargs)
 
-    def inter_slice_hopping(self, sparse=False):
+    def inter_slice_hopping(self, sparse=False, args=(), kwargs={}):
         """Hopping Hamiltonian between two slices of the infinite system."""
         slice_sites = xrange(self.slice_size)
         neighbor_sites = xrange(self.slice_size, self.graph.num_nodes)
         return self.hamiltonian_submatrix(slice_sites, neighbor_sites,
-                                          sparse=sparse)
+                                          sparse=sparse, kwargs=kwargs)
 
-    def self_energy(self, energy):
+    def self_energy(self, energy, args=(), kwargs={}):
         """Return self-energy of a lead.
 
         The returned matrix has the shape (n, n), where n is
         ``sum(self.num_orbitals(i) for i in range(self.slice_size))``.
         """
-        ham = self.slice_hamiltonian()
+        ham = self.slice_hamiltonian(args=args, kwargs=kwargs)
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
-        return physics.self_energy(ham, self.inter_slice_hopping())
+        return physics.self_energy(ham, self.inter_slice_hopping(args=args,
+                                                                 kwargs=kwargs))

@@ -42,14 +42,13 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
         sys[sys.possible_hoppings(*hopping)] = -t
 #HIDDEN_END_lcak
 
-    # In order to introduce a flux through the ring, we introduce a phase
-    # on the hoppings on the line cut through one of the arms
-
-    # since we want to change the flux without modifying Builder repeatedly,
-    # we define the modified hoppings as a function that takes the flux
-    # through the global variable phi.
+    # In order to introduce a flux through the ring, we introduce a phase on
+    # the hoppings on the line cut through one of the arms.  Since we want to
+    # change the flux without modifying the Builder instance repeatedly, we
+    # define the modified hoppings as a function that takes the flux as its
+    # parameter phi.
 #HIDDEN_BEGIN_lvkt
-    def fluxphase(site1, site2):
+    def fluxphase(site1, site2, phi):
         return exp(1j * phi)
 
     def crosses_branchcut(hop):
@@ -94,15 +93,11 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
 
 def plot_conductance(sys, energy, fluxes):
     # compute conductance
-    # global variable phi controls the flux
-    global phi
 
     normalized_fluxes = [flux / (2 * pi) for flux in fluxes]
     data = []
     for flux in fluxes:
-        phi = flux
-
-        smatrix = kwant.solve(sys, energy)
+        smatrix = kwant.solve(sys, energy, kwargs={'phi': flux})
         data.append(smatrix.transmission(1, 0))
 
     pyplot.figure()

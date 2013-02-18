@@ -28,8 +28,6 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Allow plotting of infinite systems
 
-* Consider additional optional parameters to value functions
-
 * Use sparse linear algebra to calculate bands
   However, SciPy's sparse eigenvalues don't seem to work well.
 
