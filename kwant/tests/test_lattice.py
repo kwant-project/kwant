@@ -25,7 +25,7 @@ def test_general():
             assert_equal(tag, sl.closest(site.pos))
 
     # Test 2D lattice with 1 vector.
-    lat = lattice.make_lattice([[1, 0]])
+    lat = lattice.general([[1, 0]])
     site = lat(0)
     assert_raises(ValueError, lat, 0, 1)
 
@@ -56,8 +56,7 @@ def test_translational_symmetry():
     g3 = lattice.general(np.identity(3))
     shifted = lambda site, delta: site.group(*ta.add(site.tag, delta))
 
-    sym = ts((0, 0, 4), (0, 5, 0), (0, 0, 2))
-    assert_raises(ValueError, sym.add_site_group, g3)
+    assert_raises(ValueError, ts, (0, 0, 4), (0, 5, 0), (0, 0, 2))
     sym = ts((3.3, 0))
     assert_raises(ValueError, sym.add_site_group, g2)
 
@@ -107,31 +106,22 @@ def test_translational_symmetry():
 
 
 def test_translational_symmetry_reversed():
-    def assert_equal_symmetry(a, b):
-        np.testing.assert_array_almost_equal(a.periods, b.periods)
-        for i in a.site_group_data:
-            assert i in b.site_group_data
-            data = zip(b.site_group_data[i], a.site_group_data[i])
-            for j in data:
-                assert np.array_equal(j[0], j[1])
-
-    params = [([(3,)], None),
-              ([(0, -1)], None),
-              ([(1, 1)], None),
-              ([(1, 1)], [(-1, 0)]),
-              ([(3, 1, 1), (1, 4, 1), (1, 1, 5)], []),
-              ([(3, 1, 1), (1, 4, 1)], [(1, 1, 5)]),
-              ([(3, 1, 1)], [(1, 4, 1), (1, 1, 5)])]
-    for periods, other_vectors in params:
-        sym = lattice.TranslationalSymmetry(*periods)
-        gr = lattice.general(np.identity(len(periods[0])))
-        sym.add_site_group(gr, other_vectors)
-        rsym = sym.reversed()
-        assert_equal_symmetry(sym, rsym.reversed())
-        rperiods = -np.array(periods, dtype=int)
-        rsym2 = lattice.TranslationalSymmetry(*rperiods)
-        rsym2.add_site_group(gr, other_vectors)
-        assert_equal_symmetry(rsym, rsym2)
+    np.random.seed(30)
+    lat = lattice.general(np.identity(3))
+    sites = [lat(i, j, k) for i in range(-2, 6) for j in range(-2, 6)
+                          for k in range(-2, 6)]
+    for i in range(4):
+            periods = np.random.randint(-5, 5, (3, 3))
+            try:
+                sym = lattice.TranslationalSymmetry(*periods)
+                rsym = sym.reversed()
+                for site in sites:
+                    assert_equal(sym.to_fd(site), rsym.to_fd(site))
+                    assert_equal(sym.which(site), -rsym.which(site))
+                    vec = np.array([1, 1, 1])
+                    assert_equal(sym.act(vec, site), rsym.act(-vec, site))
+            except ValueError:
+                pass
 
 
 def test_monatomic_lattice():

@@ -287,9 +287,13 @@ class TranslationalSymmetry(builder.Symmetry):
             msg = "TranslationalSymmetry takes 1d sequences as parameters.\n" \
                 "See What's new in kwant 0.2 in the documentation."
             raise ValueError(msg)
+        if np.linalg.matrix_rank(periods) < len(periods):
+            raise ValueError("Translational symmetry periods must be "
+                             "linearly independent")
         # A dictionary containing cached data required for applying the
         # symmetry to different site groups.
         self.site_group_data = {}
+        self.is_reversed = False
 
     def add_site_group(self, gr, other_vectors=None):
         """
@@ -371,7 +375,8 @@ class TranslationalSymmetry(builder.Symmetry):
 
     def which(self, site):
         det_x_inv_m_part, det_m = self._get_site_group_data(site.group)[-2:]
-        return ta.dot(det_x_inv_m_part, site.tag) // det_m
+        result = ta.dot(det_x_inv_m_part, site.tag) // det_m
+        return -result if self.is_reversed else result
 
     def act(self, element, a, b=None):
         m_part = self._get_site_group_data(a.group)[0]
@@ -380,6 +385,8 @@ class TranslationalSymmetry(builder.Symmetry):
         except ValueError:
             msg = 'Expecting a {0}-tuple group element, but got `{1}` instead.'
             raise ValueError(msg.format(self.num_directions, element))
+        if self.is_reversed:
+            delta *= -1
         if b is None:
             return builder.Site(a.group, a.tag + delta, True)
         elif b.group == a.group:
@@ -393,6 +400,8 @@ class TranslationalSymmetry(builder.Symmetry):
                 msg = 'Expecting a {0}-tuple group element, ' + \
                       'but got `{1}` instead.'
                 raise ValueError(msg.format(self.num_directions, element))
+            if self.is_reversed:
+                delta2 *= -1
             return builder.Site(a.group, a.tag + delta, True), \
                 builder.Site(b.group, b.tag + delta2, True)
 
@@ -402,20 +411,12 @@ class TranslationalSymmetry(builder.Symmetry):
     def reversed(self):
         """Return a reversed copy of the symmetry.
 
-        The result is identical to creating a new symmetry with all the
-        period vectors opposite to the original but with the same fundamental
-        domain.
+        The resulting symmetry has all the period vectors opposite to the
+        original and an identical fundamental domain.
         """
-        periods = [[-i for i in j] for j in self.periods]
-        result = TranslationalSymmetry(*periods)
-        for can_rep in self.site_group_data:
-            m_part, det_x_inv_m_part, det_m = self.site_group_data[can_rep]
-            if self.num_directions % 2:
-                det_m = -det_m
-            else:
-                det_x_inv_m_part = -det_x_inv_m_part
-            m_part = -m_part
-            result.site_group_data[can_rep] = (m_part, det_x_inv_m_part, det_m)
+        result = TranslationalSymmetry(*self.periods)
+        result.site_group_data = self.site_group_data
+        result.is_reversed = not self.is_reversed
         return result
 
 
