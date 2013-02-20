@@ -130,8 +130,11 @@ class Solver(common.SparseSolver):
         if len(sols):
             return np.concatenate(sols, axis=1)
         else:
-            return np.zeros(shape=(len(kept_vars), 0))
-
+            if isinstance(kept_vars, slice):
+                num_vars = len(xrange(*kept_vars.indices(a_shape[1])))
+            else:
+                num_vars = len(kept_vars)
+            return np.zeros(shape=(num_vars, 0))
 
 default_solver = Solver()
 

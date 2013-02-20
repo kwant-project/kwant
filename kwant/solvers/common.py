@@ -187,7 +187,8 @@ class SparseSolver(object):
                 u, ulinv, nprop, svd = modes
 
                 if leadnum in out_leads:
-                    kept_vars.extend(range(lhs.shape[0], lhs.shape[0] + nprop))
+                    kept_vars.append(
+                        np.arange(lhs.shape[0], lhs.shape[0] + nprop))
 
                 u_out, ulinv_out = u[:, nprop:], ulinv[:, nprop:]
                 u_in, ulinv_in = u[:, : nprop], ulinv[:, : nprop]
@@ -240,7 +241,7 @@ class SparseSolver(object):
                                       lhs.shape)
                 lhs = lhs + sig_sparse  # __iadd__ is not implemented in v0.7
                 if leadnum in out_leads:
-                    kept_vars.extend(list(indices))
+                    kept_vars.append(indices)
                 if leadnum in in_leads:
                     # defer formation of true rhs until the proper system
                     # size is known
@@ -267,6 +268,8 @@ class SparseSolver(object):
 
                     rhs[i] = sp.bmat(bmat, format=self.rhsformat)
 
+        kept_vars = \
+            np.concatenate(kept_vars) if kept_vars else np.empty(0, int)
         return LinearSys(lhs, rhs, kept_vars), lead_info
 
     def solve(self, sys, energy=0, out_leads=None, in_leads=None,

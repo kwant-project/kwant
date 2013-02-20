@@ -375,7 +375,6 @@ def test_ldos(ldos):
 def test_wavefunc_ldos_consistency(wave_func, ldos):
     L = 2
     W = 3
-    energy = 0
 
     np.random.seed(31)
     sys = kwant.Builder()
@@ -396,12 +395,13 @@ def test_wavefunc_ldos_consistency(wave_func, ldos):
     sys.attach_lead(top_lead)
     sys = sys.finalized()
 
-    wf = wave_func(sys, energy)
-    ldos2 = np.zeros(wf.num_orb, float)
-    for lead in xrange(len(sys.leads)):
-        temp = abs(wf(lead))
-        temp **= 2
-        ldos2 += temp.sum(axis=0)
-    ldos2 *= (0.5 / np.pi)
+    for energy in [0, 1000]:
+        wf = wave_func(sys, energy)
+        ldos2 = np.zeros(wf.num_orb, float)
+        for lead in xrange(len(sys.leads)):
+            temp = abs(wf(lead))
+            temp **= 2
+            ldos2 += temp.sum(axis=0)
+        ldos2 *= (0.5 / np.pi)
 
-    assert_almost_equal(ldos2, ldos(sys, energy))
+        assert_almost_equal(ldos2, ldos(sys, energy))
