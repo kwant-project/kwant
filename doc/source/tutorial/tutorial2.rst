@@ -148,12 +148,11 @@ define the potential profile of a quantum well as:
     :start-after: #HIDDEN_BEGIN_ehso
     :end-before: #HIDDEN_END_ehso
 
-This function takes two arguments: the first which is of type
-`~kwant.builder.Site`, from which you can get the real-space
-coordinates using ``site.pos``, and the value of the potential as a
-second argument. Note that we can use global
-variables to define the behavior of `potential`: `L` and `L_well`
-are variables taken from the namespace of `make_system`.
+This function takes two arguments: the first of type `~kwant.builder.Site`,
+from which you can get the real-space coordinates using ``site.pos``, and the
+value of the potential as the second.  Note that in `potential` we can access
+variables of the surrounding function: `L` and `L_well` are taken from the
+namespace of `make_system`.
 
 kwant now allows us to pass a function as a value to
 `~kwant.builder.Builder`:
