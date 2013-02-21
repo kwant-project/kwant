@@ -180,8 +180,8 @@ Finally, we compute the transmission probability:
     :start-after: #HIDDEN_BEGIN_sqvr
     :end-before: #HIDDEN_END_sqvr
 
-``kwant.solve`` allows us to specify a dictionary, `kwargs`, that will
-be passed as additional keyword arguments to the function that evaluates the
+``kwant.solve`` allows us to specify a dictionary, `kwargs`, that will be
+passed as additional keyword arguments to the functions that provide the
 Hamiltonian matrix elements.  In this example we are able to solve the system
 for different depths of the potential well by passing the keyword argument
 `pot`. We obtain the result:
