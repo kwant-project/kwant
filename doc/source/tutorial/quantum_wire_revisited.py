@@ -8,7 +8,6 @@
 #  - introducing `reversed()` for the leads
 #
 # Note: Does the same as tutorial1a.py, but using other features of kwant
-#
 
 #HIDDEN_BEGIN_xkzy
 import kwant

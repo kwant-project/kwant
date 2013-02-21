@@ -118,9 +118,9 @@
  
      # Finalize the system.
      sys = sys.finalized()
-@@ -110,6 +171,15 @@
-     plot_conductance(sys, energy=0.15, fluxes=[0.01 * i * 3 * 2 * pi
+@@ -111,6 +172,15 @@
                                                  for i in xrange(100)])
+ 
  
 +    # Finally, some plots needed for the notes
 +    sys = make_system_note1()

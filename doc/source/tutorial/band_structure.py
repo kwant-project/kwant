@@ -13,6 +13,7 @@ from math import pi
 # For plotting
 from matplotlib import pyplot
 
+
 #HIDDEN_BEGIN_zxip
 def make_lead(a=1, t=1.0, W=10):
     # Start with an empty lead with a single square lattice

@@ -6,9 +6,9 @@
  from matplotlib import pyplot
 +import _defs
  
+ 
  def make_lead(a=1, t=1.0, W=10):
-     # Start with an empty lead with a single square lattice
-@@ -37,11 +38,19 @@
+@@ -38,11 +39,19 @@
      bands = kwant.physics.Bands(lead)
      energies = [bands(k) for k in momenta]
  

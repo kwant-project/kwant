@@ -8,7 +8,6 @@
 #  - Use of `hamiltonian_submatrix` in order to obtain a Hamiltonian
 #    matrix.
 
-
 from cmath import exp
 import numpy as np
 import kwant
@@ -107,6 +106,7 @@ def main():
     # better spatial resolution.
     sys = make_system(r=30).finalized()
     plot_wave_function(sys)
+
 
 # Call the main function if the script gets executed (as opposed to imported).
 # See <http://docs.python.org/library/__main__.html>.
