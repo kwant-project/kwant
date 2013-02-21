@@ -25,7 +25,7 @@ itself forms a regular lattice of the same type as well, and those
 *sublattices* are referenced as `a` and `b` above.
 
 In the next step we define the shape of the scattering region (circle again)
-and add all lattice points using the ``shape()``-functionality:
+and add all lattice points using the ``shape``-functionality:
 
 .. literalinclude:: graphene.py
     :start-after: #HIDDEN_BEGIN_shzy
@@ -34,7 +34,7 @@ and add all lattice points using the ``shape()``-functionality:
 As you can see, this works exactly the same for any kind of lattice.
 We add the onsite energies using a function describing the p-n junction;
 in contrast to the previous tutorial, the potential value is this time taken
-from the scope of `make_system()`, since we keep the potential fixed
+from the scope of `make_system`, since we keep the potential fixed
 in this example.
 
 As a next step we add the hoppings, making use of
@@ -117,8 +117,7 @@ calculation if a lower SciPy version is installed.)
 The code for computing the band structure and the conductance is identical
 to the previous examples, and needs not be further explained here.
 
-Finally, in the `main()` function we make and
-plot the system:
+Finally, in the `main` function we make and plot the system:
 
 .. literalinclude:: graphene.py
     :start-after: #HIDDEN_BEGIN_itkk
@@ -149,7 +148,7 @@ should yield two eigenvalues similar to `[ 3.07869311 +1.02714523e-17j,
 -3.06233144 -6.68085759e-18j]` (round-off might change the imaginary part which
 would be equal to zero for exact arithmetics).
 
-The remaining code of `main()` attaches the leads to the system and plots it
+The remaining code of `main` attaches the leads to the system and plots it
 again:
 
 .. image:: ../images/graphene_sys2.*

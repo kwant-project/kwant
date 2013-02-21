@@ -152,7 +152,7 @@ This function takes two arguments: the first which is of type
 `~kwant.builder.Site`, from which you can get the real-space
 coordinates using ``site.pos``, and the value of the potential as a
 second argument. Note that we can use global
-variables to define the behavior of `potential()`: `L` and `L_well`
+variables to define the behavior of `potential`: `L` and `L_well`
 are variables taken from the namespace of `make_system`.
 
 kwant now allows us to pass a function as a value to
@@ -163,10 +163,10 @@ kwant now allows us to pass a function as a value to
     :end-before: #HIDDEN_END_coid
 
 For each lattice point, the corresponding site is then passed as the
-first argument to the function `onsite()`. The values of any additional
+first argument to the function `onsite`. The values of any additional
 parameters, which can be used to alter the Hamiltonian matrix elements
-at a later stage, are specified later during the call to `solve()`.
-Note that we had to define `onsite()`, as it is
+at a later stage, are specified later during the call to `solve`.
+Note that we had to define `onsite`, as it is
 not possible to mix values and functions as in ``sys[...] = 4 * t +
 potential``.
 
@@ -249,7 +249,7 @@ provided by the lattice:
     :start-after: #HIDDEN_BEGIN_lcak
     :end-before: #HIDDEN_END_lcak
 
-Here, ``lat.shape()`` takes as a second parameter a (real-space) point that is
+Here, ``lat.shape`` takes as a second parameter a (real-space) point that is
 inside the desired shape. The hoppings can still be added using
 `~kwant.builder.Builder.possible_hoppings` as before.
 
@@ -273,7 +273,7 @@ is again that we want to vary the flux through the ring, without
 constantly rebuilding the system -- instead the flux is governed
 by the parameter `phi`.
 
-For the leads, we can also use the ``lat.shape()``-functionality:
+For the leads, we can also use the ``lat.shape``-functionality:
 
 .. literalinclude:: ab_ring.py
     :start-after: #HIDDEN_BEGIN_qwgr

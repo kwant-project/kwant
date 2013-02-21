@@ -355,14 +355,14 @@ and
 Finally, we use a python trick to make our example usable both
 as a script, as well as allowing it to be imported as a module.
 We collect all statements that should be executed in the script
-in a ``main()``-function:
+in a ``main``-function:
 
 .. literalinclude:: quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_cjel
     :end-before: #HIDDEN_END_cjel
 
 Finally, we use the following python construct [#]_ that executes
-``main()`` if the program is used as a script (i.e. executed as
+``main`` if the program is used as a script (i.e. executed as
 ``python tutorial1b.py``):
 
 .. literalinclude:: quantum_wire_revisited.py
@@ -370,10 +370,10 @@ Finally, we use the following python construct [#]_ that executes
     :end-before: #HIDDEN_END_ypbj
 
 If the example however is imported using ``import tutorial1b``,
-``main()`` is not executed automatically. Instead, you can execute it
+``main`` is not executed automatically. Instead, you can execute it
 manually using ``tutorial1b.main()``.  On the other hand, you also
-have access to the other functions, ``make_system()`` and
-``plot_conductance()``, and can thus play with the parameters.
+have access to the other functions, ``make_system`` and
+``plot_conductance``, and can thus play with the parameters.
 
 The result of the example should be identical to the previous one.
 
