@@ -36,7 +36,7 @@ def make_system(a=1, t=1.0, r=10):
         rsq = x ** 2 + y ** 2
         return rsq < r ** 2
 
-    def hopx(site1, site2, B):
+    def hopx(site1, site2, B=0):
         # The magnetic field is controlled by the parameter B
         y = site1.pos[1]
         return -t * exp(-1j * B * y)
@@ -81,7 +81,7 @@ def plot_spectrum(sys, Bfields):
 #HIDDEN_BEGIN_wave
 def plot_wave_function(sys):
     # Calculate the wave functions in the system.
-    ham_mat = sys.hamiltonian_submatrix(sparse=True, kwargs={'B': 0})
+    ham_mat = sys.hamiltonian_submatrix(sparse=True)
     evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
 
     # Plot the probability density of the 10th eigenmode.

@@ -35,7 +35,7 @@
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +
      # Calculate the wave functions in the system.
-     ham_mat = sys.hamiltonian_submatrix(sparse=True, kwargs={'B': 0})
+     ham_mat = sys.hamiltonian_submatrix(sparse=True)
      evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
  
      # Plot the probability density of the 10th eigenmode.
