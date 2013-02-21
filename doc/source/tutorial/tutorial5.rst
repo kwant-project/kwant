@@ -15,7 +15,7 @@ the superconducting order parameter, and :math:`\mathcal{T}`
 the time-reversal operator. The BdG Hamiltonian introduces
 electron and hole degrees of freedom (an artificial doubling -
 be aware of the fact that electron and hole excitations
-are related!), which we now implement in `kwant`.
+are related!), which we now implement in kwant.
 
 For this we restrict ourselves to a simple spin-less system without
 magnetic field, so that :math:`\Delta` is just a number (which we

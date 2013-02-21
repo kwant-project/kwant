@@ -11,7 +11,7 @@ but now for the honeycomb lattice. As you will see, everything
 carries over nicely.
 
 We begin by defining the honeycomb lattice of graphene. This is
-in principle already done in `kwant.lattice.Honeycomb`, but we do it
+in principle already done in `kwant.lattice.honeycomb`, but we do it
 explicitly here to show how to define a new lattice:
 
 .. literalinclude:: graphene.py
@@ -39,7 +39,7 @@ in this example.
 
 As a next step we add the hoppings, making use of
 `~kwant.builder.Builder.possible_hoppings`. Since we use our home-made
-lattice (instead of `kwant.lattice.Honeycomb`), we have to define
+lattice (instead of `kwant.lattice.honeycomb`), we have to define
 the hoppings ourselves:
 
 .. literalinclude:: graphene.py
