@@ -78,3 +78,6 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Make an option for plotting hoppings as arcs, in order for overlapping
   hoppings to be distinguishable. Also potentially add arrows to the hoppings.
+
+* Adopt mincut/maxflow algorithm from networkx or python-graph to find the best
+  representation of a lead unit cell.
