@@ -13,6 +13,7 @@ __all__ = ['Builder', 'Site', 'SiteGroup', 'SimpleSiteGroup', 'Symmetry',
 
 import abc
 import sys
+import warnings
 import operator
 from itertools import izip, islice, chain
 import tinyarray as ta
@@ -314,10 +315,6 @@ class Lead(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def check_interface(self):
-        if len(self.interface) == 0:
-            raise ValueError('Lead is not connected (no interface sites).')
-
     @abc.abstractmethod
     def finalized():
         """Return a finalized version of the lead.
@@ -370,7 +367,6 @@ class BuilderLead(Lead):
     def __init__(self, builder, interface):
         self.builder = builder
         self.interface = tuple(interface)
-        self.check_interface()
 
     def finalized(self):
         """Return a `kwant.system.InfiniteSystem` corresponding to the
@@ -394,7 +390,6 @@ class SelfEnergy(Lead):
     def __init__(self, self_energy_func, interface):
         self.self_energy_func = self_energy_func
         self.interface = tuple(interface)
-        self.check_interface()
 
     def finalized(self):
         """Trivial finalization: the object is returned itself."""
@@ -1035,10 +1030,22 @@ class Builder(object):
         lead_interfaces = []
         for lead_nr, lead in enumerate(self.leads):
             try:
-                finalized_leads.append(lead.finalized())
+                with warnings.catch_warnings(record=True) as ws:
+                    warnings.simplefilter("always")
+                    # The following line is the whole "payload" of the entire
+                    # try-block.
+                    finalized_leads.append(lead.finalized())
+                for w in ws:
+                    # Re-raise any warnings with an additional message and the
+                    # proper stacklevel.
+                    w = w.message
+                    msg = 'When finalizing lead {0}:'.format(lead_nr)
+                    warnings.warn(w.__class__(' '.join((msg,) + w.args)),
+                                  stacklevel=3)
             except ValueError, e:
-                msg = 'Problem finalizing lead {0}:'
-                e.args = (' '.join((msg.format(lead_nr),) + e.args),)
+                # Re-raise the exception with an additional message.
+                msg = 'Problem finalizing lead {0}:'.format(lead_nr)
+                e.args = (' '.join((msg,) + e.args),)
                 raise
             interface = [id_by_site[isite] for isite in lead.interface]
             lead_interfaces.append(np.array(interface))
@@ -1084,7 +1091,8 @@ class Builder(object):
         slice_size = len(lsites_with) + len(lsites_without)
 
         if not lsites_with:
-            raise ValueError('Infinite system with disconnected slices.')
+            warnings.warn('Infinite system with disconnected slices.',
+                          RuntimeWarning, stacklevel=3)
 
         ### Create list of sites and a lookup table
         minus_one = ta.array((-1,))
@@ -1092,10 +1100,11 @@ class Builder(object):
         if interface_order is None:
             interface = [sym.act(minus_one, s) for s in lsites_with]
         else:
-            shift = ta.array((-sym.which(interface_order[0])[0] - 1,))
             lsites_with_set = set(lsites_with)
             lsites_with = []
             interface = []
+            if interface_order:
+                shift = ta.array((-sym.which(interface_order[0])[0] - 1,))
             for shifted_iface_site in interface_order:
                 # Shift the interface domain before the fundamental domain.
                 # That's the right place for the interface of a lead to be, but
@@ -1131,6 +1140,7 @@ class Builder(object):
 
         #### Make graph and extract onsite Hamiltonians.
         g = graph.Graph()
+        g.num_nodes = len(sites)  # Some sites could not appear in any edge.
         onsite_hamiltonians = []
         for tail_id, tail in enumerate(sites[:slice_size]):
             onsite_hamiltonians.append(self.H[tail][1])

@@ -7,6 +7,7 @@
 # http://kwant-project.org/authors.
 
 from __future__ import division
+import warnings
 from random import Random
 from nose.tools import assert_raises
 from numpy.testing import assert_equal
@@ -287,6 +288,12 @@ def test_finalization():
         shift = rng.randrange(-5, 6) * size
         site = site[0] + shift, site[1]
         lead[sg(*site)] = value
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        lead.finalized()        # Trigger the warning.
+        assert_equal(len(w), 1)
+        assert issubclass(w[0].category, RuntimeWarning)
+        assert "disconnected" in str(w[0].message)
     for (a, b), value in lead_hops.iteritems():
         shift = rng.randrange(-5, 6) * size
         a = a[0] + shift, a[1]
@@ -299,9 +306,18 @@ def test_finalization():
     check_onsite(flead, lead_sites, subset=True)
     check_hoppings(flead, lead_hops)
 
-    # Attach lead to system.
-    sys.leads.append(builder.BuilderLead(
-            lead, (builder.Site(sg, n) for n in neighbors)))
+    # Attach lead to system with empty interface.
+    sys.leads.append(builder.BuilderLead(lead, ()))
+    assert_raises(ValueError, sys.finalized)
+
+    # Attach lead with improper interface.
+    sys.leads[-1] = builder.BuilderLead(
+        lead, 2 * tuple(builder.Site(sg, n) for n in neighbors))
+    assert_raises(ValueError, sys.finalized)
+
+    # Attach lead properly.
+    sys.leads[-1] = builder.BuilderLead(
+        lead, (builder.Site(sg, n) for n in neighbors))
     fsys = sys.finalized()
     assert_equal(len(fsys.lead_interfaces), 1)
     assert_equal([fsys.site(i).tag for i in fsys.lead_interfaces[0]],
@@ -433,34 +449,27 @@ def test_attach_lead():
 
     sys = builder.Builder()
     sys[gr(1)] = 0
-    lead0 = builder.Builder(VerySimpleSymmetry(-2))
-    assert_raises(ValueError, sys.attach_lead, lead0)
+    lead = builder.Builder(VerySimpleSymmetry(-2))
+    assert_raises(ValueError, sys.attach_lead, lead)
 
-    lead0.default_site_group = gr
-    lead0[gr(0)] = lead0[gr(1)] = 1
-
-    sys2 = builder.Builder()
-    sys2.default_site_group = gr
-    sys2[gr(1)] = 0
-    assert_raises(ValueError, sys2.attach_lead, lead0)
-
-    lead0[gr(0), gr(1)] = lead0[gr(0), gr(2)] = 1
-    assert_raises(ValueError, sys.attach_lead, lead0)
-
-    sys[gr(0)] = 1
-    assert_raises(ValueError, sys.attach_lead, lead0, gr(5))
+    lead[gr(0)] = 1
+    assert_raises(ValueError, sys.attach_lead, lead)
+    lead[gr(1)] = 1
+    sys.attach_lead(lead)
+    assert_raises(ValueError, sys.attach_lead, lead, gr(5))
 
     sys = builder.Builder()
     sys[gr(1)] = 0
     sys[gr(0)] = 1
-    sys.attach_lead(lead0)
+    lead[gr(0), gr(1)] = lead[gr(0), gr(2)] = 1
+    sys.attach_lead(lead)
     assert_equal(len(list(sys.sites())), 3)
     assert_equal(set(sys.leads[0].interface), set([gr(-1), gr(0)]))
     sys[gr(-10)] = sys[gr(-11)] = 0
-    sys.attach_lead(lead0)
+    sys.attach_lead(lead)
     assert_equal(set(sys.leads[1].interface), set([gr(-10), gr(-11)]))
     assert_equal(len(list(sys.sites())), 5)
-    sys.attach_lead(lead0, gr(-5))
+    sys.attach_lead(lead, gr(-5))
     assert_equal(set(sys.leads[0].interface), set([gr(-1), gr(0)]))
     sys.finalized()
 
