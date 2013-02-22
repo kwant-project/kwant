@@ -318,11 +318,6 @@ period of one flux quantum.
 
 .. specialnote:: Technical details
 
-  - Note that in this example, we did not need to set
-    ``sys.default_site_group = lat``. All lattice points were
-    added using functionality from ``lat`` and thus were
-    proper sites already.
-
   - Leads have to have proper periodicity. Furthermore, the kwant
     format requires the hopping from the leads to the scattering
     region to be identical to the hoppings between unit cells in

@@ -362,7 +362,6 @@ def test_ldos(ldos):
     sys = kwant.Builder()
     gr = kwant.lattice.chain()
     lead = kwant.Builder(kwant.TranslationalSymmetry(gr.vec((1,))))
-    sys.default_site_group = lead.default_site_group = gr
     sys[gr(0)] = sys[gr(1)] = lead[gr(0)] = 0
     sys[gr(0), gr(1)] = lead[gr(0), gr(1)] = 1
     sys.attach_lead(lead)
