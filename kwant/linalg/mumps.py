@@ -299,7 +299,7 @@ class MUMPSContext(object):
         # Note: previous analysis is reused only if reuse_analysis == True
 
         if reuse_analysis:
-            if mumps_instance is None:
+            if self.mumps_instance is None:
                 warnings.warn("Missing analysis although reuse_analysis=True. "
                               "New analysis is performed.",
                               RuntimeWarning)
