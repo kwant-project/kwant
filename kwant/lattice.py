@@ -281,6 +281,7 @@ class TranslationalSymmetry(builder.Symmetry):
     """
     def __init__(self, *periods):
         self.periods = ta.array(periods)
+        self._periods = self.periods
         if self.periods.ndim != 2:
             # TODO: remove the second part of the following message once
             # everybody got used to it.
@@ -322,11 +323,11 @@ class TranslationalSymmetry(builder.Symmetry):
             raise KeyError('Group already processed, delete it from '
                            'site_group_data first.')
         inv = np.linalg.pinv(gr.prim_vecs)
-        bravais_periods = [np.dot(i, inv) for i in self.periods]
+        bravais_periods = [np.dot(i, inv) for i in self._periods]
         if not np.allclose(bravais_periods, np.round(bravais_periods),
                            rtol=0, atol=1e-8) or \
            not np.allclose([gr.vec(i) for i in bravais_periods],
-                           self.periods):
+                           self._periods):
             msg = 'Site group {0} does not have commensurate periods with ' +\
                   'symmetry {1}.'
             raise ValueError(msg.format(gr, self))
@@ -414,9 +415,10 @@ class TranslationalSymmetry(builder.Symmetry):
         The resulting symmetry has all the period vectors opposite to the
         original and an identical fundamental domain.
         """
-        result = TranslationalSymmetry(*self.periods)
+        result = TranslationalSymmetry(*self._periods)
         result.site_group_data = self.site_group_data
         result.is_reversed = not self.is_reversed
+        result.periods = -self.periods
         return result
 
 
