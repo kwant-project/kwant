@@ -301,14 +301,11 @@ class MUMPSContext(object):
         if reuse_analysis:
             if self.mumps_instance is None:
                 warnings.warn("Missing analysis although reuse_analysis=True. "
-                              "New analysis is performed.",
-                              RuntimeWarning)
-
+                              "New analysis is performed.", RuntimeWarning)
                 self.analyze(a, ordering=ordering, overwrite_a=overwrite_a)
             else:
                 dtype, row, col, data = _make_assembled_from_coo(a,
                                                                  overwrite_a)
-
                 if self.dtype != dtype:
                     raise ValueError("MUMPSContext dtype and matrix dtype "
                                      "incompatible!")

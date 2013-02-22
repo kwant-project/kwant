@@ -32,10 +32,10 @@ try:
     try:
         from mpl_toolkits import mplot3d
     except ImportError:
-        warnings.warn("3D plotting not available.")
+        warnings.warn("3D plotting not available.", RuntimeWarning)
 except ImportError:
     warnings.warn("matplotlib is not available, only iterator-providing"
-                  "functions will work.")
+                  "functions will work.", RuntimeWarning)
     _mpl_enabled = False
 
 from . import system, builder
