@@ -35,13 +35,13 @@ class System(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def num_orbitals(self, site):
+    def num_orbitals(self, site, *args, **kwargs):
         """Return the number of orbitals of a site.
 
         This is an inefficient general implementation.  It should be
         overridden, if a more efficient way to calculate is available.
         """
-        ham = self.hamiltonian(site, site)
+        ham = self.hamiltonian(site, site, *args, **kwargs)
         return 1 if np.isscalar(ham) else ham.shape[0]
 
     @abc.abstractmethod
@@ -136,14 +136,16 @@ class InfiniteSystem(System):
         """Hamiltonian of a single slice of the infinite system."""
         slice_sites = xrange(self.slice_size)
         return self.hamiltonian_submatrix(slice_sites, slice_sites,
-                                          sparse=sparse, kwargs=kwargs)
+                                          sparse=sparse, args=args,
+                                          kwargs=kwargs)
 
     def inter_slice_hopping(self, sparse=False, args=(), kwargs={}):
         """Hopping Hamiltonian between two slices of the infinite system."""
         slice_sites = xrange(self.slice_size)
         neighbor_sites = xrange(self.slice_size, self.graph.num_nodes)
         return self.hamiltonian_submatrix(slice_sites, neighbor_sites,
-                                          sparse=sparse, kwargs=kwargs)
+                                          sparse=sparse, args=args,
+                                          kwargs=kwargs)
 
     def self_energy(self, energy, args=(), kwargs={}):
         """Return self-energy of a lead.
