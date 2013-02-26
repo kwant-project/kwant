@@ -329,7 +329,7 @@ def sys_leads_sites(sys, n_lead_copies=2):
     if isinstance(sys, builder.Builder):
         sites = [(site, None, 0) for site in sys.sites()]
         for leadnr, lead in enumerate(sys.leads):
-            if hasattr(lead, 'builder'):
+            if hasattr(lead, 'builder') and len(lead.interface):
                 sites.extend(((site, leadnr, i) for site in
                               lead.builder.sites() for i in
                               xrange(n_lead_copies)))
@@ -337,7 +337,8 @@ def sys_leads_sites(sys, n_lead_copies=2):
         sites = [(i, None, 0) for i in xrange(sys.graph.num_nodes)]
         for leadnr, lead in enumerate(sys.leads):
             # We will only plot leads with a graph and with a symmetry.
-            if hasattr(lead, 'graph') and hasattr(lead, 'symmetry'):
+            if hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and \
+                    len(sys.lead_interfaces[leadnr]):
                 sites.extend(((site, leadnr, i) for site in
                               xrange(lead.slice_size) for i in
                               xrange(n_lead_copies)))
@@ -385,10 +386,16 @@ def sys_leads_pos(sys, site_lead_nr):
             return np.zeros((dim,)), 0
         if is_builder:
             sym = sys.leads[lead_nr].builder.symmetry
-            site = sys.leads[lead_nr].interface[0]
+            try:
+                site = sys.leads[lead_nr].interface[0]
+            except IndexError:
+                return (0, 0)
         else:
             sym = sys.leads[lead_nr].symmetry
-            site = sys.site(sys.lead_interfaces[lead_nr][0])
+            try:
+                site = sys.site(sys.lead_interfaces[lead_nr][0])
+            except IndexError:
+                return (0, 0)
         dom = sym.which(site)[0] + 1
         # TODO (Anton): vec = sym.periods[0] not supported by ta.ndarray
         # Remove conversion to np.ndarray when not necessary anymore.
@@ -446,7 +453,7 @@ def sys_leads_hoppings(sys, n_lead_copies=2):
                 yield sym.act([-shift], site2), sym.act([-shift], site1)
 
         for leadnr, lead in enumerate(sys.leads):
-            if hasattr(lead, 'builder'):
+            if hasattr(lead, 'builder') and len(lead.interface):
                 hoppings.extend(((hop, leadnr, i) for hop in
                                 lead_hoppings(lead.builder) for i in
                                 xrange(n_lead_copies)))
@@ -459,7 +466,8 @@ def sys_leads_hoppings(sys, n_lead_copies=2):
         hoppings.extend(((hop, None, 0) for hop in ll_hoppings(sys)))
         for leadnr, lead in enumerate(sys.leads):
             # We will only plot leads with a graph and with a symmetry.
-            if hasattr(lead, 'graph') and hasattr(lead, 'symmetry'):
+            if hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and \
+                    len(sys.lead_interfaces[leadnr]):
                 hoppings.extend(((hop, leadnr, i) for hop in
                                  ll_hoppings(lead) for i in
                                  xrange(n_lead_copies)))
@@ -513,10 +521,16 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
             return np.zeros((dim,)), 0
         if is_builder:
             sym = sys.leads[lead_nr].builder.symmetry
-            site = sys.leads[lead_nr].interface[0]
+            try:
+                site = sys.leads[lead_nr].interface[0]
+            except IndexError:
+                return (0, 0)
         else:
             sym = sys.leads[lead_nr].symmetry
-            site = sys.site(sys.lead_interfaces[lead_nr][0])
+            try:
+                site = sys.site(sys.lead_interfaces[lead_nr][0])
+            except IndexError:
+                return (0, 0)
         dom = sym.which(site)[0] + 1
         # TODO (Anton): vec = sym.periods[0] not supported by ta.ndarray
         # Remove conversion to np.ndarray when not necessary anymore.

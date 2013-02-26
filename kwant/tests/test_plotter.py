@@ -7,6 +7,7 @@
 # http://kwant-project.org/authors.
 
 import tempfile
+import warnings
 import nose
 import kwant
 from kwant import plotter
@@ -31,12 +32,15 @@ def sys_2d(W=3, r1=3, r2=8):
         sys[sys.possible_hoppings(*hopping)] = - t
     sym_lead0 = kwant.TranslationalSymmetry(lat.vec((-1, 0)))
     lead0 = kwant.Builder(sym_lead0)
+    lead2 = kwant.Builder(sym_lead0)
 
     def lead_shape(pos):
         (x, y) = pos
         return (-1 < x < 1) and (-W / 2 < y < W / 2)
 
     lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
+    lead2[lat.shape(lead_shape, (0, 0))] = 4 * t
+    sys.attach_lead(lead2)
     for hopping in lat.nearest:
         lead0[lead0.possible_hoppings(*hopping)] = - t
     lead1 = lead0.reversed()
@@ -109,6 +113,9 @@ def test_plot():
     plot(sys2d, show=False)
     with tempfile.TemporaryFile('w+b') as output:
         plot(sys3d, file=output)
+        warnings.simplefilter('ignore')
+        plot(sys2d.finalized(), file=output)
+        warnings.simplefilter('once')
 
 
 def test_map():
@@ -116,7 +123,9 @@ def test_map():
     with tempfile.TemporaryFile('w+b') as output:
         plotter.map(sys, lambda site: site.tag[0], file=output,
                           method='linear', a=4, oversampling=4, cmap='flag')
+        warnings.simplefilter('ignore')
         plotter.map(sys.finalized(), xrange(len(sys.sites())),
                           file=output)
+        warnings.simplefilter('once')
         nose.tools.assert_raises(ValueError, plotter.map,
                                  sys, xrange(len(sys.sites())), file=output)
