@@ -444,7 +444,7 @@ def honeycomb(a=1, name=''):
     lat = PolyatomicLattice(((a, 0), (0.5 * a, 0.5 * a * sqrt(3))),
                             ((0, 0), (0, a / sqrt(3))), name=name)
     lat.a, lat.b = lat.sublattices
-    lat.nearest = [((0, 0), lat.b, lat.a),
-                    ((0, 1), lat.b, lat.a),
-                    ((-1, 1), lat.b, lat.a)]
+    lat.nearest = [((0, 0), lat.a, lat.b),
+                    ((0, 1), lat.a, lat.b),
+                    ((-1, 1), lat.a, lat.b)]
     return lat
