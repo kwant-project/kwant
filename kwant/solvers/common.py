@@ -457,7 +457,8 @@ class SparseSolver(object):
         The returned object can be itself called like a function.  Given a lead
         number, it returns a 2d NumPy array containing the wave function within
         the scattering region due to each mode of the given lead.  Index 0 is
-        the mode number, index 1 is the orbital number.
+        the mode number, index 1 is the orbital number.  The modes appear in
+        the same order as incoming modes in `kwant.physics.modes`.
 
         Examples
         --------

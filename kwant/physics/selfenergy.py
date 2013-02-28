@@ -636,26 +636,24 @@ def modes(h_onslice, h_hop, tol=1e6):
         holding the singular value decomposition of the hopping matrix, or a
         single None if `h_hop` is invertible.
 
-        The first `nmodes` columns in `vecs` correspond to incoming modes
-        (coming from the lead into the system), the following `nmodes`
-        columns correspond to outgoing modes (going into the lead,
-        away from the system). The remaining columns are evanescent modes,
-        decaying away from the system. The propagating modes are sorted
-        according to their k-vector, with outgoing modes having k sorted in
-        ascending order, and incoming modes having k sorted in descending
-        order.
-
     Notes
     -----
-    Only propagating modes and modes decaying away from the system
-    are returned.
+    Only propagating modes and modes decaying away from the system are
+    returned: The first `nmodes` columns in `vecs` correspond to incoming modes
+    (coming from the lead into the system), the following `nmodes` columns
+    correspond to outgoing modes (going into the lead, away from the system),
+    the remaining columns are evanescent modes, decaying away from the system.
+
+    The propagating modes are sorted according to the longitudinal component of
+    their k-vector, with incoming modes having k sorted in descending order,
+    and outgoing modes having k sorted in ascending order.  In simple cases
+    where bands do not cross, this ordering corresponds to "lowest modes
+    first". In general, however, it is necessary to examine the band structure
+    -- something this function is not doing by design.
 
     If `h_hop` is invertible, the full transverse wave functions are returned.
     If it is singular, the projections (u^dagger psi, v^dagger psi lambda^-1)
     are returned.
-
-    First `nmodes` are incoming, second `nmodes` are reflected, the rest are
-    evanescent.
 
     In order for the linear system to be well-defined, instead of the
     evanescent modes, an orthogonal basis in the space of evanescent modes is
