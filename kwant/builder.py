@@ -9,7 +9,7 @@
 from __future__ import division
 
 __all__ = ['Builder', 'Site', 'SiteGroup', 'SimpleSiteGroup', 'Symmetry',
-           'Lead', 'BuilderLead', 'SelfEnergy']
+           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergy']
 
 import abc
 import sys
@@ -276,6 +276,71 @@ class NoSymmetry(Symmetry):
         return True
 
 
+################ Hopping kinds
+
+class HoppingKind(object):
+    """A pattern for matching hoppings.
+
+    A hopping ``(a, b)`` matches precisely when the site group of ``a`` equals
+    `group_a` and that of ``b`` equals `group_b` and ``(a.tag - b.tag)`` is
+    equal to `delta`.  In other words, the matching hoppings have the form:
+    ``(group_a(x + delta), group_b(x))``
+
+    Parameters
+    ----------
+    delta : Sequence of integers
+        The sequence is interpreted as a vector with integer elements.
+    group_a : `~kwant.builder.SiteGroup`
+    grpup_b : `~kwant.builder.SiteGroup` or ``None`` (default)
+        The default value means: use the same group as `group_a`.
+
+    Notes
+    -----
+    A HoppingKind instance can be used in two ways
+
+    - As a "wildcard" key when setting or deleting hoppings of a builder::
+
+          kind = kwant.builder.HoppingKind((2, 0), lat)
+          sys[kind] = 1
+
+    - Employing its `match` method.
+    """
+    __slots__ = ('delta', 'group_a', 'group_b')
+
+    def __init__(self, delta, group_a, group_b=None):
+        self.delta = ta.array(delta, int)
+        self.group_a = group_a
+        self.group_b = group_b if group_b is not None else group_a
+
+    def match(self, builder):
+        """Return an iterator over all possible matching hoppings whose sites
+        are already present in the system.  The hoppings do *not* have to be
+        already present in the system.
+
+        Parameters
+        ----------
+        builder : `~kwant.builder.Builder`
+        """
+        delta = self.delta
+        group_a = self.group_a
+        group_b = self.group_b
+        H = builder.H
+        symtofd = builder.symmetry.to_fd
+
+        for a in H:
+            if a.group != group_a:
+                continue
+            b = Site(group_b, a.tag - delta, True)
+            if symtofd(b) in H:
+                yield a, b
+
+    def __repr__(self):
+        return '{0}({1}, {2}{3}'.format(
+            self.__class__.__name__, repr(tuple(self.delta)),
+            repr(self.group_a),
+            ', ' + repr(self.group_b) if self.group_a != self.group_b else '')
+
+
 ################ Support for Hermitian conjugation
 
 def herm_conj(value):
@@ -400,40 +465,6 @@ class SelfEnergy(Lead):
 
 
 ################ Builder class
-
-
-def for_each_in_key(key, f_site, f_hopp):
-    """Perform an operation on each site or hopping in key.
-
-    Key may be
-    * a single site or hopping object,
-    * a non-tuple iterable of sites,
-    * a non-tuple iterable of hoppings.
-    """
-    if isinstance(key, Site):
-        f_site(key)
-    elif isinstance(key, tuple):
-        f_hopp(key)
-    else:
-        try:
-            ikey = iter(key)
-        except:
-            raise KeyError(key)
-        try:
-            first = next(ikey)
-        except StopIteration:
-            return
-        if isinstance(first, Site):
-            f_site(first)
-            for site in ikey:
-                f_site(site)
-        elif isinstance(first, tuple):
-            f_hopp(first)
-            for hopping in ikey:
-                f_hopp(hopping)
-        else:
-            raise KeyError(first)
-
 
 # A marker, meaning for hopping (i, j): this value is given by the Hermitian
 # conjugate the value of the hopping (j, i).  Used by Builder and System.
@@ -603,6 +634,48 @@ class Builder(object):
     def __nonzero__(self):
         return bool(self.H)
 
+    def _for_each_in_key(self, key, f_site, f_hopp):
+        """Perform an operation on each site or hopping in key.
+
+        Key may be
+        * a single site or hopping object,
+        * a non-tuple iterable of sites,
+        * a non-tuple iterable of hoppings.
+        """
+        if isinstance(key, Site):
+            f_site(key)
+        elif isinstance(key, tuple):
+            f_hopp(key)
+        elif isinstance(key, HoppingKind):
+            for hopping in key.match(self):
+                f_hopp(hopping)
+        else:
+            try:
+                ikey = iter(key)
+            except:
+                raise KeyError(key)
+            try:
+                first = next(ikey)
+            except StopIteration:
+                return
+            if isinstance(first, Site):
+                f_site(first)
+                for site in ikey:
+                    f_site(site)
+            elif isinstance(first, tuple):
+                f_hopp(first)
+                for hopping in ikey:
+                    f_hopp(hopping)
+            elif isinstance(first, HoppingKind):
+                for hopping in first.match(self):
+                    f_hopp(hopping)
+                for kind in ikey:
+                    for hopping in kind.match(self):
+                        f_hopp(hopping)
+            else:
+                raise KeyError(first)
+
+
     def _get_site(self, site):
         site = self.symmetry.to_fd(site)
         try:
@@ -701,9 +774,9 @@ class Builder(object):
 
     def __setitem__(self, key, value):
         """Set a single site/hopping or an iterable of them."""
-        for_each_in_key(key,
-                        lambda s: self._set_site(s, value),
-                        lambda h: self._set_hopping(h, value))
+        self._for_each_in_key(key,
+                              lambda s: self._set_site(s, value),
+                              lambda h: self._set_hopping(h, value))
 
     def _del_site(self, site):
         """Delete a single site and all associated hoppings."""
@@ -744,9 +817,9 @@ class Builder(object):
 
     def __delitem__(self, key):
         """Delete a single site/hopping or an iterable of them."""
-        for_each_in_key(key,
-                        lambda s: self._del_site(s),
-                        lambda h: self._del_hopping(h))
+        self._for_each_in_key(key,
+                              lambda s: self._del_site(s),
+                              lambda h: self._del_hopping(h))
 
     def eradicate_dangling(self):
         """Keep deleting dangling sites until none are left."""
@@ -842,37 +915,32 @@ class Builder(object):
         self.leads.extend(other_sys.leads)
         return self
 
-    def possible_hoppings(self, delta, group_a, group_b):
-        """Return all matching possible hoppings between existing sites.
+    # def possible_hoppings(self, delta, group_a, group_b):
+    #     """Return all matching possible hoppings between existing sites.
 
-        A hopping ``(a, b)`` matches precisely when the site group of ``a``
-        equals `group_a` and that of ``b`` equals `group_b` and
-        ``(a.tag - b.tag)`` is equal to `delta`.
+    #     A hopping ``(a, b)`` matches precisely when the site group of ``a``
+    #     equals `group_a` and that of ``b`` equals `group_b` and
+    #     ``(a.tag - b.tag)`` is equal to `delta`.
 
-        In other words, the matching hoppings have the form:
-        ``(group_a(x + delta), group_b(x))``
+    #     In other words, the matching hoppings have the form:
+    #     ``(group_a(x + delta), group_b(x))``
 
-        Parameters
-        ----------
-        delta : Sequence of integers
-            The sequence is interpreted as a vector with integer elements.
-        group_a : `~kwant.builder.SiteGroup`
-        grpup_b : `~kwant.builder.SiteGroup`
+    #     Parameters
+    #     ----------
+    #     delta : Sequence of integers
+    #         The sequence is interpreted as a vector with integer elements.
+    #     group_a : `~kwant.builder.SiteGroup`
+    #     grpup_b : `~kwant.builder.SiteGroup`
 
-        Returns
-        -------
-        hoppings : Iterator over hoppings
-           All matching possible hoppings
-        """
-        H = self.H
-        symtofd = self.symmetry.to_fd
-        delta = ta.array(delta, int)
-        for a in self.H:
-            if a.group != group_a:
-                continue
-            b = Site(group_b, a.tag - delta, True)
-            if symtofd(b) in H:
-                yield a, b
+    #     Returns
+    #     -------
+    #     hoppings : Iterator over hoppings
+    #        All matching possible hoppings
+    #     """
+    #     warnings.warn('Infinite system with disconnected slices.',
+    #                   DeprecationWarning)
+
+    #     return HoppingKind(delta, group_a, group_b)(self)
 
     def attach_lead(self, lead_builder, origin=None):
         """Attach a lead to the builder, possibly adding missing sites.

@@ -10,6 +10,7 @@ Types
 
    Builder
    Site
+   HoppingKind
    SimpleSiteGroup
    BuilderLead
    SelfEnergy

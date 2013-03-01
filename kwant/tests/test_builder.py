@@ -479,8 +479,8 @@ def test_neighbors_not_in_single_domain():
     lead = builder.Builder(VerySimpleSymmetry(-1))
     gr = builder.SimpleSiteGroup()
     sr[(gr(x, y) for x in range(3) for y in range(3) if x >= y)] = 0
-    sr[sr.possible_hoppings((1, 0), gr, gr)] = 1
-    sr[sr.possible_hoppings((0, 1), gr, gr)] = 1
+    sr[builder.HoppingKind((1, 0), gr)] = 1
+    sr[builder.HoppingKind((0, 1), gr)] = 1
     lead[(gr(0, y) for y in range(3))] = 0
     lead[((gr(0, y), gr(1, y)) for y in range(3))] = 1
     lead[((gr(0, y), gr(0, y + 1)) for y in range(2))] = 1
@@ -529,33 +529,33 @@ def test_iadd():
 # hhgh    hhgh
 # ghgh    hhgh
 #
-def test_possible_hoppings():
+def test_HoppingKind():
     g = kwant.lattice.general(ta.identity(3), name='some_lattice')
     h = kwant.lattice.general(ta.identity(3), name='another_lattice')
     sym = kwant.TranslationalSymmetry((0, 2, 0))
     sys = builder.Builder(sym)
     sys[((h if max(x, y, z) % 2 else g)(x, y, z)
          for x in range(4) for y in range(2) for z in range(4))] = None
-    for delta, group_a, group_b, n in [((1, 0, 0), g, h, 4),
+    for delta, ga, gb, n in [((1, 0, 0), g, h, 4),
                                        ((1, 0, 0), h, g, 7),
                                        ((0, 1, 0), g, h, 1),
                                        ((0, 4, 0), h, h, 21),
                                        ((0, 0, 1), g, h, 4)
                                        ]:
-        ph = list(sys.possible_hoppings(delta, group_a, group_b))
+        ph = list(builder.HoppingKind(delta, ga, gb).match(sys))
         assert_equal(len(ph), n)
         ph = set(ph)
         assert_equal(len(ph), n)
 
         ph2 = list((
                 sym.to_fd(b, a) for a, b in
-                sys.possible_hoppings(ta.negative(delta), group_b, group_a)))
+                builder.HoppingKind(ta.negative(delta), gb, ga).match(sys)))
         assert_equal(len(ph2), n)
         ph2 = set(ph2)
         assert_equal(ph2, ph)
 
         for a, b in ph:
-            assert a.group == group_a
-            assert b.group == group_b
+            assert a.group == ga
+            assert b.group == gb
             assert sym.to_fd(a) == a
             assert_equal(a.tag - b.tag, delta)
