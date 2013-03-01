@@ -38,9 +38,9 @@ except ImportError:
                   "functions will work.", RuntimeWarning)
     _mpl_enabled = False
 
-from . import system, builder
+from . import system, builder, physics
 
-__all__ = ['plot', 'map', 'sys_leads_sites', 'sys_leads_hoppings',
+__all__ = ['plot', 'map', 'bands', 'sys_leads_sites', 'sys_leads_hoppings',
            'sys_leads_pos', 'sys_leads_hopping_pos', 'mask_interpolate']
 
 
@@ -848,6 +848,26 @@ def map(sys, value, colorbar=True, cmap=None,
     if colorbar:
         fig.colorbar(image)
     return output_fig(fig, file=file, show=show)
+
+
+def bands(system, momenta=65, file=None, show=True, dpi=None, fig_size=None):
+    momenta = np.array(momenta)
+    if momenta.ndim != 1:
+        momenta = np.linspace(-np.pi, np.pi, momenta)
+
+    bands = physics.Bands(system)
+    energies = [bands(k) for k in momenta]
+
+    fig = Figure()
+    if dpi is not None:
+        fig.set_dpi(dpi)
+    if fig_size is not None:
+        fig.set_figwidth(fig_size[0])
+        fig.set_figheight(fig_size[1])
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(momenta, energies)
+    return output_fig(fig, file=file, show=show)
+
 
 # TODO (Anton): Fix plotting of parts of the system using color = np.nan.
 # Not plotting sites currently works, not plotting hoppings does not.
