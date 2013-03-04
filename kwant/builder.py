@@ -335,7 +335,7 @@ class HoppingKind(object):
                 yield a, b
 
     def __repr__(self):
-        return '{0}({1}, {2}{3}'.format(
+        return '{0}({1}, {2}{3})'.format(
             self.__class__.__name__, repr(tuple(self.delta)),
             repr(self.group_a),
             ', ' + repr(self.group_b) if self.group_a != self.group_b else '')
