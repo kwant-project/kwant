@@ -537,19 +537,18 @@ def test_HoppingKind():
     sys[((h if max(x, y, z) % 2 else g)(x, y, z)
          for x in range(4) for y in range(2) for z in range(4))] = None
     for delta, ga, gb, n in [((1, 0, 0), g, h, 4),
-                                       ((1, 0, 0), h, g, 7),
-                                       ((0, 1, 0), g, h, 1),
-                                       ((0, 4, 0), h, h, 21),
-                                       ((0, 0, 1), g, h, 4)
-                                       ]:
-        ph = list(builder.HoppingKind(delta, ga, gb).match(sys))
+                             ((1, 0, 0), h, g, 7),
+                             ((0, 1, 0), g, h, 1),
+                             ((0, 4, 0), h, h, 21),
+                             ((0, 0, 1), g, h, 4)]:
+        ph = list(builder.HoppingKind(delta, ga, gb)(sys))
         assert_equal(len(ph), n)
         ph = set(ph)
         assert_equal(len(ph), n)
 
         ph2 = list((
                 sym.to_fd(b, a) for a, b in
-                builder.HoppingKind(ta.negative(delta), gb, ga).match(sys)))
+                builder.HoppingKind(ta.negative(delta), gb, ga)(sys)))
         assert_equal(len(ph2), n)
         ph2 = set(ph2)
         assert_equal(ph2, ph)
