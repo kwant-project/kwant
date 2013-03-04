@@ -915,33 +915,6 @@ class Builder(object):
         self.leads.extend(other_sys.leads)
         return self
 
-    # def possible_hoppings(self, delta, group_a, group_b):
-    #     """Return all matching possible hoppings between existing sites.
-
-    #     A hopping ``(a, b)`` matches precisely when the site group of ``a``
-    #     equals `group_a` and that of ``b`` equals `group_b` and
-    #     ``(a.tag - b.tag)`` is equal to `delta`.
-
-    #     In other words, the matching hoppings have the form:
-    #     ``(group_a(x + delta), group_b(x))``
-
-    #     Parameters
-    #     ----------
-    #     delta : Sequence of integers
-    #         The sequence is interpreted as a vector with integer elements.
-    #     group_a : `~kwant.builder.SiteGroup`
-    #     grpup_b : `~kwant.builder.SiteGroup`
-
-    #     Returns
-    #     -------
-    #     hoppings : Iterator over hoppings
-    #        All matching possible hoppings
-    #     """
-    #     warnings.warn('Infinite system with disconnected slices.',
-    #                   DeprecationWarning)
-
-    #     return HoppingKind(delta, group_a, group_b)(self)
-
     def attach_lead(self, lead_builder, origin=None):
         """Attach a lead to the builder, possibly adding missing sites.
 
