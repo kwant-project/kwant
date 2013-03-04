@@ -20,7 +20,7 @@ import tinyarray as ta
 import numpy as np
 from . import system, graph
 
-
+
 ################ Sites and site groups
 
 class Site(tuple):
@@ -176,7 +176,7 @@ class SimpleSiteGroup(SiteGroup):
                             'its representation.')
         return tag
 
-
+
 ################ Symmetries
 
 class Symmetry(object):
@@ -275,7 +275,7 @@ class NoSymmetry(Symmetry):
     def in_fd(self, site):
         return True
 
-
+
 ################ Hopping kinds
 
 class HoppingKind(object):
@@ -340,7 +340,7 @@ class HoppingKind(object):
             repr(self.group_a),
             ', ' + repr(self.group_b) if self.group_a != self.group_b else '')
 
-
+
 ################ Support for Hermitian conjugation
 
 def herm_conj(value):
@@ -368,7 +368,7 @@ class HermConjOfFunc(object):
     def __call__(self, i, j):
         return herm_conj(self.function(j, i))
 
-
+
 ################ Leads
 
 class Lead(object):
@@ -463,7 +463,7 @@ class SelfEnergy(Lead):
     def self_energy(self, energy):
         return self.self_energy_func(energy)
 
-
+
 ################ Builder class
 
 # A marker, meaning for hopping (i, j): this value is given by the Hermitian
@@ -1254,9 +1254,8 @@ class Builder(object):
         result.symmetry = self.symmetry
         return result
 
-
+
 ################ Finalized systems
-
 
 class FiniteSystem(system.FiniteSystem):
     """
