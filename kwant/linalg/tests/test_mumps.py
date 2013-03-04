@@ -74,10 +74,8 @@ def test_error_minus_9(r=10):
 
     sys = Builder()
     sys[graphene.shape(circle, (0,0))] = -0.0001
-    for kind in (HoppingKind((0, 0), b, a),
-                 HoppingKind((0, 1), b, a),
-                 HoppingKind((-1, 1), b, a)):
-        sys[kind] = - 1
+    for kind in [((0, 0), b, a), ((0, 1), b, a), ((-1, 1), b, a)]:
+        sys[HoppingKind(*kind)] = - 1
 
     ham = sys.finalized().hamiltonian_submatrix(sparse=True)
 

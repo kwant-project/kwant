@@ -49,9 +49,8 @@ def sys_2d(W=3, r1=3, r2=8):
 
 def sys_3d(W=3, r1=2, r2=4, a=1, t=1.0):
     lat = kwant.lattice.general(((a, 0, 0), (0, a, 0), (0, 0, a)))
-    lat.nearest = [kwant.builder.HoppingKind((1, 0, 0), lat),
-                   kwant.builder.HoppingKind((0, 1, 0), lat),
-                   kwant.builder.HoppingKind((0, 0, 1), lat)]
+    lat.nearest = [kwant.builder.HoppingKind(*kind) for kind in
+                   [((1, 0, 0), lat), ((0, 1, 0), lat), ((0, 0, 1), lat)]]
     sys = kwant.Builder()
 
     def ring(pos):
