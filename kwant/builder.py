@@ -296,14 +296,22 @@ class HoppingKind(object):
 
     Notes
     -----
-    A HoppingKind instance can be used in two ways
+    A ``HoppingKind`` is a callable object: When called with a
+    `~kwant.builder.Builder` as sole argument, an instance of this class will
+    return an iterator over all possible matching hoppings whose sites are
+    already present in the system.  The hoppings do *not* have to be already
+    present in the system.  For example::
 
-    - As a "wildcard" key when setting or deleting hoppings of a builder::
+        kind = kwant.builder.HoppingKind((1, 0), lat)
+        sys[kind(sys)] = 1
 
-          kind = kwant.builder.HoppingKind((2, 0), lat)
-          sys[kind] = 1
+    Because a `~kwant.builder.Builder` can be indexed with functions or
+    iterables of functions, ``HoppingKind`` instances (or any non-tuple
+    iterables of them, e.g. a list) can be used directly as "wildcards" when
+    setting or deleting hoppings::
 
-    - Employing its `match` method.
+        kinds = [kwant.builder.HoppingKind(v, lat) for v in [(1, 0), (0, 1)]]
+        sys[kinds] = 1
     """
     __slots__ = ('delta', 'group_a', 'group_b')
 
@@ -313,14 +321,6 @@ class HoppingKind(object):
         self.group_b = group_b if group_b is not None else group_a
 
     def __call__(self, builder):
-        """Return an iterator over all possible matching hoppings whose sites
-        are already present in the system.  The hoppings do *not* have to be
-        already present in the system.
-
-        Parameters
-        ----------
-        builder : `~kwant.builder.Builder`
-        """
         delta = self.delta
         group_a = self.group_a
         group_b = self.group_b
@@ -488,20 +488,13 @@ class Builder(object):
 
     The nodes of the graph are `Site` instances.  The edges, i.e. the hoppings,
     are pairs (2-tuples) of sites.  Each node and each edge has a value
-    associated with it.  That value can be in fact any python object, but
-    currently the only *useful* values are matrices and numbers or functions
-    returning them.  The values associated with nodes are interpreted as
+    associated with it.  The values associated with nodes are interpreted as
     on-site Hamiltonians, the ones associated with edges as hopping integrals.
 
-    To make the graph accessible in a way that is natural within the python
+    To make the graph accessible in a way that is natural within the Python
     language it is exposed as a *mapping* (much like a built-in Python
-    dictionary).  Keys are sites or pairs of them.  Possible values are 2d
-    NumPy arrays, numbers (interpreted as 1 by 1 matrices), or functions.
-    Functions receive the site or the hopping (passed to the function as two
-    sites) and are expected to return a valid value.
-
-    Builder instances can be made to automatically respect a `Symmetry` that is
-    passed to them during creation.
+    dictionary).  Keys are sites or hoppings.  Values are 2d arrays
+    (e.g. NumPy or tinyarray) or numbers (interpreted as 1 by 1 matrices).
 
     Parameters
     ----------
@@ -510,24 +503,33 @@ class Builder(object):
 
     Notes
     -----
+    Values can be also functions that receive the site or the hopping (passed
+    to the function as two sites) and possibly additional arguments and are
+    expected to return a valid value.  This allows to define systems quickly,
+    to modify them without reconstructing, and to save memory for many-orbital
+    models.
+
+    Any (non-tuple) iterable (e.g. a list) of keys is also a key: Lists or
+    generator expressions of hoppings/sites can be used as keys.  Additionally,
+    a function that returns a key when given a builder as sole argument is a
+    key as well.  This makes it possible to use (lists of) `HoppingKind`
+    instances as keys.
+
     Builder instances automatically ensure that every hopping is Hermitian, so
     that if ``builder[a, b]`` has been set, there is no need to set
     ``builder[b, a]``.
 
-    Values which are functions allow to define systems quickly, to modify them
-    without reconstructing, and to save memory for many-orbital models.
+    Builder instances can be made to automatically respect a `Symmetry` that is
+    passed to them during creation.  The behavior of builders with a symmetry
+    is slightly more sophisticated.  First of all, it is implicitly assumed
+    throughout kwant that **every** function assigned as a value to a builder
+    with a symmetry possesses the same symmetry.  Secondly, all keys are mapped
+    to the fundamental domain of the symmetry before storing them.  This may
+    produce confusing results when neighbors of a site are queried.
 
-    The behavior of builders with a symmetry is slightly more sophisticated.
-    First of all, it is implicitly assumed throughout kwant that **every**
-    function assigned as a value to a builder with a symmetry possesses the
-    same symmetry.  Secondly, all keys are mapped to the fundamental domain
-    before storing them.  This may produce confusing results when neighbors of
-    a site are queried.
-
-    The methods `possible_hoppings` and `attach_lead` *work* only if the sites
-    affected by them have tags which are sequences of integers.  They *make
-    sense* only when these sites live on a regular lattice, like one provided
-    by `kwant.lattice`.
+    The method `attach_lead` *works* only if the sites affected by them have
+    tags which are sequences of integers.  It *makes sense* only when these
+    sites live on a regular lattice, like the ones provided by `kwant.lattice`.
 
     .. warning::
 
@@ -634,15 +636,8 @@ class Builder(object):
     def __nonzero__(self):
         return bool(self.H)
 
+    # TODO: rewrite using "yield from" once we can take Python 3.3 for granted.
     def _for_each_in_key(self, key, f_site, f_hopp):
-        """Perform an operation on each site or hopping in key.
-
-        Key may be (tested in this order)
-        * a single site or a hopping (a tuple of two sites),
-        * a function that returns a key when called with the builder as only
-          parameter,
-        * a non-tuple iterable of keys.
-        """
         if isinstance(key, Site):
             f_site(key)
             return 0
