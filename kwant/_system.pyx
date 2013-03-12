@@ -302,14 +302,14 @@ def hamiltonian_submatrix(self, to_sites=None, from_sites=None,
                    from_norb, from_off)
     else:
         if to_sites is None:
-            to_sites = np.arange(n)
+            to_sites = np.arange(n, dtype=gint_dtype)
             n_by_to_site = dict((site, site) for site in to_sites)
         else:
             n_by_to_site = dict((site, n_site)
                                 for n_site, site in enumerate(to_sites))
 
         if from_sites is None:
-            from_sites = np.arange(n)
+            from_sites = np.arange(n, dtype=gint_dtype)
         else:
             from_sites = np.asarray(from_sites, gint_dtype)
 
