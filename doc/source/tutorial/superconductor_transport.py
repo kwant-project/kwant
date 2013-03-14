@@ -36,10 +36,10 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
          for y in range(W))] = mu - 4 * t - barrier
 
     # hoppings in x and y-directions, for both electrons and holes
-    sys[sys.possible_hoppings((1, 0), lat_e, lat_e)] = -t
-    sys[sys.possible_hoppings((0, 1), lat_e, lat_e)] = -t
-    sys[sys.possible_hoppings((1, 0), lat_h, lat_h)] = t
-    sys[sys.possible_hoppings((0, 1), lat_h, lat_h)] = t
+    sys[kwant.builder.HoppingKind((1, 0), lat_e, lat_e)] = -t
+    sys[kwant.builder.HoppingKind((0, 1), lat_e, lat_e)] = -t
+    sys[kwant.builder.HoppingKind((1, 0), lat_h, lat_h)] = t
+    sys[kwant.builder.HoppingKind((0, 1), lat_h, lat_h)] = t
 
     # Superconducting order parameter enters as hopping between
     # electrons and holes
@@ -56,15 +56,15 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
     lead0 = kwant.Builder(sym_left)
     lead0[(lat_e(0, j) for j in xrange(W))] = 4 * t - mu
     # hoppings in x and y-direction
-    lead0[lead0.possible_hoppings((1, 0), lat_e, lat_e)] = -t
-    lead0[lead0.possible_hoppings((0, 1), lat_e, lat_e)] = -t
+    lead0[kwant.builder.HoppingKind((1, 0), lat_e, lat_e)] = -t
+    lead0[kwant.builder.HoppingKind((0, 1), lat_e, lat_e)] = -t
 
     # left hole lead
     lead1 = kwant.Builder(sym_left)
     lead1[(lat_h(0, j) for j in xrange(W))] = mu - 4 * t
     # hoppings in x and y-direction
-    lead1[lead1.possible_hoppings((1, 0), lat_h, lat_h)] = t
-    lead1[lead1.possible_hoppings((0, 1), lat_h, lat_h)] = t
+    lead1[kwant.builder.HoppingKind((1, 0), lat_h, lat_h)] = t
+    lead1[kwant.builder.HoppingKind((0, 1), lat_h, lat_h)] = t
 #HIDDEN_END_ttth
 
     # Then the lead to the right
@@ -77,10 +77,10 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
     lead2[(lat_e(0, j) for j in xrange(W))] = 4 * t - mu
     lead2[(lat_h(0, j) for j in xrange(W))] = mu - 4 * t
     # hoppings in x and y-direction
-    lead2[lead2.possible_hoppings((1, 0), lat_e, lat_e)] = -t
-    lead2[lead2.possible_hoppings((0, 1), lat_e, lat_e)] = -t
-    lead2[lead2.possible_hoppings((1, 0), lat_h, lat_h)] = t
-    lead2[lead2.possible_hoppings((0, 1), lat_h, lat_h)] = t
+    lead2[kwant.builder.HoppingKind((1, 0), lat_e, lat_e)] = -t
+    lead2[kwant.builder.HoppingKind((0, 1), lat_e, lat_e)] = -t
+    lead2[kwant.builder.HoppingKind((1, 0), lat_h, lat_h)] = t
+    lead2[kwant.builder.HoppingKind((0, 1), lat_h, lat_h)] = t
     lead2[((lat_e(0, j), lat_h(0, j)) for j in xrange(W))] = Delta
 #HIDDEN_END_mhiw
 

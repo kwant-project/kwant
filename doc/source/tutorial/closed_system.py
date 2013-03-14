@@ -43,9 +43,9 @@ def make_system(a=1, t=1.0, r=10):
 
     sys[lat.shape(circle, (0, 0))] = 4 * t
     # hoppings in x-direction
-    sys[sys.possible_hoppings((1, 0), lat, lat)] = hopx
+    sys[kwant.builder.HoppingKind((1, 0), lat, lat)] = hopx
     # hoppings in y-directions
-    sys[sys.possible_hoppings((0, 1), lat, lat)] = -t
+    sys[kwant.builder.HoppingKind((0, 1), lat, lat)] = -t
 
     # It's a closed system for a change, so no leads
     return sys

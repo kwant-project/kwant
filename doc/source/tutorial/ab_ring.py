@@ -38,8 +38,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     # and add the corresponding lattice points using the `shape`-function
 #HIDDEN_BEGIN_lcak
     sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
-    for hopping in lat.nearest:
-        sys[sys.possible_hoppings(*hopping)] = -t
+    sys[lat.nearest] = -t
 #HIDDEN_END_lcak
 
     # In order to introduce a flux through the ring, we introduce a phase on
@@ -54,13 +53,16 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     def crosses_branchcut(hop):
         ix0, iy0 = hop[0].tag
 
-        # possible_hoppings with the argument (1, 0) below
+        # builder.HoppingKind with the argument (1, 0) below
         # returns hoppings ordered as ((i+1, j), (i, j))
         return iy0 < 0 and ix0 == 1  # ix1 == 0 then implied
 
     # Modify only those hopings in x-direction that cross the branch cut
-    sys[(hop for hop in sys.possible_hoppings((1, 0), lat, lat)
-         if crosses_branchcut(hop))] = fluxphase
+    def hops_across_cut(sys):
+        for hop in kwant.builder.HoppingKind((1, 0), lat, lat)(sys):
+            if crosses_branchcut(hop):
+                yield hop
+    sys[hops_across_cut] = fluxphase
 #HIDDEN_END_lvkt
 
     #### Define the leads. ####
@@ -74,8 +76,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
         return (-1 < x < 1) and (-W / 2 < y < W / 2)
 
     lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
-    for hopping in lat.nearest:
-        lead0[lead0.possible_hoppings(*hopping)] = -t
+    lead0[lat.nearest] = -t
 #HIDDEN_END_qwgr
 
     # Then the lead to the right

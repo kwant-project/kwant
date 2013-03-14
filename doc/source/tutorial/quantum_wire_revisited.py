@@ -4,7 +4,7 @@
 #
 # Kwant features highlighted
 # --------------------------
-#  - Using iterables and possible_hoppings() for making systems
+#  - Using iterables and builder.HoppingKind for making systems
 #  - introducing `reversed()` for the leads
 #
 # Note: Does the same as tutorial1a.py, but using other features of kwant
@@ -29,8 +29,7 @@ def make_system(a=1, t=1.0, W=10, L=30):
     sys[(lat(x, y) for x in range(L) for y in range(W))] = 4 * t
 #HIDDEN_END_vvjt
 #HIDDEN_BEGIN_nooi
-    for hopping in lat.nearest:
-        sys[sys.possible_hoppings(*hopping)] = -t
+    sys[lat.nearest] = -t
 #HIDDEN_END_nooi
 
     #### Define the leads. ####
@@ -41,8 +40,7 @@ def make_system(a=1, t=1.0, W=10, L=30):
     lead0 = kwant.Builder(sym_lead0)
 
     lead0[(lat(0, j) for j in xrange(W))] = 4 * t
-    for hopping in lat.nearest:
-        lead0[lead0.possible_hoppings(*hopping)] = -t
+    lead0[lat.nearest] = -t
 #HIDDEN_END_iepx
 
     # ... then the lead to the right.  We use a method that returns a copy of

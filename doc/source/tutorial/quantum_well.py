@@ -35,8 +35,7 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
         return 4 * t + potential(site, pot)
 
     sys[(lat(x, y) for x in range(L) for y in range(W))] = onsite
-    for hopping in lat.nearest:
-        sys[sys.possible_hoppings(*hopping)] = -t
+    sys[lat.nearest] = -t
 #HIDDEN_END_coid
 
     #### Define the leads. ####
@@ -45,8 +44,7 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
     lead0 = kwant.Builder(sym_lead0)
 
     lead0[(lat(0, j) for j in xrange(W))] = 4 * t
-    for hopping in lat.nearest:
-        lead0[lead0.possible_hoppings(*hopping)] = -t
+    lead0[lat.nearest] = -t
 
     # ... then the lead to the right.  We use a method that returns a copy of
     # `lead0` with its direction reversed.

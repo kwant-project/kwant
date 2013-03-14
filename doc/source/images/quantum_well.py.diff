@@ -8,7 +8,7 @@
  
  
  def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
-@@ -63,19 +64,25 @@
+@@ -61,19 +62,25 @@
          smatrix = kwant.solve(sys, energy, kwargs={'pot': -welldepth})
          data.append(smatrix.transmission(1, 0))
  

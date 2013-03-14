@@ -8,9 +8,9 @@
  
  
  def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
-@@ -38,12 +39,13 @@
-     for hopping in lat.nearest:
-         sys[sys.possible_hoppings(*hopping)] = -t
+@@ -37,12 +38,13 @@
+     sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
+     sys[lat.nearest] = -t
  
 -    # In order to introduce a flux through the ring, we introduce a phase on
 -    # the hoppings on the line cut through one of the arms.  Since we want to
@@ -28,7 +28,7 @@
          return exp(1j * phi)
  
      def crosses_branchcut(hop):
-@@ -81,6 +83,54 @@
+@@ -82,6 +84,50 @@
      return sys
  
  
@@ -40,16 +40,14 @@
 +        rsq = x**2 + y**2
 +        return ( r1**2 < rsq < r2**2)
 +    sys[lat.shape(ring, (0, 11))] = 4 * t
-+    for hopping in lat.nearest:
-+        sys[sys.possible_hoppings(*hopping)] = -t
++    sys[lat.nearest] = -t
 +    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
 +    lead0 = kwant.Builder(sym_lead0)
 +    def lead_shape(pos):
 +        (x, y) = pos
 +        return (-1 < x < 1) and ( 0.5 * W < y < 1.5 * W )
 +    lead0[lat.shape(lead_shape, (0, W))] = 4 * t
-+    for hopping in lat.nearest:
-+        lead0[lead0.possible_hoppings(*hopping)] = -t
++    lead0[lat.nearest] = -t
 +    lead1 = lead0.reversed()
 +    sys.attach_lead(lead0)
 +    sys.attach_lead(lead1)
@@ -64,16 +62,14 @@
 +        rsq = x**2 + y**2
 +        return ( r1**2 < rsq < r2**2)
 +    sys[lat.shape(ring, (0, 11))] = 4 * t
-+    for hopping in lat.nearest:
-+        sys[sys.possible_hoppings(*hopping)] = -t
++    sys[lat.nearest] = -t
 +    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
 +    lead0 = kwant.Builder(sym_lead0)
 +    def lead_shape(pos):
 +        (x, y) = pos
 +        return (-1 < x < 1) and ( -W/2 < y < W/2  )
 +    lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
-+    for hopping in lat.nearest:
-+        lead0[lead0.possible_hoppings(*hopping)] = -t
++    lead0[lat.nearest] = -t
 +    lead1 = lead0.reversed()
 +    sys.attach_lead(lead0)
 +    sys.attach_lead(lead1, lat(0, 0))
@@ -83,7 +79,7 @@
  def plot_conductance(sys, energy, fluxes):
      # compute conductance
  
-@@ -90,18 +140,29 @@
+@@ -91,18 +137,29 @@
          smatrix = kwant.solve(sys, energy, kwargs={'phi': flux})
          data.append(smatrix.transmission(1, 0))
  
@@ -118,7 +114,7 @@
  
      # Finalize the system.
      sys = sys.finalized()
-@@ -111,6 +172,15 @@
+@@ -112,6 +169,15 @@
                                                  for i in xrange(100)])
  
  
