@@ -14,8 +14,6 @@ Roughly in order of importance.                                     -*-org-*-
   arrays, where the site index and orbital index are separate.  However, this
   must work in the general case where the number of orbitals per site varies.
 
-* Add a (tutorial?) example with kwant.plotter.map
-
 * Plotter: show site upon click
 
 * fix physics.noise (docstring, __all__, etc.)
@@ -40,13 +38,13 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Make kwant objects pickleable.
 
-* "shape" doesn't work for leads when only checking y (and not x)
+* "shape" doesn't work for leads when only checking 'y' (and not 'x')
   Make it aware of symmetries.
 
 * Improve experience when working with sites in a finalized builder
   (It should be possible to map sites to nodes efficiently.  Probably, the best
   way to do it is to sort the sites in finalized builders.)
-  One could than also RLE compress sites in finalized builders.
+  One could then also RLE compress sites in finalized builders.
 
 * In finalized leads, only keep the sites of the slice.
 
@@ -81,3 +79,8 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Adopt mincut/maxflow algorithm from networkx or python-graph to find the best
   representation of a lead unit cell.
+
+* Improve logic of generate_diffs.sh
+  Do not overwrite the diffs that do not need to be updated.
+
+* Tutorial choose either "A [B]" or "A in units of B" consistently.
