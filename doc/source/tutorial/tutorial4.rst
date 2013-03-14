@@ -38,7 +38,7 @@ from the scope of `make_system`, since we keep the potential fixed
 in this example.
 
 As a next step we add the hoppings, making use of
-`~kwant.builder.Builder.possible_hoppings`. Since we use our home-made
+`~kwant.builder.HoppingKind`. Since we use our home-made
 lattice (instead of `kwant.lattice.honeycomb`), we have to define
 the hoppings ourselves:
 

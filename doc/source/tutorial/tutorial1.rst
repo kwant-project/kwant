@@ -307,18 +307,21 @@ feature of kwant:
     :start-after: #HIDDEN_BEGIN_nooi
     :end-before: #HIDDEN_END_nooi
 
-In regular lattices, one has only very few types of different hoppings
-(by one lattice point in x or y-direction in the case of a square
-lattice considered here). For the square lattice, these types of
-hoppings are stored as a list in ``lat.nearest``, and the ``for``-loop
-runs over all of them.
-`~kwant.builder.Builder.possible_hoppings` takes as an argument
-one type of hopping (more about that in the notes below;
-details on the hopping definition will be discussed in
-:ref:`tutorial_spinorbit`), and generates all
-hoppings of this type that are possible with all the lattice points
-that were added before.  ``sys[sys.possible_hoppings(*hopping)] = -t``
-then sets all of those hopping matrix elements at once.
+In regular lattices, hoppings form large groups such that hoppings within a
+group can be transformed into one another by lattice translations. In order to
+allow to easily manipulate such hoppings, an object
+`~kwant.builder.HoppingKind` is provided. When given a `~kwant.builder.Builder` as
+an argument, `~kwant.builder.HoppingKind` yields all the hoppings of a
+certain kind that can be added to this builder without adding new sites. When
+`~kwant.builder.HoppingKind` is given to `~kwant.builder.Builder` as a key, it
+means that something is done to all the possible hoppings of this kind. A list
+of `~kwant.builder.HoppingKind` objects corresponding to nearest neighbors in
+pre-defined lattices in kwant (that is `~kwant.lattice.chain`,
+`~kwant.lattice.square`, and `~kwant.lattice.honeycomb`) is stored in
+``lat.nearest``. ``sys[lat.nearest] = -t`` then sets all of those hopping
+matrix elements at once. More detailed example of using
+`~kwant.builder.HoppingKind` directly will be provided in
+:ref:`tutorial_spinorbit`.
 
 The leads can be constructed in an analogous way:
 
@@ -390,16 +393,16 @@ The result of the example should be identical to the previous one.
        :end-before: #HIDDEN_END_nooi
 
      we write ``*hopping`` instead of ``hopping``. The reason is as follows:
-     `~kwant.builder.Builder.possible_hoppings` expects the hopping to
+     `~kwant.builder.HoppingKind` expects the hopping to
      be defined using three parameters (in particular, a tuple
      containing a relative lattice vector, and two (sub)lattice objects that
      indicate the start and end lattice, more about that in
      a :ref:`later tutorial <tutorial_spinorbit>`). ``lat.nearest``
      is a list of tuples, with every tuple containing the three
-     parameters expected by `~kwant.builder.Builder.possible_hoppings`.
+     parameters expected by `~kwant.builder.HoppingKind`.
 
      Hence, ``hopping`` is a tuple. But passing it to
-     `~kwant.builder.Builder.possible_hoppings` would fail,
+     `~kwant.builder.HoppingKind` would fail,
      as three parameters are expected (not a single tuple). ``*hopping``
      unpacks the tuple into these three separate parameters (see
      <http://docs.python.org/tutorial/controlflow.html#unpacking-argument-lists>)
@@ -441,7 +444,7 @@ The result of the example should be identical to the previous one.
      However, both can be used in ``for``-loops, for example.
 
    - In the example, we have added all the hoppings using
-     `~kwant.builder.Builder.possible_hoppings`. In fact,
+     `~kwant.builder.HoppingKind`. In fact,
      hoppings can be added in the same fashion as sites, namely specifying
 
      * a single hopping
