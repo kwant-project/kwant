@@ -31,11 +31,11 @@ contained implicitly finalized versions of the attached leads.  But now we are
 working with a single lead and there is no scattering region.  So we have to
 finalized the ``Builder`` of our sole lead explicitly.
 
-That finalized lead is then passed to `kwant.physics.Bands`.  This
-creates an object that behaves just like a function: when called with a
-momentum ``k`` as parameter it returns the eigenenergies of the translational
-invariant system for that momentum.  Computing these eigenenergies for a range
-of momenta then yields the bandstructure:
+That finalized lead is then passed to `~kwant.plotter.bands`.  This function
+calculates energies of various bands at a range of momenta and plots the
+calculated energies. It is really a convenience function, and if one needs to
+do something more profound with the dispersion relation these energies may be
+calculated directly. For now we just plot the bandstructure:
 
 .. literalinclude:: band_structure.py
     :start-after: #HIDDEN_BEGIN_pejz

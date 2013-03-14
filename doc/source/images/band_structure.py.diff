@@ -1,26 +1,25 @@
 --- original
 +++ modified
-@@ -12,6 +12,7 @@
+@@ -10,6 +10,7 @@
  
- # For plotting
+ # For plotting.
  from matplotlib import pyplot
 +import _defs
  
- 
  def make_lead(a=1, t=1.0, W=10):
-@@ -38,11 +39,19 @@
-     bands = kwant.physics.Bands(lead)
-     energies = [bands(k) for k in momenta]
+     # Start with an empty lead with a single square lattice
+@@ -33,10 +34,19 @@
  
--    pyplot.figure()
-+    fig = pyplot.figure()
-     pyplot.plot(momenta, energies)
--    pyplot.xlabel("momentum [in units of (lattice constant)^-1]")
--    pyplot.ylabel("energy [in units of t]")
+ def main():
+     lead = make_lead().finalized()
+-    kwant.plotter.bands(lead, show=False)
+-    pyplot.xlabel("momentum in units of inverse lattice constant")
+-    pyplot.ylabel("energy in units of t")
 -    pyplot.show()
-+    pyplot.xlabel("momentum [in units of (lattice constant)^-1]",
++    fig = kwant.plotter.bands(lead, show=False)
++    pyplot.xlabel("momentum in units of inverse lattice constant",
 +                 fontsize=_defs.mpl_label_size)
-+    pyplot.ylabel("energy [in units of t]", fontsize=_defs.mpl_label_size)
++    pyplot.ylabel("energy in units of t", fontsize=_defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
 +               fontsize=_defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),
@@ -29,6 +28,7 @@
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
 +    fig.savefig("band_structure_result.pdf")
 +    fig.savefig("band_structure_result.png", dpi=_defs.dpi)
++
  
  
- def main():
+ # Call the main function if the script gets executed (as opposed to imported).

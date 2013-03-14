@@ -8,13 +8,13 @@
  
  tau_x = tinyarray.array([[0, 1], [1, 0]])
  tau_z = tinyarray.array([[1, 0], [0, -1]])
-@@ -46,12 +47,19 @@
-     bands = kwant.physics.Bands(lead)
-     energies = [bands(k) for k in momenta]
+@@ -46,11 +47,19 @@
+     # Make system and finalize it right away.
+     lead = make_lead().finalized()
  
--    pyplot.figure()
-+    fig = pyplot.figure()
-     pyplot.plot(momenta, energies)
+-    kwant.plotter.bands(lead, momenta=np.linspace(-1.5, 1.5, 101), show=False)
++    fig = kwant.plotter.bands(lead, momenta=np.linspace(-1.5, 1.5, 101),
++                              show=False)
      pyplot.xlabel("momentum [in untis of (lattice constant)^-1]")
      pyplot.ylabel("energy [in units of t]")
      pyplot.ylim([-0.8, 0.8])
@@ -29,4 +29,4 @@
 +    fig.savefig("superconductor_band_structure_result.png", dpi=_defs.dpi)
  
  
- def main():
+ # Call the main function if the script gets executed (as opposed to imported).

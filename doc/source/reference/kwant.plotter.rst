@@ -11,6 +11,7 @@ Plotting routine
 
    plot
    map
+   bands
 
 Data-generating functions
 -------------------------

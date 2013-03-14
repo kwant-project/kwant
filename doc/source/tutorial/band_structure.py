@@ -8,11 +8,8 @@
 
 import kwant
 
-from math import pi
-
-# For plotting
+# For plotting.
 from matplotlib import pyplot
-
 
 #HIDDEN_BEGIN_zxip
 def make_lead(a=1, t=1.0, W=10):
@@ -37,24 +34,12 @@ def make_lead(a=1, t=1.0, W=10):
 
 
 #HIDDEN_BEGIN_pejz
-def plot_bandstructure(lead, momenta):
-    bands = kwant.physics.Bands(lead)
-    energies = [bands(k) for k in momenta]
-
-    pyplot.figure()
-    pyplot.plot(momenta, energies)
-    pyplot.xlabel("momentum [in units of (lattice constant)^-1]")
-    pyplot.ylabel("energy [in units of t]")
-    pyplot.show()
-
-
 def main():
     lead = make_lead().finalized()
-
-    # list of momenta at which the bands should be computed
-    momenta = [-pi + 0.02 * pi * i for i in xrange(101)]
-
-    plot_bandstructure(lead, momenta)
+    kwant.plotter.bands(lead, show=False)
+    pyplot.xlabel("momentum in units of inverse lattice constant")
+    pyplot.ylabel("energy in units of t")
+    pyplot.show()
 #HIDDEN_END_pejz
 
 
