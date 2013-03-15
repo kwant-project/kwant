@@ -7,7 +7,7 @@
 # http://kwant-project.org/authors.
 
 from nose.plugins.skip import Skip, SkipTest
-from  kwant.solvers.sparse import solve, ldos, wave_func
+from  kwant.solvers.sparse import solve, ldos, wave_function
 import kwant.solvers.sparse
 import _test_sparse
 
@@ -64,4 +64,4 @@ def test_ldos():
 
 
 def test_wavefunc_ldos_consistency():
-    _test_sparse.test_wavefunc_ldos_consistency(wave_func, ldos)
+    _test_sparse.test_wavefunc_ldos_consistency(wave_function, ldos)

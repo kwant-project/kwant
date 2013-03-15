@@ -371,7 +371,7 @@ def test_ldos(ldos):
                         np.array([1, 1]) / (2 * np.pi))
 
 
-def test_wavefunc_ldos_consistency(wave_func, ldos):
+def test_wavefunc_ldos_consistency(wave_function, ldos):
     L = 2
     W = 3
 
@@ -395,7 +395,7 @@ def test_wavefunc_ldos_consistency(wave_func, ldos):
     sys = sys.finalized()
 
     for energy in [0, 1000]:
-        wf = wave_func(sys, energy)
+        wf = wave_function(sys, energy)
         ldos2 = np.zeros(wf.num_orb, float)
         for lead in xrange(len(sys.leads)):
             temp = abs(wf(lead))

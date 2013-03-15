@@ -10,7 +10,7 @@ from nose.plugins.skip import Skip, SkipTest
 from numpy.testing.decorators import skipif
 try:
     from kwant.solvers.mumps import \
-        solve, ldos, wave_func, options, reset_options
+        solve, ldos, wave_function, options, reset_options
     import _test_sparse
     _no_mumps = False
 except ImportError:
@@ -116,4 +116,4 @@ def test_ldos():
 def test_wavefunc_ldos_consistency():
     for opts in opt_list:
         options(**opts)
-        _test_sparse.test_wavefunc_ldos_consistency(wave_func, ldos)
+        _test_sparse.test_wavefunc_ldos_consistency(wave_function, ldos)

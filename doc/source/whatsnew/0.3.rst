@@ -3,6 +3,10 @@ What's New in kwant 0.3
 
 This article explains the user-visible changes in kwant 0.3.
 
+Some renames
+------------
+``wave_func`` has been renamed to `~kwant.solvers.default.wave_function`.
+
 Immutable site groups
 ---------------------
 In order to make naming more consistent, `kwant.make_lattice` was renamed and
@@ -70,4 +74,4 @@ passed to `solve` like this::
                 args=(time,), kwargs={'B': magnetic_field, 'pot': potential})
 
 Arguments can be passed in an equivalent way in calls to
-`~kwant.solvers.default.wave_func` and `~kwant.solvers.default.ldos`.
+`~kwant.solvers.default.wave_function` and `~kwant.solvers.default.ldos`.

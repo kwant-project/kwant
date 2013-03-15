@@ -435,7 +435,7 @@ class SparseSolver(object):
 
         return ldos * (0.5 / np.pi)
 
-    def wave_func(self, sys, energy=0, args=(), kwargs={}):
+    def wave_function(self, sys, energy=0, args=(), kwargs={}):
         """
         Return a callable object for the computation of the wave function
         inside the scattering region.
@@ -462,13 +462,13 @@ class SparseSolver(object):
 
         Examples
         --------
-        >>> wf = kwant.solvers.default.wave_func(some_sys, some_energy)
+        >>> wf = kwant.solvers.default.wave_function(some_sys, some_energy)
         >>> wfs_of_lead_2 = wf(2)
         """
-        return WaveFunc(self, sys, energy, args, kwargs)
+        return WaveFunction(self, sys, energy, args, kwargs)
 
 
-class WaveFunc(object):
+class WaveFunction(object):
     def __init__(self, solver, sys, energy=0, args=(), kwargs={}):
         for lead in sys.leads:
             if not isinstance(lead, system.InfiniteSystem):

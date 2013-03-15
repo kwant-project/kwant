@@ -6,7 +6,7 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['solve', 'ldos', 'wave_func', 'options', 'Solver']
+__all__ = ['solve', 'ldos', 'wave_function', 'options', 'Solver']
 
 import numpy as np
 import scipy.sparse as sp
@@ -140,6 +140,6 @@ default_solver = Solver()
 
 solve = default_solver.solve
 ldos = default_solver.ldos
-wave_func = default_solver.wave_func
+wave_function = default_solver.wave_function
 options = default_solver.options
 reset_options = default_solver.reset_options

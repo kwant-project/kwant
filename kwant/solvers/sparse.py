@@ -6,7 +6,7 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['solve', 'ldos', 'wave_func', 'Solver']
+__all__ = ['solve', 'ldos', 'wave_function', 'Solver']
 
 import warnings
 import numpy as np
@@ -131,4 +131,4 @@ default_solver = Solver()
 
 solve = default_solver.solve
 ldos = default_solver.ldos
-wave_func = default_solver.wave_func
+wave_function = default_solver.wave_function

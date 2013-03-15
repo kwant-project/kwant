@@ -27,7 +27,7 @@ reasons to use another.  The following functions are provided.
    :toctree: generated/
 
    solve
-   wave_func
+   wave_function
    ldos
 
 ``solve`` returns an object of the following type:

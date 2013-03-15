@@ -6,7 +6,7 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['solve', 'ldos', 'wave_func']
+__all__ = ['solve', 'ldos', 'wave_function']
 
 # MUMPS usually works best.  Use SciPy as fallback.
 try:
@@ -18,4 +18,4 @@ hidden_instance = smodule.Solver()
 
 solve = hidden_instance.solve
 ldos = hidden_instance.ldos
-wave_func = hidden_instance.wave_func
+wave_function = hidden_instance.wave_function
