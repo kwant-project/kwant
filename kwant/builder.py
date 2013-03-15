@@ -160,7 +160,7 @@ class SimpleSiteGroup(SiteGroup):
     sites with non-numeric objects like strings should this every be useful.
 
     Due to its low storage efficiency for numbers it is not recommended to use
-    `SimpleSiteGroup` when `kwant.lattice.MonatomicLattice` would also work.
+    `SimpleSiteGroup` when `kwant.lattice.Monatomic` would also work.
     """
 
     def __init__(self, name=None):

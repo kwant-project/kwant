@@ -8,8 +8,7 @@
 
 from __future__ import division
 
-__all__ = ['general', 'TranslationalSymmetry',
-           'PolyatomicLattice', 'MonatomicLattice']
+__all__ = ['TranslationalSymmetry', 'general', 'Polyatomic', 'Monatomic']
 
 from math import sqrt
 import numpy as np
@@ -34,7 +33,7 @@ def general(prim_vecs, basis=None, name=''):
 
     Returns
     -------
-    lattice : either `MonatomicLattice` or `PolyatomicLattice`
+    lattice : either `Monatomic` or `Polyatomic`
         Resulting lattice.
 
     Notes
@@ -43,12 +42,12 @@ def general(prim_vecs, basis=None, name=''):
     lattices.
     """
     if basis is None:
-        return MonatomicLattice(prim_vecs, name=name)
+        return Monatomic(prim_vecs, name=name)
     else:
-        return PolyatomicLattice(prim_vecs, basis, name=name)
+        return Polyatomic(prim_vecs, basis, name=name)
 
 
-class PolyatomicLattice(object):
+class Polyatomic(object):
     """
     Bravais lattice with a basis containing more than one site.
 
@@ -67,7 +66,7 @@ class PolyatomicLattice(object):
 
     Instance Variables
     ------------------
-    sublattices : list of `MonatomicLattice`
+    sublattices : list of `Monatomic`
         Sublattices belonging to this lattice.
 
     Raises
@@ -93,7 +92,7 @@ class PolyatomicLattice(object):
         if basis.shape[1] != dim:
             raise ValueError('Basis dimensionality does not match '
                              'the space dimensionality.')
-        self.sublattices = [MonatomicLattice(prim_vecs, offset, sname)
+        self.sublattices = [Monatomic(prim_vecs, offset, sname)
                             for offset, sname in zip(basis, name)]
         # Sequence of primitive vectors of the lattice.
         self.prim_vecs = prim_vecs
@@ -174,7 +173,7 @@ class PolyatomicLattice(object):
         return ta.dot(int_vec, self.prim_vecs)
 
 
-class MonatomicLattice(builder.SiteGroup, PolyatomicLattice):
+class Monatomic(builder.SiteGroup, Polyatomic):
     """
     A site group of sites belonging to a Bravais lattice.
 
@@ -226,12 +225,12 @@ class MonatomicLattice(builder.SiteGroup, PolyatomicLattice):
             return full[1 : -1]
 
         if self.name != '':
-            msg = "MonoatomicLattice {0}, vectors {1}, origin {2}"
+            msg = "Monatomic lattice {0}, vectors {1}, origin {2}"
             self.cached_str = msg.format(self.name,
                                          short_array_str(self.prim_vecs),
                                          short_array_str(self.offset))
         else:
-            msg = "unnamed MonoatomicLattice, vectors {0}, origin [{1}]"
+            msg = "unnamed Monatomic lattice, vectors {0}, origin [{1}]"
             self.cached_str = msg.format(short_array_str(self.prim_vecs),
                                          short_array_str(self.offset))
 
@@ -426,14 +425,14 @@ class TranslationalSymmetry(builder.Symmetry):
 
 def chain(a=1, name=''):
     """Create a one-dimensional lattice."""
-    lat = MonatomicLattice(((a,),), name=name)
+    lat = Monatomic(((a,),), name=name)
     lat.nearest = [((1,), lat, lat)]
     return lat
 
 
 def square(a=1, name=''):
     """Create a square lattice."""
-    lat = MonatomicLattice(((a, 0), (0, a)), name=name)
+    lat = Monatomic(((a, 0), (0, a)), name=name)
     lat.nearest = [((1, 0), lat, lat),
                     ((0, 1), lat, lat)]
     return lat
@@ -441,7 +440,7 @@ def square(a=1, name=''):
 
 def honeycomb(a=1, name=''):
     """Create a honeycomb lattice."""
-    lat = PolyatomicLattice(((a, 0), (0.5 * a, 0.5 * a * sqrt(3))),
+    lat = Polyatomic(((a, 0), (0.5 * a, 0.5 * a * sqrt(3))),
                             ((0, 0), (0, a / sqrt(3))), name=name)
     lat.a, lat.b = lat.sublattices
     lat.nearest = [((0, 0), lat.a, lat.b),

@@ -8,10 +8,10 @@ General
 .. autosummary::
    :toctree: generated/
 
-   general
    TranslationalSymmetry
-   MonatomicLattice
-   PolyatomicLattice
+   general
+   Monatomic
+   Polyatomic
 
 Library of lattices
 -------------------

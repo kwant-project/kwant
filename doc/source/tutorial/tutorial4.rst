@@ -82,7 +82,7 @@ The leads are defined almost as before:
     :start-after: #HIDDEN_BEGIN_aakh
     :end-before: #HIDDEN_END_aakh
 
-Note the method `~kwant.lattice.PolyatomicLattice.vec` used in calculating the
+Note the method `~kwant.lattice.Polyatomic.vec` used in calculating the
 parameter for `~kwant.lattice.TranslationalSymmetry`.  The latter expects a
 real-space symmetry vector, but for many lattices symmetry vectors are more
 easily expressed in the natural coordinate system of the lattice.  The ``vec``
