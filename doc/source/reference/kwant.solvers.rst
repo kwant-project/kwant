@@ -30,7 +30,7 @@ reasons to use another.  The following functions are provided.
    wave_func
    ldos
 
-`solve` returns an object of the following type:
+``solve`` returns an object of the following type:
 
 .. module:: kwant.solvers
 

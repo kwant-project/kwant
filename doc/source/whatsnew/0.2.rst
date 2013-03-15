@@ -75,7 +75,7 @@ See the documentation of `kwant.physics.Bands` and
 
 Calculation of the local density of states
 ------------------------------------------
-The new function of sparse solvers `~kwant.solvers.common.SparseSolver.ldos`
+The new function of sparse solvers `~kwant.solvers.default.ldos`
 allows the calculation of the local density of states.
 
 Calculation of wave functions in the scattering region
@@ -86,7 +86,7 @@ wave function in the scattering region due to any mode of any lead.
 
 Return value of sparse solver
 -----------------------------
-The function `~kwant.solvers.common.SparseSolver.solve` of sparse solvers now
+The function `~kwant.solvers.default.solve` of sparse solvers now
 always returns a single instance of `~kwant.solvers.common.BlockResult`.  The
 latter has been generalized to include more information for leads defined as
 infinite systems.
