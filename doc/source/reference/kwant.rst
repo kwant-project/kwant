@@ -22,7 +22,6 @@ From `kwant.lattice`
 .. autosummary::
 
    TranslationalSymmetry
-   general
 
 .. currentmodule:: kwant.plotter
 
