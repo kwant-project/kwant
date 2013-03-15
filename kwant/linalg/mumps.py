@@ -336,7 +336,7 @@ class MUMPSContext(object):
                     # double the additional memory
                     self.mumps_instance.icntl[14] *= 2
                 else:
-                    raise MUMPSError(self.mumps_instance.infog[1])
+                    raise MUMPSError(self.mumps_instance.infog)
             else:
                 done = True
 
