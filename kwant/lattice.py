@@ -49,18 +49,18 @@ def general(prim_vecs, basis=None, name=''):
 
 class Polyatomic(object):
     """
-    Bravais lattice with a basis containing more than one site.
+    A Bravais lattice with an arbitrary number of sites in the basis.
 
-    Contains monatomic sublattices.
+    Contains `Monatomic` sublattices.
 
     Parameters
     ----------
     prim_vecs : sequence of floats
-        Primitive vectors of a Bravais lattice.
+        The primitive vectors of a Bravais lattice.
     basis : sequence of floats
-        Coordinates of the basis sites inside the unit cell.
+        The coordinates of the basis sites inside the unit cell.
     name : string or sequence of strings
-        Name of the lattice, or the list of names of all of the sublattices.
+        The name of the lattice, or a list of the names of all the sublattices.
         If the name of the lattice is given, the names of sublattices are
         obtained by appending their number to the name of the lattice.
 
@@ -175,12 +175,14 @@ class Polyatomic(object):
 
 class Monatomic(builder.SiteGroup, Polyatomic):
     """
-    A site group of sites belonging to a Bravais lattice.
+    A Bravais lattice with a single site in the basis.  Also a site group.
+
+    Used on its own and as sublattices of `Polyatomic` lattices.
 
     Parameters
     ----------
     prim_vecs : sequence of floats
-        Primitive vectors of a Bravais lattice.
+        Primitive vectors of the Bravais lattice.
     offset : vector of floats
         Displacement of the lattice origin from the real space
         coordinates origin.
