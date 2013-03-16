@@ -7,5 +7,5 @@ and running ``make doc/source/images/SCRIPT.py`` in doc.  Now examine the newly
 created doc/source/images/SCRIPT.py.  If you do not like the result or the
 patch did not apply, edit doc/source/images/SCRIPT.py until you like it.  You
 can run `make html` during your edits to check things.  Finally, even if you
-did not edit the script, execute generate-diffs.sh in doc/source/images.  If
+did not edit the script, execute generate-diffs in doc/source/images.  If
 the patches applied cleanly the diff files will usually stay unchanged.

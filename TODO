@@ -80,7 +80,4 @@ Roughly in order of importance.                                     -*-org-*-
 * Adopt mincut/maxflow algorithm from networkx or python-graph to find the best
   representation of a lead unit cell.
 
-* Improve logic of generate_diffs.sh
-  Do not overwrite the diffs that do not need to be updated.
-
 * Tutorial choose either "A [B]" or "A in units of B" consistently.
