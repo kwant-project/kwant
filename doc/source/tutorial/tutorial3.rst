@@ -35,7 +35,8 @@ That finalized lead is then passed to `~kwant.plotter.bands`.  This function
 calculates energies of various bands at a range of momenta and plots the
 calculated energies. It is really a convenience function, and if one needs to
 do something more profound with the dispersion relation these energies may be
-calculated directly. For now we just plot the bandstructure:
+calculated directly using `~kwant.physics.Bands`. For now we just plot the
+bandstructure:
 
 .. literalinclude:: band_structure.py
     :start-after: #HIDDEN_BEGIN_pejz
