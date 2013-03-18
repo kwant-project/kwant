@@ -3,6 +3,11 @@ What's New in kwant 0.3
 
 This article explains the user-visible changes in kwant 0.3.
 
+Band structure plots
+--------------------
+A convenience function `~kwant.plotter.bands` for quick plotting of band
+structure was implemented.
+
 Immutable site groups
 ---------------------
 In order to make naming more consistent, `kwant.make_lattice` was renamed and
