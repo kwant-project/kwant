@@ -13,13 +13,13 @@
  def main():
      lead = make_lead().finalized()
 -    kwant.plotter.bands(lead, show=False)
--    pyplot.xlabel("momentum in units of inverse lattice constant")
--    pyplot.ylabel("energy in units of t")
+-    pyplot.xlabel("momentum [(lattice constant)^-1]")
+-    pyplot.ylabel("energy [t]")
 -    pyplot.show()
 +    fig = kwant.plotter.bands(lead, show=False)
-+    pyplot.xlabel("momentum in units of inverse lattice constant",
++    pyplot.xlabel("momentum [(lattice constant)^-1]",
 +                 fontsize=_defs.mpl_label_size)
-+    pyplot.ylabel("energy in units of t", fontsize=_defs.mpl_label_size)
++    pyplot.ylabel("energy [t]", fontsize=_defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
 +               fontsize=_defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),

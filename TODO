@@ -79,5 +79,3 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Adopt mincut/maxflow algorithm from networkx or python-graph to find the best
   representation of a lead unit cell.
-
-* Tutorial choose either "A [B]" or "A in units of B" consistently.

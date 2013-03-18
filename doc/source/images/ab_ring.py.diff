@@ -86,12 +86,12 @@
 -    pyplot.figure()
 +    fig = pyplot.figure()
      pyplot.plot(normalized_fluxes, data)
--    pyplot.xlabel("flux [in units of the flux quantum]")
--    pyplot.ylabel("conductance [in units of e^2/h]")
+-    pyplot.xlabel("flux [flux quantum]")
+-    pyplot.ylabel("conductance [e^2/h]")
 -    pyplot.show()
-+    pyplot.xlabel("flux [in units of the flux quantum]",
++    pyplot.xlabel("flux [flux quantum]",
 +                 fontsize=_defs.mpl_label_size)
-+    pyplot.ylabel("conductance [in units of e^2/h]",
++    pyplot.ylabel("conductance [e^2/h]",
 +                 fontsize=_defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
 +               fontsize=_defs.mpl_tick_size)

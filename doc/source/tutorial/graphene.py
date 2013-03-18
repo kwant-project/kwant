@@ -120,8 +120,8 @@ def plot_conductance(sys, energies):
 
     pyplot.figure()
     pyplot.plot(energies, data)
-    pyplot.xlabel("energy [in units of t]")
-    pyplot.ylabel("conductance [in units of e^2/h]")
+    pyplot.xlabel("energy [t]")
+    pyplot.ylabel("conductance [e^2/h]")
     pyplot.show()
 
 
@@ -131,8 +131,8 @@ def plot_bandstructure(flead, momenta):
 
     pyplot.figure()
     pyplot.plot(momenta, energies)
-    pyplot.xlabel("momentum [in units of (lattice constant)^-1]")
-    pyplot.ylabel("energy [in units of t]")
+    pyplot.xlabel("momentum [(lattice constant)^-1]")
+    pyplot.ylabel("energy [t]")
     pyplot.show()
 
 

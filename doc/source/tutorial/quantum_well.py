@@ -68,8 +68,8 @@ def plot_conductance(sys, energy, welldepths):
 
     pyplot.figure()
     pyplot.plot(welldepths, data)
-    pyplot.xlabel("well depth [in units of t]")
-    pyplot.ylabel("conductance [in units of e^2/h]")
+    pyplot.xlabel("well depth [t]")
+    pyplot.ylabel("conductance [e^2/h]")
     pyplot.show()
 #HIDDEN_END_sqvr
 

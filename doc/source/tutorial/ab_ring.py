@@ -103,8 +103,8 @@ def plot_conductance(sys, energy, fluxes):
 
     pyplot.figure()
     pyplot.plot(normalized_fluxes, data)
-    pyplot.xlabel("flux [in units of the flux quantum]")
-    pyplot.ylabel("conductance [in units of e^2/h]")
+    pyplot.xlabel("flux [flux quantum]")
+    pyplot.ylabel("conductance [e^2/h]")
     pyplot.show()
 
 

@@ -49,8 +49,8 @@ def main():
     lead = make_lead().finalized()
 
     kwant.plotter.bands(lead, momenta=np.linspace(-1.5, 1.5, 101), show=False)
-    pyplot.xlabel("momentum [in untis of (lattice constant)^-1]")
-    pyplot.ylabel("energy [in units of t]")
+    pyplot.xlabel("momentum [(lattice constant)^-1]")
+    pyplot.ylabel("energy [t]")
     pyplot.ylim([-0.8, 0.8])
     pyplot.show()
 

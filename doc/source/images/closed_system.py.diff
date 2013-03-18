@@ -15,12 +15,12 @@
 -    pyplot.figure()
 +    fig = pyplot.figure()
      pyplot.plot(Bfields, energies)
--    pyplot.xlabel("magnetic field [some arbitrary units]")
--    pyplot.ylabel("energy [in units of t]")
+-    pyplot.xlabel("magnetic field [arbitrary units]")
+-    pyplot.ylabel("energy [t]")
 -    pyplot.show()
-+    pyplot.xlabel("magnetic field [some arbitrary units]",
++    pyplot.xlabel("magnetic field [arbitrary units]",
 +                  fontsize=_defs.mpl_label_size)
-+    pyplot.ylabel("energy [in units of t]", fontsize=_defs.mpl_label_size)
++    pyplot.ylabel("energy [t]", fontsize=_defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
 +                fontsize=_defs.mpl_tick_size)
 +    pyplot.setp(fig.get_axes()[0].get_yticklabels(),

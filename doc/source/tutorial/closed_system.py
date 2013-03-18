@@ -72,8 +72,8 @@ def plot_spectrum(sys, Bfields):
 
     pyplot.figure()
     pyplot.plot(Bfields, energies)
-    pyplot.xlabel("magnetic field [some arbitrary units]")
-    pyplot.ylabel("energy [in units of t]")
+    pyplot.xlabel("magnetic field [arbitrary units]")
+    pyplot.ylabel("energy [t]")
     pyplot.show()
 #HIDDEN_END_yvri
 

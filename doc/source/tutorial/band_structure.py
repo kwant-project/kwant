@@ -37,8 +37,8 @@ def make_lead(a=1, t=1.0, W=10):
 def main():
     lead = make_lead().finalized()
     kwant.plotter.bands(lead, show=False)
-    pyplot.xlabel("momentum in units of inverse lattice constant")
-    pyplot.ylabel("energy in units of t")
+    pyplot.xlabel("momentum [(lattice constant)^-1]")
+    pyplot.ylabel("energy [t]")
     pyplot.show()
 #HIDDEN_END_pejz
 

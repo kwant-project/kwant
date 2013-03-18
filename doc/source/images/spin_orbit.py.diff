@@ -15,11 +15,11 @@
 -    pyplot.figure()
 +    fig = pyplot.figure()
      pyplot.plot(energies, data)
--    pyplot.xlabel("energy [in units of t]")
--    pyplot.ylabel("conductance [in units of e^2/h]")
+-    pyplot.xlabel("energy [t]")
+-    pyplot.ylabel("conductance [e^2/h]")
 -    pyplot.show()
-+    pyplot.xlabel("energy [in units of t]", fontsize=_defs.mpl_label_size)
-+    pyplot.ylabel("conductance [in units of e^2/h]",
++    pyplot.xlabel("energy [t]", fontsize=_defs.mpl_label_size)
++    pyplot.ylabel("conductance [e^2/h]",
 +                 fontsize=_defs.mpl_label_size)
 +    pyplot.setp(fig.get_axes()[0].get_xticklabels(),
 +               fontsize=_defs.mpl_tick_size)

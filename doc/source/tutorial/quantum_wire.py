@@ -122,7 +122,7 @@ for ie in xrange(100):
 
 pyplot.figure()
 pyplot.plot(energies, data)
-pyplot.xlabel("energy [in units of t]")
-pyplot.ylabel("conductance [in units of e^2/h]")
+pyplot.xlabel("energy [t]")
+pyplot.ylabel("conductance [e^2/h]")
 pyplot.show()
 #HIDDEN_END_lliv
