@@ -38,9 +38,9 @@ except ImportError:
                   "functions will work.", RuntimeWarning)
     _mpl_enabled = False
 
-from . import system, builder
+from . import system, builder, physics
 
-__all__ = ['plot', 'map', 'sys_leads_sites', 'sys_leads_hoppings',
+__all__ = ['plot', 'map', 'bands', 'sys_leads_sites', 'sys_leads_hoppings',
            'sys_leads_pos', 'sys_leads_hopping_pos', 'mask_interpolate']
 
 
@@ -848,6 +848,56 @@ def map(sys, value, colorbar=True, cmap=None,
     if colorbar:
         fig.colorbar(image)
     return output_fig(fig, file=file, show=show)
+
+
+def bands(sys, momenta=65, file=None, show=True, dpi=None, fig_size=None):
+    """Plot band structure of a translationally invariant 1D system.
+
+    Parameters
+    ----------
+    sys : kwant.system.InfiniteSystem
+        A system bands of which are to be plotted.
+    momenta : int or 1D array-like
+        Either a number of sampling points on the interval [-pi, pi], or an
+        array of points at which the band structure has to be evaluated.
+    file : string or file object or `None`
+        The output file.  If `None`, output will be shown instead.
+    show : bool
+        Whether `matplotlib.pyplot.show()` is to be called, and the output is
+        to be shown immediately.  Defaults to `True`.
+    dpi : float
+        Number of pixels per inch.  If not set the `matplotlib` default is
+        used.
+    fig_size : tuple
+        Figure size `(width, height)` in inches.  If not set, the default
+        `matplotlib` value is used.
+
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output.
+
+    Notes
+    -----
+    See `physics.Bands` for the calculation of dispersion without plotting.
+    """
+    momenta = np.array(momenta)
+    if momenta.ndim != 1:
+        momenta = np.linspace(-np.pi, np.pi, momenta)
+
+    bands = physics.Bands(sys)
+    energies = [bands(k) for k in momenta]
+
+    fig = Figure()
+    if dpi is not None:
+        fig.set_dpi(dpi)
+    if fig_size is not None:
+        fig.set_figwidth(fig_size[0])
+        fig.set_figheight(fig_size[1])
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(momenta, energies)
+    return output_fig(fig, file=file, show=show)
+
 
 # TODO (Anton): Fix plotting of parts of the system using color = np.nan.
 # Not plotting sites currently works, not plotting hoppings does not.

@@ -9,6 +9,11 @@ Some renames
 * ``MonatomicLattice`` has been renamed to `~kwant.lattice.Monatomic`,
 * ``PolyatomicLattice`` has been renamed to `~kwant.lattice.Polyatomic`.
 
+Band structure plots
+--------------------
+A convenience function `~kwant.plotter.bands` for quick plotting of band
+structure was implemented.
+
 Immutable site groups
 ---------------------
 In order to make naming more consistent, `kwant.make_lattice` was renamed and

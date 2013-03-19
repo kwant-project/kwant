@@ -44,26 +44,15 @@ def make_lead(a=1, t=1.0, mu=0.7, Delta=0.1, W=10):
 #HIDDEN_END_nbvn
 
 
-def plot_bandstructure(lead, momenta):
-    bands = kwant.physics.Bands(lead)
-    energies = [bands(k) for k in momenta]
-
-    pyplot.figure()
-    pyplot.plot(momenta, energies)
-    pyplot.xlabel("momentum [in untis of (lattice constant)^-1]")
-    pyplot.ylabel("energy [in units of t]")
-    pyplot.ylim([-0.8, 0.8])
-    pyplot.show()
-
-
 def main():
     # Make system and finalize it right away.
     lead = make_lead().finalized()
 
-    # list of momenta at which the bands should be computed
-    momenta = np.linspace(-1.5, 1.5, 201)
-
-    plot_bandstructure(lead, momenta)
+    kwant.plotter.bands(lead, momenta=np.linspace(-1.5, 1.5, 101), show=False)
+    pyplot.xlabel("momentum [in untis of (lattice constant)^-1]")
+    pyplot.ylabel("energy [in units of t]")
+    pyplot.ylim([-0.8, 0.8])
+    pyplot.show()
 
 
 # Call the main function if the script gets executed (as opposed to imported).
