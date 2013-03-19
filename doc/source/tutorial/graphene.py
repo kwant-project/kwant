@@ -49,13 +49,12 @@ def make_system(r=10, w=2.0, pot=0.1):
 #HIDDEN_END_shzy
 
     # specify the hoppings of the graphene lattice in the
-    # format expected by possibe_hoppings()
+    # format expected by builder.HoppingKind
 #HIDDEN_BEGIN_hsmc
     hoppings = (((0, 0), a, b), ((0, 1), a, b), ((-1, 1), a, b))
 #HIDDEN_END_hsmc
 #HIDDEN_BEGIN_bfwb
-    for hopping in hoppings:
-        sys[sys.possible_hoppings(*hopping)] = -1
+    sys[[kwant.builder.HoppingKind(*hopping) for hopping in hoppings]] = -1
 #HIDDEN_END_bfwb
 
     # Modify the scattering region
@@ -75,8 +74,7 @@ def make_system(r=10, w=2.0, pot=0.1):
 
     lead0 = kwant.Builder(sym0)
     lead0[graphene.shape(lead0_shape, (0, 0))] = -pot
-    for hopping in hoppings:
-        lead0[lead0.possible_hoppings(*hopping)] = -1
+    lead0[[kwant.builder.HoppingKind(*hopping) for hopping in hoppings]] = -1
 
     # The second lead, going to the top right
     sym1 = kwant.TranslationalSymmetry(graphene.vec((0, 1)))
@@ -89,8 +87,7 @@ def make_system(r=10, w=2.0, pot=0.1):
 
     lead1 = kwant.Builder(sym1)
     lead1[graphene.shape(lead1_shape, (0, 0))] = pot
-    for hopping in hoppings:
-        lead1[lead1.possible_hoppings(*hopping)] = -1
+    lead1[[kwant.builder.HoppingKind(*hopping) for hopping in hoppings]] = -1
 #HIDDEN_END_aakh
 
 #HIDDEN_BEGIN_kmmw

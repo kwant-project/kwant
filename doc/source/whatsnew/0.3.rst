@@ -3,6 +3,27 @@ What's New in kwant 0.3
 
 This article explains the user-visible changes in kwant 0.3.
 
+
+``possible_hoppings`` replaced by `~kwant.builder.HoppingKind`
+--------------------------------------------------------------
+The `~kwant.builder.Builder` method ``possible_hoppings`` has been rendered
+obsolete.  Where previously one would have had ::
+
+    for kind in lat.nearest:
+        sys[sys.possible_hoppings(*kind)] = t
+
+now it suffices to write ::
+
+    sys[lat.nearest] = t
+
+This is possible because `~kwant.builder.Builder` now accepts *functions* as
+keys in addition to `~kwant.builder.Site` objects and tuples of them
+(hoppings).  These functions are expected to yield either sites or hoppings,
+when given a builder instance as the sole argument. The use of such keys is to
+implement sets of sites or hoppings that depend on what is already present in
+the builder, such as `~kwant.builder.HoppingKind`.  In the above example,
+``lat.nearest`` is a list of ``HoppingKind`` objects.
+
 Some renames
 ------------
 * ``wave_func`` has been renamed to `~kwant.solvers.default.wave_function`,

@@ -428,15 +428,15 @@ class TranslationalSymmetry(builder.Symmetry):
 def chain(a=1, name=''):
     """Create a one-dimensional lattice."""
     lat = Monatomic(((a,),), name=name)
-    lat.nearest = [((1,), lat, lat)]
+    lat.nearest = [builder.HoppingKind((1,), lat, lat)]
     return lat
 
 
 def square(a=1, name=''):
     """Create a square lattice."""
     lat = Monatomic(((a, 0), (0, a)), name=name)
-    lat.nearest = [((1, 0), lat, lat),
-                    ((0, 1), lat, lat)]
+    lat.nearest = [builder.HoppingKind((1, 0), lat, lat),
+                   builder.HoppingKind((0, 1), lat, lat)]
     return lat
 
 
@@ -445,7 +445,7 @@ def honeycomb(a=1, name=''):
     lat = Polyatomic(((a, 0), (0.5 * a, 0.5 * a * sqrt(3))),
                             ((0, 0), (0, a / sqrt(3))), name=name)
     lat.a, lat.b = lat.sublattices
-    lat.nearest = [((0, 0), lat.a, lat.b),
-                    ((0, 1), lat.a, lat.b),
-                    ((-1, 1), lat.a, lat.b)]
+    lat.nearest = [builder.HoppingKind((0, 0), lat.a, lat.b),
+                   builder.HoppingKind((0, 1), lat.a, lat.b),
+                   builder.HoppingKind((-1, 1), lat.a, lat.b)]
     return lat

@@ -59,11 +59,10 @@ we can simply write:
 Note that the Zeeman energy adds to the onsite term, whereas the Rashba
 spin-orbit term adds to the hoppings (due to the derivative operator).
 Furthermore, the hoppings in x and y-direction have a different matrix
-structure. We still use `~kwant.builder.Builder.possible_hoppings`
-to add all the hoppings at once, but we now have to distinguish
-x and y-direction. Because of that, we have to explicitly specify
-the hoppings in the form expected by
-`~kwant.builder.Builder.possible_hoppings`:
+structure. We now cannot use ``lat.nearest`` to add all the hoppings at once,
+since we now have to distinguish x and y-direction. Because of that, we have to
+explicitly specify the hoppings in the form expected by
+`~kwant.builder.HoppingKind`:
 
 - A tuple with relative lattice indices.  For example, `(1, 0)` means
   hopping from `(i, j)` to `(i+1, j)`, whereas `(1, 1)` would
@@ -113,7 +112,7 @@ the following, clearly non-monotonic conductance steps:
     for kwant: it allows them to be used directly as dictionary keys.
 
   - It should be emphasized that the relative hopping used for
-    `~kwant.builder.Builder.possible_hoppings` is given in terms of
+    `~kwant.builder.HoppingKind` is given in terms of
     lattice indices, i.e. relative to the Bravais lattice vectors.
     For a square lattice, the Bravais lattice vectors are simply
     `(a,0)` and `(0,a)`, and hence the mapping from
@@ -250,7 +249,7 @@ provided by the lattice:
 
 Here, ``lat.shape`` takes as a second parameter a (real-space) point that is
 inside the desired shape. The hoppings can still be added using
-`~kwant.builder.Builder.possible_hoppings` as before.
+``lat.nearest`` as before.
 
 Up to now, the system contains constant hoppings and onsite energies,
 and we still need to include the phase shift due to the magnetic flux.

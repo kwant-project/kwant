@@ -8,16 +8,7 @@
  
  
  # Define the graphene lattice
-@@ -63,7 +64,7 @@
-         return (-1 < x < 1) and (-0.4 * r < y < 0.4 * r)
- 
-     lead0 = kwant.Builder(sym0)
--    lead0[graphene.shape(lead0_shape, (0, 0))] = -pot
-+    lead0[graphene.shape(lead0_shape, (0, 0))] = - pot
-     for hopping in hoppings:
-         lead0[lead0.possible_hoppings(*hopping)] = -1
- 
-@@ -105,22 +106,40 @@
+@@ -102,22 +103,40 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(0, 1))
  
@@ -66,7 +57,7 @@
  
  
  def main():
-@@ -133,17 +152,22 @@
+@@ -130,17 +149,22 @@
          return 0 if site.group == a else 1
  
      # Plot the closed system without leads.

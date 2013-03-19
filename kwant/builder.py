@@ -9,7 +9,7 @@
 from __future__ import division
 
 __all__ = ['Builder', 'Site', 'SiteGroup', 'SimpleSiteGroup', 'Symmetry',
-           'Lead', 'BuilderLead', 'SelfEnergy']
+           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergy']
 
 import abc
 import sys
@@ -20,7 +20,7 @@ import tinyarray as ta
 import numpy as np
 from . import system, graph
 
-
+
 ################ Sites and site groups
 
 class Site(tuple):
@@ -176,7 +176,7 @@ class SimpleSiteGroup(SiteGroup):
                             'its representation.')
         return tag
 
-
+
 ################ Symmetries
 
 class Symmetry(object):
@@ -275,7 +275,72 @@ class NoSymmetry(Symmetry):
     def in_fd(self, site):
         return True
 
+
+################ Hopping kinds
 
+class HoppingKind(object):
+    """A pattern for matching hoppings.
+
+    A hopping ``(a, b)`` matches precisely when the site group of ``a`` equals
+    `group_a` and that of ``b`` equals `group_b` and ``(a.tag - b.tag)`` is
+    equal to `delta`.  In other words, the matching hoppings have the form:
+    ``(group_a(x + delta), group_b(x))``
+
+    Parameters
+    ----------
+    delta : Sequence of integers
+        The sequence is interpreted as a vector with integer elements.
+    group_a : `~kwant.builder.SiteGroup`
+    grpup_b : `~kwant.builder.SiteGroup` or ``None`` (default)
+        The default value means: use the same group as `group_a`.
+
+    Notes
+    -----
+    A ``HoppingKind`` is a callable object: When called with a
+    `~kwant.builder.Builder` as sole argument, an instance of this class will
+    return an iterator over all possible matching hoppings whose sites are
+    already present in the system.  The hoppings do *not* have to be already
+    present in the system.  For example::
+
+        kind = kwant.builder.HoppingKind((1, 0), lat)
+        sys[kind(sys)] = 1
+
+    Because a `~kwant.builder.Builder` can be indexed with functions or
+    iterables of functions, ``HoppingKind`` instances (or any non-tuple
+    iterables of them, e.g. a list) can be used directly as "wildcards" when
+    setting or deleting hoppings::
+
+        kinds = [kwant.builder.HoppingKind(v, lat) for v in [(1, 0), (0, 1)]]
+        sys[kinds] = 1
+    """
+    __slots__ = ('delta', 'group_a', 'group_b')
+
+    def __init__(self, delta, group_a, group_b=None):
+        self.delta = ta.array(delta, int)
+        self.group_a = group_a
+        self.group_b = group_b if group_b is not None else group_a
+
+    def __call__(self, builder):
+        delta = self.delta
+        group_a = self.group_a
+        group_b = self.group_b
+        H = builder.H
+        symtofd = builder.symmetry.to_fd
+
+        for a in H:
+            if a.group != group_a:
+                continue
+            b = Site(group_b, a.tag - delta, True)
+            if symtofd(b) in H:
+                yield a, b
+
+    def __repr__(self):
+        return '{0}({1}, {2}{3})'.format(
+            self.__class__.__name__, repr(tuple(self.delta)),
+            repr(self.group_a),
+            ', ' + repr(self.group_b) if self.group_a != self.group_b else '')
+
+
 ################ Support for Hermitian conjugation
 
 def herm_conj(value):
@@ -303,7 +368,7 @@ class HermConjOfFunc(object):
     def __call__(self, i, j):
         return herm_conj(self.function(j, i))
 
-
+
 ################ Leads
 
 class Lead(object):
@@ -398,42 +463,8 @@ class SelfEnergy(Lead):
     def self_energy(self, energy):
         return self.self_energy_func(energy)
 
-
+
 ################ Builder class
-
-
-def for_each_in_key(key, f_site, f_hopp):
-    """Perform an operation on each site or hopping in key.
-
-    Key may be
-    * a single site or hopping object,
-    * a non-tuple iterable of sites,
-    * a non-tuple iterable of hoppings.
-    """
-    if isinstance(key, Site):
-        f_site(key)
-    elif isinstance(key, tuple):
-        f_hopp(key)
-    else:
-        try:
-            ikey = iter(key)
-        except:
-            raise KeyError(key)
-        try:
-            first = next(ikey)
-        except StopIteration:
-            return
-        if isinstance(first, Site):
-            f_site(first)
-            for site in ikey:
-                f_site(site)
-        elif isinstance(first, tuple):
-            f_hopp(first)
-            for hopping in ikey:
-                f_hopp(hopping)
-        else:
-            raise KeyError(first)
-
 
 # A marker, meaning for hopping (i, j): this value is given by the Hermitian
 # conjugate the value of the hopping (j, i).  Used by Builder and System.
@@ -457,20 +488,13 @@ class Builder(object):
 
     The nodes of the graph are `Site` instances.  The edges, i.e. the hoppings,
     are pairs (2-tuples) of sites.  Each node and each edge has a value
-    associated with it.  That value can be in fact any python object, but
-    currently the only *useful* values are matrices and numbers or functions
-    returning them.  The values associated with nodes are interpreted as
+    associated with it.  The values associated with nodes are interpreted as
     on-site Hamiltonians, the ones associated with edges as hopping integrals.
 
-    To make the graph accessible in a way that is natural within the python
+    To make the graph accessible in a way that is natural within the Python
     language it is exposed as a *mapping* (much like a built-in Python
-    dictionary).  Keys are sites or pairs of them.  Possible values are 2d
-    NumPy arrays, numbers (interpreted as 1 by 1 matrices), or functions.
-    Functions receive the site or the hopping (passed to the function as two
-    sites) and are expected to return a valid value.
-
-    Builder instances can be made to automatically respect a `Symmetry` that is
-    passed to them during creation.
+    dictionary).  Keys are sites or hoppings.  Values are 2d arrays
+    (e.g. NumPy or tinyarray) or numbers (interpreted as 1 by 1 matrices).
 
     Parameters
     ----------
@@ -479,24 +503,33 @@ class Builder(object):
 
     Notes
     -----
+    Values can be also functions that receive the site or the hopping (passed
+    to the function as two sites) and possibly additional arguments and are
+    expected to return a valid value.  This allows to define systems quickly,
+    to modify them without reconstructing, and to save memory for many-orbital
+    models.
+
+    Any (non-tuple) iterable (e.g. a list) of keys is also a key: Lists or
+    generator expressions of hoppings/sites can be used as keys.  Additionally,
+    a function that returns a key when given a builder as sole argument is a
+    key as well.  This makes it possible to use (lists of) `HoppingKind`
+    instances as keys.
+
     Builder instances automatically ensure that every hopping is Hermitian, so
     that if ``builder[a, b]`` has been set, there is no need to set
     ``builder[b, a]``.
 
-    Values which are functions allow to define systems quickly, to modify them
-    without reconstructing, and to save memory for many-orbital models.
+    Builder instances can be made to automatically respect a `Symmetry` that is
+    passed to them during creation.  The behavior of builders with a symmetry
+    is slightly more sophisticated.  First of all, it is implicitly assumed
+    throughout kwant that **every** function assigned as a value to a builder
+    with a symmetry possesses the same symmetry.  Secondly, all keys are mapped
+    to the fundamental domain of the symmetry before storing them.  This may
+    produce confusing results when neighbors of a site are queried.
 
-    The behavior of builders with a symmetry is slightly more sophisticated.
-    First of all, it is implicitly assumed throughout kwant that **every**
-    function assigned as a value to a builder with a symmetry possesses the
-    same symmetry.  Secondly, all keys are mapped to the fundamental domain
-    before storing them.  This may produce confusing results when neighbors of
-    a site are queried.
-
-    The methods `possible_hoppings` and `attach_lead` *work* only if the sites
-    affected by them have tags which are sequences of integers.  They *make
-    sense* only when these sites live on a regular lattice, like one provided
-    by `kwant.lattice`.
+    The method `attach_lead` *works* only if the sites affected by them have
+    tags which are sequences of integers.  It *makes sense* only when these
+    sites live on a regular lattice, like the ones provided by `kwant.lattice`.
 
     .. warning::
 
@@ -603,6 +636,39 @@ class Builder(object):
     def __nonzero__(self):
         return bool(self.H)
 
+    # TODO: rewrite using "yield from" once we can take Python 3.3 for granted.
+    def _for_each_in_key(self, key, f_site, f_hopp):
+        if isinstance(key, Site):
+            f_site(key)
+            return 0
+        elif isinstance(key, tuple):
+            f_hopp(key)
+            return 1
+        elif callable(key):
+            return self._for_each_in_key(key(self), f_site, f_hopp)
+        else:
+            try:
+                ret = None
+                for item in key:
+                    last = self._for_each_in_key(item, f_site, f_hopp)
+                    if last != ret:
+                        if ret is None:
+                            ret = last
+                        elif last is not None:
+                            raise KeyError(item)
+                return ret
+            except TypeError:
+                raise KeyError(key)
+            # The following clauses make sure that a useful error message is
+            # generated for infinitely iterable keys (like strings).
+            except KeyError as e:
+                if not e.args and key != item:
+                    raise KeyError(key)
+                else:
+                    raise
+            except RuntimeError:
+                raise KeyError()
+
     def _get_site(self, site):
         site = self.symmetry.to_fd(site)
         try:
@@ -701,9 +767,9 @@ class Builder(object):
 
     def __setitem__(self, key, value):
         """Set a single site/hopping or an iterable of them."""
-        for_each_in_key(key,
-                        lambda s: self._set_site(s, value),
-                        lambda h: self._set_hopping(h, value))
+        self._for_each_in_key(key,
+                              lambda s: self._set_site(s, value),
+                              lambda h: self._set_hopping(h, value))
 
     def _del_site(self, site):
         """Delete a single site and all associated hoppings."""
@@ -744,9 +810,9 @@ class Builder(object):
 
     def __delitem__(self, key):
         """Delete a single site/hopping or an iterable of them."""
-        for_each_in_key(key,
-                        lambda s: self._del_site(s),
-                        lambda h: self._del_hopping(h))
+        self._for_each_in_key(key,
+                              lambda s: self._del_site(s),
+                              lambda h: self._del_hopping(h))
 
     def eradicate_dangling(self):
         """Keep deleting dangling sites until none are left."""
@@ -841,38 +907,6 @@ class Builder(object):
             self[hop] = value
         self.leads.extend(other_sys.leads)
         return self
-
-    def possible_hoppings(self, delta, group_a, group_b):
-        """Return all matching possible hoppings between existing sites.
-
-        A hopping ``(a, b)`` matches precisely when the site group of ``a``
-        equals `group_a` and that of ``b`` equals `group_b` and
-        ``(a.tag - b.tag)`` is equal to `delta`.
-
-        In other words, the matching hoppings have the form:
-        ``(group_a(x + delta), group_b(x))``
-
-        Parameters
-        ----------
-        delta : Sequence of integers
-            The sequence is interpreted as a vector with integer elements.
-        group_a : `~kwant.builder.SiteGroup`
-        grpup_b : `~kwant.builder.SiteGroup`
-
-        Returns
-        -------
-        hoppings : Iterator over hoppings
-           All matching possible hoppings
-        """
-        H = self.H
-        symtofd = self.symmetry.to_fd
-        delta = ta.array(delta, int)
-        for a in self.H:
-            if a.group != group_a:
-                continue
-            b = Site(group_b, a.tag - delta, True)
-            if symtofd(b) in H:
-                yield a, b
 
     def attach_lead(self, lead_builder, origin=None):
         """Attach a lead to the builder, possibly adding missing sites.
@@ -1186,9 +1220,8 @@ class Builder(object):
         result.symmetry = self.symmetry
         return result
 
-
+
 ################ Finalized systems
-
 
 class FiniteSystem(system.FiniteSystem):
     """

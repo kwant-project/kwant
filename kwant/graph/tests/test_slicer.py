@@ -42,8 +42,9 @@ def test_rectangle():
         lead[(lat(0, i) for i in xrange(w))] = 0
         sys[(lat(j, i) for j in xrange(l) for i in xrange(w))] = 0
         for s in [lead, sys]:
-            for delta in [(1, 0), (0, 1)]:
-                s[s.possible_hoppings(delta, lat, lat)] = -1
+            for kind in [kwant.builder.HoppingKind((1, 0), lat),
+                         kwant.builder.HoppingKind((0, 1), lat)]:
+                s[kind] = -1
         sys.attach_lead(lead)
         sys.attach_lead(lead.reversed())
         fsys = sys.finalized()

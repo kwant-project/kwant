@@ -13,7 +13,7 @@ except ImportError:
     _no_mumps = True
 
 from kwant.lattice import honeycomb
-from kwant import Builder
+from kwant.builder import Builder, HoppingKind
 from nose.tools import assert_equal, assert_true
 from numpy.testing.decorators import skipif
 import numpy as np
@@ -74,9 +74,8 @@ def test_error_minus_9(r=10):
 
     sys = Builder()
     sys[graphene.shape(circle, (0,0))] = -0.0001
-    hoppings = (((0, 0), b, a), ((0, 1), b, a), ((-1, 1), b, a))
-    for hopping in hoppings:
-        sys[sys.possible_hoppings(*hopping)] = - 1
+    for kind in [((0, 0), b, a), ((0, 1), b, a), ((-1, 1), b, a)]:
+        sys[HoppingKind(*kind)] = - 1
 
     ham = sys.finalized().hamiltonian_submatrix(sparse=True)
 
