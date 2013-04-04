@@ -79,3 +79,7 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Adopt mincut/maxflow algorithm from networkx or python-graph to find the best
   representation of a lead unit cell.
+
+* Make shape a callable that uses system symmetry.
+  Similarly to HoppingKind, which requires information about sites in the
+  builder to generate hoppings, shape can be made symmetry-aware.
