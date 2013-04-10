@@ -628,7 +628,7 @@ def modes(h_onslice, h_hop, tol=1e6):
 
     Returns
     -------
-    (vecs, vecslmbdainv, nmodes, svd) : Modes
+    Modes(vecs, vecslmbdainv, nmodes, svd) : a named tuple
         `vecs` is the matrix of eigenvectors of the translation operator.
         `vecslmbdainv` is the matrix of eigenvectors multiplied with their
         corresponding inverse eigenvalue.  `nmodes` is the number of
