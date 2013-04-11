@@ -83,3 +83,11 @@ Roughly in order of importance.                                     -*-org-*-
 * Make shape a callable that uses system symmetry.
   Similarly to HoppingKind, which requires information about sites in the
   builder to generate hoppings, shape can be made symmetry-aware.
+
+* Consider using two-way-compressed uni-directional graphs in systems
+  advantages:
+  - The number of edges gets reduced by 1/2.
+  - The Hermicity of the Hamiltonian is enforced in a more obvious way.
+  - It's clear at system level which Hamiltonian elements are defined
+    directly.
+  Would Michael's graph slicing code continue to work?
