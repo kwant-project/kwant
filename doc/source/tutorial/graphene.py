@@ -136,7 +136,7 @@ def plot_bandstructure(flead, momenta):
     pyplot.show()
 
 
-#HIDDEN The part of the following code block which begins with group_colors
+#HIDDEN The part of the following code block which begins with family_colors
 #HIDDEN is included verbatim in the tutorial text because nested code examples
 #HIDDEN are not supported.  Remember to update the tutorial text when you
 #HIDDEN modify this block.
@@ -147,11 +147,11 @@ def main():
 
     # To highlight the two sublattices of graphene, we plot one with
     # a filled, and the other one with an open circle:
-    def group_colors(site):
-        return 0 if site.group == a else 1
+    def family_colors(site):
+        return 0 if site.family == a else 1
 
     # Plot the closed system without leads.
-    kwant.plot(sys, site_color=group_colors, colorbar=False)
+    kwant.plot(sys, site_color=family_colors, colorbar=False)
 #HIDDEN_END_itkk
 
     # Compute some eigenvalues.
@@ -164,7 +164,7 @@ def main():
         sys.attach_lead(lead)
 
     # Then, plot the system with leads.
-    kwant.plot(sys, site_color=group_colors, colorbar=False)
+    kwant.plot(sys, site_color=family_colors, colorbar=False)
 
     # Finalize the system.
     sys = sys.finalized()

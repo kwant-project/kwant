@@ -127,8 +127,8 @@ We customize the plotting: we set the `site_colors` argument of
 `~kwant.plotter.plot` to a function which returns 0 for
 sublattice `a` and 1 for sublattice `b`::
 
-    def group_colors(site):
-        return 0 if site.group == a else 1
+    def family_colors(site):
+        return 0 if site.family == a else 1
 
 The function `~kwant.plotter.plot` shows these values using a color scale
 (grayscale by default). The symbol `size` is specified in points, and is

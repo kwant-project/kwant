@@ -202,18 +202,18 @@ subbands that increases with energy.
 
      Technically, `~kwant.builder.Builder` expects
      **sites** as indices. Sites themselves have a certain type, and
-     belong to a **site group**. A site group is also used to convert
+     belong to a **site family**. A site family is also used to convert
      something that represents a site (like a tuple) into a
      proper `~kwant.builder.Site` object that can be used with
      `~kwant.builder.Builder`.
 
-     In the above example, `lat` is the site group. ``lat(i, j)``
+     In the above example, `lat` is the site family. ``lat(i, j)``
      then translates the description of a lattice site in terms of two
      integer indices (which is the natural way to do here) into
      a proper `~kwant.builder.Site` object.
 
-     The concept of site groups and sites allows `~kwant.builder.Builder`
-     to mix arbitrary lattices and site groups
+     The concept of site families and sites allows `~kwant.builder.Builder`
+     to mix arbitrary lattices and site families
 
    - In the example, we wrote
 

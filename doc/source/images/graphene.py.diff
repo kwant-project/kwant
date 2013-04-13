@@ -58,17 +58,17 @@
  
  def main():
 @@ -130,17 +149,22 @@
-         return 0 if site.group == a else 1
+         return 0 if site.family == a else 1
  
      # Plot the closed system without leads.
--    kwant.plot(sys, site_color=group_colors, colorbar=False)
+-    kwant.plot(sys, site_color=family_colors, colorbar=False)
 -
 -    # Compute some eigenvalues.
 -    compute_evs(sys.finalized())
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
-+    kwant.plot(sys, site_color=group_colors, colorbar=False,
++    kwant.plot(sys, site_color=family_colors, colorbar=False,
 +               file="graphene_sys1.pdf", fig_size=size, dpi=_defs.dpi)
-+    kwant.plot(sys, site_color=group_colors, colorbar=False,
++    kwant.plot(sys, site_color=family_colors, colorbar=False,
 +               file="graphene_sys1.png", fig_size=size, dpi=_defs.dpi)
  
      # Attach the leads to the system.
@@ -76,11 +76,11 @@
          sys.attach_lead(lead)
  
      # Then, plot the system with leads.
--    kwant.plot(sys, site_color=group_colors, colorbar=False)
+-    kwant.plot(sys, site_color=family_colors, colorbar=False)
 +    size = (_defs.figwidth_in, 0.9 * _defs.figwidth_in)
-+    kwant.plot(sys, site_color=group_colors, colorbar=False,
++    kwant.plot(sys, site_color=family_colors, colorbar=False,
 +               file="graphene_sys2.pdf", fig_size=size, dpi=_defs.dpi)
-+    kwant.plot(sys, site_color=group_colors, colorbar=False,
++    kwant.plot(sys, site_color=family_colors, colorbar=False,
 +               file="graphene_sys2.png", fig_size=size, dpi=_defs.dpi)
  
      # Finalize the system.

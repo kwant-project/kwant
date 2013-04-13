@@ -11,7 +11,7 @@ Types
    Builder
    Site
    HoppingKind
-   SimpleSiteGroup
+   SimpleSiteFamily
    BuilderLead
    SelfEnergy
 
@@ -20,6 +20,6 @@ Abstract base classes
 .. autosummary::
    :toctree: generated/
 
-   SiteGroup
+   SiteFamily
    Symmetry
    Lead

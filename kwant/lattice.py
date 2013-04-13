@@ -173,9 +173,9 @@ class Polyatomic(object):
         return ta.dot(int_vec, self.prim_vecs)
 
 
-class Monatomic(builder.SiteGroup, Polyatomic):
+class Monatomic(builder.SiteFamily, Polyatomic):
     """
-    A Bravais lattice with a single site in the basis.  Also a site group.
+    A Bravais lattice with a single site in the basis.  Also a site family.
 
     Used on its own and as sublattices of `Polyatomic` lattices.
 
@@ -271,10 +271,10 @@ class TranslationalSymmetry(builder.Symmetry):
     Notes
     -----
     This symmetry automatically chooses the fundamental domain for each new
-    `SiteGroup` it encounters. If this site group does not correspond to a
+    `SiteFamily` it encounters. If this site family does not correspond to a
     Bravais lattice, or if it does not have a commensurate period, an error is
     produced. A certain flexibility in choice of the fundamental domain can be
-    achieved by calling manually the `add_site_group` method and providing it
+    achieved by calling manually the `add_site_family` method and providing it
     the `other_vectors` parameter.
 
     The fundamental domain for hoppings are all hoppings ``(a, b)`` with site
@@ -293,20 +293,20 @@ class TranslationalSymmetry(builder.Symmetry):
             raise ValueError("Translational symmetry periods must be "
                              "linearly independent")
         # A dictionary containing cached data required for applying the
-        # symmetry to different site groups.
-        self.site_group_data = {}
+        # symmetry to different site families.
+        self.site_family_data = {}
         self.is_reversed = False
 
-    def add_site_group(self, gr, other_vectors=None):
+    def add_site_family(self, gr, other_vectors=None):
         """
-        Select a fundamental domain for site group and cache associated data.
+        Select a fundamental domain for site family and cache associated data.
 
         Parameters
         ----------
-        gr : `SiteGroup`
-            the site group which has to be processed.  Be sure to delete the
-            previously processed site groups from `site_group_data` if you want
-            to modify the cache.
+        gr : `SiteFamily`
+            the site family which has to be processed.  Be sure to delete the
+            previously processed site families from `site_family_data` if you
+            want to modify the cache.
 
         other_vectors : list of lists of integers
             Bravais lattice vectors used to complement the periods in forming
@@ -316,20 +316,20 @@ class TranslationalSymmetry(builder.Symmetry):
         Raises
         ------
         KeyError
-            If `gr` is already stored in `site_group_data`.
+            If `gr` is already stored in `site_family_data`.
         ValueError
             If lattice shape of `gr` cannot have the given `periods`.
         """
-        if gr.canonical_repr in self.site_group_data:
-            raise KeyError('Group already processed, delete it from '
-                           'site_group_data first.')
+        if gr.canonical_repr in self.site_family_data:
+            raise KeyError('Family already processed, delete it from '
+                           'site_family_data first.')
         inv = np.linalg.pinv(gr.prim_vecs)
         bravais_periods = [np.dot(i, inv) for i in self._periods]
         if not np.allclose(bravais_periods, np.round(bravais_periods),
                            rtol=0, atol=1e-8) or \
            not np.allclose([gr.vec(i) for i in bravais_periods],
                            self._periods):
-            msg = 'Site group {0} does not have commensurate periods with ' +\
+            msg = 'Site family {0} does not have commensurate periods with ' +\
                   'symmetry {1}.'
             raise ValueError(msg.format(gr, self))
         bravais_periods = np.array(np.round(bravais_periods), dtype='int')
@@ -361,27 +361,27 @@ class TranslationalSymmetry(builder.Symmetry):
 
         det_x_inv_m_part = det_x_inv_m[:num_dir, :]
         m_part = m[:, :num_dir]
-        self.site_group_data[gr.canonical_repr] = (ta.array(m_part),
+        self.site_family_data[gr.canonical_repr] = (ta.array(m_part),
                                     ta.array(det_x_inv_m_part), det_m)
 
     @property
     def num_directions(self):
         return len(self.periods)
 
-    def _get_site_group_data(self, group):
+    def _get_site_family_data(self, family):
         try:
-            return self.site_group_data[group.canonical_repr]
+            return self.site_family_data[family.canonical_repr]
         except KeyError:
-            self.add_site_group(group)
-            return self.site_group_data[group.canonical_repr]
+            self.add_site_family(family)
+            return self.site_family_data[family.canonical_repr]
 
     def which(self, site):
-        det_x_inv_m_part, det_m = self._get_site_group_data(site.group)[-2:]
+        det_x_inv_m_part, det_m = self._get_site_family_data(site.family)[-2:]
         result = ta.dot(det_x_inv_m_part, site.tag) // det_m
         return -result if self.is_reversed else result
 
     def act(self, element, a, b=None):
-        m_part = self._get_site_group_data(a.group)[0]
+        m_part = self._get_site_family_data(a.family)[0]
         try:
             delta = ta.dot(m_part, element)
         except ValueError:
@@ -390,12 +390,12 @@ class TranslationalSymmetry(builder.Symmetry):
         if self.is_reversed:
             delta *= -1
         if b is None:
-            return builder.Site(a.group, a.tag + delta, True)
-        elif b.group == a.group:
-            return builder.Site(a.group, a.tag + delta, True), \
-                builder.Site(b.group, b.tag + delta, True)
+            return builder.Site(a.family, a.tag + delta, True)
+        elif b.family == a.family:
+            return builder.Site(a.family, a.tag + delta, True), \
+                builder.Site(b.family, b.tag + delta, True)
         else:
-            m_part = self._get_site_group_data(b.group)[0]
+            m_part = self._get_site_family_data(b.family)[0]
             try:
                 delta2 = ta.dot(m_part, element)
             except ValueError:
@@ -404,8 +404,8 @@ class TranslationalSymmetry(builder.Symmetry):
                 raise ValueError(msg.format(self.num_directions, element))
             if self.is_reversed:
                 delta2 *= -1
-            return builder.Site(a.group, a.tag + delta, True), \
-                builder.Site(b.group, b.tag + delta2, True)
+            return builder.Site(a.family, a.tag + delta, True), \
+                builder.Site(b.family, b.tag + delta2, True)
 
     def to_fd(self, a, b=None):
         return self.act(-self.which(a), a, b)
@@ -417,7 +417,7 @@ class TranslationalSymmetry(builder.Symmetry):
         original and an identical fundamental domain.
         """
         result = TranslationalSymmetry(*self._periods)
-        result.site_group_data = self.site_group_data
+        result.site_family_data = self.site_family_data
         result.is_reversed = not self.is_reversed
         result.periods = -self.periods
         return result

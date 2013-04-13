@@ -16,11 +16,11 @@ import kwant
 from kwant import builder
 
 
-def test_site_groups():
+def test_site_families():
     sys = builder.Builder()
-    sg = builder.SimpleSiteGroup()
-    osg = builder.SimpleSiteGroup()
-    yasg = builder.SimpleSiteGroup('another_name')
+    sg = builder.SimpleSiteFamily()
+    osg = builder.SimpleSiteFamily()
+    yasg = builder.SimpleSiteFamily('another_name')
 
     assert_raises(KeyError, sys.__setitem__, (0, ), 7)
     sys[sg(0)] = 7
@@ -46,7 +46,7 @@ class VerySimpleSymmetry(builder.Symmetry):
         return ta.array((site.tag[0] // self.period,), int)
 
     def act(self, element, a, b=None):
-        shifted = lambda site, delta: site.group(*ta.add(site.tag, delta))
+        shifted = lambda site, delta: site.family(*ta.add(site.tag, delta))
         delta = (self.period * element[0],) + (len(a.tag) - 1) * (0,)
         if b is None:
             return shifted(a, delta)
@@ -58,7 +58,7 @@ class VerySimpleSymmetry(builder.Symmetry):
 # made.
 def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
                                     failing_hoppings, sym=None):
-    gr = builder.SimpleSiteGroup()
+    gr = builder.SimpleSiteFamily()
     sys = builder.Builder(sym)
     t, V = 1.0j, 0.0
     sys[sites] = V
@@ -110,7 +110,7 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
 
 def test_construction_and_indexing():
     # Without symmetry
-    gr = builder.SimpleSiteGroup()
+    gr = builder.SimpleSiteFamily()
     sites = [gr(0, 0), gr(0, 1), gr(1, 0)]
     hoppings = [(gr(0, 0), gr(0, 1)),
                 (gr(0, 1), gr(1, 0)),
@@ -149,7 +149,7 @@ def test_hermitian_conjugation():
             raise ValueError
 
     sys = builder.Builder()
-    sg = builder.SimpleSiteGroup()
+    sg = builder.SimpleSiteFamily()
     sys[sg(0)] = sys[sg(1)] = ta.identity(2)
 
     sys[sg(0), sg(1)] = f
@@ -165,7 +165,7 @@ def test_hermitian_conjugation():
 def test_value_equality_and_identity():
     m = ta.array([[1, 2], [3j, 4j]])
     sys = builder.Builder()
-    sg = builder.SimpleSiteGroup()
+    sg = builder.SimpleSiteFamily()
 
     sys[sg(0)] = m
     sys[sg(1)] = m
@@ -344,7 +344,7 @@ def test_hamiltonian_evaluation():
     edges = [(0, 1), (0, 2), (0, 3), (1, 2)]
 
     sys = builder.Builder()
-    sg = builder.SimpleSiteGroup()
+    sg = builder.SimpleSiteFamily()
     sites = [sg(*tag) for tag in tags]
     sys[(sg(*tag) for tag in tags)] = f_onsite
     sys[((sg(*tags[i]), sg(*tags[j])) for (i, j) in edges)] = f_hopping
@@ -372,7 +372,7 @@ def test_dangling():
         #       / \
         #    3-0---2-4-5  6-7  8
         sys = builder.Builder()
-        sg = builder.SimpleSiteGroup()
+        sg = builder.SimpleSiteFamily()
         sys[(sg(i) for i in range(9))] = None
         sys[[(sg(0), sg(1)), (sg(1), sg(2)), (sg(2), sg(0))]] = None
         sys[[(sg(0), sg(3)), (sg(2), sg(4)), (sg(4), sg(5))]] = None
@@ -445,7 +445,7 @@ def test_builder_with_symmetry():
 
 
 def test_attach_lead():
-    gr = builder.SimpleSiteGroup()
+    gr = builder.SimpleSiteFamily()
 
     sys = builder.Builder()
     sys[gr(1)] = 0
@@ -477,7 +477,7 @@ def test_attach_lead():
 def test_neighbors_not_in_single_domain():
     sr = builder.Builder()
     lead = builder.Builder(VerySimpleSymmetry(-1))
-    gr = builder.SimpleSiteGroup()
+    gr = builder.SimpleSiteFamily()
     sr[(gr(x, y) for x in range(3) for y in range(3) if x >= y)] = 0
     sr[builder.HoppingKind((1, 0), gr)] = 1
     sr[builder.HoppingKind((0, 1), gr)] = 1
@@ -489,7 +489,7 @@ def test_neighbors_not_in_single_domain():
 
 
 def test_iadd():
-    lat = builder.SimpleSiteGroup()
+    lat = builder.SimpleSiteFamily()
 
     sys = builder.Builder()
     sys[[lat(0,), lat(1,)]] = 1
@@ -554,7 +554,7 @@ def test_HoppingKind():
         assert_equal(ph2, ph)
 
         for a, b in ph:
-            assert a.group == ga
-            assert b.group == gb
+            assert a.family == ga
+            assert b.family == gb
             assert sym.to_fd(a) == a
             assert_equal(a.tag - b.tag, delta)

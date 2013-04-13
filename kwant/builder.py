@@ -8,7 +8,7 @@
 
 from __future__ import division
 
-__all__ = ['Builder', 'Site', 'SiteGroup', 'SimpleSiteGroup', 'Symmetry',
+__all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
            'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergy']
 
 import abc
@@ -21,22 +21,22 @@ import numpy as np
 from . import system, graph
 
 
-################ Sites and site groups
+################ Sites and site families
 
 class Site(tuple):
-    """A site, member of a `SiteGroup`.
+    """A site, member of a `SiteFamily`.
 
     Sites are the vertices of the graph which describes the tight binding
     system in a `Builder`.
 
-    A site is uniquely identified by its group and its tag.
+    A site is uniquely identified by its family and its tag.
 
     Parameters
     ----------
-    group : an instance of `SiteGroup`
+    family : an instance of `SiteFamily`
         The 'type' of the site.
     tag : a hashable python object
-        The unique identifier of the site within the site group, typically a
+        The unique identifier of the site within the site family, typically a
         vector of integers.
 
     Attributes
@@ -47,63 +47,63 @@ class Site(tuple):
     Raises
     ------
     ValueError
-        If `tag` is not a proper tag for `group`.
+        If `tag` is not a proper tag for `family`.
 
     Notes
     -----
-    For convenience, ``group(*tag)`` can be used instead of ``Site(group,
+    For convenience, ``family(*tag)`` can be used instead of ``Site(family,
     tag)`` to create a site.
 
     The parameters of the constructor (see above) are stored as instance
     variables under the same names.  Given a site ``site``, common things to
-    query are thus ``site.group``, ``site.tag``, and ``site.pos``.
+    query are thus ``site.family``, ``site.tag``, and ``site.pos``.
     """
     __slots__ = ()
 
-    group = property(operator.itemgetter(0))
+    family = property(operator.itemgetter(0))
     tag = property(operator.itemgetter(1))
 
-    def __new__(cls, group, tag, _i_know_what_i_do=False):
+    def __new__(cls, family, tag, _i_know_what_i_do=False):
         if _i_know_what_i_do:
-            return tuple.__new__(cls, (group, tag))
+            return tuple.__new__(cls, (family, tag))
         try:
-            tag = group.normalize_tag(tag)
+            tag = family.normalize_tag(tag)
         except (TypeError, ValueError):
             t, v, tb = sys.exc_info()
-            msg = 'Tag {0} is not allowed for site group {1}: {2}'
-            raise t(msg.format(repr(tag), repr(group), v))
-        return tuple.__new__(cls, (group, tag))
+            msg = 'Tag {0} is not allowed for site family {1}: {2}'
+            raise t(msg.format(repr(tag), repr(family), v))
+        return tuple.__new__(cls, (family, tag))
 
     def __repr__(self):
-        return 'Site({0}, {1})'.format(repr(self.group), repr(self.tag))
+        return 'Site({0}, {1})'.format(repr(self.family), repr(self.tag))
 
     def __str__(self):
-        return '{1} of {0}'.format(str(self.group), str(self.tag))
+        return '{1} of {0}'.format(str(self.family), str(self.tag))
 
     @property
     def pos(self):
         """Real space position of the site."""
-        return self.group.pos(self.tag)
+        return self.family.pos(self.tag)
 
 
-class SiteGroup(object):
+class SiteFamily(object):
     """
-    Abstract base class for site groups.
+    Abstract base class for site families.
 
-    A site group is a 'type' of sites.  All the site groups must inherit from
-    this basic one.  Site groups must be immutable and fully defined by their
+    A site family is a 'type' of sites.  All the site families must inherit from
+    this basic one.  Site families must be immutable and fully defined by their
     initial arguments.  One of these arguments should be `name`, used to
-    distinguish otherwise identical site groups.  Every site group must have
+    distinguish otherwise identical site families.  Every site family must have
     an attribute `name` and an attribute `canonical_repr` which uniquely
-    identifies the group, and is also used for `repr(group)`. For efficiency
+    identifies the family, and is also used for `repr(family)`. For efficiency
     `canonical_repr` should be an interned string.
 
-    All site groups must define the method `normalize_tag` which brings a tag
-    to the format standard for this site group.
+    All site families must define the method `normalize_tag` which brings a tag
+    to the format standard for this site family.
 
-    Site groups which are intended for use with plotting should also provide a
+    Site families which are intended for use with plotting should also provide a
     method `pos(tag)`, which returns a vector with real-space coordinates of
-    the site belonging to this group with a given tag.
+    the site belonging to this family with a given tag.
     """
     __metaclass__ = abc.ABCMeta
 
@@ -144,23 +144,23 @@ class SiteGroup(object):
         """
         # Catch a likely and difficult to find mistake.
         if tag and isinstance(tag[0], tuple):
-            raise ValueError('Use site_group(1, 2) instead of '
-                             'site_group((1, 2))!')
+            raise ValueError('Use site_family(1, 2) instead of '
+                             'site_family((1, 2))!')
         return Site(self, tag)
 
 
-class SimpleSiteGroup(SiteGroup):
-    """A site group used as an example and for testing.
+class SimpleSiteFamily(SiteFamily):
+    """A site family used as an example and for testing.
 
-    A group of sites tagged by any python objects where object satisfied
+    A family of sites tagged by any python objects where object satisfied
     condition ``object == eval(repr(object))``.
 
-    It exists to provide a basic site group that can be used for testing the
+    It exists to provide a basic site family that can be used for testing the
     builder module without other dependencies.  It can be also used to tag
     sites with non-numeric objects like strings should this every be useful.
 
     Due to its low storage efficiency for numbers it is not recommended to use
-    `SimpleSiteGroup` when `kwant.lattice.Monatomic` would also work.
+    `SimpleSiteFamily` when `kwant.lattice.Monatomic` would also work.
     """
 
     def __init__(self, name=None):
@@ -200,7 +200,7 @@ class Symmetry(object):
     elementary periods for translational symmetry).
 
     A ``ValueError`` must be raised by the symmetry class whenever a symmetry
-    is used together with sites whose site group is not compatible with it.  A
+    is used together with sites whose site family is not compatible with it.  A
     typical example of this is when the vector defining a translational
     symmetry is not a lattice vector.
     """
@@ -281,18 +281,18 @@ class NoSymmetry(Symmetry):
 class HoppingKind(object):
     """A pattern for matching hoppings.
 
-    A hopping ``(a, b)`` matches precisely when the site group of ``a`` equals
-    `group_a` and that of ``b`` equals `group_b` and ``(a.tag - b.tag)`` is
+    A hopping ``(a, b)`` matches precisely when the site family of ``a`` equals
+    `family_a` and that of ``b`` equals `family_b` and ``(a.tag - b.tag)`` is
     equal to `delta`.  In other words, the matching hoppings have the form:
-    ``(group_a(x + delta), group_b(x))``
+    ``(family_a(x + delta), family_b(x))``
 
     Parameters
     ----------
     delta : Sequence of integers
         The sequence is interpreted as a vector with integer elements.
-    group_a : `~kwant.builder.SiteGroup`
-    grpup_b : `~kwant.builder.SiteGroup` or ``None`` (default)
-        The default value means: use the same group as `group_a`.
+    family_a : `~kwant.builder.SiteFamily`
+    family_b : `~kwant.builder.SiteFamily` or ``None`` (default)
+        The default value means: use the same family as `family_a`.
 
     Notes
     -----
@@ -313,32 +313,32 @@ class HoppingKind(object):
         kinds = [kwant.builder.HoppingKind(v, lat) for v in [(1, 0), (0, 1)]]
         sys[kinds] = 1
     """
-    __slots__ = ('delta', 'group_a', 'group_b')
+    __slots__ = ('delta', 'family_a', 'family_b')
 
-    def __init__(self, delta, group_a, group_b=None):
+    def __init__(self, delta, family_a, family_b=None):
         self.delta = ta.array(delta, int)
-        self.group_a = group_a
-        self.group_b = group_b if group_b is not None else group_a
+        self.family_a = family_a
+        self.family_b = family_b if family_b is not None else family_a
 
     def __call__(self, builder):
         delta = self.delta
-        group_a = self.group_a
-        group_b = self.group_b
+        family_a = self.family_a
+        family_b = self.family_b
         H = builder.H
         symtofd = builder.symmetry.to_fd
 
         for a in H:
-            if a.group != group_a:
+            if a.family != family_a:
                 continue
-            b = Site(group_b, a.tag - delta, True)
+            b = Site(family_b, a.tag - delta, True)
             if symtofd(b) in H:
                 yield a, b
 
     def __repr__(self):
         return '{0}({1}, {2}{3})'.format(
             self.__class__.__name__, repr(tuple(self.delta)),
-            repr(self.group_a),
-            ', ' + repr(self.group_b) if self.group_a != self.group_b else '')
+            repr(self.family_a),
+            ', ' + repr(self.family_b) if self.family_a != self.family_b else '')
 
 
 ################ Support for Hermitian conjugation
@@ -946,19 +946,19 @@ class Builder(object):
         if not H:
             raise ValueError('Lead to be attached contains no sites.')
 
-        # Check if site groups of the lead are present in the system (catches
+        # Check if site families of the lead are present in the system (catches
         # a common and a hard to find bug).
-        groups = set(site.group for site in H)
+        families = set(site.family for site in H)
         for site in self.H:
-            groups.discard(site.group)
-            if not groups:
+            families.discard(site.family)
+            if not families:
                 break
         else:
-            msg = 'Sites with site groups {0} do not appear in the system, ' \
+            msg = 'Sites with site families {0} do not appear in the system, ' \
                 'hence the system does not interrupt the lead. Note that ' \
                 'different lattice instances with the same parameters are ' \
-                'different site groups. See tutorial for more details.'
-            raise ValueError(msg.format(tuple(groups)))
+                'different site families. See tutorial for more details.'
+            raise ValueError(msg.format(tuple(families)))
 
         all_doms = list(sym.which(site)[0]
                         for site in self.H if sym.to_fd(site) in H)

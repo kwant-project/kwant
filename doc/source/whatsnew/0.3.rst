@@ -26,6 +26,8 @@ the builder, such as `~kwant.builder.HoppingKind`.  In the above example,
 
 Some renames
 ------------
+* site groups are now called site families.  This affects all the names that
+  used to contain "group" or "groups".
 * ``wave_func`` has been renamed to `~kwant.solvers.default.wave_function`,
 * ``MonatomicLattice`` has been renamed to `~kwant.lattice.Monatomic`,
 * ``PolyatomicLattice`` has been renamed to `~kwant.lattice.Polyatomic`.
@@ -35,8 +37,8 @@ Band structure plots
 A convenience function `~kwant.plotter.bands` for quick plotting of band
 structure was implemented.
 
-Immutable site groups
----------------------
+Immutable site families
+-----------------------
 In order to make naming more consistent, `kwant.make_lattice` was renamed and
 can be found now as `~kwant.lattice.general`. Classes `Chain`, `Square`, and
 `Honeycomb` from `~kwant.lattice` were made functions `~kwant.lattice.chain`,
@@ -45,9 +47,9 @@ can be found now as `~kwant.lattice.general`. Classes `Chain`, `Square`, and
 In previous versions if one executed `a = kwant.lattice.square();
 b = kwant.lattice.square()` then `a` and `b` were
 actually different lattices. This often led to confusions in more convoluted
-use cases, so this behavior was changed. Now two site groups created with the
+use cases, so this behavior was changed. Now two site families created with the
 same parameters are actually indistinguishable by `kwant`. If it is desired to
-make two site groups which have the same geometry, but mean different things,
+make two site families which have the same geometry, but mean different things,
 as for instance in :doc:`../tutorial/tutorial5`, then the `name` argument has
 to be used when creating a lattice, e.g. `a = kwant.lattice.square(name='a');
 b = kwant.lattice.square(name='b')`.

@@ -54,32 +54,32 @@ def test_translational_symmetry():
     ts = lattice.TranslationalSymmetry
     g2 = lattice.general(np.identity(2))
     g3 = lattice.general(np.identity(3))
-    shifted = lambda site, delta: site.group(*ta.add(site.tag, delta))
+    shifted = lambda site, delta: site.family(*ta.add(site.tag, delta))
 
     assert_raises(ValueError, ts, (0, 0, 4), (0, 5, 0), (0, 0, 2))
     sym = ts((3.3, 0))
-    assert_raises(ValueError, sym.add_site_group, g2)
+    assert_raises(ValueError, sym.add_site_family, g2)
 
     # Test lattices with dimension smaller than dimension of space.
     g2in3 = lattice.general([[4, 4, 0], [4, -4, 0]])
     sym = ts((8, 0, 0))
-    sym.add_site_group(g2in3)
+    sym.add_site_family(g2in3)
     sym = ts((8, 0, 1))
-    assert_raises(ValueError, sym.add_site_group, g2in3)
+    assert_raises(ValueError, sym.add_site_family, g2in3)
 
     # Test automatic fill-in of transverse vectors.
     sym = ts((1, 2))
-    sym.add_site_group(g2)
-    assert_not_equal(sym.site_group_data[g2.canonical_repr][2], 0)
+    sym.add_site_family(g2)
+    assert_not_equal(sym.site_family_data[g2.canonical_repr][2], 0)
     sym = ts((1, 0, 2), (3, 0, 2))
-    sym.add_site_group(g3)
-    assert_not_equal(sym.site_group_data[g3.canonical_repr][2], 0)
+    sym.add_site_family(g3)
+    assert_not_equal(sym.site_family_data[g3.canonical_repr][2], 0)
 
     transl_vecs = np.array([[10, 0], [7, 7]], dtype=int)
     sym = ts(*transl_vecs)
     assert_equal(sym.num_directions, 2)
     sym2 = ts(*transl_vecs[: 1, :])
-    sym2.add_site_group(g2, transl_vecs[1:, :])
+    sym2.add_site_family(g2, transl_vecs[1:, :])
     for site in [g2(0, 0), g2(4, 0), g2(2, 1), g2(5, 5), g2(15, 6)]:
         assert sym.in_fd(site)
         assert sym2.in_fd(site)
