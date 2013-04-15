@@ -45,62 +45,52 @@ for i in xrange(L):
             sys[lat(i, j), lat(i - 1, j)] = -t
 #HIDDEN_END_zfvr
 
-# Then, define the leads:
+# Then, define and attach the leads:
 
 # First the lead to the left
-
 # (Note: TranslationalSymmetry takes a real-space vector)
 #HIDDEN_BEGIN_xcmc
-sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
-lead0 = kwant.Builder(sym_lead0)
+sym_left_lead = kwant.TranslationalSymmetry((-a, 0))
+left_lead = kwant.Builder(sym_left_lead)
 #HIDDEN_END_xcmc
 
 #HIDDEN_BEGIN_ndez
 for j in xrange(W):
-    lead0[lat(0, j)] = 4 * t
-
+    left_lead[lat(0, j)] = 4 * t
     if j > 0:
-        lead0[lat(0, j), lat(0, j - 1)] = -t
-
-    lead0[lat(1, j), lat(0, j)] = -t
+        left_lead[lat(0, j), lat(0, j - 1)] = -t
+    left_lead[lat(1, j), lat(0, j)] = -t
 #HIDDEN_END_ndez
+
+#HIDDEN_BEGIN_fskr
+sys.attach_lead(left_lead)
+#HIDDEN_END_fskr
 
 # Then the lead to the right
 #HIDDEN_BEGIN_xhqc
-
-sym_lead1 = kwant.TranslationalSymmetry((a, 0))
-lead1 = kwant.Builder(sym_lead1)
+sym_right_lead = kwant.TranslationalSymmetry((a, 0))
+right_lead = kwant.Builder(sym_right_lead)
 
 for j in xrange(W):
-    lead1[lat(0, j)] = 4 * t
-
+    right_lead[lat(0, j)] = 4 * t
     if j > 0:
-        lead1[lat(0, j), lat(0, j - 1)] = -t
+        right_lead[lat(0, j), lat(0, j - 1)] = -t
+    right_lead[lat(1, j), lat(0, j)] = -t
 
-    lead1[lat(1, j), lat(0, j)] = -t
+sys.attach_lead(right_lead)
 #HIDDEN_END_xhqc
 
-# Then attach the leads to the system
-
-#HIDDEN_BEGIN_fskr
-sys.attach_lead(lead0)
-sys.attach_lead(lead1)
-#HIDDEN_END_fskr
-
 # Plot it, to make sure it's OK
-
 #HIDDEN_BEGIN_wsgh
 kwant.plot(sys)
 #HIDDEN_END_wsgh
 
 # Finalize the system
-
 #HIDDEN_BEGIN_dngj
 sys = sys.finalized()
 #HIDDEN_END_dngj
 
 # Now that we have the system, we can compute conductance
-
 #HIDDEN_BEGIN_buzn
 energies = []
 data = []
@@ -119,7 +109,6 @@ for ie in xrange(100):
 # Use matplotlib to write output
 # We should see conductance steps
 #HIDDEN_BEGIN_lliv
-
 pyplot.figure()
 pyplot.plot(energies, data)
 pyplot.xlabel("energy [t]")

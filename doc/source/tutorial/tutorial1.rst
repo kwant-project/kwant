@@ -73,11 +73,11 @@ system must have a translational symmetry:
     :start-after: #HIDDEN_BEGIN_xcmc
     :end-before: #HIDDEN_END_xcmc
 
-Here, the `~kwant.builder.Builder` takes a translational symmetry as the
-optional parameter. Note that the (real-space) vector ``(-a, 0)`` defining the
-translational symmetry must point in a direction *away* from the scattering
-region, *into* the lead -- hence, lead 0 [#]_ will be the left lead, extending
-to infinity to the left.
+Here, the `~kwant.builder.Builder` takes a
+`~kwant.lattice.TranslationalSymmetry` as the optional parameter. Note that the
+(real-space) vector ``(-a, 0)`` defining the translational symmetry must point
+in a direction *away* from the scattering region, *into* the lead -- hence, lead
+0 [#]_ will be the left lead, extending to infinity to the left.
 
 For the lead itself it is enough to add the points of one unit cell as well
 as the hoppings inside one unit cell and to the next unit cell of the lead.
@@ -89,7 +89,15 @@ simply a vertical line of points:
     :end-before: #HIDDEN_END_ndez
 
 Note that here it doesn't matter if you add the hoppings to the next or the
-previous unit cell -- the translational symmetry takes care of that.
+previous unit cell -- the translational symmetry takes care of that.  The
+isolated, infinite is attached at the correct position using
+
+.. literalinclude:: quantum_wire.py
+    :start-after: #HIDDEN_BEGIN_fskr
+    :end-before: #HIDDEN_END_fskr
+
+More details about attaching leads can be found in the tutorial
+:ref:`tutorial-abring`.
 
 We also want to add a lead on the right side. The only difference to
 the left lead is that the vector of the translational
@@ -102,17 +110,7 @@ symmetry must point to the right, the remaining code is the same:
 Note that here we added points with x-coordinate 0, just as for the left lead.
 You might object that the right lead should be placed `L`
 (or `L+1`?) points to the right with respect to the left lead. In fact,
-you do not need to worry about that. The `~kwant.builder.Builder` with
-`~kwant.lattice.TranslationalSymmetry` represents a lead which is
-infinitely extended. These isolated, infinite leads can then be simply
-attached at the right position using:
-
-.. literalinclude:: quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_fskr
-    :end-before: #HIDDEN_END_fskr
-
-More details about attaching leads can be found in the tutorial
-:ref:`tutorial-abring`.
+you do not need to worry about that.
 
 Now we have finished building our system! We plot it, to make sure we didn't
 make any mistakes:
@@ -323,48 +321,37 @@ matrix elements at once. More detailed example of using
 `~kwant.builder.HoppingKind` directly will be provided in
 :ref:`tutorial_spinorbit`.
 
-The leads can be constructed in an analogous way:
+The left lead is constructed in an analogous way:
 
 .. literalinclude:: quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_iepx
     :end-before: #HIDDEN_END_iepx
 
-Note that in the previous example, we essentially used the same code
-for the right and the left lead, the only difference was the direction
-of the translational symmetry vector. The
-`~kwant.builder.Builder` used for the lead provides a method
-`~kwant.builder.Builder.reversed` that returns a copy of the
-lead, but with it's translational vector reversed.  This can thus be
-used to obtain a lead pointing in the opposite direction, i.e. makes a
-right lead from a left lead:
-
-.. literalinclude:: quantum_wire_revisited.py
-    :start-after: #HIDDEN_BEGIN_xkdo
-    :end-before: #HIDDEN_END_xkdo
-
-The remainder of the code is identical to the previous example
-(except for a bit of reorganization into functions):
+The previous example duplicated almost identical code for the left and
+the right lead.  The only difference was the direction of the translational
+symmetry vector.  Here, we only construct the left lead, and use the method
+`~kwant.builder.Builder.reversed` of `~kwant.builder.Builder` to obtain a copy
+of a lead pointing in the opposite direction.  Both leads are attached as
+before and the finished system returned:
 
 .. literalinclude:: quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_yxot
     :end-before: #HIDDEN_END_yxot
 
-and
+The remainder of the script has been organized into two functions.  One for the
+plotting of the conductance.
 
 .. literalinclude:: quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_ayuk
     :end-before: #HIDDEN_END_ayuk
 
-Finally, we use a python trick to make our example usable both
-as a script, as well as allowing it to be imported as a module.
-We collect all statements that should be executed in the script
-in a ``main``-function:
+And one ``main`` function.
 
 .. literalinclude:: quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_cjel
     :end-before: #HIDDEN_END_cjel
 
-Finally, we use the following python construct [#]_ that executes
+Finally, we use the following standard Python construct [#]_ to execute
 ``main`` if the program is used as a script (i.e. executed as
 ``python tutorial1b.py``):
 
@@ -372,8 +359,8 @@ Finally, we use the following python construct [#]_ that executes
     :start-after: #HIDDEN_BEGIN_ypbj
     :end-before: #HIDDEN_END_ypbj
 
-If the example however is imported using ``import tutorial1b``,
-``main`` is not executed automatically. Instead, you can execute it
+If the example, however, is imported inside Python using ``import tutorial1b``,
+``main`` is not executed automatically.  Instead, you can execute it
 manually using ``tutorial1b.main()``.  On the other hand, you also
 have access to the other functions, ``make_system`` and
 ``plot_conductance``, and can thus play with the parameters.

@@ -48,28 +48,22 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
         1j * alpha * sigma_x
 #HIDDEN_END_uxrm
 
-    #### Define the leads. ####
-    # left lead
-    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
-    lead0 = kwant.Builder(sym_lead0)
+    #### Define the left lead. ####
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
 
 #HIDDEN_BEGIN_yliu
-    lead0[(lat(0, j) for j in xrange(W))] = 4 * t * sigma_0 + e_z * sigma_z
+    lead[(lat(0, j) for j in xrange(W))] = 4 * t * sigma_0 + e_z * sigma_z
     # hoppings in x-direction
-    lead0[kwant.builder.HoppingKind((1, 0), lat, lat)] = -t * sigma_0 - \
+    lead[kwant.builder.HoppingKind((1, 0), lat, lat)] = -t * sigma_0 - \
         1j * alpha * sigma_y
     # hoppings in y-directions
-    lead0[kwant.builder.HoppingKind((0, 1), lat, lat)] = -t * sigma_0 + \
+    lead[kwant.builder.HoppingKind((0, 1), lat, lat)] = -t * sigma_0 + \
         1j * alpha * sigma_x
 #HIDDEN_END_yliu
 
-    # Then the lead to the right
-    # (again, obtained using reverse()
-    lead1 = lead0.reversed()
-
     #### Attach the leads and return the finalized system. ####
-    sys.attach_lead(lead0)
-    sys.attach_lead(lead1)
+    sys.attach_lead(lead)
+    sys.attach_lead(lead.reversed())
 
     return sys
 

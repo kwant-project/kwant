@@ -8,7 +8,7 @@
  
  # define Pauli-matrices for convenience
  sigma_0 = tinyarray.array([[1, 0], [0, 1]])
-@@ -73,19 +74,24 @@
+@@ -67,19 +68,24 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(1, 0))
  

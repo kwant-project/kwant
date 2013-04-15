@@ -38,21 +38,12 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
     sys[lat.nearest] = -t
 #HIDDEN_END_coid
 
-    #### Define the leads. ####
-    # First the lead to the left, ...
-    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
-    lead0 = kwant.Builder(sym_lead0)
-
-    lead0[(lat(0, j) for j in xrange(W))] = 4 * t
-    lead0[lat.nearest] = -t
-
-    # ... then the lead to the right.  We use a method that returns a copy of
-    # `lead0` with its direction reversed.
-    lead1 = lead0.reversed()
-
-    #### Attach the leads and return the finalized system. ####
-    sys.attach_lead(lead0)
-    sys.attach_lead(lead1)
+    #### Define and attach the leads. ####
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
+    lead[(lat(0, j) for j in xrange(W))] = 4 * t
+    lead[lat.nearest] = -t
+    sys.attach_lead(lead)
+    sys.attach_lead(lead.reversed())
 
     return sys
 

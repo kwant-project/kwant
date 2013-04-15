@@ -68,25 +68,21 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     #### Define the leads. ####
     # left lead
 #HIDDEN_BEGIN_qwgr
-    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
-    lead0 = kwant.Builder(sym_lead0)
+    sym_lead = kwant.TranslationalSymmetry((-a, 0))
+    lead = kwant.Builder(sym_lead)
 
     def lead_shape(pos):
         (x, y) = pos
         return (-1 < x < 1) and (-W / 2 < y < W / 2)
 
-    lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
-    lead0[lat.nearest] = -t
+    lead[lat.shape(lead_shape, (0, 0))] = 4 * t
+    lead[lat.nearest] = -t
 #HIDDEN_END_qwgr
-
-    # Then the lead to the right
-    # [again, obtained using reversed()]
-    lead1 = lead0.reversed()
 
     #### Attach the leads and return the system. ####
 #HIDDEN_BEGIN_skbz
-    sys.attach_lead(lead0)
-    sys.attach_lead(lead1)
+    sys.attach_lead(lead)
+    sys.attach_lead(lead.reversed())
 #HIDDEN_END_skbz
 
     return sys

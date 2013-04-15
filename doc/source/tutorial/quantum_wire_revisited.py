@@ -32,27 +32,18 @@ def make_system(a=1, t=1.0, W=10, L=30):
     sys[lat.nearest] = -t
 #HIDDEN_END_nooi
 
-    #### Define the leads. ####
-    # First the lead to the left, ...
-    # (Note: TranslationalSymmetry takes a real-space vector)
+    #### Define and attach the leads. ####
+    # Construct the left lead.
 #HIDDEN_BEGIN_iepx
-    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
-    lead0 = kwant.Builder(sym_lead0)
-
-    lead0[(lat(0, j) for j in xrange(W))] = 4 * t
-    lead0[lat.nearest] = -t
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
+    lead[(lat(0, j) for j in xrange(W))] = 4 * t
+    lead[lat.nearest] = -t
 #HIDDEN_END_iepx
 
-    # ... then the lead to the right.  We use a method that returns a copy of
-    # `lead0` with its direction reversed.
-#HIDDEN_BEGIN_xkdo
-    lead1 = lead0.reversed()
-#HIDDEN_END_xkdo
-
-    #### Attach the leads and return the system. ####
+    # Attach the left lead and its reversed copy.
 #HIDDEN_BEGIN_yxot
-    sys.attach_lead(lead0)
-    sys.attach_lead(lead1)
+    sys.attach_lead(lead)
+    sys.attach_lead(lead.reversed())
 
     return sys
 #HIDDEN_END_yxot
