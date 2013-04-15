@@ -531,6 +531,11 @@ class Builder(object):
     tags which are sequences of integers.  It *makes sense* only when these
     sites live on a regular lattice, like the ones provided by `kwant.lattice`.
 
+    `builder0 += builder1` adds all the sites, hoppings, and leads of `builder1`
+    to `builder0`.  Sites and hoppings present in both systems are overwritten
+    by those in `builder1`.  The leads of `builder1` are appended to the leads
+    of the system being extended.
+
     .. warning::
 
         If functions are used to set values in a builder with a symmetry, then
@@ -893,14 +898,6 @@ class Builder(object):
         return self._out_neighbors(a)
 
     def __iadd__(self, other_sys):
-        """Add `other_sys` to the system.
-
-        Sites and hoppings present in both systems are overwritten by those in
-        `other_sys`.  The leads of `other_sys` are appended to the leads of the
-        system being extended.
-        """
-        if self.symmetry != other_sys.symmetry:
-            raise ValueError('System to be added has a different symmetry.')
         for site, value in other_sys.site_value_pairs():
             self[site] = value
         for hop, value in other_sys.hopping_value_pairs():
