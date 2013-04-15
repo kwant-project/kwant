@@ -86,9 +86,9 @@ square lattices representing electron and hole degrees of freedom:
     :end-before: #HIDDEN_END_zuuw
 
 Note that since these two lattices have identical spatial parameters, the
-argument `name` to `~kwant.lattice.square` has to be different for two lattices.
+argument `name` to `~kwant.lattice.square` has to be different.
 Any diagonal entry (kinetic energy, potentials, ...) in the BdG
-Hamiltonian then corresponds to on-site energies or hoppings within
+Hamiltonian corresponds to on-site energies or hoppings within
 the *same* lattice, whereas any off-diagonal entry (essentially, the
 superconducting order parameter :math:`\Delta`) corresponds
 to a hopping between *different* lattices:
@@ -115,8 +115,9 @@ system:
 This separation into two different leads allows us then later to compute the
 reflection probablities between electrons and holes explicitely.
 
-On the superconducting side, we cannot do this separation, and can
-only define a single lead coupling electrons and holes:
+On the superconducting side, we cannot do this separation, and can only define a
+single lead coupling electrons and holes (The `+=` operator adds all the sites
+and hoppings present in one builder to another):
 
 .. literalinclude:: superconductor_transport.py
     :start-after: #HIDDEN_BEGIN_mhiw

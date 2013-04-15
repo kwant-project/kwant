@@ -8,7 +8,7 @@
  
  
  def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
-@@ -94,19 +95,23 @@
+@@ -82,19 +83,23 @@
                      smatrix.transmission(0, 0) +
                      smatrix.transmission(1, 0))
  
