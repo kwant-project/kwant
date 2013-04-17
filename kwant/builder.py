@@ -1279,7 +1279,7 @@ class InfiniteSystem(system.InfiniteSystem):
             if hasattr(value, '__call__'):
                 site_i = self.sites[i]
                 site_j = self.sites[j]
-                site_i, site_j = self.symmetry.to_fd(site_i,site_j)
+                site_i, site_j = self.symmetry.to_fd(site_i, site_j)
                 value = value(site_i, site_j, *args, **kwargs)
             if conj:
                 value = herm_conj(value)

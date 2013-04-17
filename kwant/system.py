@@ -68,7 +68,8 @@ class FiniteSystem(System):
     Instance Variables
     ------------------
     leads : sequence of lead objects
-        Each lead object has to provide a method ``self_energy(energy)``.
+        Each lead object has to provide a method
+        ``self_energy(energy, *args, **kwargs)``.
     lead_interfaces : sequence of sequences of integers
         Each sub-sequence contains the indices of the system sites to which the
         lead is connected.

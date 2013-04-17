@@ -171,7 +171,7 @@ class SparseSolver(object):
         for leadnum, interface in enumerate(sys.lead_interfaces):
             lead = sys.leads[leadnum]
             if isinstance(lead, system.InfiniteSystem) and not force_realspace:
-                h = lead.slice_hamiltonian()
+                h = lead.slice_hamiltonian(args=args, kwargs=kwargs)
 
                 if check_hermiticity:
                     if not np.allclose(h, h.T.conj(), rtol=1e-13):
@@ -180,7 +180,7 @@ class SparseSolver(object):
                         raise ValueError(msg.format(leadnum))
 
                 h -= energy * np.identity(h.shape[0])
-                v = lead.inter_slice_hopping()
+                v = lead.inter_slice_hopping(args=args, kwargs=kwargs)
                 modes = physics.modes(h, v)
                 lead_info.append(modes)
 
@@ -237,7 +237,7 @@ class SparseSolver(object):
                     # See comment about zero-shaped sparse matrices at the top.
                     rhs.append(np.zeros((lhs.shape[1], 0)))
             else:
-                sigma = lead.self_energy(energy)
+                sigma = lead.self_energy(energy, args=args, kwargs=kwargs)
                 lead_info.append(sigma)
                 indices = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                       for i in interface)]
