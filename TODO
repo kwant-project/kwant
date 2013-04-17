@@ -52,9 +52,6 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Add support for optimization of lead fundamental domains.
 
-* Write a module to generate "functional" random numbers.
-  That module should probably use (hardware accelerated) AES encryption.
-
 * Incorprorate efficient correlated disorder using scipy.spatial.
 
 * Implement the C solver interface.
@@ -91,3 +88,6 @@ Roughly in order of importance.                                     -*-org-*-
   - It's clear at system level which Hamiltonian elements are defined
     directly.
   Would Michael's graph slicing code continue to work?
+
+* Speed up kwant.contrib.digest
+  by using SipHash and Ziggurat algorithm in C/Cython
