@@ -1,5 +1,7 @@
 Roughly in order of importance.                                     -*-org-*-
 
+* Document the order of sites/orbitals in finalized builders
+
 * Make kwant run on windows
 
 * Implement "lead freezing"
@@ -91,3 +93,5 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Speed up kwant.contrib.digest
   by using SipHash and Ziggurat algorithm in C/Cython
+
+* Add a test of kwant that verifies QHE conductance quantization
