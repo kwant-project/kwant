@@ -20,6 +20,10 @@ class Bands(object):
     sys : `kwant.system.InfiniteSystem`
         The low level infinite system for which the energies are to be
         calculated.
+    args : tuple, defaults to empty
+        Positional arguments to pass to the ``hamiltonian`` method.
+    kwargs : dictionary, defaults to empty
+        Keyword arguments to pass to the ``hamiltonian`` method.
 
     Notes
     -----
@@ -37,11 +41,11 @@ class Bands(object):
     >>> pyplot.show()
     """
 
-    def __init__(self, sys):
-        self.ham = sys.slice_hamiltonian()
+    def __init__(self, sys, args=(), kwargs={}):
+        self.ham = sys.slice_hamiltonian(args=args, kwargs=kwargs)
         if not np.allclose(self.ham, self.ham.T.conj()):
             raise ValueError('The slice Hamiltonian is not Hermitian.')
-        hop = sys.inter_slice_hopping()
+        hop = sys.inter_slice_hopping(args=args, kwargs=kwargs)
         self.hop = np.empty(self.ham.shape, dtype=complex)
         self.hop[:, : hop.shape[1]] = hop
         self.hop[:, hop.shape[1]:] = 0
