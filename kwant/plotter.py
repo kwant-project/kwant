@@ -757,7 +757,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
     elif a <= 0:
         raise ValueError("The distance a must be strictly positive.")
 
-    shape = (((cmin - cmax) / a + 1) * oversampling).round()
+    shape = (((cmax - cmin) / a + 1) * oversampling).round()
     delta = 0.5 * (oversampling - 1) * a / oversampling
     cmin -= delta
     cmax += delta
