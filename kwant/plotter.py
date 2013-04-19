@@ -743,8 +743,8 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
       exactly at the center of a pixel of the output array.
 
     - When plotting a system on a square lattice and `method` is "nearest", it
-      makes sense to set `oversampling` to ``1`` to minimize the size of the
-      output array.
+      makes sense to set `oversampling` to ``1``.  Then, each site will
+      correspond to exactly one pixel in the resulting array.
     """
     # Build the bounding box.
     cmin, cmax = coords.min(0), coords.max(0)
@@ -766,7 +766,12 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
     grid = tuple(np.ogrid[dims])
     img = interpolate.griddata(coords, values, grid, method)
     mask = np.mgrid[dims].reshape(len(cmin), -1).T
-    mask = tree.query(mask, eps=1.)[0] > 1.5 * a
+    # The numerical values in the following line are optimized for the common
+    # case of a square lattice:
+    # * 0.99 makes sure that non-masked pixels and sites correspond 1-by-1 to
+    #   each other when oversampling == 1.
+    # * 0.4 (which is just below sqrt(2) - 1) makes tree.query() exact.
+    mask = tree.query(mask, eps=0.4)[0] > 0.99 * a
 
     return np.ma.masked_array(img, mask), cmin, cmax
 
@@ -814,10 +819,9 @@ def map(sys, value, colorbar=True, cmap=None,
 
     Notes
     -----
-    - See notes of `~kwant.plotter.show_interpolate`.
-
-    - Matplotlib's interpolation is turned off, if the keyword argument
-      `method` is not set or set to the default value "nearest".
+    - When plotting a system on a square lattice and `method` is "nearest", it
+      makes sense to set `oversampling` to ``1``.  Then, each site will
+      correspond to exactly one pixel.
     """
     sites = sys_leads_sites(sys, 0)
     coords = sys_leads_pos(sys, sites)

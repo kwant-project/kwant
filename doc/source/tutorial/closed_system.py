@@ -85,7 +85,8 @@ def plot_wave_function(sys):
     evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
 
     # Plot the probability density of the 10th eigenmode.
-    kwant.plotter.map(sys, np.abs(evecs[:, 9])**2, colorbar=False)
+    kwant.plotter.map(sys, np.abs(evecs[:, 9])**2,
+                      colorbar=False, oversampling=1)
 #HIDDEN_END_wave
 
 

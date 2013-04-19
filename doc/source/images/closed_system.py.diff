@@ -8,7 +8,7 @@
  
  
  def make_system(a=1, t=1.0, r=10):
-@@ -65,28 +66,40 @@
+@@ -65,29 +66,40 @@
  
          energies.append(ev)
  
@@ -39,13 +39,14 @@
      evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
  
      # Plot the probability density of the 10th eigenmode.
--    kwant.plotter.map(sys, np.abs(evecs[:, 9])**2, colorbar=False)
-+    kwant.plotter.map(sys, np.abs(evecs[:, 9])**2, colorbar=False,
-+                      file="closed_system_eigenvector.pdf",
-+                      fig_size=size, dpi=_defs.dpi)
-+    kwant.plotter.map(sys, np.abs(evecs[:, 9])**2, colorbar=False,
-+                      file="closed_system_eigenvector.png",
-+                      fig_size=size, dpi=_defs.dpi)
+-    kwant.plotter.map(sys, np.abs(evecs[:, 9])**2,
+-                      colorbar=False, oversampling=1)
++    kwant.plotter.map(
++        sys, np.abs(evecs[:, 9])**2, colorbar=False, oversampling=1,
++        file="closed_system_eigenvector.pdf", fig_size=size, dpi=_defs.dpi)
++    kwant.plotter.map(
++        sys, np.abs(evecs[:, 9])**2, colorbar=False, oversampling=1,
++        file="closed_system_eigenvector.png", fig_size=size, dpi=_defs.dpi)
  
  
  def main():

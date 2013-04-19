@@ -109,9 +109,11 @@ using `~kwant.plotter.map`:
     :start-after: #HIDDEN_BEGIN_wave
     :end-before: #HIDDEN_END_wave
 
-This yields the result:
-
 .. image:: ../images/closed_system_eigenvector.*
+
+The last two arguments to `~kwant.plotter.map` are optional.  The first prevents
+a colorbar from appearing.  The second, ``oversampling=1``, makes the image look
+better for the special case of a square lattice.
 
 .. seealso::
     The full source code can be found in
