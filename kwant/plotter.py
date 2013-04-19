@@ -802,8 +802,8 @@ def map(sys, value, colorbar=True, cmap=None,
         Reference length.  If not given, it is determined as a typical
         nearest neighbor distance.
     method : string, optional
-        Passed to `scipy.interpolate.griddata` and to `matplotlib`
-        `Axes.imshow.interpolation`: "nearest" (default), "linear", or "cubic".
+        Passed to `scipy.interpolate.griddata`: "nearest" (default), "linear",
+        or "cubic"
     oversampling : integer, optional
         Number of pixels per reference length.  Defaults to 3.
     file : string or file object or `None`
@@ -845,10 +845,10 @@ def map(sys, value, colorbar=True, cmap=None,
         fig.set_figwidth(fig_size[0])
         fig.set_figheight(fig_size[1])
     ax = fig.add_subplot(111, aspect='equal')
-    if method != 'nearest':
-        method = 'bi' + method
+    # Note that we tell imshow to show the array created by mask_interpolate
+    # faithfully and not to interpolate by itself another time.
     image = ax.imshow(img.T, extent=(min[0], max[0], min[1], max[1]),
-                      origin='lower', interpolation=method, cmap=cmap)
+                      origin='lower', interpolation='none', cmap=cmap)
     if colorbar:
         fig.colorbar(image)
     return output_fig(fig, file=file, show=show)
