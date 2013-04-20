@@ -16,6 +16,17 @@ Roughly in order of importance.                                     -*-org-*-
   arrays, where the site index and orbital index are separate.  However, this
   must work in the general case where the number of orbitals per site varies.
 
+* Go through the documentation and apply consistent linking/naming practice:
+  We could adopt the scheme that is used in Python's stdlib.  See for example
+  http://docs.python.org/2/library/threading.html
+  This would mean:
+  - When referring to functions, we always append "()" to their name.
+  - Names of objects (types, functions, ...) that are a documented part of
+    kwant are always hyperlinks _when_ the object itself is meant.
+  - Concepts that are meant in a more general sense are not hyperlinked, even if
+    there exists an object of the same name in kwant.  (Consider the usage of
+    linking for the term "Thread" in the document linked above.)
+
 * Plotter: show site upon click
 
 * fix physics.noise (docstring, __all__, etc.)
