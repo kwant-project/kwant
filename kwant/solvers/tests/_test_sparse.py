@@ -17,6 +17,16 @@ chain = kwant.lattice.chain()
 sq = square = kwant.lattice.square()
 
 
+class LeadWithOnlySelfEnergy(object):
+    def __init__(self, lead):
+        self.lead = lead
+
+    def self_energy(self, energy, args=(), kwargs={}):
+        assert args == ()
+        assert kwargs == {}
+        return self.lead.self_energy(energy)
+
+
 # Test output sanity: that an error is raised if no output is requested,
 # and that solving for a subblock of a scattering matrix is the same as taking
 # a subblock of the full scattering matrix.
@@ -264,13 +274,6 @@ def test_tricky_singular_hopping(solve):
 # Test equivalence between self-energy and scattering matrix representations.
 # Also check that transmission works.
 def test_self_energy(solve):
-    class LeadWithOnlySelfEnergy(object):
-        def __init__(self, lead):
-            self.lead = lead
-
-        def self_energy(self, energy):
-            return self.lead.self_energy(energy)
-
     np.random.seed(4)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
@@ -314,13 +317,6 @@ def test_self_energy(solve):
 
 
 def test_self_energy_reflection(solve):
-    class LeadWithOnlySelfEnergy(object):
-        def __init__(self, lead):
-            self.lead = lead
-
-        def self_energy(self, energy):
-            return self.lead.self_energy(energy)
-
     np.random.seed(4)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))

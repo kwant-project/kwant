@@ -69,7 +69,7 @@ class FiniteSystem(System):
     ------------------
     leads : sequence of lead objects
         Each lead object has to provide a method
-        ``self_energy(energy, *args, **kwargs)``.
+        ``self_energy(energy, args, kwargs)``.
     lead_interfaces : sequence of sequences of integers
         Each sub-sequence contains the indices of the system sites to which the
         lead is connected.

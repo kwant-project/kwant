@@ -39,6 +39,16 @@ def test_twoterminal_input():
     assert_raises(ValueError, two_terminal_shotnoise, sol)
 
 
+class LeadWithOnlySelfEnergy(object):
+    def __init__(self, lead):
+        self.lead = lead
+
+    def self_energy(self, energy, args=(), kwargs={}):
+        assert args == ()
+        assert kwargs == {}
+        return self.lead.self_energy(energy)
+
+
 def test_twoterminal():
     """Shot noise in a two-terminal conductor"""
 
@@ -52,13 +62,6 @@ def test_twoterminal():
     assert_almost_equal(noise_should_be, two_terminal_shotnoise(sol))
 
     # replace leads successively with self-energy
-    class LeadWithOnlySelfEnergy(object):
-        def __init__(self, lead):
-            self.lead = lead
-
-        def self_energy(self, energy):
-            return self.lead.self_energy(energy)
-
     fsys.leads[0] = LeadWithOnlySelfEnergy(fsys.leads[0])
     sol = kwant.solve(fsys)
     assert_almost_equal(noise_should_be, two_terminal_shotnoise(sol))
