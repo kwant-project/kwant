@@ -776,7 +776,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
     return np.ma.masked_array(img, mask), cmin, cmax
 
 
-def map(sys, value, colorbar=True, cmap=None,
+def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
          a=None, method='nearest', oversampling=3, file=None, show=True,
          dpi=None, fig_size=None):
     """Show interpolated map of a function defined for the sites of a system.
@@ -798,6 +798,12 @@ def map(sys, value, colorbar=True, cmap=None,
     cmap : `matplotlib` color map or `None`
         The color map used for sites and optionally hoppings, if `None`,
         `matplotlib` default is used.
+    vmin : float, optional
+        The lower saturation limit for the colormap; values returned by
+        `value` which are smaller than this will saturate
+    vmax : float, optional
+        The upper saturation limit for the colormap; valued returned by
+        `value` which are larger than this will saturate
     a : float, optional
         Reference length.  If not given, it is determined as a typical
         nearest neighbor distance.
@@ -848,7 +854,8 @@ def map(sys, value, colorbar=True, cmap=None,
     # Note that we tell imshow to show the array created by mask_interpolate
     # faithfully and not to interpolate by itself another time.
     image = ax.imshow(img.T, extent=(min[0], max[0], min[1], max[1]),
-                      origin='lower', interpolation='none', cmap=cmap)
+                      origin='lower', interpolation='none', cmap=cmap,
+                      vmin=vmin, vmax=vmax)
     if colorbar:
         fig.colorbar(image)
     return output_fig(fig, file=file, show=show)
