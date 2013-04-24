@@ -446,7 +446,7 @@ class SelfEnergy(Lead):
     ----------
     self_energy_func : function
         Function which returns the self energy matrix for the interface sites
-        given the energy.
+        given the energy and optionally a list of extra arguments.
     interface : sequence of `Site` instances
     """
     def __init__(self, self_energy_func, interface):
@@ -457,8 +457,8 @@ class SelfEnergy(Lead):
         """Trivial finalization: the object is returned itself."""
         return self
 
-    def self_energy(self, energy):
-        return self.self_energy_func(energy)
+    def self_energy(self, energy, args=()):
+        return self.self_energy_func(energy, args)
 
 
 ################ Builder class
