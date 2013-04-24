@@ -39,11 +39,6 @@ class Site(tuple):
         The unique identifier of the site within the site family, typically a
         vector of integers.
 
-    Attributes
-    ----------
-    pos : sequence of numbers
-        The real-space position of the site.  Used for plotting, for example.
-
     Raises
     ------
     ValueError
@@ -60,8 +55,10 @@ class Site(tuple):
     """
     __slots__ = ()
 
-    family = property(operator.itemgetter(0))
-    tag = property(operator.itemgetter(1))
+    family = property(operator.itemgetter(0),
+                      doc="The site family to which the site belongs.")
+    tag = property(operator.itemgetter(1), doc="The tag of the site.")
+
 
     def __new__(cls, family, tag, _i_know_what_i_do=False):
         if _i_know_what_i_do:
