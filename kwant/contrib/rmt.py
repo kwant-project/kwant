@@ -224,7 +224,7 @@ def circular(n, sym='A', charge=None):
     s, h = qr(h)
     if p(sym) == -1 and not np.allclose(np.diag(h, 1)[::2], 0, atol=1e-8):
         raise RuntimeError('QR decomposition symmetry failure.')
-    h = np.diag(h)
+    h = np.diag(h).copy()
     h /= np.abs(h)
     s *= h
 
