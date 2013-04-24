@@ -9,7 +9,7 @@
  
  def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
 @@ -52,19 +53,25 @@
-         smatrix = kwant.solve(sys, energy, kwargs={'pot': -welldepth})
+         smatrix = kwant.solve(sys, energy, args=[-welldepth])
          data.append(smatrix.transmission(1, 0))
  
 -    pyplot.figure()

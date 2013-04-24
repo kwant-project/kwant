@@ -80,7 +80,7 @@
      # compute conductance
  
 @@ -87,18 +133,29 @@
-         smatrix = kwant.solve(sys, energy, kwargs={'phi': flux})
+         smatrix = kwant.solve(sys, energy, args=[flux])
          data.append(smatrix.transmission(1, 0))
  
 -    pyplot.figure()

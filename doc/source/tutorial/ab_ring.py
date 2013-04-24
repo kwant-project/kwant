@@ -94,7 +94,7 @@ def plot_conductance(sys, energy, fluxes):
     normalized_fluxes = [flux / (2 * pi) for flux in fluxes]
     data = []
     for flux in fluxes:
-        smatrix = kwant.solve(sys, energy, kwargs={'phi': flux})
+        smatrix = kwant.solve(sys, energy, args=[flux])
         data.append(smatrix.transmission(1, 0))
 
     pyplot.figure()

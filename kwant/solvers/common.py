@@ -93,7 +93,7 @@ class SparseSolver(object):
 
     def _make_linear_sys(self, sys, out_leads, in_leads, energy=0,
                         force_realspace=False, check_hermiticity=True,
-                        args=(), kwargs={}):
+                        args=()):
         """
         Make a sparse linear system of equations defining a scattering
         problem.
@@ -117,8 +117,6 @@ class SparseSolver(object):
             Check if Hamiltonian matrices are in fact Hermitian.
         args : tuple, defaults to empty
             Positional arguments to pass to the ``hamiltonian`` method.
-        kwargs : dictionary, defaults to empty
-            Keyword arguments to pass to the ``hamiltonian`` method.
 
         Returns
         -------
@@ -150,7 +148,7 @@ class SparseSolver(object):
             raise ValueError('System contains no leads.')
         lhs, norb = sys.hamiltonian_submatrix(sparse=True,
                                               return_norb=True,
-                                              args=args, kwargs=kwargs)[:2]
+                                              args=args)[:2]
         lhs = getattr(lhs, 'to' + self.lhsformat)()
         lhs = lhs - energy * sp.identity(lhs.shape[0], format=self.lhsformat)
 
@@ -171,7 +169,7 @@ class SparseSolver(object):
         for leadnum, interface in enumerate(sys.lead_interfaces):
             lead = sys.leads[leadnum]
             if isinstance(lead, system.InfiniteSystem) and not force_realspace:
-                h = lead.slice_hamiltonian(args=args, kwargs=kwargs)
+                h = lead.slice_hamiltonian(args=args)
 
                 if check_hermiticity:
                     if not np.allclose(h, h.T.conj(), rtol=1e-13):
@@ -180,7 +178,7 @@ class SparseSolver(object):
                         raise ValueError(msg.format(leadnum))
 
                 h -= energy * np.identity(h.shape[0])
-                v = lead.inter_slice_hopping(args=args, kwargs=kwargs)
+                v = lead.inter_slice_hopping(args=args)
                 modes = physics.modes(h, v)
                 lead_info.append(modes)
 
@@ -237,7 +235,7 @@ class SparseSolver(object):
                     # See comment about zero-shaped sparse matrices at the top.
                     rhs.append(np.zeros((lhs.shape[1], 0)))
             else:
-                sigma = lead.self_energy(energy, args, kwargs)
+                sigma = lead.self_energy(energy, args)
                 lead_info.append(sigma)
                 indices = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                       for i in interface)]
@@ -280,7 +278,7 @@ class SparseSolver(object):
 
     def solve(self, sys, energy=0, out_leads=None, in_leads=None,
               force_realspace=False, check_hermiticity=True,
-              args=(), kwargs={}):
+              args=()):
         """
         Compute the scattering matrix or Green's function between leads.
 
@@ -307,8 +305,6 @@ class SparseSolver(object):
             Check if the Hamiltonian matrices are Hermitian.
         args : tuple, defaults to empty
             Positional arguments to pass to the ``hamiltonian`` method.
-        kwargs : dictionary, defaults to empty
-            Keyword arguments to pass to the ``hamiltonian`` method.
 
         Returns
         -------
@@ -360,8 +356,7 @@ class SparseSolver(object):
 
         linsys, lead_info = self._make_linear_sys(sys, out_leads, in_leads,
                                                   energy, force_realspace,
-                                                  check_hermiticity,
-                                                  args, kwargs)
+                                                  check_hermiticity, args)
 
         # Do not perform factorization if no calculation is to be done.
         len_rhs = sum(i.shape[1] for i in linsys.rhs)
@@ -379,7 +374,7 @@ class SparseSolver(object):
         return BlockResult(data, lead_info, out_leads, in_leads)
 
 
-    def ldos(self, fsys, energy=0, args=(), kwargs={}):
+    def ldos(self, fsys, energy=0, args=()):
         """
         Calculate the local density of states of a system at a given energy.
 
@@ -392,9 +387,6 @@ class SparseSolver(object):
             Excitation energy at which to solve the scattering problem.
         args : tuple of arguments, or empty tuple
             Positional arguments to pass to the function(s) which
-            evaluate the hamiltonian matrix elements
-        kwargs : dictionary of keyword, argument pairs or empty dictionary
-            Optional keyword arguments to pass to the function(s) which
             evaluate the hamiltonian matrix elements
 
         Returns
@@ -410,7 +402,7 @@ class SparseSolver(object):
 
         (h, rhs, kept_vars), lead_info = \
             self._make_linear_sys(fsys, [], xrange(len(fsys.leads)), energy,
-                                  args=args, kwargs=kwargs)
+                                  args=args)
 
         Modes = physics.Modes
         num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
@@ -435,7 +427,7 @@ class SparseSolver(object):
 
         return ldos * (0.5 / np.pi)
 
-    def wave_function(self, sys, energy=0, args=(), kwargs={}):
+    def wave_function(self, sys, energy=0, args=()):
         """
         Return a callable object for the computation of the wave function
         inside the scattering region.
@@ -447,9 +439,6 @@ class SparseSolver(object):
             calculated.
         args : tuple of arguments, or empty tuple
             Positional arguments to pass to the function(s) which
-            evaluate the hamiltonian matrix elements
-        kwargs : dictionary of keyword, argument pairs or empty dictionary
-            Optional keyword arguments to pass to the function(s) which
             evaluate the hamiltonian matrix elements
 
         Notes
@@ -465,11 +454,11 @@ class SparseSolver(object):
         >>> wf = kwant.solvers.default.wave_function(some_sys, some_energy)
         >>> wfs_of_lead_2 = wf(2)
         """
-        return WaveFunction(self, sys, energy, args, kwargs)
+        return WaveFunction(self, sys, energy, args)
 
 
 class WaveFunction(object):
-    def __init__(self, solver, sys, energy=0, args=(), kwargs={}):
+    def __init__(self, solver, sys, energy=0, args=()):
         for lead in sys.leads:
             if not isinstance(lead, system.InfiniteSystem):
                 # TODO: fix this
@@ -477,7 +466,7 @@ class WaveFunction(object):
                 raise ValueError(msg)
         (h, self.rhs, kept_vars), lead_info = \
             solver._make_linear_sys(sys, [], xrange(len(sys.leads)),
-                                    energy, args=args, kwargs=kwargs)
+                                    energy, args=args)
         Modes = physics.Modes
         num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
                              for li in lead_info if isinstance(li, Modes))

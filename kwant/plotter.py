@@ -861,8 +861,8 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
     return output_fig(fig, file=file, show=show)
 
 
-def bands(sys, momenta=65, args=(), kwargs={},
-          file=None, show=True, dpi=None, fig_size=None):
+def bands(sys, momenta=65, args=(), file=None, show=True, dpi=None,
+          fig_size=None):
     """Plot band structure of a translationally invariant 1D system.
 
     Parameters
@@ -871,8 +871,6 @@ def bands(sys, momenta=65, args=(), kwargs={},
         A system bands of which are to be plotted.
     args : tuple, defaults to empty
         Positional arguments to pass to the ``hamiltonian`` method.
-    kwargs : dictionary, defaults to empty
-        Keyword arguments to pass to the ``hamiltonian`` method.
     momenta : int or 1D array-like
         Either a number of sampling points on the interval [-pi, pi], or an
         array of points at which the band structure has to be evaluated.
@@ -901,7 +899,7 @@ def bands(sys, momenta=65, args=(), kwargs={},
     if momenta.ndim != 1:
         momenta = np.linspace(-np.pi, np.pi, momenta)
 
-    bands = physics.Bands(sys, args=args, kwargs=kwargs)
+    bands = physics.Bands(sys, args=args)
     energies = [bands(k) for k in momenta]
 
     fig = Figure()

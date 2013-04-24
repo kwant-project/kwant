@@ -35,17 +35,17 @@ class System(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def num_orbitals(self, site, *args, **kwargs):
+    def num_orbitals(self, site, *args):
         """Return the number of orbitals of a site.
 
         This is an inefficient general implementation.  It should be
         overridden, if a more efficient way to calculate is available.
         """
-        ham = self.hamiltonian(site, site, *args, **kwargs)
+        ham = self.hamiltonian(site, site, *args)
         return 1 if np.isscalar(ham) else ham.shape[0]
 
     @abc.abstractmethod
-    def hamiltonian(self, i, j, *args, **kwargs):
+    def hamiltonian(self, i, j, *args):
         """Return the hamiltonian matrix element for sites `i` and `j`.
 
         If ``i == j``, return the on-site Hamiltonian of site `i`.
@@ -68,8 +68,7 @@ class FiniteSystem(System):
     Instance Variables
     ------------------
     leads : sequence of lead objects
-        Each lead object has to provide a method
-        ``self_energy(energy, args, kwargs)``.
+        Each lead object has to provide a method ``self_energy(energy, args)``.
     lead_interfaces : sequence of sequences of integers
         Each sub-sequence contains the indices of the system sites to which the
         lead is connected.
@@ -133,32 +132,29 @@ class InfiniteSystem(System):
     """
     __metaclass__ = abc.ABCMeta
 
-    def slice_hamiltonian(self, sparse=False, args=(), kwargs={}):
+    def slice_hamiltonian(self, sparse=False, args=()):
         """Hamiltonian of a single slice of the infinite system."""
         slice_sites = xrange(self.slice_size)
         return self.hamiltonian_submatrix(slice_sites, slice_sites,
-                                          sparse=sparse, args=args,
-                                          kwargs=kwargs)
+                                          sparse=sparse, args=args)
 
-    def inter_slice_hopping(self, sparse=False, args=(), kwargs={}):
+    def inter_slice_hopping(self, sparse=False, args=()):
         """Hopping Hamiltonian between two slices of the infinite system."""
         slice_sites = xrange(self.slice_size)
         neighbor_sites = xrange(self.slice_size, self.graph.num_nodes)
         return self.hamiltonian_submatrix(slice_sites, neighbor_sites,
-                                          sparse=sparse, args=args,
-                                          kwargs=kwargs)
+                                          sparse=sparse, args=args)
 
-    def self_energy(self, energy, args=(), kwargs={}):
+    def self_energy(self, energy, args=()):
         """Return self-energy of a lead.
 
         The returned matrix has the shape (n, n), where n is
         ``sum(self.num_orbitals(i) for i in range(self.slice_size))``.
         """
-        ham = self.slice_hamiltonian(args=args, kwargs=kwargs)
+        ham = self.slice_hamiltonian(args=args)
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
-        return physics.self_energy(ham, self.inter_slice_hopping(args=args,
-                                                                 kwargs=kwargs))
+        return physics.self_energy(ham, self.inter_slice_hopping(args=args))

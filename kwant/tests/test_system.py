@@ -77,7 +77,7 @@ def test_hamiltonian_submatrix():
     sys[(gr(i) for i in xrange(3))] = onsite
     sys[((gr(i), gr(i + 1)) for i in xrange(2))] = hopping
     sys2 = sys.finalized()
-    mat = sys2.hamiltonian_submatrix(args=(2,), kwargs={'p2': 1})
+    mat = sys2.hamiltonian_submatrix(args=(2, 1))
     mat_should_be = [[5, 1, 0], [1, 4, 1.], [0, 1, 3]]
 
     # Sorting is required due to unknown compression order of builder.

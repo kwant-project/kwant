@@ -22,8 +22,6 @@ class Bands(object):
         calculated.
     args : tuple, defaults to empty
         Positional arguments to pass to the ``hamiltonian`` method.
-    kwargs : dictionary, defaults to empty
-        Keyword arguments to pass to the ``hamiltonian`` method.
 
     Notes
     -----
@@ -41,11 +39,11 @@ class Bands(object):
     >>> pyplot.show()
     """
 
-    def __init__(self, sys, args=(), kwargs={}):
-        self.ham = sys.slice_hamiltonian(args=args, kwargs=kwargs)
+    def __init__(self, sys, args=()):
+        self.ham = sys.slice_hamiltonian(args=args)
         if not np.allclose(self.ham, self.ham.T.conj()):
             raise ValueError('The slice Hamiltonian is not Hermitian.')
-        hop = sys.inter_slice_hopping(args=args, kwargs=kwargs)
+        hop = sys.inter_slice_hopping(args=args)
         self.hop = np.empty(self.ham.shape, dtype=complex)
         self.hop[:, : hop.shape[1]] = hop
         self.hop[:, hop.shape[1]:] = 0

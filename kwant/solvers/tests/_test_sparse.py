@@ -21,9 +21,8 @@ class LeadWithOnlySelfEnergy(object):
     def __init__(self, lead):
         self.lead = lead
 
-    def self_energy(self, energy, args=(), kwargs={}):
+    def self_energy(self, energy, args=()):
         assert args == ()
-        assert kwargs == {}
         return self.lead.self_energy(energy)
 
 

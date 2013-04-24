@@ -75,15 +75,11 @@ regular function parameters (e.g. global variables).
 
 Now the value functions may accept arbitrary arguments after the `Site`
 arguments.  These extra arguments can be specified when
-`~kwant.solvers.default.solve` is called by setting the keyword arguments:
+`~kwant.solvers.default.solve` is called by setting the arguments:
 
 args
     A tuple of values to be passed as the positional arguments to the
     Hamiltonian value functions (not including the `Site` arguments).
-
-kwargs
-    A dictionary of keyword-value pairs to be passed as the keyword
-    arguments to the Hamiltonian value functions.
 
 For example, if the hopping and onsite Hamiltonian value functions have
 the following prototype::
@@ -97,11 +93,30 @@ the following prototype::
 then the values of `t`, `B` and `pot` for which to solve the system can be
 passed to `solve` like this::
 
-    time = 2
-    magnetic_field = 3
-    potential = 4
     kwant.solve(sys, energy,
-                args=(time,), kwargs={'B': magnetic_field, 'pot': potential})
+                args=(2., 3., 4.))
+
+A more verbose way to do the same is to pass to the functions an object,
+containing all the parameters as attributes::
+
+    class SimpleNamespace(object):
+        def __init__(self, **kwargs):
+            self.__dict__.update(kwargs)
+    # With Python >= 3.3 we can have instead:
+    # from types import SimpleNamespace
+
+    params = SimpleNamespace()
+
+    def onsite(site, p):
+        mu = p.mu
+        ...
+
+    def hopping(site1, site2, p):
+        t, B = p.t, p.B
+        ...
+
+    kwant.solve(sys, energy,
+                args=(params(t=1., mu=2., B=0.1))
 
 Arguments can be passed in an equivalent way in calls to
 `~kwant.solvers.default.wave_function` and `~kwant.solvers.default.ldos`.
