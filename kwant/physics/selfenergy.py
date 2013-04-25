@@ -50,7 +50,8 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
     # treat this extremely singular case.
     # Note: np.any(h_hop) returns (at least from NumPy 1.6.1 - 1.8-devel)
     #       False if h_hop is purely imaginary
-    assert np.any(h_hop.real) or np.any(h_hop.imag)
+    if not (np.any(h_hop.real) or np.any(h_hop.imag)):
+        raise ValueError("Inter-slice hopping is exactly zero.")
 
     eps = np.finfo(np.common_type(h_onslice, h_hop)).eps
 
