@@ -115,18 +115,8 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         if gamma is None:
             # Matrices are complex or need self-energy-like term  to be
             # stabilized.
-
-            # Normalize such that the maximum entry in the
-            # self-energy-like term has a value comparable to the
-            # maximum entry in h_onslice.
-
+            gamma = 1j
             temp = dot(u, u.T.conj()) + dot(v, v.T.conj())
-
-            max_h = np.amax(abs(h_onslice))
-            max_temp = np.amax(abs(temp))
-
-            gamma = max_h / max_temp * 1j
-
             h = h_onslice + gamma * temp
 
             sol = kla.lu_factor(h)
