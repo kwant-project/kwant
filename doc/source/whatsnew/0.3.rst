@@ -96,8 +96,9 @@ passed to `solve` like this::
     kwant.solve(sys, energy,
                 args=(2., 3., 4.))
 
-A more verbose way to do the same is to pass to the functions an object,
-containing all the parameters as attributes::
+With many parameters it can be less error-prone to collect all of them into a
+single object and pass this object as the single argument.  Such a parameter
+collection could be a dictionary, or a class instance, for example::
 
     class SimpleNamespace(object):
         def __init__(self, **kwargs):
@@ -105,21 +106,19 @@ containing all the parameters as attributes::
     # With Python >= 3.3 we can have instead:
     # from types import SimpleNamespace
 
-    params = SimpleNamespace()
-
     def onsite(site, p):
-        mu = p.mu
-        ...
+        return p.mu * ...
 
     def hopping(site1, site2, p):
-        t, B = p.t, p.B
-        ...
+        return p.t * exp(-1j * p.B * ...)
 
-    kwant.solve(sys, energy,
-                args=(params(t=1., mu=2., B=0.1))
+    params = SimpleNamespace(t=1, mu=2)
+    for params.B in B_values:
+        kwant.solve(sys, energy, args=[params])
 
-Arguments can be passed in an equivalent way in calls to
-`~kwant.solvers.default.wave_function` and `~kwant.solvers.default.ldos`.
+Arguments can be passed in an equivalent way to
+`~kwant.solvers.default.wave_function`,
+`~kwant.system.System.hamiltonian_submatrix`, etc.
 
 Lattice and shape improvements
 ------------------------------
