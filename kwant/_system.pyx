@@ -213,6 +213,7 @@ def make_dense_full(ham, args, CGraph gr, diag,
     return h_sub
 
 
+@cython.embedsignature(True)
 def hamiltonian_submatrix(self, to_sites=None, from_sites=None,
                           sparse=False, return_norb=False,
                           args=()):
