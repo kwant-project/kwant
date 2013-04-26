@@ -18,6 +18,7 @@ dot = np.dot
 
 __all__ = ['self_energy', 'modes', 'Modes']
 
+Linsys = namedtuple('Linsys', ['eigenproblem', 'v', 'extract', 'project'])
 
 def setup_linsys(h_onslice, h_hop, tol=1e6):
     """
@@ -32,7 +33,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
 
     Returns
     -------
-    linsys : matrix or tuple
+    linsys : namedtuple
         if the hopping is nonsingular, a single matrix defining an eigenvalue
         problem is returned, othewise a tuple of two matrices defining a
         generalized eigenvalue problem together with additional information is
@@ -67,16 +68,29 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
 
     if n_nonsing == n:
         # The hopping matrix is well-conditioned and can be safely inverted.
-        sol = kla.lu_factor(h_hop)
+        hop_inv = la.inv(h_hop)
 
         A = np.empty((2*n, 2*n), dtype=np.common_type(h_onslice, h_hop))
 
-        A[0:n, 0:n] = kla.lu_solve(sol, -h_onslice)
-        A[0:n, n:2*n] = kla.lu_solve(sol, -h_hop.T.conj())
-        A[n:2*n, 0:n] = np.identity(n)
+        A[0:n, 0:n] = dot(hop_inv, -h_onslice)
+        A[0:n, n:2*n] = -hop_inv
+        A[n:2*n, 0:n] = h_hop.T.conj()
         A[n:2*n, n:2*n] = 0
 
-        return A
+        # Function that can extract the full wave function psi from the
+        # projected one. Here it is almost trivial, but used for simplifying
+        # the logic.
+
+        def extract_wf(psi, lmbdainv):
+            return psi[:n]
+
+        # Project a full wave function back.
+
+        def project_wf(psi, lmbdainv):
+            return np.asarray(np.bmat([[psi * lmbdainv], [dot(h_hop.T.conj(), psi)]]))
+
+        matrices = (A,)
+        v_out = None
     else:
         # The hopping matrix has eigenvalues close to 0 - those
         # need to be eliminated.
@@ -87,7 +101,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         s = s[:n_nonsing]
         # pad v with zeros if necessary
         v = np.zeros((n, n_nonsing), dtype=vh.dtype)
-        v[:vh.shape[1], :] = vh[:n_nonsing, :].T.conj()
+        v[:vh.shape[1]] = vh[:n_nonsing].T.conj()
 
         # Eliminating the zero eigenvalues requires inverting the
         # on-site Hamiltonian, possibly including a self-energy-like term.
@@ -116,7 +130,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
             # Matrices are complex or need self-energy-like term  to be
             # stabilized.
             gamma = 1j
-            temp = dot(u, u.T.conj()) + dot(v, v.T.conj())
+            temp = dot(u, s.reshape(-1, 1) * u.T.conj()) + dot(v, v.T.conj())
             h = h_onslice + gamma * temp
 
             sol = kla.lu_factor(h)
@@ -136,39 +150,40 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
                                 gamma * dot(v, psi[: n_nonsing]) +
                                 gamma * dot(u, psi[n_nonsing:] * lmbdainv) -
                                 dot(u * s, psi[: n_nonsing] * lmbdainv) -
-                                dot(v * s, psi[n_nonsing:]))
+                                dot(v, psi[n_nonsing:]))
 
         # Project a full wave function back.
 
         def project_wf(psi, lmbdainv):
             return np.asarray(np.bmat([[dot(v.T.conj(), psi * lmbdainv)],
-                                       [dot(u.T.conj(), psi)]]))
+                                       [dot(s.reshape(-1, 1) * u.T.conj(),
+                                            psi)]]))
 
         # Setup the generalized eigenvalue problem.
 
         A = np.empty((2 * n_nonsing, 2 * n_nonsing), np.common_type(h, h_hop))
         B = np.empty((2 * n_nonsing, 2 * n_nonsing), np.common_type(h, h_hop))
 
-        A[:n_nonsing, :n_nonsing] = -np.eye(n_nonsing)
+        A[:n_nonsing, :n_nonsing] = -np.identity(n_nonsing)
 
-        B[n_nonsing: 2 * n_nonsing,
-          n_nonsing: 2 * n_nonsing] = np.eye(n_nonsing)
+        B[n_nonsing:, n_nonsing:] = np.identity(n_nonsing)
+        u_s = u * s
 
         temp = kla.lu_solve(sol, v)
-        temp2 = dot(u.T.conj(), temp)
+        temp2 = dot(u_s.T.conj(), temp)
         A[n_nonsing : 2 * n_nonsing, :n_nonsing] = gamma * temp2
-        A[n_nonsing : 2 * n_nonsing, n_nonsing: 2 * n_nonsing] = - temp2 * s
+        A[n_nonsing : 2 * n_nonsing, n_nonsing: 2 * n_nonsing] = - temp2
         temp2 = dot(v.T.conj(), temp)
         A[:n_nonsing, :n_nonsing] += gamma * temp2
-        A[:n_nonsing, n_nonsing : 2 * n_nonsing] = - temp2 * s
+        A[:n_nonsing, n_nonsing : 2 * n_nonsing] = - temp2
 
-        temp = kla.lu_solve(sol, u)
-        temp2 = dot(u.T.conj(), temp)
-        B[n_nonsing : 2 * n_nonsing, :n_nonsing] = temp2 * s
+        temp = kla.lu_solve(sol, u_s)
+        temp2 = dot(u_s.T.conj(), temp)
+        B[n_nonsing : 2 * n_nonsing, :n_nonsing] = temp2
         B[n_nonsing : 2 * n_nonsing, n_nonsing : 2 * n_nonsing] -= \
             gamma * temp2
         temp2 = dot(v.T.conj(), temp)
-        B[:n_nonsing, :n_nonsing] = temp2 * s
+        B[:n_nonsing, :n_nonsing] = temp2
         B[:n_nonsing, n_nonsing : 2 * n_nonsing] = - gamma * temp2
 
         # Solving a generalized eigenproblem is about twice as expensive
@@ -184,11 +199,13 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
 
         # I put a more stringent condition here - errors can accumulate
         # from here to the eigenvalue calculation later.
+        v_out = v[:m]
         if rcond > eps * tol**2:
-            return (kla.lu_solve(lu_b, A), (u, s, v[:m, :]),
-                    (extract_wf, project_wf))
+            matrices = (kla.lu_solve(lu_b, A),)
         else:
-            return (A, B, (u, s, v[:m]), (extract_wf, project_wf))
+            matrices = (A, B)
+
+    return Linsys(matrices, v_out, extract_wf, project_wf)
 
 
 def split_degenerate(evs, tol=1e6):
@@ -240,8 +257,7 @@ def split_degenerate(evs, tol=1e6):
     return evlist
 
 
-def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
-                      project=None, tol=1e6):
+def make_proper_modes(lmbdainv, psi, extract, project, tol=1e6):
     """
     Determine the velocities and direction of the propagating eigenmodes.
 
@@ -250,17 +266,12 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
     modes. In this case, also the proper (orthogonal) modes are computed.
     """
 
-    vel_eps = np.finfo(np.common_type(psi, h_hop)).eps * tol
+    vel_eps = np.finfo(psi.dtype).eps * tol
 
     # h_hop is either the full hopping matrix, or the singular
     # values vector of the svd.
-    if h_hop.ndim == 2:
-        n = h_hop.shape[0]
-        m = h_hop.shape[1]
-    else:
-        n = h_hop.size
-
     nmodes = psi.shape[1]
+    n = len(psi) // 2
 
     if nmodes == 0:
         raise ValueError('Empty mode array.')
@@ -291,10 +302,7 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             # have the full, not the projected wave functions
             # (at least to our current knowledge).
 
-            if extract is not None:
-                full_psi = extract(psi[:, indx], lmbdainv[indx])
-            else:
-                full_psi = psi[:n, indx]
+            full_psi = extract(psi[:, indx], lmbdainv[indx])
 
             # Finding the true modes is done in two steps:
 
@@ -313,11 +321,7 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             except TypeError:
                 full_psi = la.qr(full_psi, mode='economic')[0]
 
-            if project:
-                psi[:, indx] = project(full_psi, lmbdainv[indx])
-            else:
-                psi[:n, indx] = full_psi * lmbdainv[indx]
-                psi[n:2*n, indx] = full_psi
+            psi[:, indx] = project(full_psi, lmbdainv[indx])
 
             # 2. Moving infinitesimally away from the degeneracy
             # point, the modes should diagonalize the velocity
@@ -330,15 +334,9 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             # must have the same velocity). However, this does not matter,
             # as we are happy with any superposition in this case.
 
-            if h_hop.ndim == 2:
-                vel_op = -1j * dot(psi[n:, indx].T.conj(),
-                                     dot(h_hop, psi[:m, indx]))
-            else:
-                vel_op = -1j * dot(psi[n:, indx].T.conj() * h_hop,
-                                     psi[:n, indx])
+            vel_op = -1j * dot(psi[n:, indx].T.conj(), psi[:n, indx])
 
             vel_op = vel_op + vel_op.T.conj()
-
             vel_vals, rot = la.eigh(vel_op)
 
             # If the eigenvectors were purely real up to this stage,
@@ -353,6 +351,7 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             # For some of the self-energy methods it matters
             # whether the degeneracy is a crossing with velocities
             # of different sign
+
             if not ((vel_vals > 0).all() or (vel_vals < 0).all()):
                 crossing = True
 
@@ -369,12 +368,7 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
             # A single, unique propagating mode
             k = indx[0]
 
-            if h_hop.ndim == 2:
-                v[k] = 2 * dot(dot(psi[n:2*n, k:k+1].T.conj(), h_hop),
-                               psi[:m, k:k+1]).imag
-            else:
-                v[k] = 2 * dot(psi[n:2*n, k:k+1].T.conj() * h_hop,
-                               psi[0:n, k:k+1]).imag
+            v[k] = 2 * dot(psi[n:, k].T.conj(), psi[0:n, k]).imag
 
             if v[k] > vel_eps:
                 rightselect[k] = True
@@ -388,7 +382,7 @@ def make_proper_modes(lmbdainv, psi, h_hop, extract=None,
     if n_left != n_right:
         raise RuntimeError("Numbers of left- and right-propagating "
                            "modes differ.")
-
+    
     return psi, v, rightselect, crossing
 
 
@@ -416,9 +410,9 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
         eigenvector space) of the (general) Schur decomposition reordered such
         that the eigenvalues chosen by the array select are in the top left
         block.
-    u, w, v :
-        if the hopping is singular, the svd of the hopping matrix, otherwise
-        they all the three values are None.
+    v : array or None
+        if the hopping is singular, the last part of the svd of the hopping
+        matrix, otherwise None.
     extract, project : functions
         functions to extract the full wave function from the projected wave
         functions, and project it back. Both are equal to None if the hopping
@@ -427,32 +421,26 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
 
     eps = np.finfo(np.common_type(h_onslice, h_hop)).eps
 
-    linsys = setup_linsys(h_onslice, h_hop)
+    matrices, v, extract, project = setup_linsys(h_onslice, h_hop)
 
-    if isinstance(linsys, tuple):
+    if v is not None:
         # In the singular case, it depends on the details of the system
         # whether one needs to solve a regular or a generalized
         # eigenproblem.
 
-        assert len(linsys) == 3 or len(linsys) == 4, \
-            "Corrupt lead eigenproblem data."
-
-        if len(linsys) == 3:
-            t, z, ev = kla.schur(linsys[0])
+        if len(matrices) == 1:
+            t, z, ev = kla.schur(matrices[0])
 
             # Right-decaying modes.
             select = abs(ev) > 1 + eps * tol
             # Propagating modes.
             propselect = abs(abs(ev) - 1) < eps * tol
 
-            u, w, v = linsys[1]
-            extract, project = linsys[2]
-
             vec_gen = lambda x: kla.evecs_from_schur(t, z, select=x)
             ord_schur = lambda x: kla.order_schur(x, t, z, calc_ev=False)[1]
 
         else:
-            s, t, z, alpha, beta = kla.gen_schur(linsys[0], linsys[1],
+            s, t, z, alpha, beta = kla.gen_schur(matrices[0], matrices[1],
                                                  calc_q=False)
 
             # Right-decaying modes.
@@ -467,9 +455,6 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
             # Note: the division is OK here, as we later only access
             #       eigenvalues close to the unit circle
 
-            u, w, v = linsys[2]
-            extract, project = linsys[3]
-
             vec_gen = lambda x: kla.evecs_from_gen_schur(s, t, z=z, select=x)
             ord_schur = lambda x: kla.order_gen_schur(x, s, t,
                                                       z=z, calc_ev=False)[2]
@@ -477,22 +462,17 @@ def unified_eigenproblem(h_onslice, h_hop, tol):
         # Hopping matrix can be safely inverted -> regular eigenproblem can be
         # used. This also means, that the hopping matrix is n x n square.
 
-        t, z, ev = kla.schur(linsys)
+        t, z, ev = kla.schur(matrices[0])
 
         # Right-decaying modes.
         select = abs(ev) > 1 + eps * tol
         # Propagating modes.
         propselect = abs(abs(ev) - 1) < eps * tol
 
-        # Signal that we are in the regular case.
-        u = v = w = None
-        extract = project = None
-
         vec_gen = lambda x: kla.evecs_from_schur(t, z, select=x)
         ord_schur = lambda x: kla.order_schur(x, t, z, calc_ev=False)[1]
 
-    return ev, select, propselect, vec_gen, ord_schur,\
-        u, w, v, extract, project
+    return ev, select, propselect, vec_gen, ord_schur, v, extract, project
 
 
 def self_energy(h_onslice, h_hop, tol=1e6):
@@ -536,11 +516,10 @@ def self_energy(h_onslice, h_hop, tol=1e6):
 
     #defer most of the calculation to a helper routine (also used by modes)
     ev, select, propselect, vec_gen, ord_schur,\
-        u, w, v, extract, project = unified_eigenproblem(h_onslice, h_hop, tol)
+        v, extract, project = unified_eigenproblem(h_onslice, h_hop, tol)
 
-    if w is not None:
-        n = w.size
-        h_hop = w
+    if v is not None:
+        n = v.shape[1]
     else:
         n = h_onslice.shape[0]
 
@@ -551,42 +530,33 @@ def self_energy(h_onslice, h_hop, tol=1e6):
         prop_vecs = vec_gen(propselect)
 
         prop_vecs, vel, rselect, crossing = \
-            make_proper_modes(ev[propselect], prop_vecs, h_hop,
-                              extract, project)
+            make_proper_modes(ev[propselect], prop_vecs, extract, project)
     else:
         # Without propagating modes, the Schur methods certainly work.
         crossing = False
 
     if crossing:
         # Schur decomposition method does not work in this case, we need to
-        # compute all the eigenvectors.
+        # compute all the eigenvectors. Since there is a crossing, there are
+        # definitely propagating modes.
 
         # We already have the propagating ones, now we just need the
         # evanescent ones in addition.
 
-        if nprop > 0:
-            vecs = np.empty((2*n, n),
-                            dtype=np.common_type(ev, prop_vecs))
-        else:
-            vecs = np.empty((2*n, n), dtype=ev.dtype)
+        vecs = np.empty((2*n, n), dtype=np.common_type(ev, prop_vecs))
         # Note: rationale for the dtype: only if all the eigenvalues are real,
         #       (which can only happen if the original eigenproblem was
         #       real) and all propagating modes are real, the matrix of
         #       eigenvectors will be real, too.
 
-        if nprop > 0:
-            nmodes = np.sum(rselect)
-            vecs[:, :nmodes] = prop_vecs[:, rselect]
-        else:
-            nmodes = 0
-
+        nmodes = np.sum(rselect)
+        vecs[:, :nmodes] = prop_vecs[:, rselect]
         vecs[:, nmodes:] = vec_gen(select)
 
         if v is not None:
-            return dot(v * w, dot(vecs[n:], dot(npl.inv(vecs[:n]),
-                                                v.T.conj())))
+            return dot(v, dot(vecs[n:], dot(npl.inv(vecs[:n]), v.T.conj())))
         else:
-            return dot(h_hop.T.conj(), dot(vecs[n:], npl.inv(vecs[:n])))
+            return dot(vecs[n:], npl.inv(vecs[:n]))
     else:
         # Reorder all the right-going eigenmodes to the top left part of
         # the Schur decomposition.
@@ -597,10 +567,9 @@ def self_energy(h_onslice, h_hop, tol=1e6):
         z = ord_schur(select)
 
         if v is not None:
-            return dot(v * w, dot(z[n:, :n], dot(npl.inv(z[:n, :n]),
-                                                   v.T.conj())))
+            return dot(v, dot(z[n:, :n], dot(npl.inv(z[:n, :n]), v.T.conj())))
         else:
-            return dot(h_hop.T.conj(), dot(z[n:, :n], npl.inv(z[:n, :n])))
+            return dot(z[n:, :n], npl.inv(z[:n, :n]))
 
 Modes = namedtuple('Modes', ['vecs', 'vecslmbdainv', 'nmodes', 'svd'])
 
@@ -667,15 +636,15 @@ def modes(h_onslice, h_hop, tol=1e6):
     #       False if h_hop is purely imaginary
     if not (np.any(h_hop.real) or np.any(h_hop.imag)):
         n = h_hop.shape[0]
-        svd = (np.empty((n, 0)), np.empty((0, 0)), np.empty((0, m)))
-        return Modes(np.empty((0, 0)), np.empty((0, 0)), 0, svd)
+        v = np.empty((0, m))
+        return Modes(np.empty((0, 0)), np.empty((0, 0)), 0, v)
 
     # Defer most of the calculation to a helper routine.
     ev, evanselect, propselect, vec_gen, ord_schur, \
-        u, s, v, extract, project = unified_eigenproblem(h_onslice, h_hop, tol)
+        v, extract, project = unified_eigenproblem(h_onslice, h_hop, tol)
 
-    if s is not None:
-        n = s.size
+    if v is not None:
+        n = v.shape[1]
     else:
         n = h_onslice.shape[0]
 
@@ -688,15 +657,10 @@ def modes(h_onslice, h_hop, tol=1e6):
     if nprop > 0:
         # Compute the propagating eigenvectors.
         prop_vecs = vec_gen(propselect)
-
         # Compute their velocity, and, if necessary, rotate them
-        if s is not None:
-            prop_vecs, vel, rprop, crossing = \
-                make_proper_modes(ev[propselect], prop_vecs, s,
-                                  extract, project)
-        else:
-            prop_vecs, vel, rprop, crossing = \
-                make_proper_modes(ev[propselect], prop_vecs, h_hop)
+        prop_vecs, vel, rprop, crossing = \
+                make_proper_modes(ev[propselect], prop_vecs, extract, project)
+
 
         # Normalize propagating eigenvectors by velocities.
         prop_vecs /= np.sqrt(abs(vel))
@@ -734,8 +698,7 @@ def modes(h_onslice, h_hop, tol=1e6):
         vecslmbdainv = evan_vecs[:n]
         nmodes = 0
 
-    svd = None if s is None else (u, s, v)
-    return Modes(vecs, vecslmbdainv, nmodes, svd)
+    return Modes(vecs, vecslmbdainv, nmodes, v)
 
 
 def square_self_energy(width, hopping, potential, fermi_energy):

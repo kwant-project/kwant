@@ -55,7 +55,8 @@ def test_output(solve):
     s2, modes2 = result2.data, result2.lead_info
     assert s2.shape == (modes2[1][2], modes2[0][2])
     assert_almost_equal(s1, s2)
-    assert_almost_equal(np.dot(s.conjugate().transpose(), s),
+    print np.dot(s.T.conj(), s)
+    assert_almost_equal(np.dot(s.T.conj(), s),
                         np.identity(s.shape[0]))
     assert_raises(ValueError, solve, fsys, 0, [])
     modes = solve(fsys).lead_info

@@ -188,7 +188,9 @@ class SparseSolver(object):
                     # See comment about zero-shaped sparse matrices at the top.
                     rhs.append(np.zeros((lhs.shape[1], 0)))
                     continue
-                u, ulinv, nprop, svd = modes
+                u, ulinv, nprop, svd_v = modes
+                if svd_v is not None:
+                    svd_v = svd_v.T.conj()
 
                 if leadnum in out_leads:
                     kept_vars.append(
@@ -206,27 +208,25 @@ class SparseSolver(object):
                 transf = sp.csc_matrix((np.ones(iface_orbs.size), coords),
                                        shape=(iface_orbs.size, lhs.shape[0]))
 
-                if svd is not None:
-                    v_sp = sp.csc_matrix(svd[2].T.conj()) * transf
+                if svd_v is not None:
+                    v_sp = sp.csc_matrix(svd_v) * transf
                     vdaguout_sp = transf.T * \
-                        sp.csc_matrix(np.dot(svd[2] * svd[1], u_out))
+                        sp.csc_matrix(np.dot(svd_v.T.conj(), u_out))
                     lead_mat = - ulinv_out
                 else:
                     v_sp = transf
-                    vdaguout_sp = transf.T * sp.csc_matrix(np.dot(v.T.conj(),
-                                                                  u_out))
+                    vdaguout_sp = transf.T * sp.csc_matrix(u_out)
                     lead_mat = - ulinv_out
 
                 lhs = sp.bmat([[lhs, vdaguout_sp], [v_sp, lead_mat]],
                               format=self.lhsformat)
 
                 if leadnum in in_leads and nprop > 0:
-                    if svd:
+                    if svd_v is not None:
                         vdaguin_sp = transf.T * sp.csc_matrix(
-                            -np.dot(svd[2] * svd[1], u_in))
+                            -np.dot(svd_v.T.conj(), u_in))
                     else:
-                        vdaguin_sp = transf.T * sp.csc_matrix(
-                            -np.dot(v.T.conj(), u_in))
+                        vdaguin_sp = transf.T * sp.csc_matrix(-u_in)
 
                     # defer formation of the real matrix until the proper
                     # system size is known

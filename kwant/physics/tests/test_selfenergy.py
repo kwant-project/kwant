@@ -32,7 +32,7 @@ def test_regular_fully_degenerate():
 
     This case can still be treated with the Schur technique."""
 
-    w = 5                       # width
+    w = 2                       # width
     t = 0.5                     # hopping element
     v = 2                       # potential
     e = 3.3                     # Fermi energy
@@ -55,8 +55,7 @@ def test_regular_fully_degenerate():
     g[0:w, 0:w] = se.square_self_energy(w, t, v, e)
     g[w:2*w, w:2*w] = se.square_self_energy(w, t, v, e)
 
-    assert_almost_equal(g,
-                        se.self_energy(h_onslice, h_hop))
+    assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
 
 def test_regular_degenerate_with_crossing():
     """This is a testcase with invertible hopping matrices,
@@ -66,14 +65,13 @@ def test_regular_degenerate_with_crossing():
     For this case the fall-back technique must be used.
     """
 
-    w = 5                       # width
+    w = 2                       # width
     t = 0.5                     # hopping element
     v = 2                       # potential
     e = 3.3                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = ((v + 4 * t - e)
-                 * np.identity(w))
+    h_onslice_s = (v + 4 * t - e) * np.identity(w)
     h_onslice_s.flat[1 :: w + 1] = -t
     h_onslice_s.flat[w :: w + 1] = -t
 
@@ -88,9 +86,10 @@ def test_regular_degenerate_with_crossing():
     g = np.zeros((2*w, 2*w), dtype=complex)
     g[0:w, 0:w] = se.square_self_energy(w, t, v, e)
     g[w:2*w, w:2*w] = -np.conj(se.square_self_energy(w, t, v, e))
-
-    assert_almost_equal(g,
-                        se.self_energy(h_onslice, h_hop))
+    
+    print np.round(g, 5)
+    print np.round(se.self_energy(h_onslice, h_hop), 5)
+    assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
 
 def test_singular():
     """This testcase features a rectangular (and hence singular)
@@ -98,10 +97,10 @@ def test_singular():
 
     This case can be treated with the Schur technique."""
 
-    w = 5                       # width
-    t = 0.5                     # hopping element
-    v = 2                       # potential
-    e = 3.3                     # Fermi energy
+    w = 2                       # width
+    t = .5                     # hopping element
+    v = 0                       # potential
+    e = 0                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
     h_onslice_s = ((v + 4 * t - e)
@@ -117,9 +116,10 @@ def test_singular():
     h_onslice[0:w, w:2*w] = h_hop_s
     h_onslice[w:2*w, 0:w] = h_hop_s
     h_onslice[w:2*w, w:2*w] = h_onslice_s
+    g = se.square_self_energy(w, t, v, e)
 
-    assert_almost_equal(se.square_self_energy(w, t, v, e),
-                        se.self_energy(h_onslice, h_hop))
+    print np.round(g, 5) / np.round(se.self_energy(h_onslice, h_hop), 5)
+    assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
 
 def test_singular_but_square():
     """This testcase features a singular, square hopping matrices
@@ -150,8 +150,7 @@ def test_singular_but_square():
     g = np.zeros((2*w, 2*w), dtype=complex)
     g[0:w, 0:w] = se.square_self_energy(w, t, v, e)
 
-    assert_almost_equal(g,
-                        se.self_energy(h_onslice, h_hop))
+    assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
 
 def test_singular_fully_degenerate():
     """This testcase features a rectangular (and hence singular)
@@ -236,15 +235,12 @@ def test_singular_h_and_t():
     sigma = se.self_energy(h, t)
     sigma_should_be = np.zeros((6,6))
     sigma_should_be[4, 4] = sigma_should_be[5, 5] = -10
-    assert_almost_equal(se.self_energy(h, t), sigma_should_be)
+    assert_almost_equal(sigma, sigma_should_be)
 
 def test_modes():
     h, t = .3, .7
-    vecs, vecslinv, nrpop, svd = se.modes(np.array([[h]]), np.array([[t]]))
-    l = (np.sqrt(h**2 - 4 * t**2 + 0j) - h) / (2 * t)
-    current = np.sqrt(4 * t**2 - h**2)
-    assert nrpop == 1
+    vecs, vecslinv, nrprop, svd = se.modes(np.array([[h]]), np.array([[t]]))
+    assert nrprop == 1
     assert svd is None
-    np.testing.assert_almost_equal(vecs, [2 * [1/np.sqrt(current)]])
-    np.testing.assert_almost_equal(vecslinv,
-                                   vecs * np.array([1/l, 1/l.conj()]))
+    np.testing.assert_almost_equal((vecs[0] *  vecslinv[0].conj()).imag,
+                                   [0.5, -0.5])
