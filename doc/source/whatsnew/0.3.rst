@@ -126,6 +126,9 @@ Change of modes format and `~kwant.builder.ModesLead`
 The return format of the modes calculation was simplified, and so was
 the information required by the solvers about the leads.
 
+`~kwant.physics.selfenergy` now uses the output of `~kwant.physics.modes` as
+input instead of the slice Hamiltonian and inter-slice hopping.
+
 Similar to self-energy, calculation of modes is now the lead's responsibility.
 There is also a new object `~kwant.builder.ModesLead`, allowing to attach leads
 that have a custom way of calculating their modes, e.g. ideal leads.
