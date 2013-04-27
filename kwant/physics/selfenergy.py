@@ -548,7 +548,7 @@ def self_energy(h_onslice=None, h_hop=None, tol=1e6, lead_modes=None):
         return la.solve(vecslmbdainv.T, vecs.T).T
 
 
-def square_self_energy(width, hopping, potential, fermi_energy):
+def square_self_energy(width, hopping, fermi_energy):
     """
     Calculate analytically the self energy for a square lattice.
 
@@ -584,7 +584,7 @@ def square_self_energy(width, hopping, potential, fermi_energy):
     f_p = np.empty((width,), dtype=complex)
     for p in xrange(width):
         e = 2 * hopping * (1 - cos(factor * (p + 1)))
-        q = (fermi_energy - potential - e) / hopping - 2
+        q = (fermi_energy - e) / hopping - 2
         f_p[p] = f(q)
 
     # Put everything together into the self energy and return it.

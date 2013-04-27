@@ -11,49 +11,44 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 import kwant.physics.selfenergy as se
 
+
+def h_slice(t, w, e):
+    h = (4 * t - e) * np.identity(w)
+    h.flat[1 :: w + 1] = -t
+    h.flat[w :: w + 1] = -t
+    return h
+
+
 def test_analytic_numeric():
     w = 5                       # width
-    t = 0.5                     # hopping element
-    v = 2                       # potential
-    e = 3.3                     # Fermi energy
+    t = 0.78                    # hopping element
+    e = 1.3                     # Fermi energy
 
-    h_hop = -t * np.identity(w)
-    h_onslice = ((v + 4 * t - e)
-                 * np.identity(w))
-    h_onslice.flat[1 :: w + 1] = -t
-    h_onslice.flat[w :: w + 1] = -t
+    assert_almost_equal(se.square_self_energy(w, t, e),
+                        se.self_energy(h_slice(t, w, e), -t * np.identity(w)))
 
-    assert_almost_equal(se.square_self_energy(w, t, v, e),
-                        se.self_energy(h_onslice, h_hop))
 
 def test_regular_fully_degenerate():
-    """This testcase features an invertible hopping matrix,
-    and bands that are fully degenerate.
+    """Selfenergy with an invertible hopping matrix, and degenerate bands."""
 
-    This case can still be treated with the Schur technique."""
-
-    w = 2                       # width
+    w = 6                       # width
     t = 0.5                     # hopping element
-    v = 2                       # potential
-    e = 3.3                     # Fermi energy
+    e = 1.3                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = ((v + 4 * t - e)
-                 * np.identity(w))
-    h_onslice_s.flat[1 :: w + 1] = -t
-    h_onslice_s.flat[w :: w + 1] = -t
+    h_onslice_s = h_slice(t, w, e)
 
     h_hop = np.zeros((2*w, 2*w))
-    h_hop[0:w, 0:w] = h_hop_s
-    h_hop[w:2*w, w:2*w] = h_hop_s
+    h_hop[:w, :w] = h_hop_s
+    h_hop[w:, w:] = h_hop_s
 
     h_onslice = np.zeros((2*w, 2*w))
-    h_onslice[0:w, 0:w] = h_onslice_s
-    h_onslice[w:2*w, w:2*w] = h_onslice_s
+    h_onslice[:w, :w] = h_onslice_s
+    h_onslice[w:, w:] = h_onslice_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
-    g[0:w, 0:w] = se.square_self_energy(w, t, v, e)
-    g[w:2*w, w:2*w] = se.square_self_energy(w, t, v, e)
+    g[:w, :w] = se.square_self_energy(w, t, e)
+    g[w:, w:] = se.square_self_energy(w, t, e)
 
     assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
 
@@ -65,31 +60,27 @@ def test_regular_degenerate_with_crossing():
     For this case the fall-back technique must be used.
     """
 
-    w = 2                       # width
+    w = 4                       # width
     t = 0.5                     # hopping element
-    v = 2                       # potential
-    e = 3.3                     # Fermi energy
+    e = 1.8                     # Fermi energy
 
+    global h_hop
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = (v + 4 * t - e) * np.identity(w)
-    h_onslice_s.flat[1 :: w + 1] = -t
-    h_onslice_s.flat[w :: w + 1] = -t
+    h_onslice_s = h_slice(t, w, e)
 
-    h_hop = np.zeros((2*w, 2*w))
-    h_hop[0:w, 0:w] = h_hop_s
-    h_hop[w:2*w, w:2*w] = -h_hop_s
+    hop = np.zeros((2*w, 2*w))
+    hop[:w, :w] = h_hop_s
+    hop[w:, w:] = -h_hop_s
 
     h_onslice = np.zeros((2*w, 2*w))
-    h_onslice[0:w, 0:w] = h_onslice_s
-    h_onslice[w:2*w, w:2*w] = -h_onslice_s
+    h_onslice[:w, :w] = h_onslice_s
+    h_onslice[w:, w:] = -h_onslice_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
-    g[0:w, 0:w] = se.square_self_energy(w, t, v, e)
-    g[w:2*w, w:2*w] = -np.conj(se.square_self_energy(w, t, v, e))
-    
-    print np.round(g, 5)
-    print np.round(se.self_energy(h_onslice, h_hop), 5)
-    assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
+    g[:w, :w] = se.square_self_energy(w, t, e)
+    g[w:, w:] = -np.conj(se.square_self_energy(w, t, e))
+
+    assert_almost_equal(g, se.self_energy(h_onslice, hop))
 
 def test_singular():
     """This testcase features a rectangular (and hence singular)
@@ -97,26 +88,22 @@ def test_singular():
 
     This case can be treated with the Schur technique."""
 
-    w = 2                       # width
+    w = 5                       # width
     t = .5                     # hopping element
-    v = 0                       # potential
-    e = 0                     # Fermi energy
+    e = 0.4                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = ((v + 4 * t - e)
-                 * np.identity(w))
-    h_onslice_s.flat[1 :: w + 1] = -t
-    h_onslice_s.flat[w :: w + 1] = -t
+    h_onslice_s = h_slice(t, w, e)
 
     h_hop = np.zeros((2*w, w))
-    h_hop[w:2*w, 0:w] = h_hop_s
+    h_hop[w:, :w] = h_hop_s
 
     h_onslice = np.zeros((2*w, 2*w))
-    h_onslice[0:w, 0:w] = h_onslice_s
-    h_onslice[0:w, w:2*w] = h_hop_s
-    h_onslice[w:2*w, 0:w] = h_hop_s
-    h_onslice[w:2*w, w:2*w] = h_onslice_s
-    g = se.square_self_energy(w, t, v, e)
+    h_onslice[:w, :w] = h_onslice_s
+    h_onslice[:w, w:] = h_hop_s
+    h_onslice[w:, :w] = h_hop_s
+    h_onslice[w:, w:] = h_onslice_s
+    g = se.square_self_energy(w, t, e)
 
     print np.round(g, 5) / np.round(se.self_energy(h_onslice, h_hop), 5)
     assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
@@ -128,28 +115,23 @@ def test_singular_but_square():
     This case can be treated with the Schur technique."""
 
     w = 5                       # width
-    t = 0.5                     # hopping element
-    v = 2                       # potential
-    e = 3.3                     # Fermi energy
+    t = 0.9                     # hopping element
+    e = 2.38                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = ((v + 4 * t - e)
-                 * np.identity(w))
-    h_onslice_s.flat[1 :: w + 1] = -t
-    h_onslice_s.flat[w :: w + 1] = -t
+    h_onslice_s = h_slice(t, w, e)
 
     h_hop = np.zeros((2*w, 2*w))
-    h_hop[w:2*w, 0:w] = h_hop_s
+    h_hop[w:, :w] = h_hop_s
 
     h_onslice = np.zeros((2*w, 2*w))
-    h_onslice[0:w, 0:w] = h_onslice_s
-    h_onslice[0:w, w:2*w] = h_hop_s
-    h_onslice[w:2*w, 0:w] = h_hop_s
-    h_onslice[w:2*w, w:2*w] = h_onslice_s
+    h_onslice[:w, :w] = h_onslice_s
+    h_onslice[:w, w:] = h_hop_s
+    h_onslice[w:, :w] = h_hop_s
+    h_onslice[w:, w:] = h_onslice_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
-    g[0:w, 0:w] = se.square_self_energy(w, t, v, e)
-
+    g[:w, :w] = se.square_self_energy(w, t, e)
     assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
 
 def test_singular_fully_degenerate():
@@ -159,36 +141,31 @@ def test_singular_fully_degenerate():
     This case can still be treated with the Schur technique."""
 
     w = 5                       # width
-    t = 0.5                     # hopping element
-    v = 2                       # potential
+    t = 1.5                     # hopping element
     e = 3.3                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = ((v + 4 * t - e)
-                 * np.identity(w))
-    h_onslice_s.flat[1 :: w + 1] = -t
-    h_onslice_s.flat[w :: w + 1] = -t
+    h_onslice_s = h_slice(t, w, e)
 
     h_hop = np.zeros((4*w, 2*w))
-    h_hop[2*w:3*w, 0:w] = h_hop_s
+    h_hop[2*w:3*w, :w] = h_hop_s
     h_hop[3*w:4*w, w:2*w] = h_hop_s
 
     h_onslice = np.zeros((4*w, 4*w))
-    h_onslice[0:w, 0:w] = h_onslice_s
-    h_onslice[0:w, 2*w:3*w] = h_hop_s
+    h_onslice[:w, :w] = h_onslice_s
+    h_onslice[:w, 2*w:3*w] = h_hop_s
     h_onslice[w:2*w, w:2*w] = h_onslice_s
     h_onslice[w:2*w, 3*w:4*w] = h_hop_s
-    h_onslice[2*w:3*w, 0:w] = h_hop_s
+    h_onslice[2*w:3*w, :w] = h_hop_s
     h_onslice[2*w:3*w, 2*w:3*w] = h_onslice_s
     h_onslice[3*w:4*w, w:2*w] = h_hop_s
     h_onslice[3*w:4*w, 3*w:4*w] = h_onslice_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
-    g[0:w, 0:w] = se.square_self_energy(w, t, v, e)
-    g[w:2*w, w:2*w] = se.square_self_energy(w, t, v, e)
+    g[:w, :w] = se.square_self_energy(w, t, e)
+    g[w:, w:] = se.square_self_energy(w, t, e)
 
-    assert_almost_equal(g,
-                        se.self_energy(h_onslice, h_hop))
+    assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
 
 def test_singular_degenerate_with_crossing():
     """This testcase features a rectangular (and hence singular)
@@ -198,33 +175,29 @@ def test_singular_degenerate_with_crossing():
     This case must be treated with the fall-back technique."""
 
     w = 5                       # width
-    t = 0.5                     # hopping element
-    v = 2                       # potential
+    t = 20.5                     # hopping element
     e = 3.3                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = ((v + 4 * t - e)
-                 * np.identity(w))
-    h_onslice_s.flat[1 :: w + 1] = -t
-    h_onslice_s.flat[w :: w + 1] = -t
+    h_onslice_s = h_slice(t, w, e)
 
     h_hop = np.zeros((4*w, 2*w))
-    h_hop[2*w:3*w, 0:w] = h_hop_s
+    h_hop[2*w:3*w, :w] = h_hop_s
     h_hop[3*w:4*w, w:2*w] = -h_hop_s
 
     h_onslice = np.zeros((4*w, 4*w))
-    h_onslice[0:w, 0:w] = h_onslice_s
-    h_onslice[0:w, 2*w:3*w] = h_hop_s
+    h_onslice[:w, :w] = h_onslice_s
+    h_onslice[:w, 2*w:3*w] = h_hop_s
     h_onslice[w:2*w, w:2*w] = -h_onslice_s
     h_onslice[w:2*w, 3*w:4*w] = -h_hop_s
-    h_onslice[2*w:3*w, 0:w] = h_hop_s
+    h_onslice[2*w:3*w, :w] = h_hop_s
     h_onslice[2*w:3*w, 2*w:3*w] = h_onslice_s
     h_onslice[3*w:4*w, w:2*w] = -h_hop_s
     h_onslice[3*w:4*w, 3*w:4*w] = -h_onslice_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
-    g[0:w, 0:w] = se.square_self_energy(w, t, v, e)
-    g[w:2*w, w:2*w] = -np.conj(se.square_self_energy(w, t, v, e))
+    g[:w, :w] = se.square_self_energy(w, t, e)
+    g[w:, w:] = -np.conj(se.square_self_energy(w, t, e))
 
     assert_almost_equal(g,
                         se.self_energy(h_onslice, h_hop))
