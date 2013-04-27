@@ -14,6 +14,7 @@ Types
    SimpleSiteFamily
    BuilderLead
    SelfEnergy
+   ModesLead
 
 Abstract base classes
 ---------------------

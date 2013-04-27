@@ -120,3 +120,12 @@ containing all the parameters as attributes::
 
 Arguments can be passed in an equivalent way in calls to
 `~kwant.solvers.default.wave_function` and `~kwant.solvers.default.ldos`.
+
+Change of modes format and `~kwant.builder.ModesLead`
+-----------------------------------------------------
+The return format of the modes calculation was simplified, and so was
+the information required by the solvers about the leads.
+
+Similar to self-energy, calculation of modes is now the lead's responsibility.
+There is also a new object `~kwant.builder.ModesLead`, allowing to attach leads
+that have a custom way of calculating their modes, e.g. ideal leads.

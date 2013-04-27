@@ -68,8 +68,8 @@ class FiniteSystem(System):
     Instance Variables
     ------------------
     leads : sequence of lead objects
-        Each lead object has to provide a method ``self_energy(energy, args)``
-        or ``modes(energy, args)`` which calculates its self-energy or modes.
+        Each lead has to provide a method 
+        ``self_energy(energy, args)`` or ``modes(energy, args)``.
     lead_interfaces : sequence of sequences of integers
         Each sub-sequence contains the indices of the system sites to which the
         lead is connected.
@@ -79,9 +79,9 @@ class FiniteSystem(System):
     The length of `leads` must be equal to the length of `lead_interfaces`.
 
     For lead ``n``, the method leads[n].self_energy must return a square matrix
-    whose size is ``sum(self.num_orbitals(neighbor) for neighbor in
-    self.lead_interfaces[n])`` the output format for ``leads[n].modes is more
-    complicated, and it should match the output of `kwant.physics.modes`.
+    whose size is ``sum(self.num_orbitals(neighbor)`` for neighbor in
+    self.lead_interfaces[n])``. The output format for ``leads[n].modes`` is more
+    complicated, and it should match the output of `~kwant.physics.modes`.
 
     Often, the elements of `leads` will be instances of `InfiniteSystem`.  If
     this is the case for lead ``n``, the sites ``lead_interfaces[n]`` match
