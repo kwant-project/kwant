@@ -167,10 +167,4 @@ class InfiniteSystem(System):
         The returned matrix has the shape (n, n), where n is
         ``sum(self.num_orbitals(i) for i in range(self.slice_size))``.
         """
-        ham = self.slice_hamiltonian(args=args)
-        shape = ham.shape
-        assert len(shape) == 2
-        assert shape[0] == shape[1]
-        # Subtract energy from the diagonal.
-        ham.flat[::ham.shape[0] + 1] -= energy
-        return physics.self_energy(ham, self.inter_slice_hopping(args=args))
+        return physics.self_energy(self.modes(energy, args=()))

@@ -11,6 +11,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 import kwant.physics.selfenergy as se
 
+modes_se = lambda h, t: se.self_energy(se.modes(h, t))
 
 def h_slice(t, w, e):
     h = (4 * t - e) * np.identity(w)
@@ -25,7 +26,7 @@ def test_analytic_numeric():
     e = 1.3                     # Fermi energy
 
     assert_almost_equal(se.square_self_energy(w, t, e),
-                        se.self_energy(h_slice(t, w, e), -t * np.identity(w)))
+                        modes_se(h_slice(t, w, e), -t * np.identity(w)))
 
 
 def test_regular_fully_degenerate():
@@ -50,7 +51,7 @@ def test_regular_fully_degenerate():
     g[:w, :w] = se.square_self_energy(w, t, e)
     g[w:, w:] = se.square_self_energy(w, t, e)
 
-    assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
+    assert_almost_equal(g, modes_se(h_onslice, h_hop))
 
 def test_regular_degenerate_with_crossing():
     """This is a testcase with invertible hopping matrices,
@@ -80,7 +81,7 @@ def test_regular_degenerate_with_crossing():
     g[:w, :w] = se.square_self_energy(w, t, e)
     g[w:, w:] = -np.conj(se.square_self_energy(w, t, e))
 
-    assert_almost_equal(g, se.self_energy(h_onslice, hop))
+    assert_almost_equal(g, modes_se(h_onslice, hop))
 
 def test_singular():
     """This testcase features a rectangular (and hence singular)
@@ -105,8 +106,8 @@ def test_singular():
     h_onslice[w:, w:] = h_onslice_s
     g = se.square_self_energy(w, t, e)
 
-    print np.round(g, 5) / np.round(se.self_energy(h_onslice, h_hop), 5)
-    assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
+    print np.round(g, 5) / np.round(modes_se(h_onslice, h_hop), 5)
+    assert_almost_equal(g, modes_se(h_onslice, h_hop))
 
 def test_singular_but_square():
     """This testcase features a singular, square hopping matrices
@@ -132,7 +133,7 @@ def test_singular_but_square():
 
     g = np.zeros((2*w, 2*w), dtype=complex)
     g[:w, :w] = se.square_self_energy(w, t, e)
-    assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
+    assert_almost_equal(g, modes_se(h_onslice, h_hop))
 
 def test_singular_fully_degenerate():
     """This testcase features a rectangular (and hence singular)
@@ -165,7 +166,7 @@ def test_singular_fully_degenerate():
     g[:w, :w] = se.square_self_energy(w, t, e)
     g[w:, w:] = se.square_self_energy(w, t, e)
 
-    assert_almost_equal(g, se.self_energy(h_onslice, h_hop))
+    assert_almost_equal(g, modes_se(h_onslice, h_hop))
 
 def test_singular_degenerate_with_crossing():
     """This testcase features a rectangular (and hence singular)
@@ -199,13 +200,12 @@ def test_singular_degenerate_with_crossing():
     g[:w, :w] = se.square_self_energy(w, t, e)
     g[w:, w:] = -np.conj(se.square_self_energy(w, t, e))
 
-    assert_almost_equal(g,
-                        se.self_energy(h_onslice, h_hop))
+    assert_almost_equal(g, modes_se(h_onslice, h_hop))
 
 def test_singular_h_and_t():
     h = 0.1 * np.identity(6)
     t = np.eye(6, 6, 4)
-    sigma = se.self_energy(h, t)
+    sigma = modes_se(h, t)
     sigma_should_be = np.zeros((6,6))
     sigma_should_be[4, 4] = sigma_should_be[5, 5] = -10
     assert_almost_equal(sigma, sigma_should_be)
