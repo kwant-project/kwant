@@ -9,7 +9,7 @@
 from __future__ import division
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
-           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergy']
+           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergy', 'ModesLead']
 
 import abc
 import sys
@@ -18,7 +18,7 @@ import operator
 from itertools import izip, islice, chain
 import tinyarray as ta
 import numpy as np
-from . import system, graph
+from . import system, graph, physics
 
 
 ################ Sites and site families
@@ -450,7 +450,7 @@ class SelfEnergy(Lead):
     interface : sequence of `Site` instances
     """
     def __init__(self, self_energy_func, interface):
-        self.self_energy_func = self_energy_func
+        self._self_energy_func = self_energy_func
         self.interface = tuple(interface)
 
     def finalized(self):
@@ -458,7 +458,34 @@ class SelfEnergy(Lead):
         return self
 
     def self_energy(self, energy, args=()):
-        return self.self_energy_func(energy, args)
+        return self._self_energy_func(energy, args)
+
+
+class ModesLead(Lead):
+    """A general lead defined by its modes wave functions.
+
+    Parameters
+    ----------
+    modes_func : function
+        Function which returns the modes of the lead in the format required by
+        a solver given the energy and optionally a list of extra arguments.
+    interface : sequence of `Site` instances
+    """
+    def __init__(self, modes_func, interface):
+        self._modes_func = modes_func
+        self.interface = tuple(interface)
+
+    def finalized(self):
+        """Trivial finalization: the object is returned itself."""
+        return self
+
+    def modes(self, energy, args=()):
+        return self._modes_func(energy, args)
+
+    def self_energy(self, energy, args=()):
+        modes = self.modes(energy, args)
+        return physics.selfenergy(modes=modes)
+        
 
 
 ################ Builder class
