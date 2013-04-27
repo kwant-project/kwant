@@ -168,27 +168,16 @@ class SparseSolver(object):
         lead_info = []
         for leadnum, interface in enumerate(sys.lead_interfaces):
             lead = sys.leads[leadnum]
-            if isinstance(lead, system.InfiniteSystem) and not force_realspace:
-                h = lead.slice_hamiltonian(args=args)
-
-                if check_hermiticity:
-                    if not np.allclose(h, h.T.conj(), rtol=1e-13):
-                        msg = "Lead number {0} has a non-Hermitian " \
-                            "slice Hamiltonian."
-                        raise ValueError(msg.format(leadnum))
-
-                h -= energy * np.identity(h.shape[0])
-                v = lead.inter_slice_hopping(args=args)
-                modes = physics.modes(h, v)
+            if hasattr(lead, 'modes') and not force_realspace:
+                modes = lead.modes(energy, args=args)
                 lead_info.append(modes)
+                u, ulinv, nprop, svd_v = modes
 
-                # Note: np.any(v) returns (at least from NumPy 1.6.1 -
-                #       1.8-devel) False if v is purely imaginary
-                if not (np.any(v.real) or np.any(v.imag)):
+                if len(u) == 0:
                     # See comment about zero-shaped sparse matrices at the top.
                     rhs.append(np.zeros((lhs.shape[1], 0)))
                     continue
-                u, ulinv, nprop, svd_v = modes
+
                 if svd_v is not None:
                     svd_v = svd_v.T.conj()
 

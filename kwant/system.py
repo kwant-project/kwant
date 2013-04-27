@@ -68,7 +68,8 @@ class FiniteSystem(System):
     Instance Variables
     ------------------
     leads : sequence of lead objects
-        Each lead object has to provide a method ``self_energy(energy, args)``.
+        Each lead object has to provide a method ``self_energy(energy, args)``
+        or ``modes(energy, args)`` which calculates its self-energy or modes.
     lead_interfaces : sequence of sequences of integers
         Each sub-sequence contains the indices of the system sites to which the
         lead is connected.
@@ -144,6 +145,20 @@ class InfiniteSystem(System):
         neighbor_sites = xrange(self.slice_size, self.graph.num_nodes)
         return self.hamiltonian_submatrix(slice_sites, neighbor_sites,
                                           sparse=sparse, args=args)
+
+    def modes(self, energy, args=()):
+        """Return self-energy of a lead.
+
+        The returned matrix has the shape (n, n), where n is
+        ``sum(self.num_orbitals(i) for i in range(self.slice_size))``.
+        """
+        ham = self.slice_hamiltonian(args=args)
+        shape = ham.shape
+        assert len(shape) == 2
+        assert shape[0] == shape[1]
+        # Subtract energy from the diagonal.
+        ham.flat[::ham.shape[0] + 1] -= energy
+        return physics.modes(ham, self.inter_slice_hopping(args=args))
 
     def self_energy(self, energy, args=()):
         """Return self-energy of a lead.
