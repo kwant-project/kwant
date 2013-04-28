@@ -21,9 +21,9 @@ class LeadWithOnlySelfEnergy(object):
     def __init__(self, lead):
         self.lead = lead
 
-    def self_energy(self, energy, args=()):
+    def selfenergy(self, energy, args=()):
         assert args == ()
-        return self.lead.self_energy(energy)
+        return self.lead.selfenergy(energy)
 
 
 # Test output sanity: that an error is raised if no output is requested,
@@ -273,7 +273,7 @@ def test_tricky_singular_hopping(solve):
 
 # Test equivalence between self-energy and scattering matrix representations.
 # Also check that transmission works.
-def test_self_energy(solve):
+def test_selfenergy(solve):
     np.random.seed(4)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
@@ -316,7 +316,7 @@ def test_self_energy(solve):
     assert_almost_equal(t_should_be, sol.transmission(1, 0))
 
 
-def test_self_energy_reflection(solve):
+def test_selfenergy_reflection(solve):
     np.random.seed(4)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))

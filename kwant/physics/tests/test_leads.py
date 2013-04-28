@@ -11,7 +11,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 from kwant.physics import leads
 
-modes_se = lambda h, t: leads.self_energy(leads.modes(h, t))
+modes_se = lambda h, t: leads.selfenergy(leads.modes(h, t))
 
 def h_slice(t, w, e):
     h = (4 * t - e) * np.identity(w)
@@ -25,7 +25,7 @@ def test_analytic_numeric():
     t = 0.78                    # hopping element
     e = 1.3                     # Fermi energy
 
-    assert_almost_equal(leads.square_self_energy(w, t, e),
+    assert_almost_equal(leads.square_selfenergy(w, t, e),
                         modes_se(h_slice(t, w, e), -t * np.identity(w)))
 
 
@@ -48,8 +48,8 @@ def test_regular_fully_degenerate():
     h_onslice[w:, w:] = h_onslice_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
-    g[:w, :w] = leads.square_self_energy(w, t, e)
-    g[w:, w:] = leads.square_self_energy(w, t, e)
+    g[:w, :w] = leads.square_selfenergy(w, t, e)
+    g[w:, w:] = leads.square_selfenergy(w, t, e)
 
     assert_almost_equal(g, modes_se(h_onslice, h_hop))
 
@@ -78,8 +78,8 @@ def test_regular_degenerate_with_crossing():
     h_onslice[w:, w:] = -h_onslice_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
-    g[:w, :w] = leads.square_self_energy(w, t, e)
-    g[w:, w:] = -np.conj(leads.square_self_energy(w, t, e))
+    g[:w, :w] = leads.square_selfenergy(w, t, e)
+    g[w:, w:] = -np.conj(leads.square_selfenergy(w, t, e))
 
     assert_almost_equal(g, modes_se(h_onslice, hop))
 
@@ -104,7 +104,7 @@ def test_singular():
     h_onslice[:w, w:] = h_hop_s
     h_onslice[w:, :w] = h_hop_s
     h_onslice[w:, w:] = h_onslice_s
-    g = leads.square_self_energy(w, t, e)
+    g = leads.square_selfenergy(w, t, e)
 
     print np.round(g, 5) / np.round(modes_se(h_onslice, h_hop), 5)
     assert_almost_equal(g, modes_se(h_onslice, h_hop))
@@ -132,7 +132,7 @@ def test_singular_but_square():
     h_onslice[w:, w:] = h_onslice_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
-    g[:w, :w] = leads.square_self_energy(w, t, e)
+    g[:w, :w] = leads.square_selfenergy(w, t, e)
     assert_almost_equal(g, modes_se(h_onslice, h_hop))
 
 def test_singular_fully_degenerate():
@@ -163,8 +163,8 @@ def test_singular_fully_degenerate():
     h_onslice[3*w:4*w, 3*w:4*w] = h_onslice_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
-    g[:w, :w] = leads.square_self_energy(w, t, e)
-    g[w:, w:] = leads.square_self_energy(w, t, e)
+    g[:w, :w] = leads.square_selfenergy(w, t, e)
+    g[w:, w:] = leads.square_selfenergy(w, t, e)
 
     assert_almost_equal(g, modes_se(h_onslice, h_hop))
 
@@ -197,8 +197,8 @@ def test_singular_degenerate_with_crossing():
     h_onslice[3*w:4*w, 3*w:4*w] = -h_onslice_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
-    g[:w, :w] = leads.square_self_energy(w, t, e)
-    g[w:, w:] = -np.conj(leads.square_self_energy(w, t, e))
+    g[:w, :w] = leads.square_selfenergy(w, t, e)
+    g[w:, w:] = -np.conj(leads.square_selfenergy(w, t, e))
 
     assert_almost_equal(g, modes_se(h_onslice, h_hop))
 

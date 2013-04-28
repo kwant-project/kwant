@@ -10,4 +10,4 @@ Leads
 
    Bands
    modes
-   self_energy
+   selfenergy

@@ -28,6 +28,8 @@ Some renames
 ------------
 * site groups are now called site families.  This affects all the names that
   used to contain "group" or "groups".
+* ``self_energy`` has been renamed to ``selfenergy`` in all cases, most notably
+  in `kwant.physics.selfenergy`.
 * ``wave_func`` has been renamed to `~kwant.solvers.default.wave_function`,
 * ``MonatomicLattice`` has been renamed to `~kwant.lattice.Monatomic`,
 * ``PolyatomicLattice`` has been renamed to `~kwant.lattice.Polyatomic`.

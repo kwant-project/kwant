@@ -388,10 +388,10 @@ class Lead(object):
         Notes
         -----
         The finalized lead must at least have a single method
-        ``self_energy(energy)`` but it can be a full
+        ``selfenergy(energy)`` but it can be a full
         `kwant.system.InfiniteSystem` as well.
 
-        The method ``self_energy`` of the finalized lead must return a square
+        The method ``selfenergy`` of the finalized lead must return a square
         matrix of appropriate size.
 
         The order of interface sites is assumed to be preserved during
@@ -444,21 +444,21 @@ class SelfEnergy(Lead):
 
     Parameters
     ----------
-    self_energy_func : function
+    selfenergy_func : function
         Function which returns the self energy matrix for the interface sites
         given the energy and optionally a list of extra arguments.
     interface : sequence of `Site` instances
     """
-    def __init__(self, self_energy_func, interface):
-        self._self_energy_func = self_energy_func
+    def __init__(self, selfenergy_func, interface):
+        self._selfenergy_func = selfenergy_func
         self.interface = tuple(interface)
 
     def finalized(self):
         """Trivial finalization: the object is returned itself."""
         return self
 
-    def self_energy(self, energy, args=()):
-        return self._self_energy_func(energy, args)
+    def selfenergy(self, energy, args=()):
+        return self._selfenergy_func(energy, args)
 
 
 class ModesLead(Lead):
@@ -482,7 +482,7 @@ class ModesLead(Lead):
     def modes(self, energy, args=()):
         return self._modes_func(energy, args)
 
-    def self_energy(self, energy, args=()):
+    def selfenergy(self, energy, args=()):
         modes = self.modes(energy, args)
         return physics.selfenergy(modes=modes)
         

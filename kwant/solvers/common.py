@@ -224,7 +224,7 @@ class SparseSolver(object):
                     # See comment about zero-shaped sparse matrices at the top.
                     rhs.append(np.zeros((lhs.shape[1], 0)))
             else:
-                sigma = lead.self_energy(energy, args)
+                sigma = lead.selfenergy(energy, args)
                 lead_info.append(sigma)
                 indices = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                       for i in interface)]

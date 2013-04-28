@@ -81,19 +81,19 @@ def test_tricky_singular_hopping():
 
 
 @skipif(_no_mumps)
-def test_self_energy():
+def test_selfenergy():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_self_energy(solve)
+        _test_sparse.test_selfenergy(solve)
 
 
 @skipif(_no_mumps)
-def test_self_energy_reflection():
+def test_selfenergy_reflection():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_self_energy_reflection(solve)
+        _test_sparse.test_selfenergy_reflection(solve)
 
 
 @skipif(_no_mumps)

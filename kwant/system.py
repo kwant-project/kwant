@@ -69,7 +69,7 @@ class FiniteSystem(System):
     ------------------
     leads : sequence of lead objects
         Each lead has to provide a method 
-        ``self_energy(energy, args)`` or ``modes(energy, args)``.
+        ``selfenergy(energy, args)`` or ``modes(energy, args)``.
     lead_interfaces : sequence of sequences of integers
         Each sub-sequence contains the indices of the system sites to which the
         lead is connected.
@@ -78,7 +78,7 @@ class FiniteSystem(System):
     -----
     The length of `leads` must be equal to the length of `lead_interfaces`.
 
-    For lead ``n``, the method leads[n].self_energy must return a square matrix
+    For lead ``n``, the method leads[n].selfenergy must return a square matrix
     whose size is ``sum(self.num_orbitals(neighbor)`` for neighbor in
     self.lead_interfaces[n])``. The output format for ``leads[n].modes`` is more
     complicated, and it should match the output of `~kwant.physics.modes`.
@@ -161,10 +161,10 @@ class InfiniteSystem(System):
         ham.flat[::ham.shape[0] + 1] -= energy
         return physics.modes(ham, self.inter_slice_hopping(args=args))
 
-    def self_energy(self, energy, args=()):
+    def selfenergy(self, energy, args=()):
         """Return self-energy of a lead.
 
         The returned matrix has the shape (n, n), where n is
         ``sum(self.num_orbitals(i) for i in range(self.slice_size))``.
         """
-        return physics.self_energy(self.modes(energy, args=()))
+        return physics.selfenergy(self.modes(energy, args=()))
