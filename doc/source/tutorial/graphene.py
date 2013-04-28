@@ -70,7 +70,7 @@ def make_system(r=10, w=2.0, pot=0.1):
 
     def lead0_shape(pos):
         x, y = pos
-        return (-1 < x < 1) and (-0.4 * r < y < 0.4 * r)
+        return (-0.4 * r < y < 0.4 * r)
 
     lead0 = kwant.Builder(sym0)
     lead0[graphene.shape(lead0_shape, (0, 0))] = -pot
@@ -80,10 +80,8 @@ def make_system(r=10, w=2.0, pot=0.1):
     sym1 = kwant.TranslationalSymmetry(graphene.vec((0, 1)))
 
     def lead1_shape(pos):
-        x, y = pos
-        u = x * sin_30 + y * cos_30
-        v = y * sin_30 - x * cos_30
-        return (-1 < u < 1) and (-0.4 * r < v < 0.4 * r)
+        v = pos[1] * sin_30 - pos[0] * cos_30
+        return (-0.4 * r < v < 0.4 * r)
 
     lead1 = kwant.Builder(sym1)
     lead1[graphene.shape(lead1_shape, (0, 0))] = pot

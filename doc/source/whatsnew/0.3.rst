@@ -120,3 +120,14 @@ containing all the parameters as attributes::
 
 Arguments can be passed in an equivalent way in calls to
 `~kwant.solvers.default.wave_function` and `~kwant.solvers.default.ldos`.
+
+Lattice and shape improvements
+------------------------------
+`~kwant.lattice.Monoatomic.closest` now returns an exact, and not approximately
+closest point. A new method `~kwant.lattice.Monoatomic.n_closest` was added,
+which returns n closest lattice points. Likewise
+`~kwant.lattice.Polyatomic.shape` has acquired an improved flood-fill
+algorithm, making it work better on narrow ribbon (which were sometimes buggy
+before with non-square lattices). Additionally, it was made symmetry-aware, so
+if a shape is used for a lead, no conditions with regard to coordnate parallel
+to the lead period are required.

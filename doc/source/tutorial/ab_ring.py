@@ -73,7 +73,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
 
     def lead_shape(pos):
         (x, y) = pos
-        return (-1 < x < 1) and (-W / 2 < y < W / 2)
+        return (-W / 2 < y < W / 2)
 
     lead[lat.shape(lead_shape, (0, 0))] = 4 * t
     lead[lat.nearest] = -t

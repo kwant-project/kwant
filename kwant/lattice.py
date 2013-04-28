@@ -74,10 +74,6 @@ class Polyatomic(object):
     ------
     ValueError
         If dimensionalities do not match.
-
-    Notes
-    -----
-
     """
     def __init__(self, prim_vecs, basis, name=''):
         prim_vecs = ta.array(prim_vecs, float)
@@ -408,6 +404,17 @@ class Shape(object):
             and False otherwise.
         start : float vector
             The origin for the flood-fill algorithm.
+
+        Notes
+        -----
+        A ``Shape`` is a callable object: When called with a
+        `~kwant.builder.Builder` as sole argument, an instance of this class will
+        return an iterator over all the sites from the shape that are in the fundamental domain of the builder's symmetry.
+
+        Because a `~kwant.builder.Builder` can be indexed with functions or
+        iterables of functions, ``Shape`` instances (or any non-tuple
+        iterables of them, e.g. a list) can be used directly as "wildcards" when
+        setting or deleting sites.
         """
         self.lat, self.func, self.start = lattice, function, start
 
