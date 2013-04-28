@@ -38,7 +38,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     # and add the corresponding lattice points using the `shape`-function
 #HIDDEN_BEGIN_lcak
     sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
-    sys[lat.nearest] = -t
+    sys[lat.neighbors()] = -t
 #HIDDEN_END_lcak
 
     # In order to introduce a flux through the ring, we introduce a phase on
@@ -76,7 +76,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
         return (-W / 2 < y < W / 2)
 
     lead[lat.shape(lead_shape, (0, 0))] = 4 * t
-    lead[lat.nearest] = -t
+    lead[lat.neighbors()] = -t
 #HIDDEN_END_qwgr
 
     #### Attach the leads and return the system. ####

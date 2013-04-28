@@ -43,6 +43,15 @@ def test_general():
     assert_raises(ValueError, lat, 0, 1)
 
 
+def test_neighbors():
+    lat = lattice.honeycomb()
+    num_nth_nearest = [len(lat.neighbors(n)) for n in range(5)]
+    assert num_nth_nearest == [2, 3, 6, 3, 6]
+    lat = lattice.square()
+    num_nth_nearest = [len(lat.neighbors(n)) for n in range(5)]
+    assert num_nth_nearest == [1, 2, 2, 2, 4]
+
+
 def test_shape():
     def in_circle(pos):
         return pos[0] ** 2 + pos[1] ** 2 < 3

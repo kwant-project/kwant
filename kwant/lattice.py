@@ -11,6 +11,7 @@ from __future__ import division
 __all__ = ['TranslationalSymmetry', 'general', 'Polyatomic', 'Monatomic']
 
 from math import sqrt
+from itertools import product
 import numpy as np
 import tinyarray as ta
 from . import builder
@@ -103,6 +104,88 @@ class Polyatomic(object):
         See `~kwant.lattice.Shape` for more information.
         """
         return Shape(self, function, start)
+
+    def neighbors(self, n=1, eps=1e-8):
+        """
+        Return n-th nearest neighbor hoppings.
+
+        Parameters
+        ----------
+        n : integer
+            Order of the hoppings to return.
+        eps : float
+            A cutoff for when to consider lengths to be approximately equal.
+
+        Returns
+        -------
+        hoppings : list of kwant.builder.HopplingKind objects
+            A list n-th nearest neighbor hoppings.
+
+        Notes
+        -----
+        The hoppings are ordered lexicographically according to sublattice from
+        which they originate, sublattice on which they end, and their lattice
+        coordinates. Out of the two equivalent hoppings (a hopping and its
+        reverse) only the lexicographically larger one is returned.
+        """
+        # This algorithm is not designed to be fast and can be improved,
+        # however there is no real need.
+        sls = self.sublattices
+        nvec = len(self.prim_vecs)
+        sublat_pairs = [(i, j) for (i, j) in product(sls, sls)
+                        if sls.index(j) >= sls.index(i)]
+        def first_nonnegative(tag):
+            for i in tag:
+                if i < 0:
+                    return False
+                elif i > 0:
+                    return True
+                else:
+                    continue
+            return True
+
+        # Find the correct number of neighbors to calculate on each lattice.
+        cutoff = n + 2
+        while True:
+            max_dist = []
+            sites = []
+            for i, j in sublat_pairs:
+                origin = j(*ta.zeros(nvec)).pos
+                tags = i.n_closest(origin, n=cutoff**nvec)
+
+                ij_dist = [np.linalg.norm(i(*tag).pos - origin)
+                              for tag in tags]
+                sites.append((tags, (i, j), ij_dist))
+            max_dist = [i[2][-1] for i in sites]
+            distances = np.r_[tuple((i[2] for i in sites))]
+            distances = np.sort(distances)
+            group_boundaries = np.argwhere(np.diff(distances) > eps)
+            if len(group_boundaries) < n:
+                cutoff += 1
+                continue
+            n_dist = distances[group_boundaries[n]]
+            if np.all(max_dist > n_dist):
+                break
+            cutoff += 1
+
+        # We now have all the required sites, we need to find n-th.
+        result = []
+        for group in sites:
+            tags, distance = group[0], group[2]
+            i, j = group[1]
+            tags = np.array([tag for tag, dist in zip(tags, distance)
+                             if abs(dist - n_dist) < eps])
+            if len(tags):
+                # Sort the tags.
+                tags = tags[np.lexsort(tags.T[::-1])][::-1]
+                # Throw away equivalent hoppings if
+                # two sublattices are the same.
+                if i == j and len(tags) > 1:
+                    tags = tags[: len(tags) // 2]
+                for tag in tags:
+                    result.append(builder.HoppingKind(tag, j, i))
+        return result
+
 
     def vec(self, int_vec):
         """
@@ -489,15 +572,12 @@ class Shape(object):
 def chain(a=1, name=''):
     """Create a one-dimensional lattice."""
     lat = Monatomic(((a,),), name=name)
-    lat.nearest = [builder.HoppingKind((1,), lat, lat)]
     return lat
 
 
 def square(a=1, name=''):
     """Create a square lattice."""
     lat = Monatomic(((a, 0), (0, a)), name=name)
-    lat.nearest = [builder.HoppingKind((1, 0), lat, lat),
-                   builder.HoppingKind((0, 1), lat, lat)]
     return lat
 
 
@@ -506,7 +586,4 @@ def honeycomb(a=1, name=''):
     lat = Polyatomic(((a, 0), (0.5 * a, 0.5 * a * sqrt(3))),
                             ((0, 0), (0, a / sqrt(3))), name=name)
     lat.a, lat.b = lat.sublattices
-    lat.nearest = [builder.HoppingKind((0, 0), lat.a, lat.b),
-                   builder.HoppingKind((0, 1), lat.a, lat.b),
-                   builder.HoppingKind((-1, 1), lat.a, lat.b)]
     return lat

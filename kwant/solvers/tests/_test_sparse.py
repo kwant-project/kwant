@@ -382,7 +382,7 @@ def test_wavefunc_ldos_consistency(wave_function, ldos):
             h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
             h += h.conjugate().transpose()
             b[site] = h
-        for hopping_kind in square.nearest:
+        for hopping_kind in square.neighbors():
             for hop in hopping_kind(b):
                 b[hop] = 10 * np.random.rand(n, n) + 1j * np.random.rand(n, n)
     sys.attach_lead(left_lead)

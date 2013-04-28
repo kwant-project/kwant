@@ -14,7 +14,7 @@ obsolete.  Where previously one would have had ::
 
 now it suffices to write ::
 
-    sys[lat.nearest] = t
+    sys[lat.neighbors()] = t
 
 This is possible because `~kwant.builder.Builder` now accepts *functions* as
 keys in addition to `~kwant.builder.Site` objects and tuples of them
@@ -125,9 +125,13 @@ Lattice and shape improvements
 ------------------------------
 `~kwant.lattice.Monoatomic.closest` now returns an exact, and not approximately
 closest point. A new method `~kwant.lattice.Monoatomic.n_closest` was added,
-which returns n closest lattice points. Likewise
-`~kwant.lattice.Polyatomic.shape` has acquired an improved flood-fill
+which returns n closest lattice points.
+
+Likewise `~kwant.lattice.Polyatomic.shape` has acquired an improved flood-fill
 algorithm, making it work better on narrow ribbon (which were sometimes buggy
 before with non-square lattices). Additionally, it was made symmetry-aware, so
 if a shape is used for a lead, no conditions with regard to coordnate parallel
 to the lead period are required.
+
+Finally, lattices now have a method `~kwant.lattice.Polyatomic.neighbors`,
+which calculates all the n-th shortest possible hoppings on this lattice.

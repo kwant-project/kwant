@@ -28,7 +28,7 @@ def sys_2d(W=3, r1=3, r2=8):
         return r1 ** 2 < rsq < r2 ** 2
 
     sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
-    sys[lat.nearest] = -t
+    sys[lat.neighbors()] = -t
     sym_lead0 = kwant.TranslationalSymmetry(lat.vec((-1, 0)))
     lead0 = kwant.Builder(sym_lead0)
     lead2 = kwant.Builder(sym_lead0)
@@ -38,7 +38,7 @@ def sys_2d(W=3, r1=3, r2=8):
     lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
     lead2[lat.shape(lead_shape, (0, 0))] = 4 * t
     sys.attach_lead(lead2)
-    lead0[lat.nearest] = - t
+    lead0[lat.neighbors()] = - t
     lead1 = lead0.reversed()
     sys.attach_lead(lead0)
     sys.attach_lead(lead1)
@@ -47,8 +47,6 @@ def sys_2d(W=3, r1=3, r2=8):
 
 def sys_3d(W=3, r1=2, r2=4, a=1, t=1.0):
     lat = kwant.lattice.general(((a, 0, 0), (0, a, 0), (0, 0, a)))
-    lat.nearest = [kwant.builder.HoppingKind(*kind) for kind in
-                   [((1, 0, 0), lat), ((0, 1, 0), lat), ((0, 0, 1), lat)]]
     sys = kwant.Builder()
 
     def ring(pos):
@@ -56,14 +54,14 @@ def sys_3d(W=3, r1=2, r2=4, a=1, t=1.0):
         rsq = x ** 2 + y ** 2
         return (r1 ** 2 < rsq < r2 ** 2) and abs(z) < 2
     sys[lat.shape(ring, (0, -r2 + 1, 0))] = 4 * t
-    sys[lat.nearest] = - t
+    sys[lat.neighbors()] = - t
     sym_lead0 = kwant.TranslationalSymmetry(lat.vec((-1, 0, 0)))
     lead0 = kwant.Builder(sym_lead0)
 
     lead_shape = lambda pos: (-W / 2 < pos[1] < W / 2) and abs(pos[2]) < 2
 
     lead0[lat.shape(lead_shape, (0, 0, 0))] = 4 * t
-    lead0[lat.nearest] = - t
+    lead0[lat.neighbors()] = - t
     lead1 = lead0.reversed()
     sys.attach_lead(lead0)
     sys.attach_lead(lead1)

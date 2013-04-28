@@ -308,16 +308,16 @@ feature of kwant:
 In regular lattices, hoppings form large groups such that hoppings within a
 group can be transformed into one another by lattice translations. In order to
 allow to easily manipulate such hoppings, an object
-`~kwant.builder.HoppingKind` is provided. When given a `~kwant.builder.Builder` as
-an argument, `~kwant.builder.HoppingKind` yields all the hoppings of a
+`~kwant.builder.HoppingKind` is provided. When given a `~kwant.builder.Builder`
+as an argument, `~kwant.builder.HoppingKind` yields all the hoppings of a
 certain kind that can be added to this builder without adding new sites. When
 `~kwant.builder.HoppingKind` is given to `~kwant.builder.Builder` as a key, it
 means that something is done to all the possible hoppings of this kind. A list
 of `~kwant.builder.HoppingKind` objects corresponding to nearest neighbors in
-pre-defined lattices in kwant (that is `~kwant.lattice.chain`,
-`~kwant.lattice.square`, and `~kwant.lattice.honeycomb`) is stored in
-``lat.nearest``. ``sys[lat.nearest] = -t`` then sets all of those hopping
-matrix elements at once. More detailed example of using
+lattices in kwant is obtained using ``lat.neighbors()``. ``sys[lat.neighbors()]
+= -t`` then sets all of those hopping matrix elements at once. In order to set
+values for all the nth-nearest neighbors at once, one can similarly use
+``sys[lat.neighbors(n)] = -t``. More detailed example of using
 `~kwant.builder.HoppingKind` directly will be provided in
 :ref:`tutorial_spinorbit`.
 

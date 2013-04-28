@@ -36,8 +36,8 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
          for y in range(W))] = mu - 4 * t - barrier
 
     # hoppings for both electrons and holes
-    sys[lat_e.nearest] = -t
-    sys[lat_h.nearest] = t
+    sys[lat_e.neighbors()] = -t
+    sys[lat_h.neighbors()] = t
 
     # Superconducting order parameter enters as hopping between
     # electrons and holes
@@ -53,12 +53,12 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
     # left electron lead
     lead0 = kwant.Builder(sym_left)
     lead0[(lat_e(0, j) for j in xrange(W))] = 4 * t - mu
-    lead0[lat_e.nearest] = -t
+    lead0[lat_e.neighbors()] = -t
 
     # left hole lead
     lead1 = kwant.Builder(sym_left)
     lead1[(lat_h(0, j) for j in xrange(W))] = mu - 4 * t
-    lead1[lat_h.nearest] = t
+    lead1[lat_h.neighbors()] = t
 #HIDDEN_END_ttth
 
     # Then the lead to the right

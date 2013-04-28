@@ -29,7 +29,7 @@ def make_system(a=1, t=1.0, W=10, L=30):
     sys[(lat(x, y) for x in range(L) for y in range(W))] = 4 * t
 #HIDDEN_END_vvjt
 #HIDDEN_BEGIN_nooi
-    sys[lat.nearest] = -t
+    sys[lat.neighbors()] = -t
 #HIDDEN_END_nooi
 
     #### Define and attach the leads. ####
@@ -37,7 +37,7 @@ def make_system(a=1, t=1.0, W=10, L=30):
 #HIDDEN_BEGIN_iepx
     lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
     lead[(lat(0, j) for j in xrange(W))] = 4 * t
-    lead[lat.nearest] = -t
+    lead[lat.neighbors()] = -t
 #HIDDEN_END_iepx
 
     # Attach the left lead and its reversed copy.

@@ -59,9 +59,9 @@ we can simply write:
 Note that the Zeeman energy adds to the onsite term, whereas the Rashba
 spin-orbit term adds to the hoppings (due to the derivative operator).
 Furthermore, the hoppings in x and y-direction have a different matrix
-structure. We now cannot use ``lat.nearest`` to add all the hoppings at once,
-since we now have to distinguish x and y-direction. Because of that, we have to
-explicitly specify the hoppings in the form expected by
+structure. We now cannot use ``lat.neighbors()`` to add all the hoppings at
+once, since we now have to distinguish x and y-direction. Because of that, we
+have to explicitly specify the hoppings in the form expected by
 `~kwant.builder.HoppingKind`:
 
 - A tuple with relative lattice indices.  For example, `(1, 0)` means
@@ -248,7 +248,7 @@ provided by the lattice:
 
 Here, ``lat.shape`` takes as a second parameter a (real-space) point that is
 inside the desired shape. The hoppings can still be added using
-``lat.nearest`` as before.
+``lat.neighbors()`` as before.
 
 Up to now, the system contains constant hoppings and onsite energies,
 and we still need to include the phase shift due to the magnetic flux.

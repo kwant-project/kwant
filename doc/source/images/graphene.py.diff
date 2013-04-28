@@ -8,7 +8,7 @@
  
  
  # Define the graphene lattice
-@@ -102,22 +103,40 @@
+@@ -100,22 +101,40 @@
          smatrix = kwant.solve(sys, energy)
          data.append(smatrix.transmission(0, 1))
  
@@ -57,7 +57,7 @@
  
  
  def main():
-@@ -130,17 +149,22 @@
+@@ -128,17 +147,22 @@
          return 0 if site.family == a else 1
  
      # Plot the closed system without leads.
