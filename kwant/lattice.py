@@ -14,6 +14,7 @@ from math import sqrt
 import numpy as np
 import tinyarray as ta
 from . import builder
+from .linalg import lll
 
 
 def general(prim_vecs, basis=None, name=''):
@@ -96,67 +97,16 @@ class Polyatomic(object):
                             for offset, sname in zip(basis, name)]
         # Sequence of primitive vectors of the lattice.
         self.prim_vecs = prim_vecs
+        # Precalculation of auxiliary arrays for real space calculations.
+        self._reduced_vecs, self._transf = lll.lll(prim_vecs)
+        self._voronoi = ta.dot(lll.voronoi(self._reduced_vecs), self._transf)
 
     def shape(self, function, start):
+        """Yield sites belonging to a certain shape.
+
+        See `~kwant.lattice.Shape` for more information.
         """
-        Yield all the lattice sites which belong to a certain shape.
-
-        Parameters
-        ----------
-        function : a boolean function of real-space coordinates
-            A function which evaluates to True inside the desired shape.
-        start : real-valued vector
-            The starting point to the flood-fill algorithm.  If the site
-            nearest to `start` is not inside the shape, no sites are returned.
-
-        Returns
-        -------
-        sites : sequence of `Site` objects
-            all the sites that belong to the lattice and fit inside the shape.
-        """
-        Site = builder.Site
-
-        dim = len(start)
-        num_vecs = len(self.prim_vecs)
-        if dim != self.prim_vecs.shape[1]:
-            raise ValueError('Dimensionality of start position does not match'
-                             ' the space dimensionality.')
-        sls = self.sublattices
-        deltas = [ta.array(i * (0,) + (1,) + (num_vecs - 1 - i) * (0,))
-                  for i in xrange(num_vecs)]
-        deltas += [-delta for delta in deltas]
-
-        # Check if no sites are going to be added, to catch a common error.
-        empty = True
-        for sl in sls:
-            if function(sl(*sl.closest(start)).pos):
-                empty = False
-        if empty:
-            msg = 'No sites close to {0} are inside the desired shape.'
-            raise ValueError(msg.format(start))
-
-        # Continue to flood fill.
-        outer_shell = set(sl.closest(start) for sl in sls)
-        inner_shell = set()
-        while outer_shell:
-            tmp = set()
-            for tag in outer_shell:
-                vec = ta.dot(tag, self.prim_vecs)
-                any_hits = False
-                for sl in sls:
-                    if not function(vec + sl.offset):
-                        continue
-                    yield Site(sl, tag, True)
-                    any_hits = True
-                if not any_hits:
-                    continue
-                for shift in deltas:
-                    new_tag = tag + shift
-                    if new_tag not in inner_shell and \
-                       new_tag not in outer_shell:
-                        tmp.add(new_tag)
-            inner_shell = outer_shell
-            outer_shell = tmp
+        return Shape(self, function, start)
 
     def vec(self, int_vec):
         """
@@ -208,6 +158,9 @@ class Monatomic(builder.SiteFamily, Polyatomic):
         self.prim_vecs = prim_vecs
         self.inv_pv = ta.array(np.linalg.pinv(prim_vecs))
         self.offset = offset
+        # Precalculation of auxiliary arrays for real space calculations.
+        self._reduced_vecs, self._transf = lll.lll(prim_vecs)
+        self._voronoi = ta.dot(lll.voronoi(self._reduced_vecs), self._transf)
 
         def short_array_repr(array):
             full = ' '.join([i.lstrip() for i in repr(array).split('\n')])
@@ -245,9 +198,23 @@ class Monatomic(builder.SiteFamily, Polyatomic):
             raise ValueError("Dimensionality mismatch.")
         return tag
 
+    def n_closest(self, pos, n=1):
+        """Find n sites closest to position `pos`.
+
+        Returns
+        -------
+        sites : numpy array
+            An array with sites coordinates.
+        """
+        # TODO (Anton): transform to tinyarrays, once ta indexing is better.
+        return np.dot(lll.cvp(pos - self.offset, self._reduced_vecs, n),
+                      self._transf.T)
+
     def closest(self, pos):
-        """Find the site closest to position `pos`."""
-        return ta.array(ta.round(ta.dot(pos - self.offset, self.inv_pv)), int)
+        """
+        Find the lattice coordinates of the site closest to position `pos`.
+        """
+        return ta.array(self.n_closest(pos)[0])
 
     def pos(self, tag):
         """Return the real-space position of the site with a given tag."""
@@ -421,6 +388,93 @@ class TranslationalSymmetry(builder.Symmetry):
         result.is_reversed = not self.is_reversed
         result.periods = -self.periods
         return result
+
+
+class Shape(object):
+    def __init__(self, lattice, function, start):
+        """A class for finding all the lattice sites in a shape.
+
+        It uses a flood-fill algorithm, and takes into account
+        the symmetry of the builder to which it is provided, or
+        the symmetry, that is supplied to it after initialization.
+
+        Parameters
+        ----------
+        lattice : Polyatomic or Monoatomic lattice
+            Lattice, to which the resulting sites should belong.
+        function : callable
+            A function of real space coordinates, which should
+            return True for coordinates inside the shape,
+            and False otherwise.
+        start : float vector
+            The origin for the flood-fill algorithm.
+        """
+        self.lat, self.func, self.start = lattice, function, start
+
+    def __call__(self, builder_or_symmetry=None):
+        """
+        Yield all the lattice sites which belong to a certain shape.
+
+        Parameters
+        ----------
+        builder_or_symmetry : Builder or Symmetry instance
+            The builder to which the site from the shape are added, or
+            the symmetry, such that the sites from the shape belong to
+            its fundamental domain. If not provided, trivial symmetry is
+            used.
+
+        Returns
+        -------
+        sites : sequence of `Site` objects
+            all the sites that belong to the lattice and fit inside the shape.
+        """
+        Site = builder.Site
+        lat, func, start = self.lat, self.func, self.start
+        try:
+            symmetry = builder_or_symmetry.symmetry
+        except AttributeError:
+            symmetry = builder_or_symmetry
+        if symmetry is None:
+            symmetry = builder.NoSymmetry()
+
+        sym_site = lambda lat, tag: symmetry.to_fd(Site(lat, tag, True))
+
+        dim = len(start)
+        if dim != lat.prim_vecs.shape[1]:
+            raise ValueError('Dimensionality of start position does not match'
+                             ' the space dimensionality.')
+        sls = lat.sublattices
+        deltas = [ta.array(i) for i in lat._voronoi]
+
+        # Check if no sites are going to be added, to catch a common error.
+        empty = True
+        for sl in sls:
+            if func(sym_site(sl, sl.closest(start)).pos):
+                empty = False
+        if empty:
+            msg = 'No sites close to {0} are inside the desired shape.'
+            raise ValueError(msg.format(start))
+
+        # Continue to flood fill.
+        tags = set([sl.closest(start) for sl in sls])
+        new_sites = [sym_site(sl, tag) for sl in sls for tag in tags]
+        new_sites = [i for i in new_sites if func(i.pos)]
+        old_sites = set()
+        while new_sites:
+            tmp = set()
+            for site in new_sites:
+                yield site
+            tags = set((i.tag for i in new_sites))
+            for tag in tags:
+                for shift in deltas:
+                    for sl in sls:
+                        site = sym_site(sl, tag + shift)
+                        if site not in old_sites and \
+                           site not in new_sites and \
+                           func(site.pos):
+                            tmp.add(site)
+            old_sites = new_sites
+            new_sites = tmp
 
 
 ################ Library of lattices (to be extended)

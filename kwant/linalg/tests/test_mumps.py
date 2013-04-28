@@ -14,7 +14,6 @@ except ImportError:
 
 from kwant.lattice import honeycomb
 from kwant.builder import Builder, HoppingKind
-from nose.tools import assert_equal, assert_true
 from numpy.testing.decorators import skipif
 import numpy as np
 import scipy.sparse as sp

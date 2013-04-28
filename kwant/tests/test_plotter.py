@@ -33,9 +33,7 @@ def sys_2d(W=3, r1=3, r2=8):
     lead0 = kwant.Builder(sym_lead0)
     lead2 = kwant.Builder(sym_lead0)
 
-    def lead_shape(pos):
-        (x, y) = pos
-        return (-1 < x < 1) and (-W / 2 < y < W / 2)
+    lead_shape = lambda pos: (-W / 2 < pos[1] < W / 2)
 
     lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
     lead2[lat.shape(lead_shape, (0, 0))] = 4 * t
@@ -62,9 +60,7 @@ def sys_3d(W=3, r1=2, r2=4, a=1, t=1.0):
     sym_lead0 = kwant.TranslationalSymmetry(lat.vec((-1, 0, 0)))
     lead0 = kwant.Builder(sym_lead0)
 
-    def lead_shape(pos):
-        (x, y, z) = pos
-        return (-1 < x < 1) and (-W / 2 < y < W / 2) and abs(z) < 2
+    lead_shape = lambda pos: (-W / 2 < pos[1] < W / 2) and abs(pos[2]) < 2
 
     lead0[lat.shape(lead_shape, (0, 0, 0))] = 4 * t
     lead0[lat.nearest] = - t

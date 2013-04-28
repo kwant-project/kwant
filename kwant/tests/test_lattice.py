@@ -15,6 +15,19 @@ from numpy.testing import assert_equal
 from kwant import lattice
 
 
+def test_closest():
+    np.random.seed(4)
+    lat = lattice.general(((1, 0), (0.5, sqrt(3)/2)))
+    for i in range(50):
+        point = 20 * np.random.rand(2)
+        closest = lat(*lat.closest(point)).pos
+        assert np.linalg.norm(point - closest) <= 1 / sqrt(3)
+    lat = lattice.general(np.random.randn(3, 3))
+    for i in range(50):
+        tag = np.random.randint(10, size=(3,))
+        assert_equal(lat.closest(lat(*tag).pos), tag)
+
+
 def test_general():
     for lat in (lattice.general(((1, 0), (0.5, 0.5))),
                 lattice.general(((1, 0), (0.5, sqrt(3)/2)),
@@ -36,7 +49,7 @@ def test_shape():
 
     lat = lattice.general(((1, 0), (0.5, sqrt(3) / 2)),
                                ((0, 0), (0, 1 / sqrt(3))))
-    sites = list(lat.shape(in_circle, (0, 0)))
+    sites = list(lat.shape(in_circle, (0, 0))())
     sites_alt = list()
     sl0, sl1 = lat.sublattices
     for x in xrange(-2, 3):
@@ -47,8 +60,15 @@ def test_shape():
                     sites_alt.append(site)
     assert len(sites) == len(sites_alt)
     assert_equal(set(sites), set(sites_alt))
-    assert_raises(ValueError, lat.shape(in_circle, (10, 10)).next)
-
+    assert_raises(ValueError, lat.shape(in_circle, (10, 10))().next)
+    # Check if narrow ribbons work.
+    for period in (0, 1), (1, 0), (1, -1):
+        vec = lat.vec(period)
+        sym = lattice.TranslationalSymmetry(vec)
+        def shape(pos):
+            return abs(pos[0] * vec[1] - pos[1] * vec[0]) < 10
+        sites = list(lat.shape(shape, (0, 0))(sym))
+        assert len(sites) > 35
 
 def test_translational_symmetry():
     ts = lattice.TranslationalSymmetry
