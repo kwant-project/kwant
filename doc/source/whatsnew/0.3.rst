@@ -133,6 +133,3 @@ responsibility.
 The new class `~kwant.builder.ModesLead` allows to attach leads that have a
 custom way of calculating their modes (e.g. ideal leads) directly to a
 `~kwant.builder.Builder`.
-
-`~kwant.physics.selfenergy` now uses the output of `~kwant.physics.modes` as
-input instead of the slice Hamiltonian and inter-slice hopping.

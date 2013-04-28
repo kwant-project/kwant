@@ -11,7 +11,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 from kwant.physics import leads
 
-modes_se = lambda h, t: leads.selfenergy(leads.modes(h, t))
+modes_se = leads.selfenergy
 
 def h_slice(t, w, e):
     h = (4 * t - e) * np.identity(w)

@@ -481,7 +481,7 @@ class ModesLead(Lead):
 
     def selfenergy(self, energy, args=()):
         modes = self.modes(energy, args)
-        return physics.selfenergy(modes=modes)
+        return physics.selfenergy_from_modes(modes=modes)
 
 
 

@@ -148,10 +148,10 @@ class InfiniteSystem(System):
                                           sparse=sparse, args=args)
 
     def modes(self, energy, args=()):
-        """Return self-energy of a lead.
+        """Return mode decomposition of the lead
 
-        The returned matrix has the shape (n, n), where n is
-        ``sum(self.num_orbitals(i) for i in range(self.slice_size))``.
+        See documentation of `~kwant.physics.Modes` for the return
+        format details.
         """
         ham = self.slice_hamiltonian(args=args)
         shape = ham.shape
@@ -167,4 +167,10 @@ class InfiniteSystem(System):
         The returned matrix has the shape (n, n), where n is
         ``sum(self.num_orbitals(i) for i in range(self.slice_size))``.
         """
-        return physics.selfenergy(self.modes(energy, args=()))
+        ham = self.slice_hamiltonian(args=args)
+        shape = ham.shape
+        assert len(shape) == 2
+        assert shape[0] == shape[1]
+        # Subtract energy from the diagonal.
+        ham.flat[::ham.shape[0] + 1] -= energy
+        return physics.selfenergy(ham, self.inter_slice_hopping(args=args))
