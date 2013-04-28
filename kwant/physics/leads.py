@@ -17,7 +17,7 @@ from .. import linalg as kla
 
 dot = np.dot
 
-__all__ = ['selfenergy', 'modes', 'Modes']
+__all__ = ['selfenergy', 'modes', 'ModesTuple', 'selfenergy_from_modes']
 
 Linsys = namedtuple('Linsys', ['eigenproblem', 'v', 'extract', 'project'])
 
@@ -31,6 +31,9 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         Hamiltonian of a single lead slice.
     h_hop : numpy array with shape (n, m), m <= n
         Hopping Hamiltonian from the slice to the next one.
+    tol : float
+        Numbers are considered zero when they are smaller than `tol` times
+        the machine precision.
 
     Returns
     -------
@@ -374,8 +377,26 @@ def unified_eigenproblem(a, b=None, tol=1e6):
     return ev, select, propselect, vec_gen, ord_schur
 
 
-Modes = namedtuple('Modes', ['vecs', 'vecslmbdainv', 'nmodes', 'svd'])
+_Modes = namedtuple('ModesTuple', ['vecs', 'vecslmbdainv', 'nmodes', 'svd'])
+modes_docstring = """Eigendecomposition of a translation operator.
 
+A named tuple with attributes `(vecs, vecslmbdainv, nmodes, v)`.  The
+translation eigenproblem is written in the basis `psi_n, h_hop^+ * psi_(n+1)`,
+with ``h_hop`` the hopping between unit cells.  If `h_hop` is not invertible
+with singular value decomposition `u s v^+`, then the eigenproblem is written
+in the basis `v^+ psi_n, s u^+ psi_(n+1)`. `vecs` and `vecslmbdainv` are the
+first and the second halves of the wave functions.  The first `nmodes` are
+eigenmodes moving in the negative direction (hence they are incoming into the
+system in kwant convention), the second `nmodes` are eigenmodes moving in the
+positive direction. The remaining modes are Schur vectors of the modes
+evanescent in the positive direction. Propagating modes with the same
+eigenvalue are orthogonalized, and all the propagating modes are normalized to
+carry unit current.
+"""
+d = dict(_Modes.__dict__)
+d.update(__doc__=modes_docstring)
+ModesTuple = type('ModesTuple', _Modes.__bases__, d)
+del _Modes, d, modes_docstring
 
 def modes(h_onslice, h_hop, tol=1e6):
     """
@@ -388,17 +409,15 @@ def modes(h_onslice, h_hop, tol=1e6):
     h_hop : numpy array, real or complex, shape (N,M)
         The hopping matrix from a lead slice to the one on which self-energy
         has to be calculated (and any other hopping in the same direction).
+    tol : float
+        Numbers and differences are considered zero when they are smaller
+        than `tol` times the machine precision.
 
     Returns
     -------
-    Modes(vecs, vecslmbdainv, nmodes, v) : a named tuple
-        `vecs` is the matrix of eigenvectors of the translation operator.
-        `vecslmbdainv` is the matrix of eigenvectors multiplied with their
-        corresponding inverse eigenvalue and with the hermitian conjugate
-        of the hopping matrix. `nmodes` is the number of propagating modes
-        in either direction. `v` is the last matrix of the hopping matrix
-        singular value decomposition (u, s, v), or None if `h_hop` is
-        invertible.
+    ModesTuple(vecs, vecslmbdainv, nmodes, v) : a named tuple
+        See notes below and `~kwant.physics.ModesTuple`
+        documentation for details.
 
     Notes
     -----
@@ -440,7 +459,7 @@ def modes(h_onslice, h_hop, tol=1e6):
     if not (np.any(h_hop.real) or np.any(h_hop.imag)):
         n = h_hop.shape[0]
         v = np.empty((0, m))
-        return Modes(np.empty((0, 0)), np.empty((0, 0)), 0, v)
+        return ModesTuple(np.empty((0, 0)), np.empty((0, 0)), 0, v)
 
     # Defer most of the calculation to helper routines.
     matrices, v, extract, project = setup_linsys(h_onslice, h_hop, tol)
@@ -500,7 +519,7 @@ def modes(h_onslice, h_hop, tol=1e6):
                          prop_vecs[:n, rprop][:, rsort],
                          evan_vecs[:n]]
 
-    return Modes(vecs, vecslmbdainv, nmodes, v)
+    return ModesTuple(vecs, vecslmbdainv, nmodes, v)
 
 
 def selfenergy_from_modes(lead_modes):
@@ -509,9 +528,9 @@ def selfenergy_from_modes(lead_modes):
 
     Parameters
     ----------
-    lead_modes : Modes(vecs, vecslmbdainv, nmodes, v) a named tuple
-        The modes in the lead, as calculated by
-        `kwant.physics.modes`.
+    lead_modes : ModesTuple(vecs, vecslmbdainv, nmodes, v) a named tuple
+        The modes in the lead, with format defined in
+        `~kwant.physics.ModesTuple`.
 
     Returns
     -------
@@ -546,7 +565,8 @@ def selfenergy(h_onslice, h_hop, tol=1e6):
         The hopping matrix from a lead slice to the one on which self-energy
         has to be calculated (and any other hopping in the same direction).
     tol : float
-        Tolerance for numerical error.
+        Numbers are considered zero when they are smaller than `tol` times
+        the machine precision.
 
     Returns
     -------

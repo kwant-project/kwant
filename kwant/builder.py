@@ -464,8 +464,9 @@ class ModesLead(Lead):
     Parameters
     ----------
     modes_func : function
-        Function which returns the modes of the lead in the format required by
-        a solver given the energy and optionally a list of extra arguments.
+        Function which returns the modes of the lead in the format specified
+        in `~kwant.physics.ModesTuple` given the energy and optionally a list of
+        extra arguments.
     interface : sequence of `Site` instances
     """
     def __init__(self, modes_func, interface):

@@ -94,8 +94,7 @@ class SparseSolver(object):
     def _make_linear_sys(self, sys, out_leads, in_leads, energy=0,
                         force_realspace=False, check_hermiticity=True,
                         args=()):
-        """
-        Make a sparse linear system of equations defining a scattering
+        """Make a sparse linear system of equations defining a scattering
         problem.
 
         Parameters
@@ -129,9 +128,9 @@ class SparseSolver(object):
             a small part of the complete solution).
         lead_info : list of objects
             Contains one entry for each lead.  For a lead defined as a
-            tight-binding system, this is an instance of `kwant.physics.Modes`
-            (as returned by `kwant.physics.modes`), otherwise the lead
-            self-energy matrix.
+            tight-binding system, this is an instance of
+            `~kwant.physics.ModesTuple` with a corresponding format,
+            otherwise the lead self-energy matrix.
 
         Notes
         -----
@@ -139,6 +138,7 @@ class SparseSolver(object):
         or a low-level translationally invariant system.
         The system of equations that is created is described in
         kwant/doc/other/linear_system.pdf
+
         """
 
         splhsmat = getattr(sp, self.lhsformat + '_matrix')
@@ -393,7 +393,7 @@ class SparseSolver(object):
             self._make_linear_sys(fsys, [], xrange(len(fsys.leads)), energy,
                                   args=args)
 
-        Modes = physics.Modes
+        Modes = physics.ModesTuple
         num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
                              for li in lead_info if isinstance(li, Modes))
         num_orb = h.shape[0] - num_extra_vars
@@ -456,7 +456,7 @@ class WaveFunction(object):
         (h, self.rhs, kept_vars), lead_info = \
             solver._make_linear_sys(sys, [], xrange(len(sys.leads)),
                                     energy, args=args)
-        Modes = physics.Modes
+        Modes = physics.ModesTuple
         num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
                              for li in lead_info if isinstance(li, Modes))
         self.solver = solver
