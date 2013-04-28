@@ -387,15 +387,12 @@ class Lead(object):
 
         Notes
         -----
-        The finalized lead must at least have a single method
-        ``selfenergy(energy)`` but it can be a full
-        `kwant.system.InfiniteSystem` as well.
+        The finalized lead must be an object that can be used as a lead in a
+        `kwant.system.FiniteSystem`.  It could be an instance of
+        `kwant.system.InfiniteSystem` for example.
 
-        The method ``selfenergy`` of the finalized lead must return a square
-        matrix of appropriate size.
-
-        The order of interface sites is assumed to be preserved during
-        finalization.
+        The order of sites for the finalized lead must be the one specified in
+        `interface`.
         """
         pass
 
@@ -485,7 +482,7 @@ class ModesLead(Lead):
     def selfenergy(self, energy, args=()):
         modes = self.modes(energy, args)
         return physics.selfenergy(modes=modes)
-        
+
 
 
 ################ Builder class
