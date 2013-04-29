@@ -64,10 +64,10 @@ def test_hamiltonian_submatrix():
     sys.attach_lead(lead)
     sys2 = sys.finalized()
     smatrix = kwant.solve(sys2, .1).data
-    sys3 = sys2.precalculate(.1)
+    sys3 = sys2.precalculate(.1, calculate_selfenergy=False)
     smatrix2 = kwant.solve(sys3, .1).data
     np.testing.assert_almost_equal(smatrix, smatrix2)
-    assert_raises(ValueError, kwant.solve, sys3, 0.2)
+    assert_raises(ValueError, kwant.solve, sys3, 0.2, None, None, True)
 
     # Test for shape errors.
     sys[gr(0), gr(2)] = np.array([[1, 2]])
