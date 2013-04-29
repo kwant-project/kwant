@@ -104,67 +104,83 @@ You can make this setting permanent by adding this line to the file
 Mac OS X
 --------
 
-(Please help to improve these instructions.)
+These instructions were verified in April 2013 under Mac OS X 10.8.2
 
-These are instructions for installing kwant on Mac computers using the software
-MacPorts.  MacPorts allows to download and install a large number of
-open-source software packages.  There exist also other ways to install the
-required libraries.
+The instructions also include installing MUMPS for optimal performance
+of kwant. If you choose to omit MUMPS, you can skip over the optional
+steps 3 and 5.
 
-Following these instructions will install kwant without `MUMPS
-<http://graal.ens-lyon.fr/MUMPS/>`_.  It is well possible to use MUMPS under OS
-X - most likely you will have to install it from source.  The section `Build
-configuration`_ explains how to tell kwant where to find your self-compiled
-MUMPS.
+1. Install the current version of `MacPorts
+   <http://www.macports.org/>`_.  As a prerequisite, you will also
+   have to install a current version of Xcode (Apple's developer
+   tools). For that, follow the `installation instructions of MacPorts
+   <http://www.macports.org/install.php>`_. (Note that you will need an
+   account with Apple to download the latest version of Xcode).
 
-These instructions were verified in November 2011 under Mac OS X 10.6.8.
+2. Install the required packages::
 
-1. Install a fresh version of Xcode (Apple's development environment).
-
-2. Install `MacPorts <http://www.macports.org/>`_.  After installation, you
-   probably want to update its data base with ::
-
-       sudo port selfupdate
-
-3. OPTIONAL: Install a more recent gcc compiler::
-
-       sudo port install mp-gcc44
-
-   (``port search gcc`` will give you the available versions) and set it as
-   your default ::
-
-       sudo port select --set gcc mp-gcc44
-
-   (``port select gcc`` will give you the possible choices)
-
-4. Install the required packages::
-
+       sudo port install gcc48
        sudo port install python27
-       sudo port install py27-scipy
-       sudo port install py27-matplotlib
-
-5. You might need to modify the matplotlib configuration file::
-
-       > python
-       >>> import matplotlib
-       >>> matplotlib.matplotlib_fname()
-       '/Users/username/.matplotlib/matplotlibrc'
-
-    Edit the corresponding ``matplotlibrc`` configuration file, look for the
-    line starting with backend and modify it to::
-
-       backend      : MacOSX
-
-6. Set python 2.7 as your default. ::
-
        sudo port select --set python python27
+       sudo port install py27-numpy py27-scipy py27-cython py27-matplotlib
 
-7. Unpack tinyarray, enter its directory, build and install. ::
+3. (OPTIONAL) For the best performance, install also the MUMPS library and its
+   prerequisites.
+
+   * Download `METIS <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_.
+     You need to download version 4.0.3 from the METIS `download page
+     <http://glaros.dtc.umn.edu/gkhome/fsroot/sw/metis/OLD>`_ (the newer
+     versions have an incompatible interface).
+
+     In order to compile metis, edit the corresponding lines in
+     ``Makefile.in`` such that they read::
+
+         CC = gcc-mp-4.8
+         COPTIONS = -fPIC
+         LDOPTIONS = -fPIC
+
+     Then, execute ``make``.
+
+   * Download `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_. In order to install
+     it, copy ``Make.inc/Makefile.gfortran.SEQ`` to ``Makefile.inc``, and
+     edit in it the corresponding lines such they read::
+
+         LMETISDIR = <metisdir>
+         LMETIS    = -L$(LMETISDIR) -lmetis
+
+         ORDERINGSF  = -Dpord -Dmetis
+
+         CC = gcc-mp-4.8
+         FC = gfortran-mp-4.8
+         FL = gfortran-mp-4.8
+
+         LIBBLAS = -lblas
+
+         OPTF = -O -DALLOW_NON_INIT -fPIC
+         OPTL = -O -fPIC
+         OPTC = -O -fPIC
+
+     where ``<metisdir>`` is the directory of METIS.
+
+     Then, execute ``make all``.
+
+4. Unpack tinyarray, enter its directory, build and install::
 
        python setup.py build
        sudo python setup.py install
 
-8. Go to the kwant directory, build and install. ::
+5. (OPTIONAL) To make kwant use MUMPS, go to the kwant directory, and
+   edit ``build.conf`` to read::
+
+       [mumps]
+       include_dirs = <mumpsdir>/include
+       library_dirs = <mumpsdir>/lib <mumpsdir>/libseq <metisdir>/
+       libraries = zmumps mumps_common pord metis mpiseq
+
+   where ``<mumpsdir>`` and <metisdir>`` are the driectories of the previously
+   installed MUMPS and METIS.
+
+6. Then, build and install kwant. ::
 
        python setup.py build
        sudo python setup.py install
