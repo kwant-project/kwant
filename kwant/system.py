@@ -13,6 +13,7 @@ __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 
 import abc
 import types
+from copy import copy
 import numpy as np
 from . import physics, _system
 
@@ -90,6 +91,57 @@ class FiniteSystem(System):
     """
     __metaclass__ = abc.ABCMeta
 
+    def precalculate(self, energy, args=(), leads=None, check=True,
+                     calculate_selfenergy=True):
+        """
+        Precalculate modes or self-energies in the leads.
+
+        Construct a copy of the system, with the lead modes precalculated,
+        which may significantly speed up calculations where only the system
+        is changing.
+
+        Parameters
+        ----------
+        energy : float
+            Energy at which the modes or self-energies have to be
+            evaluated.
+        args : sequence
+            Additional parameters required for calculating the Hamiltionians
+        leads : list of integers or None
+            Numbers of the leads to be precalculated. If `None`, all are
+            precalculated.
+        check : bool
+            Whether the resulting system should raise an error if solving
+            is attempted at parameter or energy values other than used
+            during precalculation.
+        calculate_selfenergy : bool
+            Whether to calculate self-energy if modes are available.
+
+        Returns
+        -------
+        sys : FiniteSystem
+            A copy of the original system with some leads precalculated.
+        """
+        result = copy(self)
+        if leads is None:
+            leads = range(len(self.leads))
+        new_leads = []
+        res_energy, res_args = (energy, args) if check else (None, None)
+        for nr, lead in enumerate(self.leads):
+            if nr not in leads:
+                new_leads.append(lead)
+                continue
+            modes, selfenergy = None, None
+            try:
+                modes = lead.modes(energy, args)
+                if calculate_selfenergy:
+                    selfenergy = physics.selfenergy_from_modes(modes)
+            except AttributeError:
+                selfenergy = lead.selfenergy(energy, args)
+            new_leads.append(PrecalculatedLead(modes, selfenergy, res_energy,
+                                               res_args))
+        result.leads = new_leads
+        return result
 
 class InfiniteSystem(System):
     """
@@ -175,3 +227,60 @@ class InfiniteSystem(System):
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
         return physics.selfenergy(ham, self.inter_slice_hopping(args=args))
+
+
+class PrecalculatedLead(object):
+    def __init__(self, modes=None, selfenergy=None, energy=None, args=None):
+        """A general lead defined by its self energy.
+
+        Parameters
+        ----------
+        modes : kwant.physics.ModesTuple
+            Modes of the lead.
+        selfenergy : numpy array
+            Lead self-energy.
+        energy : float
+            Energy at which modes or self-energy were calculated.
+        args : sequence
+            Extra parameters used in the calculation.
+
+        Raises
+        ------
+        ValueError
+            If modes or self-energy are requested, at the energy or argument
+            values different from the ones specified during initialization.
+            If the initial values were `None`, no check is performed.
+
+        Notes
+        -----
+        At least one of `modes` and `selfenergy` must be provided.
+        """
+        if modes is None and selfenergy is None:
+            raise ValueError("No precalculated values provided.")
+        self._modes = modes
+        self._selfenergy = selfenergy
+        self._energy = energy
+        self._args = args
+
+    def _check_params(self, energy, args=()):
+        cond1 = self._energy is not None and self._energy != energy
+        cond2 = self._args is not None and tuple(self._args) != tuple(args)
+        if cond1 or cond2:
+            raise ValueError("The lead modes or self-energy are requested "
+                             "at parameter values different from the ones "
+                             "at which they were evaluated.")
+
+    def modes(self, energy, args=()):
+        self._check_params(energy, args)
+        if self._modes is not None:
+            return self._modes
+        else:
+            raise ValueError("No precalculated modes were provided.")
+
+    def selfenergy(self, energy, args=()):
+        self._check_params(energy, args)
+        return self._selfenergy
+        if self._selfenergy is not None:
+            return self._selfenergy
+        else:
+            raise ValueError("No precalculated self-energy was provided.")

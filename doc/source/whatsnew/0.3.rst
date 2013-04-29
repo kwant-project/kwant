@@ -133,3 +133,8 @@ responsibility.
 The new class `~kwant.builder.ModesLead` allows to attach leads that have a
 custom way of calculating their modes (e.g. ideal leads) directly to a
 `~kwant.builder.Builder`.
+
+Modes or self-energies can now be precomputed before passing the system to a
+solver, using the method `~kwant.system.FiniteSystem.precalculate`. This may
+save time, when the linear system has to be solved many times with the same
+lead parameters.
