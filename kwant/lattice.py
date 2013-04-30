@@ -155,7 +155,7 @@ class Polyatomic(object):
 
                 ij_dist = [np.linalg.norm(i(*tag).pos - origin)
                               for tag in tags]
-                sites.append((tags, (i, j), ij_dist))
+                sites.append((tags, (j, i), ij_dist))
             max_dist = [i[2][-1] for i in sites]
             distances = np.r_[tuple((i[2] for i in sites))]
             distances = np.sort(distances)
