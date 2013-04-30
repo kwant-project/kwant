@@ -175,7 +175,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         A[n_nonsing:, n_nonsing:] = -temp2
         temp2 = dot(v.T.conj(), temp)
         if need_to_stabilize:
-            A[:n_nonsing, :n_nonsing] += temp2
+            A[:n_nonsing, :n_nonsing] += 1j *temp2
         A[:n_nonsing, n_nonsing:] = -temp2
 
         temp = kla.lu_solve(sol, u_s)

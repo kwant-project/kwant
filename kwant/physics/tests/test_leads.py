@@ -10,6 +10,7 @@ from __future__ import division
 import numpy as np
 from numpy.testing import assert_almost_equal
 from kwant.physics import leads
+import kwant
 
 modes_se = leads.selfenergy
 
@@ -217,3 +218,14 @@ def test_modes():
     assert svd is None
     np.testing.assert_almost_equal((vecs[0] *  vecslinv[0].conj()).imag,
                                    [0.5, -0.5])
+
+def test_modes_bearder_ribbon():
+    # Check if bearded graphene ribbons work.
+    lat = kwant.lattice.honeycomb()
+    sys = kwant.Builder(kwant.TranslationalSymmetry((1, 0)))
+    sys[lat.shape((lambda pos: -20 < pos[1] < 20 and -2 < pos[0] < 2),
+                  (0, 0))] = 0.3
+    sys[lat.nearest] = -1
+    sys = sys.finalized()
+    h, t = sys.slice_hamiltonian(), sys.inter_slice_hopping()
+    assert leads.modes(h, t).nmodes == 8  # Calculated by plotting dispersion.
