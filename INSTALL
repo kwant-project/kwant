@@ -62,9 +62,11 @@ Unix-like systems (Linux)
 kwant should run on all recent Unix-like systems.  The following instructions
 have been verified to work on Debian 6 (Squeeze) or newer, and on Ubuntu 12.04
 or newer.  For other systems step 1 will likely have to be adapted.  If
-``sudo`` is not available, the respective command must be run as root.
+Ubuntu-style ``sudo`` is not available, the respective command must be run as
+root.
 
-1. Install the required packages by running the command ::
+1. Install the required packages.  On Debian-based systems like Ubuntu this can
+   be done by running the command ::
 
        sudo apt-get install python-dev python-scipy python-matplotlib \
        python-nose g++ gfortran libopenblas-dev liblapack-dev \
