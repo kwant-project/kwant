@@ -2,12 +2,14 @@
 Authors of kwant
 ================
 
-The principal developers of kwant are (in alphabetic order)
+The principal developers of kwant are
 
-* Anton R. Akhmerov <anton.akhmerov@gmail.com>
-* Christoph W. Groth <christoph.groth@cea.fr>
-* Xavier Waintal <xavier.waintal@cea.fr>
-* Michael Wimmer <wimmer@lorentz.leidenuniv.nl>
+* Christoph W. Groth (SPSMS-INAC-CEA Grenoble)
+* Michael Wimmer (Leiden University)
+* Anton R. Akhmerov (Harvard University, Leiden University)
+* Xavier Waintal (SPSMS-INAC-CEA Grenoble)
+
+The authors can be reached at authors@kwant-project.org.
 
 The contributions of Christoph and Xavier are part of their work at `CEA
 <http://cea.fr>`_, the French Commissariat à l'énergie atomique et aux énergies
