@@ -21,7 +21,7 @@ __all__ = ['selfenergy', 'modes', 'ModesTuple', 'selfenergy_from_modes']
 
 Linsys = namedtuple('Linsys', ['eigenproblem', 'v', 'extract', 'project'])
 
-def setup_linsys(h_onslice, h_hop, tol=1e6):
+def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
     """
     Make an eigenvalue problem for eigenvectors of translation operator.
 
@@ -34,6 +34,18 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
     tol : float
         Numbers are considered zero when they are smaller than `tol` times
         the machine precision.
+    algorithm : tuple or 3 booleans or None
+        Which steps of the eigenvalue prolem stabilization to perform.
+        The first value selects whether to work in the basis of the
+        hopping svd, or lattice basis. If the real space basis is chosen, the
+        following two options do not apply.
+        The second value selects whether to add an anti-Hermitian term to the
+        slice Hamiltonian before inverting. Finally the third value selects
+        whether to reduce a generalized eigenvalue problem to the regular one.
+        The default value, `None`, results in kwant selecting the algorithm
+        that is the most efficient without sacrificing stability. Manual
+        selection may result in either slower performance, or large numerical
+        errors, and is mostly required for testing purposes.
 
     Returns
     -------
@@ -69,7 +81,8 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
     assert m == vh.shape[1], "Corrupt output of svd."
     n_nonsing = np.sum(s > eps * s[0])
 
-    if n_nonsing == n:
+    if (n_nonsing == n and algorithm is None) or (algorithm is not None and
+                                                  algorithm[0]):
         # The hopping matrix is well-conditioned and can be safely inverted.
         # Hence the regular transfer matrix may be used.
         hop_inv = la.inv(h_hop)
@@ -94,6 +107,11 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         matrices = (A, None)
         v_out = None
     else:
+        if algorithm is not None:
+            need_to_stabilize, divide = algorithm[1:]
+        else:
+            need_to_stabilize = None
+
         # The hopping matrix has eigenvalues close to 0 - those
         # need to be eliminated.
 
@@ -115,21 +133,23 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         # always if the original Hamiltonian is complex, and check for
         # invertibility first if it is real
 
-        need_to_stabilize = True
-
-        if issubclass(np.common_type(h_onslice, h_hop), np.floating):
+        h = h_onslice
+        sol = kla.lu_factor(h)
+        if issubclass(np.common_type(h_onslice, h_hop), np.floating) \
+           and need_to_stabilize is None:
             # Check if stabilization is needed.
-            h = h_onslice
-            sol = kla.lu_factor(h)
             rcond = kla.rcond_from_lu(sol, npl.norm(h, 1))
 
             if rcond > eps:
                 need_to_stabilize = False
 
+        if need_to_stabilize is None:
+            need_to_stabilize = True
+
         if need_to_stabilize:
             # Matrices are complex or need self-energy-like term to be
             # stabilized.
-            temp = dot(u, s.reshape(-1, 1) * u.T.conj()) + dot(v, v.T.conj())
+            temp = dot(u * s, u.T.conj()) + dot(v, v.T.conj())
             h = h_onslice + 1j * temp
 
             sol = kla.lu_factor(h)
@@ -163,30 +183,34 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         A = np.zeros((2 * n_nonsing, 2 * n_nonsing), np.common_type(h, h_hop))
         B = np.zeros((2 * n_nonsing, 2 * n_nonsing), np.common_type(h, h_hop))
 
-        A[:n_nonsing, :n_nonsing] = -np.identity(n_nonsing)
+        begin, end = slice(n_nonsing), slice(n_nonsing, None)
 
-        B[n_nonsing:, n_nonsing:] = np.identity(n_nonsing)
+        A[begin, begin] = -np.identity(n_nonsing)
+
+        B[end, end] = np.identity(n_nonsing)
         u_s = u * s
 
         temp = kla.lu_solve(sol, v)
         temp2 = dot(u_s.T.conj(), temp)
         if need_to_stabilize:
-            A[n_nonsing:, :n_nonsing] = 1j * temp2
-        A[n_nonsing:, n_nonsing:] = -temp2
+            A[end, begin] = 1j * temp2
+        A[end, end] = -temp2
         temp2 = dot(v.T.conj(), temp)
         if need_to_stabilize:
-            A[:n_nonsing, :n_nonsing] += 1j *temp2
-        A[:n_nonsing, n_nonsing:] = -temp2
+            A[begin, begin] += 1j *temp2
+        A[begin, end] = -temp2
 
         temp = kla.lu_solve(sol, u_s)
         temp2 = dot(u_s.T.conj(), temp)
-        B[n_nonsing:, :n_nonsing] = temp2
+        B[end, begin] = temp2
         if need_to_stabilize:
-            B[n_nonsing:, n_nonsing:] -= 1j * temp2
+            B[end, end] -= 1j * temp2
         temp2 = dot(v.T.conj(), temp)
-        B[:n_nonsing, :n_nonsing] = temp2
+        B[begin, begin] = temp2
         if need_to_stabilize:
-            B[:n_nonsing, n_nonsing:] = -1j * temp2
+            B[begin, end] = -1j * temp2
+
+        v_out = v[:m]
 
         # Solving a generalized eigenproblem is about twice as expensive
         # as solving a regular eigenvalue problem.
@@ -197,16 +221,16 @@ def setup_linsys(h_onslice, h_hop, tol=1e6):
         # the matrix B can be safely inverted.
 
         lu_b = kla.lu_factor(B)
-        rcond = kla.rcond_from_lu(lu_b, npl.norm(B, 1))
+        if algorithm is None:
+            rcond = kla.rcond_from_lu(lu_b, npl.norm(B, 1))
+            # A more stringent condition is used here since errors can
+            # accumulate from here to the eigenvalue calculation later.
+            divide = rcond > eps * tol
 
-        # A more stringent condition is used here since errors can accumulate
-        # from here to the eigenvalue calculation later.
-        v_out = v[:m]
-        if rcond > eps * tol:
+        if divide:
             matrices = (kla.lu_solve(lu_b, A), None)
         else:
             matrices = (A, B)
-
     return Linsys(matrices, v_out, extract_wf, project_wf)
 
 
@@ -398,7 +422,7 @@ d.update(__doc__=modes_docstring)
 ModesTuple = type('ModesTuple', _Modes.__bases__, d)
 del _Modes, d, modes_docstring
 
-def modes(h_onslice, h_hop, tol=1e6):
+def modes(h_onslice, h_hop, tol=1e6, algorithm=None):
     """
     Compute the eigendecomposition of a translation operator of a lead.
 
@@ -412,6 +436,18 @@ def modes(h_onslice, h_hop, tol=1e6):
     tol : float
         Numbers and differences are considered zero when they are smaller
         than `tol` times the machine precision.
+    algorithm : tuple or 3 booleans or None
+        Which steps of the eigenvalue prolem stabilization to perform. The
+        default value, `None`, results in kwant selecting the algorithm that is
+        the most efficient without sacrificing stability. Manual selection may
+        result in either slower performance, or large numerical errors, and is
+        mostly required for testing purposes.  The first value selects whether
+        to work in the basis of the hopping svd, or lattice basis. If the real
+        space basis is chosen, the following two options do not apply.  The
+        second value selects whether to add an anti-Hermitian term to the slice
+        Hamiltonian before inverting. Finally the third value selects whether
+        to reduce a generalized eigenvalue problem to the regular one.
+
 
     Returns
     -------
@@ -447,6 +483,7 @@ def modes(h_onslice, h_hop, tol=1e6):
 
     This function uses the most stable and efficient algorithm for calculating
     the mode decomposition. Its details will be published elsewhere.
+
     """
     m = h_hop.shape[1]
 
@@ -462,7 +499,8 @@ def modes(h_onslice, h_hop, tol=1e6):
         return ModesTuple(np.empty((0, 0)), np.empty((0, 0)), 0, v)
 
     # Defer most of the calculation to helper routines.
-    matrices, v, extract, project = setup_linsys(h_onslice, h_hop, tol)
+    matrices, v, extract, project = setup_linsys(h_onslice, h_hop, tol,
+                                                 algorithm)
     ev, evanselect, propselect, vec_gen, ord_schur =\
          unified_eigenproblem(*(matrices + (tol,)))
 

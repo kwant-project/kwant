@@ -8,6 +8,7 @@
 
 from __future__ import division
 import numpy as np
+from itertools import product
 from numpy.testing import assert_almost_equal
 from kwant.physics import leads
 import kwant
@@ -54,6 +55,7 @@ def test_regular_fully_degenerate():
 
     assert_almost_equal(g, modes_se(h_onslice, h_hop))
 
+
 def test_regular_degenerate_with_crossing():
     """This is a testcase with invertible hopping matrices,
     and degenerate k-values with a crossing such that one
@@ -84,6 +86,7 @@ def test_regular_degenerate_with_crossing():
 
     assert_almost_equal(g, modes_se(h_onslice, hop))
 
+
 def test_singular():
     """This testcase features a rectangular (and hence singular)
      hopping matrix without degeneracies.
@@ -107,8 +110,8 @@ def test_singular():
     h_onslice[w:, w:] = h_onslice_s
     g = leads.square_selfenergy(w, t, e)
 
-    print np.round(g, 5) / np.round(modes_se(h_onslice, h_hop), 5)
     assert_almost_equal(g, modes_se(h_onslice, h_hop))
+
 
 def test_singular_but_square():
     """This testcase features a singular, square hopping matrices
@@ -135,6 +138,7 @@ def test_singular_but_square():
     g = np.zeros((2*w, 2*w), dtype=complex)
     g[:w, :w] = leads.square_selfenergy(w, t, e)
     assert_almost_equal(g, modes_se(h_onslice, h_hop))
+
 
 def test_singular_fully_degenerate():
     """This testcase features a rectangular (and hence singular)
@@ -168,6 +172,7 @@ def test_singular_fully_degenerate():
     g[w:, w:] = leads.square_selfenergy(w, t, e)
 
     assert_almost_equal(g, modes_se(h_onslice, h_hop))
+
 
 def test_singular_degenerate_with_crossing():
     """This testcase features a rectangular (and hence singular)
@@ -203,6 +208,7 @@ def test_singular_degenerate_with_crossing():
 
     assert_almost_equal(g, modes_se(h_onslice, h_hop))
 
+
 def test_singular_h_and_t():
     h = 0.1 * np.identity(6)
     t = np.eye(6, 6, 4)
@@ -210,6 +216,7 @@ def test_singular_h_and_t():
     sigma_should_be = np.zeros((6,6))
     sigma_should_be[4, 4] = sigma_should_be[5, 5] = -10
     assert_almost_equal(sigma, sigma_should_be)
+
 
 def test_modes():
     h, t = .3, .7
@@ -219,7 +226,8 @@ def test_modes():
     np.testing.assert_almost_equal((vecs[0] *  vecslinv[0].conj()).imag,
                                    [0.5, -0.5])
 
-def test_modes_bearder_ribbon():
+
+def test_modes_bearded_ribbon():
     # Check if bearded graphene ribbons work.
     lat = kwant.lattice.honeycomb()
     sys = kwant.Builder(kwant.TranslationalSymmetry((1, 0)))
@@ -229,3 +237,19 @@ def test_modes_bearder_ribbon():
     sys = sys.finalized()
     h, t = sys.slice_hamiltonian(), sys.inter_slice_hopping()
     assert leads.modes(h, t).nmodes == 8  # Calculated by plotting dispersion.
+
+
+def test_algorithm_equivalence():
+    np.random.seed(400)
+    n = 5
+    h = np.random.randn(n, n) + 1j * np.random.randn(n, n)
+    h += h.T.conj()
+    t = np.random.randn(n, n) + 1j * np.random.randn(n, n)
+    results = [leads.modes(h, t, algorithm=algo)
+               for algo in product(*(3 * [(True, False)]))]
+    for i in results:
+        assert np.allclose(results[0].vecs, i.vecs)
+        vecslmbdainv = i.vecslmbdainv
+        if i.svd is not None:
+            vecslmbdainv = np.dot(i.svd, vecslmbdainv)
+        assert np.allclose(vecslmbdainv, results[0].vecslmbdainv)
