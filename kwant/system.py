@@ -148,8 +148,9 @@ class InfiniteSystem(System):
     def self_energy(self, energy, args=()):
         """Return self-energy of a lead.
 
-        The returned matrix has the shape (n, n), where n is
-        ``sum(self.num_orbitals(i) for i in range(self.slice_size))``.
+        The returned matrix has the shape (s, s), where s is
+        ``sum(self.num_orbitals(i)
+              for i in range(self.graph.num_nodes - self.slice_size))``.
         """
         ham = self.slice_hamiltonian(args=args)
         shape = ham.shape
