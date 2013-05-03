@@ -471,28 +471,29 @@ class TranslationalSymmetry(builder.Symmetry):
 
 class Shape(object):
     def __init__(self, lattice, function, start):
-        """A class for finding all the lattice sites in a shape.
+        """A class for finding all the lattice sites inside a shape.
 
-        It uses a flood-fill algorithm, and takes into account
-        the symmetry of the builder to which it is provided, or
-        the symmetry, that is supplied to it after initialization.
+        When an instance of this class is called, a flood-fill algorithm finds
+        and yields all the sites inside the specified shape starting from the
+        specified position.
 
         Parameters
         ----------
         lattice : Polyatomic or Monoatomic lattice
             Lattice, to which the resulting sites should belong.
         function : callable
-            A function of real space coordinates, which should
-            return True for coordinates inside the shape,
-            and False otherwise.
+            A function of real space coordinates that returns a truth value:
+            true for coordinates inside the shape, and false otherwise.
         start : float vector
             The origin for the flood-fill algorithm.
 
         Notes
         -----
-        A ``Shape`` is a callable object: When called with a
-        `~kwant.builder.Builder` as sole argument, an instance of this class will
-        return an iterator over all the sites from the shape that are in the fundamental domain of the builder's symmetry.
+        A `~kwant.builder.Symmetry` or `~kwant.builder.Builder` may be passed as
+        sole argument when calling an instance of this class.  This will
+        restrict the flood-fill to the fundamental domain of the symmetry (or
+        the builder's symmetry).  Note that unless the shape function has that
+        symmetry itself, the result may be unexpected.
 
         Because a `~kwant.builder.Builder` can be indexed with functions or
         iterables of functions, ``Shape`` instances (or any non-tuple
@@ -501,70 +502,52 @@ class Shape(object):
         """
         self.lat, self.func, self.start = lattice, function, start
 
-    def __call__(self, builder_or_symmetry=None):
-        """
-        Yield all the lattice sites which belong to a certain shape.
-
-        Parameters
-        ----------
-        builder_or_symmetry : Builder or Symmetry instance
-            The builder to which the site from the shape are added, or
-            the symmetry, such that the sites from the shape belong to
-            its fundamental domain. If not provided, trivial symmetry is
-            used.
-
-        Returns
-        -------
-        sites : sequence of `Site` objects
-            all the sites that belong to the lattice and fit inside the shape.
-        """
+    def __call__(self, symmetry=None):
         Site = builder.Site
         lat, func, start = self.lat, self.func, self.start
-        try:
-            symmetry = builder_or_symmetry.symmetry
-        except AttributeError:
-            symmetry = builder_or_symmetry
-        if symmetry is None:
-            symmetry = builder.NoSymmetry()
 
-        sym_site = lambda lat, tag: symmetry.to_fd(Site(lat, tag, True))
+        if symmetry is None:
+             symmetry = builder.NoSymmetry()
+        elif not isinstance(symmetry, builder.Symmetry):
+            symmetry = symmetry.symmetry
+
+        def sym_site(lat, tag):
+            return symmetry.to_fd(Site(lat, tag, True))
 
         dim = len(start)
         if dim != lat.prim_vecs.shape[1]:
             raise ValueError('Dimensionality of start position does not match'
                              ' the space dimensionality.')
         sls = lat.sublattices
-        deltas = [ta.array(i) for i in lat._voronoi]
+        deltas = [ta.array(delta) for delta in lat._voronoi]
 
-        # Check if no sites are going to be added, to catch a common error.
-        empty = True
-        for sl in sls:
-            if func(sym_site(sl, sl.closest(start)).pos):
-                empty = False
-        if empty:
+        #### Flood-fill ####
+        sites = []
+        for tag in set(sl.closest(start) for sl in sls):
+            for sl in sls:
+                site = sym_site(sl, tag)
+                if func(site.pos):
+                    sites.append(site)
+        if not sites:
             msg = 'No sites close to {0} are inside the desired shape.'
             raise ValueError(msg.format(start))
 
-        # Continue to flood fill.
-        tags = set([sl.closest(start) for sl in sls])
-        new_sites = [sym_site(sl, tag) for sl in sls for tag in tags]
-        new_sites = [i for i in new_sites if func(i.pos)]
         old_sites = set()
-        while new_sites:
-            tmp = set()
-            for site in new_sites:
+        while sites:
+            tags = set()
+            for site in sites:
                 yield site
-            tags = set((i.tag for i in new_sites))
+                tags.add(site.tag)
+            tags = set(tag + delta for tag in tags for delta in deltas)
+            new_sites = set()
             for tag in tags:
-                for shift in deltas:
-                    for sl in sls:
-                        site = sym_site(sl, tag + shift)
-                        if site not in old_sites and \
-                           site not in new_sites and \
-                           func(site.pos):
-                            tmp.add(site)
-            old_sites = new_sites
-            new_sites = tmp
+                for sl in sls:
+                    site = sym_site(sl, tag)
+                    if site not in old_sites and site not in sites \
+                            and func(site.pos):
+                        new_sites.add(site)
+            old_sites = sites
+            sites = new_sites
 
 
 ################ Library of lattices (to be extended)
@@ -584,6 +567,6 @@ def square(a=1, name=''):
 def honeycomb(a=1, name=''):
     """Create a honeycomb lattice."""
     lat = Polyatomic(((a, 0), (0.5 * a, 0.5 * a * sqrt(3))),
-                            ((0, 0), (0, a / sqrt(3))), name=name)
+                     ((0, 0), (0, a / sqrt(3))), name=name)
     lat.a, lat.b = lat.sublattices
     return lat

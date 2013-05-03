@@ -56,8 +56,7 @@ def test_shape():
     def in_circle(pos):
         return pos[0] ** 2 + pos[1] ** 2 < 3
 
-    lat = lattice.general(((1, 0), (0.5, sqrt(3) / 2)),
-                               ((0, 0), (0, 1 / sqrt(3))))
+    lat = lattice.honeycomb()
     sites = list(lat.shape(in_circle, (0, 0))())
     sites_alt = list()
     sl0, sl1 = lat.sublattices
@@ -70,6 +69,7 @@ def test_shape():
     assert len(sites) == len(sites_alt)
     assert_equal(set(sites), set(sites_alt))
     assert_raises(ValueError, lat.shape(in_circle, (10, 10))().next)
+
     # Check if narrow ribbons work.
     for period in (0, 1), (1, 0), (1, -1):
         vec = lat.vec(period)
@@ -78,6 +78,7 @@ def test_shape():
             return abs(pos[0] * vec[1] - pos[1] * vec[0]) < 10
         sites = list(lat.shape(shape, (0, 0))(sym))
         assert len(sites) > 35
+
 
 def test_translational_symmetry():
     ts = lattice.TranslationalSymmetry
