@@ -258,7 +258,7 @@ def test_algorithm_equivalence():
         # Bring the calculated vectors to real space
         if not algo[0]:
             vecs = np.dot(v, vecs)
-            np.testing.assert_almost_equal(result.svd, v)
+            np.testing.assert_almost_equal(result.sqrt_hop, v)
         else:
             vecslmbdainv = np.dot(v.T.conj(), vecslmbdainv)
         full_vecs = np.r_[vecslmbdainv, vecs]

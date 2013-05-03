@@ -400,21 +400,23 @@ def unified_eigenproblem(a, b=None, tol=1e6):
     return ev, select, propselect, vec_gen, ord_schur
 
 
-_Modes = namedtuple('ModesTuple', ['vecs', 'vecslmbdainv', 'nmodes', 'svd'])
+_Modes = namedtuple('ModesTuple', ['vecs', 'vecslmbdainv', 'nmodes',
+                                   'sqrt_hop'])
 modes_docstring = """Eigendecomposition of a translation operator.
 
-A named tuple with attributes `(vecs, vecslmbdainv, nmodes, v)`.  The
+A named tuple with attributes `(vecs, vecslmbdainv, nmodes, sqrt_hop)`.  The
 translation eigenproblem is written in the basis `psi_n, h_hop^+ * psi_(n+1)`,
 with ``h_hop`` the hopping between unit cells.  If `h_hop` is not invertible
 with singular value decomposition `u s v^+`, then the eigenproblem is written
-in the basis `v^+ psi_n, s u^+ psi_(n+1)`. `vecs` and `vecslmbdainv` are the
-first and the second halves of the wave functions.  The first `nmodes` are
-eigenmodes moving in the negative direction (hence they are incoming into the
-system in kwant convention), the second `nmodes` are eigenmodes moving in the
-positive direction. The remaining modes are Schur vectors of the modes
-evanescent in the positive direction. Propagating modes with the same
-eigenvalue are orthogonalized, and all the propagating modes are normalized to
-carry unit current.
+in the basis `sqrt(s) v^+ psi_n, sqrt(s) u^+ psi_(n+1)`. `vecs` and
+`vecslmbdainv` are the first and the second halves of the wave functions.  The
+first `nmodes` are eigenmodes moving in the negative direction (hence they are
+incoming into the system in kwant convention), the second `nmodes` are
+eigenmodes moving in the positive direction. The remaining modes are Schur
+vectors of the modes evanescent in the positive direction. Propagating modes
+with the same eigenvalue are orthogonalized, and all the propagating modes are
+normalized to carry unit current. Finally he `sqrt_hop` attribute is `v
+sqrt(s)`.
 """
 d = dict(_Modes.__dict__)
 d.update(__doc__=modes_docstring)
