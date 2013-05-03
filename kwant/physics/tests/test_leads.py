@@ -8,7 +8,7 @@
 
 from __future__ import division
 import numpy as np
-from itertools import product
+from itertools import product, izip
 from numpy.testing import assert_almost_equal
 from kwant.physics import leads
 import kwant
@@ -241,15 +241,38 @@ def test_modes_bearded_ribbon():
 
 def test_algorithm_equivalence():
     np.random.seed(400)
-    n = 5
+    n = 12
     h = np.random.randn(n, n) + 1j * np.random.randn(n, n)
     h += h.T.conj()
     t = np.random.randn(n, n) + 1j * np.random.randn(n, n)
-    results = [leads.modes(h, t, algorithm=algo)
-               for algo in product(*(3 * [(True, False)]))]
-    for i in results:
-        assert np.allclose(results[0].vecs, i.vecs)
-        vecslmbdainv = i.vecslmbdainv
-        if i.svd is not None:
-            vecslmbdainv = np.dot(i.svd, vecslmbdainv)
-        assert np.allclose(vecslmbdainv, results[0].vecslmbdainv)
+    u, s, vh = np.linalg.svd(t)
+    prop_vecs = []
+    evan_vecs = []
+    algos = [(True,)] + list(product(*([(False,)] + 2 * [(True, False)])))
+    for algo in algos:
+        result = leads.modes(h, t, algorithm=algo)
+
+        vecs, vecslmbdainv = result.vecs, result.vecslmbdainv
+
+        # Bring the calculated vectors to real space
+        if not algo[0]:
+            vecslmbdainv = np.dot(vh.T.conj(), vecslmbdainv)
+            vecs = np.dot(vh.T.conj(), vecs)
+            np.testing.assert_almost_equal(result.svd, vh.T.conj())
+        full_vecs = np.r_[vecslmbdainv, vecs]
+
+        prop_vecs.append(full_vecs[:, : 2 * result.nmodes])
+        evan_vecs.append(full_vecs[:, 2 * result.nmodes :])
+
+    msg = 'Algorithm {0} failed.'
+    for vecs, algo in izip(prop_vecs, algos):
+        # Propagating modes should have identical ordering, and only vary
+        # By a phase
+        np.testing.assert_allclose(np.abs(np.sum(vecs/prop_vecs[0],
+                                                 axis=0)), vecs.shape[0],
+                                   err_msg=msg.format(algo))
+
+    for vecs, algo in izip(evan_vecs, algos):
+        # Evanescent modes must span the same linear space.
+        assert np.linalg.matrix_rank(np.c_[vecs, evan_vecs[0]], tol=1e-12) == \
+               vecs.shape[1], msg.format(algo)
