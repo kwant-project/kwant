@@ -119,10 +119,11 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
         # u, v are matrices with shape n x n_nonsing.
         u = u[:, :n_nonsing]
         s = s[:n_nonsing]
-        u_s = u * s
+        u = u * np.sqrt(s)
         # pad v with zeros if necessary
         v = np.zeros((n, n_nonsing), dtype=vh.dtype)
         v[:vh.shape[1]] = vh[:n_nonsing].T.conj()
+        v = v * np.sqrt(s)
 
         # Eliminating the zero eigenvalues requires inverting the
         # on-site Hamiltonian, possibly including a self-energy-like term.
@@ -150,7 +151,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
         if need_to_stabilize:
             # Matrices are complex or need self-energy-like term to be
             # stabilized.
-            temp = dot(u_s, u_s.T.conj()) + dot(v, v.T.conj())
+            temp = dot(u, u.T.conj()) + dot(v, v.T.conj())
             h = h_onslice + 1j * temp
 
             sol = kla.lu_factor(h)
@@ -166,7 +167,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
         # the projected one (v^dagger psi lambda^-1, s u^dagger psi).
 
         def extract_wf(psi, lmbdainv):
-            wf = - dot(u_s, psi[: n_nonsing] * lmbdainv) - \
+            wf = - dot(u, psi[: n_nonsing] * lmbdainv) - \
                  dot(v, psi[n_nonsing:])
             if need_to_stabilize:
                 wf += 1j * (dot(v, psi[: n_nonsing]) +
@@ -177,7 +178,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
 
         def project_wf(psi, lmbdainv):
             return np.r_[dot(v.T.conj(), psi * lmbdainv),
-                         dot(s.reshape(-1, 1) * u.T.conj(), psi)]
+                         dot(u.T.conj(), psi)]
 
         # Setup the generalized eigenvalue problem.
 
@@ -188,7 +189,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
 
         A[end, begin] = np.identity(n_nonsing)
         temp = kla.lu_solve(sol, v)
-        temp2 = dot(u_s.T.conj(), temp)
+        temp2 = dot(u.T.conj(), temp)
         if need_to_stabilize:
             A[begin, begin] = -1j * temp2
         A[begin, end] = temp2
@@ -198,8 +199,8 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
         A[end, end] = temp2
 
         B[begin, end] = -np.identity(n_nonsing)
-        temp = kla.lu_solve(sol, u_s)
-        temp2 = dot(u_s.T.conj(), temp)
+        temp = kla.lu_solve(sol, u)
+        temp2 = dot(u.T.conj(), temp)
         B[begin, begin] = -temp2
         if need_to_stabilize:
             B[begin, end] += 1j * temp2

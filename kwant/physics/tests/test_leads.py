@@ -246,6 +246,7 @@ def test_algorithm_equivalence():
     h += h.T.conj()
     t = np.random.randn(n, n) + 1j * np.random.randn(n, n)
     u, s, vh = np.linalg.svd(t)
+    u, v = u * np.sqrt(s), vh.T.conj() * np.sqrt(s)
     prop_vecs = []
     evan_vecs = []
     algos = [(True,)] + list(product(*([(False,)] + 2 * [(True, False)])))
@@ -256,9 +257,10 @@ def test_algorithm_equivalence():
 
         # Bring the calculated vectors to real space
         if not algo[0]:
-            vecslmbdainv = np.dot(vh.T.conj(), vecslmbdainv)
-            vecs = np.dot(vh.T.conj(), vecs)
-            np.testing.assert_almost_equal(result.svd, vh.T.conj())
+            vecs = np.dot(v, vecs)
+            np.testing.assert_almost_equal(result.svd, v)
+        else:
+            vecslmbdainv = np.dot(v.T.conj(), vecslmbdainv)
         full_vecs = np.r_[vecslmbdainv, vecs]
 
         prop_vecs.append(full_vecs[:, : 2 * result.nmodes])
