@@ -8,7 +8,7 @@ from matplotlib import pyplot
 import kwant
 from kwant.physics.selfenergy import square_self_energy
 
-__all__ = ['System' ]
+__all__ = ['System']
 
 class Lead(object):
     def __init__(self, width, t, potential):
@@ -16,7 +16,7 @@ class Lead(object):
         self.t = t
         self.potential = potential
 
-    def self_energy(self, fermi_energy):
+    def self_energy(self, fermi_energy, args=()):
         return square_self_energy(self.width, self.t, self.potential,
                                   fermi_energy)
 
