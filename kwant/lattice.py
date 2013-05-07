@@ -519,7 +519,7 @@ class Shape(object):
             raise ValueError('Dimensionality of start position does not match'
                              ' the space dimensionality.')
         sls = lat.sublattices
-        deltas = [ta.array(delta) for delta in lat._voronoi]
+        deltas = list(lat._voronoi)
 
         #### Flood-fill ####
         sites = []
