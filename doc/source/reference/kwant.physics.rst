@@ -10,4 +10,6 @@ Leads
 
    Bands
    modes
-   self_energy
+   selfenergy
+   selfenergy_from_modes
+   ModesTuple

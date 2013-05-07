@@ -13,6 +13,7 @@ __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 
 import abc
 import types
+from copy import copy
 import numpy as np
 from . import physics, _system
 
@@ -67,19 +68,22 @@ class FiniteSystem(System):
 
     Instance Variables
     ------------------
-    leads : sequence of lead objects
-        Each lead object has to provide a method ``self_energy(energy, args)``.
+    leads : sequence of leads
+        Each lead has to provide a method
+        ``selfenergy(energy, args)``.
+        It may provide ``modes(energy, args)`` as well.
     lead_interfaces : sequence of sequences of integers
-        Each sub-sequence contains the indices of the system sites to which the
-        lead is connected.
+        Each sub-sequence contains the indices of the system sites
+        to which the lead is connected.
 
     Notes
     -----
     The length of `leads` must be equal to the length of `lead_interfaces`.
 
-    For lead ``n``, the method leads[n].self_energy must return a square matrix
-    whose size is ``sum(self.num_orbitals(neighbor) for neighbor in
-    self.lead_interfaces[n])``.
+    For lead ``n``, the method leads[n].selfenergy must return a square matrix
+    whose size is ``sum(self.num_orbitals(neighbor)`` for neighbor in
+    self.lead_interfaces[n])``. The output format for ``leads[n].modes`` has to
+    be as described in `~kwant.physics.ModesTuple`.
 
     Often, the elements of `leads` will be instances of `InfiniteSystem`.  If
     this is the case for lead ``n``, the sites ``lead_interfaces[n]`` match
@@ -87,6 +91,57 @@ class FiniteSystem(System):
     """
     __metaclass__ = abc.ABCMeta
 
+    def precalculate(self, energy, args=(), leads=None,
+                     calculate_selfenergy=True):
+        """
+        Precalculate modes or self-energies in the leads.
+
+        Construct a copy of the system, with the lead modes precalculated,
+        which may significantly speed up calculations where only the system
+        is changing.
+
+        Parameters
+        ----------
+        energy : float
+            Energy at which the modes or self-energies have to be
+            evaluated.
+        args : sequence
+            Additional parameters required for calculating the Hamiltionians
+        leads : list of integers or None
+            Numbers of the leads to be precalculated. If `None`, all are
+            precalculated.
+        calculate_selfenergy : bool
+            Whether to calculate self-energy if modes are available.
+
+        Returns
+        -------
+        sys : FiniteSystem
+            A copy of the original system with some leads precalculated.
+
+        Notes
+        -----
+        If the leads are precalculated at certain `energy` or `args` values,
+        they might give wrong results if used to solve the system with
+        different parameter values. Use this function with caution.
+        """
+        result = copy(self)
+        if leads is None:
+            leads = range(len(self.leads))
+        new_leads = []
+        for nr, lead in enumerate(self.leads):
+            if nr not in leads:
+                new_leads.append(lead)
+                continue
+            modes, selfenergy = None, None
+            try:
+                modes = lead.modes(energy, args)
+                if calculate_selfenergy:
+                    selfenergy = physics.selfenergy_from_modes(modes)
+            except AttributeError:
+                selfenergy = lead.selfenergy(energy, args)
+            new_leads.append(PrecalculatedLead(modes, selfenergy))
+        result.leads = new_leads
+        return result
 
 class InfiniteSystem(System):
     """
@@ -145,7 +200,21 @@ class InfiniteSystem(System):
         return self.hamiltonian_submatrix(slice_sites, neighbor_sites,
                                           sparse=sparse, args=args)
 
-    def self_energy(self, energy, args=()):
+    def modes(self, energy, args=()):
+        """Return mode decomposition of the lead
+
+        See documentation of `~kwant.physics.ModesTuple` for the return
+        format details.
+        """
+        ham = self.slice_hamiltonian(args=args)
+        shape = ham.shape
+        assert len(shape) == 2
+        assert shape[0] == shape[1]
+        # Subtract energy from the diagonal.
+        ham.flat[::ham.shape[0] + 1] -= energy
+        return physics.modes(ham, self.inter_slice_hopping(args=args))
+
+    def selfenergy(self, energy, args=()):
         """Return self-energy of a lead.
 
         The returned matrix has the shape (s, s), where s is
@@ -158,4 +227,37 @@ class InfiniteSystem(System):
         assert shape[0] == shape[1]
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
-        return physics.self_energy(ham, self.inter_slice_hopping(args=args))
+        return physics.selfenergy(ham, self.inter_slice_hopping(args=args))
+
+
+class PrecalculatedLead(object):
+    def __init__(self, modes=None, selfenergy=None):
+        """A general lead defined by its self energy.
+
+        Parameters
+        ----------
+        modes : kwant.physics.ModesTuple
+            Modes of the lead.
+        selfenergy : numpy array
+            Lead self-energy.
+
+        Notes
+        -----
+        At least one of `modes` and `selfenergy` must be provided.
+        """
+        if modes is None and selfenergy is None:
+            raise ValueError("No precalculated values provided.")
+        self._modes = modes
+        self._selfenergy = selfenergy
+
+    def modes(self, energy, args=()):
+        if self._modes is not None:
+            return self._modes
+        else:
+            raise ValueError("No precalculated modes were provided.")
+
+    def selfenergy(self, energy, args=()):
+        if self._selfenergy is not None:
+            return self._selfenergy
+        else:
+            raise ValueError("No precalculated self-energy was provided.")

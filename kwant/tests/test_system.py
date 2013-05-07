@@ -56,6 +56,19 @@ def test_hamiltonian_submatrix():
     mat_sp = sys2.hamiltonian_submatrix(sparse=True).todense()
     np.testing.assert_array_equal(mat_sp, mat_dense)
 
+    # Test precalculation of modes.
+    np.random.seed(5)
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
+    lead[gr(0)] = np.zeros((2, 2))
+    lead[gr(0), gr(1)] = np.random.randn(2, 2)
+    sys.attach_lead(lead)
+    sys2 = sys.finalized()
+    smatrix = kwant.solve(sys2, .1).data
+    sys3 = sys2.precalculate(.1, calculate_selfenergy=False)
+    smatrix2 = kwant.solve(sys3, .1).data
+    np.testing.assert_almost_equal(smatrix, smatrix2)
+    assert_raises(ValueError, kwant.solve, sys3, 0.2, None, None, True)
+
     # Test for shape errors.
     sys[gr(0), gr(2)] = np.array([[1, 2]])
     sys2 = sys.finalized()
@@ -86,3 +99,4 @@ def test_hamiltonian_submatrix():
     mat = mat[perm, :]
     mat = mat[:, perm]
     np.testing.assert_array_equal(mat, mat_should_be)
+

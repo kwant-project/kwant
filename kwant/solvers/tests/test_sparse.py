@@ -39,12 +39,12 @@ def test_tricky_singular_hopping():
     _test_sparse.test_tricky_singular_hopping(solve)
 
 
-def test_self_energy():
-    _test_sparse.test_self_energy(solve)
+def test_selfenergy():
+    _test_sparse.test_selfenergy(solve)
 
 
-def test_self_energy_reflection():
-    _test_sparse.test_self_energy_reflection(solve)
+def test_selfenergy_reflection():
+    _test_sparse.test_selfenergy_reflection(solve)
 
 
 def test_very_singular_leads():

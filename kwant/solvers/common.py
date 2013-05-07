@@ -94,8 +94,7 @@ class SparseSolver(object):
     def _make_linear_sys(self, sys, out_leads, in_leads, energy=0,
                         force_realspace=False, check_hermiticity=True,
                         args=()):
-        """
-        Make a sparse linear system of equations defining a scattering
+        """Make a sparse linear system of equations defining a scattering
         problem.
 
         Parameters
@@ -129,9 +128,9 @@ class SparseSolver(object):
             a small part of the complete solution).
         lead_info : list of objects
             Contains one entry for each lead.  For a lead defined as a
-            tight-binding system, this is an instance of `kwant.physics.Modes`
-            (as returned by `kwant.physics.modes`), otherwise the lead
-            self-energy matrix.
+            tight-binding system, this is an instance of
+            `~kwant.physics.ModesTuple` with a corresponding format,
+            otherwise the lead self-energy matrix.
 
         Notes
         -----
@@ -139,6 +138,7 @@ class SparseSolver(object):
         or a low-level translationally invariant system.
         The system of equations that is created is described in
         kwant/doc/other/linear_system.pdf
+
         """
 
         splhsmat = getattr(sp, self.lhsformat + '_matrix')
@@ -168,27 +168,18 @@ class SparseSolver(object):
         lead_info = []
         for leadnum, interface in enumerate(sys.lead_interfaces):
             lead = sys.leads[leadnum]
-            if isinstance(lead, system.InfiniteSystem) and not force_realspace:
-                h = lead.slice_hamiltonian(args=args)
-
-                if check_hermiticity:
-                    if not np.allclose(h, h.T.conj(), rtol=1e-13):
-                        msg = "Lead number {0} has a non-Hermitian " \
-                            "slice Hamiltonian."
-                        raise ValueError(msg.format(leadnum))
-
-                h -= energy * np.identity(h.shape[0])
-                v = lead.inter_slice_hopping(args=args)
-                modes = physics.modes(h, v)
+            if hasattr(lead, 'modes') and not force_realspace:
+                modes = lead.modes(energy, args=args)
                 lead_info.append(modes)
+                u, ulinv, nprop, svd_v = modes
 
-                # Note: np.any(v) returns (at least from NumPy 1.6.1 -
-                #       1.8-devel) False if v is purely imaginary
-                if not (np.any(v.real) or np.any(v.imag)):
+                if len(u) == 0:
                     # See comment about zero-shaped sparse matrices at the top.
                     rhs.append(np.zeros((lhs.shape[1], 0)))
                     continue
-                u, ulinv, nprop, svd = modes
+
+                if svd_v is not None:
+                    svd_v = svd_v.T.conj()
 
                 if leadnum in out_leads:
                     kept_vars.append(
@@ -206,27 +197,25 @@ class SparseSolver(object):
                 transf = sp.csc_matrix((np.ones(iface_orbs.size), coords),
                                        shape=(iface_orbs.size, lhs.shape[0]))
 
-                if svd is not None:
-                    v_sp = sp.csc_matrix(svd[2].T.conj()) * transf
+                if svd_v is not None:
+                    v_sp = sp.csc_matrix(svd_v) * transf
                     vdaguout_sp = transf.T * \
-                        sp.csc_matrix(np.dot(svd[2] * svd[1], u_out))
+                        sp.csc_matrix(np.dot(svd_v.T.conj(), u_out))
                     lead_mat = - ulinv_out
                 else:
                     v_sp = transf
-                    vdaguout_sp = transf.T * sp.csc_matrix(np.dot(v.T.conj(),
-                                                                  u_out))
+                    vdaguout_sp = transf.T * sp.csc_matrix(u_out)
                     lead_mat = - ulinv_out
 
                 lhs = sp.bmat([[lhs, vdaguout_sp], [v_sp, lead_mat]],
                               format=self.lhsformat)
 
                 if leadnum in in_leads and nprop > 0:
-                    if svd:
+                    if svd_v is not None:
                         vdaguin_sp = transf.T * sp.csc_matrix(
-                            -np.dot(svd[2] * svd[1], u_in))
+                            -np.dot(svd_v.T.conj(), u_in))
                     else:
-                        vdaguin_sp = transf.T * sp.csc_matrix(
-                            -np.dot(v.T.conj(), u_in))
+                        vdaguin_sp = transf.T * sp.csc_matrix(-u_in)
 
                     # defer formation of the real matrix until the proper
                     # system size is known
@@ -235,7 +224,7 @@ class SparseSolver(object):
                     # See comment about zero-shaped sparse matrices at the top.
                     rhs.append(np.zeros((lhs.shape[1], 0)))
             else:
-                sigma = lead.self_energy(energy, args)
+                sigma = lead.selfenergy(energy, args)
                 lead_info.append(sigma)
                 indices = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                       for i in interface)]
@@ -404,7 +393,7 @@ class SparseSolver(object):
             self._make_linear_sys(fsys, [], xrange(len(fsys.leads)), energy,
                                   args=args)
 
-        Modes = physics.Modes
+        Modes = physics.ModesTuple
         num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
                              for li in lead_info if isinstance(li, Modes))
         num_orb = h.shape[0] - num_extra_vars
@@ -467,7 +456,7 @@ class WaveFunction(object):
         (h, self.rhs, kept_vars), lead_info = \
             solver._make_linear_sys(sys, [], xrange(len(sys.leads)),
                                     energy, args=args)
-        Modes = physics.Modes
+        Modes = physics.ModesTuple
         num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
                              for li in lead_info if isinstance(li, Modes))
         self.solver = solver

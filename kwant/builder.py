@@ -9,7 +9,7 @@
 from __future__ import division
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
-           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergy']
+           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergy', 'ModesLead']
 
 import abc
 import sys
@@ -18,7 +18,7 @@ import operator
 from itertools import izip, islice, chain
 import tinyarray as ta
 import numpy as np
-from . import system, graph
+from . import system, graph, physics
 
 
 ################ Sites and site families
@@ -387,15 +387,12 @@ class Lead(object):
 
         Notes
         -----
-        The finalized lead must at least have a single method
-        ``self_energy(energy)`` but it can be a full
-        `kwant.system.InfiniteSystem` as well.
+        The finalized lead must be an object that can be used as a lead in a
+        `kwant.system.FiniteSystem`.  It could be an instance of
+        `kwant.system.InfiniteSystem` for example.
 
-        The method ``self_energy`` of the finalized lead must return a square
-        matrix of appropriate size.
-
-        The order of interface sites is assumed to be preserved during
-        finalization.
+        The order of sites for the finalized lead must be the one specified in
+        `interface`.
         """
         pass
 
@@ -444,21 +441,49 @@ class SelfEnergy(Lead):
 
     Parameters
     ----------
-    self_energy_func : function
+    selfenergy_func : function
         Function which returns the self energy matrix for the interface sites
         given the energy and optionally a list of extra arguments.
     interface : sequence of `Site` instances
     """
-    def __init__(self, self_energy_func, interface):
-        self.self_energy_func = self_energy_func
+    def __init__(self, selfenergy_func, interface):
+        self._selfenergy_func = selfenergy_func
         self.interface = tuple(interface)
 
     def finalized(self):
         """Trivial finalization: the object is returned itself."""
         return self
 
-    def self_energy(self, energy, args=()):
-        return self.self_energy_func(energy, args)
+    def selfenergy(self, energy, args=()):
+        return self._selfenergy_func(energy, args)
+
+
+class ModesLead(Lead):
+    """A general lead defined by its modes wave functions.
+
+    Parameters
+    ----------
+    modes_func : function
+        Function which returns the modes of the lead in the format specified
+        in `~kwant.physics.ModesTuple` given the energy and optionally a list of
+        extra arguments.
+    interface : sequence of `Site` instances
+    """
+    def __init__(self, modes_func, interface):
+        self._modes_func = modes_func
+        self.interface = tuple(interface)
+
+    def finalized(self):
+        """Trivial finalization: the object is returned itself."""
+        return self
+
+    def modes(self, energy, args=()):
+        return self._modes_func(energy, args)
+
+    def selfenergy(self, energy, args=()):
+        modes = self.modes(energy, args)
+        return physics.selfenergy_from_modes(modes=modes)
+
 
 
 ################ Builder class

@@ -43,9 +43,9 @@ class LeadWithOnlySelfEnergy(object):
     def __init__(self, lead):
         self.lead = lead
 
-    def self_energy(self, energy, args=()):
+    def selfenergy(self, energy, args=()):
         assert args == ()
-        return self.lead.self_energy(energy)
+        return self.lead.selfenergy(energy)
 
 
 def test_twoterminal():
