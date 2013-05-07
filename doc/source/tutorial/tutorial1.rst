@@ -373,27 +373,6 @@ The result of the example should be identical to the previous one.
 
 .. specialnote:: Technical details
 
-   - In
-
-     .. literalinclude:: quantum_wire_revisited.py
-       :start-after: #HIDDEN_BEGIN_nooi
-       :end-before: #HIDDEN_END_nooi
-
-     we write ``*hopping`` instead of ``hopping``. The reason is as follows:
-     `~kwant.builder.HoppingKind` expects the hopping to
-     be defined using three parameters (in particular, a tuple
-     containing a relative lattice vector, and two (sub)lattice objects that
-     indicate the start and end lattice, more about that in
-     a :ref:`later tutorial <tutorial_spinorbit>`). ``lat.nearest``
-     is a list of tuples, with every tuple containing the three
-     parameters expected by `~kwant.builder.HoppingKind`.
-
-     Hence, ``hopping`` is a tuple. But passing it to
-     `~kwant.builder.HoppingKind` would fail,
-     as three parameters are expected (not a single tuple). ``*hopping``
-     unpacks the tuple into these three separate parameters (see
-     <http://docs.python.org/tutorial/controlflow.html#unpacking-argument-lists>)
-
    - We have seen different ways to add lattice points to a
      `~kwant.builder.Builder`. It allows to
 

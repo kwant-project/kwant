@@ -4,6 +4,25 @@ What's New in kwant 0.3
 This article explains the user-visible changes in kwant 0.3.
 
 
+Lattice and shape improvements
+------------------------------
+Lattices now have a method `~kwant.lattice.Polyatomic.neighbors`,
+which calculates all the n-th shortest possible hoppings on this lattice.  This
+replaces the ``nearest`` attribute that some lattices used to have.
+
+`~kwant.lattice.Polyatomic.shape` uses an improved flood-fill algorithm, making
+it work better on narrow ribbons (which were sometimes buggy before with
+non-square lattices). Additionally, it was made symmetry-aware: If
+`~kwant.lattice.Polyatomic.shape` is used with a lead, the shape does not have
+to be limited along the lead direction anymore.  In fact, if the shape function
+does not have the same symmetry as the lead, the result may be unexpected, so
+it is highly recommended to use shape functions that have the same symmetry as
+the lead.
+
+`~kwant.lattice.Monoatomic.closest` now returns an exact, and not approximate
+closest point. A new method `~kwant.lattice.Monoatomic.n_closest` was added,
+which returns the n closest lattice points.
+
 ``possible_hoppings`` replaced by `~kwant.builder.HoppingKind`
 --------------------------------------------------------------
 The `~kwant.builder.Builder` method ``possible_hoppings`` has been rendered
@@ -22,7 +41,7 @@ keys in addition to `~kwant.builder.Site` objects and tuples of them
 when given a builder instance as the sole argument. The use of such keys is to
 implement sets of sites or hoppings that depend on what is already present in
 the builder, such as `~kwant.builder.HoppingKind`.  In the above example,
-``lat.nearest`` is a list of ``HoppingKind`` objects.
+``lat.neighbors()`` is a list of ``HoppingKind`` objects.
 
 Some renames
 ------------
@@ -119,18 +138,3 @@ collection could be a dictionary, or a class instance, for example::
 Arguments can be passed in an equivalent way to
 `~kwant.solvers.default.wave_function`,
 `~kwant.system.System.hamiltonian_submatrix`, etc.
-
-Lattice and shape improvements
-------------------------------
-`~kwant.lattice.Monoatomic.closest` now returns an exact, and not approximately
-closest point. A new method `~kwant.lattice.Monoatomic.n_closest` was added,
-which returns n closest lattice points.
-
-Likewise `~kwant.lattice.Polyatomic.shape` has acquired an improved flood-fill
-algorithm, making it work better on narrow ribbon (which were sometimes buggy
-before with non-square lattices). Additionally, it was made symmetry-aware, so
-if a shape is used for a lead, no conditions with regard to coordnate parallel
-to the lead period are required.
-
-Finally, lattices now have a method `~kwant.lattice.Polyatomic.neighbors`,
-which calculates all the n-th shortest possible hoppings on this lattice.
