@@ -34,7 +34,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
     tol : float
         Numbers are considered zero when they are smaller than `tol` times
         the machine precision.
-    algorithm : tuple or 3 booleans or None
+    algorithm : tuple of 3 booleans or None
         Which steps of the eigenvalue prolem stabilization to perform.
         The first value selects whether to work in the basis of the
         hopping svd, or lattice basis. If the real space basis is chosen, the
