@@ -1,38 +1,39 @@
 """An example of advanced system creation."""
 
 from __future__ import division
-import kwant
-import tinyarray as ta
 from math import tanh
+import tinyarray as ta
+import kwant
 
 
-def make_system(R=50):
-    sigma_0 = ta.identity(2)
-    sigma_x = ta.array([[0, 1], [1, 0]])
-    sigma_y = ta.array([[0, -1j], [1j, 0]])
-    sigma_z = ta.array([[1, 0], [0, -1]])
+sigma_0 = ta.identity(2)
+sigma_x = ta.array([[0, 1], [1, 0]])
+sigma_y = ta.array([[0, -1j], [1j, 0]])
+sigma_z = ta.array([[1, 0], [0, -1]])
 
+
+def make_system(R):
     def in_ring(pos):
-        return R ** 2 / 4 < pos[0] ** 2 + pos[1] ** 2 < R ** 2
+        x, y = pos
+        return R**2 / 4 < x**2 + y**2 < R**2
+
+    def in_lead(pos):
+        x, y = pos
+        return -R / 4 < y < R / 4
 
     def pot(site):
         x, y = site.pos
         return (0.1 * tanh(x / R) + tanh(2 * y / R)) * sigma_z
 
-    def in_lead(pos):
-        return -1 < pos[0] < 1.3 and -R / 4 < pos[1] < R / 4
-
-    lat = kwant.lattice.Honeycomb()
+    lat = kwant.lattice.honeycomb()
 
     sys = kwant.Builder()
     sys[lat.shape(in_ring, (3 * R / 4, 0))] = pot
-    for hopping in lat.nearest:
-        sys[sys.possible_hoppings(*hopping)] = sigma_y
+    sys[lat.neighbors()] = sigma_y
 
     lead = kwant.Builder(kwant.TranslationalSymmetry(lat.vec((-1, 0))))
     lead[lat.shape(in_lead, (0, 0))] = sigma_0
-    for hopping in lat.nearest:
-        lead[lead.possible_hoppings(*hopping)] = sigma_x
+    lead[lat.neighbors()] = sigma_x
     sys.attach_lead(lead)
     sys.attach_lead(lead.reversed())
 
@@ -40,8 +41,8 @@ def make_system(R=50):
 
 
 def main():
-    fsys = make_system(100)
-    print kwant.solve(fsys, 0.1).transmission(0, 1)
+    sys = make_system(100)
+    print kwant.solve(sys, 1.1).transmission(0, 1)
 
 
 if __name__ == '__main__':
