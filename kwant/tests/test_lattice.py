@@ -50,6 +50,9 @@ def test_neighbors():
     lat = lattice.square()
     num_nth_nearest = [len(lat.neighbors(n)) for n in range(5)]
     assert num_nth_nearest == [1, 2, 2, 2, 4]
+    lat = lattice.chain()
+    num_nth_nearest = [len(lat.neighbors(n)) for n in range(5)]
+    assert num_nth_nearest == 5 * [1]
 
 
 def test_shape():

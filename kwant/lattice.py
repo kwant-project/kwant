@@ -163,7 +163,11 @@ class Polyatomic(object):
             if len(group_boundaries) < n:
                 cutoff += 1
                 continue
-            n_dist = distances[group_boundaries[n]]
+            try:
+                n_dist = distances[group_boundaries[n]]
+            except IndexError:
+                cutoff += 1
+                continue
             if np.all(max_dist > n_dist):
                 break
             cutoff += 1
