@@ -2,6 +2,7 @@
 
 from __future__ import division
 from math import tanh
+from cmath import exp
 import tinyarray as ta
 import kwant
 
@@ -21,15 +22,20 @@ def make_system(R):
         x, y = pos
         return -R / 4 < y < R / 4
 
-    def pot(site):
+    def pot(site, B):
         x, y = site.pos
         return (0.1 * tanh(x / R) + tanh(2 * y / R)) * sigma_z
+
+    def hop(site1, site2, B):
+        x1, y1 = site1.pos
+        x2, y2 = site2.pos
+        return - exp(.5j * B * (x1 - x2) * (y1 + y2)) * sigma_0
 
     lat = kwant.lattice.honeycomb()
 
     sys = kwant.Builder()
     sys[lat.shape(in_ring, (3 * R / 4, 0))] = pot
-    sys[lat.neighbors()] = sigma_y
+    sys[lat.neighbors()] = hop
 
     lead = kwant.Builder(kwant.TranslationalSymmetry(lat.vec((-1, 0))))
     lead[lat.shape(in_lead, (0, 0))] = sigma_0
@@ -42,7 +48,7 @@ def make_system(R):
 
 def main():
     sys = make_system(100)
-    print kwant.solve(sys, 1.1).transmission(0, 1)
+    print kwant.solve(sys, 1.1, args=[0.1]).transmission(0, 1)
 
 
 if __name__ == '__main__':
