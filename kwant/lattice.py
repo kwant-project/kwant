@@ -518,7 +518,7 @@ class Shape(object):
         elif not isinstance(symmetry, builder.Symmetry):
             symmetry = symmetry.symmetry
 
-        def sym_site(lat, tag):
+        def fd_site(lat, tag):
             return symmetry.to_fd(Site(lat, tag, True))
 
         dim = len(start)
@@ -532,29 +532,35 @@ class Shape(object):
         sites = []
         for tag in set(sl.closest(start) for sl in sls):
             for sl in sls:
-                site = sym_site(sl, tag)
+                site = fd_site(sl, tag)
                 if func(site.pos):
                     sites.append(site)
         if not sites:
             msg = 'No sites close to {0} are inside the desired shape.'
             raise ValueError(msg.format(start))
+        tags = set(s.tag for s in sites)
 
-        old_sites = set()
         while sites:
+            old_tags = tags
             tags = set()
             for site in sites:
                 yield site
                 tags.add(site.tag)
-            tags = set(tag + delta for tag in tags for delta in deltas)
-            new_sites = set()
+            old_tags |= tags
+
+            new_tags = set()
             for tag in tags:
+                for delta in deltas:
+                     new_tag = tag + delta
+                     if new_tag not in old_tags:
+                         new_tags.add(new_tag)
+
+            sites = set()
+            for tag in new_tags:
                 for sl in sls:
-                    site = sym_site(sl, tag)
-                    if site not in old_sites and site not in sites \
-                            and func(site.pos):
-                        new_sites.add(site)
-            old_sites = sites
-            sites = new_sites
+                    site = fd_site(sl, tag)
+                    if site.tag not in old_tags and func(site.pos):
+                        sites.add(site)
 
 
 ################ Library of lattices (to be extended)
