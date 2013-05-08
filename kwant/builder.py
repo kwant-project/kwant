@@ -271,6 +271,7 @@ class NoSymmetry(Symmetry):
     def act(self, element, a, b=None):
         if element:
             raise ValueError('`element` must be empty for NoSymmetry.')
+        return a if b is None else (a, b)
 
     def to_fd(self, a, b=None):
         return a if b is None else (a, b)
