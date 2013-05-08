@@ -441,7 +441,7 @@ class TranslationalSymmetry(builder.Symmetry):
             msg = 'Expecting a {0}-tuple group element, but got `{1}` instead.'
             raise ValueError(msg.format(self.num_directions, element))
         if self.is_reversed:
-            delta *= -1
+            delta = -delta
         if b is None:
             return builder.Site(a.family, a.tag + delta, True)
         elif b.family == a.family:
@@ -456,7 +456,7 @@ class TranslationalSymmetry(builder.Symmetry):
                       'but got `{1}` instead.'
                 raise ValueError(msg.format(self.num_directions, element))
             if self.is_reversed:
-                delta2 *= -1
+                delta2 = -delta2
             return builder.Site(a.family, a.tag + delta, True), \
                 builder.Site(b.family, b.tag + delta2, True)
 
@@ -514,7 +514,7 @@ class Shape(object):
         lat, func, start = self.lat, self.func, self.start
 
         if symmetry is None:
-             symmetry = builder.NoSymmetry()
+            symmetry = builder.NoSymmetry()
         elif not isinstance(symmetry, builder.Symmetry):
             symmetry = symmetry.symmetry
 
