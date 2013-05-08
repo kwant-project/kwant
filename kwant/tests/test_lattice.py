@@ -103,10 +103,10 @@ def test_translational_symmetry():
     # Test automatic fill-in of transverse vectors.
     sym = ts((1, 2))
     sym.add_site_family(g2)
-    assert_not_equal(sym.site_family_data[g2.canonical_repr][2], 0)
+    assert_not_equal(sym.site_family_data[g2][2], 0)
     sym = ts((1, 0, 2), (3, 0, 2))
     sym.add_site_family(g3)
-    assert_not_equal(sym.site_family_data[g3.canonical_repr][2], 0)
+    assert_not_equal(sym.site_family_data[g3][2], 0)
 
     transl_vecs = np.array([[10, 0], [7, 7]], dtype=int)
     sym = ts(*transl_vecs)

@@ -206,6 +206,16 @@ class Polyatomic(object):
         return ta.dot(int_vec, self.prim_vecs)
 
 
+def short_array_repr(array):
+    full = ' '.join([i.lstrip() for i in repr(array).split('\n')])
+    return full[6 : -1]
+
+
+def short_array_str(array):
+    full = ', '.join([i.lstrip() for i in str(array).split('\n')])
+    return full[1 : -1]
+
+
 class Monatomic(builder.SiteFamily, Polyatomic):
     """
     A Bravais lattice with a single site in the basis.  Also a site family.
@@ -226,7 +236,6 @@ class Monatomic(builder.SiteFamily, Polyatomic):
         dim = prim_vecs.shape[1]
         if name is None:
             name = ''
-        self.name = name
         if prim_vecs.shape[0] > dim:
             raise ValueError('Number of primitive vectors exceeds '
                              'the space dimensionality.')
@@ -237,34 +246,28 @@ class Monatomic(builder.SiteFamily, Polyatomic):
             if offset.shape != (dim,):
                 raise ValueError('Dimensionality of offset does not match '
                                  'that of the space.')
+
+        msg = '{0}({1}, {2}, {3})'
+        cl = self.__module__ + '.' + self.__class__.__name__
+        canonical_repr = msg.format(cl, short_array_repr(prim_vecs),
+                                    short_array_repr(offset), repr(name))
+        super(Monatomic, self).__init__(canonical_repr, name)
+
         self.sublattices = [self]
         self.prim_vecs = prim_vecs
         self.inv_pv = ta.array(np.linalg.pinv(prim_vecs))
         self.offset = offset
+
         # Precalculation of auxiliary arrays for real space calculations.
         self._reduced_vecs, self._transf = lll.lll(prim_vecs)
         self._voronoi = ta.dot(lll.voronoi(self._reduced_vecs), self._transf)
 
-        def short_array_repr(array):
-            full = ' '.join([i.lstrip() for i in repr(array).split('\n')])
-            return full[6 : -1]
-
-        msg = '{0}({1}, {2}, {3})'
-        cl = self.__module__ + '.' + self.__class__.__name__
-        self.canonical_repr = msg.format(cl, short_array_repr(self.prim_vecs),
-                                         short_array_repr(self.offset),
-                                         repr(self.name))
-        intern(self.canonical_repr)
         self.dim = dim
         self._lattice_dim = len(prim_vecs)
 
-        def short_array_str(array):
-            full = ', '.join([i.lstrip() for i in str(array).split('\n')])
-            return full[1 : -1]
-
-        if self.name != '':
+        if name != '':
             msg = "Monatomic lattice {0}, vectors {1}, origin {2}"
-            self.cached_str = msg.format(self.name,
+            self.cached_str = msg.format(name,
                                          short_array_str(self.prim_vecs),
                                          short_array_str(self.offset))
         else:
@@ -370,7 +373,7 @@ class TranslationalSymmetry(builder.Symmetry):
         ValueError
             If lattice shape of `gr` cannot have the given `periods`.
         """
-        if gr.canonical_repr in self.site_family_data:
+        if gr in self.site_family_data:
             raise KeyError('Family already processed, delete it from '
                            'site_family_data first.')
         inv = np.linalg.pinv(gr.prim_vecs)
@@ -411,8 +414,8 @@ class TranslationalSymmetry(builder.Symmetry):
 
         det_x_inv_m_part = det_x_inv_m[:num_dir, :]
         m_part = m[:, :num_dir]
-        self.site_family_data[gr.canonical_repr] = (ta.array(m_part),
-                                    ta.array(det_x_inv_m_part), det_m)
+        self.site_family_data[gr] = (ta.array(m_part),
+                                     ta.array(det_x_inv_m_part), det_m)
 
     @property
     def num_directions(self):
@@ -420,10 +423,10 @@ class TranslationalSymmetry(builder.Symmetry):
 
     def _get_site_family_data(self, family):
         try:
-            return self.site_family_data[family.canonical_repr]
+            return self.site_family_data[family]
         except KeyError:
             self.add_site_family(family)
-            return self.site_family_data[family.canonical_repr]
+            return self.site_family_data[family]
 
     def which(self, site):
         det_x_inv_m_part, det_m = self._get_site_family_data(site.family)[-2:]

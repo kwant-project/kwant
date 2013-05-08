@@ -87,22 +87,27 @@ class SiteFamily(object):
     """
     Abstract base class for site families.
 
-    A site family is a 'type' of sites.  All the site families must inherit from
-    this basic one.  Site families must be immutable and fully defined by their
-    initial arguments.  One of these arguments should be `name`, used to
-    distinguish otherwise identical site families.  Every site family must have
-    an attribute `name` and an attribute `canonical_repr` which uniquely
-    identifies the family, and is also used for `repr(family)`. For efficiency
-    `canonical_repr` should be an interned string.
+    A site family is a 'type' of sites.  Site families must be immutable and
+    fully defined by their initial arguments.  They must inherit from this
+    abstract base class and call its __init__ function providing it with two
+    arguments: a canonical representation and a name.  The canonical
+    representation will be returned as the objects representation and must
+    uniquely identify the site family instance.  The name is a string used to
+    distinguish otherwise identical site families.  It may be empty.
 
     All site families must define the method `normalize_tag` which brings a tag
-    to the format standard for this site family.
+    to the standard format for this site family.
 
     Site families which are intended for use with plotting should also provide a
     method `pos(tag)`, which returns a vector with real-space coordinates of
     the site belonging to this family with a given tag.
     """
     __metaclass__ = abc.ABCMeta
+
+    def __init__(self, canonical_repr, name):
+        self.canonical_repr = canonical_repr
+        self.hash = hash(canonical_repr)
+        self.name = name
 
     def __repr__(self):
         return self.canonical_repr
@@ -111,7 +116,7 @@ class SiteFamily(object):
         return '{0} object {1}'.format(self.__class__, self.name)
 
     def __hash__(self):
-        return hash(self.canonical_repr)
+        return self.hash
 
     def __eq__(self, other):
         try:
@@ -161,7 +166,8 @@ class SimpleSiteFamily(SiteFamily):
     """
 
     def __init__(self, name=None):
-        self.canonical_repr = '{0}({1})'.format(self.__class__, repr(name))
+        canonical_repr = '{0}({1})'.format(self.__class__, repr(name))
+        super(SimpleSiteFamily, self).__init__(canonical_repr, name)
 
     def normalize_tag(self, tag):
         tag = tuple(tag)
