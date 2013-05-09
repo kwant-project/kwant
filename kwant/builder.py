@@ -726,7 +726,7 @@ class Builder(object):
                 b, a = sym.to_fd(b, a)
                 assert not sym.in_fd(a)
             value = self._get_edge(b, a)
-            if hasattr(value, '__call__'):
+            if callable(value):
                 assert not isinstance(value, HermConjOfFunc)
                 value = HermConjOfFunc(value)
             else:
@@ -1258,7 +1258,7 @@ class FiniteSystem(system.FiniteSystem):
     def hamiltonian(self, i, j, *args):
         if i == j:
             value = self.onsite_hamiltonians[i]
-            if hasattr(value, '__call__'):
+            if callable(value):
                 value = value(self.sites[i], *args)
         else:
             edge_id = self.graph.first_edge_id(i, j)
@@ -1268,8 +1268,9 @@ class FiniteSystem(system.FiniteSystem):
                 i, j = j, i
                 edge_id = self.graph.first_edge_id(i, j)
                 value = self.hoppings[edge_id]
-            if hasattr(value, '__call__'):
-                value = value(self.sites[i], self.sites[j], *args)
+            if callable(value):
+                sites = self.sites
+                value = value(sites[i], sites[j], *args)
             if conj:
                 value = herm_conj(value)
         return value
@@ -1288,9 +1289,8 @@ class InfiniteSystem(system.InfiniteSystem):
             if i >= self.slice_size:
                 i -= self.slice_size
             value = self.onsite_hamiltonians[i]
-            if hasattr(value, '__call__'):
-                value = value(self.symmetry.to_fd(self.sites[i]),
-                                                  *args)
+            if callable(value):
+                value = value(self.symmetry.to_fd(self.sites[i]), *args)
         else:
             edge_id = self.graph.first_edge_id(i, j)
             value = self.hoppings[edge_id]
@@ -1299,9 +1299,10 @@ class InfiniteSystem(system.InfiniteSystem):
                 i, j = j, i
                 edge_id = self.graph.first_edge_id(i, j)
                 value = self.hoppings[edge_id]
-            if hasattr(value, '__call__'):
-                site_i = self.sites[i]
-                site_j = self.sites[j]
+            if callable(value):
+                sites = self.sites
+                site_i = sites[i]
+                site_j = sites[j]
                 site_i, site_j = self.symmetry.to_fd(site_i, site_j)
                 value = value(site_i, site_j, *args)
             if conj:

@@ -619,9 +619,9 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
         sites_pos = np.apply_along_axis(pos_transform, 1, sites_pos)
         end_pos = np.apply_along_axis(pos_transform, 1, end_pos)
         start_pos = np.apply_along_axis(pos_transform, 1, start_pos)
-    if hasattr(site_color, '__call__'):
+    if callable(site_color):
         site_color = [site_color(i[0]) for i in sites if i[1] is None]
-    if hasattr(hop_color, '__call__'):
+    if callable(hop_color):
         hop_color = [hop_color(*i[0]) for i in hops if i[1] is None]
     # Choose plot type.
     dim = 3 if (sites_pos.shape[1] == 3) else 2
@@ -833,7 +833,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
     coords = sys_leads_pos(sys, sites)
     if coords.shape[1] != 2:
         raise ValueError('Only 2D systems can be plotted this way.')
-    if hasattr(value, '__call__'):
+    if callable(value):
         value = [value(site[0]) for site in sites]
     else:
         if not isinstance(sys, system.FiniteSystem):
