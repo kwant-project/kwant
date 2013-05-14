@@ -641,10 +641,12 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
         cmap = cmap[0]
     else:
         hop_cmap = None
+    print n_lead_copies
+    norm = matplotlib.colors.Normalize(-0.5, n_lead_copies - 0.5)
     if dim == 2:
         ax = fig.add_subplot(111, aspect='equal')
         ax.scatter(*sites_pos[: n_sys_sites].T, c=site_color, cmap=cmap,
-                   s=size ** 2, zorder=2)
+                   s=size**2, zorder=2)
         end, start = end_pos[: n_sys_hops], start_pos[: n_sys_hops]
         lines(ax, end[:, 0], start[:, 0], end[:, 1], start[:, 1], hop_color,
               linewidths=thickness, zorder=1, cmap=hop_cmap)
@@ -653,23 +655,23 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
         # Avoid the matplotlib autoscale bug (remove when fixed)
         if len(sites_pos) > n_sys_sites:
             ax.scatter(*sites_pos[n_sys_sites:].T, c=lead_site_colors,
-                       cmap='gist_yarg_r', s=size ** 2, zorder=2,
-                       norm=matplotlib.colors.Normalize(-1, n_lead_copies + 1))
+                       cmap='gray', s=size**2, zorder=2,
+                       norm=norm)
         else:
             ax.add_collection(matplotlib.collections.PathCollection([]))
         lead_hop_colors = np.array([i[2] for i in
                                      hops if i[1] is not None], dtype=float)
         end, start = end_pos[n_sys_hops:], start_pos[n_sys_hops:]
         lines(ax, end[:, 0], start[:, 0], end[:, 1], start[:, 1],
-              lead_hop_colors, linewidths=thickness, cmap='gist_yarg_r',
-              norm=matplotlib.colors.Normalize(-1, n_lead_copies + 1),
+              lead_hop_colors, linewidths=thickness, cmap='gray',
+              norm=norm,
               zorder=1)
     else:
         warnings.filterwarnings('ignore', message=r'.*rotation.*')
         ax = fig.add_subplot(111, projection='3d')
         warnings.resetwarnings()
         ax.scatter(*sites_pos[: n_sys_sites].T, c=site_color, cmap=cmap,
-                   s=size ** 2)
+                   s=size**2)
         end, start = end_pos[: n_sys_hops], start_pos[: n_sys_hops]
         lines3d(ax, end[:, 0], start[:, 0], end[:, 1], start[:, 1],
               end[:, 2], start[:, 2], hop_color, cmap=hop_cmap,
@@ -680,8 +682,7 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
         # Avoid the matplotlib autoscale bug (remove when fixed)
         if len(sites_pos) > n_sys_sites:
             ax.scatter(*sites_pos[n_sys_sites:].T, c=lead_site_colors,
-                       cmap='gist_yarg_r', s=size ** 2,
-                       norm=matplotlib.colors.Normalize(-1, n_lead_copies + 1))
+                       cmap='gray', s=size**2, norm=norm)
         else:
             col = mplot3d.art3d.Patch3DCollection([])
             col.set_3d_properties([], 'z')
@@ -691,9 +692,9 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
         lead_hop_colors = 1 / np.sqrt(1. + lead_hop_colors)
         end, start = end_pos[n_sys_hops:], start_pos[n_sys_hops:]
         lines3d(ax, end[:, 0], start[:, 0], end[:, 1], start[:, 1],
-              end[:, 2], start[:, 2],
-              lead_hop_colors, linewidths=thickness, cmap='gist_yarg_r',
-              norm=matplotlib.colors.Normalize(-1, n_lead_copies + 1))
+                end[:, 2], start[:, 2],
+                lead_hop_colors, linewidths=thickness, cmap='gray',
+                norm=norm)
         min_ = np.min(sites_pos, 0)
         max_ = np.max(sites_pos, 0)
         w = np.max(max_ - min_) / 2
