@@ -19,6 +19,7 @@ Roughly in order of importance.                                     -*-org-*-
     - The Hermicity of the Hamiltonian is enforced in a more obvious way.
     - It's clear at system level which Hamiltonian elements are defined
       directly.
+  - Verify that the graph slicing algorithm continues to work.
 
 * Improve experience when working with sites in a finalized builder
   (It should be possible to map sites to nodes efficiently.  Probably, the best
@@ -78,7 +79,10 @@ Roughly in order of importance.                                     -*-org-*-
   If yes, implement it.
 
 * Consider implementing "models" module, incorporate units into it.
-  Perhaps a general python module for units would suffice?
+  - It is potentially related to vectorized value functions (since modesl are
+    spatially homogeneous)
+  - It may also be related to units, which we may borrow from somewhere,
+    or implement on our own.
 
 * Improve handling of s-matrices with important additional degrees of freedom.
   i.e. spin, or electron-hole.  Currently, one needs to manually process lead
