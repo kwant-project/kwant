@@ -9,6 +9,24 @@ Roughly in order of importance.                                     -*-org-*-
 * Consider making the b parameter of _solve_linear_sys a matrix instead of a
   list of matrices
 
+* Re-design the interface of low level systems
+  considering the following
+  - We want support for multiple symmetry directions
+  - Consider making System.hamiltonian a vectorized function
+  - Consider using two-way-compressed uni-directional graphs in systems
+    advantages:
+    - The number of edges gets reduced by 1/2.
+    - The Hermicity of the Hamiltonian is enforced in a more obvious way.
+    - It's clear at system level which Hamiltonian elements are defined
+      directly.
+
+* Improve experience when working with sites in a finalized builder
+  (It should be possible to map sites to nodes efficiently.  Probably, the best
+  way to do it is to sort the sites in finalized builders.)
+  One could then also RLE compress sites in finalized builders.
+
+* Make kwant objects pickleable
+
 * Implement "inhomogeneous arrays" for ldos and wavefunc
   The point is to have ldos or wavefunc return objects that behave like 2d
   arrays, where the site index and orbital index are separate.  However, this
@@ -44,22 +62,9 @@ Roughly in order of importance.                                     -*-org-*-
   The most easy way to do this is increasing the period of the lead.
   Alternatively, generalize modes and InfiniteSystem format.
 
-* Benchmark MUMPS and check whether nested dissection would be useful.
-  If yes, implement it.
-
-* Make kwant objects pickleable.
-
-* "shape" doesn't work for leads when only checking 'y' (and not 'x')
-  Make it aware of symmetries.
-
-* Improve experience when working with sites in a finalized builder
-  (It should be possible to map sites to nodes efficiently.  Probably, the best
-  way to do it is to sort the sites in finalized builders.)
-  One could then also RLE compress sites in finalized builders.
-
 * In finalized leads, only keep the sites of the slice.
 
-* Generalize InfiniteSystem to multiple directions.
+* Add a test of kwant that verifies QHE conductance quantization
 
 * Add support for optimization of lead fundamental domains.
 
@@ -69,7 +74,11 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Wrap TB_SIM as a solver.
 
-* Implement models module, incorporate units into it.
+* Benchmark MUMPS and check whether nested dissection would be useful.
+  If yes, implement it.
+
+* Consider implementing "models" module, incorporate units into it.
+  Perhaps a general python module for units would suffice?
 
 * Improve handling of s-matrices with important additional degrees of freedom.
   i.e. spin, or electron-hole.  Currently, one needs to manually process lead
@@ -88,19 +97,5 @@ Roughly in order of importance.                                     -*-org-*-
 * Adopt mincut/maxflow algorithm from networkx or python-graph to find the best
   representation of a lead unit cell.
 
-* Make shape a callable that uses system symmetry.
-  Similarly to HoppingKind, which requires information about sites in the
-  builder to generate hoppings, shape can be made symmetry-aware.
-
-* Consider using two-way-compressed uni-directional graphs in systems
-  advantages:
-  - The number of edges gets reduced by 1/2.
-  - The Hermicity of the Hamiltonian is enforced in a more obvious way.
-  - It's clear at system level which Hamiltonian elements are defined
-    directly.
-  Would Michael's graph slicing code continue to work?
-
 * Speed up kwant.contrib.digest
   by using SipHash and Ziggurat algorithm in C/Cython
-
-* Add a test of kwant that verifies QHE conductance quantization
