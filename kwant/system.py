@@ -91,7 +91,7 @@ class FiniteSystem(System):
     """
     __metaclass__ = abc.ABCMeta
 
-    def precalculate(self, energy, args=(), leads=None,
+    def precalculate(self, energy=0, args=(), leads=None,
                      calculate_selfenergy=True):
         """
         Precalculate modes or self-energies in the leads.
@@ -200,7 +200,7 @@ class InfiniteSystem(System):
         return self.hamiltonian_submatrix(slice_sites, neighbor_sites,
                                           sparse=sparse, args=args)
 
-    def modes(self, energy, args=()):
+    def modes(self, energy=0, args=()):
         """Return mode decomposition of the lead
 
         See documentation of `~kwant.physics.ModesTuple` for the return
@@ -214,7 +214,7 @@ class InfiniteSystem(System):
         ham.flat[::ham.shape[0] + 1] -= energy
         return physics.modes(ham, self.inter_slice_hopping(args=args))
 
-    def selfenergy(self, energy, args=()):
+    def selfenergy(self, energy=0, args=()):
         """Return self-energy of a lead.
 
         The returned matrix has the shape (s, s), where s is
@@ -250,13 +250,13 @@ class PrecalculatedLead(object):
         self._modes = modes
         self._selfenergy = selfenergy
 
-    def modes(self, energy, args=()):
+    def modes(self, energy=0, args=()):
         if self._modes is not None:
             return self._modes
         else:
             raise ValueError("No precalculated modes were provided.")
 
-    def selfenergy(self, energy, args=()):
+    def selfenergy(self, energy=0, args=()):
         if self._selfenergy is not None:
             return self._selfenergy
         else:
