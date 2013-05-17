@@ -86,7 +86,7 @@ def set_edge_colors(color, collection, cmap, norm=None):
         collection.set_norm(norm)
 
 
-def lines(axes, x0, x1, y0, y1, colors='k', linestyles='solid', cmap=None,
+def lines(axes, pos0, pos1, colors='k', linestyles='solid', cmap=None,
           norm=None, **kwargs):
     """Add a collection of line segments to an axes instance.
 
@@ -94,14 +94,10 @@ def lines(axes, x0, x1, y0, y1, colors='k', linestyles='solid', cmap=None,
     ----------
     axes : matplotlib.axes.Axes instance
         Axes to which the lines have to be added.
-    x0 : array_like
-        Starting x-coordinates of each line segment
-    x1 : array_like
-        Ending x-coordinates of each line segment
-    y0 : array_like
-        Starting y-coordinates of each line segment
-    y1 : array_like
-        Ending y-coordinates of each line segment
+    pos0 : 2d array_like
+        Starting coordinates of each line segment
+    pos1 : 2d array_like
+        Ending coordinates of each line segment
     colors : color definition, optional
         Either a single object that is a proper matplotlib color definition
         or a sequence of such objects of appropriate length.  Defaults to all
@@ -122,28 +118,27 @@ def lines(axes, x0, x1, y0, y1, colors='k', linestyles='solid', cmap=None,
     `matplotlib.collections.LineCollection` instance containing all the
     segments that were added.
     """
-    coords = (y0, y1, x0, x1)
 
-    if not all(len(coord) == len(y0) for coord in coords):
+    if not pos0.shape == pos1.shape:
         raise ValueError('Incompatible lengths of coordinate arrays.')
 
-    if len(x0) == 0:
+    if len(pos0) == 0:
         coll = collections.LineCollection([], linestyles=linestyles)
         axes.add_collection(coll)
         axes.autoscale_view()
         return coll
 
-    segments = (((i[0], i[1]), (i[2], i[3])) for
-                i in itertools.izip(x0, y0, x1, y1))
+    segments = np.c_[pos0, pos1].reshape(pos0.shape[0], 2, 2)
+
     coll = collections.LineCollection(segments, linestyles=linestyles)
     set_edge_colors(colors, coll, cmap, norm)
     axes.add_collection(coll)
     coll.update(kwargs)
 
-    minx = min(x0.min(), x1.min())
-    maxx = max(x0.max(), x1.max())
-    miny = min(y0.min(), y1.min())
-    maxy = max(y0.max(), y1.max())
+    minx = min(pos0[:, 0].min(), pos1[:, 0].min())
+    maxx = max(pos0[:, 0].max(), pos1[:, 0].max())
+    miny = min(pos0[:, 1].min(), pos1[:, 1].min())
+    maxy = max(pos0[:, 1].max(), pos1[:, 1].max())
 
     corners = (minx, miny), (maxx, maxy)
 
@@ -153,7 +148,7 @@ def lines(axes, x0, x1, y0, y1, colors='k', linestyles='solid', cmap=None,
     return coll
 
 
-def lines3d(axes, x0, x1, y0, y1, z0, z1,
+def lines3d(axes, pos0, pos1,
             colors='k', linestyles='solid', cmap=None, norm=None, **kwargs):
     """Add a collection of 3D line segments to an Axes3D instance.
 
@@ -161,18 +156,10 @@ def lines3d(axes, x0, x1, y0, y1, z0, z1,
     ----------
     axes : matplotlib.axes.Axes instance
         Axes to which the lines have to be added.
-    x0 : array_like
-        Starting x-coordinates of each line segment
-    x1 : array_like
+    pos0 : 3D array_like
+        Starting coordinates of each line segment
+    pos1 : 3D array_like
         Ending x-coordinates of each line segment
-    y0 : array_like
-        Starting y-coordinates of each line segment
-    y1 : array_like
-        Ending y-coordinates of each line segment
-    z0 : array_like
-        Starting z-coordinates of each line segment
-    z1 : array_like
-        Ending z-coordinates of each line segment
     colors : color definition, optional
         Either a single object that is a proper matplotlib color definition
         or a sequence of such objects of appropriate length.  Defaults to all
@@ -194,26 +181,27 @@ def lines3d(axes, x0, x1, y0, y1, z0, z1,
     segments that were added.
     """
     had_data = axes.has_data()
-    coords = (y0, y1, x0, x1, z0, z1)
 
-    if not all(len(coord) == len(y0) for coord in coords):
+    if not pos0.shape == pos1.shape:
         raise ValueError('Incompatible lengths of coordinate arrays.')
 
-    if len(x0) == 0:
+    if len(pos0) == 0:
         coll = mplot3d.art3d.Line3DCollection([], linestyles=linestyles)
         axes.add_collection3d(coll)
         return coll
 
-    segments = [(i[: 3], i[3:]) for
-                i in itertools.izip(x0, y0, z0, x1, y1, z1)]
+    segments = np.c_[pos0, pos1].reshape(pos0.shape[0], 2, 3)
+
     coll = mplot3d.art3d.Line3DCollection(segments, linestyles=linestyles)
-    set_edge_colors(colors, coll, cmap, norm)
+    set_colors(colors, coll, cmap, norm)
     coll.update(kwargs)
     axes.add_collection3d(coll)
 
     min_max = lambda a, b: np.array(min(a.min(), b.min()),
                                     max(a.max(), b.max()))
-    x, y, z = min_max(x0, x1), min_max(y0, y1), min_max(z0, z1)
+    x, y, z = (min_max(pos0[:, 0], pos1[:, 0]), 
+               min_max(pos0[:, 1], pos1[:, 1]), 
+               min_max(pos0[:, 2], pos1[:, 2]))
 
     axes.auto_scale_xyz(x, y, z, had_data)
 
@@ -647,7 +635,7 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
         ax.scatter(*sites_pos[: n_sys_sites].T, c=site_color, cmap=cmap,
                    s=size**2, zorder=2)
         end, start = end_pos[: n_sys_hops], start_pos[: n_sys_hops]
-        lines(ax, end[:, 0], start[:, 0], end[:, 1], start[:, 1], hop_color,
+        lines(ax, end, start, hop_color,
               linewidths=thickness, zorder=1, cmap=hop_cmap)
         lead_site_colors = np.array([i[2] for i in
                                      sites if i[1] is not None], dtype=float)
@@ -661,7 +649,7 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
         lead_hop_colors = np.array([i[2] for i in
                                      hops if i[1] is not None], dtype=float)
         end, start = end_pos[n_sys_hops:], start_pos[n_sys_hops:]
-        lines(ax, end[:, 0], start[:, 0], end[:, 1], start[:, 1],
+        lines(ax, end, start,
               lead_hop_colors, linewidths=thickness, cmap='gray',
               norm=norm,
               zorder=1)
@@ -670,18 +658,17 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
         ax = fig.add_subplot(111, projection='3d')
         warnings.resetwarnings()
         ax.scatter(*sites_pos[: n_sys_sites].T, c=site_color, cmap=cmap,
-                   s=size**2)
+                   s=site_size**2)
         end, start = end_pos[: n_sys_hops], start_pos[: n_sys_hops]
-        lines3d(ax, end[:, 0], start[:, 0], end[:, 1], start[:, 1],
-              end[:, 2], start[:, 2], hop_color, cmap=hop_cmap,
-              linewidths=thickness)
+        lines3d(ax, end, start, hop_color, cmap=hop_cmap,
+                linewidths=hop_lw)
         lead_site_colors = np.array([i[2] for i in
                                      sites if i[1] is not None], dtype=float)
         lead_site_colors = 1 / np.sqrt(1. + lead_site_colors)
         # Avoid the matplotlib autoscale bug (remove when fixed)
         if len(sites_pos) > n_sys_sites:
             ax.scatter(*sites_pos[n_sys_sites:].T, c=lead_site_colors,
-                       cmap='gray', s=size**2, norm=norm)
+                       cmap='gray', s=site_size**2, norm=norm)
         else:
             col = mplot3d.art3d.Patch3DCollection([])
             col.set_3d_properties([], 'z')
@@ -690,10 +677,8 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
                                      hops if i[1] is not None], dtype=float)
         lead_hop_colors = 1 / np.sqrt(1. + lead_hop_colors)
         end, start = end_pos[n_sys_hops:], start_pos[n_sys_hops:]
-        lines3d(ax, end[:, 0], start[:, 0], end[:, 1], start[:, 1],
-                end[:, 2], start[:, 2],
-                lead_hop_colors, linewidths=thickness, cmap='gray',
-                norm=norm)
+        lines3d(ax, end, start, lead_hop_colors, linewidths=hop_lw,
+                cmap='gray', norm=norm)
         min_ = np.min(sites_pos, 0)
         max_ = np.max(sites_pos, 0)
         w = np.max(max_ - min_) / 2
