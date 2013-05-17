@@ -641,7 +641,6 @@ def plot(sys, n_lead_copies=2, site_color='b', hop_color='b', cmap='gray',
         cmap = cmap[0]
     else:
         hop_cmap = None
-    print n_lead_copies
     norm = matplotlib.colors.Normalize(-0.5, n_lead_copies - 0.5)
     if dim == 2:
         ax = fig.add_subplot(111, aspect='equal')
