@@ -6,7 +6,7 @@ from __future__ import division
 import numpy as np
 from matplotlib import pyplot
 import kwant
-from kwant.physics.selfenergy import square_selfenergy
+from kwant.physics.leads import square_selfenergy
 
 __all__ = ['System']
 
@@ -16,14 +16,9 @@ class Lead(object):
         self.t = t
         self.potential = potential
 
-<<<<<<< HEAD
-    def self_energy(self, fermi_energy, args=()):
-        return square_self_energy(self.width, self.t, self.potential,
-=======
-    def selfenergy(self, fermi_energy):
-        return square_selfenergy(self.width, self.t, self.potential,
->>>>>>> modes
-                                  fermi_energy)
+    def selfenergy(self, fermi_energy, args=()):
+        return square_selfenergy(self.width, self.t,
+                                 self.potential + fermi_energy)
 
 class System(kwant.system.FiniteSystem):
     def __init__(self, shape, hopping,
