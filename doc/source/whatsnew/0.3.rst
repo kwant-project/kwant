@@ -156,3 +156,8 @@ Modes or self-energies can now be precomputed before passing the system to a
 solver, using the method `~kwant.system.FiniteSystem.precalculate`. This may
 save time, when the linear system has to be solved many times with the same
 lead parameters.
+
+Inclusion of contributed modules
+--------------------------------
+kwant now contains a sub-package :mod:`kwant.contrib` that contains various
+modules that are useful with kwant but are not considered to be part of it.

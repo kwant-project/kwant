@@ -34,4 +34,9 @@ have made it possible <authors>`.
 
    reference/index
 
+.. toctree::
+   :maxdepth: 2
+
+   contrib/index
+
 * :ref:`genindex`

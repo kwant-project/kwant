@@ -6,7 +6,7 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-"""A module for "functional" random numbers.
+"""Random-access random numbers
 
 This module provides routines that given some input compute a "random" output
 that depends on the input in a (cryptographically) intractable way.
