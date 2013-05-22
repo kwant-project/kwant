@@ -71,6 +71,11 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
         #       False if h_hop is purely imaginary
         raise ValueError("Inter-slice hopping is exactly zero.")
 
+    # If both h and t are real, it may be possible to use the real eigenproblem.
+    if (not np.any(h_hop.imag)) and (not np.any(h_onslice.imag)):
+        h_hop = h_hop.real
+        h_onslice = h_onslice.real
+
     eps = np.finfo(np.common_type(h_onslice, h_hop)).eps * tol
 
     # First check if the hopping matrix has singular values close to 0.
