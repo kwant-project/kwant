@@ -31,6 +31,7 @@ def make_sparse(ham, args, CGraph gr, diag,
     cdef complex [:, :] h
     cdef gint [:, :] rows_cols
     cdef complex [:] data
+    cdef complex value
 
     matrix = ta.matrix
 
@@ -59,10 +60,12 @@ def make_sparse(ham, args, CGraph gr, diag,
                 raise ValueError(msg.format(fs, fs))
             for i in xrange(h.shape[0]):
                 for j in xrange(h.shape[1]):
-                    data[k] = h[i, j]
-                    rows_cols[0, k] = i + to_off[n_ts]
-                    rows_cols[1, k] = j + from_off[n_fs]
-                    k += 1
+                    value = h[i, j]
+                    if value != 0:
+                        data[k] = value
+                        rows_cols[0, k] = i + to_off[n_ts]
+                        rows_cols[1, k] = j + from_off[n_fs]
+                        k += 1
 
         nbors = gr.out_neighbors(fs)
         for ts in nbors.data[:nbors.size]:
@@ -74,12 +77,15 @@ def make_sparse(ham, args, CGraph gr, diag,
                 raise ValueError(msg.format(fs, ts))
             for i in xrange(h.shape[0]):
                 for j in xrange(h.shape[1]):
-                    data[k] = h[i, j]
-                    rows_cols[0, k] = i + to_off[n_ts]
-                    rows_cols[1, k] = j + from_off[n_fs]
-                    k += 1
+                    value = h[i, j]
+                    if value != 0:
+                        data[k] = value
+                        rows_cols[0, k] = i + to_off[n_ts]
+                        rows_cols[1, k] = j + from_off[n_fs]
+                        k += 1
 
-    return sp.coo_matrix((data, rows_cols), shape=(to_off[-1], from_off[-1]))
+    return sp.coo_matrix((data[:k], rows_cols[:, :k]),
+                         shape=(to_off[-1], from_off[-1]))
 
 
 @cython.boundscheck(False)
@@ -93,6 +99,7 @@ def make_sparse_full(ham, args, CGraph gr, diag,
     cdef complex [:, :] h
     cdef gint [:, :] rows_cols
     cdef complex [:] data
+    cdef complex value
 
     matrix = ta.matrix
     n = gr.num_nodes
@@ -116,10 +123,12 @@ def make_sparse_full(ham, args, CGraph gr, diag,
             raise ValueError(msg.format(fs, fs))
         for i in xrange(h.shape[0]):
             for j in xrange(h.shape[1]):
-                data[k] = h[i, j]
-                rows_cols[0, k] = i + to_off[fs]
-                rows_cols[1, k] = j + from_off[fs]
-                k += 1
+                value = h[i, j]
+                if value != 0:
+                    data[k] = value
+                    rows_cols[0, k] = i + to_off[fs]
+                    rows_cols[1, k] = j + from_off[fs]
+                    k += 1
 
         nbors = gr.out_neighbors(fs)
         for ts in nbors.data[:nbors.size]:
@@ -130,13 +139,16 @@ def make_sparse_full(ham, args, CGraph gr, diag,
                 raise ValueError(msg.format(fs, ts))
             for i in xrange(h.shape[0]):
                 for j in xrange(h.shape[1]):
-                    data[k] = h[i, j]
-                    data[k + 1] = h[i, j].conjugate()
-                    rows_cols[1, k + 1] = rows_cols[0, k] = i + to_off[ts]
-                    rows_cols[0, k + 1] = rows_cols[1, k] = j + from_off[fs]
-                    k += 2
+                    value = h[i, j]
+                    if value != 0:
+                        data[k] = value
+                        data[k + 1] = h[i, j].conjugate()
+                        rows_cols[1, k + 1] = rows_cols[0, k] = i + to_off[ts]
+                        rows_cols[0, k + 1] = rows_cols[1, k] = j + from_off[fs]
+                        k += 2
 
-    return sp.coo_matrix((data, rows_cols), shape=(to_off[-1], from_off[-1]))
+    return sp.coo_matrix((data[:k], rows_cols[:, :k]),
+                         shape=(to_off[-1], from_off[-1]))
 
 
 @cython.boundscheck(False)
