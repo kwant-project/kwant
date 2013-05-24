@@ -36,15 +36,6 @@ class System(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def num_orbitals(self, site, *args):
-        """Return the number of orbitals of a site.
-
-        This is an inefficient general implementation.  It should be
-        overridden, if a more efficient way to calculate is available.
-        """
-        ham = self.hamiltonian(site, site, *args)
-        return 1 if np.isscalar(ham) else ham.shape[0]
-
     @abc.abstractmethod
     def hamiltonian(self, i, j, *args):
         """Return the hamiltonian matrix element for sites `i` and `j`.
@@ -81,7 +72,7 @@ class FiniteSystem(System):
     The length of `leads` must be equal to the length of `lead_interfaces`.
 
     For lead ``n``, the method leads[n].selfenergy must return a square matrix
-    whose size is ``sum(self.num_orbitals(neighbor)`` for neighbor in
+    whose size is ``sum(len(self.hamiltonian(site, site)) for site in
     self.lead_interfaces[n])``. The output format for ``leads[n].modes`` has to
     be as described in `~kwant.physics.ModesTuple`.
 
@@ -218,7 +209,7 @@ class InfiniteSystem(System):
         """Return self-energy of a lead.
 
         The returned matrix has the shape (s, s), where s is
-        ``sum(self.num_orbitals(i)
+        ``sum(len(self.hamiltonian(i, i))
               for i in range(self.graph.num_nodes - self.slice_size))``.
         """
         ham = self.slice_hamiltonian(args=args)

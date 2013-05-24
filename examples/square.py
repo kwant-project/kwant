@@ -72,10 +72,6 @@ class System(kwant.system.FiniteSystem):
         self.leads = [Lead(shape[1], hopping, lead_potentials[i])
                       for i in range(2)]
 
-    def num_orbitals(self, site):
-        """Return the number of orbitals of a site."""
-        return 1
-
     def hamiltonian(self, i, j):
         """Return an submatrix of the tight-binding Hamiltonian."""
         if i == j:
