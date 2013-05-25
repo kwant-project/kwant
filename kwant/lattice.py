@@ -193,6 +193,62 @@ class Polyatomic(object):
 
         return shape_sites
 
+    def wire(self, center, radius):
+        """Return a key for all the lattice sites inside an infinite cylinder.
+
+        This method makes it easy to define cylindrical (2d: rectangular) leads
+        that point in any direction.  The object returned by this method is
+        primarily meant to be used as a key for indexing `kwant.Builder`
+        instances.  See example below.
+
+        Parameters
+        ----------
+        center : float vector
+            A point belonging to the axis of the cylinder.
+        radius : float
+            The radius of the cylinder.
+
+        Notes
+        -----
+        The function returned by this method is to be called with a
+        `~kwant.builder.TranslationalSymmetry` instance (or a
+        `~kwant.builder.Builder` instance whose symmetry is used then) as sole
+        argument.  All the lattice sites (in the fundamental domain of the
+        symmetry) inside the specified infinite cylinder are yielded.  The
+        direction of the cylinder is determined by the symmetry.
+
+        Examples
+        --------
+        >>> lat = kwant.lattice.honeycomb()
+        >>> sym = kwant.TranslationalSymmetry(lat.a.vec((-2, 1)))
+        >>> lead = kwant.Builder(sym)
+        >>> lead[lat.wire((0, -5), 5)] = 0
+        >>> lead[lat.neighbors()] = 1
+        """
+        center = ta.array(center, float)
+
+        def wire_sites(sym):
+            if not isinstance(sym, builder.Symmetry):
+                sym = sym.symmetry
+            if not isinstance(sym, TranslationalSymmetry):
+                raise ValueError('wire shape only works with '
+                                 'translational symmetry.')
+            if len(sym.periods) != 1:
+                raise ValueError('wire shape only works with one-dimensional '
+                                 'translational symmetry.')
+            period = np.array(sym.periods)[0]
+            direction = ta.array(period / np.linalg.norm(period))
+            r_squared = radius**2
+
+            def wire_shape(pos):
+                rel_pos = pos - center
+                projection = rel_pos - direction * ta.dot(direction, rel_pos)
+                return sum(projection * projection) <= r_squared
+
+            return self.shape(wire_shape, center)(sym)
+
+        return wire_sites
+
     def neighbors(self, n=1, eps=1e-8):
         """
         Return n-th nearest neighbor hoppings.
@@ -564,6 +620,7 @@ class TranslationalSymmetry(builder.Symmetry):
         return result
 
 
+
 ################ Library of lattices (to be extended)
 
 def chain(a=1, name=''):

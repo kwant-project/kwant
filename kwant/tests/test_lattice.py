@@ -12,7 +12,7 @@ import numpy as np
 import tinyarray as ta
 from nose.tools import assert_raises, assert_not_equal
 from numpy.testing import assert_equal
-from kwant import lattice
+from kwant import lattice, builder
 
 
 def test_closest():
@@ -81,6 +81,24 @@ def test_shape():
             return abs(pos[0] * vec[1] - pos[1] * vec[0]) < 10
         sites = list(lat.shape(shape, (0, 0))(sym))
         assert len(sites) > 35
+
+
+def test_wire():
+    np.random.seed(5)
+    vecs = np.random.randn(3, 3)
+    vecs[0] = [1, 0, 0]
+    center = np.random.randn(3)
+    lat = lattice.general(vecs, np.random.randn(4, 3))
+    sys = builder.Builder(lattice.TranslationalSymmetry((2, 0, 0)))
+    def wire_shape(pos):
+        pos = np.array(pos)
+        return np.linalg.norm(pos[1:] - center[1:])**2 <= 8.6**2
+    sys[lat.shape(wire_shape, center)] = 0
+    sites2 = set(sys.sites())
+    sys = builder.Builder(lattice.TranslationalSymmetry((2, 0, 0)))
+    sys[lat.wire(center, 8.6)] = 1
+    sites1 = set(sys.sites())
+    assert_equal(sites1, sites2)
 
 
 def test_translational_symmetry():
