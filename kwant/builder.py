@@ -538,11 +538,14 @@ class Builder(object):
     to modify them without reconstructing, and to save memory for many-orbital
     models.
 
-    Any (non-tuple) iterable (e.g. a list) of keys is also a key: Lists or
-    generator expressions of hoppings/sites can be used as keys.  Additionally,
-    a function that returns a key when given a builder as sole argument is a
-    key as well.  This makes it possible to use (lists of) `HoppingKind`
-    instances as keys.
+    In addition to simple keys (single sites and hoppings) more powerful keys
+    are possible as well that allow to manipulate multiple sites/hoppings in a
+    single operation.  Such "fancy" keys are internally expanded into a sequence
+    of simple keys by using the method `Builder.expand`.  For example,
+    ``sys[fancy_key] = value`` is equivalent to ::
+
+        for simple_key in sys.expand(fancy_key):
+            sys[simple_key] = value
 
     Builder instances automatically ensure that every hopping is Hermitian, so
     that if ``builder[a, b]`` has been set, there is no need to set
@@ -670,38 +673,35 @@ class Builder(object):
     def __nonzero__(self):
         return bool(self.H)
 
-    # TODO: rewrite using "yield from" once we can take Python 3.3 for granted.
-    def _for_each_in_key(self, key, f_site, f_hopp):
-        if isinstance(key, Site):
-            f_site(key)
-            return 0
-        elif isinstance(key, tuple):
-            f_hopp(key)
-            return 1
-        elif callable(key):
-            return self._for_each_in_key(key(self), f_site, f_hopp)
-        else:
-            try:
-                ret = None
-                for item in key:
-                    last = self._for_each_in_key(item, f_site, f_hopp)
-                    if last != ret:
-                        if ret is None:
-                            ret = last
-                        elif last is not None:
-                            raise KeyError(item)
-                return ret
-            except TypeError:
-                raise KeyError(key)
-            # The following clauses make sure that a useful error message is
-            # generated for infinitely iterable keys (like strings).
-            except KeyError as e:
-                if not e.args and key != item:
-                    raise KeyError(key)
+    def expand(self, key):
+        """
+        Expand a general (possibly fancy) key into an iterator over simple keys.
+
+        This method is used to expand the keys when getting or deleting items of
+        a builder (i.e. ``sys[key] = value`` or ``del sys[key]``).
+
+        Keys are (recursively):
+            * Simple keys: sites or 2-tuples of sites (=hoppings).
+            * Any (non-tuple) iterable of keys, e.g. a list or a generator
+              expression.
+            * Any function that returns a key when passed a builder as sole
+              argument, e.g. a `HoppingKind` instance or the function returned
+              by `~kwant.lattice.Polyatomic.shape`.
+        """
+        itr = iter((key,))
+        iter_stack = [None]
+        while iter_stack:
+            for key in itr:
+                if isinstance(key, Site) or isinstance(key, tuple):
+                    yield key
                 else:
-                    raise
-            except RuntimeError:
-                raise KeyError()
+                    iter_stack.append(itr)
+                    if callable(key):
+                        key = key(self)
+                    itr = iter(key)
+                    break
+            else:
+                itr = iter_stack.pop()
 
     def _get_site(self, site):
         site = self.symmetry.to_fd(site)
@@ -800,10 +800,16 @@ class Builder(object):
             raise KeyError(hopping)
 
     def __setitem__(self, key, value):
-        """Set a single site/hopping or an iterable of them."""
-        self._for_each_in_key(key,
-                              lambda s: self._set_site(s, value),
-                              lambda h: self._set_hopping(h, value))
+        """Set a single site/hopping or a bunch of them."""
+        # TODO: Once we can take Python 3 for granted, get rid of the if-clause
+        # inside the loop by defining a special func that rebinds itself upon
+        # the first call.
+        func = None
+        for sh in self.expand(key):
+            if func is None:
+                func = self._set_site if isinstance(sh, Site) \
+                    else self._set_hopping
+            func(sh, value)
 
     def _del_site(self, site):
         """Delete a single site and all associated hoppings."""
@@ -843,10 +849,16 @@ class Builder(object):
             raise KeyError(hopping)
 
     def __delitem__(self, key):
-        """Delete a single site/hopping or an iterable of them."""
-        self._for_each_in_key(key,
-                              lambda s: self._del_site(s),
-                              lambda h: self._del_hopping(h))
+        """Delete a single site/hopping or bunch of them."""
+        # TODO: Once we can take Python 3 for granted, get rid of the if-clause
+        # inside the loop by defining a special func that rebinds itself upon
+        # the first call.
+        func = None
+        for sh in self.expand(key):
+            if func is None:
+                func = self._del_site if isinstance(sh, Site) \
+                    else self._del_hopping
+            func(sh)
 
     def eradicate_dangling(self):
         """Keep deleting dangling sites until none are left."""
