@@ -12,7 +12,6 @@ General
    general
    Monatomic
    Polyatomic
-   Shape
 
 Library of lattices
 -------------------

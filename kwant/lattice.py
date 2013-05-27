@@ -99,11 +99,99 @@ class Polyatomic(object):
         self._voronoi = ta.dot(lll.voronoi(self._reduced_vecs), self._transf)
 
     def shape(self, function, start):
-        """Yield sites belonging to a certain shape.
+        """Return a key for all the lattice sites inside a given shape.
 
-        See `~kwant.lattice.Shape` for more information.
+        The object returned by this method is primarily meant to be used as a
+        key for indexing `kwant.Builder` instances.  See example below.
+
+        Parameters
+        ----------
+        function : callable
+            A function of real space coordinates that returns a truth value:
+            true for coordinates inside the shape, and false otherwise.
+        start : float vector
+            The origin for the flood-fill algorithm.
+
+        Returns
+        -------
+        shape_sites : function
+
+        Notes
+        -----
+        When the function returned by this method is called, a flood-fill
+        algorithm finds and yields all the lattice sites inside the specified
+        shape starting from the specified position.
+
+        A `~kwant.builder.Symmetry` or `~kwant.builder.Builder` may be passed as
+        sole argument when calling the function returned by this method.  This
+        will restrict the flood-fill to the fundamental domain of the symmetry
+        (or the builder's symmetry).  Note that unless the shape function has
+        that symmetry itself, the result may be unexpected.
+
+        Examples
+        --------
+        >>> def circle(pos):
+        ...     x, y = pos
+        ...     return x**2 + y**2 < 100
+        ...
+        >>> lat = kwant.lattice.honeycomb()
+        >>> sys = kwant.Builder()
+        >>> sys[lat.shape(circle, (0, 0))] = 0
+        >>> sys[lat.neighbors()] = 1
         """
-        return Shape(self, function, start)
+        def shape_sites(symmetry=None):
+            Site = builder.Site
+
+            if symmetry is None:
+                symmetry = builder.NoSymmetry()
+            elif not isinstance(symmetry, builder.Symmetry):
+                symmetry = symmetry.symmetry
+
+            def fd_site(lat, tag):
+                return symmetry.to_fd(Site(lat, tag, True))
+
+            dim = len(start)
+            if dim != self.prim_vecs.shape[1]:
+                raise ValueError('Dimensionality of start position does not '
+                                 'match the space dimensionality.')
+            lats = self.sublattices
+            deltas = list(self._voronoi)
+
+            #### Flood-fill ####
+            sites = []
+            for tag in set(lat.closest(start) for lat in lats):
+                for lat in lats:
+                    site = fd_site(lat, tag)
+                    if function(site.pos):
+                        sites.append(site)
+            if not sites:
+                msg = 'No sites close to {0} are inside the desired shape.'
+                raise ValueError(msg.format(start))
+            tags = set(s.tag for s in sites)
+
+            while sites:
+                old_tags = tags
+                tags = set()
+                for site in sites:
+                    yield site
+                    tags.add(site.tag)
+                old_tags |= tags
+
+                new_tags = set()
+                for tag in tags:
+                    for delta in deltas:
+                         new_tag = tag + delta
+                         if new_tag not in old_tags:
+                             new_tags.add(new_tag)
+
+                sites = set()
+                for tag in new_tags:
+                    for lat in lats:
+                        site = fd_site(lat, tag)
+                        if site.tag not in old_tags and function(site.pos):
+                            sites.add(site)
+
+        return shape_sites
 
     def neighbors(self, n=1, eps=1e-8):
         """
@@ -474,93 +562,6 @@ class TranslationalSymmetry(builder.Symmetry):
         result.is_reversed = not self.is_reversed
         result.periods = -self.periods
         return result
-
-
-class Shape(object):
-    def __init__(self, lattice, function, start):
-        """A class for finding all the lattice sites inside a shape.
-
-        When an instance of this class is called, a flood-fill algorithm finds
-        and yields all the sites inside the specified shape starting from the
-        specified position.
-
-        Parameters
-        ----------
-        lattice : Polyatomic or Monoatomic lattice
-            Lattice, to which the resulting sites should belong.
-        function : callable
-            A function of real space coordinates that returns a truth value:
-            true for coordinates inside the shape, and false otherwise.
-        start : float vector
-            The origin for the flood-fill algorithm.
-
-        Notes
-        -----
-        A `~kwant.builder.Symmetry` or `~kwant.builder.Builder` may be passed as
-        sole argument when calling an instance of this class.  This will
-        restrict the flood-fill to the fundamental domain of the symmetry (or
-        the builder's symmetry).  Note that unless the shape function has that
-        symmetry itself, the result may be unexpected.
-
-        Because a `~kwant.builder.Builder` can be indexed with functions or
-        iterables of functions, ``Shape`` instances (or any non-tuple
-        iterables of them, e.g. a list) can be used directly as "wildcards" when
-        setting or deleting sites.
-        """
-        self.lat, self.func, self.start = lattice, function, start
-
-    def __call__(self, symmetry=None):
-        Site = builder.Site
-        lat, func, start = self.lat, self.func, self.start
-
-        if symmetry is None:
-            symmetry = builder.NoSymmetry()
-        elif not isinstance(symmetry, builder.Symmetry):
-            symmetry = symmetry.symmetry
-
-        def fd_site(lat, tag):
-            return symmetry.to_fd(Site(lat, tag, True))
-
-        dim = len(start)
-        if dim != lat.prim_vecs.shape[1]:
-            raise ValueError('Dimensionality of start position does not match'
-                             ' the space dimensionality.')
-        sls = lat.sublattices
-        deltas = list(lat._voronoi)
-
-        #### Flood-fill ####
-        sites = []
-        for tag in set(sl.closest(start) for sl in sls):
-            for sl in sls:
-                site = fd_site(sl, tag)
-                if func(site.pos):
-                    sites.append(site)
-        if not sites:
-            msg = 'No sites close to {0} are inside the desired shape.'
-            raise ValueError(msg.format(start))
-        tags = set(s.tag for s in sites)
-
-        while sites:
-            old_tags = tags
-            tags = set()
-            for site in sites:
-                yield site
-                tags.add(site.tag)
-            old_tags |= tags
-
-            new_tags = set()
-            for tag in tags:
-                for delta in deltas:
-                     new_tag = tag + delta
-                     if new_tag not in old_tags:
-                         new_tags.add(new_tag)
-
-            sites = set()
-            for tag in new_tags:
-                for sl in sls:
-                    site = fd_site(sl, tag)
-                    if site.tag not in old_tags and func(site.pos):
-                        sites.add(site)
 
 
 ################ Library of lattices (to be extended)
