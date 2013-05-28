@@ -563,10 +563,10 @@ class Builder(object):
     tags which are sequences of integers.  It *makes sense* only when these
     sites live on a regular lattice, like the ones provided by `kwant.lattice`.
 
-    `builder0 += builder1` adds all the sites, hoppings, and leads of `builder1`
-    to `builder0`.  Sites and hoppings present in both systems are overwritten
-    by those in `builder1`.  The leads of `builder1` are appended to the leads
-    of the system being extended.
+    ``builder0 += builder1`` adds all the sites, hoppings, and leads of
+    ``builder1`` to ``builder0``.  Sites and hoppings present in both systems
+    are overwritten by those in ``builder1``.  The leads of ``builder1`` are
+    appended to the leads of the system being extended.
 
     .. warning::
 
@@ -677,9 +677,13 @@ class Builder(object):
         """
         Expand a general (possibly fancy) key into an iterator over simple keys.
 
-        This method is used to expand the keys when getting or deleting items of
-        a builder (i.e. ``sys[key] = value`` or ``del sys[key]``).
+        Parameters
+        ----------
+        key : builder key (see notes)
+            The key to be expanded
 
+        Notes
+        -----
         Keys are (recursively):
             * Simple keys: sites or 2-tuples of sites (=hoppings).
             * Any (non-tuple) iterable of keys, e.g. a list or a generator
@@ -687,17 +691,22 @@ class Builder(object):
             * Any function that returns a key when passed a builder as sole
               argument, e.g. a `HoppingKind` instance or the function returned
               by `~kwant.lattice.Polyatomic.shape`.
+
+        This method is internally used to expand the keys when getting or
+        deleting items of a builder (i.e. ``sys[key] = value`` or ``del
+        sys[key]``).
+
         """
         itr = iter((key,))
         iter_stack = [None]
         while iter_stack:
             for key in itr:
+                while callable(key):
+                    key = key(self)
                 if isinstance(key, Site) or isinstance(key, tuple):
                     yield key
                 else:
                     iter_stack.append(itr)
-                    if callable(key):
-                        key = key(self)
                     itr = iter(key)
                     break
             else:
