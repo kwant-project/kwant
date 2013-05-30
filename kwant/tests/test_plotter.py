@@ -83,7 +83,7 @@ def test_plot():
             if color != 'k' and isinstance(color(iter(sys2d.sites()).next()),
                                            float):
                 assert fig.axes[0].collections[0].get_array() is not None
-            assert len(fig.axes[0].collections) == 4
+            assert len(fig.axes[0].collections) == (8 if sys is sys2d else 6)
     color_opts = ['k', (lambda site, site2: site.tag[0]),
                   lambda site, site2: (abs(site.tag[0] / 100),
                                        abs(site.tag[1] / 100), 0)]
