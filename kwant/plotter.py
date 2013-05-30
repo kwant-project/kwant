@@ -17,6 +17,7 @@ system in two or three dimensions.
 from collections import defaultdict
 import warnings
 import numpy as np
+import tinyarray as ta
 from scipy import spatial, interpolate
 from math import cos, sin, pi, sqrt
 
@@ -796,14 +797,21 @@ def sys_leads_pos(sys, site_lead_nr):
     site and `sys.pos(sitenr)` for finalized systems.  This function requires
     that all the positions of all the sites have the same dimensionality.
     """
+
+    # Note about efficiency (also applies to sys_leads_hoppings_pos)
+    # numpy is really slow when making a numpy array from a tinyarray
+    # (buffer interface seems very slow). It's much faster to first
+    # convert to a tuple and then to convert to numpy array ...
+
     is_builder = isinstance(sys, builder.Builder)
     num_lead_slices = site_lead_nr[-1][2] + 1
     if is_builder:
-        pos = np.array([i[0].pos for i in site_lead_nr])
+        pos = np.array(ta.array([i[0].pos for i in site_lead_nr]))
     else:
         sys_from_lead = lambda lead: (sys if (lead is None)
                                       else sys.leads[lead])
-        pos = np.array([sys_from_lead(i[1]).pos(i[0]) for i in site_lead_nr])
+        pos = np.array(ta.array([sys_from_lead(i[1]).pos(i[0])
+                                 for i in site_lead_nr]))
     if pos.dtype == object:  # Happens if not all the pos are same length.
         raise ValueError("pos attribute of the sites does not have consistent"
                          " values.")
@@ -825,8 +833,7 @@ def sys_leads_pos(sys, site_lead_nr):
             except IndexError:
                 return (0, 0)
         dom = sym.which(site)[0] + 1
-        # TODO (Anton): vec = sym.periods[0] not supported by ta.ndarray
-        # Remove conversion to np.ndarray when not necessary anymore.
+        # Conversion to numpy array here useful for efficiency
         vec = np.array(sym.periods)[0]
         return vec, dom
     vecs_doms = dict((i, get_vec_domain(i)) for i in xrange(len(sys.leads)))
@@ -940,13 +947,16 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
         return np.empty((0, 3)), np.empty((0, 3))
     num_lead_slices = hop_lead_nr[-1][2] + 1
     if is_builder:
-        pos = np.array([np.r_[i[0][0].pos, i[0][1].pos] for i in hop_lead_nr])
+        pos = np.array(ta.array([ta.array(tuple(i[0][0].pos) +
+                                          tuple(i[0][1].pos))
+                                 for i in hop_lead_nr]))
     else:
         sys_from_lead = lambda lead: (sys if (lead is None)
                                       else sys.leads[lead])
-        pos = [(sys_from_lead(i[1]).pos(i[0][0]),
-                sys_from_lead(i[1]).pos(i[0][1])) for i in hop_lead_nr]
-        pos = np.array([np.r_[i[0], i[1]] for i in pos])
+        pos = ta.array([ta.array(tuple(sys_from_lead(i[1]).pos(i[0][0])) +
+                                 tuple(sys_from_lead(i[1]).pos(i[0][1])))
+                        for i in hop_lead_nr])
+        pos = np.array(pos)
     if pos.dtype == object:  # Happens if not all the pos are same length.
         raise ValueError("pos attribute of the sites does not have consistent"
                          " values.")
@@ -968,8 +978,6 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
             except IndexError:
                 return (0, 0)
         dom = sym.which(site)[0] + 1
-        # TODO (Anton): vec = sym.periods[0] not supported by ta.ndarray
-        # Remove conversion to np.ndarray when not necessary anymore.
         vec = np.array(sym.periods)[0]
         return np.r_[vec, vec], dom
 
