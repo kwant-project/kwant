@@ -1,7 +1,7 @@
-What's New in kwant 0.3
+What's New in kwant 1.0
 =======================
 
-This article explains the user-visible changes in kwant 0.3.
+This article explains the user-visible changes in kwant 1.0.
 
 
 Lattice and shape improvements
