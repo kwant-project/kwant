@@ -161,3 +161,11 @@ Inclusion of contributed modules
 --------------------------------
 kwant now contains a sub-package :mod:`kwant.contrib` that contains various
 modules that are useful with kwant but are not considered to be part of it.
+
+Improved plotting functionality
+-------------------------------
+The plotting functionality has been extended. By default, symbols and lines in
+plots are now relative to the system coordinates, i.e. will scale accordingly
+if different zoom-levels are used. Different styles for representing sites and
+hoppings are now possible. 3D plotting has been made more efficient.
+
