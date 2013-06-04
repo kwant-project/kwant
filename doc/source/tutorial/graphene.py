@@ -149,7 +149,7 @@ def main():
         return 0 if site.family == a else 1
 
     # Plot the closed system without leads.
-    kwant.plot(sys, site_color=family_colors, colorbar=False)
+    kwant.plot(sys, site_color=family_colors, site_lw=0.12, colorbar=False)
 #HIDDEN_END_itkk
 
     # Compute some eigenvalues.
@@ -162,7 +162,8 @@ def main():
         sys.attach_lead(lead)
 
     # Then, plot the system with leads.
-    kwant.plot(sys, site_color=family_colors, colorbar=False)
+    kwant.plot(sys, site_color=family_colors, site_lw=0.12,
+               lead_site_lw=0, colorbar=False)
 
     # Finalize the system.
     sys = sys.finalized()

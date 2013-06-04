@@ -57,31 +57,34 @@
  
  
  def main():
-@@ -128,17 +147,22 @@
+@@ -127,8 +146,11 @@
+     def family_colors(site):
          return 0 if site.family == a else 1
  
-     # Plot the closed system without leads.
--    kwant.plot(sys, site_color=family_colors, colorbar=False)
--
--    # Compute some eigenvalues.
--    compute_evs(sys.finalized())
+-    # Plot the closed system without leads.
+-    kwant.plot(sys, site_color=family_colors, site_lw=0.12, colorbar=False)
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
-+    kwant.plot(sys, site_color=family_colors, colorbar=False,
++    kwant.plot(sys, site_color=family_colors, site_lw=0.12, colorbar=False,
 +               file="graphene_sys1.pdf", fig_size=size, dpi=_defs.dpi)
-+    kwant.plot(sys, site_color=family_colors, colorbar=False,
++    kwant.plot(sys, site_color=family_colors, site_lw=0.12, colorbar=False,
 +               file="graphene_sys1.png", fig_size=size, dpi=_defs.dpi)
  
-     # Attach the leads to the system.
+     # Compute some eigenvalues.
+     compute_evs(sys.finalized())
+@@ -137,9 +159,13 @@
      for lead in leads:
          sys.attach_lead(lead)
  
-     # Then, plot the system with leads.
--    kwant.plot(sys, site_color=family_colors, colorbar=False)
+-    # Then, plot the system with leads.
+-    kwant.plot(sys, site_color=family_colors, site_lw=0.12,
+-               lead_site_lw=0, colorbar=False)
 +    size = (_defs.figwidth_in, 0.9 * _defs.figwidth_in)
-+    kwant.plot(sys, site_color=family_colors, colorbar=False,
-+               file="graphene_sys2.pdf", fig_size=size, dpi=_defs.dpi)
-+    kwant.plot(sys, site_color=family_colors, colorbar=False,
-+               file="graphene_sys2.png", fig_size=size, dpi=_defs.dpi)
++    kwant.plot(sys, site_color=family_colors, colorbar=False, site_lw=0.12,
++               file="graphene_sys2.pdf", fig_size=size, dpi=_defs.dpi,
++               lead_site_lw=0)
++    kwant.plot(sys, site_color=family_colors, colorbar=False, site_lw=0.12,
++               file="graphene_sys2.png", fig_size=size, dpi=_defs.dpi,
++               lead_site_lw=0)
  
      # Finalize the system.
      sys = sys.finalized()

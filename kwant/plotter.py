@@ -31,7 +31,6 @@ try:
     from matplotlib import collections
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     _mpl_enabled = True
-    from matplotlib.cbook import is_string_like, is_sequence_of_strings
     try:
         from mpl_toolkits import mplot3d
         has3d = True
@@ -59,9 +58,9 @@ def _isarray(var):
 def _nparray_if_array(var):
     return np.asarray(var) if _isarray(var) else var
 
-class LineCollection(matplotlib.collections.LineCollection):
+class LineCollection(collections.LineCollection):
     def __init__(self, segments, reflen=None, **kwargs):
-        matplotlib.collections.LineCollection.__init__(self, segments,
+        collections.LineCollection.__init__(self, segments,
                                                        **kwargs)
         self.reflen = reflen
 
@@ -76,19 +75,19 @@ class LineCollection(matplotlib.collections.LineCollection):
             #       72.0 - there is 72 points in an inch
             factor = (self.axes.transData.frozen().to_values()[0] /
                       self.figure.dpi * 72.0 * self.reflen)
-            matplotlib.collections.LineCollection.set_linewidths(self,
+            collections.LineCollection.set_linewidths(self,
                                          self._linewidths_orig * factor)
         else:
-            matplotlib.collections.LineCollection.set_linewidths(self,
+            collections.LineCollection.set_linewidths(self,
                                                   self._linewidths_orig)
 
-        return matplotlib.collections.LineCollection.draw(self, renderer)
+        return collections.LineCollection.draw(self, renderer)
 
 
-class PathCollection(matplotlib.collections.PathCollection):
+class PathCollection(collections.PathCollection):
     def __init__(self, paths, sizes=None, reflen=None,
                  **kwargs):
-        matplotlib.collections.PathCollection.__init__(self, paths,
+        collections.PathCollection.__init__(self, paths,
                                                        sizes=sizes,
                                                        **kwargs)
 
@@ -120,7 +119,7 @@ class PathCollection(matplotlib.collections.PathCollection):
                       self.figure.dpi * 72.0 * self.reflen)
             self.set_linewidths(self._linewidths_orig * factor)
 
-        return matplotlib.collections.Collection.draw(self, renderer)
+        return collections.Collection.draw(self, renderer)
 
 
 if has3d:
@@ -404,11 +403,9 @@ def set_colors(color, collection, cmap, norm=None):
     collection.set_color(colors)
 
 
-symbol_dict = {
-    'O': 'o',
-    's': ('p', 4, 45),
-    'S': ('P', 4, 45),
-}
+symbol_dict = {'O': 'o',
+               's': ('p', 4, 45),
+               'S': ('P', 4, 45)}
 
 def get_symbol(symbols):
     """Return the path corresponding to the description in `symbol`
@@ -991,15 +988,15 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
 
 # Useful plot functions (to be extended).
 
-_defaults = { 'site_symbol' : { 2 : 'o', 3 : 'o'},
-              'site_size' : { 2 : 0.3, 3 : 0.5},
-              'site_color' : { 2 : 'black', 3 : 'white'},
-              'site_edgecolor' : { 2 : 'black', 3 : 'black'},
-              'site_lw' : { 2 : 0.12, 3 : 0.12},
-              'hop_color' : { 2 : 'black', 3 : 'black'},
-              'hop_lw' : { 2 : 0.12, 3 : 0},
-              'lead_color': { 2 : 'red', 3 : 'red' }
-    }
+_defaults = {'site_symbol': {2: 'o', 3: 'o'},
+             'site_size': {2: 0.3, 3: 0.5},
+             'site_color': {2: 'black', 3: 'white'},
+             'site_edgecolor': {2: 'black', 3: 'black'},
+             'site_lw': {2: 0, 3: 0.12},
+             'hop_color': {2: 'black', 3: 'black'},
+             'hop_lw': {2: 0.12, 3: 0},
+             'lead_color': {2: 'red', 3: 'red'}}
+
 
 def plot(sys, num_lead_slices=2, units='nn',
          site_symbol=None, site_size=None,
