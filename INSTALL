@@ -102,6 +102,23 @@ You can make this setting permanent by adding this line to the file
 ``.bashrc`` (or equivalent) in your home directory.
 
 
+.. _ubuntu-problem:
+
+Known problem on Ubuntu 12.04 32-bit (i486)
+...........................................
+
+With Ubuntu 12.04 running on 32-bit Intel architecture processors the following
+error has been observed when running the tests included with kwant: "Arrays are
+not almost equal to 7 decimals".  That problem seems to be due to a bug in the
+OpenBLAS package included with that version of Ubuntu.  It can be worked-around
+by installing a different BLAS.  Execute the following shell commands::
+
+    sudo apt-get install libblas3gf
+    sudo update-alternatives --config libblas.so.3gf
+
+and select the "libblas.so.3gf" alternative when prompted by the second command.
+
+
 Mac OS X
 --------
 
