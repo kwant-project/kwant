@@ -8,18 +8,19 @@
  
  # First, define the tight-binding system
  
-@@ -65,7 +66,9 @@
+@@ -65,7 +66,10 @@
  sys.attach_lead(right_lead)
  
  # Plot it, to make sure it's OK
 -kwant.plot(sys)
 +size = (_defs.figwidth_in, 0.3 * _defs.figwidth_in)
-+kwant.plot(sys, file="quantum_wire_sys.pdf", fig_size=size, dpi=_defs.dpi)
-+kwant.plot(sys, file="quantum_wire_sys.png", fig_size=size, dpi=_defs.dpi)
++for extension in ('pdf', 'png'):
++    kwant.plot(sys, file="quantum_wire_sys." + extension,
++               fig_size=size, dpi=_defs.dpi)
  
  # Finalize the system
  sys = sys.finalized()
-@@ -86,8 +89,13 @@
+@@ -86,8 +90,13 @@
  
  # Use matplotlib to write output
  # We should see conductance steps
@@ -35,5 +36,5 @@
 +pyplot.setp(fig.get_axes()[0].get_yticklabels(), fontsize=_defs.mpl_tick_size)
 +fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-+fig.savefig("quantum_wire_result.pdf")
-+fig.savefig("quantum_wire_result.png", dpi=_defs.dpi)
++for extension in ('pdf', 'png'):
++    fig.savefig("quantum_wire_result." + extension, dpi=_defs.dpi)

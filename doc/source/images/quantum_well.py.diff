@@ -28,8 +28,8 @@
 +               fontsize=_defs.mpl_tick_size)
 +    fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-+    fig.savefig("quantum_well_result.pdf")
-+    fig.savefig("quantum_well_result.png", dpi=_defs.dpi)
++    for extension in ('pdf', 'png'):
++        fig.savefig("quantum_well_result." + extension, dpi=_defs.dpi)
  
  
  def main():

@@ -28,8 +28,8 @@
 +               fontsize=_defs.mpl_tick_size)
 +    fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-+    fig.savefig("graphene_result.pdf")
-+    fig.savefig("graphene_result.png", dpi=_defs.dpi)
++    for extension in ('pdf', 'png'):
++        fig.savefig("graphene_result." + extension, dpi=_defs.dpi)
  
  
  def plot_bandstructure(flead, momenta):
@@ -52,8 +52,8 @@
 +               fontsize=_defs.mpl_tick_size)
 +    fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-+    fig.savefig("graphene_bs.pdf")
-+    fig.savefig("graphene_bs.png", dpi=_defs.dpi)
++    for extension in ('pdf', 'png'):
++        fig.savefig("graphene_bs." + extension, dpi=_defs.dpi)
  
  
  def main():
@@ -64,14 +64,14 @@
 -    # Plot the closed system without leads.
 -    kwant.plot(sys, site_color=family_colors, site_lw=0.12, colorbar=False)
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
-+    kwant.plot(sys, site_color=family_colors, site_lw=0.12, colorbar=False,
-+               file="graphene_sys1.pdf", fig_size=size, dpi=_defs.dpi)
-+    kwant.plot(sys, site_color=family_colors, site_lw=0.12, colorbar=False,
-+               file="graphene_sys1.png", fig_size=size, dpi=_defs.dpi)
++    for extension in ('pdf', 'png'):
++        kwant.plot(sys, site_color=family_colors, site_lw=0.12, colorbar=False,
++                   file="graphene_sys1." + extension,
++                   fig_size=size, dpi=_defs.dpi)
  
      # Compute some eigenvalues.
      compute_evs(sys.finalized())
-@@ -137,9 +159,13 @@
+@@ -137,9 +159,11 @@
      for lead in leads:
          sys.attach_lead(lead)
  
@@ -79,12 +79,10 @@
 -    kwant.plot(sys, site_color=family_colors, site_lw=0.12,
 -               lead_site_lw=0, colorbar=False)
 +    size = (_defs.figwidth_in, 0.9 * _defs.figwidth_in)
-+    kwant.plot(sys, site_color=family_colors, colorbar=False, site_lw=0.12,
-+               file="graphene_sys2.pdf", fig_size=size, dpi=_defs.dpi,
-+               lead_site_lw=0)
-+    kwant.plot(sys, site_color=family_colors, colorbar=False, site_lw=0.12,
-+               file="graphene_sys2.png", fig_size=size, dpi=_defs.dpi,
-+               lead_site_lw=0)
++    for extension in ('pdf', 'png'):
++        kwant.plot(sys, site_color=family_colors, colorbar=False, site_lw=0.12,
++                   file="graphene_sys2." + extension,
++                   fig_size=size, dpi=_defs.dpi, lead_site_lw=0)
  
      # Finalize the system.
      sys = sys.finalized()

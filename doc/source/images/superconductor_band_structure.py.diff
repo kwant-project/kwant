@@ -8,7 +8,7 @@
  
  tau_x = tinyarray.array([[0, 1], [1, 0]])
  tau_z = tinyarray.array([[1, 0], [0, -1]])
-@@ -46,11 +47,19 @@
+@@ -46,11 +47,20 @@
      # Make system and finalize it right away.
      lead = make_lead().finalized()
  
@@ -25,8 +25,9 @@
 +               fontsize=_defs.mpl_tick_size)
 +    fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-+    fig.savefig("superconductor_band_structure_result.pdf")
-+    fig.savefig("superconductor_band_structure_result.png", dpi=_defs.dpi)
++    for extension in ('pdf', 'png'):
++        fig.savefig("superconductor_band_structure_result." + extension,
++                    dpi=_defs.dpi)
  
  
  # Call the main function if the script gets executed (as opposed to imported).

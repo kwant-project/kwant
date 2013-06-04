@@ -8,7 +8,7 @@
  
  
  def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
-@@ -82,19 +83,23 @@
+@@ -82,19 +83,24 @@
                      smatrix.transmission(0, 0) +
                      smatrix.transmission(1, 0))
  
@@ -24,8 +24,9 @@
 +               fontsize=_defs.mpl_tick_size)
 +    fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-+    fig.savefig("superconductor_transport_result.pdf")
-+    fig.savefig("superconductor_transport_result.png", dpi=_defs.dpi)
++    for extension in ('pdf', 'png'):
++        fig.savefig("superconductor_transport_result." + extension,
++                    dpi=_defs.dpi)
  
  
  def main():

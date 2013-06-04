@@ -8,7 +8,7 @@
  
  
  def make_system(a=1, t=1.0, r=10):
-@@ -65,29 +66,40 @@
+@@ -65,29 +66,39 @@
  
          energies.append(ev)
  
@@ -27,8 +27,8 @@
 +                fontsize=_defs.mpl_tick_size)
 +    fig.set_size_inches(_defs.mpl_width_in, _defs.mpl_width_in * 3. / 4.)
 +    fig.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
-+    fig.savefig("closed_system_result.pdf")
-+    fig.savefig("closed_system_result.png", dpi=_defs.dpi)
++    for extension in ('pdf', 'png'):
++        fig.savefig("closed_system_result." + extension, dpi=_defs.dpi)
  
  
  def plot_wave_function(sys):
@@ -41,12 +41,11 @@
      # Plot the probability density of the 10th eigenmode.
 -    kwant.plotter.map(sys, np.abs(evecs[:, 9])**2,
 -                      colorbar=False, oversampling=1)
-+    kwant.plotter.map(
-+        sys, np.abs(evecs[:, 9])**2, colorbar=False, oversampling=1,
-+        file="closed_system_eigenvector.pdf", fig_size=size, dpi=_defs.dpi)
-+    kwant.plotter.map(
-+        sys, np.abs(evecs[:, 9])**2, colorbar=False, oversampling=1,
-+        file="closed_system_eigenvector.png", fig_size=size, dpi=_defs.dpi)
++    for extension in ('pdf', 'png'):
++        kwant.plotter.map(
++            sys, np.abs(evecs[:, 9])**2, colorbar=False, oversampling=1,
++            file="closed_system_eigenvector." + extension,
++            fig_size=size, dpi=_defs.dpi)
  
  
  def main():
