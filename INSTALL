@@ -64,9 +64,9 @@ Unix-like systems (Linux)
 
 kwant should run on all recent Unix-like systems.  The following instructions
 have been verified to work on Debian 6 (Squeeze) or newer, and on Ubuntu 12.04
-or newer.  For other systems step 1 will likely have to be adapted.  If
-Ubuntu-style ``sudo`` is not available, the respective command must be run as
-root.
+(see :ref:`Note <ubuntu-problem>` below) or newer.  For other distributions step
+1 will likely have to be adapted.  If Ubuntu-style ``sudo`` is not available,
+the respective command must be run as root.
 
 1. Install the required packages.  On Debian-based systems like Ubuntu this can
    be done by running the command ::
