@@ -1437,7 +1437,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
 
 
 def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
-         a=None, method='nearest', oversampling=3, num_lead_slices=2,
+         a=None, method='nearest', oversampling=3, num_lead_slices=0,
         file=None, show=True,  dpi=None, fig_size=None):
     """Show interpolated map of a function defined for the sites of a system.
 
@@ -1454,7 +1454,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
         builder, or a list of function values for each system site of the
         finalized system.
     colorbar : bool, optional
-        Whether to show a color bar.  Defaults to `true`.
+        Whether to show a color bar.  Defaults to `True`.
     cmap : `matplotlib` color map or `None`
         The color map used for sites and optionally hoppings, if `None`,
         `matplotlib` default is used.
@@ -1474,7 +1474,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
         Number of pixels per reference length.  Defaults to 3.
     num_lead_slices : integer, optional
         number of lead unit cells that should be plotted to indicate
-        the position of leads. Defaults to 2.
+        the position of leads. Defaults to 0.
     file : string or file object or `None`
         The output file.  If `None`, output will be shown instead.
     show : bool
