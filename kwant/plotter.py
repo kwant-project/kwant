@@ -989,12 +989,12 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
 # Useful plot functions (to be extended).
 
 _defaults = {'site_symbol': {2: 'o', 3: 'o'},
-             'site_size': {2: 0.3, 3: 0.5},
+             'site_size': {2: 0.25, 3: 0.5},
              'site_color': {2: 'black', 3: 'white'},
              'site_edgecolor': {2: 'black', 3: 'black'},
-             'site_lw': {2: 0, 3: 0.12},
+             'site_lw': {2: 0, 3: 0.1},
              'hop_color': {2: 'black', 3: 'black'},
-             'hop_lw': {2: 0.12, 3: 0},
+             'hop_lw': {2: 0.1, 3: 0},
              'lead_color': {2: 'red', 3: 'red'}}
 
 

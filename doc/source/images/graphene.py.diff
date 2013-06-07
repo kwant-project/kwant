@@ -62,10 +62,10 @@
          return 0 if site.family == a else 1
  
 -    # Plot the closed system without leads.
--    kwant.plot(sys, site_color=family_colors, site_lw=0.12, colorbar=False)
+-    kwant.plot(sys, site_color=family_colors, site_lw=0.1, colorbar=False)
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, site_color=family_colors, site_lw=0.12, colorbar=False,
++        kwant.plot(sys, site_color=family_colors, site_lw=0.1, colorbar=False,
 +                   file="graphene_sys1." + extension,
 +                   fig_size=size, dpi=_defs.dpi)
  
@@ -76,11 +76,11 @@
          sys.attach_lead(lead)
  
 -    # Then, plot the system with leads.
--    kwant.plot(sys, site_color=family_colors, site_lw=0.12,
+-    kwant.plot(sys, site_color=family_colors, site_lw=0.1,
 -               lead_site_lw=0, colorbar=False)
 +    size = (_defs.figwidth_in, 0.9 * _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, site_color=family_colors, colorbar=False, site_lw=0.12,
++        kwant.plot(sys, site_color=family_colors, colorbar=False, site_lw=0.1,
 +                   file="graphene_sys2." + extension,
 +                   fig_size=size, dpi=_defs.dpi, lead_site_lw=0)
  
