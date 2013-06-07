@@ -19,5 +19,7 @@ Library of lattices
    :toctree: generated/
 
    chain
-   honeycomb
    square
+   triangular
+   honeycomb
+   kagome

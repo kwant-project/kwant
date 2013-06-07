@@ -8,7 +8,8 @@
 
 from __future__ import division
 
-__all__ = ['TranslationalSymmetry', 'general', 'Polyatomic', 'Monatomic']
+__all__ = ['TranslationalSymmetry', 'general', 'Polyatomic', 'Monatomic',
+           'chain', 'square', 'triangular', 'honeycomb', 'kagome']
 
 from math import sqrt
 from itertools import product
@@ -621,23 +622,34 @@ class TranslationalSymmetry(builder.Symmetry):
 
 
 
-################ Library of lattices (to be extended)
+################ Library of lattices
 
 def chain(a=1, name=''):
-    """Create a one-dimensional lattice."""
-    lat = Monatomic(((a,),), name=name)
-    return lat
+    """Make a one-dimensional lattice."""
+    return Monatomic(((a,),), name=name)
 
 
 def square(a=1, name=''):
-    """Create a square lattice."""
-    lat = Monatomic(((a, 0), (0, a)), name=name)
-    return lat
+    """Make a square lattice."""
+    return Monatomic(((a, 0), (0, a)), name=name)
+
+
+tri = ta.array(((1, 0), (0.5, 0.5 * sqrt(3))))
+
+def triangular(a=1, name=''):
+    """Make a triangular lattice."""
+    return Monatomic(a * tri, name=name)
 
 
 def honeycomb(a=1, name=''):
-    """Create a honeycomb lattice."""
-    lat = Polyatomic(((a, 0), (0.5 * a, 0.5 * a * sqrt(3))),
-                     ((0, 0), (0, a / sqrt(3))), name=name)
+    """Make a honeycomb lattice."""
+    lat = Polyatomic(a * tri, ((0, 0), (0, a / sqrt(3))), name=name)
     lat.a, lat.b = lat.sublattices
+    return lat
+
+
+def kagome(a=1, name=''):
+    """Make a kagome lattice."""
+    lat = Polyatomic(a * tri, ((0, 0),) + tuple(0.5 * a * tri), name=name)
+    lat.a, lat.b, lat.c = lat.sublattices
     return lat
