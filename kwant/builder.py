@@ -540,11 +540,11 @@ class Builder(object):
 
     In addition to simple keys (single sites and hoppings) more powerful keys
     are possible as well that allow to manipulate multiple sites/hoppings in a
-    single operation.  Such "fancy" keys are internally expanded into a sequence
-    of simple keys by using the method `Builder.expand`.  For example,
-    ``sys[fancy_key] = value`` is equivalent to ::
+    single operation.  Such keys are internally expanded into a sequence of
+    simple keys by using the method `Builder.expand`.  For example,
+    ``sys[general_key] = value`` is equivalent to ::
 
-        for simple_key in sys.expand(fancy_key):
+        for simple_key in sys.expand(general_key):
             sys[simple_key] = value
 
     Builder instances automatically ensure that every hopping is Hermitian, so
@@ -675,7 +675,7 @@ class Builder(object):
 
     def expand(self, key):
         """
-        Expand a general (possibly fancy) key into an iterator over simple keys.
+        Expand a general key into an iterator over simple keys.
 
         Parameters
         ----------
