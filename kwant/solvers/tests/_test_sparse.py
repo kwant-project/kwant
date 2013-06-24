@@ -59,11 +59,11 @@ def test_output(solve):
                         np.identity(s.shape[0]))
     assert_raises(ValueError, solve, fsys, 0, [])
     modes = solve(fsys).lead_info
-    h = fsys.leads[0].slice_hamiltonian()
-    t = fsys.leads[0].inter_slice_hopping()
+    h = fsys.leads[0].cell_hamiltonian()
+    t = fsys.leads[0].inter_cell_hopping()
     modes1 = kwant.physics.modes(h, t)
-    h = fsys.leads[1].slice_hamiltonian()
-    t = fsys.leads[1].inter_slice_hopping()
+    h = fsys.leads[1].cell_hamiltonian()
+    t = fsys.leads[1].inter_cell_hopping()
     modes2 = kwant.physics.modes(h, t)
     assert_almost_equal(modes1[0], modes[0][0])
     assert_almost_equal(modes2[1], modes[1][1])
@@ -239,7 +239,7 @@ def test_singular_graph_system(solve):
     assert_almost_equal(t_elements, t_el_should_be)
 
 
-# This test features inside the onslice Hamiltonian a hopping matrix with more
+# This test features inside the cell Hamiltonian a hopping matrix with more
 # zero eigenvalues than the lead hopping matrix. Older version of the
 # sparse solver failed here.
 def test_tricky_singular_hopping(solve):

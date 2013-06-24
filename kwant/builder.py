@@ -412,17 +412,17 @@ class BuilderLead(Lead):
     builder : `Builder`
         The tight-binding system of a lead. It has to possess appropriate
         symmetry, and it may not contain hoppings between further than
-        neighboring lead slices.
+        neighboring lead unit cells.
     interface : sequence of `Site` instances
         Sequence of sites in the scattering region to which the lead is
         attached.
 
     Notes
     -----
-    The hopping from the scattering region to the lead is assumed to be
-    equal to the hopping from a lead slice to the next one in the direction of
-    the symmetry vector (i.e. the lead is 'leaving' the system and starts
-    with a hopping).
+    The hopping from the scattering region to the lead is assumed to be equal to
+    the hopping from a lead unit cell to the next one in the direction of the
+    symmetry vector (i.e. the lead is 'leaving' the system and starts with a
+    hopping).
 
     The given order of interface sites is preserved throughout finalization.
 
@@ -971,7 +971,7 @@ class Builder(object):
         ------
         ValueError
             If `lead_builder` does not have proper symmetry, has hoppings with
-            range of more than one slice, or if it is not completely
+            range of more than one lead unit cell, or if it is not completely
             interrupted by the system.
 
         Notes
@@ -986,8 +986,8 @@ class Builder(object):
             raise ValueError('Only builders with a 1D symmetry are allowed.')
         for hopping in lead_builder.hoppings():
             if not -1 <= sym.which(hopping[1])[0] <= 1:
-                msg = 'Hopping {0} connects non-neighboring slices. Only ' +\
-                      'nearest-slice hoppings are allowed ' +\
+                msg = 'Hopping {0} connects non-neighboring lead unit cells.' +\
+                      'Only nearest-cell hoppings are allowed ' +\
                       '(consider increasing the lead period).'
                 raise ValueError(msg.format(hopping))
         if not H:
@@ -1169,10 +1169,10 @@ class Builder(object):
             else:
                 # Tail is a fund. domain site not connected to prev. domain.
                 lsites_without.append(tail)
-        slice_size = len(lsites_with) + len(lsites_without)
+        cell_size = len(lsites_with) + len(lsites_without)
 
         if not lsites_with:
-            warnings.warn('Infinite system with disconnected slices.',
+            warnings.warn('Infinite system with disconnected cells.',
                           RuntimeWarning, stacklevel=3)
 
         ### Create list of sites and a lookup table
@@ -1200,7 +1200,7 @@ class Builder(object):
                     if (-sym.which(shifted_iface_site)[0] - 1,) != shift:
                         raise ValueError(
                             'The sites in interface_order do not all '
-                            'belong to the same lead slice.')
+                            'belong to the same lead cell.')
                     else:
                         raise ValueError('A site in interface_order is not an '
                                          'interface site:\n' + str(iface_site))
@@ -1223,7 +1223,7 @@ class Builder(object):
         g = graph.Graph()
         g.num_nodes = len(sites)  # Some sites could not appear in any edge.
         onsite_hamiltonians = []
-        for tail_id, tail in enumerate(sites[:slice_size]):
+        for tail_id, tail in enumerate(sites[:cell_size]):
             onsite_hamiltonians.append(self.H[tail][1])
             for head in self._out_neighbors(tail):
                 head_id = id_by_site.get(head)
@@ -1234,11 +1234,11 @@ class Builder(object):
                     # to this one has been added already or will be added.
                     fd = sym.which(head)[0]
                     if fd != 1:
-                        msg = 'Further-than-nearest-neighbor slices ' \
+                        msg = 'Further-than-nearest-neighbor cells ' \
                               'are connected by hopping\n{0}.'
                         raise ValueError(msg.format((tail, head)))
                     continue
-                if head_id >= slice_size:
+                if head_id >= cell_size:
                     # Head belongs to previous domain.  The edge added here
                     # correspond to one left out just above.
                     g.add_edge(head_id, tail_id)
@@ -1251,7 +1251,7 @@ class Builder(object):
         for tail_id, head_id in g:
             tail = sites[tail_id]
             head = sites[head_id]
-            if tail_id >= slice_size:
+            if tail_id >= cell_size:
                 # The tail belongs to the previous domain.  Find the
                 # corresponding hopping with the tail in the fund. domain.
                 tail, head = sym.to_fd(tail, head)
@@ -1259,7 +1259,7 @@ class Builder(object):
 
         #### Assemble and return result.
         result = InfiniteSystem()
-        result.slice_size = slice_size
+        result.cell_size = cell_size
         result.sites = sites
         result.graph = g
         result.hoppings = hoppings
@@ -1307,8 +1307,8 @@ class InfiniteSystem(system.InfiniteSystem):
     """Finalized infinite system, extracted from a `Builder`."""
     def hamiltonian(self, i, j, *args):
         if i == j:
-            if i >= self.slice_size:
-                i -= self.slice_size
+            if i >= self.cell_size:
+                i -= self.cell_size
             value = self.onsite_hamiltonians[i]
             if callable(value):
                 value = value(self.symmetry.to_fd(self.sites[i]), *args)

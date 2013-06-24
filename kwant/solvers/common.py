@@ -189,7 +189,7 @@ class SparseSolver(object):
                 u_in, ulinv_in = u[:, : nprop], ulinv[:, : nprop]
 
                 # Construct a matrix of 1's that translates the
-                # inter-slice hopping to a proper hopping
+                # inter-cell hopping to a proper hopping
                 # from the system to the lead.
                 iface_orbs = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                         for i in interface)]

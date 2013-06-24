@@ -59,11 +59,11 @@ Roughly in order of importance.                                     -*-org-*-
 * Use sparse linear algebra to calculate bands
   However, SciPy's sparse eigenvalues don't seem to work well.
 
-* Allow attaching leads with further than nearest slice hoppings.
+* Allow attaching leads with further than nearest lead unit cell hoppings.
   The most easy way to do this is increasing the period of the lead.
   Alternatively, generalize modes and InfiniteSystem format.
 
-* In finalized leads, only keep the sites of the slice.
+* In finalized leads, only keep the sites of a single lead unit cell.
 
 * Add a test of kwant that verifies QHE conductance quantization
 

@@ -323,7 +323,7 @@ def test_finalization():
     assert_equal([fsys.site(i).tag for i in fsys.lead_interfaces[0]],
                  neighbors)
 
-    # Add a hopping to the lead which couples two next-nearest slices and check
+    # Add a hopping to the lead which couples two next-nearest cells and check
     # whether this leads to an error.
     a = rng.choice(lead_sites_list)
     b = rng.choice(possible_neighbors)

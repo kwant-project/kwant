@@ -138,27 +138,27 @@ class InfiniteSystem(System):
     """
     Abstract infinite low-level system.
 
-    An infinite system consists of an infinite series of identical slices.
-    Adjacent slices are connected by identical inter-slice hoppings.
+    An infinite system consists of an infinite series of identical cells.
+    Adjacent cells are connected by identical inter-cell hoppings.
 
     Instance Variables
     ------------------
-    slice_size : integer
-        The number of sites in a single slice of the system.
+    cell_size : integer
+        The number of sites in a single cell of the system.
 
     Notes
     -----
-    The system graph of an infinite systems contains a single slice, as well as
-    the part of the previous slice which is connected to it.  The first
-    `slice_size` sites form one complete single slice.  The remaining `N` sites
-    of the graph (`N` equals ``graph.num_nodes - slice_size``) belong to the
-    previous slice.  They are included so that hoppings between slices can be
-    represented.  The N sites of the previous slice correspond to the first `N`
-    sites of the fully included slice.  When an InfiniteSystem is used as a
-    lead, `N` acts also as the number of interface sites to which it must be
+    The system graph of an infinite systems contains a single cell, as well as
+    the part of the previous cell which is connected to it.  The first
+    `cell_size` sites form one complete single cell.  The remaining `N` sites of
+    the graph (`N` equals ``graph.num_nodes - cell_size``) belong to the
+    previous cell.  They are included so that hoppings between cells can be
+    represented.  The N sites of the previous cell correspond to the first `N`
+    sites of the fully included cell.  When an InfiniteSystem is used as a lead,
+    `N` acts also as the number of interface sites to which it must be
     connected.
 
-    The drawing shows three slices of an infinite system.  Each slice consists
+    The drawing shows three cells of an infinite system.  Each cell consists
     of three sites.  Numbers denote sites which are included into the system
     graph.  Stars denote sites which are not included.  Hoppings are included
     in the graph if and only if they occur between two sites which are part of
@@ -170,7 +170,7 @@ class InfiniteSystem(System):
             |/|/|
             *-1-4
 
-        <-- order of slices
+        <-- order of cells
 
     The numbering of sites in the drawing is one of the two valid ones for that
     infinite system.  The other scheme has the numbers of site 0 and 1
@@ -178,17 +178,17 @@ class InfiniteSystem(System):
     """
     __metaclass__ = abc.ABCMeta
 
-    def slice_hamiltonian(self, sparse=False, args=()):
-        """Hamiltonian of a single slice of the infinite system."""
-        slice_sites = xrange(self.slice_size)
-        return self.hamiltonian_submatrix(slice_sites, slice_sites,
+    def cell_hamiltonian(self, sparse=False, args=()):
+        """Hamiltonian of a single cell of the infinite system."""
+        cell_sites = xrange(self.cell_size)
+        return self.hamiltonian_submatrix(cell_sites, cell_sites,
                                           sparse=sparse, args=args)
 
-    def inter_slice_hopping(self, sparse=False, args=()):
-        """Hopping Hamiltonian between two slices of the infinite system."""
-        slice_sites = xrange(self.slice_size)
-        neighbor_sites = xrange(self.slice_size, self.graph.num_nodes)
-        return self.hamiltonian_submatrix(slice_sites, neighbor_sites,
+    def inter_cell_hopping(self, sparse=False, args=()):
+        """Hopping Hamiltonian between two cells of the infinite system."""
+        cell_sites = xrange(self.cell_size)
+        neighbor_sites = xrange(self.cell_size, self.graph.num_nodes)
+        return self.hamiltonian_submatrix(cell_sites, neighbor_sites,
                                           sparse=sparse, args=args)
 
     def modes(self, energy=0, args=()):
@@ -197,28 +197,28 @@ class InfiniteSystem(System):
         See documentation of `~kwant.physics.ModesTuple` for the return
         format details.
         """
-        ham = self.slice_hamiltonian(args=args)
+        ham = self.cell_hamiltonian(args=args)
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
-        return physics.modes(ham, self.inter_slice_hopping(args=args))
+        return physics.modes(ham, self.inter_cell_hopping(args=args))
 
     def selfenergy(self, energy=0, args=()):
         """Return self-energy of a lead.
 
         The returned matrix has the shape (s, s), where s is
         ``sum(len(self.hamiltonian(i, i))
-              for i in range(self.graph.num_nodes - self.slice_size))``.
+              for i in range(self.graph.num_nodes - self.cell_size))``.
         """
-        ham = self.slice_hamiltonian(args=args)
+        ham = self.cell_hamiltonian(args=args)
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
-        return physics.selfenergy(ham, self.inter_slice_hopping(args=args))
+        return physics.selfenergy(ham, self.inter_cell_hopping(args=args))
 
 
 class PrecalculatedLead(object):

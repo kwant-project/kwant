@@ -21,16 +21,16 @@ __all__ = ['selfenergy', 'modes', 'ModesTuple', 'selfenergy_from_modes']
 
 Linsys = namedtuple('Linsys', ['eigenproblem', 'v', 'extract', 'project'])
 
-def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
+def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
     """
     Make an eigenvalue problem for eigenvectors of translation operator.
 
     Parameters
     ----------
-    h_onslice : numpy array with shape (n, n)
-        Hamiltonian of a single lead slice.
+    h_cell : numpy array with shape (n, n)
+        Hamiltonian of a single lead unit cell.
     h_hop : numpy array with shape (n, m), m <= n
-        Hopping Hamiltonian from the slice to the next one.
+        Hopping Hamiltonian from a cell to the next one.
     tol : float
         Numbers are considered zero when they are smaller than `tol` times
         the machine precision.
@@ -40,7 +40,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
         hopping svd, or lattice basis. If the real space basis is chosen, the
         following two options do not apply.
         The second value selects whether to add an anti-Hermitian term to the
-        slice Hamiltonian before inverting. Finally the third value selects
+        cell Hamiltonian before inverting. Finally the third value selects
         whether to reduce a generalized eigenvalue problem to the regular one.
         The default value, `None`, results in kwant selecting the algorithm
         that is the most efficient without sacrificing stability. Manual
@@ -61,22 +61,22 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
     The lead problem with degenerate hopping is rather complicated, and the
     details of the algorithm will be published elsewhere.
     """
-    n = h_onslice.shape[0]
+    n = h_cell.shape[0]
     m = h_hop.shape[1]
 
     if not (np.any(h_hop.real) or np.any(h_hop.imag)):
-        # Inter-slice hopping is zero.  The current algorithm is not suited to
+        # Inter-cell hopping is zero.  The current algorithm is not suited to
         # treat this extremely singular case.
         # Note: np.any(h_hop) returns (at least from numpy 1.6.*)
         #       False if h_hop is purely imaginary
-        raise ValueError("Inter-slice hopping is exactly zero.")
+        raise ValueError("Inter-cell hopping is exactly zero.")
 
     # If both h and t are real, it may be possible to use the real eigenproblem.
-    if (not np.any(h_hop.imag)) and (not np.any(h_onslice.imag)):
+    if (not np.any(h_hop.imag)) and (not np.any(h_cell.imag)):
         h_hop = h_hop.real
-        h_onslice = h_onslice.real
+        h_cell = h_cell.real
 
-    eps = np.finfo(np.common_type(h_onslice, h_hop)).eps * tol
+    eps = np.finfo(np.common_type(h_cell, h_hop)).eps * tol
 
     # First check if the hopping matrix has singular values close to 0.
     # (Close to zero is defined here as |x| < eps * tol * s[0] , where
@@ -92,8 +92,8 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
         # Hence the regular transfer matrix may be used.
         hop_inv = la.inv(h_hop)
 
-        A = np.zeros((2*n, 2*n), dtype=np.common_type(h_onslice, h_hop))
-        A[:n, :n] = dot(hop_inv, -h_onslice)
+        A = np.zeros((2*n, 2*n), dtype=np.common_type(h_cell, h_hop))
+        A[:n, :n] = dot(hop_inv, -h_cell)
         A[:n, n:] = -hop_inv
         A[n:, :n] = h_hop.T.conj()
 
@@ -140,9 +140,9 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
         # always if the original Hamiltonian is complex, and check for
         # invertibility first if it is real
 
-        h = h_onslice
+        h = h_cell
         sol = kla.lu_factor(h)
-        if issubclass(np.common_type(h_onslice, h_hop), np.floating) \
+        if issubclass(np.common_type(h_cell, h_hop), np.floating) \
            and need_to_stabilize is None:
             # Check if stabilization is needed.
             rcond = kla.rcond_from_lu(sol, npl.norm(h, 1))
@@ -157,7 +157,7 @@ def setup_linsys(h_onslice, h_hop, tol=1e6, algorithm=None):
             # Matrices are complex or need self-energy-like term to be
             # stabilized.
             temp = dot(u, u.T.conj()) + dot(v, v.T.conj())
-            h = h_onslice + 1j * temp
+            h = h_cell + 1j * temp
 
             sol = kla.lu_factor(h)
             rcond = kla.rcond_from_lu(sol, npl.norm(h, 1))
@@ -358,7 +358,7 @@ def unified_eigenproblem(a, b=None, tol=1e6):
         An array of eigenvalues (can contain NaNs and Infs, but those
         are not accessed in `modes()`) The number of eigenvalues equals
         twice the number of nonzero singular values of
-        `h_hop` (so `2*h_onslice.shape[0]` if `h_hop` is invertible).
+        `h_hop` (so `2*h_cell.shape[0]` if `h_hop` is invertible).
     evanselect : numpy integer array
         Index array of right-decaying modes.
     propselect : numpy integer array
@@ -428,16 +428,16 @@ d.update(__doc__=modes_docstring)
 ModesTuple = type('ModesTuple', _Modes.__bases__, d)
 del _Modes, d, modes_docstring
 
-def modes(h_onslice, h_hop, tol=1e6, algorithm=None):
+def modes(h_cell, h_hop, tol=1e6, algorithm=None):
     """
     Compute the eigendecomposition of a translation operator of a lead.
 
     Parameters
     ----------
-    h_onslice : numpy array, real or complex, shape (N,N) The unit cell
-        Hamiltonian of the lead slice.
+    h_cell : numpy array, real or complex, shape (N,N) The unit cell
+        Hamiltonian of the lead unit cell.
     h_hop : numpy array, real or complex, shape (N,M)
-        The hopping matrix from a lead slice to the one on which self-energy
+        The hopping matrix from a lead cell to the one on which self-energy
         has to be calculated (and any other hopping in the same direction).
     tol : float
         Numbers and differences are considered zero when they are smaller
@@ -450,7 +450,7 @@ def modes(h_onslice, h_hop, tol=1e6, algorithm=None):
         mostly required for testing purposes.  The first value selects whether
         to work in the basis of the hopping svd, or lattice basis. If the real
         space basis is chosen, the following two options do not apply.  The
-        second value selects whether to add an anti-Hermitian term to the slice
+        second value selects whether to add an anti-Hermitian term to the cell
         Hamiltonian before inverting. Finally the third value selects whether
         to reduce a generalized eigenvalue problem to the regular one.
 
@@ -493,9 +493,9 @@ def modes(h_onslice, h_hop, tol=1e6, algorithm=None):
     """
     m = h_hop.shape[1]
 
-    if (h_onslice.shape[0] != h_onslice.shape[1] or
-        h_onslice.shape[0] != h_hop.shape[0]):
-        raise ValueError("Incompatible matrix sizes for h_onslice and h_hop.")
+    if (h_cell.shape[0] != h_cell.shape[1] or
+        h_cell.shape[0] != h_hop.shape[0]):
+        raise ValueError("Incompatible matrix sizes for h_cell and h_hop.")
 
     # Note: np.any(h_hop) returns (at least from numpy 1.6.1 - 1.8-devel)
     #       False if h_hop is purely imaginary
@@ -505,15 +505,14 @@ def modes(h_onslice, h_hop, tol=1e6, algorithm=None):
         return ModesTuple(np.empty((0, 0)), np.empty((0, 0)), 0, v)
 
     # Defer most of the calculation to helper routines.
-    matrices, v, extract, project = setup_linsys(h_onslice, h_hop, tol,
-                                                 algorithm)
+    matrices, v, extract, project = setup_linsys(h_cell, h_hop, tol, algorithm)
     ev, evanselect, propselect, vec_gen, ord_schur =\
          unified_eigenproblem(*(matrices + (tol,)))
 
     if v is not None:
         n = v.shape[1]
     else:
-        n = h_onslice.shape[0]
+        n = h_cell.shape[0]
 
     nprop = np.sum(propselect)
     nevan = n - nprop // 2
@@ -579,9 +578,9 @@ def selfenergy_from_modes(lead_modes):
     Returns
     -------
     Sigma : numpy array, real or complex, shape (M,M)
-        The computed self-energy. Note that even if `h_onslice` and `h_hop`
-        are both real, `Sigma` will typically be complex. (More precisely, if
-        there is a propagating mode, `Sigma` will definitely be complex.)
+        The computed self-energy. Note that even if `h_cell` and `h_hop` are
+        both real, `Sigma` will typically be complex. (More precisely, if there
+        is a propagating mode, `Sigma` will definitely be complex.)
 
     Notes
     -----
@@ -597,16 +596,16 @@ def selfenergy_from_modes(lead_modes):
         return la.solve(vecslmbdainv.T, vecs.T).T
 
 
-def selfenergy(h_onslice, h_hop, tol=1e6):
+def selfenergy(h_cell, h_hop, tol=1e6):
     """
     Compute the self-energy generated by the lead.
 
     Parameters
     ----------
-    h_onslice : numpy array, real or complex, shape (N,N) The unit cell
-        Hamiltonian of the lead slice.
+    h_cell : numpy array, real or complex, shape (N,N) The unit cell Hamiltonian
+        of the lead unit cell.
     h_hop : numpy array, real or complex, shape (N,M)
-        The hopping matrix from a lead slice to the one on which self-energy
+        The hopping matrix from a lead cell to the one on which self-energy
         has to be calculated (and any other hopping in the same direction).
     tol : float
         Numbers are considered zero when they are smaller than `tol` times
@@ -615,16 +614,16 @@ def selfenergy(h_onslice, h_hop, tol=1e6):
     Returns
     -------
     Sigma : numpy array, real or complex, shape (M,M)
-        The computed self-energy. Note that even if `h_onslice` and `h_hop`
-        are both real, `Sigma` will typically be complex. (More precisely, if
-        there is a propagating mode, `Sigma` will definitely be complex.)
+        The computed self-energy. Note that even if `h_cell` and `h_hop` are
+        both real, `Sigma` will typically be complex. (More precisely, if there
+        is a propagating mode, `Sigma` will definitely be complex.)
 
     Notes
     -----
     For simplicity this function internally calculates the modes first.
     This may cause a small slowdown, and can be improved if necessary.
     """
-    return selfenergy_from_modes(modes(h_onslice, h_hop, tol))
+    return selfenergy_from_modes(modes(h_cell, h_hop, tol))
 
 
 def square_selfenergy(width, hopping, fermi_energy):
@@ -644,7 +643,7 @@ def square_selfenergy(width, hopping, fermi_energy):
     # http://www.physik.uni-regensburg.de/forschung/\
     # richter/richter/media/research/publications2004/wimmer-Diplomarbeit.pdf
 
-    # p labels transversal modes.  i and j label the sites of a slice.
+    # p labels transversal modes.  i and j label the sites of a cell.
 
     # Precalculate the transverse wave function.
     psi_p_i = np.empty((width, width))

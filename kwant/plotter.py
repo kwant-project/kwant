@@ -718,14 +718,14 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
 
 # Extracting necessary data from the system.
 
-def sys_leads_sites(sys, num_lead_slices=2):
+def sys_leads_sites(sys, num_lead_cells=2):
     """Return all the sites of the system and of the leads as a list.
 
     Parameters
     ----------
     sys : kwant.builder.Builder or kwant.system.System instance
         The system, sites of which should be returned.
-    num_lead_slices : integer
+    num_lead_cells : integer
         The number of times lead sites from each lead should be returned.
         This is useful for showing several unit cells of the lead next to the
         system.
@@ -736,8 +736,8 @@ def sys_leads_sites(sys, num_lead_slices=2):
         A site is a `builder.Site` instance if the system is not finalized,
         and an integer otherwise.  For system sites `lead_number` is `None` and
         `copy_number` is `0`, for leads both are integers.
-    lead_slices : list of slices
-        `lead_slices[i]` gives the position of all the coordinates of lead
+    lead_cells : list of slices
+        `lead_cells[i]` gives the position of all the coordinates of lead
         `i` within `sites`.
 
     Notes
@@ -747,7 +747,7 @@ def sys_leads_sites(sys, num_lead_slices=2):
     unfinalized system, and sites of `system.InfiniteSystem` leads are
     returned with a finalized system.
     """
-    lead_slices = []
+    lead_cells = []
     if isinstance(sys, builder.Builder):
         sites = [(site, None, 0) for site in sys.sites()]
         for leadnr, lead in enumerate(sys.leads):
@@ -755,8 +755,8 @@ def sys_leads_sites(sys, num_lead_slices=2):
             if hasattr(lead, 'builder') and len(lead.interface):
                 sites.extend(((site, leadnr, i) for site in
                               lead.builder.sites() for i in
-                              xrange(num_lead_slices)))
-            lead_slices.append(slice(start, len(sites)))
+                              xrange(num_lead_cells)))
+            lead_cells.append(slice(start, len(sites)))
     elif isinstance(sys, system.FiniteSystem):
         sites = [(i, None, 0) for i in xrange(sys.graph.num_nodes)]
         for leadnr, lead in enumerate(sys.leads):
@@ -765,12 +765,12 @@ def sys_leads_sites(sys, num_lead_slices=2):
             if hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and \
                     len(sys.lead_interfaces[leadnr]):
                 sites.extend(((site, leadnr, i) for site in
-                              xrange(lead.slice_size) for i in
-                              xrange(num_lead_slices)))
-            lead_slices.append(slice(start, len(sites)))
+                              xrange(lead.cell_size) for i in
+                              xrange(num_lead_cells)))
+            lead_cells.append(slice(start, len(sites)))
     else:
         raise TypeError('Unrecognized system type.')
-    return sites, lead_slices
+    return sites, lead_cells
 
 
 def sys_leads_pos(sys, site_lead_nr):
@@ -801,7 +801,7 @@ def sys_leads_pos(sys, site_lead_nr):
     # convert to a tuple and then to convert to numpy array ...
 
     is_builder = isinstance(sys, builder.Builder)
-    num_lead_slices = site_lead_nr[-1][2] + 1
+    num_lead_cells = site_lead_nr[-1][2] + 1
     if is_builder:
         pos = np.array(ta.array([i[0].pos for i in site_lead_nr]))
     else:
@@ -836,19 +836,19 @@ def sys_leads_pos(sys, site_lead_nr):
     vecs_doms = dict((i, get_vec_domain(i)) for i in xrange(len(sys.leads)))
     vecs_doms[None] = np.zeros((dim,)), 0
     for k, v in vecs_doms.iteritems():
-        vecs_doms[k] = [v[0] * i for i in xrange(v[1], v[1] + num_lead_slices)]
+        vecs_doms[k] = [v[0] * i for i in xrange(v[1], v[1] + num_lead_cells)]
     pos += [vecs_doms[i[1]][i[2]] for i in site_lead_nr]
     return pos
 
 
-def sys_leads_hoppings(sys, num_lead_slices=2):
+def sys_leads_hoppings(sys, num_lead_cells=2):
     """Return all the hoppings of the system and of the leads as an iterator.
 
     Parameters
     ----------
     sys : kwant.builder.Builder or kwant.system.System instance
         The system, sites of which should be returned.
-    num_lead_slices : integer
+    num_lead_cells : integer
         The number of times lead sites from each lead should be returned.
         This is useful for showing several unit cells of the lead next to the
         system.
@@ -859,8 +859,8 @@ def sys_leads_hoppings(sys, num_lead_slices=2):
         A site is a `builder.Site` instance if the system is not finalized,
         and an integer otherwise.  For system sites `lead_number` is `None` and
         `copy_number` is `0`, for leads both are integers.
-    lead_slices : list of slices
-        `lead_slices[i]` gives the position of all the coordinates of lead
+    lead_cells : list of slices
+        `lead_cells[i]` gives the position of all the coordinates of lead
         `i` within `hoppings`.
 
     Notes
@@ -871,7 +871,7 @@ def sys_leads_hoppings(sys, num_lead_slices=2):
     returned with a finalized system.
     """
     hoppings = []
-    lead_slices = []
+    lead_cells = []
     if isinstance(sys, builder.Builder):
         hoppings.extend(((hop, None, 0) for hop in sys.hoppings()))
 
@@ -893,8 +893,8 @@ def sys_leads_hoppings(sys, num_lead_slices=2):
             if hasattr(lead, 'builder') and len(lead.interface):
                 hoppings.extend(((hop, leadnr, i) for hop in
                                 lead_hoppings(lead.builder) for i in
-                                xrange(num_lead_slices)))
-            lead_slices.append(slice(start, len(hoppings)))
+                                xrange(num_lead_cells)))
+            lead_cells.append(slice(start, len(hoppings)))
     elif isinstance(sys, system.System):
         def ll_hoppings(sys):
             for i in xrange(sys.graph.num_nodes):
@@ -909,11 +909,11 @@ def sys_leads_hoppings(sys, num_lead_slices=2):
                     len(sys.lead_interfaces[leadnr]):
                 hoppings.extend(((hop, leadnr, i) for hop in
                                  ll_hoppings(lead) for i in
-                                 xrange(num_lead_slices)))
-            lead_slices.append(slice(start, len(hoppings)))
+                                 xrange(num_lead_cells)))
+            lead_cells.append(slice(start, len(hoppings)))
     else:
         raise TypeError('Unrecognized system type.')
-    return hoppings, lead_slices
+    return hoppings, lead_cells
 
 
 def sys_leads_hopping_pos(sys, hop_lead_nr):
@@ -942,7 +942,7 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
     is_builder = isinstance(sys, builder.Builder)
     if len(hop_lead_nr) == 0:
         return np.empty((0, 3)), np.empty((0, 3))
-    num_lead_slices = hop_lead_nr[-1][2] + 1
+    num_lead_cells = hop_lead_nr[-1][2] + 1
     if is_builder:
         pos = np.array(ta.array([ta.array(tuple(i[0][0].pos) +
                                           tuple(i[0][1].pos))
@@ -981,7 +981,7 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
     vecs_doms = dict((i, get_vec_domain(i)) for i in xrange(len(sys.leads)))
     vecs_doms[None] = np.zeros((dim,)), 0
     for k, v in vecs_doms.iteritems():
-        vecs_doms[k] = [v[0] * i for i in xrange(v[1], v[1] + num_lead_slices)]
+        vecs_doms[k] = [v[0] * i for i in xrange(v[1], v[1] + num_lead_cells)]
     pos += [vecs_doms[i[1]][i[2]] for i in hop_lead_nr]
     return np.copy(pos[:, : dim / 2]), np.copy(pos[:, dim / 2:])
 
@@ -998,7 +998,7 @@ _defaults = {'site_symbol': {2: 'o', 3: 'o'},
              'lead_color': {2: 'red', 3: 'red'}}
 
 
-def plot(sys, num_lead_slices=2, units='nn',
+def plot(sys, num_lead_cells=2, units='nn',
          site_symbol=None, site_size=None,
          site_color=None, site_edgecolor=None, site_lw=None,
          hop_color=None, hop_lw=None,
@@ -1014,7 +1014,7 @@ def plot(sys, num_lead_slices=2, units='nn',
     ----------
     sys : kwant.builder.Builder or kwant.system.FiniteSystem
         A system to be plotted.
-    num_lead_slices : int
+    num_lead_cells : int
         Number of lead copies to be shown with the system.
     units : 'pt', 'nn', or float
         The units in which symbol sizes, linewidths below are specified.
@@ -1080,7 +1080,7 @@ def plot(sys, num_lead_slices=2, units='nn',
     lead_site_size : number or `None`
         Relative (linear) size of the lead symbol
     lead_color : `matplotlib` color description or `None`
-        For the leads, `num_lead_slices` copies of the lead unit cell
+        For the leads, `num_lead_cells` copies of the lead unit cell
         are plotted. They are plotted in color fading from `lead_color`
         to white (alpha values in `lead_color` are supported) when moving
         from the system into the lead. Is also applied to the
@@ -1139,10 +1139,10 @@ def plot(sys, num_lead_slices=2, units='nn',
     """
 
     # Generate data.
-    sites, lead_sites_slcs = sys_leads_sites(sys, num_lead_slices)
+    sites, lead_sites_slcs = sys_leads_sites(sys, num_lead_cells)
     n_sys_sites = sum(i[1] is None for i in sites)
     sites_pos = sys_leads_pos(sys, sites)
-    hops, lead_hops_slcs = sys_leads_hoppings(sys, num_lead_slices)
+    hops, lead_hops_slcs = sys_leads_hoppings(sys, num_lead_cells)
     n_sys_hops = sum(i[1] is None for i in hops)
     end_pos, start_pos = sys_leads_hopping_pos(sys, hops)
 
@@ -1320,7 +1320,7 @@ def plot(sys, num_lead_slices=2, units='nn',
           linewidths=hop_lw, zorder=1, cmap=hop_cmap)
 
     # plot lead sites and hoppings
-    norm = matplotlib.colors.Normalize(-0.5, num_lead_slices - 0.5)
+    norm = matplotlib.colors.Normalize(-0.5, num_lead_cells - 0.5)
     lead_cmap = matplotlib.colors.LinearSegmentedColormap.from_list(None,
         [lead_color, (1, 1, 1, lead_color[3])])
 
@@ -1437,7 +1437,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
 
 
 def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
-         a=None, method='nearest', oversampling=3, num_lead_slices=0,
+         a=None, method='nearest', oversampling=3, num_lead_cells=0,
         file=None, show=True,  dpi=None, fig_size=None):
     """Show interpolated map of a function defined for the sites of a system.
 
@@ -1472,7 +1472,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
         or "cubic"
     oversampling : integer, optional
         Number of pixels per reference length.  Defaults to 3.
-    num_lead_slices : integer, optional
+    num_lead_cells : integer, optional
         number of lead unit cells that should be plotted to indicate
         the position of leads. Defaults to 0.
     file : string or file object or `None`
@@ -1520,8 +1520,8 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
     image = ax.imshow(img.T, extent=(min[0], max[0], min[1], max[1]),
                       origin='lower', interpolation='none', cmap=cmap,
                       vmin=vmin, vmax=vmax)
-    if num_lead_slices:
-        plot(sys, num_lead_slices, site_symbol='no symbol', hop_lw=0,
+    if num_lead_cells:
+        plot(sys, num_lead_cells, site_symbol='no symbol', hop_lw=0,
              lead_site_symbol='s', lead_site_size=0.501,
              lead_site_lw=0, lead_hop_lw=0, lead_color='black',
              colorbar=False, ax=ax)

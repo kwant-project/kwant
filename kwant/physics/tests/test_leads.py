@@ -15,7 +15,7 @@ import kwant
 
 modes_se = leads.selfenergy
 
-def h_slice(t, w, e):
+def h_cell_s_func(t, w, e):
     h = (4 * t - e) * np.identity(w)
     h.flat[1 :: w + 1] = -t
     h.flat[w :: w + 1] = -t
@@ -28,7 +28,7 @@ def test_analytic_numeric():
     e = 1.3                     # Fermi energy
 
     assert_almost_equal(leads.square_selfenergy(w, t, e),
-                        modes_se(h_slice(t, w, e), -t * np.identity(w)))
+                        modes_se(h_cell_s_func(t, w, e), -t * np.identity(w)))
 
 
 def test_regular_fully_degenerate():
@@ -39,21 +39,21 @@ def test_regular_fully_degenerate():
     e = 1.3                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = h_slice(t, w, e)
+    h_cell_s = h_cell_s_func(t, w, e)
 
     h_hop = np.zeros((2*w, 2*w))
     h_hop[:w, :w] = h_hop_s
     h_hop[w:, w:] = h_hop_s
 
-    h_onslice = np.zeros((2*w, 2*w))
-    h_onslice[:w, :w] = h_onslice_s
-    h_onslice[w:, w:] = h_onslice_s
+    h_cell = np.zeros((2*w, 2*w))
+    h_cell[:w, :w] = h_cell_s
+    h_cell[w:, w:] = h_cell_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
     g[:w, :w] = leads.square_selfenergy(w, t, e)
     g[w:, w:] = leads.square_selfenergy(w, t, e)
 
-    assert_almost_equal(g, modes_se(h_onslice, h_hop))
+    assert_almost_equal(g, modes_se(h_cell, h_hop))
 
 
 def test_regular_degenerate_with_crossing():
@@ -70,21 +70,21 @@ def test_regular_degenerate_with_crossing():
 
     global h_hop
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = h_slice(t, w, e)
+    h_cell_s = h_cell_s_func(t, w, e)
 
     hop = np.zeros((2*w, 2*w))
     hop[:w, :w] = h_hop_s
     hop[w:, w:] = -h_hop_s
 
-    h_onslice = np.zeros((2*w, 2*w))
-    h_onslice[:w, :w] = h_onslice_s
-    h_onslice[w:, w:] = -h_onslice_s
+    h_cell = np.zeros((2*w, 2*w))
+    h_cell[:w, :w] = h_cell_s
+    h_cell[w:, w:] = -h_cell_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
     g[:w, :w] = leads.square_selfenergy(w, t, e)
     g[w:, w:] = -np.conj(leads.square_selfenergy(w, t, e))
 
-    assert_almost_equal(g, modes_se(h_onslice, hop))
+    assert_almost_equal(g, modes_se(h_cell, hop))
 
 
 def test_singular():
@@ -98,19 +98,19 @@ def test_singular():
     e = 0.4                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = h_slice(t, w, e)
+    h_cell_s = h_cell_s_func(t, w, e)
 
     h_hop = np.zeros((2*w, w))
     h_hop[w:, :w] = h_hop_s
 
-    h_onslice = np.zeros((2*w, 2*w))
-    h_onslice[:w, :w] = h_onslice_s
-    h_onslice[:w, w:] = h_hop_s
-    h_onslice[w:, :w] = h_hop_s
-    h_onslice[w:, w:] = h_onslice_s
+    h_cell = np.zeros((2*w, 2*w))
+    h_cell[:w, :w] = h_cell_s
+    h_cell[:w, w:] = h_hop_s
+    h_cell[w:, :w] = h_hop_s
+    h_cell[w:, w:] = h_cell_s
     g = leads.square_selfenergy(w, t, e)
 
-    assert_almost_equal(g, modes_se(h_onslice, h_hop))
+    assert_almost_equal(g, modes_se(h_cell, h_hop))
 
 
 def test_singular_but_square():
@@ -124,20 +124,20 @@ def test_singular_but_square():
     e = 2.38                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = h_slice(t, w, e)
+    h_cell_s = h_cell_s_func(t, w, e)
 
     h_hop = np.zeros((2*w, 2*w))
     h_hop[w:, :w] = h_hop_s
 
-    h_onslice = np.zeros((2*w, 2*w))
-    h_onslice[:w, :w] = h_onslice_s
-    h_onslice[:w, w:] = h_hop_s
-    h_onslice[w:, :w] = h_hop_s
-    h_onslice[w:, w:] = h_onslice_s
+    h_cell = np.zeros((2*w, 2*w))
+    h_cell[:w, :w] = h_cell_s
+    h_cell[:w, w:] = h_hop_s
+    h_cell[w:, :w] = h_hop_s
+    h_cell[w:, w:] = h_cell_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
     g[:w, :w] = leads.square_selfenergy(w, t, e)
-    assert_almost_equal(g, modes_se(h_onslice, h_hop))
+    assert_almost_equal(g, modes_se(h_cell, h_hop))
 
 
 def test_singular_fully_degenerate():
@@ -151,27 +151,27 @@ def test_singular_fully_degenerate():
     e = 3.3                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = h_slice(t, w, e)
+    h_cell_s = h_cell_s_func(t, w, e)
 
     h_hop = np.zeros((4*w, 2*w))
     h_hop[2*w:3*w, :w] = h_hop_s
     h_hop[3*w:4*w, w:2*w] = h_hop_s
 
-    h_onslice = np.zeros((4*w, 4*w))
-    h_onslice[:w, :w] = h_onslice_s
-    h_onslice[:w, 2*w:3*w] = h_hop_s
-    h_onslice[w:2*w, w:2*w] = h_onslice_s
-    h_onslice[w:2*w, 3*w:4*w] = h_hop_s
-    h_onslice[2*w:3*w, :w] = h_hop_s
-    h_onslice[2*w:3*w, 2*w:3*w] = h_onslice_s
-    h_onslice[3*w:4*w, w:2*w] = h_hop_s
-    h_onslice[3*w:4*w, 3*w:4*w] = h_onslice_s
+    h_cell = np.zeros((4*w, 4*w))
+    h_cell[:w, :w] = h_cell_s
+    h_cell[:w, 2*w:3*w] = h_hop_s
+    h_cell[w:2*w, w:2*w] = h_cell_s
+    h_cell[w:2*w, 3*w:4*w] = h_hop_s
+    h_cell[2*w:3*w, :w] = h_hop_s
+    h_cell[2*w:3*w, 2*w:3*w] = h_cell_s
+    h_cell[3*w:4*w, w:2*w] = h_hop_s
+    h_cell[3*w:4*w, 3*w:4*w] = h_cell_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
     g[:w, :w] = leads.square_selfenergy(w, t, e)
     g[w:, w:] = leads.square_selfenergy(w, t, e)
 
-    assert_almost_equal(g, modes_se(h_onslice, h_hop))
+    assert_almost_equal(g, modes_se(h_cell, h_hop))
 
 
 def test_singular_degenerate_with_crossing():
@@ -186,27 +186,27 @@ def test_singular_degenerate_with_crossing():
     e = 3.3                     # Fermi energy
 
     h_hop_s = -t * np.identity(w)
-    h_onslice_s = h_slice(t, w, e)
+    h_cell_s = h_cell_s_func(t, w, e)
 
     h_hop = np.zeros((4*w, 2*w))
     h_hop[2*w:3*w, :w] = h_hop_s
     h_hop[3*w:4*w, w:2*w] = -h_hop_s
 
-    h_onslice = np.zeros((4*w, 4*w))
-    h_onslice[:w, :w] = h_onslice_s
-    h_onslice[:w, 2*w:3*w] = h_hop_s
-    h_onslice[w:2*w, w:2*w] = -h_onslice_s
-    h_onslice[w:2*w, 3*w:4*w] = -h_hop_s
-    h_onslice[2*w:3*w, :w] = h_hop_s
-    h_onslice[2*w:3*w, 2*w:3*w] = h_onslice_s
-    h_onslice[3*w:4*w, w:2*w] = -h_hop_s
-    h_onslice[3*w:4*w, 3*w:4*w] = -h_onslice_s
+    h_cell = np.zeros((4*w, 4*w))
+    h_cell[:w, :w] = h_cell_s
+    h_cell[:w, 2*w:3*w] = h_hop_s
+    h_cell[w:2*w, w:2*w] = -h_cell_s
+    h_cell[w:2*w, 3*w:4*w] = -h_hop_s
+    h_cell[2*w:3*w, :w] = h_hop_s
+    h_cell[2*w:3*w, 2*w:3*w] = h_cell_s
+    h_cell[3*w:4*w, w:2*w] = -h_hop_s
+    h_cell[3*w:4*w, 3*w:4*w] = -h_cell_s
 
     g = np.zeros((2*w, 2*w), dtype=complex)
     g[:w, :w] = leads.square_selfenergy(w, t, e)
     g[w:, w:] = -np.conj(leads.square_selfenergy(w, t, e))
 
-    assert_almost_equal(g, modes_se(h_onslice, h_hop))
+    assert_almost_equal(g, modes_se(h_cell, h_hop))
 
 
 def test_singular_h_and_t():
@@ -235,7 +235,7 @@ def test_modes_bearded_ribbon():
                   (0, 0))] = 0.3
     sys[lat.neighbors()] = -1
     sys = sys.finalized()
-    h, t = sys.slice_hamiltonian(), sys.inter_slice_hopping()
+    h, t = sys.cell_hamiltonian(), sys.inter_cell_hopping()
     assert leads.modes(h, t).nmodes == 8  # Calculated by plotting dispersion.
 
 
