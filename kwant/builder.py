@@ -412,7 +412,7 @@ class BuilderLead(Lead):
     builder : `Builder`
         The tight-binding system of a lead. It has to possess appropriate
         symmetry, and it may not contain hoppings between further than
-        neighboring lead unit cells.
+        neighboring images of the fundamental domain.
     interface : sequence of `Site` instances
         Sequence of sites in the scattering region to which the lead is
         attached.
