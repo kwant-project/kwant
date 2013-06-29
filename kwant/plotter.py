@@ -173,10 +173,10 @@ if has3d:
 
         def do_3d_projection(self, renderer):
             mplot3d.art3d.Line3DCollection.do_3d_projection(self, renderer)
-            # the whole 3D ordering is flawed in mplot3d when several
+            # The whole 3D ordering is flawed in mplot3d when several
             # collections are added. We just use normal zorder. Note the
             # "-" due to the different logic in the 3d plotting, we still want
-            # larger zorder values to be plotted on top of smaller ones
+            # larger zorder values to be plotted on top of smaller ones.
             return -self._zorder3d
 
         def draw(self, renderer):
@@ -187,7 +187,7 @@ if has3d:
                 #       aspect ratio, this (currently) does not work with
                 #       3D plots in matplotlib. As an approximation, we
                 #       thus scale with the average of the x- and y-axis
-                #       transformation
+                #       transformation.
                 factor = proj_len * (a + d) * 0.5 / self.figure.dpi * 72.0
                 mplot3d.art3d.Line3DCollection.set_linewidths(self,
                                             self._linewidths_orig * factor)
@@ -1016,43 +1016,45 @@ def plot(sys, num_lead_cells=2, unit='nn',
         A system to be plotted.
     num_lead_cells : int
         Number of lead copies to be shown with the system.
-    unit : 'pt', 'nn', or float
-        The unit in which symbol sizes and linewidths below are specified.
+    unit : 'nn', 'pt', or float
+        The unit used to specify symbol sizes and linewidths.
         Possible choices are:
 
-        - 'pt': sizes are given in points (point = 1/72 inch) which is
-          an absolute size in figure space. This means that symbols/linewidths
-          will always be identical, independent of zoom level
-        - 'nn': sizes are given with respect to system coordinates, and in
-          particular relative to the typical nearest neighbor spacing.
-          This means that symbol sizes/linewidths will scale according to
-          zoom level.
-        - float: sizes are given relative to system coordinates, and
-          in particular relative to the given number `unit`.
+        - 'nn': unit is the shortest hopping or a typical nearst neighbor
+          distance in the system if there are no hoppings.  This means that
+          symbol sizes/linewidths will scale as the zoom level of the figure is
+          changed.  Very short distances are discarded before searching for the
+          shortest.  This choice means that the symbols will scale if the
+          figure is zoomed.
+        - 'pt': unit is points (point = 1/72 inch) in figure space.  This means
+          that symbols and linewidths will always be drawn with the same size
+          independent of zoom level of the plot.
+        - float: sizes are given in units of this value in real (system) space,
+          and will accordingly scale as the plot is zoomed.
 
-        Defaults to 'nn'.
+        The default value is 'nn', which allows to ensure that the images
+        neighboring sites do not overlap.
+
     site_symbol : symbol specification, function, array or `None`
         Symbol used for representing a site in the plot. Can be specified as
 
-        - 'o': cirlce with radius of 1 unit
-        - 's': square with inner circle radius of 1 unit
-        - `('p', nvert, angle)`: regular polygon with `nvert` edges,
+        - 'o': circle with radius of 1 unit.
+        - 's': square with inner circle radius of 1 unit.
+        - `('p', nvert, angle)`: regular polygon with `nvert` vertices,
           rotated by `angle`. `angle` is given in degrees, and ``angle=0``
           corresponds to one edge of the polygon pointing upward. The
           radius of the inner circle is 1 unit.
-        - 'no symbol': no symbol is plotted
+        - 'no symbol': no symbol is plotted.
         - 'S', `('P', nvert, angle)`: as the lower-case variants described
           above, but with an area equal to a circle of radius 1. (Makes
-          the symbol "look" the same size as a circle)
-        - matplotlib.path.Path instance
+          the visual size of the symbol equal to the size of a circle with
+        - radius 1).
+        - matplotlib.path.Path instance.
 
         Instead of a single symbol, different symbols can be specified
         for different sites by passing a function that returns a valid
         symbol specification for each site, or by passing an array of
         symbols specifications (only for kwant.system.FiniteSystem).
-        If `None` is given, a default value is used.
-
-        The same behavior applies to the other site properties listed below.
     site_size : number, function, array or `None`
         Relative (linear) size of the site symbol.
     site_color : `matplotlib` color description, function, array or `None`
@@ -1136,6 +1138,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
     - The system is scaled to fit the smaller dimension of the figure, given
       its aspect ratio.
+
     """
 
     # Generate data.
@@ -1161,23 +1164,37 @@ def plot(sys, num_lead_cells=2, unit='nn',
     end_pos = resize_to_dim(end_pos)
     start_pos = resize_to_dim(start_pos)
 
-    # determine the reference length
+    # Determine the reference length.
     if unit == 'pt':
         reflen = None
     elif unit == 'nn':
         if n_sys_hops:
-            reflen = sqrt(np.sum((end_pos - start_pos)**2, axis=1).min())
+            # If hoppings are present use their lengths to determine the
+            # minimal one.
+            distances = np.sort(np.sqrt(np.sum((end_pos - start_pos)**2,
+                                               axis=1)))
         else:
-            tree = spatial.cKDTree(sites_pos)
-            points = sites_pos[np.random.randint(len(sites_pos), size=10)]
-            reflen = np.min(tree.query(points, 2)[0][:, 1])
-            del tree
+            # If no hoppings are present, use for the same purpose distances
+            # from ten randomly selected points to the remaining points in the
+            # system.
+            points = sites_pos[np.random.randint(len(sites_pos), size=10)].T
+            distances = (sites_pos.T.reshape(1, -1, dim) -
+                         points.reshape(-1, 1, dim)).reshape(-1, dim)
+            distances = np.sort(np.sqrt(np.sum(distances**2, axis=1)))
+        # Then check if distances are present that are way shorter than the
+        # longest one. Then take first distance longer than these short
+        # ones. This heuristic will fail for too large systems, or systems with
+        # hoppings that vary by orders and orders of magnitude, but for sane
+        # cases it will work.
+        long_dist_coord = np.searchsorted(distances, 1e-8 * distances[-1])
+        reflen = distances[long_dist_coord]
+
     else:
-        # other allowed value is a float
+        # The last allowed value is float-compatible.
         try:
-            reflen = 1.0 * unit
+            reflen = float(unit)
         except:
-            raise ValueError('unit is invalid')
+            raise ValueError('Invalid value of unit argument.')
 
     # Apply transformations to the data
     if pos_transform is not None:
