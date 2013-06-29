@@ -998,7 +998,7 @@ _defaults = {'site_symbol': {2: 'o', 3: 'o'},
              'lead_color': {2: 'red', 3: 'red'}}
 
 
-def plot(sys, num_lead_cells=2, units='nn',
+def plot(sys, num_lead_cells=2, unit='nn',
          site_symbol=None, site_size=None,
          site_color=None, site_edgecolor=None, site_lw=None,
          hop_color=None, hop_lw=None,
@@ -1016,8 +1016,8 @@ def plot(sys, num_lead_cells=2, units='nn',
         A system to be plotted.
     num_lead_cells : int
         Number of lead copies to be shown with the system.
-    units : 'pt', 'nn', or float
-        The units in which symbol sizes, linewidths below are specified.
+    unit : 'pt', 'nn', or float
+        The unit in which symbol sizes and linewidths below are specified.
         Possible choices are:
 
         - 'pt': sizes are given in points (point = 1/72 inch) which is
@@ -1028,7 +1028,7 @@ def plot(sys, num_lead_cells=2, units='nn',
           This means that symbol sizes/linewidths will scale according to
           zoom level.
         - float: sizes are given relative to system coordinates, and
-          in particular relative to the given number `units`.
+          in particular relative to the given number `unit`.
 
         Defaults to 'nn'.
     site_symbol : symbol specification, function, array or `None`
@@ -1162,9 +1162,9 @@ def plot(sys, num_lead_cells=2, units='nn',
     start_pos = resize_to_dim(start_pos)
 
     # determine the reference length
-    if units == 'pt':
+    if unit == 'pt':
         reflen = None
-    elif units == 'nn':
+    elif unit == 'nn':
         if n_sys_hops:
             reflen = sqrt(np.sum((end_pos - start_pos)**2, axis=1).min())
         else:
@@ -1175,9 +1175,9 @@ def plot(sys, num_lead_cells=2, units='nn',
     else:
         # other allowed value is a float
         try:
-            reflen = 1.0 * units
+            reflen = 1.0 * unit
         except:
-            raise ValueError('units are invalid')
+            raise ValueError('unit is invalid')
 
     # Apply transformations to the data
     if pos_transform is not None:
