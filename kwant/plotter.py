@@ -1048,7 +1048,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         - 'S', `('P', nvert, angle)`: as the lower-case variants described
           above, but with an area equal to a circle of radius 1. (Makes
           the visual size of the symbol equal to the size of a circle with
-        - radius 1).
+          radius 1).
         - matplotlib.path.Path instance.
 
         Instead of a single symbol, different symbols can be specified
