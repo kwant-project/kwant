@@ -1171,8 +1171,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         if n_sys_hops:
             # If hoppings are present use their lengths to determine the
             # minimal one.
-            distances = np.sort(np.sqrt(np.sum((end_pos - start_pos)**2,
-                                               axis=1)))
+            distances = end_pos - start_pos
         else:
             # If no hoppings are present, use for the same purpose distances
             # from ten randomly selected points to the remaining points in the
@@ -1180,14 +1179,14 @@ def plot(sys, num_lead_cells=2, unit='nn',
             points = sites_pos[np.random.randint(len(sites_pos), size=10)].T
             distances = (sites_pos.T.reshape(1, -1, dim) -
                          points.reshape(-1, 1, dim)).reshape(-1, dim)
-            distances = np.sort(np.sqrt(np.sum(distances**2, axis=1)))
+        distances = np.sort(np.sum(distances**2, axis=1))
         # Then check if distances are present that are way shorter than the
         # longest one. Then take first distance longer than these short
         # ones. This heuristic will fail for too large systems, or systems with
         # hoppings that vary by orders and orders of magnitude, but for sane
         # cases it will work.
-        long_dist_coord = np.searchsorted(distances, 1e-8 * distances[-1])
-        reflen = distances[long_dist_coord]
+        long_dist_coord = np.searchsorted(distances, 1e-16 * distances[-1])
+        reflen = sqrt(distances[long_dist_coord])
 
     else:
         # The last allowed value is float-compatible.
