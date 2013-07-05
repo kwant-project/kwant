@@ -37,7 +37,7 @@ try:
     except ImportError:
         warnings.warn("3D plotting not available.", RuntimeWarning)
 except ImportError:
-    warnings.warn("matplotlib is not available, only iterator-providing"
+    warnings.warn("matplotlib is not available, only iterator-providing "
                   "functions will work.", RuntimeWarning)
     _mpl_enabled = False
 
