@@ -266,6 +266,10 @@ def make_proper_modes(lmbdainv, psi, extract, project, tol=1e6):
     boundaries = np.argwhere(np.abs(np.diff(lmbdainv[sort_order]))
                              > eps).flatten() + 1
 
+    # Detect the singular case of all eigenvalues equal.
+    if boundaries.shape == (0,) and len(angles):
+        boundaries = np.array([0, len(angles)])
+
     for interval in izip(boundaries[:-1], boundaries[1:]):
         if interval[1] > boundaries[0] + len(angles):
             break
