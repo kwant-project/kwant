@@ -278,3 +278,16 @@ def test_algorithm_equivalence():
         # Evanescent modes must span the same linear space.
         assert np.linalg.matrix_rank(np.c_[vecs, evan_vecs[0]], tol=1e-12) == \
                vecs.shape[1], msg.format(algo)
+
+
+def test_for_all_evs_equal():
+    """Test an 'ideal lead' which has all eigenvalues e^ik equal."""
+
+    onsite = np.array([[0., 1.], [1., 0.]], dtype=complex)
+    hopping = np.array([[0.0], [-1.0]], dtype=complex)
+
+    modes = leads.modes(onsite, hopping)
+
+    assert modes.vecs.shape == (1, 2)
+    assert modes.vecslmbdainv.shape == (1, 2)
+    assert modes.nmodes == 1
