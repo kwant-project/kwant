@@ -17,10 +17,94 @@ from .. import linalg as kla
 
 dot = np.dot
 
-__all__ = ['selfenergy', 'modes', 'ModesTuple', 'selfenergy_from_modes']
+__all__ = ['selfenergy', 'modes', 'PropagatingModes', 'StabilizedModes',
+           'selfenergy_from_modes']
 
-Linsys = namedtuple('Linsys', ['eigenproblem', 'v', 'extract', 'project'])
 
+# Container classes
+Linsys = namedtuple('Linsys', ['eigenproblem', 'v', 'extract'])
+
+
+class PropagatingModes(object):
+    """A container for the calculated propagating modes.
+
+    Instance variables
+    ==================
+    wave_functions : numpy array
+        The wave functions of the propagating modes.  The first dimension
+        corresponds to sites in a unit cell, the second one to the number of
+        the mode.  Each mode is normalized to carry unit current. If several
+        modes have the same momentum and velocity, an arbitrary orthonormal
+        basis in the subspace of these modes is chosed. The first half of the
+        modes are incoming (having negative velocity), the second half is
+        outgoing (having positive velocity).  momenta : numpy array
+    momenta : numpy array
+        Momenta of the modes.
+    velocities : numpy array
+        Velocities of the modes.
+
+    Notes
+    =====
+    The sort order of all the three arrays is identical. The first half of the
+    modes have negative velocity, the second half have positive velocity. The
+    modes with negative velocity are ordered from larger to lower momenta, the
+    modes with positive velocity vice versa.
+    """
+    def __init__(self, wave_functions, velocities, momenta):
+        kwargs = locals()
+        kwargs.pop('self')
+        self.__dict__.update(kwargs)
+
+
+class StabilizedModes(object):
+    """Stabilized eigendecomposition of the translation operator.
+
+    Due to the lack of Hermiticity of the translation operator, its
+    eigendecomposition is frequently poorly conditioned. Solvers in kwant use
+    this stabilized decomposition of the propagating and evanescent modes in
+    the leads. If the hopping between the unit cells of an infinite system is
+    invertible, the translation eigenproblem is written in the basis `psi_n,
+    h_hop^+ * psi_(n+1)`, with ``h_hop`` the hopping between unit cells.  If
+    `h_hop` is not invertible, and has the singular value decomposition `u s
+    v^+`, then the eigenproblem is written in the basis `sqrt(s) v^+ psi_n,
+    sqrt(s) u^+ psi_(n+1)`. In this basis we calculate the eigenvectors of the
+    propagating modes, and the Schur vectors (an orthogonal basis) in the space
+    of evanescent modes.
+
+    `vecs` and `vecslmbdainv` are the first and the second halves of the wave
+    functions.  The first `nmodes` are eigenmodes moving in the negative
+    direction (hence they are incoming into the system in kwant convention),
+    the second `nmodes` are eigenmodes moving in the positive direction. The
+    remaining modes are the Schur vectors of the modes evanescent in the
+    positive direction. Propagating modes with the same eigenvalue are
+    orthogonalized, and all the propagating modes are normalized to carry unit
+    current. Finally the `sqrt_hop` attribute is `v sqrt(s)`.
+
+    For convenience, it is possible to assign this object to a tuple:
+    `vecs, vecslmbdainv, nmodes, sqrt_hop = stabilized_modes`
+
+    Instance variables
+    ==================
+    vecs : numpy array
+        Translation eigenvectors.
+    vecslmbdainv : numpy array
+        Translation eigenvectors divided by the corresponding eigenvalues.
+    nmodes : int
+        Number of left-moving (or right-moving) modes.
+    sqrt_hop : numpy array or None
+        Part of the SVD of `h_hop`, or None if the latter is invertible.
+    """
+
+    def __init__(self, vecs, vecslmbdainv, nmodes, sqrt_hop=None):
+        kwargs = locals()
+        kwargs.pop('self')
+        self.__dict__.update(kwargs)
+
+    def __getitem__(self, item):
+        return (self.vecs, self.vecslmbdainv, self.nmodes, self.sqrt_hop)[item]
+
+
+# Auxiliary functions that perform different parts of the calculation.
 def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
     """
     Make an eigenvalue problem for eigenvectors of translation operator.
@@ -102,12 +186,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
         # the logic.
 
         def extract_wf(psi, lmbdainv):
-            return psi[:n]
-
-        # Project the full wave function back (also trivial).
-
-        def project_wf(psi, lmbdainv):
-            return np.r_[psi * lmbdainv, dot(h_hop.T.conj(), psi)]
+            return np.copy(psi[:n])
 
         matrices = (A, None)
         v_out = None
@@ -179,12 +258,6 @@ def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
                             dot(u, psi[n_nonsing:] * lmbdainv))
             return kla.lu_solve(sol, wf)
 
-        # Project the full wave function back.
-
-        def project_wf(psi, lmbdainv):
-            return np.r_[dot(v.T.conj(), psi * lmbdainv),
-                         dot(u.T.conj(), psi)]
-
         # Setup the generalized eigenvalue problem.
 
         A = np.zeros((2 * n_nonsing, 2 * n_nonsing), np.common_type(h, h_hop))
@@ -235,108 +308,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
             matrices = (kla.lu_solve(lu_b, A), None)
         else:
             matrices = (A, B)
-    return Linsys(matrices, v_out, extract_wf, project_wf)
-
-
-def make_proper_modes(lmbdainv, psi, extract, project, tol=1e6):
-    """
-    Determine the velocities and direction of the propagating eigenmodes.
-
-    Special care is taken of the case of degenerate k-values, where the
-    numerically computed modes are typically a superposition of the real
-    modes. In this case, also the proper (orthogonal) modes are computed.
-    """
-    vel_eps = np.finfo(psi.dtype).eps * tol
-
-    # h_hop is either the full hopping matrix, or the singular
-    # values vector of the svd.
-    nmodes = psi.shape[1]
-    n = len(psi) // 2
-
-    # Array for the velocities.
-    velocities = np.empty(nmodes, dtype=float)
-
-    # Mark the right-going modes.
-    rightselect = np.zeros(nmodes, dtype=bool)
-
-    # Find clusters of nearby points.
-    eps = np.finfo(lmbdainv.dtype).eps * tol
-    angles = np.angle(lmbdainv)
-    sort_order = np.resize(np.argsort(angles), (2 * len(angles,)))
-    boundaries = np.argwhere(np.abs(np.diff(lmbdainv[sort_order]))
-                             > eps).flatten() + 1
-
-    # Detect the singular case of all eigenvalues equal.
-    if boundaries.shape == (0,) and len(angles):
-        boundaries = np.array([0, len(angles)])
-
-    for interval in izip(boundaries[:-1], boundaries[1:]):
-        if interval[1] > boundaries[0] + len(angles):
-            break
-
-        indx = sort_order[interval[0] : interval[1]]
-
-        # If there is a degenerate eigenvalue with several different
-        # eigenvectors, the numerical routines return some arbitrary
-        # overlap of the real, physical solutions. In order
-        # to figure out the correct wave function, we need to
-        # have the full, not the projected wave functions
-        # (at least to our current knowledge).
-
-        # Finding the true modes is done in two steps:
-
-        # 1. The true transversal modes should be orthogonal to
-        # each other, as they share the same Bloch momentum (note
-        # that transversal modes with different Bloch momenta k1
-        # and k2 need not be orthogonal, the full modes are
-        # orthogonal because of the longitudinal dependence
-        # e^{i k1 x} and e^{i k2 x}).
-        # The modes with the same k are therefore orthogonalized:
-
-        if len(indx) > 1:
-            full_psi = extract(psi[:, indx], lmbdainv[indx])
-
-            # Note: Here's a workaround for the fact that the interface
-            # to qr changed from SciPy 0.8.0 to 0.9.0
-            try:
-                full_psi = la.qr(full_psi, econ=True, mode='qr')[0]
-            except TypeError:
-                full_psi = la.qr(full_psi, mode='economic')[0]
-
-            psi[:, indx] = project(full_psi, lmbdainv[indx])
-
-        # 2. Moving infinitesimally away from the degeneracy
-        # point, the modes should diagonalize the velocity
-        # operator (i.e. when they are non-degenerate any more)
-        # The modes are therefore rotated properly such that they
-        # diagonalize the velocity operator.
-        # Note that step 2. does not give a unique result if there are
-        # two modes with the same velocity, or if the modes stay
-        # degenerate even for a range of Bloch momenta (and hence
-        # must have the same velocity). However, this does not matter,
-        # since we are happy with any superposition in this case.
-
-        vel_op = -1j * dot(psi[n:, indx].T.conj(), psi[:n, indx])
-        vel_op = vel_op + vel_op.T.conj()
-        vel_vals, rot = la.eigh(vel_op)
-
-        # If the eigenvectors were purely real up to this stage,
-        # they will typically become complex after the rotation.
-
-        if psi.dtype != np.common_type(psi, rot):
-            psi = psi.astype(np.common_type(psi, rot))
-        psi[:, indx] = dot(psi[:, indx], rot)
-        velocities[indx] = vel_vals
-
-    rightselect = velocities > vel_eps
-    if np.any(abs(velocities) < vel_eps):
-        raise RuntimeError("Found a mode with zero or close to zero velocity.")
-    if 2 * np.sum(rightselect) != len(velocities):
-        raise RuntimeError("Numbers of left- and right-propagating "
-                           "modes differ, possibly due to a numerical "
-                           "instability.")
-
-    return psi, velocities, rightselect
+    return Linsys(matrices, v_out, extract_wf)
 
 
 def unified_eigenproblem(a, b=None, tol=1e6):
@@ -409,32 +381,131 @@ def unified_eigenproblem(a, b=None, tol=1e6):
     return ev, select, propselect, vec_gen, ord_schur
 
 
-_Modes = namedtuple('ModesTuple', ['vecs', 'vecslmbdainv', 'nmodes',
-                                   'sqrt_hop'])
-modes_docstring = """Eigendecomposition of a translation operator.
+def make_proper_modes(lmbdainv, psi, extract, tol=1e6):
+    """
+    Find, normalize and sort the propagating eigenmodes.
 
-A named tuple with attributes `(vecs, vecslmbdainv, nmodes, sqrt_hop)`.  The
-translation eigenproblem is written in the basis `psi_n, h_hop^+ * psi_(n+1)`,
-with ``h_hop`` the hopping between unit cells.  If `h_hop` is not invertible
-with singular value decomposition `u s v^+`, then the eigenproblem is written
-in the basis `sqrt(s) v^+ psi_n, sqrt(s) u^+ psi_(n+1)`. `vecs` and
-`vecslmbdainv` are the first and the second halves of the wave functions.  The
-first `nmodes` are eigenmodes moving in the negative direction (hence they are
-incoming into the system in kwant convention), the second `nmodes` are
-eigenmodes moving in the positive direction. The remaining modes are Schur
-vectors of the modes evanescent in the positive direction. Propagating modes
-with the same eigenvalue are orthogonalized, and all the propagating modes are
-normalized to carry unit current. Finally he `sqrt_hop` attribute is `v
-sqrt(s)`.
-"""
-d = dict(_Modes.__dict__)
-d.update(__doc__=modes_docstring)
-ModesTuple = type('ModesTuple', _Modes.__bases__, d)
-del _Modes, d, modes_docstring
+    Special care is taken of the case of degenerate k-values, where the
+    numerically computed modes are typically a superposition of the real
+    modes. In this case, also the proper (orthogonal) modes are computed.
+    """
+    vel_eps = np.finfo(psi.dtype).eps * tol
+
+    # h_hop is either the full hopping matrix, or the singular
+    # values vector of the svd.
+    nmodes = psi.shape[1]
+    n = len(psi) // 2
+
+    # Array for the velocities.
+    velocities = np.empty(nmodes, dtype=float)
+
+    # Calculate the full wave function in real space.
+    full_psi = extract(psi, lmbdainv)
+
+    # Find clusters of nearby eigenvalues. Since the eigenvalues occupy the
+    # unit circle, special care has to be taken to not introduce a cut at
+    # lambda = -1.
+    eps = np.finfo(lmbdainv.dtype).eps * tol
+    angles = np.angle(lmbdainv)
+    sort_order = np.resize(np.argsort(angles), (2 * len(angles,)))
+    boundaries = np.argwhere(np.abs(np.diff(lmbdainv[sort_order]))
+                             > eps).flatten() + 1
+
+    # Detect the singular case of all eigenvalues equal.
+    if boundaries.shape == (0,) and len(angles):
+        boundaries = np.array([0, len(angles)])
+
+    for interval in izip(boundaries[:-1], boundaries[1:]):
+        if interval[1] > boundaries[0] + len(angles):
+            break
+
+        indx = sort_order[interval[0] : interval[1]]
+
+        # If there is a degenerate eigenvalue with several different
+        # eigenvectors, the numerical routines return some arbitrary
+        # overlap of the real, physical solutions. In order
+        # to figure out the correct wave function, we need to
+        # have the full, not the projected wave functions
+        # (at least to our current knowledge).
+
+        # Finding the true modes is done in two steps:
+
+        # 1. The true transversal modes should be orthogonal to each other, as
+        # they share the same Bloch momentum (note that transversal modes with
+        # different Bloch momenta k1 and k2 need not be orthogonal, the full
+        # modes are orthogonal because of the longitudinal dependence e^{i k1
+        # x} and e^{i k2 x}).  The modes with the same k are therefore
+        # orthogonalized. Moreover for the velocity to have a proper value the
+        # modes should also be normalized.
+
+        # Note: Here's a workaround for the fact that the interface
+        # to qr changed from SciPy 0.8.0 to 0.9.0
+        try:
+            q, r = la.qr(full_psi[:, indx], econ=True, mode='qr')
+        except TypeError:
+            q, r = la.qr(full_psi[:, indx], mode='economic')
+
+        # If the eigenvectors were purely real up to this stage,
+        # they will typically become complex after the rotation.
+        if psi.dtype != np.common_type(psi, r):
+            psi = psi.astype(np.common_type(psi, r))
+        if full_psi.dtype != np.common_type(full_psi, q):
+            full_psi = full_psi.astype(np.common_type(psi, q))
+
+        full_psi[:, indx] = q
+        psi[:, indx] = la.solve(r.T, psi[:, indx].T).T
+
+        # 2. Moving infinitesimally away from the degeneracy
+        # point, the modes should diagonalize the velocity
+        # operator (i.e. when they are non-degenerate any more)
+        # The modes are therefore rotated properly such that they
+        # diagonalize the velocity operator.
+        # Note that step 2. does not give a unique result if there are
+        # two modes with the same velocity, or if the modes stay
+        # degenerate even for a range of Bloch momenta (and hence
+        # must have the same velocity). However, this does not matter,
+        # since we are happy with any superposition in this case.
+
+        vel_op = -1j * dot(psi[n:, indx].T.conj(), psi[:n, indx])
+        vel_op = vel_op + vel_op.T.conj()
+        vel_vals, rot = la.eigh(vel_op)
+
+        # If the eigenvectors were purely real up to this stage,
+        # they will typically become complex after the rotation.
+
+        if psi.dtype != np.common_type(psi, rot):
+            psi = psi.astype(np.common_type(psi, rot))
+        if full_psi.dtype != np.common_type(full_psi, rot):
+            full_psi = full_psi.astype(np.common_type(psi, rot))
+
+        psi[:, indx] = dot(psi[:, indx], rot)
+        full_psi[:, indx] = dot(full_psi[:, indx], rot)
+        velocities[indx] = vel_vals
+
+    if np.any(abs(velocities) < vel_eps):
+        raise RuntimeError("Found a mode with zero or close to zero velocity.")
+    if 2 * np.sum(velocities < 0) != len(velocities):
+        raise RuntimeError("Numbers of left- and right-propagating "
+                           "modes differ, possibly due to a numerical "
+                           "instability.")
+    momenta = np.angle(lmbdainv)
+    order = np.lexsort([np.sign(velocities), -np.sign(velocities) * momenta,
+                        velocities])
+    # The following is necessary due to wrong numpy handling of zero length
+    # arrays, which is going to be fixed in numpy 1.8.
+    if not len(order):
+        order = slice(None)
+    velocities = velocities[order]
+    norm = np.sqrt(abs(velocities))
+    full_psi = full_psi[:, order] / norm
+    psi = psi[:, order] / norm
+    momenta = momenta[order]
+
+    return psi, PropagatingModes(full_psi, velocities, momenta)
+
 
 def modes(h_cell, h_hop, tol=1e6, algorithm=None):
-    """
-    Compute the eigendecomposition of a translation operator of a lead.
+    """Compute the eigendecomposition of a translation operator of a lead.
 
     Parameters
     ----------
@@ -461,18 +532,17 @@ def modes(h_cell, h_hop, tol=1e6, algorithm=None):
 
     Returns
     -------
-    ModesTuple(vecs, vecslmbdainv, nmodes, v) : a named tuple
-        See notes below and `~kwant.physics.ModesTuple`
-        documentation for details.
+    PropagatingModes(wave_functions, momenta, velocities) : object
+        A contained for the array of the wave functions of propagating modes,
+        their momenta, and their velocities. It can be used to identify the
+        gauge in which the scattering problem is solved. See
+        `~kwant.physics.PropagatingModes` for details.
+    StabilizedModes(vecs, vecslmbdainv, nmodes, sqrt_hop) : object
+        A basis of propagating and evanescent modes used by the solvers.
+        See the `~kwant.physics.StablizedModes` for details.
 
     Notes
     -----
-    Only the propagating modes and the modes decaying away from the system are
-    returned: The first `nmodes` columns in `vecs` correspond to incoming modes
-    (coming from the lead into the system), the following `nmodes` columns
-    correspond to outgoing modes (going into the lead, away from the system),
-    the remaining columns are evanescent modes, decaying away from the system.
-
     The propagating modes are sorted according to the longitudinal component of
     their k-vector, with incoming modes having k sorted in descending order,
     and outgoing modes having k sorted in ascending order.  In simple cases
@@ -480,22 +550,15 @@ def modes(h_cell, h_hop, tol=1e6, algorithm=None):
     first". In general, however, it is necessary to examine the band structure
     -- something this function is not doing by design.
 
-    If `h_hop` is invertible, the full transverse wave functions are returned.
-    If it is singular, the projections (s u^dagger psi, v^dagger psi lambda^-1)
-    are returned.
-
-    In order for the linear system to be well-defined, instead of the
-    evanescent modes, an orthogonal basis in the space of evanescent modes is
-    returned.
-
-    Propagating modes with the same lambda are orthogonalized. All the
+    Propagating modes with the same momentum are orthogonalized. All the
     propagating modes are normalized by current.
 
     This function uses the most stable and efficient algorithm for calculating
-    the mode decomposition. Its details will be published elsewhere.
-
+    the mode decomposition that the kwant authors are aware about. Its details
+    are to be published.
     """
     m = h_hop.shape[1]
+    n = h_cell.shape[0]
 
     if (h_cell.shape[0] != h_cell.shape[1] or
         h_cell.shape[0] != h_hop.shape[0]):
@@ -504,69 +567,33 @@ def modes(h_cell, h_hop, tol=1e6, algorithm=None):
     # Note: np.any(h_hop) returns (at least from numpy 1.6.1 - 1.8-devel)
     #       False if h_hop is purely imaginary
     if not (np.any(h_hop.real) or np.any(h_hop.imag)):
-        n = h_hop.shape[0]
         v = np.empty((0, m))
-        return ModesTuple(np.empty((0, 0)), np.empty((0, 0)), 0, v)
+        return PropagatingModes(np.empty((0, n)), np.empty((0,)),
+                                np.empty((0,))), \
+               StabilizedModes(np.empty((0, 0)), np.empty((0, 0)), 0, v)
 
     # Defer most of the calculation to helper routines.
-    matrices, v, extract, project = setup_linsys(h_cell, h_hop, tol, algorithm)
+    matrices, v, extract = setup_linsys(h_cell, h_hop, tol, algorithm)
     ev, evanselect, propselect, vec_gen, ord_schur =\
          unified_eigenproblem(*(matrices + (tol,)))
 
     if v is not None:
         n = v.shape[1]
-    else:
-        n = h_cell.shape[0]
 
-    nprop = np.sum(propselect)
-    nevan = n - nprop // 2
-    evanselect_bool = np.zeros((2*n), dtype='bool')
-    evanselect_bool[evanselect] = True
+    nrightmovers = np.sum(propselect) // 2
+    nevan = n - nrightmovers
     evan_vecs = ord_schur(evanselect)[:, :nevan]
 
     # Compute the propagating eigenvectors.
     prop_vecs = vec_gen(propselect)
     # Compute their velocity, and, if necessary, rotate them
-    prop_vecs, vel, rprop = \
-            make_proper_modes(ev[propselect], prop_vecs, extract, project, tol)
+    prop_vecs, real_space_data = \
+            make_proper_modes(ev[propselect], prop_vecs, extract, tol)
 
-    # Normalize propagating eigenvectors by velocities.
-    prop_vecs /= np.sqrt(abs(vel))
+    vecs = np.c_[prop_vecs[n:], evan_vecs[n:]]
+    vecslmbdainv = np.c_[prop_vecs[:n], evan_vecs[:n]]
 
-    # Fix the phase factor - make maximum of the transverse wave function real
-    # TODO (Anton): Take care of multiple maxima when normalizing.
-    maxnode = prop_vecs[n + np.argmax(abs(prop_vecs[n:, :]), axis=0),
-                        np.arange(prop_vecs.shape[1])]
-    maxnode /= abs(maxnode)
-    prop_vecs /= maxnode
-
-    lprop = np.logical_not(rprop)
-    nmodes = np.sum(rprop)
-
-    # Sort modes according to their k-vector (1/lambda = e^{-ik}):
-    # - right-going modes: sort that k is in ascending order
-    # - left-going modes: sort that k is in descending order
-    # (note that k can be positive or negative). With this convention,
-    # the modes of a simple square lattice strip are ordered as
-    # expected (lowest subband first, etc.)
-
-    prop_ev = ev[propselect]
-    rsort = np.argsort((-1j * np.log(prop_ev[rprop])).real)
-    lsort = np.argsort((1j * np.log(prop_ev[lprop])).real)
-
-    # The following is necessary due to how numpy deals with indexing of empty.
-    # arrays.
-    if nmodes == 0:
-        lprop = rprop = rsort = lsort = slice(None)
-
-    vecs = np.c_[prop_vecs[n:, lprop][:, lsort],
-                 prop_vecs[n:, rprop][:, rsort],
-                 evan_vecs[n:]]
-    vecslmbdainv = np.c_[prop_vecs[:n, lprop][:, lsort],
-                         prop_vecs[:n, rprop][:, rsort],
-                         evan_vecs[:n]]
-
-    return ModesTuple(vecs, vecslmbdainv, nmodes, v)
+    return real_space_data, StabilizedModes(vecs, vecslmbdainv, nrightmovers, v)
 
 
 def selfenergy_from_modes(lead_modes):
@@ -575,7 +602,7 @@ def selfenergy_from_modes(lead_modes):
 
     Parameters
     ----------
-    lead_modes : ModesTuple(vecs, vecslmbdainv, nmodes, v) a named tuple
+    lead_modes : StabilizedModes(vecs, vecslmbdainv, nmodes, v) a named tuple
         The modes in the lead, with format defined in
         `~kwant.physics.ModesTuple`.
 
@@ -627,7 +654,7 @@ def selfenergy(h_cell, h_hop, tol=1e6):
     For simplicity this function internally calculates the modes first.
     This may cause a small slowdown, and can be improved if necessary.
     """
-    return selfenergy_from_modes(modes(h_cell, h_hop, tol))
+    return selfenergy_from_modes(modes(h_cell, h_hop, tol)[1])
 
 
 def square_selfenergy(width, hopping, fermi_energy):

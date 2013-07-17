@@ -169,17 +169,13 @@ class SparseSolver(object):
         for leadnum, interface in enumerate(sys.lead_interfaces):
             lead = sys.leads[leadnum]
             if hasattr(lead, 'modes') and not force_realspace:
-                modes = lead.modes(energy, args=args)
+                modes, (u, ulinv, nprop, svd_v) = lead.modes(energy, args=args)
                 lead_info.append(modes)
-                u, ulinv, nprop, svd_v = modes
 
                 if len(u) == 0:
                     # See comment about zero-shaped sparse matrices at the top.
                     rhs.append(np.zeros((lhs.shape[1], 0)))
                     continue
-
-                if svd_v is not None:
-                    svd_v = svd_v.T.conj()
 
                 if leadnum in out_leads:
                     kept_vars.append(
@@ -198,9 +194,9 @@ class SparseSolver(object):
                                        shape=(iface_orbs.size, lhs.shape[0]))
 
                 if svd_v is not None:
-                    v_sp = sp.csc_matrix(svd_v) * transf
+                    v_sp = sp.csc_matrix(svd_v.T.conj()) * transf
                     vdaguout_sp = transf.T * \
-                        sp.csc_matrix(np.dot(svd_v.T.conj(), u_out))
+                        sp.csc_matrix(np.dot(svd_v, u_out))
                     lead_mat = - ulinv_out
                 else:
                     v_sp = transf
@@ -213,7 +209,7 @@ class SparseSolver(object):
                 if leadnum in in_leads and nprop > 0:
                     if svd_v is not None:
                         vdaguin_sp = transf.T * sp.csc_matrix(
-                            -np.dot(svd_v.T.conj(), u_in))
+                            -np.dot(svd_v, u_in))
                     else:
                         vdaguin_sp = transf.T * sp.csc_matrix(-u_in)
 
@@ -393,7 +389,7 @@ class SparseSolver(object):
             self._make_linear_sys(fsys, [], xrange(len(fsys.leads)), energy,
                                   args=args)
 
-        Modes = physics.ModesTuple
+        Modes = physics.PropagatingModes
         num_extra_vars = sum(li.vecs.shape[1] - li.nmodes
                              for li in lead_info if isinstance(li, Modes))
         num_orb = h.shape[0] - num_extra_vars
