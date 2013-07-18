@@ -105,9 +105,8 @@ class StabilizedModes(object):
 
 
 # Auxiliary functions that perform different parts of the calculation.
-def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
-    """
-    Make an eigenvalue problem for eigenvectors of translation operator.
+def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
+    """Make an eigenvalue problem for eigenvectors of translation operator.
 
     Parameters
     ----------
@@ -118,18 +117,18 @@ def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
     tol : float
         Numbers are considered zero when they are smaller than `tol` times
         the machine precision.
-    algorithm : tuple of 3 booleans or None
-        Which steps of the eigenvalue prolem stabilization to perform.
-        The first value selects whether to work in the basis of the
-        hopping svd, or lattice basis. If the real space basis is chosen, the
-        following two options do not apply.
-        The second value selects whether to add an anti-Hermitian term to the
-        cell Hamiltonian before inverting. Finally the third value selects
-        whether to reduce a generalized eigenvalue problem to the regular one.
-        The default value, `None`, results in kwant selecting the algorithm
-        that is the most efficient without sacrificing stability. Manual
-        selection may result in either slower performance, or large numerical
-        errors, and is mostly required for testing purposes.
+    stabilization : list of 2 booleans or None
+        Which steps of the eigenvalue prolem stabilization to perform. If the
+        value is `None`, then kwant chooses the fastest (and least stable)
+        algorithm that is expected to be sufficient.  For any other value,
+        kwant forms the eigenvalue problem in the basis of the hopping singular
+        values.  The first element set to `True` forces kwant add an
+        anti-Hermitian term to the cell Hamiltonian before inverting. If it is
+        set to `False`, the extra term will only be added if the cell
+        Hamiltonian isn't invertible. The second element set to `True` forces
+        kwant to solve a generalized eigenvalue problem, and not to reduce it
+        to the regular one.  If it is `False`, reduction to a regular problem
+        is performed if necessary.
 
     Returns
     -------
@@ -144,9 +143,12 @@ def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
     -----
     The lead problem with degenerate hopping is rather complicated, and the
     details of the algorithm will be published elsewhere.
+
     """
     n = h_cell.shape[0]
     m = h_hop.shape[1]
+    if stabilization is not None:
+        stabilization = list(stabilization)
 
     if not (np.any(h_hop.real) or np.any(h_hop.imag)):
         # Inter-cell hopping is zero.  The current algorithm is not suited to
@@ -170,8 +172,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
     assert m == vh.shape[1], "Corrupt output of svd."
     n_nonsing = np.sum(s > eps * s[0])
 
-    if (n_nonsing == n and algorithm is None) or (algorithm is not None and
-                                                  algorithm[0]):
+    if (n_nonsing == n and stabilization is None):
         # The hopping matrix is well-conditioned and can be safely inverted.
         # Hence the regular transfer matrix may be used.
         hop_inv = la.inv(h_hop)
@@ -191,10 +192,8 @@ def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
         matrices = (A, None)
         v_out = None
     else:
-        if algorithm is not None:
-            need_to_stabilize, divide = algorithm[1:]
-        else:
-            need_to_stabilize = None
+        if stabilization is None:
+            stabilization = [None, False]
 
         # The hopping matrix has eigenvalues close to 0 - those
         # need to be eliminated.
@@ -209,30 +208,31 @@ def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
         v[:vh.shape[1]] = vh[:n_nonsing].T.conj()
         v = v * np.sqrt(s)
 
-        # Eliminating the zero eigenvalues requires inverting the
-        # on-site Hamiltonian, possibly including a self-energy-like term.
-        # The self-energy-like term stabilizes the inversion, but the most
-        # stable choice is inherently complex. This can be disadvantageous
-        # if the Hamiltonian is real - as staying in real arithmetics can be
-        # significantly faster.
-        # The strategy here is to add a complex self-energy-like term
-        # always if the original Hamiltonian is complex, and check for
-        # invertibility first if it is real
+        # Eliminating the zero eigenvalues requires inverting the on-site
+        # Hamiltonian, possibly including a self-energy-like term.  The
+        # self-energy-like term stabilizes the inversion, but the most stable
+        # choice is inherently complex. This can be disadvantageous if the
+        # Hamiltonian is real, since staying in real arithmetics can be
+        # significantly faster.  The strategy here is to add a complex
+        # self-energy-like term always if the original Hamiltonian is complex,
+        # and check for invertibility first if it is real
 
-        h = h_cell
-        sol = kla.lu_factor(h)
-        if issubclass(np.common_type(h_cell, h_hop), np.floating) \
-           and need_to_stabilize is None:
-            # Check if stabilization is needed.
+        matrices_real = issubclass(np.common_type(h_cell, h_hop), np.floating)
+        add_imaginary = stabilization[0] or ((stabilization[0] is None) and
+                                             matrices_real)
+        # Check if there is a chance we will not need to add an imaginary term.
+        if not add_imaginary:
+            h = h_cell
+            sol = kla.lu_factor(h)
             rcond = kla.rcond_from_lu(sol, npl.norm(h, 1))
 
-            if rcond > eps:
+            if rcond < eps:
+                need_to_stabilize = True
+            else:
                 need_to_stabilize = False
 
-        if need_to_stabilize is None:
+        if add_imaginary or need_to_stabilize:
             need_to_stabilize = True
-
-        if need_to_stabilize:
             # Matrices are complex or need self-energy-like term to be
             # stabilized.
             temp = dot(u, u.T.conj()) + dot(v, v.T.conj())
@@ -298,13 +298,13 @@ def setup_linsys(h_cell, h_hop, tol=1e6, algorithm=None):
         # the matrix B can be safely inverted.
 
         lu_b = kla.lu_factor(B)
-        if algorithm is None:
+        if not stabilization[1]:
             rcond = kla.rcond_from_lu(lu_b, npl.norm(B, 1))
             # A more stringent condition is used here since errors can
             # accumulate from here to the eigenvalue calculation later.
-            divide = rcond > eps * tol
+            stabilization[1] = rcond > eps * tol
 
-        if divide:
+        if stabilization[1]:
             matrices = (kla.lu_solve(lu_b, A), None)
         else:
             matrices = (A, B)
@@ -504,7 +504,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6):
     return psi, PropagatingModes(full_psi, velocities, momenta)
 
 
-def modes(h_cell, h_hop, tol=1e6, algorithm=None):
+def modes(h_cell, h_hop, tol=1e6, stabilization=None):
     """Compute the eigendecomposition of a translation operator of a lead.
 
     Parameters
@@ -517,18 +517,19 @@ def modes(h_cell, h_hop, tol=1e6, algorithm=None):
     tol : float
         Numbers and differences are considered zero when they are smaller
         than `tol` times the machine precision.
-    algorithm : tuple or 3 booleans or None
-        Which steps of the eigenvalue prolem stabilization to perform. The
-        default value, `None`, results in kwant selecting the algorithm that is
-        the most efficient without sacrificing stability. Manual selection may
-        result in either slower performance, or large numerical errors, and is
-        mostly required for testing purposes.  The first value selects whether
-        to work in the basis of the hopping svd, or lattice basis. If the real
-        space basis is chosen, the following two options do not apply.  The
-        second value selects whether to add an anti-Hermitian term to the cell
-        Hamiltonian before inverting. Finally the third value selects whether
-        to reduce a generalized eigenvalue problem to the regular one.
-
+    stabilization : list of 2 booleans or None
+        Which steps of the eigenvalue prolem stabilization to perform. If the
+        value is `None`, then kwant chooses the fastest (and least stable)
+        algorithm that is expected to be sufficient.  For any other value,
+        kwant forms the eigenvalue problem in the basis of the hopping singular
+        values.  The first element set to `True` forces kwant add an
+        anti-Hermitian term to the cell Hamiltonian before inverting. If it is
+        set to `False`, the extra term will only be added if the cell
+        Hamiltonian isn't invertible. The second element set to `True` forces
+        kwant to solve a generalized eigenvalue problem, and not to reduce it
+        to the regular one.  If it is `False`, reduction to a regular problem
+        is performed if necessary.  Selecting the stabilization manually is
+        mostly necessary for testing purposes.
 
     Returns
     -------
@@ -573,7 +574,7 @@ def modes(h_cell, h_hop, tol=1e6, algorithm=None):
                StabilizedModes(np.empty((0, 0)), np.empty((0, 0)), 0, v)
 
     # Defer most of the calculation to helper routines.
-    matrices, v, extract = setup_linsys(h_cell, h_hop, tol, algorithm)
+    matrices, v, extract = setup_linsys(h_cell, h_hop, tol, stabilization)
     ev, evanselect, propselect, vec_gen, ord_schur =\
          unified_eigenproblem(*(matrices + (tol,)))
 

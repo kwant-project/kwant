@@ -256,14 +256,14 @@ def test_algorithm_equivalence():
     u, v = u * np.sqrt(s), vh.T.conj() * np.sqrt(s)
     prop_vecs = []
     evan_vecs = []
-    algos = [(True,)] + list(product(*([(False,)] + 2 * [(True, False)])))
+    algos = [None] + list(product(*(2 * [(True, False)])))
     for algo in algos:
-        result = leads.modes(h, t, algorithm=algo)[1]
+        result = leads.modes(h, t, stabilization=algo)[1]
 
         vecs, vecslmbdainv = result.vecs, result.vecslmbdainv
 
         # Bring the calculated vectors to real space
-        if not algo[0]:
+        if algo is not None:
             vecs = np.dot(v, vecs)
             np.testing.assert_almost_equal(result.sqrt_hop, v)
         else:
@@ -273,7 +273,7 @@ def test_algorithm_equivalence():
         prop_vecs.append(full_vecs[:, : 2 * result.nmodes])
         evan_vecs.append(full_vecs[:, 2 * result.nmodes :])
 
-    msg = 'Algorithm {0} failed.'
+    msg = 'Stabilization {0} failed.'
     for vecs, algo in izip(prop_vecs, algos):
         # Propagating modes should have identical ordering, and only vary
         # By a phase
