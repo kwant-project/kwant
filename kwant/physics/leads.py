@@ -605,7 +605,7 @@ def selfenergy_from_modes(lead_modes):
     ----------
     lead_modes : StabilizedModes(vecs, vecslmbdainv, nmodes, v) a named tuple
         The modes in the lead, with format defined in
-        `~kwant.physics.ModesTuple`.
+        `~kwant.physics.StabilizedMods`.
 
     Returns
     -------
