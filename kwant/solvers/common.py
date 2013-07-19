@@ -17,11 +17,11 @@ from .. import physics, system
 # Currently, scipy.sparse does not support matrices with one dimension being
 # zero: http://projects.scipy.org/scipy/ticket/1602 We use NumPy dense matrices
 # as a replacement.
+
 # TODO: Once this issue is fixed, code for the special cases can be removed
 # from _make_linear_sys, _solve_linear_sys and possibly other places marked by
 # the line "See comment about zero-shaped sparse matrices at the top of
 # common.py".
-
 
 LinearSys = namedtuple('LinearSys', ['lhs', 'rhs', 'indices', 'num_orb'])
 
@@ -78,9 +78,8 @@ class SparseSolver(object):
         ----------
         factorized : object
             The result of calling `_factorized` for the matrix a.
-        b : a sequence of matrices.
-            Sizes of these matrices may be smaller than needed, the missing
-            entries at the end are padded with zeros.
+        b : sparse matrix
+            The right hand side. Its format much match `rhsformat`.
         kept_vars : slice object or sequence of integers
             A sequence of numbers of variables to keep in the solution
 
@@ -123,7 +122,8 @@ class SparseSolver(object):
             mentioned in `in_leads`. `indices` is a list of arrays of variables
             in the system of equations corresponding to the the outgoing modes
             in each lead, or the indices of variables, on which a lead defined
-            via self-energy adds the self-energy.
+            via self-energy adds the self-energy. Finally `num_orb` is the
+            total number of degrees of freedom in the scattering region.
 
         lead_info : list of objects
             Contains one entry for each lead.  For a lead defined as a
@@ -173,8 +173,7 @@ class SparseSolver(object):
                 lead_info.append(modes)
 
                 if len(u) == 0:
-                    # See comment about zero-shaped sparse matrices at the top.
-                    rhs.append(np.zeros((lhs.shape[1], 0)))
+                    rhs.append(None)
                     continue
 
                 indices.append(np.arange(lhs.shape[0], lhs.shape[0] + nprop))
@@ -215,8 +214,7 @@ class SparseSolver(object):
                     # system size is known
                     rhs.append((vdaguin_sp, ulinv_in))
                 else:
-                    # See comment about zero-shaped sparse matrices at the top.
-                    rhs.append(np.zeros((lhs.shape[1], 0)))
+                    rhs.append(None)
             else:
                 sigma = lead.selfenergy(energy, args)
                 lead_info.append(sigma)
@@ -253,6 +251,11 @@ class SparseSolver(object):
                         bmat = [[mats[0]], [mats[1]]]
 
                     rhs[i] = sp.bmat(bmat, format=self.rhsformat)
+            elif mats is None:
+                # A lead with no rhs.
+                rhs[i] = np.zeros((lhs.shape[0], 0))
+            else:
+                raise RuntimeError('Unknown right-hand side format')
 
         return LinearSys(lhs, rhs, indices, num_orb), lead_info
 
@@ -349,8 +352,11 @@ class SparseSolver(object):
             return BlockResult(np.zeros((len_kv, len_rhs)),
                                lead_info, out_leads, in_leads)
 
+        # See comment about zero-shaped sparse matrices at the top of common.py.
+        rhs = sp.bmat([[i for i in linsys.rhs if i.shape[1]]],
+                      format=self.rhsformat)
         flhs = self._factorized(linsys.lhs)
-        data = self._solve_linear_sys(flhs, linsys.rhs, kept_vars)
+        data = self._solve_linear_sys(flhs, rhs, kept_vars)
 
         return BlockResult(data, lead_info, out_leads, in_leads)
 
@@ -389,17 +395,19 @@ class SparseSolver(object):
         factored = None
 
         # Do not perform factorization if no further calculation is needed.
-        if sum(i.shape[1] for i in linsys.rhs):
-            factored = self._factorized(linsys.lhs)
-            for mat in linsys.rhs:
-                if mat.shape[1] == 0:
-                    continue
+        if not sum(i.shape[1] for i in linsys.rhs):
+            return ldos
 
-                for j in xrange(0, mat.shape[1], self.nrhs):
-                    jend = min(j + self.nrhs, mat.shape[1])
-                    psi = self._solve_linear_sys(factored, [mat[:, j:jend]],
-                                                 slice(linsys.num_orb))
-                    ldos += np.sum(np.square(abs(psi)), axis=1)
+        factored = self._factorized(linsys.lhs)
+
+        # See comment about zero-shaped sparse matrices at the top of common.py.
+        rhs = sp.bmat([[i for i in linsys.rhs if i.shape[1]]],
+                      format=self.rhsformat)
+        for j in xrange(0, rhs.shape[1], self.nrhs):
+            jend = min(j + self.nrhs, rhs.shape[1])
+            psi = self._solve_linear_sys(factored, rhs[:, j:jend],
+                                         slice(linsys.num_orb))
+            ldos += np.sum(np.square(abs(psi)), axis=1)
 
         return ldos * (0.5 / np.pi)
 
@@ -450,8 +458,8 @@ class WaveFunction(object):
         self.num_orb = linsys.num_orb
 
     def __call__(self, lead):
-        result = self.solve(
-            self.factorized_h, [self.rhs[lead]], slice(self.num_orb))
+        result = self.solve(self.factorized_h, self.rhs[lead],
+                            slice(self.num_orb))
         return result.transpose()
 
 

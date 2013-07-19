@@ -98,33 +98,19 @@ class Solver(common.SparseSolver):
 
     def _factorized(self, a):
         a = sp.csc_matrix(a)
-        return factorized(a), a.shape
+        return factorized(a)
 
-    def _solve_linear_sys(self, factorized_a, b, kept_vars=None):
-        slv, a_shape = factorized_a
-
-        if kept_vars is None:
-            kept_vars = slice(a_shape[1])
+    def _solve_linear_sys(self, factorized_a, b, kept_vars):
+        if b.shape[1] == 0:
+            return b[kept_vars]
 
         sols = []
-        vec = np.empty(a_shape[0], complex)
-        for mat in b:
-            if mat.shape[1] != 0:
-                # See comment about zero-shaped sparse matrices at the top of
-                # common.py.
-                mat = sp.csr_matrix(mat)
-            for j in xrange(mat.shape[1]):
-                vec[:] = mat[:, j].todense().flatten()
-                sols.append(slv(vec)[kept_vars])
+        vec = np.empty(b.shape[0], complex)
+        for j in xrange(b.shape[1]):
+            vec[:] = b[:, j].todense().flatten()
+            sols.append(factorized_a(vec)[kept_vars])
 
-        if len(sols):
-            return np.asarray(sols).transpose()
-        else:
-            if isinstance(kept_vars, slice):
-                num_vars = len(xrange(*kept_vars.indices(a_shape[1])))
-            else:
-                num_vars = len(kept_vars)
-            return np.zeros(shape=(num_vars, 0))
+        return np.asarray(sols).transpose()
 
 
 default_solver = Solver()
