@@ -31,13 +31,7 @@ class PropagatingModes(object):
     Instance variables
     ==================
     wave_functions : numpy array
-        The wave functions of the propagating modes.  The first dimension
-        corresponds to sites in a unit cell, the second one to the number of
-        the mode.  Each mode is normalized to carry unit current. If several
-        modes have the same momentum and velocity, an arbitrary orthonormal
-        basis in the subspace of these modes is chosed. The first half of the
-        modes are incoming (having negative velocity), the second half is
-        outgoing (having positive velocity).  momenta : numpy array
+        The wave functions of the propagating modes.
     momenta : numpy array
         Momenta of the modes.
     velocities : numpy array
@@ -49,6 +43,12 @@ class PropagatingModes(object):
     modes have negative velocity, the second half have positive velocity. The
     modes with negative velocity are ordered from larger to lower momenta, the
     modes with positive velocity vice versa.
+
+    The first dimension of the `wave_functions` corresponds to sites in a unit
+    cell, the second one to the number of the mode.  Each mode is normalized to
+    carry unit current. If several modes have the same momentum and velocity,
+    an arbitrary orthonormal basis in the subspace of these modes is
+    chosen.
     """
     def __init__(self, wave_functions, velocities, momenta):
         kwargs = locals()

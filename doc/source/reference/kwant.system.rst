@@ -20,3 +20,4 @@ the interface defined here.
    System
    InfiniteSystem
    FiniteSystem
+   PrecalculatedLead
