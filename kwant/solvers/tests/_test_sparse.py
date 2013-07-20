@@ -26,6 +26,14 @@ class LeadWithOnlySelfEnergy(object):
         return self.lead.selfenergy(energy)
 
 
+def assert_modes_equal(modes1, modes2):
+    assert_almost_equal(modes1.velocities, modes2.velocities)
+    assert_almost_equal(modes1.momenta, modes2.momenta)
+    vecs1, vecs2 = modes1.wave_functions, modes2.wave_functions
+    assert_almost_equal(np.abs(np.sum(vecs1/vecs2, axis=0)),
+                        vecs1.shape[0])
+
+
 # Test output sanity: that an error is raised if no output is requested,
 # and that solving for a subblock of a scattering matrix is the same as taking
 # a subblock of the full scattering matrix.
@@ -66,8 +74,8 @@ def test_output(solve):
     h = fsys.leads[1].cell_hamiltonian()
     t = fsys.leads[1].inter_cell_hopping()
     modes2 = kwant.physics.modes(h, t)[0]
-    assert_almost_equal(modes1.wave_functions, modes[0].wave_functions)
-    assert_almost_equal(modes2.wave_functions, modes[1].wave_functions)
+    assert_modes_equal(modes1, modes[0])
+    assert_modes_equal(modes2, modes[1])
 
 
 # Test that a system with one lead has unitary scattering matrix.
