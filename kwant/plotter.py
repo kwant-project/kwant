@@ -46,71 +46,63 @@ from . import system, builder, physics
 __all__ = ['plot', 'map', 'bands', 'sys_leads_sites', 'sys_leads_hoppings',
            'sys_leads_pos', 'sys_leads_hopping_pos', 'mask_interpolate']
 
+
 # Collections that allow for symbols and linewiths to be given in data space
 # (not for general use, only implement what's needed for plotter)
-
 def _isarray(var):
     if hasattr(var, '__getitem__') and not isinstance(var, basestring):
         return True
     else:
         return False
 
+
 def _nparray_if_array(var):
     return np.asarray(var) if _isarray(var) else var
 
+
 class LineCollection(collections.LineCollection):
     def __init__(self, segments, reflen=None, **kwargs):
-        collections.LineCollection.__init__(self, segments,
-                                                       **kwargs)
+        super(LineCollection, self).__init__(segments, **kwargs)
         self.reflen = reflen
-
 
     def set_linewidths(self, linewidths):
         self._linewidths_orig = _nparray_if_array(linewidths)
 
-
     def draw(self, renderer):
-        if self.reflen:
+        linewidths = self._linewidths_orig
+        if self.reflen is not None:
             # Note: only works for aspect ratio 1!
             #       72.0 - there is 72 points in an inch
-            factor = (self.axes.transData.frozen().to_values()[0] /
-                      self.figure.dpi * 72.0 * self.reflen)
-            collections.LineCollection.set_linewidths(self,
-                                         self._linewidths_orig * factor)
-        else:
-            collections.LineCollection.set_linewidths(self,
-                                                  self._linewidths_orig)
+            factor = (self.axes.transData.frozen().to_values()[0] * 72.0 *
+                      self.reflen / self.figure.dpi)
+            linewidths *= factor
 
-        return collections.LineCollection.draw(self, renderer)
+        super(LineCollection, self).set_linewidths(linewidths)
+        return super(LineCollection, self).draw(renderer)
 
 
 class PathCollection(collections.PathCollection):
-    def __init__(self, paths, sizes=None, reflen=None,
-                 **kwargs):
-        collections.PathCollection.__init__(self, paths,
-                                                       sizes=sizes,
-                                                       **kwargs)
+    def __init__(self, paths, sizes=None, reflen=None, **kwargs):
+        super(PathCollection, self).__init__(paths, sizes=sizes, **kwargs)
 
         self.reflen = reflen
         self._linewidths_orig = _nparray_if_array(self.get_linewidths())
 
-        self._transforms = [
-            matplotlib.transforms.Affine2D().scale(x)
-            for x in sizes]
+        self._transforms = [matplotlib.transforms.Affine2D().scale(x) for x in
+                            sizes]
 
     def get_transforms(self):
         return self._transforms
 
     def get_transform(self):
-        if self.reflen:
-            # For the paths, use the data transformation but
-            # strip the offset (will be added later with offsets)
-            a, b, c, d, e, f = self.axes.transData.frozen().to_values()
-            return matplotlib.transforms.Affine2D().from_values(a, b, c, d,
-                                              0, 0).scale(self.reflen)
+        transform = matplotlib.transforms.Affine2D()
+        if self.reflen is not None:
+            # For the paths, use the data transformation but strip the offset
+            # (will be added later with offsets)
+            args = self.axes.transData.frozen().to_values()[:4] + (0, 0)
+            return transform.from_values(*args).scale(self.reflen)
         else:
-            return matplotlib.transforms.Affine2D().scale(
-                (self.figure.dpi / 72.0))
+            return transform.scale(self.figure.dpi / 72.0)
 
     def draw(self, renderer):
         if self.reflen:
@@ -130,41 +122,37 @@ if has3d:
     # for this we use 2 3D half-circles that are projected into 2D
     # (this gives the same length as projecting the full unit sphere)
 
-    _xs = []
-    _ys = []
-    _zs = []
-
-    for phi in np.linspace(0, pi, 21):
-        _xs.append(cos(phi))
-        _ys.append(sin(phi))
-        _zs.append(0)
-        _ys.append(cos(phi))
-        _zs.append(sin(phi))
-        _xs.append(0)
-
-    _unit_sphere = np.array([_xs, _ys, _zs])
+    _phi = np.linspace(0, pi, 21)
+    _xyz = np.c_[np.cos(_phi), np.sin(_phi), 0 * _phi].T.reshape(-1, 1, 21)
+    _unit_sphere = np.bmat([[_xyz[0], _xyz[2]], [_xyz[1], _xyz[0]],
+                            [_xyz[2], _xyz[1]]])
+    _unit_sphere = np.asarray(_unit_sphere)
 
     def projected_length(ax, length):
-        xc = sum(ax.get_xlim3d())/2.0
-        yc = sum(ax.get_ylim3d())/2.0
-        zc = sum(ax.get_zlim3d())/2.0
+        rc = np.array([ax.get_xlim3d(), ax.get_ylim3d(), ax.get_zlim3d()])
+        rc = np.apply_along_axis(np.sum, 1, rc) / 2.
 
-        xs = _unit_sphere[0] * length + xc
-        ys = _unit_sphere[1] * length + yc
-        zs = _unit_sphere[2] * length + zc
+        rs = _unit_sphere * length + rc.reshape(-1, 1)
 
-        xp, yp, _ = mplot3d.proj3d.proj_transform(xs, ys, zs, ax.get_proj())
-        xc, yc, _ = mplot3d.proj3d.proj_transform(xc, yc, zc, ax.get_proj())
+        transform = mplot3d.proj3d.proj_transform
+        rp = np.asarray(transform(*(list(rs) + [ax.get_proj()]))[:2])
+        rc[:2] = transform(*(list(rc) + [ax.get_proj()]))[:2]
 
-        coords = np.array([xp, yp]) - np.repeat([[xc], [yc]], len(xs), axis=1)
+        coords = rp - np.repeat(rc[:2].reshape(-1, 1), len(rs[0]), axis=1)
         return sqrt(np.sum(coords**2, axis=0).max())
 
 
+    # Auxiliary array for calculating corners of a cube.
+    corners = np.zeros((3, 8, 6), np.float_)
+    corners[0, [0, 1, 2, 3], 0] = corners[0, [4, 5, 6, 7], 1] = \
+    corners[0, [0, 1, 4, 5], 2] = corners[0, [2, 3, 6, 7], 3] = \
+    corners[0, [0, 2, 4, 6], 4] = corners[0, [1, 3, 5, 7], 5] = 1.
+
+
+
     class Line3DCollection(mplot3d.art3d.Line3DCollection):
-        def __init__(self, segments, reflen=None, zorder=0,
-                     **kwargs):
-            mplot3d.art3d.Line3DCollection.__init__(self, segments,
-                                                    **kwargs)
+        def __init__(self, segments, reflen=None, zorder=0, **kwargs):
+            super(Line3DCollection, self).__init__(segments, **kwargs)
             self.reflen = reflen
             self._zorder3d = zorder
 
@@ -172,7 +160,7 @@ if has3d:
             self._linewidths_orig = _nparray_if_array(linewidths)
 
         def do_3d_projection(self, renderer):
-            mplot3d.art3d.Line3DCollection.do_3d_projection(self, renderer)
+            super(Line3DCollection, self).do_3d_projection(renderer)
             # The whole 3D ordering is flawed in mplot3d when several
             # collections are added. We just use normal zorder. Note the
             # "-" due to the different logic in the 3d plotting, we still want
@@ -180,22 +168,21 @@ if has3d:
             return -self._zorder3d
 
         def draw(self, renderer):
+            linewidths = self._linewidths_orig
             if self.reflen:
                 proj_len = projected_length(self.axes, self.reflen)
-                a, _, _, d, _, _ = self.axes.transData.frozen().to_values()
+                args = self.axes.transData.frozen().to_values()
                 # Note: unlike in the 2D case, where we can enforce equal
                 #       aspect ratio, this (currently) does not work with
                 #       3D plots in matplotlib. As an approximation, we
                 #       thus scale with the average of the x- and y-axis
                 #       transformation.
-                factor = proj_len * (a + d) * 0.5 / self.figure.dpi * 72.0
-                mplot3d.art3d.Line3DCollection.set_linewidths(self,
-                                            self._linewidths_orig * factor)
-            else:
-                mplot3d.art3d.Line3DCollection.set_linewidths(self,
-                                                     self._linewidths_orig)
+                factor = proj_len * (args[0] +
+                                     args[3]) * 0.5 * 72.0 / self.figure.dpi
+                linewidths *= factor
 
-            mplot3d.art3d.Line3DCollection.draw(self, renderer)
+            super(Line3DCollection, self).set_linewidths(linewidths)
+            super(Line3DCollection, self).draw(renderer)
 
 
     class Path3DCollection(mplot3d.art3d.Patch3DCollection):
@@ -204,14 +191,12 @@ if has3d:
             paths = [matplotlib.patches.PathPatch(path) for path in paths]
 
             if offsets is not None:
-                mplot3d.art3d.Patch3DCollection.__init__(self, paths,
-                                                         offsets=offsets[:,:2],
-                                                         **kwargs)
-                self.set_3d_properties(zs=offsets[:,2], zdir="z")
-            else:
-                mplot3d.art3d.Patch3DCollection.__init__(self, paths,
-                                                         **kwargs)
+                kwargs['offsets'] = offsets[:, :2]
 
+            super(Path3DCollection, self).__init__(paths, **kwargs)
+
+            if offsets is not None:
+                self.set_3d_properties(zs=offsets[:, 2], zdir="z")
 
             self.reflen = reflen
             self._zorder3d = zorder
@@ -223,24 +208,24 @@ if has3d:
             self._facecolors_orig = _nparray_if_array(self.get_facecolors())
             self._edgecolors_orig = _nparray_if_array(self.get_edgecolors())
 
-            self._orig_transforms = np.array([
-                matplotlib.transforms.Affine2D().scale(x)
-                for x in sizes], dtype='object')
+            transform = matplotlib.transforms.Affine2D()
+            self._orig_transforms = np.array([transform.scale(x) for x in
+                                              sizes], dtype='object')
             self._transforms = self._orig_transforms
 
         def set_array(self, array):
             self._array_orig = _nparray_if_array(array)
-            mplot3d.art3d.Patch3DCollection.set_array(self, array)
+            super(Path3DCollection, self).set_array(array)
 
         def set_color(self, colors):
             self._facecolors_orig = _nparray_if_array(colors)
             self._edgecolors_orig = self._facecolors_orig
-            mplot3d.art3d.Patch3DCollection.set_color(self, colors)
+            super(Path3DCollection, self).set_color(colors)
 
         def set_edgecolors(self, colors):
             colors = matplotlib.colors.colorConverter.to_rgba_array(colors)
             self._edgecolors_orig = _nparray_if_array(colors)
-            mplot3d.art3d.Patch3DCollection.set_edgecolors(self, colors)
+            super(Path3DCollection, self).set_edgecolors(colors)
 
         def get_transforms(self):
             # this is exact only for an isometric projection, for the
@@ -248,79 +233,70 @@ if has3d:
             return self._transforms
 
         def get_transform(self):
+            transform = matplotlib.transforms.Affine2D()
             if self.reflen:
                 proj_len = projected_length(self.axes, self.reflen)
 
-                # For the paths, use the data transformation but
-                # strip the offset (will be added later with offsets)
-                a, b, c, d, e, f = self.axes.transData.frozen().to_values()
-                return matplotlib.transforms.Affine2D().from_values(a, b, c, d,
-                                                         0, 0).scale(proj_len)
+                # For the paths, use the data transformation but strip the
+                # offset (will be added later with the offsets).
+                args = self.axes.transData.frozen().to_values()[:4] + (0, 0)
+                return transform.from_values(*args).scale(proj_len)
             else:
-                return matplotlib.transforms.Affine2D().scale(
-                    (self.figure.dpi / 72.0))
-
+                return transform.scale(self.figure.dpi / 72.0)
 
         def do_3d_projection(self, renderer):
-            xs, ys, zs = self._offsets3d
+            rs = np.array(self._offsets3d)
 
             # numpy complains about zero-length index arrays
-            if len(xs) == 0:
+            if rs.shape[1] == 0:
                 return -self._zorder3d
 
-            vs = np.empty((len(xs), 3), np.float_)
-            vs[:, 0], vs[:, 1], vs[:, 2], _ = \
-                mplot3d.proj3d.proj_transform_clip(xs, ys, zs,
-                                                   renderer.M)
+            proj = mplot3d.proj3d.proj_transform_clip
+            vs = np.array(proj(*(list(rs) + [renderer.M]))[:3])
 
             if _sort3d:
-                indx = vs[:, 2].argsort()[::-1]
+                indx = vs[2].argsort()[::-1]
 
-                self.set_offsets(vs[indx, :2])
+                self.set_offsets(vs[:2, indx].T)
 
                 if len(self._paths_orig) > 1:
-                    paths = np.resize(self._paths_orig,
-                                      (vs.shape[0], ))
+                    paths = np.resize(self._paths_orig, (vs.shape[1],))
                     self.set_paths(paths[indx])
 
                 if len(self._orig_transforms) > 1:
                     self._transforms = np.resize(self._orig_transforms,
-                                             (vs.shape[0], ))
+                                                 (vs.shape[1],))
                     self._transforms = self._transforms[indx]
 
                 if (isinstance(self._linewidths_orig, np.ndarray) and
                     len(self._linewidths_orig) > 1):
-                    self._linewidths_orig2 =  np.resize(self._linewidths_orig,
-                                                        (vs.shape[0], ))
-                    self._linewidths_orig2 = self._linewidths_orig2[indx]
+                    self._linewidths_orig2 = np.resize(self._linewidths_orig,
+                                                       (vs.shape[1],))[indx]
 
-                # Note: here array, facecolors and edgecolors are
-                #       guaranteed to be 2d numpy arrays or None.
-                #       (And array is the same length as the
-                #       coordinates)
+                # Note: here array, facecolors and edgecolors are guaranteed to
+                #       be 2d numpy arrays or None.  (And array is the same
+                #       length as the coordinates)
 
                 if self._array_orig is not None:
-                    mplot3d.art3d.Patch3DCollection.set_array(self,
-                                                self._array_orig[indx])
+                    super(Path3DCollection,
+                          self).set_array(self._array_orig[indx])
 
                 if (self._facecolors_orig is not None and
                     self._facecolors_orig.shape[0] > 1):
                     shape = list(self._facecolors_orig.shape)
                     shape[0] = vs.shape[0]
-                    mplot3d.art3d.Patch3DCollection.set_facecolors(self,
-                                         np.resize(self._facecolors_orig,
-                                                   shape)[indx])
+                    super(Path3DCollection, self).set_facecolors(
+                        np.resize(self._facecolors_orig, shape)[indx])
 
                 if (self._edgecolors_orig is not None and
                     self._edgecolors_orig.shape[0] > 1):
                     shape = list(self._edgecolors_orig.shape)
                     shape[0] = vs.shape[0]
-                    mplot3d.art3d.Patch3DCollection.set_edgecolors(self,
-                                         np.resize(self._edgecolors_orig,
-                                                   shape)[indx])
+                    super(Path3DCollection, self).set_edgecolors(
+                                            np.resize(self._edgecolors_orig,
+                                                      shape)[indx])
             else:
-                self.set_offsets(vs[:, :2])
-
+                self.set_offsets(vs[:2])
 
             # the whole 3D ordering is flawed in mplot3d when several
             # collections are added. We just use normal zorder, but correct
@@ -331,33 +307,23 @@ if has3d:
             # zorder. Still, smaller and larger integer zorders are plotted
             # below or on top.
 
-            minx, maxx, miny, maxy, minz, maxz = self.axes.get_w_lims()
-            corners = np.zeros((8, 3), np.float_)
-            corners[[0, 1, 2, 3], 0] = minx
-            corners[[4, 5, 6, 7], 0] = maxx
-            corners[[0, 1, 4, 5], 0] = miny
-            corners[[2, 3, 6, 7], 0] = maxy
-            corners[[0, 2, 4, 6], 0] = minz
-            corners[[1, 3, 5, 7], 0] = maxz
+            bbox = np.asarray(self.axes.get_w_lims())
 
-            cz = np.empty((8,), np.float_)
-            _, _, cz[:], _ = mplot3d.proj3d.proj_transform_clip(corners[:, 0],
-                                                                corners[:, 1],
-                                                                corners[: ,2],
-                                                                renderer.M)
+            proj = mplot3d.proj3d.proj_transform_clip
+            cz = proj(*(list(np.dot(corners, bbox)) + [renderer.M]))[2]
 
-            return -self._zorder3d + vs[:, 2].mean()/cz.ptp()
-
+            return -self._zorder3d + vs[2].mean() / cz.ptp()
 
         def draw(self, renderer):
             if self.reflen:
                 proj_len = projected_length(self.axes, self.reflen)
-                a, _, _, d, _, _ = self.axes.transData.frozen().to_values()
-                factor = proj_len * (a + d) * 0.5 / self.figure.dpi * 72.0
+                args = self.axes.transData.frozen().to_values()
+                factor = proj_len * (args[0] +
+                                     args[3]) * 0.5 * 72.0 / self.figure.dpi
 
                 self.set_linewidths(self._linewidths_orig2 * factor)
 
-            mplot3d.art3d.Patch3DCollection.draw(self, renderer)
+            super(Path3DCollection, self).draw(renderer)
 
 
 # matplotlib helper functions.
@@ -379,8 +345,7 @@ def set_colors(color, collection, cmap, norm=None):
     length = max(len(collection.get_paths()), len(collection.get_offsets()))
 
     # matplotlib gets confused if dtype='object'
-    if (isinstance(color, np.ndarray) and
-        color.dtype == np.dtype('object')):
+    if (isinstance(color, np.ndarray) and color.dtype == np.dtype('object')):
         color = tuple(color)
 
     if isinstance(collection, mplot3d.art3d.Line3DCollection):
@@ -403,23 +368,20 @@ def set_colors(color, collection, cmap, norm=None):
     collection.set_color(colors)
 
 
-symbol_dict = {'O': 'o',
-               's': ('p', 4, 45),
-               'S': ('P', 4, 45)}
+symbol_dict = {'O': 'o', 's': ('p', 4, 45), 'S': ('P', 4, 45)}
 
 def get_symbol(symbols):
-    """Return the path corresponding to the description in `symbol`
-    """
-    # figure out if list of symbols or single symbol
+    """Return the path corresponding to the description in `symbol`"""
+    # Figure out if list of symbols or single symbol.
     if not hasattr(symbols, '__getitem__'):
         symbols = [symbols]
     elif len(symbols) == 3 and symbols[0] in ('p', 'P'):
-        # most likely a polygon specification (at least not a valid
-        # other symbol)
+        # Most likely a polygon specification (at least not a valid other
+        # symbol).
         symbols = [symbols]
 
-    symbols = [symbol_dict[symbol] if symbol in symbol_dict else symbol
-               for symbol in symbols]
+    symbols = [symbol_dict[symbol] if symbol in symbol_dict else symbol for
+               symbol in symbols]
 
     paths = []
     for symbol in symbols:
@@ -430,7 +392,7 @@ def get_symbol(symbols):
 
             if kind in ['p', 'P']:
                 if kind == 'p':
-                    radius = 1.0 / cos(pi / n)
+                    radius = 1. / cos(pi / n)
                 else:
                     # make the polygon such that it has area equal
                     # to a unit circle
@@ -450,13 +412,10 @@ def get_symbol(symbols):
     return paths
 
 
-def symbols(axes, pos, symbol='o', size=1, reflen=None,
-            facecolor='k', edgecolor='k',
-            linewidth=None, cmap=None, norm=None, zorder=0,
+def symbols(axes, pos, symbol='o', size=1, reflen=None, facecolor='k',
+            edgecolor='k', linewidth=None, cmap=None, norm=None, zorder=0,
             **kwargs):
-    """
-    Add a collection of symbols to an axes instance. Can deal with
-    2D and 3D data.
+    """Add a collection of symbols (2D or 3D) to an axes instance.
 
     Parameters
     ----------
@@ -495,7 +454,6 @@ def symbols(axes, pos, symbol='o', size=1, reflen=None,
     -------
     `PathCollection` or `Path3DCollection` instance containing all the
     symbols that were added.
-
     """
 
     dim = pos.shape[1]
@@ -504,7 +462,7 @@ def symbols(axes, pos, symbol='o', size=1, reflen=None,
     #internally, size must be array_like
     try:
         size[0]
-    except:
+    except TypeError:
         size = (size, )
 
     if dim == 2:
@@ -513,26 +471,17 @@ def symbols(axes, pos, symbol='o', size=1, reflen=None,
         Collection = Path3DCollection
 
     if len(pos) == 0 or np.all(symbol == 'no symbol') or np.all(size == 0):
-        coll = Collection([], sizes=size, reflen=reflen,
-                      linewidths=linewidth,
-                      offsets=np.empty((0, dim)), transOffset=axes.transData,
-                      zorder=zorder)
-        coll.update(kwargs)
-        if dim == 2:
-            axes.add_collection(coll)
-        else:
-            axes.add_collection3d(coll)
-        axes.autoscale_view()
-        return coll
+        paths = []
+        pos = np.empty((0, dim))
+    else:
+        paths = get_symbol(symbol)
 
-    paths = get_symbol(symbol)
-    coll = Collection(paths, sizes=size, reflen=reflen,
-                      linewidths=linewidth,
-                      offsets=pos, transOffset=axes.transData,
-                      zorder=zorder)
+    coll = Collection(paths, sizes=size, reflen=reflen, linewidths=linewidth,
+                      offsets=pos, transOffset=axes.transData, zorder=zorder)
 
     set_colors(facecolor, coll, cmap, norm)
     coll.set_edgecolors(edgecolor)
+
     coll.update(kwargs)
 
     if dim == 2:
@@ -541,14 +490,12 @@ def symbols(axes, pos, symbol='o', size=1, reflen=None,
         axes.add_collection3d(coll)
 
     axes.autoscale_view()
-
     return coll
 
 
 def lines(axes, pos0, pos1, reflen=None, colors='k', linestyles='solid',
           cmap=None, norm=None, zorder=0, **kwargs):
-    """Add a collection of line segments to an axes instance. Can deal with
-    2D and 3D data.
+    """Add a collection of line segments (2D or 3D) to an axes instance.
 
     Parameters
     ----------
@@ -709,8 +656,7 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
             savefile_opts = ([], {})
         if 'dpi' not in savefile_opts[1]:
             savefile_opts[1]['dpi'] = fig.dpi
-        canvas.print_figure(file, *savefile_opts[0],
-                            **savefile_opts[1])
+        canvas.print_figure(file, *savefile_opts[0], **savefile_opts[1])
         return fig
     else:
         assert False, 'Unknown output_mode'
@@ -892,8 +838,8 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
             start = len(hoppings)
             if hasattr(lead, 'builder') and len(lead.interface):
                 hoppings.extend(((hop, leadnr, i) for hop in
-                                lead_hoppings(lead.builder) for i in
-                                xrange(num_lead_cells)))
+                                 lead_hoppings(lead.builder) for i in
+                                 xrange(num_lead_cells)))
             lead_cells.append(slice(start, len(hoppings)))
     elif isinstance(sys, system.System):
         def ll_hoppings(sys):
@@ -901,15 +847,15 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
                 for j in sys.graph.out_neighbors(i):
                     if i < j:
                         yield i, j
+
         hoppings.extend(((hop, None, 0) for hop in ll_hoppings(sys)))
         for leadnr, lead in enumerate(sys.leads):
             start = len(hoppings)
             # We will only plot leads with a graph and with a symmetry.
             if hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and \
                     len(sys.lead_interfaces[leadnr]):
-                hoppings.extend(((hop, leadnr, i) for hop in
-                                 ll_hoppings(lead) for i in
-                                 xrange(num_lead_cells)))
+                hoppings.extend(((hop, leadnr, i) for hop in ll_hoppings(lead)
+                                 for i in xrange(num_lead_cells)))
             lead_cells.append(slice(start, len(hoppings)))
     else:
         raise TypeError('Unrecognized system type.')
@@ -945,14 +891,14 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
     num_lead_cells = hop_lead_nr[-1][2] + 1
     if is_builder:
         pos = np.array(ta.array([ta.array(tuple(i[0][0].pos) +
-                                          tuple(i[0][1].pos))
-                                 for i in hop_lead_nr]))
+                                          tuple(i[0][1].pos)) for i in
+                                 hop_lead_nr]))
     else:
-        sys_from_lead = lambda lead: (sys if (lead is None)
-                                      else sys.leads[lead])
+        sys_from_lead = lambda lead: (sys if (lead is None) else
+                                      sys.leads[lead])
         pos = ta.array([ta.array(tuple(sys_from_lead(i[1]).pos(i[0][0])) +
-                                 tuple(sys_from_lead(i[1]).pos(i[0][1])))
-                        for i in hop_lead_nr])
+                                 tuple(sys_from_lead(i[1]).pos(i[0][1]))) for i
+                        in hop_lead_nr])
         pos = np.array(pos)
     if pos.dtype == object:  # Happens if not all the pos are same length.
         raise ValueError("pos attribute of the sites does not have consistent"
@@ -1006,8 +952,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
          lead_site_edgecolor=None, lead_site_lw=None,
          lead_hop_lw=None, pos_transform=None,
          cmap='gray', colorbar=True, file=None,
-         show=True, dpi=None, fig_size=None,
-         ax=None):
+         show=True, dpi=None, fig_size=None, ax=None):
     """Plot a system in 2 or 3 dimensions.
 
     Parameters
@@ -1322,39 +1267,37 @@ def plot(sys, num_lead_cells=2, unit='nn',
     for symbol, slc in symbol_slcs:
         size = site_size[slc] if _isarray(site_size) else site_size
         col = site_color[slc] if _isarray(site_color) else site_color
-        edgecol = (site_edgecolor[slc] if _isarray(site_edgecolor)
-                   else site_edgecolor)
-        lw  = site_lw[slc] if _isarray(site_lw) else site_lw
+        edgecol = (site_edgecolor[slc] if _isarray(site_edgecolor) else
+                   site_edgecolor)
+        lw = site_lw[slc] if _isarray(site_lw) else site_lw
 
         symbols(ax, sites_pos[slc], size=size,
-                reflen=reflen, symbol=symbol, facecolor=col,
-                edgecolor=edgecol, linewidth=lw,
-                cmap=cmap, norm=norm, zorder=2)
+                reflen=reflen, symbol=symbol,
+                facecolor=col, edgecolor=edgecol,
+                linewidth=lw, cmap=cmap, norm=norm, zorder=2)
 
     end, start = end_pos[: n_sys_hops], start_pos[: n_sys_hops]
-    lines(ax, end, start, reflen, hop_color,
-          linewidths=hop_lw, zorder=1, cmap=hop_cmap)
+    lines(ax, end, start, reflen, hop_color, linewidths=hop_lw, zorder=1,
+          cmap=hop_cmap)
 
     # plot lead sites and hoppings
     norm = matplotlib.colors.Normalize(-0.5, num_lead_cells - 0.5)
-    lead_cmap = matplotlib.colors.LinearSegmentedColormap.from_list(None,
-        [lead_color, (1, 1, 1, lead_color[3])])
+    cmap_from_list = matplotlib.colors.LinearSegmentedColormap.from_list
+    lead_cmap = cmap_from_list(None, [lead_color, (1, 1, 1, lead_color[3])])
 
     for sites_slc, hops_slc in zip(lead_sites_slcs, lead_hops_slcs):
-        lead_site_colors = np.array([i[2] for i in
-                                     sites[sites_slc]], dtype=float)
+        lead_site_colors = np.array([i[2] for i in sites[sites_slc]],
+                                    dtype=float)
 
         # Note: the previous version of the code had in addition this
         # line in the 3D case:
         # lead_site_colors = 1 / np.sqrt(1. + lead_site_colors)
-        symbols(ax, sites_pos[sites_slc], size=lead_site_size,
-                reflen=reflen, symbol=lead_site_symbol,
-                facecolor=lead_site_colors, edgecolor=lead_site_edgecolor,
-                linewidth=lead_site_lw,
+        symbols(ax, sites_pos[sites_slc], size=lead_site_size, reflen=reflen,
+                symbol=lead_site_symbol, facecolor=lead_site_colors,
+                edgecolor=lead_site_edgecolor, linewidth=lead_site_lw,
                 cmap=lead_cmap, zorder=2, norm=norm)
 
-        lead_hop_colors = np.array([i[2] for i in
-                                    hops[hops_slc]], dtype=float)
+        lead_hop_colors = np.array([i[2] for i in hops[hops_slc]], dtype=float)
 
         # Note: the previous version of the code had in addition this
         # line in the 3D case:
@@ -1452,9 +1395,9 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
     return np.ma.masked_array(img, mask), cmin, cmax
 
 
-def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
-         a=None, method='nearest', oversampling=3, num_lead_cells=0,
-        file=None, show=True,  dpi=None, fig_size=None):
+def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
+        method='nearest', oversampling=3, num_lead_cells=0, file=None,
+        show=True, dpi=None, fig_size=None):
     """Show interpolated map of a function defined for the sites of a system.
 
     Create a pixmap representation of a function of the sites of a system by
@@ -1516,7 +1459,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
         value = [value(site[0]) for site in sites]
     else:
         if not isinstance(sys, system.FiniteSystem):
-            raise ValueError('List of values is only allowed as input'
+            raise ValueError('List of values is only allowed as input '
                              'for finalized systems.')
     value = np.array(value)
     img, min, max = mask_interpolate(coords, value, a, method, oversampling)
@@ -1538,9 +1481,8 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None,
                       vmin=vmin, vmax=vmax)
     if num_lead_cells:
         plot(sys, num_lead_cells, site_symbol='no symbol', hop_lw=0,
-             lead_site_symbol='s', lead_site_size=0.501,
-             lead_site_lw=0, lead_hop_lw=0, lead_color='black',
-             colorbar=False, ax=ax)
+             lead_site_symbol='s', lead_site_size=0.501, lead_site_lw=0,
+             lead_hop_lw=0, lead_color='black', colorbar=False, ax=ax)
 
     if colorbar:
         fig.colorbar(image)
