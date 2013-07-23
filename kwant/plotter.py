@@ -1253,7 +1253,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
             fig.set_figheight(fig_size[1])
 
         if dim == 2:
-            ax = fig.add_subplot(111, aspect='equal')
+            ax = fig.add_subplot(111, aspect='equal', adjustable='datalim')
             ax.set_xmargin(0.05)
             ax.set_ymargin(0.05)
         else:
@@ -1472,7 +1472,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     if fig_size is not None:
         fig.set_figwidth(fig_size[0])
         fig.set_figheight(fig_size[1])
-    ax = fig.add_subplot(111, aspect='equal')
+    ax = fig.add_subplot(111, aspect='equal', adjustable='datalim')
 
     # Note that we tell imshow to show the array created by mask_interpolate
     # faithfully and not to interpolate by itself another time.
@@ -1536,7 +1536,7 @@ def bands(sys, momenta=65, args=(), file=None, show=True, dpi=None,
     if fig_size is not None:
         fig.set_figwidth(fig_size[0])
         fig.set_figheight(fig_size[1])
-    ax = fig.add_subplot(1, 1, 1)
+    ax = fig.add_subplot(111)
     ax.plot(momenta, energies)
     return output_fig(fig, file=file, show=show)
 
