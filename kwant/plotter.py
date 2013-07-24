@@ -36,6 +36,7 @@ try:
         has3d = True
     except ImportError:
         warnings.warn("3D plotting not available.", RuntimeWarning)
+        has3d = False
 except ImportError:
     warnings.warn("matplotlib is not available, only iterator-providing "
                   "functions will work.", RuntimeWarning)
