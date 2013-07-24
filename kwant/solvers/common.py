@@ -79,7 +79,7 @@ class SparseSolver(object):
         factorized : object
             The result of calling `_factorized` for the matrix a.
         b : sparse matrix
-            The right hand side. Its format much match `rhsformat`.
+            The right hand side. Its format must match `rhsformat`.
         kept_vars : slice object or sequence of integers
             A sequence of numbers of variables to keep in the solution
 

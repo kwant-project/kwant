@@ -161,7 +161,7 @@ lead parameters.
 
 Change of the modes and lead_info format
 ----------------------------------------
-The `~kwant.physics.modes` now returns two objects:
+The function `~kwant.physics.modes` now returns two objects:
 `~kwant.physics.PropagatingModes` and `~kwant.physics.StabilizedModes`.  The
 first one contains the wave functions of all the propagating modes in real
 space, as well as their velocities and momenta.  All these quantities were
@@ -171,7 +171,6 @@ and evanescent modes in the compressed format expected by the sparse solver
 the `lead_info` attribute of `~kwant.solvers.default.BlockResult` contains the
 real space information about the modes in the leads (a list of
 `~kwant.physics.PropagatingModes` objects).
-
 
 Inclusion of contributed modules
 --------------------------------
@@ -184,4 +183,3 @@ The plotting functionality has been extended. By default, symbols and lines in
 plots are now relative to the system coordinates, i.e. will scale accordingly
 if different zoom-levels are used. Different styles for representing sites and
 hoppings are now possible. 3D plotting has been made more efficient.
-

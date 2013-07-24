@@ -44,11 +44,11 @@ class PropagatingModes(object):
     modes with negative velocity are ordered from larger to lower momenta, the
     modes with positive velocity vice versa.
 
-    The first dimension of the `wave_functions` corresponds to sites in a unit
-    cell, the second one to the number of the mode.  Each mode is normalized to
-    carry unit current. If several modes have the same momentum and velocity,
-    an arbitrary orthonormal basis in the subspace of these modes is
-    chosen.
+    The first dimension of `wave_functions` corresponds to the orbitals of all
+    the sites in a unit cell, the second one to the number of the mode.  Each
+    mode is normalized to carry unit current. If several modes have the same
+    momentum and velocity, an arbitrary orthonormal basis in the subspace of
+    these modes is chosen.
     """
     def __init__(self, wave_functions, velocities, momenta):
         kwargs = locals()
@@ -118,7 +118,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         Numbers are considered zero when they are smaller than `tol` times
         the machine precision.
     stabilization : list of 2 booleans or None
-        Which steps of the eigenvalue prolem stabilization to perform. If the
+        Which steps of the eigenvalue problem stabilization to perform. If the
         value is `None`, then kwant chooses the fastest (and least stable)
         algorithm that is expected to be sufficient.  For any other value,
         kwant forms the eigenvalue problem in the basis of the hopping singular
