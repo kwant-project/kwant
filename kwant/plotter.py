@@ -246,14 +246,14 @@ if has3d:
                 return Affine2D().scale(self.figure.dpi / 72.0)
 
         def do_3d_projection(self, renderer):
-            rs = np.array(self._offsets3d)
+            xs, ys, zs = self._offsets3d
 
             # numpy complains about zero-length index arrays
-            if rs.shape[1] == 0:
+            if len(xs) == 0:
                 return -self._zorder3d
 
             proj = mplot3d.proj3d.proj_transform_clip
-            vs = np.array(proj(*(list(rs) + [renderer.M]))[:3])
+            vs = np.array(proj(xs, ys, zs, renderer.M)[:3])
 
             if _sort3d:
                 indx = vs[2].argsort()[::-1]
