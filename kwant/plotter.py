@@ -96,14 +96,14 @@ class PathCollection(collections.PathCollection):
         return self._transforms
 
     def get_transform(self):
-        transform = matplotlib.transforms.Affine2D()
+        Affine2D = matplotlib.transforms.Affine2D
         if self.reflen is not None:
             # For the paths, use the data transformation but strip the offset
             # (will be added later with offsets)
             args = self.axes.transData.frozen().to_values()[:4] + (0, 0)
-            return transform.from_values(*args).scale(self.reflen)
+            return Affine2D().from_values(*args).scale(self.reflen)
         else:
-            return transform.scale(self.figure.dpi / 72.0)
+            return Affine2D().scale(self.figure.dpi / 72.0)
 
     def draw(self, renderer):
         if self.reflen:
@@ -209,8 +209,8 @@ if has3d:
             self._facecolors_orig = _nparray_if_array(self.get_facecolors())
             self._edgecolors_orig = _nparray_if_array(self.get_edgecolors())
 
-            transform = matplotlib.transforms.Affine2D()
-            self._orig_transforms = np.array([transform.scale(x) for x in
+            Affine2D = matplotlib.transforms.Affine2D
+            self._orig_transforms = np.array([Affine2D().scale(x) for x in
                                               sizes], dtype='object')
             self._transforms = self._orig_transforms
 
@@ -234,16 +234,16 @@ if has3d:
             return self._transforms
 
         def get_transform(self):
-            transform = matplotlib.transforms.Affine2D()
+            Affine2D = matplotlib.transforms.Affine2D
             if self.reflen:
                 proj_len = projected_length(self.axes, self.reflen)
 
                 # For the paths, use the data transformation but strip the
                 # offset (will be added later with the offsets).
                 args = self.axes.transData.frozen().to_values()[:4] + (0, 0)
-                return transform.from_values(*args).scale(proj_len)
+                return Affine2D().from_values(*args).scale(proj_len)
             else:
-                return transform.scale(self.figure.dpi / 72.0)
+                return Affine2D().scale(self.figure.dpi / 72.0)
 
         def do_3d_projection(self, renderer):
             rs = np.array(self._offsets3d)
