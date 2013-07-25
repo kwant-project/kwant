@@ -297,7 +297,7 @@ if has3d:
                                             np.resize(self._edgecolors_orig,
                                                       shape)[indx])
             else:
-                self.set_offsets(vs[:2])
+                self.set_offsets(vs[:2].T)
 
             # the whole 3D ordering is flawed in mplot3d when several
             # collections are added. We just use normal zorder, but correct
