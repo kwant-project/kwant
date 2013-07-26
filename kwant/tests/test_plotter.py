@@ -11,7 +11,7 @@ import warnings
 import nose
 import kwant
 from kwant import plotter
-if plotter._mpl_enabled:
+if plotter.mpl_enabled:
     from mpl_toolkits import mplot3d
     from matplotlib import pyplot
 
@@ -70,7 +70,7 @@ def sys_3d(W=3, r1=2, r2=4, a=1, t=1.0):
 
 def test_plot():
     plot = plotter.plot
-    if not plotter._mpl_enabled:
+    if not plotter.mpl_enabled:
         raise nose.SkipTest
     sys2d = sys_2d()
     sys3d = sys_3d()

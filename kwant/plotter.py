@@ -30,7 +30,7 @@ try:
     from matplotlib.figure import Figure
     from matplotlib import collections
     from matplotlib.backends.backend_agg import FigureCanvasAgg
-    _mpl_enabled = True
+    mpl_enabled = True
     try:
         from mpl_toolkits import mplot3d
         has3d = True
@@ -40,7 +40,7 @@ try:
 except ImportError:
     warnings.warn("matplotlib is not available, only iterator-providing "
                   "functions will work.", RuntimeWarning)
-    _mpl_enabled = False
+    mpl_enabled = False
 
 from . import system, builder, physics
 
@@ -50,15 +50,15 @@ __all__ = ['plot', 'map', 'bands', 'sys_leads_sites', 'sys_leads_hoppings',
 
 # Collections that allow for symbols and linewiths to be given in data space
 # (not for general use, only implement what's needed for plotter)
-def _isarray(var):
+def isarray(var):
     if hasattr(var, '__getitem__') and not isinstance(var, basestring):
         return True
     else:
         return False
 
 
-def _nparray_if_array(var):
-    return np.asarray(var) if _isarray(var) else var
+def nparray_if_array(var):
+    return np.asarray(var) if isarray(var) else var
 
 
 class LineCollection(collections.LineCollection):
@@ -67,7 +67,7 @@ class LineCollection(collections.LineCollection):
         self.reflen = reflen
 
     def set_linewidths(self, linewidths):
-        self._linewidths_orig = _nparray_if_array(linewidths)
+        self._linewidths_orig = nparray_if_array(linewidths)
 
     def draw(self, renderer):
         linewidths = self._linewidths_orig
@@ -87,7 +87,7 @@ class PathCollection(collections.PathCollection):
         super(PathCollection, self).__init__(paths, sizes=sizes, **kwargs)
 
         self.reflen = reflen
-        self._linewidths_orig = _nparray_if_array(self.get_linewidths())
+        self._linewidths_orig = nparray_if_array(self.get_linewidths())
 
         self._transforms = [matplotlib.transforms.Affine2D().scale(x) for x in
                             sizes]
@@ -116,24 +116,24 @@ class PathCollection(collections.PathCollection):
 
 
 if has3d:
-    # 3D is optional
-    _sort3d = True
+    # Sorting is optional.
+    sort3d = True
 
     # Compute the projection of a 3D length into 2D data coordinates
-    # for this we use 2 3D half-circles that are projected into 2D
-    # (this gives the same length as projecting the full unit sphere)
+    # for this we use 2 3D half-circles that are projected into 2D.
+    # (This gives the same length as projecting the full unit sphere.)
 
-    _phi = np.linspace(0, pi, 21)
-    _xyz = np.c_[np.cos(_phi), np.sin(_phi), 0 * _phi].T.reshape(-1, 1, 21)
-    _unit_sphere = np.bmat([[_xyz[0], _xyz[2]], [_xyz[1], _xyz[0]],
-                            [_xyz[2], _xyz[1]]])
-    _unit_sphere = np.asarray(_unit_sphere)
+    phi = np.linspace(0, pi, 21)
+    xyz = np.c_[np.cos(phi), np.sin(phi), 0 * phi].T.reshape(-1, 1, 21)
+    unit_sphere = np.bmat([[xyz[0], xyz[2]], [xyz[1], xyz[0]],
+                            [xyz[2], xyz[1]]])
+    unit_sphere = np.asarray(unit_sphere)
 
     def projected_length(ax, length):
         rc = np.array([ax.get_xlim3d(), ax.get_ylim3d(), ax.get_zlim3d()])
         rc = np.apply_along_axis(np.sum, 1, rc) / 2.
 
-        rs = _unit_sphere * length + rc.reshape(-1, 1)
+        rs = unit_sphere * length + rc.reshape(-1, 1)
 
         transform = mplot3d.proj3d.proj_transform
         rp = np.asarray(transform(*(list(rs) + [ax.get_proj()]))[:2])
@@ -150,7 +150,6 @@ if has3d:
     corners[0, [0, 2, 4, 6], 4] = corners[0, [1, 3, 5, 7], 5] = 1.
 
 
-
     class Line3DCollection(mplot3d.art3d.Line3DCollection):
         def __init__(self, segments, reflen=None, zorder=0, **kwargs):
             super(Line3DCollection, self).__init__(segments, **kwargs)
@@ -158,7 +157,7 @@ if has3d:
             self._zorder3d = zorder
 
         def set_linewidths(self, linewidths):
-            self._linewidths_orig = _nparray_if_array(linewidths)
+            self._linewidths_orig = nparray_if_array(linewidths)
 
         def do_3d_projection(self, renderer):
             super(Line3DCollection, self).do_3d_projection(renderer)
@@ -203,11 +202,11 @@ if has3d:
             self._zorder3d = zorder
 
             self._paths_orig = np.array(paths, dtype='object')
-            self._linewidths_orig = _nparray_if_array(self.get_linewidths())
+            self._linewidths_orig = nparray_if_array(self.get_linewidths())
             self._linewidths_orig2 = self._linewidths_orig
-            self._array_orig = _nparray_if_array(self.get_array())
-            self._facecolors_orig = _nparray_if_array(self.get_facecolors())
-            self._edgecolors_orig = _nparray_if_array(self.get_edgecolors())
+            self._array_orig = nparray_if_array(self.get_array())
+            self._facecolors_orig = nparray_if_array(self.get_facecolors())
+            self._edgecolors_orig = nparray_if_array(self.get_edgecolors())
 
             Affine2D = matplotlib.transforms.Affine2D
             self._orig_transforms = np.array([Affine2D().scale(x) for x in
@@ -215,17 +214,17 @@ if has3d:
             self._transforms = self._orig_transforms
 
         def set_array(self, array):
-            self._array_orig = _nparray_if_array(array)
+            self._array_orig = nparray_if_array(array)
             super(Path3DCollection, self).set_array(array)
 
         def set_color(self, colors):
-            self._facecolors_orig = _nparray_if_array(colors)
+            self._facecolors_orig = nparray_if_array(colors)
             self._edgecolors_orig = self._facecolors_orig
             super(Path3DCollection, self).set_color(colors)
 
         def set_edgecolors(self, colors):
             colors = matplotlib.colors.colorConverter.to_rgba_array(colors)
-            self._edgecolors_orig = _nparray_if_array(colors)
+            self._edgecolors_orig = nparray_if_array(colors)
             super(Path3DCollection, self).set_edgecolors(colors)
 
         def get_transforms(self):
@@ -255,7 +254,7 @@ if has3d:
             proj = mplot3d.proj3d.proj_transform_clip
             vs = np.array(proj(xs, ys, zs, renderer.M)[:3])
 
-            if _sort3d:
+            if sort3d:
                 indx = vs[2].argsort()[::-1]
 
                 self.set_offsets(vs[:2, indx].T)
@@ -352,7 +351,7 @@ def set_colors(color, collection, cmap, norm=None):
     if isinstance(collection, mplot3d.art3d.Line3DCollection):
         length = len(collection._segments3d)  # Once again, matplotlib fault!
 
-    if _isarray(color) and len(color) == length:
+    if isarray(color) and len(color) == length:
         try:
             # check if it is an array of floats for color mapping
             color = np.asarray(color, dtype=float)
@@ -619,7 +618,7 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
     matplotlib in that the `dpi` attribute of the figure is used by defaul
     instead of the matplotlib config setting.
     """
-    if not _mpl_enabled:
+    if not mpl_enabled:
         raise RuntimeError('matplotlib is not installed.')
     if output_mode == 'auto':
         if file is not None:
@@ -935,14 +934,14 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
 
 # Useful plot functions (to be extended).
 
-_defaults = {'site_symbol': {2: 'o', 3: 'o'},
-             'site_size': {2: 0.25, 3: 0.5},
-             'site_color': {2: 'black', 3: 'white'},
-             'site_edgecolor': {2: 'black', 3: 'black'},
-             'site_lw': {2: 0, 3: 0.1},
-             'hop_color': {2: 'black', 3: 'black'},
-             'hop_lw': {2: 0.1, 3: 0},
-             'lead_color': {2: 'red', 3: 'red'}}
+defaults = {'site_symbol': {2: 'o', 3: 'o'},
+            'site_size': {2: 0.25, 3: 0.5},
+            'site_color': {2: 'black', 3: 'white'},
+            'site_edgecolor': {2: 'black', 3: 'black'},
+            'site_lw': {2: 0, 3: 0.1},
+            'hop_color': {2: 'black', 3: 'black'},
+            'hop_lw': {2: 0.1, 3: 0},
+            'lead_color': {2: 'red', 3: 'red'}}
 
 
 def plot(sys, num_lead_cells=2, unit='nn',
@@ -1151,7 +1150,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
     def make_proper_site_spec(spec, fancy_indexing=False):
         if callable(spec):
             spec = [spec(i[0]) for i in sites if i[1] is None]
-        if (fancy_indexing and _isarray(spec)
+        if (fancy_indexing and isarray(spec)
             and not isinstance(spec, np.ndarray)):
             try:
                 spec = np.asarray(spec)
@@ -1162,7 +1161,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
     def make_proper_hop_spec(spec, fancy_indexing=False):
         if callable(spec):
             spec = [spec(*i[0]) for i in hops if i[1] is None]
-        if (fancy_indexing and _isarray(spec)
+        if (fancy_indexing and isarray(spec)
             and not isinstance(spec, np.ndarray)):
             try:
                 spec = np.asarray(spec)
@@ -1171,10 +1170,10 @@ def plot(sys, num_lead_cells=2, unit='nn',
         return spec
 
     site_symbol = make_proper_site_spec(site_symbol)
-    if site_symbol is None: site_symbol = _defaults['site_symbol'][dim]
+    if site_symbol is None: site_symbol = defaults['site_symbol'][dim]
     # separate different symbols (not done in 3D, the separation
     # would mess up sorting)
-    if (_isarray(site_symbol) and dim != 3 and
+    if (isarray(site_symbol) and dim != 3 and
         (len(site_symbol) != 3 or site_symbol[0] not in ('p', 'P'))):
         symbol_dict = defaultdict(list)
         for i, symbol in enumerate(site_symbol):
@@ -1196,14 +1195,14 @@ def plot(sys, num_lead_cells=2, unit='nn',
     hop_lw = make_proper_hop_spec(hop_lw)
 
     # Choose defaults depending on dimension, if None was given
-    if site_size is None: site_size = _defaults['site_size'][dim]
-    if site_color is None: site_color = _defaults['site_color'][dim]
+    if site_size is None: site_size = defaults['site_size'][dim]
+    if site_color is None: site_color = defaults['site_color'][dim]
     if site_edgecolor is None:
-        site_edgecolor = _defaults['site_edgecolor'][dim]
-    if site_lw is None: site_lw = _defaults['site_lw'][dim]
+        site_edgecolor = defaults['site_edgecolor'][dim]
+    if site_lw is None: site_lw = defaults['site_lw'][dim]
 
-    if hop_color is None: hop_color = _defaults['hop_color'][dim]
-    if hop_lw is None: hop_lw = _defaults['hop_lw'][dim]
+    if hop_color is None: hop_color = defaults['hop_color'][dim]
+    if hop_lw is None: hop_lw = defaults['hop_lw'][dim]
 
     # if symbols are split up into different collections,
     # the colormapping will fail without normalization
@@ -1219,24 +1218,24 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
     # take spec also for lead, if it's not a list/array, default, otherwise
     if lead_site_symbol is None:
-        lead_site_symbol = (site_symbol if not _isarray(site_symbol)
-                            else _defaults['site_symbol'][dim])
+        lead_site_symbol = (site_symbol if not isarray(site_symbol)
+                            else defaults['site_symbol'][dim])
     if lead_site_size is None:
-        lead_site_size = (site_size if not _isarray(site_size)
-                          else _defaults['site_size'][dim])
+        lead_site_size = (site_size if not isarray(site_size)
+                          else defaults['site_size'][dim])
     if lead_color is None:
-        lead_color = _defaults['lead_color'][dim]
+        lead_color = defaults['lead_color'][dim]
     lead_color = matplotlib.colors.colorConverter.to_rgba(lead_color)
 
     if lead_site_edgecolor is None:
-        lead_site_edgecolor = (site_edgecolor if not _isarray(site_edgecolor)
-                               else _defaults['site_edgecolor'][dim])
+        lead_site_edgecolor = (site_edgecolor if not isarray(site_edgecolor)
+                               else defaults['site_edgecolor'][dim])
     if lead_site_lw is None:
-        lead_site_lw = (site_lw if not _isarray(site_lw)
-                        else _defaults['site_lw'][dim])
+        lead_site_lw = (site_lw if not isarray(site_lw)
+                        else defaults['site_lw'][dim])
     if lead_hop_lw is None:
-        lead_hop_lw = (hop_lw if not _isarray(hop_lw)
-                       else _defaults['hop_lw'][dim])
+        lead_hop_lw = (hop_lw if not isarray(hop_lw)
+                       else defaults['hop_lw'][dim])
 
     if isinstance(cmap, tuple):
         hop_cmap = cmap[1]
@@ -1266,11 +1265,11 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
     # plot system sites and hoppings
     for symbol, slc in symbol_slcs:
-        size = site_size[slc] if _isarray(site_size) else site_size
-        col = site_color[slc] if _isarray(site_color) else site_color
-        edgecol = (site_edgecolor[slc] if _isarray(site_edgecolor) else
+        size = site_size[slc] if isarray(site_size) else site_size
+        col = site_color[slc] if isarray(site_color) else site_color
+        edgecol = (site_edgecolor[slc] if isarray(site_edgecolor) else
                    site_edgecolor)
-        lw = site_lw[slc] if _isarray(site_lw) else site_lw
+        lw = site_lw[slc] if isarray(site_lw) else site_lw
 
         symbols(ax, sites_pos[slc], size=size,
                 reflen=reflen, symbol=symbol,
