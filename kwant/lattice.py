@@ -251,15 +251,15 @@ class Polyatomic(object):
         return wire_sites
 
     def neighbors(self, n=1, eps=1e-8):
-        """
-        Return n-th nearest neighbor hoppings.
+        """Return n-th nearest neighbor hoppings.
 
         Parameters
         ----------
         n : integer
             Order of the hoppings to return.
         eps : float
-            A cutoff for when to consider lengths to be approximately equal.
+            Tolerance relative to the length of the shortest lattice vector for
+            when to consider lengths to be approximately equal.
 
         Returns
         -------
@@ -276,6 +276,9 @@ class Polyatomic(object):
         # This algorithm is not designed to be fast and can be improved,
         # however there is no real need.
         sls = self.sublattices
+        shortest_hopping = sls[0].n_closest(sls[0](*([0] * sls[0].dim)).pos,
+                                            2)[-1]
+        eps *= np.linalg.norm(self.vec(shortest_hopping))
         nvec = len(self.prim_vecs)
         sublat_pairs = [(i, j) for (i, j) in product(sls, sls)
                         if sls.index(j) >= sls.index(i)]
@@ -288,6 +291,7 @@ class Polyatomic(object):
                 else:
                     continue
             return True
+
 
         # Find the correct number of neighbors to calculate on each lattice.
         cutoff = n + 2
