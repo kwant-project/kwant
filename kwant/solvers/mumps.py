@@ -9,7 +9,6 @@
 __all__ = ['solve', 'ldos', 'wave_function', 'options', 'Solver']
 
 import numpy as np
-import scipy.sparse as sp
 from . import common
 from ..linalg import mumps
 
@@ -88,9 +87,9 @@ class Solver(common.SparseSolver):
                 raise ValueError("Invalid ordering: " + ordering)
             if ordering == 'kwant_decides':
                 # Choose what is considered to be the best ordering.
-                sorted_orderings = [ordering
-                                    for ordering in ['metis', 'scotch', 'auto']
-                                    if ordering in mumps.possible_orderings()]
+                sorted_orderings = [order
+                                    for order in ['metis', 'scotch', 'auto']
+                                    if order in mumps.possible_orderings()]
                 ordering = sorted_orderings[0]
             self.ordering = ordering
 
@@ -102,39 +101,24 @@ class Solver(common.SparseSolver):
     def _factorized(self, a):
         inst = mumps.MUMPSContext()
         inst.factor(a, ordering=self.ordering)
-        return inst, a.shape
+        return inst
 
-    def _solve_linear_sys(self, factorized_a, b, kept_vars=None):
-        inst, a_shape = factorized_a
+    def _solve_linear_sys(self, factorized_a, b, kept_vars):
+        if b.shape[1] == 0:
+            return b[kept_vars]
 
-        if kept_vars is None:
-            kept_vars = slice(a_shape[1])
-
+        solve = factorized_a.solve
         sols = []
 
-        for mat in b:
-            if mat.shape[1] != 0:
-                # See comment about zero-shaped sparse matrices at the top
-                # of sparse.
-                mat = sp.csr_matrix(mat)
+        for j in xrange(0, b.shape[1], self.nrhs):
+            tmprhs = b[:, j:min(j + self.nrhs, b.shape[1])]
 
-            for j in xrange(0, mat.shape[1], self.nrhs):
-                jend = min(j + self.nrhs, mat.shape[1])
+            if not self.sparse_rhs:
+                tmprhs = tmprhs.todense()
+            sols.append(solve(tmprhs)[kept_vars, :])
 
-                if self.sparse_rhs:
-                    sols.append(inst.solve(mat[:, j:jend])[kept_vars, :])
-                else:
-                    sols.append(inst.solve(mat[:, j:jend].todense())
-                                [kept_vars, :])
+        return np.concatenate(sols, axis=1)
 
-        if len(sols):
-            return np.concatenate(sols, axis=1)
-        else:
-            if isinstance(kept_vars, slice):
-                num_vars = len(xrange(*kept_vars.indices(a_shape[1])))
-            else:
-                num_vars = len(kept_vars)
-            return np.zeros(shape=(num_vars, 0))
 
 default_solver = Solver()
 

@@ -12,4 +12,5 @@ Leads
    modes
    selfenergy
    selfenergy_from_modes
-   ModesTuple
+   PropagatingModes
+   StabilizedModes

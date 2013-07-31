@@ -14,7 +14,6 @@ __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 import abc
 import types
 from copy import copy
-import numpy as np
 from . import physics, _system
 
 
@@ -73,12 +72,13 @@ class FiniteSystem(System):
 
     For lead ``n``, the method leads[n].selfenergy must return a square matrix
     whose size is ``sum(len(self.hamiltonian(site, site)) for site in
-    self.lead_interfaces[n])``. The output format for ``leads[n].modes`` has to
-    be as described in `~kwant.physics.ModesTuple`.
+    self.lead_interfaces[n])``. The output of ``leads[n].modes`` has to be a
+    tuple of `~kwant.physics.PropatatingModes, ~kwant.physics.StabilizedModes`.
 
     Often, the elements of `leads` will be instances of `InfiniteSystem`.  If
     this is the case for lead ``n``, the sites ``lead_interfaces[n]`` match
     the first ``len(lead_interfaces[n])`` sites of the InfiniteSystem.
+
     """
     __metaclass__ = abc.ABCMeta
 
@@ -194,8 +194,8 @@ class InfiniteSystem(System):
     def modes(self, energy=0, args=()):
         """Return mode decomposition of the lead
 
-        See documentation of `~kwant.physics.ModesTuple` for the return
-        format details.
+        See documentation of `~kwant.physics.PropagatingModes` and
+        `~kwant.physics.StabilizedModes` for the return format details.
         """
         ham = self.cell_hamiltonian(args=args)
         shape = ham.shape
@@ -209,8 +209,8 @@ class InfiniteSystem(System):
         """Return self-energy of a lead.
 
         The returned matrix has the shape (s, s), where s is
-        ``sum(len(self.hamiltonian(i, i))
-              for i in range(self.graph.num_nodes - self.cell_size))``.
+        ``sum(len(self.hamiltonian(i, i)) for i in range(self.graph.num_nodes -
+        self.cell_size))``.
         """
         ham = self.cell_hamiltonian(args=args)
         shape = ham.shape
@@ -227,7 +227,7 @@ class PrecalculatedLead(object):
 
         Parameters
         ----------
-        modes : kwant.physics.ModesTuple
+        modes : (kwant.physics.PropagatingModes, kwant.physics.StabilizedModes)
             Modes of the lead.
         selfenergy : numpy array
             Lead self-energy.

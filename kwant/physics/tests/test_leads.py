@@ -220,11 +220,17 @@ def test_singular_h_and_t():
 
 def test_modes():
     h, t = .3, .7
-    vecs, vecslinv, nrprop, svd = leads.modes(np.array([[h]]), np.array([[t]]))
+    k = np.arccos(-h / (2 * t))
+    v = 2 * t * np.sin(k)
+    modes, (vecs, vecslinv, nrprop, svd) = leads.modes(np.array([[h]]),
+                                                       np.array([[t]]))
     assert nrprop == 1
     assert svd is None
-    np.testing.assert_almost_equal((vecs[0] *  vecslinv[0].conj()).imag,
-                                   [0.5, -0.5])
+    np.testing.assert_almost_equal(modes.velocities, [-v, v])
+    np.testing.assert_almost_equal(modes.momenta, [-k, k])
+    # Test for normalization by current.
+    np.testing.assert_almost_equal(2 * (vecs[0] *  vecslinv[0].conj()).imag,
+                                   [1, -1])
 
 
 def test_modes_bearded_ribbon():
@@ -236,7 +242,8 @@ def test_modes_bearded_ribbon():
     sys[lat.neighbors()] = -1
     sys = sys.finalized()
     h, t = sys.cell_hamiltonian(), sys.inter_cell_hopping()
-    assert leads.modes(h, t).nmodes == 8  # Calculated by plotting dispersion.
+    # The number of expected modes is calculated by plotting the dispersion.
+    assert leads.modes(h, t)[1].nmodes == 8
 
 
 def test_algorithm_equivalence():
@@ -249,14 +256,14 @@ def test_algorithm_equivalence():
     u, v = u * np.sqrt(s), vh.T.conj() * np.sqrt(s)
     prop_vecs = []
     evan_vecs = []
-    algos = [(True,)] + list(product(*([(False,)] + 2 * [(True, False)])))
+    algos = [None] + list(product(*(2 * [(True, False)])))
     for algo in algos:
-        result = leads.modes(h, t, algorithm=algo)
+        result = leads.modes(h, t, stabilization=algo)[1]
 
         vecs, vecslmbdainv = result.vecs, result.vecslmbdainv
 
         # Bring the calculated vectors to real space
-        if not algo[0]:
+        if algo is not None:
             vecs = np.dot(v, vecs)
             np.testing.assert_almost_equal(result.sqrt_hop, v)
         else:
@@ -266,7 +273,7 @@ def test_algorithm_equivalence():
         prop_vecs.append(full_vecs[:, : 2 * result.nmodes])
         evan_vecs.append(full_vecs[:, 2 * result.nmodes :])
 
-    msg = 'Algorithm {0} failed.'
+    msg = 'Stabilization {0} failed.'
     for vecs, algo in izip(prop_vecs, algos):
         # Propagating modes should have identical ordering, and only vary
         # By a phase
@@ -286,7 +293,7 @@ def test_for_all_evs_equal():
     onsite = np.array([[0., 1.], [1., 0.]], dtype=complex)
     hopping = np.array([[0.0], [-1.0]], dtype=complex)
 
-    modes = leads.modes(onsite, hopping)
+    modes = leads.modes(onsite, hopping)[1]
 
     assert modes.vecs.shape == (1, 2)
     assert modes.vecslmbdainv.shape == (1, 2)

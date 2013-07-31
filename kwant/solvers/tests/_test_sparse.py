@@ -26,6 +26,14 @@ class LeadWithOnlySelfEnergy(object):
         return self.lead.selfenergy(energy)
 
 
+def assert_modes_equal(modes1, modes2):
+    assert_almost_equal(modes1.velocities, modes2.velocities)
+    assert_almost_equal(modes1.momenta, modes2.momenta)
+    vecs1, vecs2 = modes1.wave_functions, modes2.wave_functions
+    assert_almost_equal(np.abs(np.sum(vecs1/vecs2, axis=0)),
+                        vecs1.shape[0])
+
+
 # Test output sanity: that an error is raised if no output is requested,
 # and that solving for a subblock of a scattering matrix is the same as taking
 # a subblock of the full scattering matrix.
@@ -49,11 +57,12 @@ def test_output(solve):
 
     result1 = solve(fsys)
     s, modes1 = result1.data, result1.lead_info
-    assert s.shape == 2 * (sum(i[2] for i in modes1),)
+    assert s.shape == 2 * (sum(len(i.momenta) for i in modes1) // 2,)
     s1 = result1.submatrix(1, 0)
     result2 = solve(fsys, 0, [1], [0])
     s2, modes2 = result2.data, result2.lead_info
-    assert s2.shape == (modes2[1][2], modes2[0][2])
+    assert s2.shape == (len(modes2[1].momenta) // 2,
+                        len(modes2[0].momenta) // 2)
     assert_almost_equal(s1, s2)
     assert_almost_equal(np.dot(s.T.conj(), s),
                         np.identity(s.shape[0]))
@@ -61,12 +70,12 @@ def test_output(solve):
     modes = solve(fsys).lead_info
     h = fsys.leads[0].cell_hamiltonian()
     t = fsys.leads[0].inter_cell_hopping()
-    modes1 = kwant.physics.modes(h, t)
+    modes1 = kwant.physics.modes(h, t)[0]
     h = fsys.leads[1].cell_hamiltonian()
     t = fsys.leads[1].inter_cell_hopping()
-    modes2 = kwant.physics.modes(h, t)
-    assert_almost_equal(modes1[0], modes[0][0])
-    assert_almost_equal(modes2[1], modes[1][1])
+    modes2 = kwant.physics.modes(h, t)[0]
+    assert_modes_equal(modes1, modes[0])
+    assert_modes_equal(modes2, modes[1])
 
 
 # Test that a system with one lead has unitary scattering matrix.
@@ -141,8 +150,8 @@ def test_two_equal_leads(solve):
         s, leads = sol.data, sol.lead_info
         assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                             np.identity(s.shape[0]))
-        n_modes = leads[0][2]
-        assert leads[1][2] == n_modes
+        n_modes = len(leads[0].momenta) // 2
+        assert len(leads[1].momenta) // 2 == n_modes
         assert_almost_equal(s[: n_modes, : n_modes], 0)
         t_elements = np.sort(abs(np.asarray(s[n_modes :, : n_modes])),
                              axis=None)
@@ -197,8 +206,8 @@ def test_graph_system(solve):
     s, leads = result.data, result.lead_info
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
-    n_modes = leads[0][2]
-    assert_equal(leads[1][2], n_modes)
+    n_modes = len(leads[0].momenta) // 2
+    assert_equal(len(leads[1].momenta) // 2, n_modes)
     assert_almost_equal(s[: n_modes, : n_modes], 0)
     t_elements = np.sort(abs(np.asarray(s[n_modes:, :n_modes])),
                          axis=None)
@@ -230,8 +239,8 @@ def test_singular_graph_system(solve):
     s, leads = result.data, result.lead_info
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
-    n_modes = leads[0][2]
-    assert leads[1][2] == n_modes
+    n_modes = len(leads[0].momenta) // 2
+    assert len(leads[1].momenta) // 2 == n_modes
     assert_almost_equal(s[: n_modes, : n_modes], 0)
     t_elements = np.sort(abs(np.asarray(s[n_modes :, : n_modes])),
                          axis=None)
@@ -350,7 +359,7 @@ def test_very_singular_leads(solve):
     sys.attach_lead(right_lead)
     fsys = sys.finalized()
     leads = solve(fsys).lead_info
-    assert [i[2] for i in leads] == [0, 2]
+    assert [len(i.momenta) for i in leads] == [0, 4]
 
 
 def test_ldos(ldos):

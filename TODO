@@ -6,9 +6,6 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Add calculation of current density
 
-* Consider making the b parameter of _solve_linear_sys a matrix instead of a
-  list of matrices
-
 * Re-design the interface of low level systems
   considering the following
   - We want support for multiple symmetry directions

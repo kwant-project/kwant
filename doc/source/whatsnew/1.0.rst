@@ -159,6 +159,19 @@ solver, using the method `~kwant.system.FiniteSystem.precalculate`. This may
 save time, when the linear system has to be solved many times with the same
 lead parameters.
 
+Change of the modes and lead_info format
+----------------------------------------
+The function `~kwant.physics.modes` now returns two objects:
+`~kwant.physics.PropagatingModes` and `~kwant.physics.StabilizedModes`.  The
+first one contains the wave functions of all the propagating modes in real
+space, as well as their velocities and momenta.  All these quantities were
+previously not directly available.  The second object contains the propagating
+and evanescent modes in the compressed format expected by the sparse solver
+(previously this was the sole output of `~kwant.physics.modes`).  Accordingly,
+the `lead_info` attribute of `~kwant.solvers.default.BlockResult` contains the
+real space information about the modes in the leads (a list of
+`~kwant.physics.PropagatingModes` objects).
+
 Inclusion of contributed modules
 --------------------------------
 kwant now contains a sub-package :mod:`kwant.contrib` that contains various
@@ -170,4 +183,3 @@ The plotting functionality has been extended. By default, symbols and lines in
 plots are now relative to the system coordinates, i.e. will scale accordingly
 if different zoom-levels are used. Different styles for representing sites and
 hoppings are now possible. 3D plotting has been made more efficient.
-
