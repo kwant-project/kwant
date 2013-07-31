@@ -179,15 +179,23 @@ class SparseSolver(object):
                 indices.append(np.arange(lhs.shape[0], lhs.shape[0] + nprop))
 
                 u_out, ulinv_out = u[:, nprop:], ulinv[:, nprop:]
-                u_in, ulinv_in = u[:, : nprop], ulinv[:, : nprop]
+                u_in, ulinv_in = u[:, :nprop], ulinv[:, :nprop]
 
                 # Construct a matrix of 1's that translates the
                 # inter-cell hopping to a proper hopping
                 # from the system to the lead.
                 iface_orbs = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                         for i in interface)]
-                coords = np.r_[[np.arange(iface_orbs.size)], [iface_orbs]]
-                transf = sp.csc_matrix((np.ones(iface_orbs.size), coords),
+
+                n_lead_orbs = svd_v.shape[0] if svd_v is not None else \
+                              u_out.shape[0]
+                if n_lead_orbs != len(iface_orbs):
+                    msg = 'Lead {0} has hopping with dimensions ' + \
+                          'incompatible with its interface dimension.'
+                    raise ValueError(msg.format(leadnum))
+
+                coords = np.r_[[np.arange(len(iface_orbs))], [iface_orbs]]
+                transf = sp.csc_matrix((np.ones(len(iface_orbs)), coords),
                                        shape=(iface_orbs.size, lhs.shape[0]))
 
                 if svd_v is not None:
@@ -220,7 +228,13 @@ class SparseSolver(object):
                 lead_info.append(sigma)
                 vars = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                       for i in interface)]
-                assert sigma.shape == 2 * vars.shape
+
+                if sigma.shape != 2 * vars.shape:
+                    msg = 'Self-energy dimension for lead {0} does not ' + \
+                          'match the total number of orbitals of the ' + \
+                          'sites for which it is defined.'
+                    raise ValueError(msg.format(leadnum))
+
                 y, x = np.meshgrid(vars, vars)
                 sig_sparse = splhsmat((sigma.flat, [x.flat, y.flat]),
                                       lhs.shape)
