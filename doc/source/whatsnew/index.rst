@@ -1,4 +1,4 @@
-What's New in kwant
+What's New in Kwant
 ===================
 
 .. toctree::

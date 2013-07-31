@@ -1,8 +1,8 @@
-# Copyright 2011-2013 kwant authors.
+# Copyright 2011-2013 Kwant authors.
 #
-# This file is part of kwant.  It is subject to the license terms in the
+# This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of kwant authors can be found in
+# http://kwant-project.org/license.  A list of Kwant authors can be found in
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
@@ -187,7 +187,7 @@ class Symmetry(object):
 
     Many physical systems possess a discrete spatial symmetry, which results in
     special properties of these systems.  This class is the standard way to
-    describe discrete spatial symmetries in kwant.  An instance of this class
+    describe discrete spatial symmetries in Kwant.  An instance of this class
     can be passed to a `Builder` instance at its creation.  The most important
     kind of symmetry is translational symmetry, used to define scattering
     leads.
@@ -514,7 +514,7 @@ def edges(seq):
 class Builder(object):
     """A tight binding system defined on a graph.
 
-    This is one of the central types in kwant.  It is used to construct tight
+    This is one of the central types in Kwant.  It is used to construct tight
     binding systems in a flexible way.
 
     The nodes of the graph are `Site` instances.  The edges, i.e. the hoppings,
@@ -525,7 +525,7 @@ class Builder(object):
     To make the graph accessible in a way that is natural within the Python
     language it is exposed as a *mapping* (much like a built-in Python
     dictionary).  Keys are sites or hoppings.  Values are 2d arrays
-    (e.g. NumPy or tinyarray) or numbers (interpreted as 1 by 1 matrices).
+    (e.g. NumPy or Tinyarray) or numbers (interpreted as 1 by 1 matrices).
 
     Parameters
     ----------
@@ -556,7 +556,7 @@ class Builder(object):
     Builder instances can be made to automatically respect a `Symmetry` that is
     passed to them during creation.  The behavior of builders with a symmetry
     is slightly more sophisticated.  First of all, it is implicitly assumed
-    throughout kwant that **every** function assigned as a value to a builder
+    throughout Kwant that **every** function assigned as a value to a builder
     with a symmetry possesses the same symmetry.  Secondly, all keys are mapped
     to the fundamental domain of the symmetry before storing them.  This may
     produce confusing results when neighbors of a site are queried.

@@ -1,7 +1,7 @@
 Reference guide
 ===============
 
-In the following, all kwant modules appear in the order of decreasing end-user
+In the following, all Kwant modules appear in the order of decreasing end-user
 relevance.
 
 .. toctree::

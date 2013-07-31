@@ -7,7 +7,7 @@
 #  - Using iterables and builder.HoppingKind for making systems
 #  - introducing `reversed()` for the leads
 #
-# Note: Does the same as tutorial1a.py, but using other features of kwant
+# Note: Does the same as tutorial1a.py, but using other features of Kwant.
 
 #HIDDEN_BEGIN_xkzy
 import kwant

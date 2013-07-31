@@ -1,21 +1,21 @@
-What's New in kwant 0.2
+What's New in Kwant 0.2
 =======================
 
-This article explains the user-visible changes in kwant 0.2.  kwant 0.2 was
+This article explains the user-visible changes in Kwant 0.2.  Kwant 0.2 was
 released on 29 November 2012.
 
 Improved performance
 --------------------
 This has been the main focus of this release.  Through optimization a level of
-performance has been reached that we consider satisfactory: runs of kwant for
+performance has been reached that we consider satisfactory: runs of Kwant for
 mid-sized (100x100 say) systems now typically spend most time in highly
 optimized libraries and not anymore in Python-implemented code.  For large,
 truly performance-critical systems almost all time is now spent in optimized
 libraries.
 
-An important optimization has been replacing NumPy for most uses within kwant
+An important optimization has been replacing NumPy for most uses within Kwant
 by tinyarray.  tinyarray provides a subset of NumPy's functionality in a way
-that is highly optimized for small arrays such as the tags of sites in kwant.
+that is highly optimized for small arrays such as the tags of sites in Kwant.
 
 New MUMPS-based solver
 ----------------------
@@ -80,7 +80,7 @@ allows the calculation of the local density of states.
 
 Calculation of wave functions in the scattering region
 ------------------------------------------------------
-(kwant 0.3 update: ``wave_func`` has been renamed to
+(Kwant 0.3 update: ``wave_func`` has been renamed to
 `~kwant.solvers.default.wave_function`.)
 
 The new function of sparse solvers ``wave_func`` allows the calculation of the

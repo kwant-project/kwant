@@ -1,8 +1,8 @@
-# Copyright 2011-2013 kwant authors.
+# Copyright 2011-2013 Kwant authors.
 #
-# This file is part of kwant.  It is subject to the license terms in the
+# This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of kwant authors can be found in
+# http://kwant-project.org/license.  A list of Kwant authors can be found in
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
@@ -60,7 +60,7 @@ class StabilizedModes(object):
     """Stabilized eigendecomposition of the translation operator.
 
     Due to the lack of Hermiticity of the translation operator, its
-    eigendecomposition is frequently poorly conditioned. Solvers in kwant use
+    eigendecomposition is frequently poorly conditioned. Solvers in Kwant use
     this stabilized decomposition of the propagating and evanescent modes in
     the leads. If the hopping between the unit cells of an infinite system is
     invertible, the translation eigenproblem is written in the basis `psi_n,
@@ -73,7 +73,7 @@ class StabilizedModes(object):
 
     `vecs` and `vecslmbdainv` are the first and the second halves of the wave
     functions.  The first `nmodes` are eigenmodes moving in the negative
-    direction (hence they are incoming into the system in kwant convention),
+    direction (hence they are incoming into the system in Kwant convention),
     the second `nmodes` are eigenmodes moving in the positive direction. The
     remaining modes are the Schur vectors of the modes evanescent in the
     positive direction. Propagating modes with the same eigenvalue are
@@ -119,14 +119,14 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         the machine precision.
     stabilization : list of 2 booleans or None
         Which steps of the eigenvalue problem stabilization to perform. If the
-        value is `None`, then kwant chooses the fastest (and least stable)
+        value is `None`, then Kwant chooses the fastest (and least stable)
         algorithm that is expected to be sufficient.  For any other value,
-        kwant forms the eigenvalue problem in the basis of the hopping singular
-        values.  The first element set to `True` forces kwant add an
+        Kwant forms the eigenvalue problem in the basis of the hopping singular
+        values.  The first element set to `True` forces Kwant to add an
         anti-Hermitian term to the cell Hamiltonian before inverting. If it is
         set to `False`, the extra term will only be added if the cell
         Hamiltonian isn't invertible. The second element set to `True` forces
-        kwant to solve a generalized eigenvalue problem, and not to reduce it
+        Kwant to solve a generalized eigenvalue problem, and not to reduce it
         to the regular one.  If it is `False`, reduction to a regular problem
         is performed if necessary.
 
@@ -519,14 +519,14 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
         than `tol` times the machine precision.
     stabilization : list of 2 booleans or None
         Which steps of the eigenvalue prolem stabilization to perform. If the
-        value is `None`, then kwant chooses the fastest (and least stable)
+        value is `None`, then Kwant chooses the fastest (and least stable)
         algorithm that is expected to be sufficient.  For any other value,
-        kwant forms the eigenvalue problem in the basis of the hopping singular
-        values.  The first element set to `True` forces kwant add an
+        Kwant forms the eigenvalue problem in the basis of the hopping singular
+        values.  The first element set to `True` forces Kwant to add an
         anti-Hermitian term to the cell Hamiltonian before inverting. If it is
         set to `False`, the extra term will only be added if the cell
         Hamiltonian isn't invertible. The second element set to `True` forces
-        kwant to solve a generalized eigenvalue problem, and not to reduce it
+        Kwant to solve a generalized eigenvalue problem, and not to reduce it
         to the regular one.  If it is `False`, reduction to a regular problem
         is performed if necessary.  Selecting the stabilization manually is
         mostly necessary for testing purposes.
@@ -555,7 +555,7 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
     propagating modes are normalized by current.
 
     This function uses the most stable and efficient algorithm for calculating
-    the mode decomposition that the kwant authors are aware about. Its details
+    the mode decomposition that the Kwant authors are aware about. Its details
     are to be published.
     """
     m = h_hop.shape[1]

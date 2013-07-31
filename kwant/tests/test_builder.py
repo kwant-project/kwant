@@ -1,8 +1,8 @@
-# Copyright 2011-2013 kwant authors.
+# Copyright 2011-2013 Kwant authors.
 #
-# This file is part of kwant.  It is subject to the license terms in the
+# This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of kwant authors can be found in
+# http://kwant-project.org/license.  A list of Kwant authors can be found in
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
@@ -417,7 +417,7 @@ def test_builder_with_symmetry():
     sys[(a for a, b in hoppings)] = V
     sys[hoppings] = t
 
-    # TODO: Once tinyarray supports "<" the conversion to tuple can be removed.
+    # TODO: Once Tinyarray supports "<" the conversion to tuple can be removed.
     assert_equal(sorted(tuple(site.tag) for site in sys.sites()),
                  sorted(set(tuple(a.tag) for a, b in hoppings_fd)))
     for sites in hoppings_fd:
@@ -425,7 +425,7 @@ def test_builder_with_symmetry():
             assert site in sys
             assert_equal(sys[site], V)
 
-    # TODO: Once tinyarray supports "<" the conversion to tuple can be removed.
+    # TODO: Once Tinyarray supports "<" the conversion to tuple can be removed.
     assert_equal(sorted((tuple(a.tag), tuple(b.tag))
                         for a, b in sys.hoppings()),
                  sorted((tuple(a.tag), tuple(b.tag)) for a, b in hoppings_fd))

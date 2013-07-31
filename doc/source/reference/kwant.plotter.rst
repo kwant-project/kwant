@@ -23,4 +23,3 @@ Data-generating functions
    sys_leads_pos
    sys_leads_hopping_pos
    mask_interpolate
-

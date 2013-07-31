@@ -1,4 +1,4 @@
-First steps in kwant: Setting up a simple system and computing transport
+First steps in Kwant: Setting up a simple system and computing transport
 ------------------------------------------------------------------------
 
 Transport through a quantum wire
@@ -14,13 +14,13 @@ model representing the two-dimensional Schroedinger equation
 
 with a hard wall confinement :math:`V(y)` in y-direction.
 
-In order to use kwant, we need to import it:
+In order to use Kwant, we need to import it:
 
 .. literalinclude:: quantum_wire.py
     :start-after: #HIDDEN_BEGIN_dwhx
     :end-before: #HIDDEN_END_dwhx
 
-Enabling kwant is as easy as this [#]_ !
+Enabling Kwant is as easy as this [#]_ !
 
 The first step is now the definition of the system with scattering region and
 leads. For this we make use of the `~kwant.builder.Builder` type that allows to
@@ -32,7 +32,7 @@ define a system in a convenient way. We need to create an instance of it:
 
 Observe that we just accessed `~kwant.builder.Builder` by the name
 ``kwant.Builder``.  We could have just as well written
-``kwant.builder.Builder`` instead.  kwant consists of a number of sub-packages
+``kwant.builder.Builder`` instead.  Kwant consists of a number of sub-packages
 that are all covered in the :doc:`reference documentation
 <../reference/index>`.  For convenience, some of the most widely-used members
 of the sub-packages are also accessible directly through the top-level `kwant`
@@ -248,7 +248,7 @@ subbands that increases with energy.
      ``matplotlib.pyplot`` has to be imported.  (An informative error message
      will remind you if you forget.)  The reason for this is pretty technical:
      matplotlib's "backend" can only be chosen before ``matplotlib.pyplot`` has
-     been imported.  Would kwant import that module by itself, it would deprive
+     been imported.  Would Kwant import that module by itself, it would deprive
      you of the possibility to choose a non-default backend later.
 
 
@@ -260,7 +260,7 @@ subbands that increases with energy.
 The same but different: Alternative system building
 ...................................................
 
-kwant is very flexible, and often allows you more than one way to
+Kwant is very flexible, and often allows you more than one way to
 build up your system. The reason is that `~kwant.builder.Builder`
 is essentially just a container, and allows for different
 ways to be filled. Here we present a more compact rewrite of
@@ -299,7 +299,7 @@ python).
 Having added all lattice points in one line, we now turn to the
 hoppings. In this case, an iterable like for the lattice
 points becomes a bit cumbersome, and we use instead another
-feature of kwant:
+feature of Kwant:
 
 .. literalinclude:: quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_nooi
@@ -314,7 +314,7 @@ certain kind that can be added to this builder without adding new sites. When
 `~kwant.builder.HoppingKind` is given to `~kwant.builder.Builder` as a key, it
 means that something is done to all the possible hoppings of this kind. A list
 of `~kwant.builder.HoppingKind` objects corresponding to nearest neighbors in
-lattices in kwant is obtained using ``lat.neighbors()``. ``sys[lat.neighbors()]
+lattices in Kwant is obtained using ``lat.neighbors()``. ``sys[lat.neighbors()]
 = -t`` then sets all of those hopping matrix elements at once. In order to set
 values for all the nth-nearest neighbors at once, one can similarly use
 ``sys[lat.neighbors(n)] = -t``. More detailed example of using

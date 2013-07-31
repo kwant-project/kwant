@@ -2,7 +2,7 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Document the order of sites/orbitals in finalized builders
 
-* Make kwant run on windows
+* Make Kwant run on windows
 
 * Add calculation of current density
 
@@ -24,7 +24,7 @@ Roughly in order of importance.                                     -*-org-*-
   way to do it is to sort the sites in finalized builders.)
   One could then also RLE compress sites in finalized builders.
 
-* Make kwant objects pickleable
+* Make Kwant objects pickleable
 
 * Implement "inhomogeneous arrays" for ldos and wavefunc
   The point is to have ldos or wavefunc return objects that behave like 2d
@@ -37,9 +37,9 @@ Roughly in order of importance.                                     -*-org-*-
   This would mean:
   - When referring to functions, we always append "()" to their name.
   - Names of objects (types, functions, ...) that are a documented part of
-    kwant are always hyperlinks _when_ the object itself is meant.
+    Kwant are always hyperlinks _when_ the object itself is meant.
   - Concepts that are meant in a more general sense are not hyperlinked, even if
-    there exists an object of the same name in kwant.  (Consider the usage of
+    there exists an object of the same name in Kwant.  (Consider the usage of
     linking for the term "Thread" in the document linked above.)
 
 * Plotter: show site upon click
@@ -63,7 +63,7 @@ Roughly in order of importance.                                     -*-org-*-
 
 * In finalized leads, only keep the sites of a single lead unit cell.
 
-* Add a test of kwant that verifies QHE conductance quantization
+* Add a test of Kwant that verifies QHE conductance quantization
 
 * Add support for optimization of lead fundamental domains.
 

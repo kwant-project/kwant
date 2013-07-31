@@ -1,12 +1,12 @@
-# Copyright 2011-2013 kwant authors.
+# Copyright 2011-2013 Kwant authors.
 #
-# This file is part of kwant.  It is subject to the license terms in the
+# This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of kwant authors can be found in
+# http://kwant-project.org/license.  A list of Kwant authors can be found in
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-"""Plotter module for kwant.
+"""Plotter module for Kwant.
 
 This module provides iterators useful for any plotter routine, such as a list
 of system sites, their coordinates, lead sites at any lead unit cell, etc.  If
@@ -742,7 +742,7 @@ def sys_leads_pos(sys, site_lead_nr):
     """
 
     # Note about efficiency (also applies to sys_leads_hoppings_pos)
-    # numpy is really slow when making a numpy array from a tinyarray
+    # NumPy is really slow when making a NumPy array from a tinyarray
     # (buffer interface seems very slow). It's much faster to first
     # convert to a tuple and then to convert to numpy array ...
 

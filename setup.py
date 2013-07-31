@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-# Copyright 2011-2013 kwant authors.
+# Copyright 2011-2013 Kwant authors.
 #
-# This file is part of kwant.  It is subject to the license terms in the
+# This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of kwant authors can be found in
+# http://kwant-project.org/license.  A list of Kwant authors can be found in
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
@@ -59,7 +59,7 @@ class kwant_build_ext(build_ext):
         except (DistutilsError, CCompilerError):
             print >>sys.stderr, \
 """{0}
-The compilation of kwant has failed.  Please examine the error message
+The compilation of Kwant has failed.  Please examine the error message
 above and consult the installation instructions in README.
 You might have to customize {1}.
 {0}
@@ -164,7 +164,7 @@ with a comment).  It may well be incomplete."""
 
 
 # This is an exact copy of the function from kwant/version.py.  We can't import
-# it here (because kwant is not yet built when this scipt is run), so we just
+# it here (because Kwant is not yet built when this scipt is run), so we just
 # include a copy.
 def get_version_from_git():
     try:
@@ -191,7 +191,7 @@ def get_version_from_git():
 
 
 def get_static_version():
-    """Return the version as recorded inside kwant."""
+    """Return the version as recorded inside the source code."""
     try:
         with open(STATIC_VERSION_FILE) as f:
             contents = f.read()
@@ -203,7 +203,7 @@ def get_static_version():
 
 
 def version():
-    """Determine the version of kwant.  Return it and save it in a file."""
+    """Determine the version of Kwant.  Return it and save it in a file."""
     git_version = get_version_from_git()
     static_version = get_static_version()
     if git_version is not None:
@@ -261,7 +261,7 @@ def extensions():
     global build_summary
     build_summary = []
 
-    #### Add components of kwant without external compile-time dependencies.
+    #### Add components of Kwant without external compile-time dependencies.
     result = [
         (['kwant._system', ['kwant/_system.pyx']],
          {'include_dirs': ['kwant/graph']}),
@@ -282,7 +282,7 @@ def extensions():
                       'kwant/graph/c_slicer/partitioner.h',
                       'kwant/graph/c_slicer/slicer.h']})]
 
-    #### Add components of kwant with external compile-time dependencies.
+    #### Add components of Kwant with external compile-time dependencies.
     config = ConfigParser.ConfigParser()
     try:
         with open(CONFIG_FILE) as f:
@@ -367,7 +367,7 @@ def ext_modules(extensions):
                     "error: Cython-generated file {0} is missing.".format(f)
                 if cythonize:
                     print >>sys.stderr, "Install Cython so it can be made" \
-                    " or use a source distribution of kwant."
+                    " or use a source distribution of Kwant."
                 else:
                     print >>sys.stderr, "Run setup.py without", \
                         NO_CYTHON_OPTION

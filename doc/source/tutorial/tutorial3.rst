@@ -12,7 +12,7 @@ contains information about the number of modes, the velocities, ...
 In this example, we aim to compute the bandstructure of a simple
 tight-binding wire.
 
-Computing band structures in kwant is easy. Just define a lead in the
+Computing band structures in Kwant is easy. Just define a lead in the
 usual way:
 
 .. literalinclude:: band_structure.py
@@ -57,7 +57,7 @@ Hamiltonian is approximating.
 Closed systems
 ..............
 
-Although kwant is (currently) mainly aimed towards transport problema, it
+Although Kwant is (currently) mainly aimed towards transport problema, it
 can also easily be used to compute properties of closed systems -- after
 all, a closed system is nothing more than a scattering region without leads!
 

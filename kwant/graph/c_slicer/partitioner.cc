@@ -1,8 +1,8 @@
-// Copyright 2011-2013 kwant authors.
+// Copyright 2011-2013 Kwant authors.
 //
-// This file is part of kwant.  It is subject to the license terms in the
+// This file is part of Kwant.  It is subject to the license terms in the
 // LICENSE file found in the top-level directory of this distribution and at
-// http://kwant-project.org/license.  A list of kwant authors can be found in
+// http://kwant-project.org/license.  A list of Kwant authors can be found in
 // the AUTHORS file at the top-level directory of this distribution and at
 // http://kwant-project.org/authors.
 
@@ -13,9 +13,9 @@
 //----------------------------------------------------
 
 void Partitioner::bisectFirst(std::vector<int> &_left, std::vector<int> &_right,
-			      double _tolerance,
-			      int _min_opt_passes,
-			      int _max_opt_passes)
+                              double _tolerance,
+                              int _min_opt_passes,
+                              int _max_opt_passes)
 {
 #if DEBUG_LEVEL>=3
   cout << "bisectFirst" << endl;
@@ -60,28 +60,28 @@ void Partitioner::bisectFirst(std::vector<int> &_left, std::vector<int> &_right,
 
       //Have we reached a new slice?
       if(rank > current_rank) {
-	slices++;
-	current_rank=rank;
+        slices++;
+        current_rank=rank;
       }
 
       //visit the edges
       int *edge=graph.getEdges(vertex).begin();
       while(edge != graph.getEdges(vertex).end()) {
-	//Is the node inside the central slice or already at the right
-	//border?
-	if(rightside[*edge]) {
-	  done=true;
-	  break;
-	}
+        //Is the node inside the central slice or already at the right
+        //border?
+        if(rightside[*edge]) {
+          done=true;
+          break;
+        }
 
-	if(!locked[sliceIndex[*edge]]) {
-	  vertex_stack.push_back(*edge);
-	  rank_stack.push_back(rank+1);
+        if(!locked[sliceIndex[*edge]]) {
+          vertex_stack.push_back(*edge);
+          rank_stack.push_back(rank+1);
 
-	  locked[sliceIndex[*edge]]=true;
-	}
+          locked[sliceIndex[*edge]]=true;
+        }
 
-	edge++;
+        edge++;
       }
     }
 
@@ -129,18 +129,18 @@ void Partitioner::bisectFirst(std::vector<int> &_left, std::vector<int> &_right,
 
   //now do the bisection
   bisect(0, slices,
-	 _left, _right,
-	 max_edges, _tolerance,
-	 _min_opt_passes, _max_opt_passes);
+         _left, _right,
+         max_edges, _tolerance,
+         _min_opt_passes, _max_opt_passes);
 }
 
 //-------------
 
 void Partitioner::bisect(int _part, int _part_slices,
-			 vector<int> &_left_border,
-			 vector<int> &_right_border,
-			 int _max_edges, double _tolerance,
-			 int _min_opt_passes, int _max_opt_passes)
+                         vector<int> &_left_border,
+                         vector<int> &_right_border,
+                         int _max_edges, double _tolerance,
+                         int _min_opt_passes, int _max_opt_passes)
 {
   std::vector<bool> permanently_locked(parts[_part].size(),false);
   std::vector<bool> locked(parts[_part].size(),false);
@@ -221,7 +221,7 @@ void Partitioner::bisect(int _part, int _part_slices,
 
       //stop if we have exceeded the desired rank
       if(rank>max_rank) {
-	break;
+        break;
       }
 
       right_stack.pop_front();
@@ -233,19 +233,19 @@ void Partitioner::bisect(int _part, int _part_slices,
       int *edge=graph.getEdges(vertex).begin();
       while(edge != graph.getEdges(vertex).end()) {
 
-	if(inSlice[*edge]==_part &&
-	   !locked[sliceIndex[*edge]]) {
+        if(inSlice[*edge]==_part &&
+           !locked[sliceIndex[*edge]]) {
 
-	  right_stack.push_back(*edge);
-	  right_rank.push_back(rank+1);
+          right_stack.push_back(*edge);
+          right_rank.push_back(rank+1);
 
-	  locked[sliceIndex[*edge]]=true;
-	  if(rank < right_slices) {
-	    permanently_locked[sliceIndex[*edge]]=true;
-	  }
-	}
+          locked[sliceIndex[*edge]]=true;
+          if(rank < right_slices) {
+            permanently_locked[sliceIndex[*edge]]=true;
+          }
+        }
 
-	edge++;
+        edge++;
       }
     }
 
@@ -260,7 +260,7 @@ void Partitioner::bisect(int _part, int _part_slices,
 
       //stop if we have exceeded the desired rank
       if(rank>max_rank) {
-	break;
+        break;
       }
 
       left_stack.pop_front();
@@ -272,20 +272,20 @@ void Partitioner::bisect(int _part, int _part_slices,
       int *edge=graph.getEdges(vertex).begin();
       while(edge != graph.getEdges(vertex).end()) {
 
-	if(inSlice[*edge]==_part &&
-	   !locked[sliceIndex[*edge]]) {
+        if(inSlice[*edge]==_part &&
+           !locked[sliceIndex[*edge]]) {
 
-	  left_stack.push_back(*edge);
-	  left_rank.push_back(rank+1);
+          left_stack.push_back(*edge);
+          left_rank.push_back(rank+1);
 
-	  locked[sliceIndex[*edge]]=true;
+          locked[sliceIndex[*edge]]=true;
 
-	  if(rank < left_slices) {
-	    permanently_locked[sliceIndex[*edge]]=true;
-	  }
-	}
+          if(rank < left_slices) {
+            permanently_locked[sliceIndex[*edge]]=true;
+          }
+        }
 
-	edge++;
+        edge++;
       }
     }
 
@@ -294,18 +294,18 @@ void Partitioner::bisect(int _part, int _part_slices,
   }
 
   distribute(left_stack, left_rank,
-	     left_index, left_size, real_left_size,
-	     right_stack, right_rank,
-	     right_index, right_size, real_right_size,
-	     _part, locked, max_rank);
+             left_index, left_size, real_left_size,
+             right_stack, right_rank,
+             right_index, right_size, real_right_size,
+             _part, locked, max_rank);
 
   //Now optimize the structure according to Fiduccia-Mattheyses
   for(int i=0; i<_max_opt_passes; i++) {
     locked=permanently_locked;
 
     int result=optimize(left_index, left_size, right_index, right_size,
-			locked, _max_edges,
-			static_cast<int>(_tolerance*parts[left_index].size()));
+                        locked, _max_edges,
+                        static_cast<int>(_tolerance*parts[left_index].size()));
 
     if(!result ||
        (i >= _min_opt_passes && result == 1) ) {
@@ -321,10 +321,10 @@ void Partitioner::bisect(int _part, int _part_slices,
       int vertex=parts[left_index][ivertex];
 
       if(inSlice[vertex]==left_index) {
-	left_part.push_back(vertex);
+        left_part.push_back(vertex);
       }
       else {
-	right_part.push_back(vertex);
+        right_part.push_back(vertex);
       }
     }
 
@@ -350,9 +350,9 @@ void Partitioner::bisect(int _part, int _part_slices,
     while(edge != graph.getEdges(vertex).end()) {
 
       if(inSlice[*edge]==right_index) {
-	internal_left_border.push_back(vertex);
+        internal_left_border.push_back(vertex);
 
-	break;
+        break;
       }
 
       edge++;
@@ -366,9 +366,9 @@ void Partitioner::bisect(int _part, int _part_slices,
     while(edge != graph.getEdges(vertex).end()) {
 
       if(inSlice[*edge]==left_index) {
-	internal_right_border.push_back(vertex);
+        internal_right_border.push_back(vertex);
 
-	break;
+        break;
       }
 
       edge++;
@@ -387,15 +387,15 @@ void Partitioner::bisect(int _part, int _part_slices,
   //Recursively refine the bisection
   if(left_slices>1) {
     bisect(left_index, left_slices,
-	   _left_border, internal_left_border,
-	   _max_edges, _tolerance,
-	   _min_opt_passes, _max_opt_passes);
+           _left_border, internal_left_border,
+           _max_edges, _tolerance,
+           _min_opt_passes, _max_opt_passes);
   }
   if(right_slices>1) {
     bisect(right_index, right_slices,
-	   internal_right_border, _right_border,
-	   _max_edges, _tolerance,
-	   _min_opt_passes, _max_opt_passes);
+           internal_right_border, _right_border,
+           _max_edges, _tolerance,
+           _min_opt_passes, _max_opt_passes);
   }
 }
 
@@ -405,11 +405,11 @@ void Partitioner::bisect(int _part, int _part_slices,
 
 void Partitioner::
 NaturalBalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_rank,
-			   int _left_index, int _left_size, int &_real_left_size,
-			   std::deque<int> &_right_stack, std::deque<int> &_right_rank,
-			   int _right_index, int _right_size, int &_real_right_size,
-			   int _part, std::vector<bool> &_locked,
-			   int _current_rank)
+                           int _left_index, int _left_size, int &_real_left_size,
+                           std::deque<int> &_right_stack, std::deque<int> &_right_rank,
+                           int _right_index, int _right_size, int &_real_right_size,
+                           int _part, std::vector<bool> &_locked,
+                           int _current_rank)
 {
   int max_rank=_current_rank;
 
@@ -422,7 +422,7 @@ NaturalBalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_
 
       //stop if we have exceeded the desired rank
       if(rank>max_rank) {
-	break;
+        break;
       }
 
       _right_stack.pop_front();
@@ -431,27 +431,27 @@ NaturalBalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_
       //Check if we have already exceeded the size of this
       //part of the bisection
       if(_real_right_size >= _right_size) {
-	inSlice[vertex]=_left_index;
-	_real_left_size++;
+        inSlice[vertex]=_left_index;
+        _real_left_size++;
       }
       else {
-	inSlice[vertex]=_right_index;
-	_real_right_size++;
+        inSlice[vertex]=_right_index;
+        _real_right_size++;
       }
 
       int *edge=graph.getEdges(vertex).begin();
       while(edge != graph.getEdges(vertex).end()) {
 
-	if(inSlice[*edge]==_part &&
-	   !_locked[sliceIndex[*edge]]) {
+        if(inSlice[*edge]==_part &&
+           !_locked[sliceIndex[*edge]]) {
 
-	  _right_stack.push_back(*edge);
-	  _right_rank.push_back(rank+1);
+          _right_stack.push_back(*edge);
+          _right_rank.push_back(rank+1);
 
-	  _locked[sliceIndex[*edge]]=true;
-	}
+          _locked[sliceIndex[*edge]]=true;
+        }
 
-	edge++;
+        edge++;
       }
     }
 
@@ -462,7 +462,7 @@ NaturalBalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_
 
       //stop if we have exceeded the desired rank
       if(rank>max_rank) {
-	break;
+        break;
       }
 
       _left_stack.pop_front();
@@ -471,28 +471,28 @@ NaturalBalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_
       //Check if we have already exceeded the size of this
       //part of the bisection
       if(_real_left_size >= _left_size) {
-	inSlice[vertex]=_right_index;
-	_real_right_size++;
+        inSlice[vertex]=_right_index;
+        _real_right_size++;
       }
       else {
-	inSlice[vertex]=_left_index;
-	_real_left_size++;
+        inSlice[vertex]=_left_index;
+        _real_left_size++;
       }
 
       int *edge=graph.getEdges(vertex).begin();
       while(edge != graph.getEdges(vertex).end()) {
 
-	if(inSlice[*edge]==_part &&
-	   !_locked[sliceIndex[*edge]]) {
+        if(inSlice[*edge]==_part &&
+           !_locked[sliceIndex[*edge]]) {
 
-	  _left_stack.push_back(*edge);
-	  _left_rank.push_back(rank+1);
+          _left_stack.push_back(*edge);
+          _left_rank.push_back(rank+1);
 
-	  _locked[sliceIndex[*edge]]=true;
+          _locked[sliceIndex[*edge]]=true;
 
-	}
+        }
 
-	edge++;
+        edge++;
       }
     }
 
@@ -504,11 +504,11 @@ NaturalBalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_
 
 void Partitioner::
 NaturalUnbalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_rank,
-			     int _left_index, int _left_size, int &_real_left_size,
-			     std::deque<int> &_right_stack, std::deque<int> &_right_rank,
-			     int _right_index, int _right_size, int &_real_right_size,
-			     int _part, std::vector<bool> &_locked,
-			     int _current_rank)
+                             int _left_index, int _left_size, int &_real_left_size,
+                             std::deque<int> &_right_stack, std::deque<int> &_right_rank,
+                             int _right_index, int _right_size, int &_real_right_size,
+                             int _part, std::vector<bool> &_locked,
+                             int _current_rank)
 {
   int max_rank=_current_rank;
 
@@ -521,7 +521,7 @@ NaturalUnbalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_lef
 
       //stop if we have exceeded the desired rank
       if(rank>max_rank) {
-	break;
+        break;
       }
 
       _right_stack.pop_front();
@@ -533,16 +533,16 @@ NaturalUnbalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_lef
       int *edge=graph.getEdges(vertex).begin();
       while(edge != graph.getEdges(vertex).end()) {
 
-	if(inSlice[*edge]==_part &&
-	   !_locked[sliceIndex[*edge]]) {
+        if(inSlice[*edge]==_part &&
+           !_locked[sliceIndex[*edge]]) {
 
-	  _right_stack.push_back(*edge);
-	  _right_rank.push_back(rank+1);
+          _right_stack.push_back(*edge);
+          _right_rank.push_back(rank+1);
 
-	  _locked[sliceIndex[*edge]]=true;
-	}
+          _locked[sliceIndex[*edge]]=true;
+        }
 
-	edge++;
+        edge++;
       }
     }
 
@@ -553,7 +553,7 @@ NaturalUnbalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_lef
 
       //stop if we have exceeded the desired rank
       if(rank>max_rank) {
-	break;
+        break;
       }
 
       _left_stack.pop_front();
@@ -565,17 +565,17 @@ NaturalUnbalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_lef
       int *edge=graph.getEdges(vertex).begin();
       while(edge != graph.getEdges(vertex).end()) {
 
-	if(inSlice[*edge]==_part &&
-	   !_locked[sliceIndex[*edge]]) {
+        if(inSlice[*edge]==_part &&
+           !_locked[sliceIndex[*edge]]) {
 
-	  _left_stack.push_back(*edge);
-	  _left_rank.push_back(rank+1);
+          _left_stack.push_back(*edge);
+          _left_rank.push_back(rank+1);
 
-	  _locked[sliceIndex[*edge]]=true;
+          _locked[sliceIndex[*edge]]=true;
 
-	}
+        }
 
-	edge++;
+        edge++;
       }
     }
 
@@ -587,11 +587,11 @@ NaturalUnbalanced_distribute(std::deque<int> &_left_stack, std::deque<int> &_lef
 
 void Partitioner::
 Random_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_rank,
-		  int _left_index, int _left_size, int &_real_left_size,
-		  std::deque<int> &_right_stack, std::deque<int> &_right_rank,
-		  int _right_index, int _right_size, int &_real_right_size,
-		  int _part, std::vector<bool> &_locked,
-		  int _current_rank)
+                  int _left_index, int _left_size, int &_real_left_size,
+                  std::deque<int> &_right_stack, std::deque<int> &_right_rank,
+                  int _right_index, int _right_size, int &_real_right_size,
+                  int _part, std::vector<bool> &_locked,
+                  int _current_rank)
 {
   int max_rank=_current_rank;
 
@@ -604,34 +604,34 @@ Random_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_rank,
 
       //stop if we have exceeded the desired rank
       if(rank>max_rank) {
-	break;
+        break;
       }
 
       _right_stack.pop_front();
       _right_rank.pop_front();
 
       if(rand()%2) {
-	inSlice[vertex]=_right_index;
-	_real_right_size++;
+        inSlice[vertex]=_right_index;
+        _real_right_size++;
       }
       else {
-	inSlice[vertex]=_left_index;
-	_real_left_size++;
+        inSlice[vertex]=_left_index;
+        _real_left_size++;
       }
 
       int *edge=graph.getEdges(vertex).begin();
       while(edge != graph.getEdges(vertex).end()) {
 
-	if(inSlice[*edge]==_part &&
-	   !_locked[sliceIndex[*edge]]) {
+        if(inSlice[*edge]==_part &&
+           !_locked[sliceIndex[*edge]]) {
 
-	  _right_stack.push_back(*edge);
-	  _right_rank.push_back(rank+1);
+          _right_stack.push_back(*edge);
+          _right_rank.push_back(rank+1);
 
-	  _locked[sliceIndex[*edge]]=true;
-	}
+          _locked[sliceIndex[*edge]]=true;
+        }
 
-	edge++;
+        edge++;
       }
     }
 
@@ -642,35 +642,35 @@ Random_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_rank,
 
       //stop if we have exceeded the desired rank
       if(rank>max_rank) {
-	break;
+        break;
       }
 
       _left_stack.pop_front();
       _left_rank.pop_front();
 
       if(rand()%2) {
-	inSlice[vertex]=_left_index;
-	_real_left_size++;
+        inSlice[vertex]=_left_index;
+        _real_left_size++;
       }
       else {
-	inSlice[vertex]=_right_index;
-	_real_right_size++;
+        inSlice[vertex]=_right_index;
+        _real_right_size++;
       }
 
       int *edge=graph.getEdges(vertex).begin();
       while(edge != graph.getEdges(vertex).end()) {
 
-	if(inSlice[*edge]==_part &&
-	   !_locked[sliceIndex[*edge]]) {
+        if(inSlice[*edge]==_part &&
+           !_locked[sliceIndex[*edge]]) {
 
-	  _left_stack.push_back(*edge);
-	  _left_rank.push_back(rank+1);
+          _left_stack.push_back(*edge);
+          _left_rank.push_back(rank+1);
 
-	  _locked[sliceIndex[*edge]]=true;
+          _locked[sliceIndex[*edge]]=true;
 
-	}
+        }
 
-	edge++;
+        edge++;
       }
     }
 
@@ -685,14 +685,14 @@ Random_distribute(std::deque<int> &_left_stack, std::deque<int> &_left_rank,
 
 int Partitioner::
 FM_MinCut_optimize(int _left_index, int _left_size,
-		   int _right_index, int _right_size,
-		   std::vector<bool> &_locked, int _pmax, int _tolerance)
+                   int _right_index, int _right_size,
+                   std::vector<bool> &_locked, int _pmax, int _tolerance)
 {
   std::vector<int> gain(_left_size+_right_size, 0);
 
   std::vector<list<int>::iterator> vertex_list(_left_size+_right_size);
   std::vector<bucket_list> bucket(2, bucket_list(-_pmax, _pmax,
-						 vertex_list, sliceIndex));
+                                                 vertex_list, sliceIndex));
 
   std::vector<int> change_buffer;
   int size[2];
@@ -740,14 +740,14 @@ FM_MinCut_optimize(int _left_index, int _left_size,
       int *edge=graph.getEdges(vertex).begin();
 
       while(edge != graph.getEdges(vertex).end()) {
-	if(inSlice[*edge]!=part_index) {
-	  gain[sliceIndex[vertex]]++;
-	}
-	else {
-	  gain[sliceIndex[vertex]]--;
-	}
+        if(inSlice[*edge]!=part_index) {
+          gain[sliceIndex[vertex]]++;
+        }
+        else {
+          gain[sliceIndex[vertex]]--;
+        }
 
-	edge++;
+        edge++;
       }
 
       //Finally add the vertex to the bucket list
@@ -786,10 +786,10 @@ FM_MinCut_optimize(int _left_index, int _left_size,
     // size[1] with tolerance, since size[0]+size[1]=const
     if(abs(size[0])>=tolerance) {
       if(size[0] > size[1]) {
-	cur_gain[1]=-_pmax-1;
+        cur_gain[1]=-_pmax-1;
       }
       else {
-	cur_gain[0]=-_pmax-1;
+        cur_gain[0]=-_pmax-1;
       }
     }
 
@@ -806,13 +806,13 @@ FM_MinCut_optimize(int _left_index, int _left_size,
     //take the left slice
     else {
       if(cur_gain[0] > -_pmax-1) {
-	from=(size[0] >= size[1]) ? 0 : 1;
-	to=(size[0] >= size[1]) ? 1 : 0;
+        from=(size[0] >= size[1]) ? 0 : 1;
+        to=(size[0] >= size[1]) ? 1 : 0;
       }
       else {
-	//no further moves are possible
+        //no further moves are possible
 
-	break;
+        break;
       }
     }
 
@@ -839,22 +839,22 @@ FM_MinCut_optimize(int _left_index, int _left_size,
     while(edge != graph.getEdges(vertex).end()) {
 
       if(inSlice[*edge]==part_index[from]) {
-	if(!_locked[sliceIndex[*edge]]) {
-	  int old_gain=gain[sliceIndex[*edge]];
+        if(!_locked[sliceIndex[*edge]]) {
+          int old_gain=gain[sliceIndex[*edge]];
 
-	  gain[sliceIndex[*edge]]+=2;
+          gain[sliceIndex[*edge]]+=2;
 
-	  bucket[from].rearrange_back(old_gain, old_gain+2, *edge);
-	}
+          bucket[from].rearrange_back(old_gain, old_gain+2, *edge);
+        }
       }
       else if(inSlice[*edge]==part_index[to]) {
-	if(!_locked[sliceIndex[*edge]]) {
-	  int old_gain=gain[sliceIndex[*edge]];
+        if(!_locked[sliceIndex[*edge]]) {
+          int old_gain=gain[sliceIndex[*edge]];
 
-	  gain[sliceIndex[*edge]]-=2;
+          gain[sliceIndex[*edge]]-=2;
 
-	  bucket[to].rearrange_back(old_gain, old_gain-2, *edge);
-	}
+          bucket[to].rearrange_back(old_gain, old_gain-2, *edge);
+        }
       }
       edge++;
     }
@@ -904,8 +904,8 @@ FM_MinCut_optimize(int _left_index, int _left_size,
 
 int Partitioner::
 FM_MinNetCut_optimize(int _left_index, int _left_size,
-		      int _right_index, int _right_size,
-		      std::vector<bool> &_locked, int _pmax, int _tolerance)
+                      int _right_index, int _right_size,
+                      std::vector<bool> &_locked, int _pmax, int _tolerance)
 {
 #if DEBUG_LEVEL>=3
   cout << "In FM MinNetCut" << endl;
@@ -918,7 +918,7 @@ FM_MinNetCut_optimize(int _left_index, int _left_size,
 
   std::vector<list<int>::iterator> vertex_list(_left_size+_right_size);
   std::vector<bucket_list> bucket(2, bucket_list(-_pmax, _pmax,
-						 vertex_list, sliceIndex));
+                                                 vertex_list, sliceIndex));
 
   std::vector<int> change_buffer;
   int size[2];
@@ -964,10 +964,10 @@ FM_MinNetCut_optimize(int _left_index, int _left_size,
     while(edge != graph.getEdges(vertex).end()) {
 
       if(inSlice[*edge] <= _left_index) {
-	net_distribution[0][sliceIndex[vertex]]++;
+        net_distribution[0][sliceIndex[vertex]]++;
       }
       else {
-	net_distribution[1][sliceIndex[vertex]]++;
+        net_distribution[1][sliceIndex[vertex]]++;
       }
 
       edge++;
@@ -1002,22 +1002,22 @@ FM_MinNetCut_optimize(int _left_index, int _left_size,
 
       while(edge != graph.getEdges(vertex).end()) {
 
-	//Update the gain with regard to cut edges
-	if(inSlice[*edge]!=part_index) {
-	  edge_gain[sliceIndex[vertex]]++;
-	}
-	else {
-	  edge_gain[sliceIndex[vertex]]--;	}
+        //Update the gain with regard to cut edges
+        if(inSlice[*edge]!=part_index) {
+          edge_gain[sliceIndex[vertex]]++;
+        }
+        else {
+          edge_gain[sliceIndex[vertex]]--;      }
 
-	//and with regard to cut nets
-	if(net_distribution[from][sliceIndex[*edge]] == 1) {
-	  net_gain[sliceIndex[vertex]]++;
-	}
-	else if(net_distribution[to][sliceIndex[*edge]] == 0) {
-	  net_gain[sliceIndex[vertex]]--;
-	}
+        //and with regard to cut nets
+        if(net_distribution[from][sliceIndex[*edge]] == 1) {
+          net_gain[sliceIndex[vertex]]++;
+        }
+        else if(net_distribution[to][sliceIndex[*edge]] == 0) {
+          net_gain[sliceIndex[vertex]]--;
+        }
 
-	edge++;
+        edge++;
       }
 
       //Finally add the vertex to the bucket list
@@ -1059,10 +1059,10 @@ FM_MinNetCut_optimize(int _left_index, int _left_size,
     // size[1] with tolerance, since size[0]+size[1]=const
     if(abs(size[0])>=tolerance) {
       if(size[0] > size[1]) {
-	cur_gain[1]=-_pmax-1;
+        cur_gain[1]=-_pmax-1;
       }
       else {
-	cur_gain[0]=-_pmax-1;
+        cur_gain[0]=-_pmax-1;
       }
     }
 
@@ -1079,13 +1079,13 @@ FM_MinNetCut_optimize(int _left_index, int _left_size,
     //take the left slice
     else {
       if(cur_gain[0] > -_pmax-1) {
-	from=(size[0] >= size[1]) ? 0 : 1;
-	to=(size[0] >= size[1]) ? 1 : 0;
+        from=(size[0] >= size[1]) ? 0 : 1;
+        to=(size[0] >= size[1]) ? 1 : 0;
       }
       else {
-	//no further moves are possible
+        //no further moves are possible
 
-	break;
+        break;
       }
     }
 
@@ -1112,112 +1112,112 @@ FM_MinNetCut_optimize(int _left_index, int _left_size,
       //----------------
 
       if(net_distribution[to][sliceIndex[*edge]] == 0) {
-	if(!_locked[sliceIndex[*edge]]) {
-	  int old_gain=net_gain[sliceIndex[*edge]]++;
+        if(!_locked[sliceIndex[*edge]]) {
+          int old_gain=net_gain[sliceIndex[*edge]]++;
 
-	  //Note: all the vertices are in the to part
-	  bucket[from].rearrange_randomly(old_gain, old_gain+1, *edge);
-	}
+          //Note: all the vertices are in the to part
+          bucket[from].rearrange_randomly(old_gain, old_gain+1, *edge);
+        }
 
-	int *edgedge=graph.getEdges(*edge).begin();
-	while(edgedge != graph.getEdges(*edge).end()) {
-	  if(inSlice[*edgedge]!=_left_index &&
-	     inSlice[*edgedge]!=_right_index) {
-	    edgedge++;
-	    continue;
-	  }
+        int *edgedge=graph.getEdges(*edge).begin();
+        while(edgedge != graph.getEdges(*edge).end()) {
+          if(inSlice[*edgedge]!=_left_index &&
+             inSlice[*edgedge]!=_right_index) {
+            edgedge++;
+            continue;
+          }
 
-	  if(!_locked[sliceIndex[*edgedge]]) {
-	    int old_gain=net_gain[sliceIndex[*edgedge]]++;
+          if(!_locked[sliceIndex[*edgedge]]) {
+            int old_gain=net_gain[sliceIndex[*edgedge]]++;
 
-	    //Note: all the vertices are in the from part
-	    bucket[from].rearrange_randomly(old_gain, old_gain+1, *edgedge);
-	  }
-	  edgedge++;
-	}
+            //Note: all the vertices are in the from part
+            bucket[from].rearrange_randomly(old_gain, old_gain+1, *edgedge);
+          }
+          edgedge++;
+        }
       }
       else if(net_distribution[to][sliceIndex[*edge]] == 1) {
-	if(inSlice[*edge]==part_index[to] && !_locked[sliceIndex[*edge]]) {
-	  int old_gain=net_gain[sliceIndex[*edge]]--;
+        if(inSlice[*edge]==part_index[to] && !_locked[sliceIndex[*edge]]) {
+          int old_gain=net_gain[sliceIndex[*edge]]--;
 
-	  //Note: all the vertices are in the to part
-	  bucket[to].rearrange_randomly(old_gain, old_gain-1, *edge);
+          //Note: all the vertices are in the to part
+          bucket[to].rearrange_randomly(old_gain, old_gain-1, *edge);
 
-	}
-	int *edgedge=graph.getEdges(*edge).begin();
-	while(edgedge != graph.getEdges(*edge).end()) {
-	  if(inSlice[*edgedge]!=_left_index &&
-	     inSlice[*edgedge]!=_right_index) {
-	    edgedge++;
-	    continue;
-	  }
+        }
+        int *edgedge=graph.getEdges(*edge).begin();
+        while(edgedge != graph.getEdges(*edge).end()) {
+          if(inSlice[*edgedge]!=_left_index &&
+             inSlice[*edgedge]!=_right_index) {
+            edgedge++;
+            continue;
+          }
 
-	  if(inSlice[*edgedge]==part_index[to] && !_locked[sliceIndex[*edgedge]]) {
-	    int old_gain=net_gain[sliceIndex[*edgedge]]--;
+          if(inSlice[*edgedge]==part_index[to] && !_locked[sliceIndex[*edgedge]]) {
+            int old_gain=net_gain[sliceIndex[*edgedge]]--;
 
-	    bucket[to].rearrange_randomly(old_gain, old_gain-1, *edgedge);
+            bucket[to].rearrange_randomly(old_gain, old_gain-1, *edgedge);
 
-	    break; //there is only one vertex in the to part
-	    //(well, it's two after the move, nut the moved vertex is locked)
-	  }
+            break; //there is only one vertex in the to part
+            //(well, it's two after the move, nut the moved vertex is locked)
+          }
 
-	  edgedge++;
-	}
+          edgedge++;
+        }
       }
 
       net_distribution[from][sliceIndex[*edge]]--;
       net_distribution[to][sliceIndex[*edge]]++;
 
       if(net_distribution[from][sliceIndex[*edge]] == 0) {
-	if(!_locked[sliceIndex[*edge]]) {
-	  int old_gain=net_gain[sliceIndex[*edge]]--;
+        if(!_locked[sliceIndex[*edge]]) {
+          int old_gain=net_gain[sliceIndex[*edge]]--;
 
-	  //Note: all the vertices are in the to part
-	  bucket[to].rearrange_randomly(old_gain, old_gain-1, *edge);
-	}
+          //Note: all the vertices are in the to part
+          bucket[to].rearrange_randomly(old_gain, old_gain-1, *edge);
+        }
 
-	int *edgedge=graph.getEdges(*edge).begin();
-	while(edgedge != graph.getEdges(*edge).end()) {
-	  if(inSlice[*edgedge]!=_left_index &&
-	     inSlice[*edgedge]!=_right_index) {
-	    edgedge++;
-	    continue;
-	  }
+        int *edgedge=graph.getEdges(*edge).begin();
+        while(edgedge != graph.getEdges(*edge).end()) {
+          if(inSlice[*edgedge]!=_left_index &&
+             inSlice[*edgedge]!=_right_index) {
+            edgedge++;
+            continue;
+          }
 
-	  if(!_locked[sliceIndex[*edgedge]]) {
-	    int old_gain=net_gain[sliceIndex[*edgedge]]--;
+          if(!_locked[sliceIndex[*edgedge]]) {
+            int old_gain=net_gain[sliceIndex[*edgedge]]--;
 
-	    bucket[to].rearrange_randomly(old_gain, old_gain-1, *edgedge);
-	  }
-	  edgedge++;
-	}
+            bucket[to].rearrange_randomly(old_gain, old_gain-1, *edgedge);
+          }
+          edgedge++;
+        }
 
       }
       else if(net_distribution[from][sliceIndex[*edge]] == 1) {
-	if(inSlice[*edge]==part_index[from] && !_locked[sliceIndex[*edge]]) {
-	  int old_gain=net_gain[sliceIndex[*edge]]++;
+        if(inSlice[*edge]==part_index[from] && !_locked[sliceIndex[*edge]]) {
+          int old_gain=net_gain[sliceIndex[*edge]]++;
 
-	  bucket[from].rearrange_randomly(old_gain, old_gain+1, *edge);
-	}
+          bucket[from].rearrange_randomly(old_gain, old_gain+1, *edge);
+        }
 
-	int *edgedge=graph.getEdges(*edge).begin();
-	while(edgedge != graph.getEdges(*edge).end()) {
-	  if(inSlice[*edgedge]!=_left_index &&
-	     inSlice[*edgedge]!=_right_index) {
-	    edgedge++;
-	    continue;
-	  }
+        int *edgedge=graph.getEdges(*edge).begin();
+        while(edgedge != graph.getEdges(*edge).end()) {
+          if(inSlice[*edgedge]!=_left_index &&
+             inSlice[*edgedge]!=_right_index) {
+            edgedge++;
+            continue;
+          }
 
-	  if(inSlice[*edgedge]==part_index[from] && !_locked[sliceIndex[*edgedge]]) {
-	    int old_gain=net_gain[sliceIndex[*edgedge]]++;
+          if(inSlice[*edgedge]==part_index[from] && !_locked[sliceIndex[*edgedge]]) {
+            int old_gain=net_gain[sliceIndex[*edgedge]]++;
 
-	    bucket[from].rearrange_randomly(old_gain, old_gain+1, *edgedge);
-	    break; //there is only one vertex in the from part
-	    //(the other one has been moved)
-	  }
+            bucket[from].rearrange_randomly(old_gain, old_gain+1, *edgedge);
+            break; //there is only one vertex in the from part
+            //(the other one has been moved)
+          }
 
-	  edgedge++;
-	}
+          edgedge++;
+        }
       }
 
       //-----------------
@@ -1225,14 +1225,14 @@ FM_MinNetCut_optimize(int _left_index, int _left_size,
       //-----------------
 
       if(inSlice[*edge]==part_index[from]) {
-	if(!_locked[sliceIndex[*edge]]) {
-	  edge_gain[sliceIndex[*edge]]+=2;
-	}
+        if(!_locked[sliceIndex[*edge]]) {
+          edge_gain[sliceIndex[*edge]]+=2;
+        }
       }
       else if(inSlice[*edge]==part_index[to]) {
-	if(!_locked[sliceIndex[*edge]]) {
-	  edge_gain[sliceIndex[*edge]]-=2;
-	}
+        if(!_locked[sliceIndex[*edge]]) {
+          edge_gain[sliceIndex[*edge]]-=2;
+        }
       }
 
       edge++;
@@ -1284,8 +1284,8 @@ FM_MinNetCut_optimize(int _left_index, int _left_size,
 
 int Partitioner::
 FM_MinNetCutMinCut_optimize(int _left_index, int _left_size,
-			    int _right_index, int _right_size,
-			    std::vector<bool> &_locked, int _pmax, int _tolerance)
+                            int _right_index, int _right_size,
+                            std::vector<bool> &_locked, int _pmax, int _tolerance)
 {
 #if DEBUG_LEVEL>=3
   cout << "In FM MinNetCut_MinCut" << endl;
@@ -1298,8 +1298,8 @@ FM_MinNetCutMinCut_optimize(int _left_index, int _left_size,
 
   std::vector<list<int>::iterator> vertex_list(_left_size+_right_size);
   std::vector<double_bucket_list> bucket(2, double_bucket_list(-_pmax, _pmax,
-							       -_pmax, _pmax,
-							       vertex_list, sliceIndex));
+                                                               -_pmax, _pmax,
+                                                               vertex_list, sliceIndex));
 
   std::vector<int> change_buffer;
   int size[2];
@@ -1345,10 +1345,10 @@ FM_MinNetCutMinCut_optimize(int _left_index, int _left_size,
     while(edge != graph.getEdges(vertex).end()) {
 
       if(inSlice[*edge] <= _left_index) {
-	net_distribution[0][sliceIndex[vertex]]++;
+        net_distribution[0][sliceIndex[vertex]]++;
       }
       else {
-	net_distribution[1][sliceIndex[vertex]]++;
+        net_distribution[1][sliceIndex[vertex]]++;
       }
 
       edge++;
@@ -1383,28 +1383,28 @@ FM_MinNetCutMinCut_optimize(int _left_index, int _left_size,
 
       while(edge != graph.getEdges(vertex).end()) {
 
-	//Update the gain with regard to cut edges
-	if(inSlice[*edge]!=part_index) {
-	  edge_gain[sliceIndex[vertex]]++;
-	}
-	else {
-	  edge_gain[sliceIndex[vertex]]--;
-	}
+        //Update the gain with regard to cut edges
+        if(inSlice[*edge]!=part_index) {
+          edge_gain[sliceIndex[vertex]]++;
+        }
+        else {
+          edge_gain[sliceIndex[vertex]]--;
+        }
 
-	//and with regard to cut nets
-	if(net_distribution[from][sliceIndex[*edge]] == 1) {
-	  net_gain[sliceIndex[vertex]]++;
-	}
-	else if(net_distribution[to][sliceIndex[*edge]] == 0) {
-	  net_gain[sliceIndex[vertex]]--;
-	}
+        //and with regard to cut nets
+        if(net_distribution[from][sliceIndex[*edge]] == 1) {
+          net_gain[sliceIndex[vertex]]++;
+        }
+        else if(net_distribution[to][sliceIndex[*edge]] == 0) {
+          net_gain[sliceIndex[vertex]]--;
+        }
 
-	edge++;
+        edge++;
       }
 
       //Finally add the vertex to the bucket list
       bucket[index].push_randomly(net_gain[sliceIndex[vertex]],
-				  edge_gain[sliceIndex[vertex]], vertex);
+                                  edge_gain[sliceIndex[vertex]], vertex);
     }
   }
 
@@ -1441,10 +1441,10 @@ FM_MinNetCutMinCut_optimize(int _left_index, int _left_size,
     // size[1] with tolerance, since size[0]+size[1]=const
     if(abs(size[0])>=tolerance) {
       if(size[0] > size[1]) {
-	cur_net_gain[1]=-_pmax-1;
+        cur_net_gain[1]=-_pmax-1;
       }
       else {
-	cur_net_gain[0]=-_pmax-1;
+        cur_net_gain[0]=-_pmax-1;
       }
     }
 
@@ -1461,13 +1461,13 @@ FM_MinNetCutMinCut_optimize(int _left_index, int _left_size,
     //take the left slice
     else {
       if(cur_net_gain[0] > -_pmax-1) {
-	from=(size[0] >= size[1]) ? 0 : 1;
-	to=(size[0] >= size[1]) ? 1 : 0;
+        from=(size[0] >= size[1]) ? 0 : 1;
+        to=(size[0] >= size[1]) ? 1 : 0;
       }
       else {
-	//no further moves are possible
+        //no further moves are possible
 
-	break;
+        break;
       }
     }
 
@@ -1496,22 +1496,22 @@ FM_MinNetCutMinCut_optimize(int _left_index, int _left_size,
       int old_edge_gain=edge_gain[sliceIndex[*edge]];
 
       if(inSlice[*edge]==part_index[from]) {
-	if(!_locked[sliceIndex[*edge]]) {
-	  edge_gain[sliceIndex[*edge]]+=2;
+        if(!_locked[sliceIndex[*edge]]) {
+          edge_gain[sliceIndex[*edge]]+=2;
 
-	  bucket[from].rearrange_randomly(net_gain[sliceIndex[*edge]], old_edge_gain,
-					  net_gain[sliceIndex[*edge]], old_edge_gain+2,
-					  *edge);
-	}
+          bucket[from].rearrange_randomly(net_gain[sliceIndex[*edge]], old_edge_gain,
+                                          net_gain[sliceIndex[*edge]], old_edge_gain+2,
+                                          *edge);
+        }
       }
       else if(inSlice[*edge]==part_index[to]) {
-	if(!_locked[sliceIndex[*edge]]) {
-	  edge_gain[sliceIndex[*edge]]-=2;
+        if(!_locked[sliceIndex[*edge]]) {
+          edge_gain[sliceIndex[*edge]]-=2;
 
-	  bucket[to].rearrange_randomly(net_gain[sliceIndex[*edge]], old_edge_gain,
-					net_gain[sliceIndex[*edge]], old_edge_gain-2,
-					*edge);
-	}
+          bucket[to].rearrange_randomly(net_gain[sliceIndex[*edge]], old_edge_gain,
+                                        net_gain[sliceIndex[*edge]], old_edge_gain-2,
+                                        *edge);
+        }
       }
 
       //----------------
@@ -1519,128 +1519,128 @@ FM_MinNetCutMinCut_optimize(int _left_index, int _left_size,
       //----------------
 
       if(net_distribution[to][sliceIndex[*edge]] == 0) {
-	if(!_locked[sliceIndex[*edge]]) {
+        if(!_locked[sliceIndex[*edge]]) {
 
-	  int old_gain=net_gain[sliceIndex[*edge]]++;
+          int old_gain=net_gain[sliceIndex[*edge]]++;
 
-	  //Note: all the vertices are in the from part
-	  bucket[from].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edge]],
-					  old_gain+1, edge_gain[sliceIndex[*edge]],
-					  *edge);
-	}
+          //Note: all the vertices are in the from part
+          bucket[from].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edge]],
+                                          old_gain+1, edge_gain[sliceIndex[*edge]],
+                                          *edge);
+        }
 
-	int *edgedge=graph.getEdges(*edge).begin();
-	while(edgedge != graph.getEdges(*edge).end()) {
-	  if(inSlice[*edgedge]!=_left_index &&
-	     inSlice[*edgedge]!=_right_index) {
-	    edgedge++;
-	    continue;
-	  }
+        int *edgedge=graph.getEdges(*edge).begin();
+        while(edgedge != graph.getEdges(*edge).end()) {
+          if(inSlice[*edgedge]!=_left_index &&
+             inSlice[*edgedge]!=_right_index) {
+            edgedge++;
+            continue;
+          }
 
-	  if(!_locked[sliceIndex[*edgedge]]) {
-	    int old_gain=net_gain[sliceIndex[*edgedge]]++;
+          if(!_locked[sliceIndex[*edgedge]]) {
+            int old_gain=net_gain[sliceIndex[*edgedge]]++;
 
-	    //Note: all the vertices are in the from part
-	    bucket[from].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edgedge]],
-					    old_gain+1, edge_gain[sliceIndex[*edgedge]],
-					    *edgedge);
-	  }
-	  edgedge++;
-	}
+            //Note: all the vertices are in the from part
+            bucket[from].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edgedge]],
+                                            old_gain+1, edge_gain[sliceIndex[*edgedge]],
+                                            *edgedge);
+          }
+          edgedge++;
+        }
       }
       else if(net_distribution[to][sliceIndex[*edge]] == 1) {
-	if(inSlice[*edge]==part_index[to] && !_locked[sliceIndex[*edge]]) {
-	  int old_gain=net_gain[sliceIndex[*edge]]--;
+        if(inSlice[*edge]==part_index[to] && !_locked[sliceIndex[*edge]]) {
+          int old_gain=net_gain[sliceIndex[*edge]]--;
 
-	  //Note: all the vertices are in the to part
-	  bucket[to].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edge]],
-					old_gain-1, edge_gain[sliceIndex[*edge]],
-					*edge);
+          //Note: all the vertices are in the to part
+          bucket[to].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edge]],
+                                        old_gain-1, edge_gain[sliceIndex[*edge]],
+                                        *edge);
 
-	}
-	int *edgedge=graph.getEdges(*edge).begin();
-	while(edgedge != graph.getEdges(*edge).end()) {
-	  if(inSlice[*edgedge]!=_left_index &&
-	     inSlice[*edgedge]!=_right_index) {
-	    edgedge++;
-	    continue;
-	  }
+        }
+        int *edgedge=graph.getEdges(*edge).begin();
+        while(edgedge != graph.getEdges(*edge).end()) {
+          if(inSlice[*edgedge]!=_left_index &&
+             inSlice[*edgedge]!=_right_index) {
+            edgedge++;
+            continue;
+          }
 
-	  if(inSlice[*edgedge]==part_index[to] && !_locked[sliceIndex[*edgedge]]) {
-	    int old_gain=net_gain[sliceIndex[*edgedge]]--;
+          if(inSlice[*edgedge]==part_index[to] && !_locked[sliceIndex[*edgedge]]) {
+            int old_gain=net_gain[sliceIndex[*edgedge]]--;
 
-	    bucket[to].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edgedge]],
-					  old_gain-1, edge_gain[sliceIndex[*edgedge]],
-					  *edgedge);
+            bucket[to].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edgedge]],
+                                          old_gain-1, edge_gain[sliceIndex[*edgedge]],
+                                          *edgedge);
 
-	    break; //there is only one vertex in the to part
-	    //(well, it's two after the move, nut the moved vertex is locked)
-	  }
+            break; //there is only one vertex in the to part
+            //(well, it's two after the move, nut the moved vertex is locked)
+          }
 
-	  edgedge++;
-	}
+          edgedge++;
+        }
       }
 
       net_distribution[from][sliceIndex[*edge]]--;
       net_distribution[to][sliceIndex[*edge]]++;
 
       if(net_distribution[from][sliceIndex[*edge]] == 0) {
-	if(!_locked[sliceIndex[*edge]]) {
-	  int old_gain=net_gain[sliceIndex[*edge]]--;
+        if(!_locked[sliceIndex[*edge]]) {
+          int old_gain=net_gain[sliceIndex[*edge]]--;
 
-	  //Note: all the vertices are in the to part
-	  bucket[to].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edge]],
-					old_gain-1, edge_gain[sliceIndex[*edge]],
-					*edge);
-	}
+          //Note: all the vertices are in the to part
+          bucket[to].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edge]],
+                                        old_gain-1, edge_gain[sliceIndex[*edge]],
+                                        *edge);
+        }
 
-	int *edgedge=graph.getEdges(*edge).begin();
-	while(edgedge != graph.getEdges(*edge).end()) {
-	  if(inSlice[*edgedge]!=_left_index &&
-	     inSlice[*edgedge]!=_right_index) {
-	    edgedge++;
-	    continue;
-	  }
-	  if(!_locked[sliceIndex[*edgedge]]) {
-	    int old_gain=net_gain[sliceIndex[*edgedge]]--;
+        int *edgedge=graph.getEdges(*edge).begin();
+        while(edgedge != graph.getEdges(*edge).end()) {
+          if(inSlice[*edgedge]!=_left_index &&
+             inSlice[*edgedge]!=_right_index) {
+            edgedge++;
+            continue;
+          }
+          if(!_locked[sliceIndex[*edgedge]]) {
+            int old_gain=net_gain[sliceIndex[*edgedge]]--;
 
-	    bucket[to].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edgedge]],
-					  old_gain-1, edge_gain[sliceIndex[*edgedge]],
-					  *edgedge);
-	  }
-	  edgedge++;
-	}
+            bucket[to].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edgedge]],
+                                          old_gain-1, edge_gain[sliceIndex[*edgedge]],
+                                          *edgedge);
+          }
+          edgedge++;
+        }
 
       }
       else if(net_distribution[from][sliceIndex[*edge]] == 1) {
-	if(inSlice[*edge]==part_index[from] && !_locked[sliceIndex[*edge]]) {
-	  int old_gain=net_gain[sliceIndex[*edge]]++;
+        if(inSlice[*edge]==part_index[from] && !_locked[sliceIndex[*edge]]) {
+          int old_gain=net_gain[sliceIndex[*edge]]++;
 
-	  bucket[from].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edge]],
-					  old_gain+1, edge_gain[sliceIndex[*edge]],
-					  *edge);
-	}
+          bucket[from].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edge]],
+                                          old_gain+1, edge_gain[sliceIndex[*edge]],
+                                          *edge);
+        }
 
-	int *edgedge=graph.getEdges(*edge).begin();
-	while(edgedge != graph.getEdges(*edge).end()) {
-	  if(inSlice[*edgedge]!=_left_index &&
-	     inSlice[*edgedge]!=_right_index) {
-	    edgedge++;
-	    continue;
-	  }
+        int *edgedge=graph.getEdges(*edge).begin();
+        while(edgedge != graph.getEdges(*edge).end()) {
+          if(inSlice[*edgedge]!=_left_index &&
+             inSlice[*edgedge]!=_right_index) {
+            edgedge++;
+            continue;
+          }
 
-	  if(inSlice[*edgedge]==part_index[from] && !_locked[sliceIndex[*edgedge]]) {
-	    int old_gain=net_gain[sliceIndex[*edgedge]]++;
+          if(inSlice[*edgedge]==part_index[from] && !_locked[sliceIndex[*edgedge]]) {
+            int old_gain=net_gain[sliceIndex[*edgedge]]++;
 
-	    bucket[from].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edgedge]],
-					    old_gain+1, edge_gain[sliceIndex[*edgedge]],
-					    *edgedge);
-	    break; //there is only one vertex in the from part
-	    //(the other one has been moved)
-	  }
+            bucket[from].rearrange_randomly(old_gain, edge_gain[sliceIndex[*edgedge]],
+                                            old_gain+1, edge_gain[sliceIndex[*edgedge]],
+                                            *edgedge);
+            break; //there is only one vertex in the from part
+            //(the other one has been moved)
+          }
 
-	  edgedge++;
-	}
+          edgedge++;
+        }
       }
 
       edge++;

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# kwant documentation build configuration file, created by
+# Kwant documentation build configuration file, created by
 # sphinx-quickstart on Tue Jan 11 09:39:28 2011.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -38,8 +38,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'kwant'
-copyright = u'2011-2012, kwant Developers'
+project = u'Kwant'
+copyright = u'2011-2012, Kwant Developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -184,7 +184,7 @@ latex_paper_size = 'a4'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'kwant.tex', u'kwant Documentation',
+  ('index', 'kwant.tex', u'Kwant Documentation',
    u'A. R. Akhmerov, C. W. Groth, X. Waintal, M. Wimmer',
    'manual'),
 ]

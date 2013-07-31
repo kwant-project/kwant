@@ -1,35 +1,35 @@
 =============================
-Building and installing kwant
+Building and installing Kwant
 =============================
 
 Prerequisites
 =============
 
-Building kwant requires
+Building Kwant requires
  * `Python <http://python.org>`_ 2.6 or 2.7 (Python 3 is not supported yet),
  * `SciPy <http://scipy.org>`_ 0.7.2 or newer,
  * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
    <http://xianyi.github.com/OpenBLAS/>`_ or the unfree `MKL
    <http://software.intel.com/en-us/intel-mkl>`_.)
- * tinyarray, a NumPy-like Python package optimized for very small arrays,
+ * Tinyarray, a NumPy-like Python package optimized for very small arrays,
  * An environment which allows to compile Python extensions written in C and
    C++.
 
 The following software is highly recommended though not strictly required:
- * `matplotlib <http://matplotlib.sourceforge.net/>`_, for kwant's plotting
+ * `matplotlib <http://matplotlib.sourceforge.net/>`_, for Kwant's plotting
    module and the tutorial,
  * `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
-   that will in many cases speed up kwant several times and reduce the memory
-   footprint.  (kwant uses only the sequential, single core version
-   of MUMPS.  The advantages due to MUMPS as used by kwant are thus independent
-   of the number of CPU cores of the machine on which kwant runs.)
+   that will in many cases speed up Kwant several times and reduce the memory
+   footprint.  (Kwant uses only the sequential, single core version
+   of MUMPS.  The advantages due to MUMPS as used by Kwant are thus independent
+   of the number of CPU cores of the machine on which Kwant runs.)
  * The `nose <http://nose.readthedocs.org/>`_ testing framework for running the
-   tests included with kwant.
+   tests included with Kwant.
 
-In addition, to build a copy of kwant that has been checked-out directly from
+In addition, to build a copy of Kwant that has been checked-out directly from
 version control (git), you will also need `Cython <http://cython.org/>`_ 0.17.1
-or newer.  You do not need Cython to build kwant that has been unpacked from a
+or newer.  You do not need Cython to build Kwant that has been unpacked from a
 source .tar.gz-file.
 
 
@@ -38,9 +38,9 @@ Generic instructions
 
 Please note the `system-specific instructions`_ below.
 
-kwant can be built and installed following the `usual Python conventions
+Kwant can be built and installed following the `usual Python conventions
 <http://docs.python.org/install/index.html>`_ by running the following commands
-in the root directory of the kwant distribution. ::
+in the root directory of the Kwant distribution. ::
 
     python setup.py build
     python setup.py install
@@ -53,7 +53,7 @@ After installation, tests can be run with::
     python -c 'import kwant; kwant.test()'
 
 The tutorial examples can be found in the directory ``tutorial`` inside the root
-directory of the kwant source distribution.
+directory of the Kwant source distribution.
 
 
 System-specific instructions
@@ -62,7 +62,7 @@ System-specific instructions
 Unix-like systems (Linux)
 -------------------------
 
-kwant should run on all recent Unix-like systems.  The following instructions
+Kwant should run on all recent Unix-like systems.  The following instructions
 have been verified to work on Debian 6 (Squeeze) or newer, and on Ubuntu 12.04
 (see :ref:`Note <ubuntu-problem>` below) or newer.  For other distributions step
 1 will likely have to be adapted.  If Ubuntu-style ``sudo`` is not available,
@@ -73,12 +73,12 @@ the respective command must be run as root.
 
        sudo apt-get install python-dev python-scipy python-matplotlib python-nose g++ gfortran libopenblas-dev liblapack-dev libmumps-scotch-dev
 
-2. Unpack tinyarray, enter its directory. To build and install, run ::
+2. Unpack Tinyarray, enter its directory. To build and install, run ::
 
        python setup.py build
        sudo python setup.py install
 
-3. Inside the kwant source distribution's root directory run ::
+3. Inside the Kwant source distribution's root directory run ::
 
        python setup.py build
        sudo python setup.py install
@@ -88,11 +88,11 @@ change this using the ``--prefix`` option, e.g.::
 
     sudo python setup.py install --prefix=/opt
 
-If you would like to install kwant into your home directory only you can use ::
+If you would like to install Kwant into your home directory only you can use ::
 
     python setup.py install --home=~
 
-This does not require root privileges.  If you install kwant in this way
+This does not require root privileges.  If you install Kwant in this way
 be sure to tell python where to find it.  This can be done by setting the
 ``PYTHONPATH`` environment variable::
 
@@ -108,7 +108,7 @@ Known problem on Ubuntu 12.04 32-bit (i486)
 ...........................................
 
 With Ubuntu 12.04 running on 32-bit Intel architecture processors the following
-error has been observed when running the tests included with kwant: "Arrays are
+error has been observed when running the tests included with Kwant: "Arrays are
 not almost equal to 7 decimals".  That problem seems to be due to a bug in the
 OpenBLAS package included with that version of Ubuntu.  It can be worked-around
 by installing a different BLAS.  Execute the following shell commands::
@@ -125,7 +125,7 @@ Mac OS X
 These instructions were verified in April 2013 under Mac OS X 10.8.2
 
 The instructions also include installing MUMPS for optimal performance
-of kwant. If you choose to omit MUMPS, you can skip over the optional
+of Kwant. If you choose to omit MUMPS, you can skip over the optional
 steps 3 and 5.
 
 1. Install the current version of `MacPorts
@@ -182,12 +182,12 @@ steps 3 and 5.
 
      Then, execute ``make all``.
 
-4. Unpack tinyarray, enter its directory, build and install::
+4. Unpack Tinyarray, enter its directory, build and install::
 
        python setup.py build
        sudo python setup.py install
 
-5. (OPTIONAL) To make kwant use MUMPS, go to the kwant directory, and
+5. (OPTIONAL) To make Kwant use MUMPS, go to the Kwant directory, and
    edit ``build.conf`` to read::
 
        [mumps]
@@ -198,7 +198,7 @@ steps 3 and 5.
    where ``<mumpsdir>`` and <metisdir>`` are the driectories of the previously
    installed MUMPS and METIS.
 
-6. Then, build and install kwant. ::
+6. Then, build and install Kwant. ::
 
        python setup.py build
        sudo python setup.py install
@@ -207,20 +207,20 @@ steps 3 and 5.
 Microsoft Windows
 -----------------
 
-This describes one way to build a 32 bit (win32) version of kwant without MUMPS
+This describes one way to build a 32 bit (win32) version of Kwant without MUMPS
 on Windows using free software only.  These instructions were verified in April
 2013 with the following software versions: Windows XP SP3, Python 2.7.4,
 scipy-stack 13.4.9, mingw-get-inst-20120426, OpenBLAS 0.2.6.
 
-32-bit kwant without MUMPS will be limited to rather small systems and will run
-significantly slower than a kwant with MUMPS.  Volunteers who would like to
+32-bit Kwant without MUMPS will be limited to rather small systems and will run
+significantly slower than a Kwant with MUMPS.  Volunteers who would like to
 improve these instructions are welcome.
 
 1. Install the official win32 Python 2.7 distribution from `the official Python
    download page <http://python.org/download/>`_.  See the point "Python 2.7.x
    Windows Installer" there.
 
-2. Install the Python packages required by kwant (NumPy, SciPy, matplotlib).  An
+2. Install the Python packages required by Kwant (NumPy, SciPy, matplotlib).  An
    easy way to do so is to install the `scipy-stack package
    <http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy-stack>`_ (win32-py2.7)
    kindly provided by Christoph Gohlke.  Please also note the instructions at
@@ -247,7 +247,7 @@ improve these instructions are welcome.
    occurrences of the string ``-mno-cygwin``.
 
    Now you have a complete environment for compiling Python extensions.  To be
-   able to build kwant, we need to install the required linear algebra
+   able to build Kwant, we need to install the required linear algebra
    libraries.
 
 6. Download `OpenBLAS <http://xianyi.github.com/OpenBLAS/>`_ (the download link
@@ -272,18 +272,18 @@ improve these instructions are welcome.
 
       cp libopenblas_nehalem-r0.2.6.lib /c/MinGW/lib/openblas.lib
 
-7. Unpack tinyarray, enter its directory. To build and install, run ::
+7. Unpack Tinyarray, enter its directory. To build and install, run ::
 
        c:\python27\python setup.py build
        c:\python27\python setup.py install
 
-8. Inside the kwant source distribution's root directory create a file
+8. Inside the Kwant source distribution's root directory create a file
    ``build.conf`` with the following contents.::
 
        [lapack]
        libraries = openblas gfortran
 
-   Finally, build and install kwant::
+   Finally, build and install Kwant::
 
        c:\python27\python setup.py build
        c:\python27\python setup.py install
@@ -292,13 +292,13 @@ improve these instructions are welcome.
 Build configuration
 ===================
 
-The setup script of kwant has to know how to link against LAPACK & BLAS, and,
+The setup script of Kwant has to know how to link against LAPACK & BLAS, and,
 optionally, MUMPS.  Be default it will assume that LAPACK and BLAS can be found
 under their usual names.  MUMPS will be not linked against by default, except
 on Debian-based systems when the package ``libmumps-scotch-dev`` is installed.
 
 All these settings can be configured by creating/editing the file
-``build.conf`` in the root directory of the kwant distribution.  This
+``build.conf`` in the root directory of the Kwant distribution.  This
 configuration file consists of sections, one for each dependency, led by a
 [dependency-name] header and followed by name = value entries.  Possible names
 are keyword arguments for ``distutils.core.Extension`` (For a complete list,
@@ -310,7 +310,7 @@ The two currently possible sections are [lapack] and [mumps].  The former
 configures the linking against LAPACK _AND_ BLAS, the latter against MUMPS
 (without LAPACK and BLAS).
 
-Example ``build.conf`` for linking kwant against a self-compiled MUMPS, `SCOTCH
+Example ``build.conf`` for linking Kwant against a self-compiled MUMPS, `SCOTCH
 <http://www.labri.fr/perso/pelegrin/scotch/>`_ and `METIS
 <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_::
 
@@ -318,7 +318,7 @@ Example ``build.conf`` for linking kwant against a self-compiled MUMPS, `SCOTCH
     libraries = zmumps mumps_common pord metis esmumps scotch scotcherr mpiseq
         gfortran
 
-Example ``build.conf`` for linking kwant with Intel MKL.::
+Example ``build.conf`` for linking Kwant with Intel MKL.::
 
     [lapack]
     libraries = mkl_intel_lp64 mkl_sequential mkl_core mkl_def
@@ -333,12 +333,12 @@ Python's configparser module
 Building the documentation
 ==========================
 
-To build the documentation, kwant has to be installed as described above.
+To build the documentation, Kwant has to be installed as described above.
 Additionally, the `sphinx documentation generator <http://sphinx.pocoo.org/>`_
 is required.
 
 HTML documentation can be built by entering the ``doc`` subdirectory of the
-kwant package and executing ``make html``.  PDF documentation is generated by
+Kwant package and executing ``make html``.  PDF documentation is generated by
 executing ``make latex`` followed by a ``make all-pdf`` in ``doc/build/latex``.
 
 Because of some quirks of how sphinx works, it might be necessary to execute
@@ -349,13 +349,13 @@ done, sphinx might mistakenly use PNG files for PDF output.
 Hacking
 =======
 
-To work on kwant itself it is useful to build it in-place.  This can be done
+To work on Kwant itself it is useful to build it in-place.  This can be done
 with the following command ::
 
     python setup.py build_ext -i
 
 The ``kwant`` subdirectory of the source distribution will be thus turned into
-a proper python package which can be imported.  To be able to import kwant from
+a proper python package which can be imported.  To be able to import Kwant from
 within python, one can either work in the root directory of the distribution
 (where the subdirectory ``kwant`` is located), or make a (symbolic) link from
 somewhere in the Python search path to the the package subdirectory.

@@ -1,8 +1,8 @@
 ================
-Authors of kwant
+Authors of Kwant
 ================
 
-The principal developers of kwant are
+The principal developers of Kwant are
 
 * Christoph W. Groth (SPSMS-INAC-CEA Grenoble)
 * Michael Wimmer (Leiden University)
@@ -15,12 +15,12 @@ The contributions of Christoph and Xavier are part of their work at `CEA
 <http://cea.fr>`_, the French Commissariat à l'énergie atomique et aux énergies
 alternatives.
 
-Other people that have contributed to kwant include
+Other people that have contributed to Kwant include
 
 * Daniel Jaschke
 * Joseph Weston
 
 -------------------------------------------------------------
 
-To find out who exactly wrote a certain part of kwant, please use the "blame"
+To find out who exactly wrote a certain part of Kwant, please use the "blame"
 feature of `git <http://git-scm.com/>`_, the version control system.

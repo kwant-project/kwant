@@ -33,8 +33,8 @@ realistic parameters).
 
 The tight-binding model corresponding to the Rashba-Hamiltonian naturally
 exhibits a 2x2-matrix structure of onsite energies and hoppings.  In order to
-use matrices in our program, we import the tinyarray package.  (`NumPy
-<http://numpy.scipy.org/>`_ would work as well, but tinyarray is much faster
+use matrices in our program, we import the Tinyarray package.  (`NumPy
+<http://numpy.scipy.org/>`_ would work as well, but Tinyarray is much faster
 for small arrays.)
 
 .. literalinclude:: spin_orbit.py
@@ -95,10 +95,10 @@ the following, clearly non-monotonic conductance steps:
 
 .. specialnote:: Technical details
 
-  - The tinyarray package, one of the dependencies of kwant, implements
-    efficient small arrays.  It is used internally in kwant for storing small
+  - The Tinyarray package, one of the dependencies of Kwant, implements
+    efficient small arrays.  It is used internally in Kwant for storing small
     vectors and matrices.  For performance, it is preferable to define small
-    arrays that are going to be used with kwant using tinyarray.  However,
+    arrays that are going to be used with Kwant using Tinyarray.  However,
     NumPy would work as well::
 
         import numpy
@@ -107,9 +107,9 @@ the following, clearly non-monotonic conductance steps:
         sigma_y = numpy.array([[0, -1j], [1j, 0]])
         sigma_z = numpy.array([[1, 0], [0, -1]])
 
-    tinyarray arrays behave for most purposes like NumPy arrays except that
+    Tinyarray arrays behave for most purposes like NumPy arrays except that
     they are immutable: they cannot be changed once created.  This is important
-    for kwant: it allows them to be used directly as dictionary keys.
+    for Kwant: it allows them to be used directly as dictionary keys.
 
   - It should be emphasized that the relative hopping used for
     `~kwant.builder.HoppingKind` is given in terms of
@@ -153,7 +153,7 @@ value of the potential as the second.  Note that in `potential` we can access
 variables of the surrounding function: `L` and `L_well` are taken from the
 namespace of `make_system`.
 
-kwant now allows us to pass a function as a value to
+Kwant now allows us to pass a function as a value to
 `~kwant.builder.Builder`:
 
 .. literalinclude:: quantum_well.py
@@ -291,7 +291,7 @@ shapes. However, the choice of unit cell together with the
 translational vector allows to place the lead unambiguously in real space --
 the unit cell is repeated infinitely many times in the direction and
 opposite to the direction of the translational vector.
-kwant examines the lead starting from infinity and traces it
+Kwant examines the lead starting from infinity and traces it
 back (going opposite to the direction of the translational vector)
 until it intersects the scattering region. At this intersection,
 the lead is attached:
@@ -316,7 +316,7 @@ period of one flux quantum.
 
 .. specialnote:: Technical details
 
-  - Leads have to have proper periodicity. Furthermore, the kwant
+  - Leads have to have proper periodicity. Furthermore, the Kwant
     format requires the hopping from the leads to the scattering
     region to be identical to the hoppings between unit cells in
     the lead. `~kwant.builder.Builder.attach_lead` takes care of

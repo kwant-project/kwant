@@ -3,7 +3,7 @@
 
 .. module:: kwant
 
-The top-level kwant package serves as a container for sub-packages and does not
+The top-level Kwant package serves as a container for sub-packages and does not
 have any functions of its own.  For convenience, short names are provided for a
 few widely used objects from the sub-packages:
 

@@ -1,7 +1,7 @@
-What's New in kwant 1.0
+What's New in Kwant 1.0
 =======================
 
-This article explains the user-visible changes in kwant 1.0.
+This article explains the user-visible changes in Kwant 1.0.
 
 
 Lattice and shape improvements
@@ -71,7 +71,7 @@ In previous versions if one executed `a = kwant.lattice.square();
 b = kwant.lattice.square()` then `a` and `b` were
 actually different lattices. This often led to confusions in more convoluted
 use cases, so this behavior was changed. Now two site families created with the
-same parameters are actually indistinguishable by `kwant`. If it is desired to
+same parameters are actually indistinguishable by Kwant. If it is desired to
 make two site families which have the same geometry, but mean different things,
 as for instance in :doc:`../tutorial/tutorial5`, then the `name` argument has
 to be used when creating a lattice, e.g. `a = kwant.lattice.square(name='a');
@@ -79,7 +79,7 @@ b = kwant.lattice.square(name='b')`.
 
 Parameters to Hamiltonian
 -------------------------
-kwant now allows the Hamiltonian matrix elements to be described with functions
+Kwant now allows the Hamiltonian matrix elements to be described with functions
 that depend on an arbitrary number of parameters in addition to the sites on
 which they are defined.
 
@@ -174,8 +174,8 @@ real space information about the modes in the leads (a list of
 
 Inclusion of contributed modules
 --------------------------------
-kwant now contains a sub-package :mod:`kwant.contrib` that contains various
-modules that are useful with kwant but are not considered to be part of it.
+Kwant now contains a sub-package :mod:`kwant.contrib` that contains various
+modules that are useful with Kwant but are not considered to be part of it.
 
 Improved plotting functionality
 -------------------------------

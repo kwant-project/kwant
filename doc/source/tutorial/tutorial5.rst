@@ -15,7 +15,7 @@ the superconducting order parameter, and :math:`\mathcal{T}`
 the time-reversal operator. The BdG Hamiltonian introduces
 electron and hole degrees of freedom (an artificial doubling -
 be aware of the fact that electron and hole excitations
-are related!), which we now implement in kwant.
+are related!), which we now implement in Kwant.
 
 For this we restrict ourselves to a simple spin-less system without
 magnetic field, so that :math:`\Delta` is just a number (which we
@@ -67,7 +67,7 @@ where :math:`N` is the number of channels in the normal lead, and
 :math:`R_\text{ee}` the total probability of reflection from electrons
 to electrons in the normal lead, and :math:`R_\text{eh}` the total
 probability of reflection from electrons to holes in the normal
-lead. However, the current version of kwant does not allow for an easy
+lead. However, the current version of Kwant does not allow for an easy
 and elegant partitioning of the scattering matrix in these two degrees
 of freedom [#]_.
 
