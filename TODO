@@ -12,7 +12,8 @@ Roughly in order of importance.                                     -*-org-*-
 * Re-design the interface of low level systems
   considering the following
   - We want support for multiple symmetry directions
-  - Consider making System.hamiltonian a vectorized function
+  - Consider making System.hamiltonian a vectorized function.  Value functions
+    should be vectorizable as well (when marked with a decorator?)
   - Consider using two-way-compressed uni-directional graphs in systems
     advantages:
     - The number of edges gets reduced by 1/2.
