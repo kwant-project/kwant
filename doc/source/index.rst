@@ -7,9 +7,9 @@ kwant documentation
 
 Researchers, please note that even though :doc:`kwant is Free Software
 <license>`, scientific integrity requires to give appropriate credit.  If you
-write a scientific paper whose results have been obtained thanks to kwant,
-please :doc:`acknowledge <acknowledgements>` the work of the :doc:`people that
-have made it possible <authors>`.
+write a scientific paper whose results have been obtained with the help of
+kwant, please :doc:`acknowledge <acknowledgements>` the work of the :doc:`people
+that have developed it <authors>`.
 
 .. toctree::
    :maxdepth: 1

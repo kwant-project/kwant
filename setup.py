@@ -9,6 +9,7 @@
 # http://kwant-project.org/authors.
 
 CONFIG_FILE = 'build.conf'
+README_FILE = 'README'
 STATIC_VERSION_FILE = 'kwant/_static_version.py'
 REQUIRED_CYTHON_VERSION = (0, 17, 1)
 MUMPS_DEBIAN_PACKAGE = 'libmumps-scotch-dev'
@@ -217,6 +218,19 @@ def version():
     return version
 
 
+def long_description():
+    text = []
+    try:
+        with open(README_FILE) as f:
+            for line in f:
+                if line == "\n":
+                    break
+                text.append(line.rstrip())
+    except:
+        return ''
+    return '\n'.join(text)
+
+
 def packages():
     return [root.replace('/', '.')
             for root, dnames, fnames in os.walk('kwant')
@@ -387,8 +401,9 @@ def main():
           version=version(),
           author='kwant authors',
           author_email='christoph.groth@cea.fr',
-          description="A package for numerical "
-          "quantum transport calculations.",
+          description="A package for numerical quantum transport calculations.",
+          long_description=long_description(),
+          platforms=["Unix", "Linux", "Mac OS-X", "Windows"],
           url="http://kwant-project.org/",
           license="BSD",
           packages=packages(),
