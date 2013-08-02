@@ -101,3 +101,7 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Speed up kwant.contrib.digest
   by using SipHash and Ziggurat algorithm in C/Cython
+
+* Improve finding of modes with zero velocity or infinite decay length
+  Right now a mode with truly zero velocity may be incorrectly identified as
+  propagating or evanescent.
