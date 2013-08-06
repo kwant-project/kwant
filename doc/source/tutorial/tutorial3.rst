@@ -66,8 +66,8 @@ circular quantum dot and its spectrum as a function
 of magnetic field (Fock-Darwin spectrum).
 
 To compute the eigenenergies and eigenstates, we will make use of the sparse
-linear algebra functionality of `scipy <www.scipy.org>`_, which interfaces
-the ARPACK package:
+linear algebra functionality of `scipy <http://www.scipy.org>`_, which
+interfaces the ARPACK package:
 
 .. literalinclude:: closed_system.py
     :start-after: #HIDDEN_BEGIN_tibv
