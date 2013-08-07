@@ -154,7 +154,9 @@ class SparseSolver(object):
 
         if check_hermiticity:
             if np.any(abs((lhs - lhs.T.conj()).data) > 1e-13):
-                raise ValueError('System Hamiltonian is not Hermitian.')
+                raise ValueError('System Hamiltonian is not Hermitian. '
+                                 'Use option `check_hermiticity=False` '
+                                 'if this is intentional.')
 
         offsets = np.empty(norb.shape[0] + 1, int)
         offsets[0] = 0
