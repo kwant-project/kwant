@@ -26,7 +26,13 @@ def test_importable_without_matplotlib():
         code = f.read()
     code = code.replace('from . import', 'from kwant import')
     code = code.replace('matplotlib', 'totalblimp')
-    exec code
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        exec code               # Trigger the warning.
+        nose.tools.assert_equal(len(w), 1)
+        assert issubclass(w[0].category, RuntimeWarning)
+        assert "only iterator-providing functions" in str(w[0].message)
 
 
 def sys_2d(W=3, r1=3, r2=8):
