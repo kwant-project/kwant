@@ -60,6 +60,7 @@ def isarray(var):
 def nparray_if_array(var):
     return np.asarray(var) if isarray(var) else var
 
+
 if mpl_enabled:
     class LineCollection(collections.LineCollection):
         def __init__(self, segments, reflen=None, **kwargs):
@@ -981,7 +982,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         The default value is 'nn', which allows to ensure that the images
         neighboring sites do not overlap.
 
-    site_symbol : symbol specification, function, array or `None`
+    site_symbol : symbol specification, function, array, or `None`
         Symbol used for representing a site in the plot. Can be specified as
 
         - 'o': circle with radius of 1 unit.
@@ -1001,17 +1002,17 @@ def plot(sys, num_lead_cells=2, unit='nn',
         for different sites by passing a function that returns a valid
         symbol specification for each site, or by passing an array of
         symbols specifications (only for kwant.system.FiniteSystem).
-    site_size : number, function, array or `None`
+    site_size : number, function, array, or `None`
         Relative (linear) size of the site symbol.
-    site_color : `matplotlib` color description, function, array or `None`
+    site_color : `matplotlib` color description, function, array, or `None`
         A color used for plotting a site in the system. If a colormap is used,
         it should be a function returning single floats or a one-dimensional
         array of floats.
-    site_edgecolor : `matplotlib` color description, function, array or `None`
+    site_edgecolor : `matplotlib` color description, function, array, or `None`
         Color used for plotting the edges of the site symbols. Only
         valid matplotlib color descriptions are allowed (and no
         combination of floats and colormap as for site_color).
-    site_lw : number, function, array or `None`
+    site_lw : number, function, array, or `None`
         Linewidth of the site symbol edges.
     hop_color : `matplotlib` color description or a function
         Same as `site_color`, but for hoppings.  A function is passed two sites
@@ -1077,6 +1078,9 @@ def plot(sys, num_lead_cells=2, unit='nn',
       kwant.builder.Site object.  For low level systems, a site is an integer
       -- the site number.
 
+    - color and symbol definitions may be tuples, but not lists or arrays.
+      Arrays of values (linewidths, colors, sizes) may not be tuples.
+
     - The dimensionality of the plot (2D vs 3D) is inferred from the coordinate
       array.  If there are more than three coordinates, only the first three
       are used.  If there is just one coordinate, the second one is padded with
@@ -1104,6 +1108,26 @@ def plot(sys, num_lead_cells=2, unit='nn',
             return ar
         else:
             return array
+
+    loc = locals()
+
+    def check_length(name):
+        value = loc[name]
+        if name in ('site_size', 'site_lw') and isinstance(value, tuple):
+            raise TypeError('{0} may not be a tuple, use list or '
+                            'array instead.'.format(name))
+        if isinstance(value, (basestring, tuple)):
+            return
+        try:
+            if len(value) != n_sys_sites:
+                raise ValueError('Length of {0} is not equal to number of '
+                                 'system sites.'.format(name))
+        except TypeError:
+            pass
+
+    for name in ['site_symbol', 'site_size', 'site_color', 'site_edgecolor',
+                 'site_lw']:
+        check_length(name)
 
     dim = 3 if (sites_pos.shape[1] == 3) else 2
     sites_pos = resize_to_dim(sites_pos)
