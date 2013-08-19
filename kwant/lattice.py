@@ -58,9 +58,9 @@ class Polyatomic(object):
 
     Parameters
     ----------
-    prim_vecs : sequence of floats
+    prim_vecs : sequence of sequences of floats
         The primitive vectors of a Bravais lattice.
-    basis : sequence of floats
+    basis : sequence of sequences of floats
         The coordinates of the basis sites inside the unit cell.
     name : string or sequence of strings
         The name of the lattice, or a list of the names of all the sublattices.
@@ -94,7 +94,7 @@ class Polyatomic(object):
         self.sublattices = [Monatomic(prim_vecs, offset, sname)
                             for offset, sname in zip(basis, name)]
         # Sequence of primitive vectors of the lattice.
-        self.prim_vecs = prim_vecs
+        self._prim_vecs = prim_vecs
         # Precalculation of auxiliary arrays for real space calculations.
         self._reduced_vecs, self._transf = lll.lll(prim_vecs)
         self._voronoi = ta.dot(lll.voronoi(self._reduced_vecs), self._transf)
@@ -152,7 +152,7 @@ class Polyatomic(object):
                 return symmetry.to_fd(Site(lat, tag, True))
 
             dim = len(start)
-            if dim != self.prim_vecs.shape[1]:
+            if dim != self._prim_vecs.shape[1]:
                 raise ValueError('Dimensionality of start position does not '
                                  'match the space dimensionality.')
             lats = self.sublattices
@@ -279,7 +279,7 @@ class Polyatomic(object):
         shortest_hopping = sls[0].n_closest(sls[0](*([0] * sls[0].dim)).pos,
                                             2)[-1]
         eps *= np.linalg.norm(self.vec(shortest_hopping))
-        nvec = len(self.prim_vecs)
+        nvec = len(self._prim_vecs)
         sublat_pairs = [(i, j) for (i, j) in product(sls, sls)
                         if sls.index(j) >= sls.index(i)]
         def first_nonnegative(tag):
@@ -339,6 +339,9 @@ class Polyatomic(object):
                     result.append(builder.HoppingKind(tag, j, i))
         return result
 
+    @property
+    def prim_vecs(self):
+        return np.array(self._prim_vecs)
 
     def vec(self, int_vec):
         """
@@ -352,7 +355,7 @@ class Polyatomic(object):
         -------
         output : real vector
         """
-        return ta.dot(int_vec, self.prim_vecs)
+        return ta.dot(int_vec, self._prim_vecs)
 
 
 def short_array_repr(array):
@@ -373,7 +376,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
 
     Parameters
     ----------
-    prim_vecs : sequence of floats
+    prim_vecs : sequence of sequences of floats
         Primitive vectors of the Bravais lattice.
     offset : vector of floats
         Displacement of the lattice origin from the real space
@@ -403,7 +406,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
         super(Monatomic, self).__init__(canonical_repr, name)
 
         self.sublattices = [self]
-        self.prim_vecs = prim_vecs
+        self._prim_vecs = prim_vecs
         self.inv_pv = ta.array(np.linalg.pinv(prim_vecs))
         self.offset = offset
 
@@ -417,11 +420,11 @@ class Monatomic(builder.SiteFamily, Polyatomic):
         if name != '':
             msg = "Monatomic lattice {0}, vectors {1}, origin {2}"
             self.cached_str = msg.format(name,
-                                         short_array_str(self.prim_vecs),
+                                         short_array_str(self._prim_vecs),
                                          short_array_str(self.offset))
         else:
             msg = "unnamed Monatomic lattice, vectors {0}, origin [{1}]"
-            self.cached_str = msg.format(short_array_str(self.prim_vecs),
+            self.cached_str = msg.format(short_array_str(self._prim_vecs),
                                          short_array_str(self.offset))
 
     def __str__(self):
@@ -453,7 +456,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
 
     def pos(self, tag):
         """Return the real-space position of the site with a given tag."""
-        return ta.dot(tag, self.prim_vecs) + self.offset
+        return ta.dot(tag, self._prim_vecs) + self.offset
 
 
 # The following class is designed such that it should avoid floating
