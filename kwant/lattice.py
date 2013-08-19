@@ -660,3 +660,7 @@ def kagome(a=1, name=''):
     lat = Polyatomic(a * tri, ((0, 0),) + tuple(0.5 * a * tri), name=name)
     lat.a, lat.b, lat.c = lat.sublattices
     return lat
+
+
+# TODO (Anton): unhide _prim_vecs, once tinyarray supports indexing of
+# sub-arrays.
