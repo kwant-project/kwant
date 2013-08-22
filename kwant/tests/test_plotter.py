@@ -128,6 +128,8 @@ def test_plot():
 
 
 def test_map():
+    if not plotter.mpl_enabled:
+        raise nose.SkipTest
     sys = sys_2d()
     with tempfile.TemporaryFile('w+b') as output:
         plotter.map(sys, lambda site: site.tag[0], file=output,
