@@ -23,9 +23,10 @@ import os
 import glob
 import subprocess
 import ConfigParser
-from distutils.core import setup, Command
-from distutils.extension import Extension
-from distutils.errors import DistutilsError, CCompilerError
+from distutils.core import setup, Extension, Command
+from distutils.util import get_platform
+from distutils.errors import DistutilsError, DistutilsModuleError, \
+    CCompilerError
 from distutils.command.build import build as distutils_build
 from distutils.command.sdist import sdist as distutils_sdist
 import numpy
@@ -99,6 +100,30 @@ class build_tut(Command):
 # that the tutorial is present.
 class kwant_build(distutils_build):
     sub_commands = [('build_tut', None)] + distutils_build.sub_commands
+
+
+class test(Command):
+    description = "build, then run the unit tests"
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        try:
+            from nose.core import run
+        except ImportError:
+            raise DistutilsModuleError('nose <http://nose.readthedocs.org/> '
+                                       'is needed to run the tests')
+        self.run_command('build')
+        major, minor = sys.version_info[:2]
+        lib_dir = "build/lib.{0}-{1}.{2}".format(get_platform(), major, minor)
+        print '**************** Tests ****************'
+        if not run(argv=[__file__, '-v', lib_dir]):
+            raise DistutilsError('at least one of the tests failed')
 
 
 def git_lsfiles():
@@ -410,7 +435,8 @@ def main():
           cmdclass={'build': kwant_build,
                     'sdist': kwant_sdist,
                     'build_ext': kwant_build_ext,
-                    'build_tut': build_tut},
+                    'build_tut': build_tut,
+                    'test': test},
           ext_modules=ext_modules(extensions()),
           include_dirs=[numpy.get_include()])
 
