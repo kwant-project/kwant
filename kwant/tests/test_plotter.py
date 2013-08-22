@@ -122,9 +122,9 @@ def test_plot():
     plot(sys2d, show=False)
     with tempfile.TemporaryFile('w+b') as output:
         plot(sys3d, file=output)
-        warnings.simplefilter('ignore')
-        plot(sys2d.finalized(), file=output)
-        warnings.simplefilter('once')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            plot(sys2d.finalized(), file=output)
 
 
 def test_map():
@@ -132,9 +132,9 @@ def test_map():
     with tempfile.TemporaryFile('w+b') as output:
         plotter.map(sys, lambda site: site.tag[0], file=output,
                           method='linear', a=4, oversampling=4, cmap='flag')
-        warnings.simplefilter('ignore')
-        plotter.map(sys.finalized(), xrange(len(sys.sites())),
-                          file=output)
-        warnings.simplefilter('once')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            plotter.map(sys.finalized(), xrange(len(sys.sites())),
+                              file=output)
         nose.tools.assert_raises(ValueError, plotter.map,
                                  sys, xrange(len(sys.sites())), file=output)
