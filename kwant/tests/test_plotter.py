@@ -16,6 +16,19 @@ if plotter.mpl_enabled:
     from matplotlib import pyplot
 
 
+def test_importable_without_matplotlib():
+    prefix, sep, suffix = plotter.__file__.rpartition('.')
+    if suffix == 'pyc':
+        suffix = 'py'
+    assert suffix == 'py'
+    fname = sep.join((prefix, suffix))
+    with open(fname) as f:
+        code = f.read()
+    code = code.replace('from . import', 'from kwant import')
+    code = code.replace('matplotlib', 'totalblimp')
+    exec code
+
+
 def sys_2d(W=3, r1=3, r2=8):
     a = 1
     t = 1.0
