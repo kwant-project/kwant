@@ -1090,6 +1090,9 @@ def plot(sys, num_lead_cells=2, unit='nn',
       its aspect ratio.
 
     """
+    if not mpl_enabled:
+        raise RuntimeError("matplotlib was not found, but is required "
+                           "for plot()")
 
     # Generate data.
     sites, lead_sites_slcs = sys_leads_sites(sys, num_lead_cells)
@@ -1130,6 +1133,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
         check_length(name)
 
     dim = 3 if (sites_pos.shape[1] == 3) else 2
+    if dim == 3 and not has3d:
+        raise RuntimeError("Installed matplotlib does not support 3d plotting")
     sites_pos = resize_to_dim(sites_pos)
     end_pos = resize_to_dim(end_pos)
     start_pos = resize_to_dim(start_pos)
@@ -1481,6 +1486,11 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
       makes sense to set `oversampling` to ``1``.  Then, each site will
       correspond to exactly one pixel.
     """
+
+    if not mpl_enabled:
+        raise RuntimeError("matplotlib was not found, but is required "
+                           "for map()")
+
     sites = sys_leads_sites(sys, 0)[0]
     coords = sys_leads_pos(sys, sites)
     if coords.shape[1] != 2:
@@ -1561,6 +1571,11 @@ def bands(sys, momenta=65, args=(), file=None, show=True, dpi=None,
     -----
     See `physics.Bands` for the calculation of dispersion without plotting.
     """
+
+    if not mpl_enabled:
+        raise RuntimeError("matplotlib was not found, but is required "
+                           "for bands()")
+
     momenta = np.array(momenta)
     if momenta.ndim != 1:
         momenta = np.linspace(-np.pi, np.pi, momenta)
