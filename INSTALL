@@ -20,7 +20,7 @@ Mac OSX
 
 There is a number of different package managers for bringing software
 from the Unix/Linux world to Mac OSX. Since the community is quite
-split, we provide kwant and its dependencies both via the `MacPorts
+split, we provide Kwant and its dependencies both via the `MacPorts
 <http://www.macports.org>`_ and `homebrew <http://brew.sh>`_ systems.
 
 MacPorts
@@ -28,9 +28,9 @@ MacPorts
 
 MacPorts is a full-fledged package manager that recreates a whole Linux-like
 environment on your Mac. It requires little choices to be made by the user,
-and allows for the simplest way to install kwant.
+and allows for the simplest way to install Kwant.
 
-In order to install kwant, you have to
+In order to install Kwant, you have to
 
 1. Install a recent version of MacPorts, as explained in the
    `installation instructions of MacPorts
@@ -54,7 +54,7 @@ In order to install kwant, you have to
 
        echo http://dl.dropboxusercontent.com/u/769003/ports.tar | sudo tee -a /opt/local/etc/macports/sources.conf >/dev/null
 
-   (this adds the kwant MacPorts download link
+   (this adds the Kwant MacPorts download link
    `<http://dl.dropboxusercontent.com/u/769003/ports.tar>`_ at the end of the
    ``sources.conf`` file.)
 
@@ -62,7 +62,7 @@ In order to install kwant, you have to
 
        sudo port selfupdate
 
-4. Now, install kwant and its prerequisites ::
+4. Now, install Kwant and its prerequisites ::
 
        sudo port install py27-kwant
 
@@ -136,7 +136,7 @@ you are safe.
        brew tap samueljohn/python
        brew tap michaelwimmer/kwant
 
-6. Install kwant and its prerequisites ::
+6. Install Kwant and its prerequisites ::
 
        pip install nose
        brew install numpy scipy matplotlib
@@ -151,7 +151,7 @@ Notes
   if you are an expert, you don't need necessarily to install
   numpy/scipy/matplotlib from homebrew, but can use your own installation.
   The only prerequisite is that they are importable from python. (the
-  kwant installation will in any case complain if they are not)
+  Kwant installation will in any case complain if they are not)
 - In principle, you need not install the homebrew python, but could use
   Apple's already installed python. Homebrew's python is more up-to-date,
   though.
@@ -281,7 +281,7 @@ and select the "libblas.so.3gf" alternative when prompted by the second command.
 Mac OS X
 --------
 
-The required dependencies of kwant are best installed with one of the packaging
+The required dependencies of Kwant are best installed with one of the packaging
 systems. Here we only consider the case of `MacPorts
 <http://www.macports.org>`_ in detail. Some remarks for homebrew are given
 below.
@@ -313,7 +313,7 @@ below.
        CC=gcc-mp-4.7 LDSHARED='gcc-mp-4.7 -shared -undefined dynamic_lookup' python setup.py build
        sudo python setup.py install
 
-You might note that installing kwant on Mac OSX is somewhat more involved than
+You might note that installing Kwant on Mac OSX is somewhat more involved than
 installing on Linux. Part of the reason is that we need to mix Fortran and C
 code in Kwant: While C code is usually compiled using Apple compilers,
 Fortran code must be compiled with the Gnu Fortran compiler (there is
@@ -323,7 +323,7 @@ with the environment variables ``CC`` and ``LDSHARED`` as shown above.
 Notes on homebrew
 .................
 
-It is also possible to build kwant using homebrew. The dependencies can be
+It is also possible to build Kwant using homebrew. The dependencies can be
 installed as ::
 
     brew install gfortran python
