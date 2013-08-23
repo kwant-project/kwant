@@ -10,20 +10,27 @@ import numpy as np
 
 def two_terminal_shotnoise(smatrix):
     """Compute the shot-noise in a two-terminal setup.
-    [Given by tr((1 - t*t^\dagger) * t*t^\dagger)]."""
+
+    In a two terminal system the shot noise is given by `tr((1 - t*t^\dagger) *
+    t*t^\dagger)`.
+
+    Parameters
+    ----------
+    smatrix : `~kwant.solvers.common.BlockResult` instance
+        A two terminal scattering matrix.
+
+    Returns
+    -------
+    noise : float
+        Shot noise measured in noise quanta `2 e^3 |V| / pi hbar`.
+    """
 
     if len(smatrix.lead_info) != 2:
         raise ValueError("Only works for two-terminal systems!")
 
-    if 1 in smatrix.out_leads and 0 in smatrix.in_leads:
-        ttdag = smatrix._a_ttdagger_a_inv(1, 0)
-    if 0 in smatrix.out_leads and 1 in smatrix.in_leads:
-        ttdag = smatrix._a_ttdagger_a_inv(0, 1)
-    else:
-        raise ValueError("Need S-matrix block for transmission!")
-
-    ttdag -= np.dot(ttdag, ttdag)
-    return np.trace(ttdag).real
+    t = smatrix.submatrix(smatrix.out_leads[0], smatrix.in_leads[0])
+    ttdag = np.dot(t, t.conj().T)
+    return np.trace(ttdag - np.dot(ttdag, ttdag)).real
 
 
 # A general multi-terminal routine for noise would need to also have the
