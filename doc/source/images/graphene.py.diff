@@ -9,7 +9,7 @@
  
  # Define the graphene lattice
 @@ -100,22 +101,40 @@
-         smatrix = kwant.solve(sys, energy)
+         smatrix = kwant.smatrix(sys, energy)
          data.append(smatrix.transmission(0, 1))
  
 -    pyplot.figure()

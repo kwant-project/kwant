@@ -72,7 +72,7 @@ def plot_conductance(sys, energies):
     # Compute conductance
     data = []
     for energy in energies:
-        smatrix = kwant.solve(sys, energy)
+        smatrix = kwant.smatrix(sys, energy)
         data.append(smatrix.transmission(1, 0))
 
     pyplot.figure()

@@ -6,7 +6,7 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['solve', 'ldos', 'wave_function']
+__all__ = ['smatrx', 'ldos', 'wave_function', 'greens_function']
 
 # MUMPS usually works best.  Use SciPy as fallback.
 try:
@@ -16,6 +16,7 @@ except ImportError:
 
 hidden_instance = smodule.Solver()
 
-solve = hidden_instance.solve
+smatrix = hidden_instance.smatrix
 ldos = hidden_instance.ldos
 wave_function = hidden_instance.wave_function
+greens_function = hidden_instance.greens_function

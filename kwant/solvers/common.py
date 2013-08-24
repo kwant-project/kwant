@@ -6,7 +6,7 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['SparseSolver', 'BlockResult']
+__all__ = ['SparseSolver', 'SMatrix', 'GreensFunction']
 
 from collections import namedtuple
 import abc
@@ -90,7 +90,7 @@ class SparseSolver(object):
         """
         pass
 
-    def _make_linear_sys(self, sys, in_leads, energy=0, force_realspace=False,
+    def _make_linear_sys(self, sys, in_leads, energy=0, realspace=False,
                          check_hermiticity=True, args=()):
         """Make a sparse linear system of equations defining a scattering
         problem.
@@ -104,7 +104,7 @@ class SparseSolver(object):
             Numbers of leads in which current or wave function is injected.
         energy : number
             Excitation energy at which to solve the scattering problem.
-        force_realspace : bool
+        realspace : bool
             Calculate Green's function between the outermost lead
             sites, instead of lead modes. This is almost always
             more computationally expensive and less stable.
@@ -126,20 +126,18 @@ class SparseSolver(object):
             total number of degrees of freedom in the scattering region.
 
         lead_info : list of objects
-            Contains one entry for each lead.  For a lead defined as a
-            tight-binding system, this is an instance of
-            `~kwant.physics.PropagatingModes` with a corresponding format,
-            otherwise the lead self-energy matrix.
+            Contains one entry for each lead.  If `realspace=False`, this is an
+            instance of `~kwant.physics.PropagatingModes` with a corresponding
+            format, otherwise the lead self-energy matrix.
 
         Notes
         -----
-        Both incoming and outgoing leads can be defined via either self-energy,
-        or a low-level translationally invariant system.
-        The system of equations that is created is described in
-        kwant/doc/other/linear_system.pdf
+        All the leads should implement a method `modes` if `realspace=False`
+        and a method `selfenergy`.
 
+        The system of equations that is created will be described in detail
+        elsewhere.
         """
-
         splhsmat = getattr(sp, self.lhsformat + '_matrix')
         sprhsmat = getattr(sp, self.rhsformat + '_matrix')
 
@@ -170,7 +168,7 @@ class SparseSolver(object):
         lead_info = []
         for leadnum, interface in enumerate(sys.lead_interfaces):
             lead = sys.leads[leadnum]
-            if hasattr(lead, 'modes') and not force_realspace:
+            if not realspace:
                 modes, (u, ulinv, nprop, svd_v) = lead.modes(energy, args=args)
                 lead_info.append(modes)
 
@@ -275,11 +273,10 @@ class SparseSolver(object):
 
         return LinearSys(lhs, rhs, indices, num_orb), lead_info
 
-    def solve(self, sys, energy=0, out_leads=None, in_leads=None,
-              force_realspace=False, check_hermiticity=True,
-              args=()):
+    def smatrix(self, sys, energy=0, out_leads=None, in_leads=None,
+                check_hermiticity=True, args=()):
         """
-        Compute the scattering matrix or Green's function between leads.
+        Compute the scattering matrix of a system.
 
         Parameters
         ----------
@@ -296,10 +293,6 @@ class SparseSolver(object):
             Numbers of leads in which current or wave function is injected.
             None is interpreted as all leads. Default is ``None`` and means
             "all leads".
-        force_realspace : ``bool``
-            Calculate Green's function between the outermost lead
-            sites, instead of lead modes. This is almost always
-            more computationally expensive and less stable.
         check_hermiticity : ``bool``
             Check if the Hamiltonian matrices are Hermitian.
         args : tuple, defaults to empty
@@ -307,34 +300,19 @@ class SparseSolver(object):
 
         Returns
         -------
-        output : `~kwant.solvers.common.BlockResult`
-            See the notes below and `~kwant.solvers.common.BlockResult`
+        output : `~kwant.solvers.common.SMatrix`
+            See the notes below and `~kwant.solvers.common.SMatrix`
             documentation.
 
         Notes
         -----
         This function can be used to calculate the conductance and other
         transport properties of a system.  See the documentation for its output
-        type, `~kwant.solvers.common.BlockResult`.
+        type, `~kwant.solvers.common.SMatrix`.
 
-        It returns an object encapsulating the Green's function elements
-        between the desired leads. For leads defined as a self-energy, the
-        result is just the real-space retarded Green's function between the
-        system sites interfacing the leads in `in_leads` and those interfacing
-        the leads in `out_leads`. If, as is usually the case, the leads are
-        defined as tight-binding systems, then the Green's function from
-        incoming to outgoing modes is returned (more commonly known as the
-        scattering matrix).  If some leads are defined via a self-energy, and
-        some as tight-binding systems, the result has Green's function's
-        elements between modes and sites.  The returned object also contains
-        information about the modes or self-energies of the leads.
-
-        If `force_realspace` is set to ``True`` all leads will be treated as if
-        they would be defined in terms of self energies.  The returned Green's
-        function will be thus the retarded Green's function between sites in
-        real space, just like if the tradidional RGF algorithm would have been
-        used.  Enabling this option is more computationally expensive and can
-        be less stable.
+        The returned object contains the scattering matrix elements from the
+        `in_leads` to the `out_leads` as well as information about the lead
+        modes.
 
         Both `in_leads` and `out_leads` must be sorted and may only contain
         unique entries.
@@ -353,8 +331,7 @@ class SparseSolver(object):
         if len(in_leads) == 0 or len(out_leads) == 0:
             raise ValueError("No output is requested.")
 
-        linsys, lead_info = self._make_linear_sys(sys, in_leads, energy,
-                                                  force_realspace,
+        linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, False,
                                                   check_hermiticity, args)
 
         kept_vars = np.concatenate([vars for i, vars in
@@ -365,7 +342,7 @@ class SparseSolver(object):
         len_rhs = sum(i.shape[1] for i in linsys.rhs)
         len_kv = len(kept_vars)
         if not(len_rhs and len_kv):
-            return BlockResult(np.zeros((len_kv, len_rhs)),
+            return SMatrix(np.zeros((len_kv, len_rhs)),
                                lead_info, out_leads, in_leads)
 
         # See comment about zero-shaped sparse matrices at the top of common.py.
@@ -374,8 +351,90 @@ class SparseSolver(object):
         flhs = self._factorized(linsys.lhs)
         data = self._solve_linear_sys(flhs, rhs, kept_vars)
 
-        return BlockResult(data, lead_info, out_leads, in_leads)
+        return SMatrix(data, lead_info, out_leads, in_leads)
 
+    def greens_function(self, sys, energy=0, out_leads=None, in_leads=None,
+                        check_hermiticity=True, args=()):
+        """
+        Compute the retarded Green's function of the system between its leads.
+
+        Parameters
+        ----------
+        sys : `kwant.system.FiniteSystem`
+            Low level system, containing the leads and the Hamiltonian of a
+            scattering region.
+        energy : number
+            Excitation energy at which to solve the scattering problem.
+        out_leads : sequence of integers or ``None``
+            Numbers of leads where current or wave function is extracted.  None
+            is interpreted as all leads. Default is ``None`` and means "all
+            leads".
+        in_leads : sequence of integers or ``None``
+            Numbers of leads in which current or wave function is injected.
+            None is interpreted as all leads. Default is ``None`` and means
+            "all leads".
+        check_hermiticity : ``bool``
+            Check if the Hamiltonian matrices are Hermitian.
+        args : tuple, defaults to empty
+            Positional arguments to pass to the ``hamiltonian`` method.
+
+        Returns
+        -------
+        output : `~kwant.solvers.common.GreensFunction`
+            See the notes below and `~kwant.solvers.common.GreensFunction`
+            documentation.
+
+        Notes
+        -----
+        This function can be used to calculate the conductance and other
+        transport properties of a system.  It is often slower and less stable
+        than the scattering matrix-based calculation executed by
+        `~kwant.smatrix`, and is currently provided mostly for testing
+        purposes and compatibility with RGF code.
+
+        It returns an object encapsulating the Green's function elements
+        between the system sites interfacing the leads in `in_leads` and those
+        interfacing the leads in `out_leads`.  The returned object also
+        contains a list with self-energies of the leads.
+
+        Both `in_leads` and `out_leads` must be sorted and may only contain
+        unique entries.
+        """
+
+        n = len(sys.lead_interfaces)
+        if in_leads is None:
+            in_leads = range(n)
+        if out_leads is None:
+            out_leads = range(n)
+        if sorted(in_leads) != in_leads or sorted(out_leads) != out_leads or \
+            len(set(in_leads)) != len(in_leads) or \
+            len(set(out_leads)) != len(out_leads):
+            raise ValueError("Lead lists must be sorted and "
+                             "with unique entries.")
+        if len(in_leads) == 0 or len(out_leads) == 0:
+            raise ValueError("No output is requested.")
+
+        linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, True,
+                                                  check_hermiticity, args)
+
+        kept_vars = np.concatenate([vars for i, vars in
+                                    enumerate(linsys.indices) if i in
+                                    out_leads])
+
+        # Do not perform factorization if no calculation is to be done.
+        len_rhs = sum(i.shape[1] for i in linsys.rhs)
+        len_kv = len(kept_vars)
+        if not(len_rhs and len_kv):
+            return GreensFunction(np.zeros((len_kv, len_rhs)),
+                               lead_info, out_leads, in_leads)
+
+        # See comment about zero-shaped sparse matrices at the top of common.py.
+        rhs = sp.bmat([[i for i in linsys.rhs if i.shape[1]]],
+                      format=self.rhsformat)
+        flhs = self._factorized(linsys.lhs)
+        data = self._solve_linear_sys(flhs, rhs, kept_vars)
+
+        return GreensFunction(data, lead_info, out_leads, in_leads)
 
     def ldos(self, fsys, energy=0, args=()):
         """
@@ -481,52 +540,16 @@ class WaveFunction(object):
 
 class BlockResult(object):
     """
-    Solution of a transport problem, subblock of retarded Green's function
-    or scattering matrix.
+    Container for a linear system solution with variable grouping.
 
-    Transport properties can be easily accessed using the
-    `~BlockResult.transmission` method (don't be fooled by the name,
-    it can also compute reflection, which is just transmission from one
-    lead back into the same lead.)
-
-    `BlockResult` however also allows for a more direct access to the result:
-    The data stored in `BlockResult` is either a real-space Green's
-    function (e.g. if ``force_realspace=True`` in
-    `~kwant.solvers.default.solve`) or a scattering matrix with respect to
-    lead modes. The details of this data can be directly accessed through
-    the instance variables `data` and `lead_info`. Subblocks of data
-    corresponding to particular leads are conveniently obtained by
-    `~BlockResult.submatrix`.
-
-    Instance Variables
-    ------------------
-    data : NumPy matrix
-        a matrix containing all the requested matrix elements of Green's
-        function.
-    lead_info : list of data
-        a list with output of `kwant.physics.modes` for each lead
-        defined as a builder, and self-energy for each lead defined as
-        self-energy term.
-    out_leads, in_leads : list of integers
-        indices of the leads where current is extracted (out) or injected
-        (in). Only those are listed for which BlockResult contains the
-        calculated result.
+    This class is not intended to be used directly.
     """
-
-    def __init__(self, data, lead_info, out_leads, in_leads):
+    def __init__(self, data, lead_info, out_leads, in_leads, sizes):
         self.data = data
         self.lead_info = lead_info
         self.out_leads = out_leads
         self.in_leads = in_leads
-
-        sizes = []
-        for i in self.lead_info:
-            if isinstance(i, physics.PropagatingModes):
-                sizes.append(len(i.momenta) // 2)
-            else:
-                sizes.append(i.shape[0])
         self._sizes = np.array(sizes)
-
         self._in_offsets = np.zeros(len(self.in_leads) + 1, int)
         self._in_offsets[1 :] = np.cumsum(self._sizes[self.in_leads])
         self._out_offsets = np.zeros(len(self.out_leads) + 1, int)
@@ -539,16 +562,15 @@ class BlockResult(object):
         return self.out_block_coords(lead_out), self.in_block_coords(lead_in)
 
     def out_block_coords(self, lead_out):
-        """Return a slice corresponding to the rows in the block corresponding
-        to lead_out
+        """Return a slice with the rows in the block corresponding to lead_out.
         """
         lead_out = self.out_leads.index(lead_out)
         return slice(self._out_offsets[lead_out],
                      self._out_offsets[lead_out + 1])
 
     def in_block_coords(self, lead_in):
-        """Return a slice corresponding to the columns in the block
-        corresponding to lead_in
+        """
+        Return a slice with the columns in the block corresponding to lead_in.
         """
         lead_in = self.in_leads.index(lead_in)
         return slice(self._in_offsets[lead_in],
@@ -558,44 +580,124 @@ class BlockResult(object):
         """Return the matrix elements from lead_in to lead_out."""
         return self.data[self.block_coords(lead_out, lead_in)]
 
+
+class SMatrix(BlockResult):
+    """A scattering matrix.
+
+    Transport properties can be easily accessed using the
+    `~SMatrix.transmission` method (don't be fooled by the name,
+    it can also compute reflection, which is just transmission from one
+    lead back into the same lead.)
+
+    `SMatrix` however also allows for a more direct access to the result: The
+    data stored in `SMatrix` is a scattering matrix with respect to lead modes
+    and these modes themselves. The details of this data can be directly
+    accessed through the instance variables `data` and `lead_info`. Subblocks
+    of data corresponding to particular leads are conveniently obtained by
+    `~SMatrix.submatrix`.
+
+    Instance Variables
+    ------------------
+    data : NumPy array
+        a matrix containing all the requested matrix elements of the scattering
+        matrix.
+    lead_info : list of data
+        a list containing `kwant.physics.PropagatingModes` for each lead.
+    out_leads, in_leads : list of integers
+        indices of the leads where current is extracted (out) or injected
+        (in). Only those are listed for which SMatrix contains the
+        calculated result.
+    """
+
+    def __init__(self, data, lead_info, out_leads, in_leads):
+        sizes = [len(i.momenta) // 2 for i in lead_info]
+        super(SMatrix, self).__init__(data, lead_info, out_leads, in_leads,
+                                      sizes)
+
+    def transmission(self, lead_out, lead_in):
+        """Return transmission from lead_in to lead_out."""
+        return np.linalg.norm(self.submatrix(lead_out, lead_in)) ** 2
+
+    def __repr__(self):
+        return "SMatrix(data=%r, lead_info=%r, " \
+            "out_leads=%r, in_leads=%r)" % (self.data, self.lead_info,
+                                            self.out_leads, self.in_leads)
+
+
+class GreensFunction(BlockResult):
+    """
+    Retarded Green's function.
+
+    Transport properties can be easily accessed using the
+    `~GreensFunction.transmission` method (don't be fooled by the name, it can
+    also compute reflection, which is just transmission from one lead back into
+    the same lead).
+
+    `GreensFunction` however also allows for a more direct access to the
+    result: The data stored in `GreensFunction` is the real-space Green's
+    function. The details of this data can be directly accessed through the
+    instance variables `data` and `lead_info`. Subblocks of data corresponding
+    to particular leads are conveniently obtained by
+    `~GreensFunction.submatrix`.
+
+    Instance Variables
+    ------------------
+    data : NumPy array
+        a matrix containing all the requested matrix elements of Green's
+        function.
+    lead_info : list of matrices
+        a list with self-energies of each lead.
+    out_leads, in_leads : list of integers
+        indices of the leads where current is extracted (out) or injected
+        (in). Only those are listed for which SMatrix contains the
+        calculated result.
+    """
+
+    def __init__(self, data, lead_info, out_leads, in_leads):
+        sizes = [i.shape[0] for i in lead_info]
+        super(GreensFunction, self).__init__(data, lead_info, out_leads,
+                                             in_leads, sizes)
+
     def _a_ttdagger_a_inv(self, lead_out, lead_in):
+        """Return t * t^dagger in a certain basis."""
         gf = self.submatrix(lead_out, lead_in)
         factors = []
         for lead, gf2 in ((lead_out, gf), (lead_in, gf.conj().T)):
             possible_se = self.lead_info[lead]
-            if not isinstance(possible_se, physics.PropagatingModes):
-                # Lead is a "self energy lead": multiply gf2 with a gamma
-                # matrix.
-                factors.append(1j * (possible_se - possible_se.conj().T))
+            factors.append(1j * (possible_se - possible_se.conj().T))
             factors.append(gf2)
         return reduce(np.dot, factors)
 
     def transmission(self, lead_out, lead_in):
         """Return transmission from lead_in to lead_out."""
-        if isinstance(self.lead_info[lead_out], physics.PropagatingModes) and \
-           isinstance(self.lead_info[lead_in], physics.PropagatingModes):
-            return np.linalg.norm(self.submatrix(lead_out, lead_in)) ** 2
-        else:
-            result = np.trace(self._a_ttdagger_a_inv(lead_out, lead_in)).real
-            if lead_out == lead_in:
-                # For reflection we have to be more careful
-                gamma = 1j * (self.lead_info[lead_in] -
-                              self.lead_info[lead_in].conj().T)
-                gf = self.submatrix(lead_out, lead_in)
+        gf = self.submatrix(lead_out, lead_in)
+        factors = []
+        for lead, gf2 in ((lead_out, gf), (lead_in, gf.conj().T)):
+            self_en = self.lead_info[lead]
+            factors.append(1j * (self_en - self_en.conj().T))
+            factors.append(gf2)
+        attdagainv = reduce(np.dot, factors)
 
-                # The number of channels is given by the number of
-                # nonzero eigenvalues of Gamma
-                # rationale behind the threshold from
-                # Golub; van Loan, chapter 5.5.8
-                eps = np.finfo(gamma.dtype).eps * 1000
-                N = np.sum(np.linalg.eigvalsh(gamma) >
-                           eps * np.linalg.norm(gamma, np.inf))
+        result = np.trace(attdagainv).real
+        if lead_out == lead_in:
+            # For reflection we have to be more careful
+            gamma = 1j * (self.lead_info[lead_in] -
+                          self.lead_info[lead_in].conj().T)
+            gf = self.submatrix(lead_out, lead_in)
 
-                result += 2 * np.trace(np.dot(gamma, gf)).imag + N
+            # The number of channels is given by the number of
+            # nonzero eigenvalues of Gamma
+            # rationale behind the threshold from
+            # Golub; van Loan, chapter 5.5.8
+            eps = np.finfo(gamma.dtype).eps * 1000
+            N = np.sum(np.linalg.eigvalsh(gamma) >
+                       eps * np.linalg.norm(gamma, np.inf))
 
-            return result
+            result += 2 * np.trace(np.dot(gamma, gf)).imag + N
+
+        return result
 
     def __repr__(self):
-        return "BlockResult(data=%r, lead_info=%r, " \
+        return "GreensFunction(data=%r, lead_info=%r, " \
             "out_leads=%r, in_leads=%r)" % (self.data, self.lead_info,
                                             self.out_leads, self.in_leads)

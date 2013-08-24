@@ -87,7 +87,7 @@ def plot_conductance(sys, energies):
     # Compute conductance
     data = []
     for energy in energies:
-        smatrix = kwant.solve(sys, energy)
+        smatrix = kwant.smatrix(sys, energy)
         # Conductance is N - R_ee + R_he
         data.append(smatrix.submatrix(0, 0).shape[0] -
                     smatrix.transmission(0, 0) +

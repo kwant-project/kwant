@@ -16,7 +16,7 @@ def two_terminal_shotnoise(smatrix):
 
     Parameters
     ----------
-    smatrix : `~kwant.solvers.common.BlockResult` instance
+    smatrix : `~kwant.solvers.common.SMatrix` instance
         A two terminal scattering matrix.
 
     Returns
@@ -24,6 +24,10 @@ def two_terminal_shotnoise(smatrix):
     noise : float
         Shot noise measured in noise quanta `2 e^3 |V| / pi hbar`.
     """
+
+    if hasattr(smatrix.lead_info[0], 'shape'):
+        raise NotImplementedError("Noise expressions in terms of Green's "
+                                  "functions are not implemented.")
 
     if len(smatrix.lead_info) != 2:
         raise ValueError("Only works for two-terminal systems!")

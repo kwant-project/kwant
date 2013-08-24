@@ -54,6 +54,13 @@ Some renames
 * ``wave_func`` has been renamed to `~kwant.solvers.default.wave_function`,
 * ``MonatomicLattice`` has been renamed to `~kwant.lattice.Monatomic`,
 * ``PolyatomicLattice`` has been renamed to `~kwant.lattice.Polyatomic`.
+* ``solve`` was split into two functions: `~kwant.solvers.default.smatrix`, and
+  `~kwant.solvers.default.greens_function`. The former calculates the
+  scattering matrix, the latter the retarded Green's function between the sites
+  adjacent to the leads. It is temporarily not possible to mix self-energy and
+  modes leads within the same system.
+* The object that contained the results, `BlockResult` was also split into
+  `~kwant.solvers.common.SMatrix` and `~kwant.solvers.common.GreensFunction`.
 
 Band structure plots
 --------------------
@@ -98,7 +105,7 @@ regular function parameters (e.g. global variables).
 
 Now the value functions may accept arbitrary arguments after the `Site`
 arguments.  These extra arguments can be specified when
-`~kwant.solvers.default.solve` is called by setting the arguments:
+`~kwant.solvers.default.smatrix` is called by setting the arguments:
 
 args
     A tuple of values to be passed as the positional arguments to the
@@ -114,10 +121,10 @@ the following prototype::
         ...
 
 then the values of `t`, `B` and `pot` for which to solve the system can be
-passed to `solve` like this::
+passed to `~kwant.solvers.default.smatrix` like this::
 
-    kwant.solve(sys, energy,
-                args=(2., 3., 4.))
+    kwant.smatrix(sys, energy,
+                  args=(2., 3., 4.))
 
 With many parameters it can be less error-prone to collect all of them into a
 single object and pass this object as the single argument.  Such a parameter
@@ -137,7 +144,7 @@ collection could be a dictionary, or a class instance, for example::
 
     params = SimpleNamespace(t=1, mu=2)
     for params.B in B_values:
-        kwant.solve(sys, energy, args=[params])
+        kwant.smatrix(sys, energy, args=[params])
 
 Arguments can be passed in an equivalent way to
 `~kwant.solvers.default.wave_function`,
@@ -168,7 +175,7 @@ space, as well as their velocities and momenta.  All these quantities were
 previously not directly available.  The second object contains the propagating
 and evanescent modes in the compressed format expected by the sparse solver
 (previously this was the sole output of `~kwant.physics.modes`).  Accordingly,
-the `lead_info` attribute of `~kwant.solvers.default.BlockResult` contains the
+the `lead_info` attribute of `~kwant.solvers.common.SMatrix` contains the
 real space information about the modes in the leads (a list of
 `~kwant.physics.PropagatingModes` objects).
 

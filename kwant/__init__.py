@@ -19,7 +19,7 @@ from .lattice import TranslationalSymmetry
 __all__.append('TranslationalSymmetry')
 
 # Make kwant.solvers.default.solve available as kwant.solve.
-solve = solvers.default.solve
+smatrix = solvers.default.smatrix
 __all__.append('solve')
 
 # Importing plotter might not work, but this does not have to be a problem --

@@ -163,7 +163,7 @@ Kwant now allows us to pass a function as a value to
 For each lattice point, the corresponding site is then passed as the
 first argument to the function `onsite`. The values of any additional
 parameters, which can be used to alter the Hamiltonian matrix elements
-at a later stage, are specified later during the call to `solve`.
+at a later stage, are specified later during the call to `smatrix`.
 Note that we had to define `onsite`, as it is
 not possible to mix values and functions as in ``sys[...] = 4 * t +
 potential``.
@@ -179,7 +179,7 @@ Finally, we compute the transmission probability:
     :start-after: #HIDDEN_BEGIN_sqvr
     :end-before: #HIDDEN_END_sqvr
 
-``kwant.solve`` allows us to specify a list, `args`, that will be passed as
+``kwant.smatrix`` allows us to specify a list, `args`, that will be passed as
 additional arguments to the functions that provide the Hamiltonian matrix
 elements.  In this example we are able to solve the system for different depths
 of the potential well by passing the potential value. We obtain the result:

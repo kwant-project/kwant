@@ -36,7 +36,7 @@ def test_multiterminal_input():
 
     sys = twoterminal_system()
     sys.attach_lead(sys.leads[0].builder)
-    sol = kwant.solve(sys.finalized(), out_leads=[0], in_leads=[0])
+    sol = kwant.smatrix(sys.finalized(), out_leads=[0], in_leads=[0])
     assert_raises(ValueError, two_terminal_shotnoise, sol)
 
 
@@ -45,7 +45,7 @@ def test_twoterminal():
 
     fsys = twoterminal_system().finalized()
 
-    sol = kwant.solve(fsys)
+    sol = kwant.smatrix(fsys)
     t = sol.submatrix(1, 0)
     Tn = np.linalg.eigvalsh(np.dot(t, t.conj().T))
     noise_should_be = np.sum(Tn * (1 - Tn))
