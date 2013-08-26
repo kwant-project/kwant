@@ -102,7 +102,9 @@ class FiniteSystem(System):
             Numbers of the leads to be precalculated. If `None`, all are
             precalculated.
         calculate_selfenergy : bool
-            Whether to calculate self-energy if modes are available.
+            Whether to calculate self-energy if modes are available.  Defaults
+            to `False`.  Disabling this saves a typically negligible amount of
+            time and memory.
 
         Returns
         -------
@@ -127,7 +129,7 @@ class FiniteSystem(System):
             try:
                 modes = lead.modes(energy, args)
                 if calculate_selfenergy:
-                    selfenergy = physics.selfenergy_from_modes(modes)
+                    selfenergy = modes[1].selfenergy()
             except AttributeError:
                 selfenergy = lead.selfenergy(energy, args)
             new_leads.append(PrecalculatedLead(modes, selfenergy))

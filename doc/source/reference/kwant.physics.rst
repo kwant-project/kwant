@@ -11,6 +11,5 @@ Leads
    Bands
    modes
    selfenergy
-   selfenergy_from_modes
    PropagatingModes
    StabilizedModes

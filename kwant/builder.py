@@ -479,7 +479,7 @@ class ModesLead(Lead):
 
     """
     def __init__(self, modes_func, interface):
-        self._modes_func = modes_func
+        self.modes_func = modes_func
         self.interface = tuple(interface)
 
     def finalized(self):
@@ -487,11 +487,11 @@ class ModesLead(Lead):
         return self
 
     def modes(self, energy, args=()):
-        return self._modes_func(energy, args)
+        return self.modes_func(energy, args)
 
     def selfenergy(self, energy, args=()):
-        modes = self.modes(energy, args)
-        return physics.selfenergy_from_modes(modes=modes)
+        propagating, stabilized = self.modes(energy, args)
+        return stabilized.selfenergy()
 
 
 
