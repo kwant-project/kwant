@@ -74,11 +74,11 @@ def test_hamiltonian_submatrix():
     sys[gr(0), gr(2)] = np.array([[1, 2]])
     sys2 = sys.finalized()
     assert_raises(ValueError, sys2.hamiltonian_submatrix)
-    assert_raises(ValueError, sys2.hamiltonian_submatrix, None, None, True)
+    assert_raises(ValueError, sys2.hamiltonian_submatrix, sparse=True)
     sys[gr(0), gr(2)] = 1
     sys2 = sys.finalized()
     assert_raises(ValueError, sys2.hamiltonian_submatrix)
-    assert_raises(ValueError, sys2.hamiltonian_submatrix, None, None, True)
+    assert_raises(ValueError, sys2.hamiltonian_submatrix, sparse=True)
 
     # Test for passing parameters to hamiltonian matrix elements
     def onsite(site, p1, p2=0):
