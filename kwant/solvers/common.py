@@ -169,8 +169,10 @@ class SparseSolver(object):
         for leadnum, interface in enumerate(sys.lead_interfaces):
             lead = sys.leads[leadnum]
             if not realspace:
-                modes, (u, ulinv, nprop, svd_v) = lead.modes(energy, args=args)
-                lead_info.append(modes)
+                prop, stab = lead.modes(energy, args=args)
+                lead_info.append(prop)
+                u, ulinv, nprop, svd_v = \
+                    stab.vecs, stab.vecslmbdainv, stab.nmodes, stab.sqrt_hop
 
                 if len(u) == 0:
                     rhs.append(None)

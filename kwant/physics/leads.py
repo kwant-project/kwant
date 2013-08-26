@@ -25,7 +25,7 @@ Linsys = namedtuple('Linsys', ['eigenproblem', 'v', 'extract'])
 
 
 class PropagatingModes(object):
-    """A container for the calculated propagating modes.
+    """The calculated propagating modes of a lead.
 
     Instance variables
     ==================
@@ -79,9 +79,6 @@ class StabilizedModes(object):
     orthogonalized, and all the propagating modes are normalized to carry unit
     current. Finally the `sqrt_hop` attribute is `v sqrt(s)`.
 
-    For convenience, it is possible to assign this object to a tuple:
-    `vecs, vecslmbdainv, nmodes, sqrt_hop = stabilized_modes`
-
     Instance variables
     ==================
     vecs : numpy array
@@ -98,9 +95,6 @@ class StabilizedModes(object):
         kwargs = locals()
         kwargs.pop('self')
         self.__dict__.update(kwargs)
-
-    def __getitem__(self, item):
-        return (self.vecs, self.vecslmbdainv, self.nmodes, self.sqrt_hop)[item]
 
     def selfenergy(self):
         """
@@ -551,14 +545,12 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
 
     Returns
     -------
-    PropagatingModes(wave_functions, momenta, velocities) : object
+    propagating : `~kwant.physics.PropagatingModes`
         Contains the array of the wave functions of propagating modes, their
         momenta, and their velocities. It can be used to identify the gauge in
-        which the scattering problem is solved. See
-        `~kwant.physics.PropagatingModes` for details.
-    StabilizedModes(vecs, vecslmbdainv, nmodes, sqrt_hop) : object
+        which the scattering problem is solved.
+    stabilized : `~kwant.physics.StabilizedModes`
         A basis of propagating and evanescent modes used by the solvers.
-        See the `~kwant.physics.StablizedModes` for details.
 
     Notes
     -----

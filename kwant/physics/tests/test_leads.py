@@ -222,15 +222,14 @@ def test_modes():
     h, t = .3, .7
     k = np.arccos(-h / (2 * t))
     v = 2 * t * np.sin(k)
-    modes, (vecs, vecslinv, nrprop, svd) = leads.modes(np.array([[h]]),
-                                                       np.array([[t]]))
-    assert nrprop == 1
-    assert svd is None
-    np.testing.assert_almost_equal(modes.velocities, [-v, v])
-    np.testing.assert_almost_equal(modes.momenta, [-k, k])
+    prop, stab = leads.modes(np.array([[h]]), np.array([[t]]))
+    assert stab.nmodes == 1
+    assert stab.sqrt_hop is None
+    np.testing.assert_almost_equal(prop.velocities, [-v, v])
+    np.testing.assert_almost_equal(prop.momenta, [-k, k])
     # Test for normalization by current.
-    np.testing.assert_almost_equal(2 * (vecs[0] *  vecslinv[0].conj()).imag,
-                                   [1, -1])
+    np.testing.assert_almost_equal(
+        2 * (stab.vecs[0] * stab.vecslmbdainv[0].conj()).imag, [1, -1])
 
 
 def test_modes_bearded_ribbon():
