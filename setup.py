@@ -171,7 +171,7 @@ class kwant_sdist(distutils_sdist):
                         f.write(''.join([a, sep, stem, dot, 'c', '\n']))
                     f.write(name + '\n')
                 f.write(STATIC_VERSION_FILE + '\n')
-                f.write('MANIFEST')
+                f.write('MANIFEST\n')
 
         distutils_sdist.run(self)
 
