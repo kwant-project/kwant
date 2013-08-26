@@ -7,48 +7,48 @@
 # http://kwant-project.org/authors.
 
 from nose.plugins.skip import Skip, SkipTest
-from  kwant.solvers.sparse import solve, ldos, wave_function
+from  kwant.solvers.sparse import smatrix, greens_function, ldos, wave_function
 import kwant.solvers.sparse
 import _test_sparse
 
 def test_output():
-    _test_sparse.test_output(solve)
+    _test_sparse.test_output(smatrix)
 
 
 def test_one_lead():
-    _test_sparse.test_one_lead(solve)
+    _test_sparse.test_one_lead(smatrix)
 
 
 def test_smatrix_shape():
-    _test_sparse.test_smatrix_shape(solve)
+    _test_sparse.test_smatrix_shape(smatrix)
 
 
 def test_two_equal_leads():
-    _test_sparse.test_two_equal_leads(solve)
+    _test_sparse.test_two_equal_leads(smatrix)
 
 
 def test_graph_system():
-    _test_sparse.test_graph_system(solve)
+    _test_sparse.test_graph_system(smatrix)
 
 
 def test_singular_graph_system():
-    _test_sparse.test_singular_graph_system(solve)
+    _test_sparse.test_singular_graph_system(smatrix)
 
 
 def test_tricky_singular_hopping():
-    _test_sparse.test_tricky_singular_hopping(solve)
+    _test_sparse.test_tricky_singular_hopping(smatrix)
 
 
 def test_selfenergy():
-    _test_sparse.test_selfenergy(solve)
+    _test_sparse.test_selfenergy(greens_function, smatrix)
 
 
 def test_selfenergy_reflection():
-    _test_sparse.test_selfenergy_reflection(solve)
+    _test_sparse.test_selfenergy_reflection(greens_function)
 
 
 def test_very_singular_leads():
-    _test_sparse.test_very_singular_leads(solve)
+    _test_sparse.test_very_singular_leads(smatrix)
 
 
 def test_umfpack_del():

@@ -6,7 +6,7 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['solve', 'ldos', 'wave_function', 'Solver']
+__all__ = ['smatrix', 'greens_function', 'ldos', 'wave_function', 'Solver']
 
 import warnings
 import numpy as np
@@ -115,6 +115,7 @@ class Solver(common.SparseSolver):
 
 default_solver = Solver()
 
-solve = default_solver.solve
+smatrix = default_solver.smatrix
+greens_function = default_solver.greens_function
 ldos = default_solver.ldos
 wave_function = default_solver.wave_function

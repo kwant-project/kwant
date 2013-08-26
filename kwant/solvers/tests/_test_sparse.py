@@ -281,7 +281,7 @@ def test_tricky_singular_hopping(solve):
 
 # Test equivalence between self-energy and scattering matrix representations.
 # Also check that transmission works.
-def test_selfenergy(solve):
+def test_selfenergy(greens_function, smatrix):
     np.random.seed(4)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
@@ -299,12 +299,12 @@ def test_selfenergy(solve):
     system.attach_lead(right_lead)
     fsys = system.finalized()
 
-    t = solve(fsys, 0, [1], [0]).data
+    t = smatrix(fsys, 0, [1], [0]).data
     eig_should_be = np.linalg.eigvals(t * t.conjugate().transpose())
     n_eig = len(eig_should_be)
 
     fsys.leads[1] = LeadWithOnlySelfEnergy(fsys.leads[1])
-    sol = solve(fsys, 0, [1], [0])
+    sol = greens_function(fsys, 0, [1], [0])
     ttdagnew = sol._a_ttdagger_a_inv(1, 0)
     eig_are = np.linalg.eigvals(ttdagnew)
     t_should_be = np.sum(eig_are)
@@ -314,7 +314,7 @@ def test_selfenergy(solve):
     assert_almost_equal(t_should_be, sol.transmission(1, 0))
 
     fsys.leads[0] = LeadWithOnlySelfEnergy(fsys.leads[0])
-    sol = solve(fsys, 0, [1], [0])
+    sol = greens_function(fsys, 0, [1], [0])
     ttdagnew = sol._a_ttdagger_a_inv(1, 0)
     eig_are = np.linalg.eigvals(ttdagnew)
     t_should_be = np.sum(eig_are)

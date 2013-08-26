@@ -10,7 +10,7 @@
 from numpy.testing.decorators import skipif
 try:
     from kwant.solvers.mumps import \
-        solve, ldos, wave_function, options, reset_options
+        smatrix, greens_function, ldos, wave_function, options, reset_options
     import _test_sparse
     _no_mumps = False
 except ImportError:
@@ -30,7 +30,7 @@ def test_output():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_output(solve)
+        _test_sparse.test_output(smatrix)
 
 
 @skipif(_no_mumps)
@@ -38,7 +38,7 @@ def test_one_lead():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_one_lead(solve)
+        _test_sparse.test_one_lead(smatrix)
 
 
 @skipif(_no_mumps)
@@ -46,7 +46,7 @@ def test_smatrix_shape():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_smatrix_shape(solve)
+        _test_sparse.test_smatrix_shape(smatrix)
 
 
 @skipif(_no_mumps)
@@ -54,14 +54,14 @@ def test_two_equal_leads():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_two_equal_leads(solve)
+        _test_sparse.test_two_equal_leads(smatrix)
 
 @skipif(_no_mumps)
 def test_graph_system():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_graph_system(solve)
+        _test_sparse.test_graph_system(smatrix)
 
 
 @skipif(_no_mumps)
@@ -69,7 +69,7 @@ def test_singular_graph_system():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_singular_graph_system(solve)
+        _test_sparse.test_singular_graph_system(smatrix)
 
 
 @skipif(_no_mumps)
@@ -77,7 +77,7 @@ def test_tricky_singular_hopping():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_tricky_singular_hopping(solve)
+        _test_sparse.test_tricky_singular_hopping(smatrix)
 
 
 @skipif(_no_mumps)
@@ -85,7 +85,7 @@ def test_selfenergy():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_selfenergy(solve)
+        _test_sparse.test_selfenergy(greens_function, smatrix)
 
 
 @skipif(_no_mumps)
@@ -93,7 +93,7 @@ def test_selfenergy_reflection():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_selfenergy_reflection(solve)
+        _test_sparse.test_selfenergy_reflection(greens_function)
 
 
 @skipif(_no_mumps)
@@ -101,7 +101,7 @@ def test_very_singular_leads():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_very_singular_leads(solve)
+        _test_sparse.test_very_singular_leads(smatrix)
 
 
 @skipif(_no_mumps)

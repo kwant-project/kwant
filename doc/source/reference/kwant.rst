@@ -38,4 +38,4 @@ From ``kwant.solvers.default``
 ------------------------------
 .. autosummary::
 
-   solve
+   smatrix

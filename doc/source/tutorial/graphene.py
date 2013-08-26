@@ -113,7 +113,7 @@ def plot_conductance(sys, energies):
     # Compute transmission as a function of energy
     data = []
     for energy in energies:
-        smatrix = kwant.solve(sys, energy)
+        smatrix = kwant.smatrix(sys, energy)
         data.append(smatrix.transmission(0, 1))
 
     pyplot.figure()

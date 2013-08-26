@@ -97,8 +97,8 @@ data = []
 for ie in xrange(100):
     energy = ie * 0.01
 
-    # compute the scattering matrix at energy energy
-    smatrix = kwant.solve(sys, energy)
+    # compute the scattering matrix at a given energy
+    smatrix = kwant.smatrix(sys, energy)
 
     # compute the transmission probability from lead 0 to
     # lead 1

@@ -15,7 +15,7 @@ from kwant.physics.noise import two_terminal_shotnoise
 n = 5
 chain = kwant.lattice.chain()
 
-def _twoterminal_system():
+def twoterminal_system():
     np.random.seed(11)
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
@@ -28,43 +28,26 @@ def _twoterminal_system():
     lead[chain(0), chain(1)] = t
     system.attach_lead(lead)
     system.attach_lead(lead.reversed())
-    return system.finalized()
+    return system
 
 
-def test_twoterminal_input():
+def test_multiterminal_input():
     """Input checks for two_terminal_shotnoise"""
 
-    fsys = _twoterminal_system()
-    sol = kwant.solve(fsys, out_leads=[0], in_leads=[0])
+    sys = twoterminal_system()
+    sys.attach_lead(sys.leads[0].builder)
+    sol = kwant.smatrix(sys.finalized(), out_leads=[0], in_leads=[0])
     assert_raises(ValueError, two_terminal_shotnoise, sol)
-
-
-class LeadWithOnlySelfEnergy(object):
-    def __init__(self, lead):
-        self.lead = lead
-
-    def selfenergy(self, energy, args=()):
-        assert args == ()
-        return self.lead.selfenergy(energy)
 
 
 def test_twoterminal():
     """Shot noise in a two-terminal conductor"""
 
-    fsys = _twoterminal_system()
+    fsys = twoterminal_system().finalized()
 
-    sol = kwant.solve(fsys)
+    sol = kwant.smatrix(fsys)
     t = sol.submatrix(1, 0)
     Tn = np.linalg.eigvalsh(np.dot(t, t.conj().T))
     noise_should_be = np.sum(Tn * (1 - Tn))
 
-    assert_almost_equal(noise_should_be, two_terminal_shotnoise(sol))
-
-    # replace leads successively with self-energy
-    fsys.leads[0] = LeadWithOnlySelfEnergy(fsys.leads[0])
-    sol = kwant.solve(fsys)
-    assert_almost_equal(noise_should_be, two_terminal_shotnoise(sol))
-
-    fsys.leads[1] = LeadWithOnlySelfEnergy(fsys.leads[1])
-    sol = kwant.solve(fsys)
     assert_almost_equal(noise_should_be, two_terminal_shotnoise(sol))

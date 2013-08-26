@@ -99,7 +99,7 @@ class System(kwant.system.FiniteSystem):
 def main():
     sys = System((10, 5), 1)
     energies = [0.04 * i for i in xrange(100)]
-    data = [kwant.solve(sys, energy).transmission(1, 0)
+    data = [kwant.smatrix(sys, energy).transmission(1, 0)
             for energy in energies]
 
     pyplot.plot(energies, data)

@@ -142,11 +142,12 @@ its conductance as a function of energy:
     :start-after: #HIDDEN_BEGIN_buzn
     :end-before: #HIDDEN_END_buzn
 
-We use ``kwant.solve`` which is a short name for `kwant.solvers.default.solve`
-of the default solver module `kwant.solvers.default`.  ``kwant.solve`` computes
-the scattering matrix ``smatrix`` solving a sparse linear system.  ``smatrix``
-itself allows to directly compute the total transmission probability from lead
-0 to lead 1 as ``smatrix.transmission(1, 0)``.
+We use ``kwant.smatrix`` which is a short name for
+`kwant.solvers.default.smatrix` of the default solver module
+`kwant.solvers.default`.  ``kwant.smatrix`` computes the scattering matrix
+``smatrix`` solving a sparse linear system.  ``smatrix`` itself allows to
+directly compute the total transmission probability from lead 0 to lead 1 as
+``smatrix.transmission(1, 0)``.
 
 Finally we can use `matplotlib` to make a plot of the computed data
 (although writing to file and using an external viewer such as
