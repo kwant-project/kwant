@@ -63,7 +63,7 @@ def plot_spectrum(sys, Bfields):
     energies = []
     for B in Bfields:
         # Obtain the Hamiltonian as a dense matrix
-        ham_mat = sys.hamiltonian_submatrix(sparse=True, args=[B])
+        ham_mat = sys.hamiltonian_submatrix(args=[B], sparse=True)
 
         # we only calculate the 15 lowest eigenvalues
         ev = sla.eigsh(ham_mat, k=15, which='SM', return_eigenvectors=False)

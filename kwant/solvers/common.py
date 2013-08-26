@@ -90,8 +90,8 @@ class SparseSolver(object):
         """
         pass
 
-    def _make_linear_sys(self, sys, in_leads, energy=0, realspace=False,
-                         check_hermiticity=True, args=()):
+    def _make_linear_sys(self, sys, in_leads, energy=0, args=(),
+                         realspace=False, check_hermiticity=True):
         """Make a sparse linear system of equations defining a scattering
         problem.
 
@@ -143,9 +143,8 @@ class SparseSolver(object):
 
         if not sys.lead_interfaces:
             raise ValueError('System contains no leads.')
-        lhs, norb = sys.hamiltonian_submatrix(sparse=True,
-                                              return_norb=True,
-                                              args=args)[:2]
+        lhs, norb = sys.hamiltonian_submatrix(args, sparse=True,
+                                              return_norb=True)[:2]
         lhs = getattr(lhs, 'to' + self.lhsformat)()
         lhs = lhs - energy * sp.identity(lhs.shape[0], format=self.lhsformat)
         num_orb = lhs.shape[0]
@@ -169,7 +168,7 @@ class SparseSolver(object):
         for leadnum, interface in enumerate(sys.lead_interfaces):
             lead = sys.leads[leadnum]
             if not realspace:
-                prop, stab = lead.modes(energy, args=args)
+                prop, stab = lead.modes(energy, args)
                 lead_info.append(prop)
                 u, ulinv, nprop, svd_v = \
                     stab.vecs, stab.vecslmbdainv, stab.nmodes, stab.sqrt_hop
@@ -275,8 +274,8 @@ class SparseSolver(object):
 
         return LinearSys(lhs, rhs, indices, num_orb), lead_info
 
-    def smatrix(self, sys, energy=0, out_leads=None, in_leads=None,
-                check_hermiticity=True, args=()):
+    def smatrix(self, sys, energy=0, args=(),
+                out_leads=None, in_leads=None, check_hermiticity=True):
         """
         Compute the scattering matrix of a system.
 
@@ -287,6 +286,8 @@ class SparseSolver(object):
             scattering region.
         energy : number
             Excitation energy at which to solve the scattering problem.
+        args : tuple, defaults to empty
+            Positional arguments to pass to the ``hamiltonian`` method.
         out_leads : sequence of integers or ``None``
             Numbers of leads where current or wave function is extracted.  None
             is interpreted as all leads. Default is ``None`` and means "all
@@ -297,8 +298,6 @@ class SparseSolver(object):
             "all leads".
         check_hermiticity : ``bool``
             Check if the Hamiltonian matrices are Hermitian.
-        args : tuple, defaults to empty
-            Positional arguments to pass to the ``hamiltonian`` method.
 
         Returns
         -------
@@ -333,8 +332,8 @@ class SparseSolver(object):
         if len(in_leads) == 0 or len(out_leads) == 0:
             raise ValueError("No output is requested.")
 
-        linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, False,
-                                                  check_hermiticity, args)
+        linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, args,
+                                                  False, check_hermiticity)
 
         kept_vars = np.concatenate([vars for i, vars in
                                     enumerate(linsys.indices) if i in
@@ -355,8 +354,8 @@ class SparseSolver(object):
 
         return SMatrix(data, lead_info, out_leads, in_leads)
 
-    def greens_function(self, sys, energy=0, out_leads=None, in_leads=None,
-                        check_hermiticity=True, args=()):
+    def greens_function(self, sys, energy=0, args=(),
+                        out_leads=None, in_leads=None, check_hermiticity=True):
         """
         Compute the retarded Green's function of the system between its leads.
 
@@ -367,6 +366,8 @@ class SparseSolver(object):
             scattering region.
         energy : number
             Excitation energy at which to solve the scattering problem.
+        args : tuple, defaults to empty
+            Positional arguments to pass to the ``hamiltonian`` method.
         out_leads : sequence of integers or ``None``
             Numbers of leads where current or wave function is extracted.  None
             is interpreted as all leads. Default is ``None`` and means "all
@@ -377,8 +378,6 @@ class SparseSolver(object):
             "all leads".
         check_hermiticity : ``bool``
             Check if the Hamiltonian matrices are Hermitian.
-        args : tuple, defaults to empty
-            Positional arguments to pass to the ``hamiltonian`` method.
 
         Returns
         -------
@@ -416,8 +415,8 @@ class SparseSolver(object):
         if len(in_leads) == 0 or len(out_leads) == 0:
             raise ValueError("No output is requested.")
 
-        linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, True,
-                                                  check_hermiticity, args)
+        linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, args,
+                                                  True, check_hermiticity)
 
         kept_vars = np.concatenate([vars for i, vars in
                                     enumerate(linsys.indices) if i in
@@ -465,8 +464,7 @@ class SparseSolver(object):
                                  "tight binding systems.")
 
         linsys, lead_info = \
-            self._make_linear_sys(fsys, xrange(len(fsys.leads)), energy,
-                                  args=args)
+            self._make_linear_sys(fsys, xrange(len(fsys.leads)), energy, args)
 
         ldos = np.zeros(linsys.num_orb, float)
         factored = None
@@ -527,8 +525,7 @@ class WaveFunction(object):
                       ' are not available yet.'
                 raise NotImplementedError(msg)
         linsys, lead_info = \
-            solver._make_linear_sys(sys, xrange(len(sys.leads)), energy,
-                                    args=args)
+            solver._make_linear_sys(sys, xrange(len(sys.leads)), energy, args)
         self.solve = solver._solve_linear_sys
         self.rhs = linsys.rhs
         self.factorized_h = solver._factorized(linsys.lhs)

@@ -37,7 +37,7 @@ def assert_modes_equal(modes1, modes2):
 # Test output sanity: that an error is raised if no output is requested,
 # and that solving for a subblock of a scattering matrix is the same as taking
 # a subblock of the full scattering matrix.
-def test_output(solve):
+def test_output(smatrix):
     np.random.seed(3)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
@@ -55,19 +55,19 @@ def test_output(solve):
     system.attach_lead(right_lead)
     fsys = system.finalized()
 
-    result1 = solve(fsys)
+    result1 = smatrix(fsys)
     s, modes1 = result1.data, result1.lead_info
     assert s.shape == 2 * (sum(len(i.momenta) for i in modes1) // 2,)
     s1 = result1.submatrix(1, 0)
-    result2 = solve(fsys, 0, [1], [0])
+    result2 = smatrix(fsys, 0, (), [1], [0])
     s2, modes2 = result2.data, result2.lead_info
     assert s2.shape == (len(modes2[1].momenta) // 2,
                         len(modes2[0].momenta) // 2)
     assert_almost_equal(s1, s2)
     assert_almost_equal(np.dot(s.T.conj(), s),
                         np.identity(s.shape[0]))
-    assert_raises(ValueError, solve, fsys, 0, [])
-    modes = solve(fsys).lead_info
+    assert_raises(ValueError, smatrix, fsys, out_leads=[])
+    modes = smatrix(fsys).lead_info
     h = fsys.leads[0].cell_hamiltonian()
     t = fsys.leads[0].inter_cell_hopping()
     modes1 = kwant.physics.modes(h, t)[0]
@@ -79,7 +79,7 @@ def test_output(solve):
 
 
 # Test that a system with one lead has unitary scattering matrix.
-def test_one_lead(solve):
+def test_one_lead(smatrix):
     np.random.seed(3)
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
@@ -95,14 +95,14 @@ def test_one_lead(solve):
     system.attach_lead(lead)
     fsys = system.finalized()
 
-    s = solve(fsys).data
+    s = smatrix(fsys).data
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
 
 
 # Test that a system with one lead with no propagating modes has a
 # 0x0 S-matrix.
-def test_smatrix_shape(solve):
+def test_smatrix_shape(smatrix):
     system = kwant.Builder()
     lead0 = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     lead1 = kwant.Builder(kwant.TranslationalSymmetry((1,)))
@@ -123,30 +123,30 @@ def test_smatrix_shape(solve):
 
     lead0_val = 4
     lead1_val = 4
-    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0]).data
+    s = smatrix(fsys, 1.0, (), [1], [0]).data
     assert s.shape == (0, 0)
 
     lead0_val = 2
     lead1_val = 2
-    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0]).data
+    s = smatrix(fsys, 1.0, (), [1], [0]).data
     assert s.shape == (1, 1)
 
     lead0_val = 4
     lead1_val = 2
-    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0]).data
+    s = smatrix(fsys, 1.0, (), [1], [0]).data
     assert s.shape == (1, 0)
 
     lead0_val = 2
     lead1_val = 4
-    s = solve(fsys, energy=1.0, out_leads=[1], in_leads=[0]).data
+    s = smatrix(fsys, 1.0, (), [1], [0]).data
     assert s.shape == (0, 1)
 
 
 # Test that a translationally invariant system with two leads has only
 # transmission and that transmission does not mix modes.
-def test_two_equal_leads(solve):
+def test_two_equal_leads(smatrix):
     def check_fsys():
-        sol = solve(fsys)
+        sol = smatrix(fsys)
         s, leads = sol.data, sol.lead_info
         assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                             np.identity(s.shape[0]))
@@ -183,7 +183,7 @@ def test_two_equal_leads(solve):
 
 
 # Test a more complicated graph with non-singular hopping.
-def test_graph_system(solve):
+def test_graph_system(smatrix):
     np.random.seed(11)
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
@@ -202,7 +202,7 @@ def test_graph_system(solve):
     system.attach_lead(lead.reversed())
     fsys = system.finalized()
 
-    result = solve(fsys)
+    result = smatrix(fsys)
     s, leads = result.data, result.lead_info
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
@@ -216,7 +216,7 @@ def test_graph_system(solve):
 
 
 # Test a system with singular hopping.
-def test_singular_graph_system(solve):
+def test_singular_graph_system(smatrix):
     np.random.seed(11)
 
     system = kwant.Builder()
@@ -235,7 +235,7 @@ def test_singular_graph_system(solve):
     system.attach_lead(lead.reversed())
     fsys = system.finalized()
 
-    result = solve(fsys)
+    result = smatrix(fsys)
     s, leads = result.data, result.lead_info
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
@@ -251,7 +251,7 @@ def test_singular_graph_system(solve):
 # This test features inside the cell Hamiltonian a hopping matrix with more
 # zero eigenvalues than the lead hopping matrix. Older version of the
 # sparse solver failed here.
-def test_tricky_singular_hopping(solve):
+def test_tricky_singular_hopping(smatrix):
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((4, 0)))
 
@@ -274,7 +274,7 @@ def test_tricky_singular_hopping(solve):
     system.leads.append(kwant.builder.BuilderLead(lead, interface))
     fsys = system.finalized()
 
-    s = solve(fsys, -1.3).data
+    s = smatrix(fsys, -1.3).data
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
 
@@ -299,12 +299,12 @@ def test_selfenergy(greens_function, smatrix):
     system.attach_lead(right_lead)
     fsys = system.finalized()
 
-    t = smatrix(fsys, 0, [1], [0]).data
+    t = smatrix(fsys, 0, (), [1], [0]).data
     eig_should_be = np.linalg.eigvals(t * t.conjugate().transpose())
     n_eig = len(eig_should_be)
 
     fsys.leads[1] = LeadWithOnlySelfEnergy(fsys.leads[1])
-    sol = greens_function(fsys, 0, [1], [0])
+    sol = greens_function(fsys, 0, (), [1], [0])
     ttdagnew = sol._a_ttdagger_a_inv(1, 0)
     eig_are = np.linalg.eigvals(ttdagnew)
     t_should_be = np.sum(eig_are)
@@ -314,7 +314,7 @@ def test_selfenergy(greens_function, smatrix):
     assert_almost_equal(t_should_be, sol.transmission(1, 0))
 
     fsys.leads[0] = LeadWithOnlySelfEnergy(fsys.leads[0])
-    sol = greens_function(fsys, 0, [1], [0])
+    sol = greens_function(fsys, 0, (), [1], [0])
     ttdagnew = sol._a_ttdagger_a_inv(1, 0)
     eig_are = np.linalg.eigvals(ttdagnew)
     t_should_be = np.sum(eig_are)
@@ -324,7 +324,7 @@ def test_selfenergy(greens_function, smatrix):
     assert_almost_equal(t_should_be, sol.transmission(1, 0))
 
 
-def test_selfenergy_reflection(solve):
+def test_selfenergy_reflection(smatrix):
     np.random.seed(4)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
@@ -339,15 +339,15 @@ def test_selfenergy_reflection(solve):
     system.attach_lead(left_lead)
     fsys = system.finalized()
 
-    t = solve(fsys, 0, [0], [0])
+    t = smatrix(fsys, 0, (), [0], [0])
 
     fsys.leads[0] = LeadWithOnlySelfEnergy(fsys.leads[0])
-    sol = solve(fsys, 0, [0], [0])
+    sol = smatrix(fsys, 0, (), [0], [0])
 
     assert_almost_equal(sol.transmission(0,0), t.transmission(0,0))
 
 
-def test_very_singular_leads(solve):
+def test_very_singular_leads(smatrix):
     sys = kwant.Builder()
     gr = kwant.lattice.chain()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
@@ -358,7 +358,7 @@ def test_very_singular_leads(solve):
     sys.attach_lead(left_lead)
     sys.attach_lead(right_lead)
     fsys = sys.finalized()
-    leads = solve(fsys).lead_info
+    leads = smatrix(fsys).lead_info
     assert [len(i.momenta) for i in leads] == [0, 4]
 
 

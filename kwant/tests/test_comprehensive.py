@@ -41,7 +41,7 @@ def test_qhe(W=16, L=8):
     # reciprocal_phis = numpy.linspace(0.1, 7, 200)
     # conductances = []
     # for phi in 1 / reciprocal_phis:
-    #     smatrix = kwant.smatrix(sys, 1.0, args=[phi, ""])
+    #     smatrix = kwant.smatrix(sys, 1.0, [phi, ""])
     #     conductances.append(smatrix.transmission(1, 0))
     # pyplot.plot(reciprocal_phis, conductances)
     # pyplot.show()
@@ -51,5 +51,5 @@ def test_qhe(W=16, L=8):
                                        ((5.2, 5.5), 3, 1e-1)]:
         for r_phi in r_phis:
             args = (1.0 / r_phi, "")
-            T_actual = kwant.smatrix(sys, 1.0, args=args).transmission(1, 0)
+            T_actual = kwant.smatrix(sys, 1.0, args).transmission(1, 0)
             assert abs(T_nominal - T_actual) < max_err

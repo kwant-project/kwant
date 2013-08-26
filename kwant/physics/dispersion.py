@@ -40,10 +40,10 @@ class Bands(object):
     """
 
     def __init__(self, sys, args=()):
-        self.ham = sys.cell_hamiltonian(args=args)
+        self.ham = sys.cell_hamiltonian(args)
         if not np.allclose(self.ham, self.ham.T.conj()):
             raise ValueError('The cell Hamiltonian is not Hermitian.')
-        hop = sys.inter_cell_hopping(args=args)
+        hop = sys.inter_cell_hopping(args)
         self.hop = np.empty(self.ham.shape, dtype=complex)
         self.hop[:, : hop.shape[1]] = hop
         self.hop[:, hop.shape[1]:] = 0

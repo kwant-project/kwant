@@ -1533,7 +1533,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         return output_fig(fig, file=file, show=show)
 
 
-def bands(sys, momenta=65, args=(), file=None, show=True, dpi=None,
+def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
           fig_size=None, ax=None):
     """Plot band structure of a translationally invariant 1D system.
 
@@ -1580,7 +1580,7 @@ def bands(sys, momenta=65, args=(), file=None, show=True, dpi=None,
     if momenta.ndim != 1:
         momenta = np.linspace(-np.pi, np.pi, momenta)
 
-    bands = physics.Bands(sys, args=args)
+    bands = physics.Bands(sys, args)
     energies = [bands(k) for k in momenta]
 
     if ax is None:

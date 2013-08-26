@@ -180,18 +180,18 @@ class InfiniteSystem(System):
     """
     __metaclass__ = abc.ABCMeta
 
-    def cell_hamiltonian(self, sparse=False, args=()):
+    def cell_hamiltonian(self, args=(), sparse=False):
         """Hamiltonian of a single cell of the infinite system."""
         cell_sites = xrange(self.cell_size)
-        return self.hamiltonian_submatrix(cell_sites, cell_sites,
-                                          sparse=sparse, args=args)
+        return self.hamiltonian_submatrix(args, cell_sites, cell_sites,
+                                          sparse=sparse)
 
-    def inter_cell_hopping(self, sparse=False, args=()):
+    def inter_cell_hopping(self, args=(), sparse=False):
         """Hopping Hamiltonian between two cells of the infinite system."""
         cell_sites = xrange(self.cell_size)
         neighbor_sites = xrange(self.cell_size, self.graph.num_nodes)
-        return self.hamiltonian_submatrix(cell_sites, neighbor_sites,
-                                          sparse=sparse, args=args)
+        return self.hamiltonian_submatrix(args, cell_sites, neighbor_sites,
+                                          sparse=sparse)
 
     def modes(self, energy=0, args=()):
         """Return mode decomposition of the lead
@@ -199,13 +199,13 @@ class InfiniteSystem(System):
         See documentation of `~kwant.physics.PropagatingModes` and
         `~kwant.physics.StabilizedModes` for the return format details.
         """
-        ham = self.cell_hamiltonian(args=args)
+        ham = self.cell_hamiltonian(args)
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
-        return physics.modes(ham, self.inter_cell_hopping(args=args))
+        return physics.modes(ham, self.inter_cell_hopping(args))
 
     def selfenergy(self, energy=0, args=()):
         """Return self-energy of a lead.
@@ -214,13 +214,13 @@ class InfiniteSystem(System):
         ``sum(len(self.hamiltonian(i, i)) for i in range(self.graph.num_nodes -
         self.cell_size))``.
         """
-        ham = self.cell_hamiltonian(args=args)
+        ham = self.cell_hamiltonian(args)
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
-        return physics.selfenergy(ham, self.inter_cell_hopping(args=args))
+        return physics.selfenergy(ham, self.inter_cell_hopping(args))
 
 
 class PrecalculatedLead(object):

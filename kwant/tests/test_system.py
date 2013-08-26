@@ -37,10 +37,10 @@ def test_hamiltonian_submatrix():
     mat = mat[:, perm]
     np.testing.assert_array_equal(mat, mat_should_be)
 
-    mat = sys2.hamiltonian_submatrix(perm[[0, 1]], perm[[2]])
+    mat = sys2.hamiltonian_submatrix((), perm[[0, 1]], perm[[2]])
     np.testing.assert_array_equal(mat, mat_should_be[:2, 2:3])
 
-    mat = sys2.hamiltonian_submatrix(perm[[0, 1]], perm[[2]], sparse=True)
+    mat = sys2.hamiltonian_submatrix((), perm[[0, 1]], perm[[2]], sparse=True)
     mat = mat.todense()
     np.testing.assert_array_equal(mat, mat_should_be[:2, 2:3])
 
@@ -67,8 +67,7 @@ def test_hamiltonian_submatrix():
     sys3 = sys2.precalculate(.1, calculate_selfenergy=False)
     smatrix2 = kwant.smatrix(sys3, .1).data
     np.testing.assert_almost_equal(smatrix, smatrix2)
-    assert_raises(ValueError, kwant.solvers.default.greens_function, sys3, 0.2,
-                  None, None)
+    assert_raises(ValueError, kwant.solvers.default.greens_function, sys3, 0.2)
 
     # Test for shape errors.
     sys[gr(0), gr(2)] = np.array([[1, 2]])
@@ -91,7 +90,7 @@ def test_hamiltonian_submatrix():
     sys[(gr(i) for i in xrange(3))] = onsite
     sys[((gr(i), gr(i + 1)) for i in xrange(2))] = hopping
     sys2 = sys.finalized()
-    mat = sys2.hamiltonian_submatrix(args=(2, 1))
+    mat = sys2.hamiltonian_submatrix((2, 1))
     mat_should_be = [[5, 1, 0], [1, 4, 1.], [0, 1, 3]]
 
     # Sorting is required due to unknown compression order of builder.

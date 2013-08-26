@@ -226,21 +226,20 @@ def make_dense_full(ham, args, CGraph gr, diag,
 
 
 @cython.embedsignature(True)
-def hamiltonian_submatrix(self, to_sites=None, from_sites=None,
-                          sparse=False, return_norb=False,
-                          args=()):
+def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
+                          sparse=False, return_norb=False):
     """Return a submatrix of the system Hamiltonian.
 
     Parameters
     ----------
+    args : tuple, defaults to empty
+        Positional arguments to pass to the ``hamiltonian`` method.
     to_sites : sequence of sites or None (default)
     from_sites : sequence of sites or None (default)
     sparse : bool
         Whether to return a sparse or a dense matrix. Defaults to `False`.
     return_norb : bool
         Whether to return arrays of numbers of orbitals.  Defaults to `False`.
-    args : tuple, defaults to empty
-        Positional arguments to pass to the ``hamiltonian`` method.
 
     Returns
     -------
