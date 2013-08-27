@@ -393,7 +393,7 @@ def test_ldos(ldos):
                             np.array([1, 1]) / (2 * np.pi))
     assert_raises(ValueError, ldos, fsys.precalculate(what='selfenergy'), 0)
     fsys.leads[0] = LeadWithOnlySelfEnergy(fsys.leads[0])
-    assert_raises(ValueError, ldos, fsys, 0)
+    assert_raises(NotImplementedError, ldos, fsys, 0)
 
 
 def test_wavefunc_ldos_consistency(wave_function, ldos):

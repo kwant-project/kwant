@@ -460,8 +460,8 @@ class SparseSolver(object):
         for lead in fsys.leads:
             if not hasattr(lead, 'modes'):
                 # TODO: fix this
-                raise ValueError("ldos for leads with only self-energy "
-                                 "is not implemented yet")
+                raise NotImplementedError("ldos for leads with only "
+                                          "self-energy is not implemented yet")
 
         linsys, lead_info = \
             self._make_linear_sys(fsys, xrange(len(fsys.leads)), energy, args)
