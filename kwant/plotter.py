@@ -286,14 +286,14 @@ if mpl_enabled:
                     if (self._facecolors_orig is not None and
                         self._facecolors_orig.shape[0] > 1):
                         shape = list(self._facecolors_orig.shape)
-                        shape[0] = vs.shape[0]
+                        shape[0] = vs.shape[1]
                         super(Path3DCollection, self).set_facecolors(
                             np.resize(self._facecolors_orig, shape)[indx])
 
                     if (self._edgecolors_orig is not None and
                         self._edgecolors_orig.shape[0] > 1):
                         shape = list(self._edgecolors_orig.shape)
-                        shape[0] = vs.shape[0]
+                        shape[0] = vs.shape[1]
                         super(Path3DCollection, self).set_edgecolors(
                                                 np.resize(self._edgecolors_orig,
                                                           shape)[indx])
