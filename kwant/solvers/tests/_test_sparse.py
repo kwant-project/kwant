@@ -95,10 +95,12 @@ def test_one_lead(smatrix):
     system.attach_lead(lead)
     fsys = system.finalized()
 
-    s = smatrix(fsys).data
-    assert_almost_equal(np.dot(s.conjugate().transpose(), s),
-                        np.identity(s.shape[0]))
+    for sys in (fsys, fsys.precalculate(), fsys.precalculate(what='all')):
+        s = smatrix(sys).data
+        assert_almost_equal(np.dot(s.conjugate().transpose(), s),
+                            np.identity(s.shape[0]))
 
+    assert_raises(ValueError, smatrix, fsys.precalculate(what='selfenergy'))
 
 # Test that a system with one lead with no propagating modes has a
 # 0x0 S-matrix.
@@ -145,7 +147,7 @@ def test_smatrix_shape(smatrix):
 # Test that a translationally invariant system with two leads has only
 # transmission and that transmission does not mix modes.
 def test_two_equal_leads(smatrix):
-    def check_fsys():
+    def check_fsys(fsys):
         sol = smatrix(fsys)
         s, leads = sol.data, sol.lead_info
         assert_almost_equal(np.dot(s.conjugate().transpose(), s),
@@ -170,7 +172,9 @@ def test_two_equal_leads(smatrix):
     system.attach_lead(lead)
     system.attach_lead(lead.reversed())
     fsys = system.finalized()
-    check_fsys()
+    for sys in (fsys, fsys.precalculate(), fsys.precalculate(what='all')):
+        check_fsys(sys)
+    assert_raises(ValueError, check_fsys, fsys.precalculate(what='selfenergy'))
 
     # Test the same, but with a larger scattering region.
     system = kwant.Builder()
@@ -179,7 +183,9 @@ def test_two_equal_leads(smatrix):
     system.attach_lead(lead)
     system.attach_lead(lead.reversed())
     fsys = system.finalized()
-    check_fsys()
+    for sys in (fsys, fsys.precalculate(), fsys.precalculate(what='all')):
+        check_fsys(sys)
+    assert_raises(ValueError, check_fsys, fsys.precalculate(what='selfenergy'))
 
 
 # Test a more complicated graph with non-singular hopping.
@@ -303,28 +309,30 @@ def test_selfenergy(greens_function, smatrix):
     eig_should_be = np.linalg.eigvals(t * t.conjugate().transpose())
     n_eig = len(eig_should_be)
 
+    def check_fsys(fsys):
+        sol = greens_function(fsys, 0, (), [1], [0])
+        ttdagnew = sol._a_ttdagger_a_inv(1, 0)
+        eig_are = np.linalg.eigvals(ttdagnew)
+        t_should_be = np.sum(eig_are)
+        assert_almost_equal(eig_are.imag, 0)
+        assert_almost_equal(np.sort(eig_are.real)[-n_eig:],
+                            np.sort(eig_should_be.real))
+        assert_almost_equal(t_should_be, sol.transmission(1, 0))
+
     fsys.leads[1] = LeadWithOnlySelfEnergy(fsys.leads[1])
-    sol = greens_function(fsys, 0, (), [1], [0])
-    ttdagnew = sol._a_ttdagger_a_inv(1, 0)
-    eig_are = np.linalg.eigvals(ttdagnew)
-    t_should_be = np.sum(eig_are)
-    assert_almost_equal(eig_are.imag, 0)
-    assert_almost_equal(np.sort(eig_are.real)[-n_eig:],
-                        np.sort(eig_should_be.real))
-    assert_almost_equal(t_should_be, sol.transmission(1, 0))
+    check_fsys(fsys)
 
     fsys.leads[0] = LeadWithOnlySelfEnergy(fsys.leads[0])
-    sol = greens_function(fsys, 0, (), [1], [0])
-    ttdagnew = sol._a_ttdagger_a_inv(1, 0)
-    eig_are = np.linalg.eigvals(ttdagnew)
-    t_should_be = np.sum(eig_are)
-    assert_almost_equal(eig_are.imag, 0)
-    assert_almost_equal(np.sort(eig_are.real)[-n_eig :],
-                        np.sort(eig_should_be.real))
-    assert_almost_equal(t_should_be, sol.transmission(1, 0))
+    check_fsys(fsys)
+
+    fsys = system.finalized()
+    for sys in (fsys, fsys.precalculate(what='selfenergy'),
+                fsys.precalculate(what='all')):
+        check_fsys(sys)
+    assert_raises(ValueError, check_fsys, fsys.precalculate(what='modes'))
 
 
-def test_selfenergy_reflection(smatrix):
+def test_selfenergy_reflection(greens_function, smatrix):
     np.random.seed(4)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
@@ -342,9 +350,16 @@ def test_selfenergy_reflection(smatrix):
     t = smatrix(fsys, 0, (), [0], [0])
 
     fsys.leads[0] = LeadWithOnlySelfEnergy(fsys.leads[0])
-    sol = smatrix(fsys, 0, (), [0], [0])
-
+    sol = greens_function(fsys, 0, (), [0], [0])
     assert_almost_equal(sol.transmission(0,0), t.transmission(0,0))
+
+    fsys = system.finalized()
+    for sys in (fsys.precalculate(what='selfenergy'),
+                fsys.precalculate(what='all')):
+        sol = greens_function(fsys, 0, (), [0], [0])
+        assert_almost_equal(sol.transmission(0,0), t.transmission(0,0))
+    assert_raises(ValueError, greens_function, fsys.precalculate(what='modes'),
+                  0, (), [0], [0])
 
 
 def test_very_singular_leads(smatrix):
@@ -371,8 +386,14 @@ def test_ldos(ldos):
     sys.attach_lead(lead)
     sys.attach_lead(lead.reversed())
     fsys = sys.finalized()
-    assert_almost_equal(ldos(fsys, 0),
-                        np.array([1, 1]) / (2 * np.pi))
+
+    for finsys in (fsys, fsys.precalculate(what='modes'),
+                   fsys.precalculate(what='all')):
+        assert_almost_equal(ldos(finsys, 0),
+                            np.array([1, 1]) / (2 * np.pi))
+    assert_raises(ValueError, ldos, fsys.precalculate(what='selfenergy'), 0)
+    fsys.leads[0] = LeadWithOnlySelfEnergy(fsys.leads[0])
+    assert_raises(ValueError, ldos, fsys, 0)
 
 
 def test_wavefunc_ldos_consistency(wave_function, ldos):
@@ -398,13 +419,21 @@ def test_wavefunc_ldos_consistency(wave_function, ldos):
     sys.attach_lead(top_lead)
     sys = sys.finalized()
 
-    for energy in [0, 1000]:
-        wf = wave_function(sys, energy)
-        ldos2 = np.zeros(wf.num_orb, float)
-        for lead in xrange(len(sys.leads)):
-            temp = abs(wf(lead))
-            temp **= 2
-            ldos2 += temp.sum(axis=0)
-        ldos2 *= (0.5 / np.pi)
+    def check(sys):
+        for energy in [0, 1000]:
+            wf = wave_function(sys, energy)
+            ldos2 = np.zeros(wf.num_orb, float)
+            for lead in xrange(len(sys.leads)):
+                temp = abs(wf(lead))
+                temp **= 2
+                ldos2 += temp.sum(axis=0)
+            ldos2 *= (0.5 / np.pi)
 
-        assert_almost_equal(ldos2, ldos(sys, energy))
+            assert_almost_equal(ldos2, ldos(sys, energy))
+
+    for fsys in (sys, sys.precalculate(what='modes'),
+                 sys.precalculate(what='all')):
+        check(fsys)
+    assert_raises(ValueError, check, sys.precalculate(what='selfenergy'))
+    sys.leads[0] = LeadWithOnlySelfEnergy(sys.leads[0])
+    assert_raises(NotImplementedError, check, sys)

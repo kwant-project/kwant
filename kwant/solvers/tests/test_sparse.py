@@ -44,7 +44,7 @@ def test_selfenergy():
 
 
 def test_selfenergy_reflection():
-    _test_sparse.test_selfenergy_reflection(greens_function)
+    _test_sparse.test_selfenergy_reflection(greens_function, smatrix)
 
 
 def test_very_singular_leads():

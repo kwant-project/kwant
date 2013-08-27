@@ -93,7 +93,7 @@ def test_selfenergy_reflection():
     for opts in opt_list:
         reset_options()
         options(**opts)
-        _test_sparse.test_selfenergy_reflection(greens_function)
+        _test_sparse.test_selfenergy_reflection(greens_function, smatrix)
 
 
 @skipif(_no_mumps)
