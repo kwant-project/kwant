@@ -458,10 +458,10 @@ class SparseSolver(object):
             Local density of states at each orbital of the system.
         """
         for lead in fsys.leads:
-            if not isinstance(lead, system.InfiniteSystem):
+            if not hasattr(lead, 'modes'):
                 # TODO: fix this
-                raise ValueError("ldos only works when all leads are "
-                                 "tight binding systems.")
+                raise ValueError("ldos for leads with only self-energy "
+                                 "is not implemented yet")
 
         linsys, lead_info = \
             self._make_linear_sys(fsys, xrange(len(fsys.leads)), energy, args)
