@@ -83,7 +83,7 @@ class FiniteSystem(System):
     __metaclass__ = abc.ABCMeta
 
     def precalculate(self, energy=0, args=(), leads=None,
-                     calculate_selfenergy=True):
+                     what='modes'):
         """
         Precalculate modes or self-energies in the leads.
 
@@ -101,10 +101,9 @@ class FiniteSystem(System):
         leads : list of integers or None
             Numbers of the leads to be precalculated. If `None`, all are
             precalculated.
-        calculate_selfenergy : bool
-            Whether to calculate self-energy if modes are available.  Defaults
-            to `False`.  Disabling this saves a typically negligible amount of
-            time and memory.
+        what : 'modes', 'selfenergy', 'all'
+            The quantitity to precompute. 'all' will compute both
+            modes and self-energies. Defaults to 'modes'.
 
         Returns
         -------
@@ -117,6 +116,11 @@ class FiniteSystem(System):
         they might give wrong results if used to solve the system with
         different parameter values. Use this function with caution.
         """
+
+        if what not in ('modes', 'selfenergy', 'all'):
+            raise ValueError("Invalid value of argument 'what': "
+                             "{0}".format(what))
+
         result = copy(self)
         if leads is None:
             leads = range(len(self.leads))
@@ -126,12 +130,13 @@ class FiniteSystem(System):
                 new_leads.append(lead)
                 continue
             modes, selfenergy = None, None
-            try:
+            if what in ('modes', 'all'):
                 modes = lead.modes(energy, args)
-                if calculate_selfenergy:
-                    selfenergy = modes[1].selfenergy()
-            except AttributeError:
-                selfenergy = lead.selfenergy(energy, args)
+            if what in ('selfenergy', 'all'):
+                if modes:
+                     selfenergy = modes[1].selfenergy()
+                else:
+                    selfenergy = lead.selfenergy(energy, args)
             new_leads.append(PrecalculatedLead(modes, selfenergy))
         result.leads = new_leads
         return result
@@ -247,10 +252,14 @@ class PrecalculatedLead(object):
         if self._modes is not None:
             return self._modes
         else:
-            raise ValueError("No precalculated modes were provided.")
+            raise ValueError("No precalculated modes were provided. "
+                             "Consider using precalculate() with "
+                             "what='modes' or what='all'")
 
     def selfenergy(self, energy=0, args=()):
         if self._selfenergy is not None:
             return self._selfenergy
         else:
-            raise ValueError("No precalculated self-energy was provided.")
+            raise ValueError("No precalculated selfenergy was provided. "
+                             "Consider using precalculate() with "
+                             "what='selfenergy' or what='all'")

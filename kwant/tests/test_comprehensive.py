@@ -50,7 +50,7 @@ def test_qhe(W=16, L=8):
                                        ((5.2, 5.5), 3, 1e-1)]:
         for r_phi in r_phis:
             args = (1.0 / r_phi, "")
-            pc = sys.precalculate(1.0, args)
+            pc = sys.precalculate(1.0, args, what='all')
             for result in [kwant.smatrix(pc, 1, args),
                            kwant.solvers.default.greens_function(pc, 1, args)]:
                 assert abs(T_nominal - result.transmission(1, 0)) < max_err
