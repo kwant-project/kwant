@@ -9,7 +9,7 @@
 import numpy as np
 from scipy import stats
 from nose.tools import assert_raises
-from kwant.contrib import rmt
+from kwant import rmt
 assert_allclose = np.testing.assert_allclose
 
 

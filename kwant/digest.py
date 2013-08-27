@@ -25,7 +25,7 @@ from math import pi, log, sqrt, sin, cos
 from hashlib import md5
 from struct import unpack
 
-__all__ = ['digest', 'gauss', 'test']
+__all__ = ['uniform', 'gauss', 'test']
 
 
 TWOPI = 2 * pi
@@ -34,7 +34,7 @@ BPF_MASK = 2**53 - 1
 RECIP_BPF = 2**-BPF
 
 
-def digest2(input, salt=''):
+def uniform2(input, salt=''):
     """Return two independent [0,1)-distributed numbers."""
     input = memoryview(input).tobytes() + salt
     a, b = unpack('qq', md5(input).digest())
@@ -43,13 +43,13 @@ def digest2(input, salt=''):
     return a * RECIP_BPF, b * RECIP_BPF
 
 
-def digest(input, salt=''):
+def uniform(input, salt=''):
     """md5-hash `input` and `salt` and map the result to the [0,1) interval.
 
     `input` must be some object that supports the buffer protocol (i.e. a string
     or a numpy/tinyarray array).  `salt` must be a string or a bytes object.
     """
-    return digest2(input, salt)[0]
+    return uniform2(input, salt)[0]
 
 
 def gauss(input, salt=''):
@@ -61,12 +61,12 @@ def gauss(input, salt=''):
     """
     # This uses the Box-Muller transform.  Only one of the two results is
     # computed.
-    a, b = digest2(input, salt)
+    a, b = uniform2(input, salt)
     return cos(a * TWOPI) * sqrt(-2.0 * log(1.0 - b))
 
 
 def test(n=20000):
-    """Test func with the dieharder suite generating n**2 samples.
+    """Test the generator with the dieharder suite generating n**2 samples.
 
     Executing this function may take a very long time.
     """
@@ -81,7 +81,7 @@ def test(n=20000):
         for x in xrange(n):
             for y in xrange(n):
                 a = array((x, y))
-                i = int(2**32 * digest(a))
+                i = int(2**32 * uniform(a))
                 f.write(pack('I', i))
         f.close()
         subprocess.call(['dieharder', '-a', '-g', '201', '-f', f.name])

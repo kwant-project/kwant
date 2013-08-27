@@ -6,7 +6,8 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['system', 'version', 'builder', 'lattice', 'solvers']
+__all__ = ['system', 'version', 'builder', 'lattice', 'solvers',
+           'digest', 'rmt']
 for module in __all__:
     exec 'from . import {0}'.format(module)
 

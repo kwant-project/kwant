@@ -17,26 +17,9 @@ that have developed it <authors>`.
    license
    authors
    acknowledgements
-
-.. toctree::
-   :maxdepth: 1
-
    whatsnew/index
    install
-
-.. toctree::
-   :maxdepth: 2
-
    tutorial/index
-
-.. toctree::
-   :maxdepth: 2
-
    reference/index
-
-.. toctree::
-   :maxdepth: 2
-
-   contrib/index
 
 * :ref:`genindex`

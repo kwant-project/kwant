@@ -1,8 +1,8 @@
 Reference guide
 ===============
 
-In the following, all Kwant modules appear in the order of decreasing end-user
-relevance.
+Core modules of Kwant, appearing in the order of decreasing
+end-user relevance.
 
 .. toctree::
    :maxdepth: 1
@@ -14,5 +14,19 @@ relevance.
    kwant.solvers
    kwant.physics
    kwant.system
+
+Miscellaneous modules for special applications.
+
+.. toctree::
+   :maxdepth: 1
+
+   kwant.digest
+   kwant.rmt
+
+Modules mainly for internal use.
+
+.. toctree::
+   :maxdepth: 1
+
    kwant.graph
    kwant.linalg

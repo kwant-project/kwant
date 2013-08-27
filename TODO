@@ -99,7 +99,7 @@ Roughly in order of importance.                                     -*-org-*-
 * Adopt mincut/maxflow algorithm from networkx or python-graph to find the best
   representation of a lead unit cell.
 
-* Speed up kwant.contrib.digest
+* Speed up kwant.digest
   by using SipHash and Ziggurat algorithm in C/Cython
 
 * Improve finding of modes with zero velocity or infinite decay length

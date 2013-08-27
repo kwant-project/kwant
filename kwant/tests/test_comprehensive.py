@@ -1,7 +1,6 @@
 import math
 from cmath import exp
 import kwant
-from kwant.contrib.digest import gauss
 
 
 def hopping(sitei, sitej, phi, salt):
@@ -11,7 +10,7 @@ def hopping(sitei, sitej, phi, salt):
 
 
 def onsite(site, phi, salt):
-    return 0.3 * gauss(repr(site), salt) + 4
+    return 0.3 * kwant.digest.gauss(repr(site), salt) + 4
 
 
 def test_qhe(W=16, L=8):

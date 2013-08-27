@@ -179,10 +179,19 @@ the `lead_info` attribute of `~kwant.solvers.common.SMatrix` contains the
 real space information about the modes in the leads (a list of
 `~kwant.physics.PropagatingModes` objects).
 
-Inclusion of contributed modules
---------------------------------
-Kwant now contains a sub-package :mod:`kwant.contrib` that contains various
-modules that are useful with Kwant but are not considered to be part of it.
+New module for random-access random numbers
+-------------------------------------------
+The module `kwant.digest` provides functions that given some input compute a
+"random" output that depends on the input in a (cryptographically) intractable
+way.  This functionality is useful for introducing disorder, e.g.::
+
+    def onsite(site):
+        return 0.3 * kwant.digest.gauss(repr(site)) + 4
+
+New module for random matrix theory Hamiltonians
+------------------------------------------------
+The module `kwant.rmt` supports the creation of random matrix theory
+Hamiltonians.
 
 Improved plotting functionality
 -------------------------------
