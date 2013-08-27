@@ -772,10 +772,11 @@ def sys_leads_pos(sys, site_lead_nr):
             except IndexError:
                 return (0, 0)
         else:
-            sym = sys.leads[lead_nr].symmetry
             try:
+                sym = sys.leads[lead_nr].symmetry
                 site = sys.site(sys.lead_interfaces[lead_nr][0])
-            except IndexError:
+            except (AttributeError, IndexError):
+                # empty leads, or leads without symmetry aren't drawn anyways
                 return (0, 0)
         dom = sym.which(site)[0] + 1
         # Conversion to numpy array here useful for efficiency
@@ -917,10 +918,11 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
             except IndexError:
                 return (0, 0)
         else:
-            sym = sys.leads[lead_nr].symmetry
             try:
+                sym = sys.leads[lead_nr].symmetry
                 site = sys.site(sys.lead_interfaces[lead_nr][0])
-            except IndexError:
+            except (AttributeError, IndexError):
+                # empyt leads or leads without symmetry are not drawn anyways
                 return (0, 0)
         dom = sym.which(site)[0] + 1
         vec = np.array(sym.periods)[0]
