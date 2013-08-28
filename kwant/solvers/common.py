@@ -91,7 +91,7 @@ class SparseSolver(object):
         pass
 
     def _make_linear_sys(self, sys, in_leads, energy=0, args=(),
-                         realspace=False, check_hermiticity=True):
+                         check_hermiticity=True, realspace=False):
         """Make a sparse linear system of equations defining a scattering
         problem.
 
@@ -104,14 +104,14 @@ class SparseSolver(object):
             Numbers of leads in which current or wave function is injected.
         energy : number
             Excitation energy at which to solve the scattering problem.
+        args : tuple, defaults to empty
+            Positional arguments to pass to the ``hamiltonian`` method.
+        check_hermiticity : bool
+            Check if Hamiltonian matrices are in fact Hermitian.
         realspace : bool
             Calculate Green's function between the outermost lead
             sites, instead of lead modes. This is almost always
             more computationally expensive and less stable.
-        check_hermiticity : bool
-            Check if Hamiltonian matrices are in fact Hermitian.
-        args : tuple, defaults to empty
-            Positional arguments to pass to the ``hamiltonian`` method.
 
         Returns
         -------
@@ -333,7 +333,7 @@ class SparseSolver(object):
             raise ValueError("No output is requested.")
 
         linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, args,
-                                                  False, check_hermiticity)
+                                                  check_hermiticity, False)
 
         kept_vars = np.concatenate([vars for i, vars in
                                     enumerate(linsys.indices) if i in
@@ -416,7 +416,7 @@ class SparseSolver(object):
             raise ValueError("No output is requested.")
 
         linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, args,
-                                                  True, check_hermiticity)
+                                                  check_hermiticity, True)
 
         kept_vars = np.concatenate([vars for i, vars in
                                     enumerate(linsys.indices) if i in
@@ -437,7 +437,7 @@ class SparseSolver(object):
 
         return GreensFunction(data, lead_info, out_leads, in_leads)
 
-    def ldos(self, fsys, energy=0, args=()):
+    def ldos(self, sys, energy=0, args=(), check_hermiticity=True):
         """
         Calculate the local density of states of a system at a given energy.
 
@@ -451,20 +451,23 @@ class SparseSolver(object):
         args : tuple of arguments, or empty tuple
             Positional arguments to pass to the function(s) which
             evaluate the hamiltonian matrix elements
+        check_hermiticity : ``bool``
+            Check if the Hamiltonian matrices are Hermitian.
 
         Returns
         -------
         ldos : a NumPy array
             Local density of states at each orbital of the system.
         """
-        for lead in fsys.leads:
+        for lead in sys.leads:
             if not hasattr(lead, 'modes'):
                 # TODO: fix this
                 raise NotImplementedError("ldos for leads with only "
                                           "self-energy is not implemented yet")
 
         linsys, lead_info = \
-            self._make_linear_sys(fsys, xrange(len(fsys.leads)), energy, args)
+            self._make_linear_sys(sys, xrange(len(sys.leads)), energy, args,
+                                  check_hermiticity)
 
         ldos = np.zeros(linsys.num_orb, float)
         factored = None
@@ -486,7 +489,7 @@ class SparseSolver(object):
 
         return ldos * (0.5 / np.pi)
 
-    def wave_function(self, sys, energy=0, args=()):
+    def wave_function(self, sys, energy=0, args=(), check_hermiticity=True):
         """
         Return a callable object for the computation of the wave function
         inside the scattering region.
@@ -499,6 +502,8 @@ class SparseSolver(object):
         args : tuple of arguments, or empty tuple
             Positional arguments to pass to the function(s) which
             evaluate the hamiltonian matrix elements
+        check_hermiticity : ``bool``
+            Check if the Hamiltonian matrices are Hermitian.
 
         Notes
         -----
@@ -513,11 +518,11 @@ class SparseSolver(object):
         >>> wf = kwant.solvers.default.wave_function(some_sys, some_energy)
         >>> wfs_of_lead_2 = wf(2)
         """
-        return WaveFunction(self, sys, energy, args)
+        return WaveFunction(self, sys, energy, args, check_hermiticity)
 
 
 class WaveFunction(object):
-    def __init__(self, solver, sys, energy=0, args=()):
+    def __init__(self, solver, sys, energy, args, check_hermiticity):
         for lead in sys.leads:
             if not hasattr(lead, 'modes'):
                 # TODO: figure out what to do with self-energies.
@@ -525,7 +530,8 @@ class WaveFunction(object):
                       ' are not available yet.'
                 raise NotImplementedError(msg)
         linsys, lead_info = \
-            solver._make_linear_sys(sys, xrange(len(sys.leads)), energy, args)
+            solver._make_linear_sys(sys, xrange(len(sys.leads)), energy, args,
+                                    check_hermiticity)
         self.solve = solver._solve_linear_sys
         self.rhs = linsys.rhs
         self.factorized_h = solver._factorized(linsys.lhs)
