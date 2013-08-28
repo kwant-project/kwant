@@ -1,8 +1,7 @@
-Essential modules
-=================
+Core modules
+============
 
-The following modules make up the part of kwant that is most visible to its
-users.
+The following modules of Kwant are used directly most frequently.
 
 .. toctree::
    :maxdepth: 1
@@ -30,8 +29,7 @@ internally by Kwant itself or by advanced users.
 Miscellaneous modules
 =====================
 
-The following modules are not part of the core of Kwant.  They are, however,
-very useful for certain applications.
+The following modules provide functionality for special applications.
 
 .. toctree::
    :maxdepth: 1
