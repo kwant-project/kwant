@@ -150,7 +150,10 @@ class SparseSolver(object):
         num_orb = lhs.shape[0]
 
         if check_hermiticity:
-            if np.any(abs((lhs - lhs.T.conj()).data) > 1e-13):
+            rtol = 1e-13
+            atol = 1e-300
+            tol = rtol * np.max(np.abs(lhs.data)) + atol
+            if np.any(np.abs((lhs - lhs.T.conj()).data) > tol):
                 raise ValueError('System Hamiltonian is not Hermitian. '
                                  'Use option `check_hermiticity=False` '
                                  'if this is intentional.')
