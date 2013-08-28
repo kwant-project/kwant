@@ -233,5 +233,12 @@ class BoundMethodDocumenter(autodoc.FunctionDocumenter):
                 not issubclass(member.im_class, type) and
                 member.im_class is not types.ClassType)
 
+    def format_args(self):
+        args = super(BoundMethodDocumenter, self).format_args()
+        left, sep, right = args.partition('self, ')
+        if left.endswith('('):
+            args = left + right
+        return args
+
 def setup(app):
     app.add_autodocumenter(BoundMethodDocumenter)
