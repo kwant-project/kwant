@@ -71,15 +71,16 @@ if mpl_enabled:
             self._linewidths_orig = nparray_if_array(linewidths)
 
         def draw(self, renderer):
-            linewidths = self._linewidths_orig
             if self.reflen is not None:
                 # Note: only works for aspect ratio 1!
                 #       72.0 - there is 72 points in an inch
                 factor = (self.axes.transData.frozen().to_values()[0] * 72.0 *
                           self.reflen / self.figure.dpi)
-                linewidths *= factor
+            else:
+                factor = 1
 
-            super(LineCollection, self).set_linewidths(linewidths)
+            super(LineCollection, self).set_linewidths(self._linewidths_orig *
+                                                       factor)
             return super(LineCollection, self).draw(renderer)
 
 
@@ -170,7 +171,6 @@ if mpl_enabled:
                 return -self._zorder3d
 
             def draw(self, renderer):
-                linewidths = self._linewidths_orig
                 if self.reflen:
                     proj_len = projected_length(self.axes, self.reflen)
                     args = self.axes.transData.frozen().to_values()
@@ -181,9 +181,11 @@ if mpl_enabled:
                     #       transformation.
                     factor = proj_len * (args[0] +
                                          args[3]) * 0.5 * 72.0 / self.figure.dpi
-                    linewidths *= factor
+                else:
+                    factor = 1
 
-                super(Line3DCollection, self).set_linewidths(linewidths)
+                super(Line3DCollection, self).set_linewidths(
+                                                self._linewidths_orig * factor)
                 super(Line3DCollection, self).draw(renderer)
 
 
