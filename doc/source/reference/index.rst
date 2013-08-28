@@ -1,8 +1,8 @@
-Reference guide
-===============
+Essential modules
+=================
 
-Core modules of Kwant, appearing in the order of decreasing
-end-user relevance.
+The following modules make up the part of kwant that is most visible to its
+users.
 
 .. toctree::
    :maxdepth: 1
@@ -13,20 +13,28 @@ end-user relevance.
    kwant.plotter
    kwant.solvers
    kwant.physics
-   kwant.system
 
-Miscellaneous modules for special applications.
+Modules mainly for internal use
+===============================
+
+The following modules contain functionality that is most often used only
+internally by Kwant itself or by advanced users.
+
+.. toctree::
+   :maxdepth: 1
+
+   kwant.system
+   kwant.graph
+   kwant.linalg
+
+Miscellaneous modules
+=====================
+
+The following modules are not part of the core of Kwant.  They are, however,
+very useful for certain applications.
 
 .. toctree::
    :maxdepth: 1
 
    kwant.digest
    kwant.rmt
-
-Modules mainly for internal use.
-
-.. toctree::
-   :maxdepth: 1
-
-   kwant.graph
-   kwant.linalg

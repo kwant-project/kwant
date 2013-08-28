@@ -7,10 +7,10 @@ Overview
 Kwant offers several modules for computing the solutions to quantum transport
 problems, the so-called solvers. Each of these solvers may use different
 internal algorithms and/or depend on different external libraries.  If the
-libraries needed by one solver are not installed, trying to import it will
-raise an ``ImportError`` exception.  The :doc:`Installation instructions
-<../install>` list all the libraries that are required or can be used by Kwant
-and its solvers.
+libraries needed by one solver are not installed, trying to import it will raise
+an ``ImportError`` exception.  The :doc:`Installation instructions
+<../pre/install>` list all the libraries that are required or can be used by
+Kwant and its solvers.
 
 
 :mod:`kwant.solvers.default` -- The default solver
@@ -68,7 +68,7 @@ default solver are listed in the documentation of each module.
    kwant.solvers.sparse
    kwant.solvers.mumps
 
-For Kwant-experts: detail of the internal structure of a solver
+For Kwant experts: detail of the internal structure of a solver
 ---------------------------------------------------------------
 
 Each solver module (except the default one) contains a class ``Solver`` (e.g.

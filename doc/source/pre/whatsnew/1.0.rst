@@ -80,7 +80,7 @@ actually different lattices. This often led to confusions in more convoluted
 use cases, so this behavior was changed. Now two site families created with the
 same parameters are actually indistinguishable by Kwant. If it is desired to
 make two site families which have the same geometry, but mean different things,
-as for instance in :doc:`../tutorial/tutorial5`, then the `name` argument has
+as for instance in :doc:`../../tutorial/tutorial5`, then the `name` argument has
 to be used when creating a lattice, e.g. `a = kwant.lattice.square(name='a');
 b = kwant.lattice.square(name='b')`.
 

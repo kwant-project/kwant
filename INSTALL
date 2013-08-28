@@ -1,6 +1,6 @@
-================
-Installing Kwant
-================
+=========================
+Installation instructions
+=========================
 
 Kwant can be installed either using some prepared packages (on Linux, Mac OSX,
 and Windows), or it can be built and installed from source.
@@ -11,9 +11,9 @@ will also allow them to customize Kwant to use certain optimized versions of
 libraries.
 
 
-******************************
-Installing Kwant from packages
-******************************
+************************
+Installing from packages
+************************
 
 Mac OSX
 =======
@@ -157,9 +157,9 @@ Notes
   though.
 
 
-*****************************************
-Building and installing Kwant from source
-*****************************************
+***********************************
+Building and installing from source
+***********************************
 
 Prerequisites
 =============

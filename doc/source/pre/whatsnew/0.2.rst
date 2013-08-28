@@ -28,7 +28,7 @@ the same time it is able to take advantage of more than 2 GiB of RAM.
 
 New tutorial dealing with superconductivity
 -------------------------------------------
-:doc:`../tutorial/tutorial5`
+:doc:`../../tutorial/tutorial5`
 
 New `~kwant.plotter` module
 ---------------------------
@@ -71,7 +71,7 @@ Band structure functionality has been moved
 The functionality that used to be provided by the method ``energies`` of
 `kwant.system.InfiniteSystem` has been moved to the `kwant.physics` package.
 See the documentation of `kwant.physics.Bands` and
-:doc:`../tutorial/tutorial3`.
+:doc:`../../tutorial/tutorial3`.
 
 Calculation of the local density of states
 ------------------------------------------
