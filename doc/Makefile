@@ -120,7 +120,7 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 %.pdf: %.svg
-	inkscape --export-pdf=$@ $<
+	rsvg-convert -f pdf -o $@ $<
 
 # Make the image generation scripts by patching tutorial scipts.
 .SECONDARY:
