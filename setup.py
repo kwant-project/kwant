@@ -424,8 +424,8 @@ def main():
 
     setup(name='kwant',
           version=version(),
-          author='kwant authors',
-          author_email='christoph.groth@cea.fr',
+          author='C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, et al.',
+          author_email='authors@kwant-project.org',
           description="A package for numerical quantum transport calculations.",
           long_description=long_description(),
           platforms=["Unix", "Linux", "Mac OS-X", "Windows"],
