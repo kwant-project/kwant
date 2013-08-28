@@ -1,6 +1,6 @@
-===================
-Kwant documentation
-===================
+=============================
+Kwant |release| documentation
+=============================
 
 .. toctree::
    :maxdepth: 2

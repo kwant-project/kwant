@@ -46,7 +46,7 @@ copyright = u'2011-2013, C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, and
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = kwant.version.version[:]
+release = kwant.__version__
 
 for i, s in enumerate(release):
     if s not in '0123456790.':
@@ -175,17 +175,29 @@ htmlhelp_basename = 'kwantdoc'
 
 # -- Options for LaTeX output --------------------------------------------------
 
-# The paper size ('letter' or 'a4').
-latex_paper_size = 'a4'
-
-# The font size ('10pt', '11pt' or '12pt').
-#latex_font_size = '10pt'
+# http://thread.gmane.org/gmane.comp.python.sphinx.devel/4220/focus=4238
+latex_elements = {'papersize': 'a4paper',
+                  'release': '',
+                  'releasename': '',
+                  'preamble':
+r"""\makeatletter
+  \fancypagestyle{normal}{
+    \fancyhf{}
+    \fancyfoot[LE,RO]{{\py@HeaderFamily\thepage}}
+    \fancyfoot[LO]{{\py@HeaderFamily\nouppercase{\rightmark}}}
+    \fancyfoot[RE]{{\py@HeaderFamily\nouppercase{\leftmark}}}
+    \fancyhead[LE,RO]{{\py@HeaderFamily \@title}}
+    \renewcommand{\headrulewidth}{0.4pt}
+    \renewcommand{\footrulewidth}{0.4pt}
+  }
+\makeatother
+"""}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 # We use "et al." as it is shorter and there's not much space left horizontally.
 latex_documents = [
-  ('index', 'kwant.tex', u'Kwant Documentation',
+  ('index', 'kwant.tex', 'Kwant {0} documentation'.format(release),
    u'C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, et al.',
    'manual'),
 ]
@@ -197,9 +209,6 @@ latex_documents = [
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
 #latex_use_parts = False
-
-# Additional stuff for the LaTeX preamble.
-#latex_preamble = ''
 
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []
