@@ -14,6 +14,7 @@ From `kwant.builder`
 .. autosummary::
 
    Builder
+   HoppingKind
 
 .. currentmodule:: kwant.lattice
 
@@ -34,8 +35,11 @@ From `kwant.plotter`
 
 .. currentmodule:: kwant.solvers.default
 
-From ``kwant.solvers.default``
-------------------------------
+From `kwant.solvers.default`
+----------------------------
 .. autosummary::
 
+   greens_function
+   ldos
    smatrix
+   wave_function

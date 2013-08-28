@@ -13,15 +13,14 @@ for module in __all__:
 
 from .version import version as __version__
 
-from .builder import Builder
-__all__.append('Builder')
-
-from .lattice import TranslationalSymmetry
-__all__.append('TranslationalSymmetry')
-
-# Make kwant.solvers.default.smatrix available as kwant.smatrix.
-smatrix = solvers.default.smatrix
-__all__.append('smatrix')
+# Make selected functionality available directly in the root namespace.
+available = [('builder', ['Builder', 'HoppingKind']),
+             ('lattice', ['TranslationalSymmetry']),
+             ('solvers.default',
+              ['smatrix', 'greens_function', 'ldos', 'wave_function'])]
+for module, names in available:
+    exec 'from .{0} import {1}'.format(module, ', '.join(names))
+    __all__.extend(names)
 
 # Importing plotter might not work, but this does not have to be a problem --
 # only no plotting will be available.
