@@ -459,11 +459,15 @@ class SparseSolver(object):
         ldos : a NumPy array
             Local density of states at each orbital of the system.
         """
+        if not check_hermiticity:
+            raise NotImplementedError("ldos for non-Hermitian Hamiltonians "
+                                      "is not implemented yet.")
+
         for lead in sys.leads:
             if not hasattr(lead, 'modes'):
                 # TODO: fix this
                 raise NotImplementedError("ldos for leads with only "
-                                          "self-energy is not implemented yet")
+                                          "self-energy is not implemented yet.")
 
         linsys, lead_info = \
             self._make_linear_sys(sys, xrange(len(sys.leads)), energy, args,
