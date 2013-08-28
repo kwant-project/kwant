@@ -12,7 +12,6 @@ from collections import namedtuple
 import abc
 import numpy as np
 import scipy.sparse as sp
-from .. import physics, system
 
 # Currently, scipy.sparse does not support matrices with one dimension being
 # zero: http://projects.scipy.org/scipy/ticket/1602 We use NumPy dense matrices
