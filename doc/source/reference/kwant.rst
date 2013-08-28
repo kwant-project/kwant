@@ -43,3 +43,7 @@ From `kwant.solvers.default`
    ldos
    smatrix
    wave_function
+
+Version information
+-------------------
+The version of Kwant is available under the name ``__version__``.
