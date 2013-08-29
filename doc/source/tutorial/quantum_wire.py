@@ -34,13 +34,14 @@ L = 30
 
 for i in xrange(L):
     for j in xrange(W):
+        # On-site Hamiltonian
         sys[lat(i, j)] = 4 * t
 
-        # hoppig in y-direction
+        # Hopping in y-direction
         if j > 0:
             sys[lat(i, j), lat(i, j - 1)] = -t
 
-        #hopping in x-direction
+        # Hopping in x-direction
         if i > 0:
             sys[lat(i, j), lat(i - 1, j)] = -t
 #HIDDEN_END_zfvr

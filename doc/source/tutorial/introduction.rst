@@ -1,6 +1,14 @@
 Introduction
 ============
 
+Quantum transport
+.................
+
+This introduction to the software Kwant is written for people that already have
+some experience with the theory of quantum transport.  Several introductions to
+the field are available, the most widely known is probably the book "Electronic
+transport in mesoscopic systems" by Supriyo Datta.
+
 The Python programming language
 ...............................
 

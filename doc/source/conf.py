@@ -101,6 +101,14 @@ numpydoc_show_class_members = False
 
 # -- Options for HTML output ---------------------------------------------------
 
+# http://stackoverflow.com/questions/9728292/creating-latex-math-macros-within-sphinx
+pngmath_latex_preamble = r"""\newcommand{\bra}[1]{\left\langle#1\right|}
+\newcommand{\ket}[1]{\left|#1\right>}
+\newcommand{\braket}[2]{\left\langle#1|#2\right\rangle}
+\newcommand{\ri}{\text{i}}
+\newcommand{\rd}{\text{d}}
+"""
+
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = 'default'
@@ -195,7 +203,7 @@ r"""\makeatletter
     \renewcommand{\footrulewidth}{0.4pt}
   }
 \makeatother
-"""}
+""" + pngmath_latex_preamble}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).

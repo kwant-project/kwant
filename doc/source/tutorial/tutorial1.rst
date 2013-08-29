@@ -1,18 +1,60 @@
 First steps in Kwant: Setting up a simple system and computing transport
 ------------------------------------------------------------------------
 
-Transport through a quantum wire
-................................
+Discretization of a Schrödinger Hamiltonian
+...........................................
 
-As first example, we compute the transmission probability
-through a two-dimensional quantum wire. For this we use a tight-binding
-model representing the two-dimensional Schroedinger equation
+As first example, we compute the transmission probability through a
+two-dimensional quantum wire.  The wire is governed by the two-dimensional
+Schrödinger equation
 
 .. math::
+    H = \frac{-\hbar^2}{2m}(\partial_x^2 + \partial_y^2) + V(y)
 
-    H = \frac{-\hbar^2}{2 m} (\partial_x^2+\partial_y^2) + V(y)
+with a hard-wall confinement :math:`V(y)` in y-direction.
 
-with a hard wall confinement :math:`V(y)` in y-direction.
+To be able to implement the quantum wire with Kwant, the continuous Hamiltonian
+:math:`H` has to be discretized thus turning it into a tight-binding
+model.  For simplicity, we discretize :math:`H` on the sites of a square
+lattice with lattice constant :math:`a`.  Each site with the integer
+lattice coordinates :math:`(i, j)` has the real-space coordinates :math:`(x, y)
+= (ai, aj)`.
+
+Introducing the discretized positional states
+
+.. math::
+    \ket{i, j} \equiv \ket{ai, aj} = \ket{x, y}
+
+the second-order differential operators can be expressed in the limit :math:`a
+\to 0` as
+
+.. math::
+    \partial_x^2 = \frac{1}{a^2} \sum_{i, j} \left(\ket{i+1, j}\bra{i, j} +
+    \ket{i, j}\bra{i+1, j} -2 \ket{i, j}\bra{i, j} \right),
+
+and an equivalent expression for :math:`\partial_y^2`.  Subsitituting them in
+the Hamiltonian gives us
+
+.. math::
+    H = \sum_{i,j} \big[ \left(V(ai, aj) + 4t\right)\ket{i,j}\bra{i,j}
+    - t \big( \ket{i+1,j}\bra{i,j} + \ket{i,j}\bra{i+1,j}
+    + \ket{i,j+1}\bra{i,j} + \ket{i,j}\bra{i,j+1} \big) \big]
+
+with
+
+.. math::
+    t = \frac{\hbar^2}{2ma^2}.
+
+For finite :math:`a`, this discretized Hamiltonian approximates the continuous
+one to any required accuracy.  The approximation is good for all quantum states
+with a wave length considerably larger than :math:`a`.
+
+The remainder of this section demonstrates how to realize the discretized
+Hamiltonian in Kwant and how to perform transmission calculations.  For
+simplicity, we choose to work in such units that :math:`t = a = 1`.
+
+Transport through a quantum wire
+................................
 
 In order to use Kwant, we need to import it:
 
@@ -64,6 +106,27 @@ lattice points wide and `L` lattice points long:
 .. literalinclude:: quantum_wire.py
     :start-after: #HIDDEN_BEGIN_zfvr
     :end-before: #HIDDEN_END_zfvr
+
+Observe how the above code corresponds directly to the terms of the discretized
+Hamiltonian:
+"On-site Hamiltonian" implements
+
+.. math::
+    \sum_{i,j} \left(V(ai, aj) + 4t\right)\ket{i,j}\bra{i,j}
+
+(with zero potential).  "Hopping in x-direction" implements
+
+.. math::
+    \sum_{i,j} -t \big( \ket{i+1,j}\bra{i,j} + \ket{i,j}\bra{i+1,j} \big),
+
+and "Hopping in y-direction" implements
+
+.. math::
+    \sum_{i,j} -t \big( \ket{i,j+1}\bra{i,j} + \ket{i,j}\bra{i,j+1} \big).
+
+The hard-wall confinement is realized by not having hoppings (and sites) beyond
+a certain region of space.
+
 
 Next, we define the leads. Leads are also constructed using
 `~kwant.builder.Builder`, but in this case, the
