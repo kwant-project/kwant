@@ -1,13 +1,13 @@
 --- original
 +++ modified
-@@ -16,6 +16,7 @@
+@@ -9,6 +9,7 @@
+ #    example, but in the tutorial main text)
+ #  - Modifcations of hoppings/sites after they have been added
  
- # For plotting
- from matplotlib import pyplot
 +import _defs
+ from cmath import exp
+ from math import pi
  
- 
- def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
 @@ -37,12 +38,13 @@
      sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
      sys[lat.neighbors()] = -t

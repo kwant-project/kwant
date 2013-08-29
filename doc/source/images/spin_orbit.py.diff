@@ -1,13 +1,13 @@
 --- original
 +++ modified
-@@ -17,6 +17,7 @@
+@@ -10,6 +10,7 @@
+ # --------------------------
+ #  - Numpy matrices as values in Builder
  
- # For matrix support
- import tinyarray
 +import _defs
+ import kwant
  
- # define Pauli-matrices for convenience
- sigma_0 = tinyarray.array([[1, 0], [0, 1]])
+ # For plotting
 @@ -67,19 +68,24 @@
          smatrix = kwant.smatrix(sys, energy)
          data.append(smatrix.transmission(1, 0))

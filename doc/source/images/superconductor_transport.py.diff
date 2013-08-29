@@ -1,13 +1,13 @@
 --- original
 +++ modified
-@@ -11,6 +11,7 @@
+@@ -7,6 +7,7 @@
+ # - Implementing electron and hole ("orbital") degrees of freedom
+ #   using different lattices
+ 
++import _defs
+ import kwant
  
  # For plotting
- from matplotlib import pyplot
-+import _defs
- 
- 
- def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
 @@ -82,19 +83,24 @@
                      smatrix.transmission(0, 0) +
                      smatrix.transmission(1, 0))

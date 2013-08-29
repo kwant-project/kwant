@@ -1,13 +1,13 @@
 --- original
 +++ modified
-@@ -17,6 +17,7 @@
+@@ -8,6 +8,7 @@
+ #  - Use of `hamiltonian_submatrix` in order to obtain a Hamiltonian
+ #    matrix.
  
- # For plotting
- from matplotlib import pyplot
 +import _defs
- 
- 
- def make_system(a=1, t=1.0, r=10):
+ from cmath import exp
+ import numpy as np
+ import kwant
 @@ -65,29 +66,39 @@
  
          energies.append(ev)

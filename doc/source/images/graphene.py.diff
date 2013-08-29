@@ -1,13 +1,13 @@
 --- original
 +++ modified
-@@ -17,6 +17,7 @@
+@@ -8,6 +8,7 @@
+ #    lattice, namely graphene
  
- # For plotting
- from matplotlib import pyplot
+ from __future__ import division  # so that 1/2 == 0.5, and not 0
 +import _defs
+ from math import pi, sqrt, tanh
  
- 
- # Define the graphene lattice
+ import kwant
 @@ -100,22 +101,40 @@
          smatrix = kwant.smatrix(sys, energy)
          data.append(smatrix.transmission(0, 1))

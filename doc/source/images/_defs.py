@@ -1,3 +1,14 @@
+################################################################
+# Prepend Kwant's build directory to sys.path
+################################################################
+import sys
+from distutils.util import get_platform
+sys.path.insert(0, "../../../build/lib.{0}-{1}.{2}".format(
+        get_platform(), *sys.version_info[:2]))
+
+################################################################
+# Define constants for plotting
+################################################################
 pt_to_in = 1. / 72.
 
 # Default width of figures in pts

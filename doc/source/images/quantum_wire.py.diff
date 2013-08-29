@@ -1,12 +1,12 @@
 --- original
 +++ modified
-@@ -10,6 +10,7 @@
+@@ -8,6 +8,7 @@
+ #  - Making scattering region and leads
+ #  - Using the simple sparse solver for computing Landauer conductance
  
++import _defs
  from matplotlib import pyplot
  import kwant
-+import _defs
- 
- # First, define the tight-binding system
  
 @@ -65,7 +66,10 @@
  sys.attach_lead(right_lead)

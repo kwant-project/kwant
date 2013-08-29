@@ -1,13 +1,13 @@
 --- original
 +++ modified
-@@ -17,6 +17,7 @@
+@@ -10,6 +10,7 @@
+ #  - Main motivation is to contrast to the implementation of superconductivity
+ #    in tutorial5b.py
  
- # For plotting
- from matplotlib import pyplot
 +import _defs
+ import kwant
  
- tau_x = tinyarray.array([[0, 1], [1, 0]])
- tau_z = tinyarray.array([[1, 0], [0, -1]])
+ import numpy as np
 @@ -46,11 +47,20 @@
      # Make system and finalize it right away.
      lead = make_lead().finalized()

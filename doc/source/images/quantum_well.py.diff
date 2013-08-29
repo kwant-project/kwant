@@ -1,13 +1,13 @@
 --- original
 +++ modified
-@@ -10,6 +10,7 @@
+@@ -6,6 +6,7 @@
+ # --------------------------
+ #  - Functions as values in Builder
+ 
++import _defs
+ import kwant
  
  # For plotting
- from matplotlib import pyplot
-+import _defs
- 
- 
- def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
 @@ -52,19 +53,25 @@
          smatrix = kwant.smatrix(sys, energy, args=[-welldepth])
          data.append(smatrix.transmission(1, 0))
