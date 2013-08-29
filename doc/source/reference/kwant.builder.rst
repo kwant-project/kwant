@@ -13,7 +13,7 @@ Types
    HoppingKind
    SimpleSiteFamily
    BuilderLead
-   SelfEnergy
+   SelfEnergyLead
    ModesLead
 
 Abstract base classes

@@ -9,7 +9,7 @@
 from __future__ import division
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
-           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergy', 'ModesLead']
+           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergyLead', 'ModesLead']
 
 import abc
 import sys
@@ -443,7 +443,7 @@ class BuilderLead(Lead):
         return self.builder._finalized_infinite(self.interface)
 
 
-class SelfEnergy(Lead):
+class SelfEnergyLead(Lead):
     """A general lead defined by its self energy.
 
     Parameters
