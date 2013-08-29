@@ -10,7 +10,7 @@ from __future__ import division
 import warnings
 from random import Random
 from nose.tools import assert_raises
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_almost_equal
 import tinyarray as ta
 import kwant
 from kwant import builder
@@ -558,3 +558,52 @@ def test_HoppingKind():
             assert b.family == gb
             assert sym.to_fd(a) == a
             assert_equal(a.tag - b.tag, delta)
+
+
+def test_ModesLead_and_SelfEnergyLead():
+    lat = builder.SimpleSiteFamily()
+    hoppings = [builder.HoppingKind((1, 0), lat),
+                builder.HoppingKind((0, 1), lat)]
+    rng = Random(123)
+    L = 5
+    t = 1
+    energies = [0.9, 1.7]
+
+    sys = builder.Builder()
+    for x in xrange(L):
+        for y in xrange(L):
+            sys[lat(x, y)] = 4 * t + rng.random() - 0.5
+    sys[hoppings] = -t
+
+    # Attach a lead from the left.
+    lead = builder.Builder(VerySimpleSymmetry(-1))
+    for y in xrange(L):
+        lead[lat(0, y)] = 4 * t
+    lead[hoppings] = -t
+    sys.attach_lead(lead)
+
+    # Make the right lead and attach it.
+    lead = builder.Builder(VerySimpleSymmetry(1))
+    for y in xrange(L):
+        lead[lat(0, y)] = 4 * t
+    lead[hoppings] = -t
+    sys.attach_lead(lead)
+
+    fsys = sys.finalized()
+    ts = [kwant.smatrix(fsys, e).transmission(1, 0) for e in energies]
+
+    # Replace lead with it's finalized copy.
+    lead = fsys.leads[1]
+    interface = [lat(L-1, lead.site(i).tag[1]) for i in xrange(L)]
+
+    # Re-attach right lead as ModesLead.
+    sys.leads[1] = builder.ModesLead(lead.modes, interface)
+    fsys = sys.finalized()
+    ts2 = [kwant.smatrix(fsys, e).transmission(1, 0) for e in energies]
+    assert_almost_equal(ts2, ts)
+
+    # Re-attach right lead as SelfEnergyLead.
+    sys.leads[1] = builder.SelfEnergyLead(lead.selfenergy, interface)
+    fsys = sys.finalized()
+    ts2 = [kwant.greens_function(fsys, e).transmission(1, 0) for e in energies]
+    assert_almost_equal(ts2, ts)
