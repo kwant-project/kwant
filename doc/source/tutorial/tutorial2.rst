@@ -13,7 +13,7 @@ an external magnetic field:
 
 .. math::
 
-    H = \frac{\hbar^2}{2 m} (\partial_x^2+\partial_y^2) -
+    H = \frac{-\hbar^2}{2 m} (\partial_x^2+\partial_y^2) -
       i \alpha (\partial_x \sigma_y - \partial_y \sigma_x) +
       E_\text{Z} \sigma_z +  V(y)
 
