@@ -558,7 +558,7 @@ class TranslationalSymmetry(builder.Symmetry):
 
         det_m = int(round(np.linalg.det(m)))
         if det_m == 0:
-            raise ValueError('Singular symmetry matrix.')
+            raise RuntimeError('Adding site group failed.')
 
         det_x_inv_m = \
             np.array(np.round(det_m * np.linalg.inv(m)), dtype=int)
