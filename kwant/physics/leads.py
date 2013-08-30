@@ -403,8 +403,6 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6):
     """
     vel_eps = np.finfo(psi.dtype).eps * tol
 
-    # h_hop is either the full hopping matrix, or the singular
-    # values vector of the svd.
     nmodes = psi.shape[1]
     n = len(psi) // 2
 
