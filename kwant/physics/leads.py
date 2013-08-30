@@ -231,7 +231,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
 
         matrices_real = issubclass(np.common_type(h_cell, h_hop), np.floating)
         add_imaginary = stabilization[0] or ((stabilization[0] is None) and
-                                             matrices_real)
+                                             not matrices_real)
         # Check if there is a chance we will not need to add an imaginary term.
         if not add_imaginary:
             h = h_cell
