@@ -498,9 +498,10 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6):
         raise RuntimeError("Numbers of left- and right-propagating "
                            "modes differ, possibly due to a numerical "
                            "instability.")
-    momenta = np.angle(lmbdainv)
-    order = np.lexsort([np.sign(velocities), -np.sign(velocities) * momenta,
-                        velocities])
+    momenta = -np.angle(lmbdainv)
+    order = np.lexsort([velocities, -np.sign(velocities) * momenta,
+                        np.sign(velocities)])
+
     # The following is necessary due to wrong numpy handling of zero length
     # arrays, which is going to be fixed in numpy 1.8.
     if not len(order):

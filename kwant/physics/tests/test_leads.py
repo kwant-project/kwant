@@ -226,7 +226,7 @@ def test_modes():
     assert stab.nmodes == 1
     assert stab.sqrt_hop is None
     np.testing.assert_almost_equal(prop.velocities, [-v, v])
-    np.testing.assert_almost_equal(prop.momenta, [-k, k])
+    np.testing.assert_almost_equal(prop.momenta, [k, -k])
     # Test for normalization by current.
     np.testing.assert_almost_equal(
         2 * (stab.vecs[0] * stab.vecslmbdainv[0].conj()).imag, [1, -1])
