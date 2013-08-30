@@ -276,8 +276,10 @@ For the leads, we can also use the ``lat.shape``-functionality:
     :start-after: #HIDDEN_BEGIN_qwgr
     :end-before: #HIDDEN_END_qwgr
 
-Here, the shape must cover *at least* one unit cell of the lead
-(it does not hurt if it covers more unit cells).
+Here, the shape must be compatible with the translational symmetry
+of the lead ``sym_lead``. In particular, this means that it should extend to
+infinity along the translational symmetry direction (note how there is
+no restriction on ``x`` in ``lead_shape``) [#]_.
 
 Attaching the leads is done as before:
 
@@ -350,3 +352,5 @@ period of one flux quantum.
 .. [#] The corresponding vector potential is :math:`A_x(x,y)=\Phi \delta(x)
        \Theta(-y)` which yields the correct magnetic field :math:`B(x,y)=\Phi
        \delta(x)\delta(y)`.
+.. [#] Despite the "infinite" shape, the unit cell will still be finite; the
+       `~kwant.lattice.TranslationalSymmetry` takes care of that.
