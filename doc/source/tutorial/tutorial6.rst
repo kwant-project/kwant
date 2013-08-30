@@ -144,3 +144,81 @@ which shows the edge state nature of the wave function most clearly.
        that are dangling with only nearest-neighbor hopping have more than
        one hopping.
 
+3D example: zincblende structure
+................................
+
+Zincblende is a very common crystal structure of semiconductors. It is
+a face-centered cuubic crystal with two unequivalent atoms in the
+unit cell (i.e. two different types of atoms, unlike diamond which has
+the same crystal structure, but to equivalent atoms per unit cell).
+
+It is very easily generated in kwant with `kwant.lattice.general`:
+
+.. literalinclude:: plot_zincblende.py
+    :start-after: #HIDDEN_BEGIN_zincblende1
+    :end-before: #HIDDEN_END_zincblende1
+
+Note how we keep references to the two different sublattices for later use.
+
+A three-dimensional structure is created as easily as in two dimensions,
+by using the `~kwant.lattice.PolyatomicLattice.shape`-functionality:
+
+.. literalinclude:: plot_zincblende.py
+    :start-after: #HIDDEN_BEGIN_zincblende2
+    :end-before: #HIDDEN_END_zincblende2
+
+We restrict ourselves here to a simple cuboid, and do not bother to add
+real values for onsite and hopping energies, but only the placeholder
+``None`` (in a real calculation, several atomic orbitals would have to be
+considered).
+
+`~kwant.plotter.plot` can plot 3D systems just as easily as its two-dimensional
+counterparts:
+
+.. literalinclude:: plot_zincblende.py
+    :start-after: #HIDDEN_BEGIN_plot1
+    :end-before: #HIDDEN_END_plot1
+
+resulting in
+
+.. image:: ../images/plot_zincblende_sys1.*
+
+You might notice that the standard options for plotting are quite different in
+3D than in 2D. For example, by default hoppings are not printed, but sites
+are instead represented by little "balls" touching each other (which
+is achieved by a default ``site_size=0.5``). In fact, this style of
+plotting 3D shows quite decently the overall geometry of the system.
+
+When plotting into a window, the 3D plots can also be rotated and scaled
+arbitrarily, allowing for a good inspection of the geometry from all sides.
+
+.. note::
+
+    Interactive 3D plots usually have not the proper aspect ratio, but are
+    a bit squashed. This is due to bugs in matplotlib's 3D plotting
+    module that does not properly honor the corresponding arguments. By resizing
+    the plot window however one can manually adjust the aspect ratio.
+
+Also for 3D it is possible to customize the plot. For example, we
+can explicitely plot the hoppings as lines, and color sites differently
+depending on the sublattice:
+
+.. literalinclude:: plot_zincblende.py
+    :start-after: #HIDDEN_BEGIN_plot2
+    :end-before: #HIDDEN_END_plot2
+
+which results in a 3D plot that allows to interactively (when plotted
+in a window) explore the crystal structure:
+
+.. image:: ../images/plot_zincblende_sys2.*
+
+Hence, a few lines of code using kwant allows for exploring all the different
+crystal lattices out there!
+
+.. note::
+
+    - The 3D plots are in fact only *fake* 3D. For example, sites will always
+      be plotted above hoppings (this is due to the limitations of matplotlib's
+      3d module)
+    - Plotting hoppings in 3D is inherently much slower than plotting sites.
+      Hence, this is not done by default.
