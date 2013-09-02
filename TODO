@@ -2,8 +2,6 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Document the order of sites/orbitals in finalized builders
 
-* Make Kwant run on windows
-
 * Add calculation of current density
 
 * Re-design the interface of low level systems
@@ -62,8 +60,6 @@ Roughly in order of importance.                                     -*-org-*-
   Alternatively, generalize modes and InfiniteSystem format.
 
 * In finalized leads, only keep the sites of a single lead unit cell.
-
-* Add a test of Kwant that verifies QHE conductance quantization
 
 * Add support for optimization of lead fundamental domains.
 
