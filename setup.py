@@ -55,6 +55,14 @@ kwant_dir = os.path.dirname(os.path.abspath(__file__))
 
 class kwant_build_ext(build_ext):
     def run(self):
+        if not config_file_present:
+            # Create an empty config file if none is present so that the
+            # extensions will not be rebuilt each time.  Only depending on the
+            # config file if it is present would make it impossible to detect a
+            # necessary rebuild due to a deleted config file.
+            with open(CONFIG_FILE, 'w') as f:
+                f.write('# Created by setup.py - feel free to modify.\n')
+
         try:
             build_ext.run(self)
         except (DistutilsError, CCompilerError):
@@ -283,7 +291,7 @@ def extensions():
     Extension. possibly after replacing ".pyx" with ".c" if Cython is not to be
     used."""
 
-    global build_summary
+    global build_summary, config_file_present
     build_summary = []
 
     #### Add components of Kwant without external compile-time dependencies.
@@ -313,8 +321,9 @@ def extensions():
         with open(CONFIG_FILE) as f:
             config.readfp(f)
     except IOError:
-        with open(CONFIG_FILE, 'w') as f:
-            f.write('# Created by setup.py - feel free to modify.\n')
+        config_file_present = False
+    else:
+        config_file_present = True
 
     kwrds_by_section = {}
     for section in config.sections():
