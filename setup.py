@@ -414,6 +414,10 @@ def ext_modules(extensions):
                 complain_cython_unavailable()
                 exit(1)
             for f in pyx_files + kwrds.get('depends', []):
+                if f == CONFIG_FILE:
+                    # The config file is only a dependency for the compilation
+                    # of the cythonized file, not for the cythonization.
+                    continue
                 if os.stat(f).st_mtime > cythonized_oldest:
                     msg = "error: {0} is newer than its source file, but "
                     if cythonize and not cython_version:
