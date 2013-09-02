@@ -367,11 +367,23 @@ def extensions():
     return result
 
 
+def complain_cython_unavailable():
+    assert not cythonize or cython_version < REQUIRED_CYTHON_VERSION
+    if cythonize:
+        msg = "Install Cython {0} or newer so it can be made or use a source " \
+            "distribution of Kwant."
+        ver = '.'.join(str(e) for e in REQUIRED_CYTHON_VERSION)
+        print >>sys.stderr, msg.format(ver)
+    else:
+        print >>sys.stderr, "Run setup.py without", \
+            NO_CYTHON_OPTION
+
+
 def ext_modules(extensions):
     """Prepare the ext_modules argument for distutils' setup."""
     result = []
     for args, kwrds in extensions:
-        if not cythonize or not cython_version:
+        if not cythonize or cython_version < REQUIRED_CYTHON_VERSION:
             if 'language' in kwrds:
                 if kwrds['language'] == 'c':
                     ext = '.c'
@@ -399,21 +411,20 @@ def ext_modules(extensions):
             except OSError:
                 print >>sys.stderr, \
                     "error: Cython-generated file {0} is missing.".format(f)
-                if cythonize:
-                    print >>sys.stderr, "Install Cython so it can be made" \
-                    " or use a source distribution of Kwant."
-                else:
-                    print >>sys.stderr, "Run setup.py without", \
-                        NO_CYTHON_OPTION
+                complain_cython_unavailable()
                 exit(1)
             for f in pyx_files + kwrds.get('depends', []):
                 if os.stat(f).st_mtime > cythonized_oldest:
-                    msg = "Warning: {0} is newer than its source file, "
-                    if cythonize:
-                        msg += "but Cython is not installed."
+                    msg = "error: {0} is newer than its source file, but "
+                    if cythonize and not cython_version:
+                        msg += "Cython is not installed."
+                    elif cythonize:
+                        msg += "the installed Cython is too old."
                     else:
-                        msg += "but Cython is not to be run."
+                        msg += "Cython is not to be run."
                     print >>sys.stderr, msg.format(f)
+                    complain_cython_unavailable()
+                    exit(1)
 
         result.append(Extension(*args, **kwrds))
 
@@ -421,16 +432,6 @@ def ext_modules(extensions):
 
 
 def main():
-    if cythonize and cython_version < REQUIRED_CYTHON_VERSION:
-        msg = 'Warning: Cython {0} is required but '
-        if cython_version:
-            msg += 'only {1} is present.'
-        else:
-            msg += 'it is not installed.'
-        print >>sys.stderr, msg.format(
-            '.'.join(str(e) for e in REQUIRED_CYTHON_VERSION),
-            '.'.join(str(e) for e in cython_version))
-
     setup(name='kwant',
           version=version(),
           author='C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, et al.',
