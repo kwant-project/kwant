@@ -38,7 +38,7 @@ busy plot:
 .. image:: ../images/plot_graphene_sys1.*
 
 A much clearer plot can be obtained by using different colors for both
-sublattices, and by having different linewidths for different hoppings.
+sublattices, and by having different line widths for different hoppings.
 This can be achieved by passing a function to the arguments of
 `~kwant.plotter.plot`, instead of a constant. For properties of sites, this
 must be a function taking one site as argument, for hoppings
@@ -54,7 +54,7 @@ that is more intelligible, still carrying all information:
 
 .. image:: ../images/plot_graphene_sys2.*
 
-Aport from plotting the *system* itself, `~kwant.plotter.plot` can also be
+Apart from plotting the *system* itself, `~kwant.plotter.plot` can also be
 used to plot *data* living on the system.
 
 As an example, we now compute the eigenstates of the graphene quantum dot
@@ -140,7 +140,7 @@ which shows the edge state nature of the wave function most clearly.
 .. rubric:: Footnotes
 
 .. [#] A dangling site is defined as having only one hopping connecting
-       it to the rest. With next-nearest-neigbor hopping also all sites
+       it to the rest. With next-nearest-neighbor hopping also all sites
        that are dangling with only nearest-neighbor hopping have more than
        one hopping.
 
@@ -148,11 +148,11 @@ which shows the edge state nature of the wave function most clearly.
 ................................
 
 Zincblende is a very common crystal structure of semiconductors. It is
-a face-centered cuubic crystal with two unequivalent atoms in the
+a face-centered cubic crystal with two inequivalent atoms in the
 unit cell (i.e. two different types of atoms, unlike diamond which has
 the same crystal structure, but to equivalent atoms per unit cell).
 
-It is very easily generated in kwant with `kwant.lattice.general`:
+It is very easily generated in Kwant with `kwant.lattice.general`:
 
 .. literalinclude:: plot_zincblende.py
     :start-after: #HIDDEN_BEGIN_zincblende1
@@ -200,7 +200,7 @@ arbitrarily, allowing for a good inspection of the geometry from all sides.
     the plot window however one can manually adjust the aspect ratio.
 
 Also for 3D it is possible to customize the plot. For example, we
-can explicitely plot the hoppings as lines, and color sites differently
+can explicitly plot the hoppings as lines, and color sites differently
 depending on the sublattice:
 
 .. literalinclude:: plot_zincblende.py
@@ -212,7 +212,7 @@ in a window) explore the crystal structure:
 
 .. image:: ../images/plot_zincblende_sys2.*
 
-Hence, a few lines of code using kwant allows for exploring all the different
+Hence, a few lines of code using Kwant allow to explore all the different
 crystal lattices out there!
 
 .. note::
