@@ -502,71 +502,95 @@ class TranslationalSymmetry(builder.Symmetry):
         self.site_family_data = {}
         self.is_reversed = False
 
-    def add_site_family(self, gr, other_vectors=None):
+    def add_site_family(self, fam, other_vectors=None):
         """
         Select a fundamental domain for site family and cache associated data.
 
         Parameters
         ----------
-        gr : `SiteFamily`
+        fam : `SiteFamily`
             the site family which has to be processed.  Be sure to delete the
             previously processed site families from `site_family_data` if you
             want to modify the cache.
 
         other_vectors : list of lists of integers
             Bravais lattice vectors used to complement the periods in forming
-            a basis. The fundamental domain belongs to the linear space
-            spanned by these vectors.
+            a basis. The fundamental domain consists of all the lattice sites
+            for which the zero coefficients corresponding to the symmetry
+            periods in the basis formed by the symmetry periods and
+            `other_vectors`. If an insufficient number of `other_vectors` is
+            provided to form a basis, the missing ones are selected
+            automatically.
 
         Raises
         ------
         KeyError
-            If `gr` is already stored in `site_family_data`.
+            If `fam` is already stored in `site_family_data`.
         ValueError
-            If lattice shape of `gr` cannot have the given `periods`.
+            If lattice `fam` is incompatible with given periods.
         """
-        if gr in self.site_family_data:
+        dim = self._periods.shape[1]
+        if fam in self.site_family_data:
             raise KeyError('Family already processed, delete it from '
                            'site_family_data first.')
-        inv = np.linalg.pinv(gr.prim_vecs)
-        bravais_periods = [np.dot(i, inv) for i in self._periods]
+        inv = np.linalg.pinv(fam.prim_vecs)
+        bravais_periods = np.dot(self._periods, inv)
+        # Absolute tolerance is correct in the following since we want an error
+        # relative to the closest integer.
         if not np.allclose(bravais_periods, np.round(bravais_periods),
                            rtol=0, atol=1e-8) or \
-           not np.allclose([gr.vec(i) for i in bravais_periods],
+           not np.allclose([fam.vec(i) for i in bravais_periods],
                            self._periods):
             msg = 'Site family {0} does not have commensurate periods with ' +\
                   'symmetry {1}.'
-            raise ValueError(msg.format(gr, self))
+            raise ValueError(msg.format(fam, self))
         bravais_periods = np.array(np.round(bravais_periods), dtype='int')
-        (num_dir, dim) = bravais_periods.shape
+        (num_dir, lat_dim) = bravais_periods.shape
         if other_vectors is None:
-            other_vectors = []
-        for vec in other_vectors:
-            for a in vec:
-                if not isinstance(a, int):
-                    raise ValueError('Only integer other_vectors are allowed.')
-        m = np.zeros((dim, dim), dtype=int)
+            other_vectors = np.zeros((0, lat_dim), dtype=int)
+        else:
+            other_vectors = np.array(other_vectors)
+            if np.any(np.round(other_vectors) - other_vectors):
+                raise ValueError('Only integer other_vectors are allowed.')
+            other_vectors = np.array(np.round(other_vectors), dtype=int)
 
-        m.T[: num_dir] = bravais_periods
+        m = np.zeros((lat_dim, lat_dim), dtype=int)
+
+        m.T[:num_dir] = bravais_periods
         num_vec = num_dir + len(other_vectors)
-        if len(other_vectors) != 0:
-            m.T[num_dir:num_vec] = other_vectors
-        norms = np.apply_along_axis(np.linalg.norm, 1, m)
-        indices = np.argsort(norms)
-        for coord in zip(indices, range(num_vec, dim)):
-            m[coord] = 1
+        m.T[num_dir:num_vec] = other_vectors
+
+        if np.linalg.matrix_rank(m) < num_vec:
+            raise ValueError('other_vectors and symmetry periods are not '
+                             'linearly independent.')
+
+        # To define the fundamental domain of the new site family we now need to
+        # choose `lat_dim - num_vec` extra lattice vectors that are not
+        # linearly dependent on the vectors we already have. To do so we
+        # continuously add the lattice basis vectors one by one such that they
+        # are not linearly dependent on the existent vectors
+        while num_vec < lat_dim:
+            vh = np.linalg.svd(np.dot(m[:, :num_vec].T, fam.prim_vecs),
+                               full_matrices=False)[2]
+            projector = np.identity(dim) - np.dot(vh.T, vh)
+
+            residuals = np.dot(fam.prim_vecs, projector)
+            residuals = np.apply_along_axis(np.linalg.norm, 1, residuals)
+            m[np.argmax(residuals), num_vec] = 1
+            num_vec += 1
 
         det_m = int(round(np.linalg.det(m)))
         if det_m == 0:
-            raise RuntimeError('Adding site group failed.')
+            print m
+            raise RuntimeError('Adding site family failed.')
 
         det_x_inv_m = \
             np.array(np.round(det_m * np.linalg.inv(m)), dtype=int)
-        assert (np.dot(m, det_x_inv_m) // det_m == np.identity(dim)).all()
+        assert (np.dot(m, det_x_inv_m) // det_m == np.identity(lat_dim)).all()
 
         det_x_inv_m_part = det_x_inv_m[:num_dir, :]
         m_part = m[:, :num_dir]
-        self.site_family_data[gr] = (ta.array(m_part),
+        self.site_family_data[fam] = (ta.array(m_part),
                                      ta.array(det_x_inv_m_part), det_m)
 
     @property

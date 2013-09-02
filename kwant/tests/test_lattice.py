@@ -103,35 +103,35 @@ def test_wire():
 
 def test_translational_symmetry():
     ts = lattice.TranslationalSymmetry
-    g2 = lattice.general(np.identity(2))
-    g3 = lattice.general(np.identity(3))
+    f2 = lattice.general(np.identity(2))
+    f3 = lattice.general(np.identity(3))
     shifted = lambda site, delta: site.family(*ta.add(site.tag, delta))
 
     assert_raises(ValueError, ts, (0, 0, 4), (0, 5, 0), (0, 0, 2))
     sym = ts((3.3, 0))
-    assert_raises(ValueError, sym.add_site_family, g2)
+    assert_raises(ValueError, sym.add_site_family, f2)
 
     # Test lattices with dimension smaller than dimension of space.
-    g2in3 = lattice.general([[4, 4, 0], [4, -4, 0]])
+    f2in3 = lattice.general([[4, 4, 0], [4, -4, 0]])
     sym = ts((8, 0, 0))
-    sym.add_site_family(g2in3)
+    sym.add_site_family(f2in3)
     sym = ts((8, 0, 1))
-    assert_raises(ValueError, sym.add_site_family, g2in3)
+    assert_raises(ValueError, sym.add_site_family, f2in3)
 
     # Test automatic fill-in of transverse vectors.
     sym = ts((1, 2))
-    sym.add_site_family(g2)
-    assert_not_equal(sym.site_family_data[g2][2], 0)
+    sym.add_site_family(f2)
+    assert_not_equal(sym.site_family_data[f2][2], 0)
     sym = ts((1, 0, 2), (3, 0, 2))
-    sym.add_site_family(g3)
-    assert_not_equal(sym.site_family_data[g3][2], 0)
+    sym.add_site_family(f3)
+    assert_not_equal(sym.site_family_data[f3][2], 0)
 
     transl_vecs = np.array([[10, 0], [7, 7]], dtype=int)
     sym = ts(*transl_vecs)
     assert_equal(sym.num_directions, 2)
     sym2 = ts(*transl_vecs[: 1, :])
-    sym2.add_site_family(g2, transl_vecs[1:, :])
-    for site in [g2(0, 0), g2(4, 0), g2(2, 1), g2(5, 5), g2(15, 6)]:
+    sym2.add_site_family(f2, transl_vecs[1:, :])
+    for site in [f2(0, 0), f2(4, 0), f2(2, 1), f2(5, 5), f2(15, 6)]:
         assert sym.in_fd(site)
         assert sym2.in_fd(site)
         assert_equal(sym.which(site), (0, 0))
@@ -150,10 +150,28 @@ def test_translational_symmetry():
                              (site, shifted(site, hop)))
 
     # Test act for hoppings belonging to different lattices.
-    g2p = lattice.general(2 * np.identity(2))
+    f2p = lattice.general(2 * np.identity(2))
     sym = ts(*(2 * np.identity(2)))
-    assert sym.act((1, 1), g2(0, 0), g2p(0, 0)) == (g2(2, 2), g2p(1, 1))
-    assert sym.act((1, 1), g2p(0, 0), g2(0, 0)) == (g2p(1, 1), g2(2, 2))
+    assert sym.act((1, 1), f2(0, 0), f2p(0, 0)) == (f2(2, 2), f2p(1, 1))
+    assert sym.act((1, 1), f2p(0, 0), f2(0, 0)) == (f2p(1, 1), f2(2, 2))
+
+    # Test add_site_family on random lattices and symmetries by ensuring that
+    # it's possible to add site groups that are compatible with a randomly
+    # generated symmetry with proper vectors.
+    np.random.seed(30)
+    vec = np.random.randn(3, 5)
+    lat = lattice.general(vec)
+    total = 0
+    for k in range(1, 4):
+        for i in range(10):
+            sym_vec = np.random.randint(-10, 10, size=(k, 3))
+            if np.linalg.matrix_rank(sym_vec) < k:
+                continue
+            total += 1
+            sym_vec = np.dot(sym_vec, vec)
+            sym = ts(*sym_vec)
+            sym.add_site_family(lat)
+    assert total > 20
 
 
 def test_translational_symmetry_reversed():
