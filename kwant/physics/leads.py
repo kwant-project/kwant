@@ -140,7 +140,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         Hamiltonian isn't invertible. The second element set to `True` forces
         Kwant to solve a generalized eigenvalue problem, and not to reduce it
         to the regular one.  If it is `False`, reduction to a regular problem
-        is performed if necessary.
+        is performed if possible.
 
     Returns
     -------
@@ -539,7 +539,7 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
         Hamiltonian isn't invertible. The second element set to `True` forces
         Kwant to solve a generalized eigenvalue problem, and not to reduce it
         to the regular one.  If it is `False`, reduction to a regular problem
-        is performed if necessary.  Selecting the stabilization manually is
+        is performed if possible.  Selecting the stabilization manually is
         mostly necessary for testing purposes.
 
     Returns
