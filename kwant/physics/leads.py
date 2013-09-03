@@ -448,12 +448,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6):
         # orthogonalized. Moreover for the velocity to have a proper value the
         # modes should also be normalized.
 
-        # Note: Here's a workaround for the fact that the interface
-        # to qr changed from SciPy 0.8.0 to 0.9.0
-        try:
-            q, r = la.qr(full_psi[:, indx], econ=True, mode='qr')
-        except TypeError:
-            q, r = la.qr(full_psi[:, indx], mode='economic')
+        q, r = la.qr(full_psi[:, indx], mode='economic')
 
         # If the eigenvectors were purely real up to this stage,
         # they will typically become complex after the rotation.
