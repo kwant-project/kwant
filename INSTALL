@@ -485,34 +485,3 @@ Because of some quirks of how Sphinx works, it might be necessary to execute
 ``make clean`` between building HTML and PDF documentation.  If this is not
 done, Sphinx may mistakenly use PNG files for PDF output or other problems may
 appear.
-
-
-Hacking
-=======
-
-To work on Kwant itself it is useful to build it in-place.  This can be done
-with the following command ::
-
-    python setup.py build_ext -i
-
-The ``kwant`` subdirectory of the source distribution will be thus turned into
-a proper python package which can be imported.  To be able to import Kwant from
-within python, one can either work in the root directory of the distribution
-(where the subdirectory ``kwant`` is located), or make a (symbolic) link from
-somewhere in the Python search path to the the package subdirectory.
-
-Some conventions to keep in mind:
-
-* Write tests for all the important functionality you add.  Be sure not to
-  break existing tests.
-
-* Please keep the code consistent by adhering to the prevailing naming and
-  formatting conventions.  We generally follow the `"Style Guide for Python
-  Code" <http://www.python.org/dev/peps/pep-0008/>`_ For docstrings, we follow
-  `NumPy's "Docstring Standard"
-  <http://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_ and
-  `Python's "Docstring Conventions"
-  <http://www.python.org/dev/peps/pep-0257/>`_.
-
-Several modules are written in `Cython <http://cython.org/>`_ (.pyx file name
-extension).  You will need Cython if you want to modify them.

@@ -20,7 +20,18 @@ Other people that have contributed to Kwant include
 * Daniel Jaschke
 * Joseph Weston
 
--------------------------------------------------------------
+(To find out who exactly wrote a certain part of Kwant, please use the "blame"
+feature of `Git <http://git-scm.com/>`_, the version control system.)
 
-To find out who exactly wrote a certain part of Kwant, please use the "blame"
-feature of `git <http://git-scm.com/>`_, the version control system.
+We thank Christoph Gohlke for the creation of Windows installers.
+
+
+Funding
+-------
+
+During the development of Kwant 1.0, A. R. Akhmerov and M. Wimmer were supported
+by the Dutch Science Foundation NWO/FOM and by the ERC Advanced Investigator
+Grant of C. W. J. Beenakker who enthousiastically supported this project.
+A. R. Akhmerov was partially supported by a Lawrence Golub fellowship.
+C. W. Groth and X. Waintal were supported by the ERC Consolidator Grant MesoQMC.
+X. Waintal also acknowledges support from the STREP ConceptGraphene.

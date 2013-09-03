@@ -8,5 +8,6 @@ Preliminaries
    whatsnew/index
    install
    authors
-   acknowledgements
+   citing
    license
+   contribute

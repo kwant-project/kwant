@@ -1,0 +1,55 @@
+=====================
+Contributing to Kwant
+=====================
+
+We view Kwant as not just a package with fixed functionality, but also as a
+framework to implement different physics-related algorithms using a common set
+of concepts and, if possible, a shared interface. We have designed it leaving
+room for growth, and planning to extend it.
+
+We welcome both external contributions that are well-integrated with Kwant's
+core functionality, such as new solvers type, or algorithms for calculation of
+other observables, as well as code modules that are relatively independent but
+useful with Kwant (such as the random matrix theory module `kwant.rmt`).
+
+The complete development history of Kwant is `publicly available
+<http://git.kwant-project.org/kwant>`_. Any external contribution will be
+clearly marked as such, and papers where it is described (if any) will be
+properly mentioned. Contact us if you are interested in submitting a
+contribution.
+
+Technical advice
+----------------
+
+We use the version control system `Git <http://git-scm.com/>`_ to coordinate the
+development of Kwant.  If you are new to Git, we invite you to learn its
+basics.  (There's a plethora of information available on the Web.)
+
+It is best to base your development on the latest version of Kwant. ::
+
+    git clone http://git.kwant-project.org/kwant
+
+To work on Kwant itself it is useful to build it in-place so that it does not
+have to be re-installed after each change.  This can be done with the following
+command ::
+
+    python setup.py build_ext -i
+
+The ``kwant`` subdirectory of the source distribution will be thus turned into
+a proper Python package that can be imported.  To be able to import Kwant from
+within Python, one can either work in the root directory of the distribution
+(where the subdirectory ``kwant`` is located), or make a (symbolic) link from
+somewhere in the Python search path to the the package subdirectory.
+
+Some things to keep in mind:
+
+* Please keep the code consistent by adhering to the prevailing naming and
+  formatting conventions.  We generally follow the `"Style Guide for Python
+  Code" <http://www.python.org/dev/peps/pep-0008/>`_ For docstrings, we follow
+  `NumPy's "Docstring Standard"
+  <http://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_ and
+  `Python's "Docstring Conventions"
+  <http://www.python.org/dev/peps/pep-0257/>`_.
+
+* Write tests for all the important functionality you add.  Be sure not to
+  break existing tests.
