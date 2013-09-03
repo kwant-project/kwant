@@ -22,10 +22,9 @@ uses_umfpack = linsolve.isUmfpack
 
 if uses_umfpack:
     # This patches a memory leak in SciPy:
-    # http://projects.scipy.org/scipy/ticket/1597
+    # https://github.com/scipy/scipy/issues/2122
     #
-    # TODO: Remove this code once it is likely that the official bug fix has
-    # reached all of our users.
+    # TODO: Remove this code once we depend on scipy >= 0.10.1.
     def del_for_umfpackcontext(self):
         self.free()
     if not hasattr(umfpack.UmfpackContext, '__del__'):
