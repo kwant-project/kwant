@@ -69,6 +69,8 @@ class Polyatomic(object):
 
     Attributes
     ----------
+    prim_vecs : sequence of vectors
+        ``prim_vecs[i]`` is the `i`-th primitive basis vector of the lattice
     sublattices : list of `Monatomic`
         Sublattices belonging to this lattice.
 
@@ -381,6 +383,14 @@ class Monatomic(builder.SiteFamily, Polyatomic):
     offset : vector of floats
         Displacement of the lattice origin from the real space
         coordinates origin.
+
+    Attributes
+    ----------
+    offset : vector
+        Displacement of the lattice origin from the real space
+        coordinates origin.
+    prim_vecs : sequence of vectors
+        ``prim_vecs[i]`` is the `i`-th primitive basis vector of the lattice
     """
 
     def __init__(self, prim_vecs, offset=None, name=''):
