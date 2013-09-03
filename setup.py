@@ -440,7 +440,7 @@ def main():
           version=version(),
           author='C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, et al.',
           author_email='authors@kwant-project.org',
-          description="A package for numerical quantum transport calculations.",
+          description="Package for numerical quantum transport calculations.",
           long_description=long_description(),
           platforms=["Unix", "Linux", "Mac OS-X", "Windows"],
           url="http://kwant-project.org/",

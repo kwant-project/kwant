@@ -1,16 +1,11 @@
-Kwant is a Python package for numerical quantum transport calculations. It aims
-to be an user-friendly, universal, and high-performance toolbox for the
-simulation of physical systems of any dimensionality and geometry that can be
-described by a tight-binding model. Kwant has been designed such that the
-natural concepts of the theory of quantum transport (lattices, symmetries,
-electrodes, orbital/spin/electron-hole degrees of freedom) are exposed in a
-simple and transparent way: Defining a new simulation setup is very close to
-describing the corresponding mathematical model. Kwant offers direct support for
-calculations of transport properties (conductance, noise, scattering matrix),
-dispersion relations, modes, wave functions, various Green’s functions, and
-out-of-equilibrium local quantities (charge or current densities). Other
-computations involving tight-binding Hamiltonians can be implemented easily
-thanks to its extensible and modular nature.
+Kwant is a Python package for numerical quantum transport calculations. It
+exposes the natural concepts of the theory of quantum transport (lattices,
+symmetries, electrodes, orbital/spin/electron-hole degrees of freedom) in a
+simple and transparent way. Kwant offers direct support for calculations of
+transport properties (conductance, noise, scattering matrix), dispersion
+relations, modes, wave functions, various Green’s functions, and
+out-of-equilibrium local quantities. Other computations involving tight-binding
+Hamiltonians can be implemented easily.
 
 See also the files INSTALL, LICENSE, AUTHORS, and ACKNOWLEDGEMENTS in this
 directory.
