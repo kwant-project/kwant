@@ -438,7 +438,7 @@ def ext_modules(extensions):
 def main():
     setup(name='kwant',
           version=version(),
-          author='C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, et al.',
+          author='C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, and others',
           author_email='authors@kwant-project.org',
           description="Package for numerical quantum transport calculations.",
           long_description=long_description(),
