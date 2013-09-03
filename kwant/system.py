@@ -20,8 +20,8 @@ from . import physics, _system
 class System(object):
     """Abstract general low-level system.
 
-    Instance Variables
-    ------------------
+    Attributes
+    ----------
     graph : kwant.graph.CGraph
         The system graph.
 
@@ -56,8 +56,8 @@ System.hamiltonian_submatrix = types.MethodType(
 class FiniteSystem(System):
     """Abstract finite low-level system, possibly with leads.
 
-    Instance Variables
-    ------------------
+    Attributes
+    ----------
     leads : sequence of leads
         Each lead has to provide a method
         ``selfenergy(energy, args)``.
@@ -148,8 +148,8 @@ class InfiniteSystem(System):
     An infinite system consists of an infinite series of identical cells.
     Adjacent cells are connected by identical inter-cell hoppings.
 
-    Instance Variables
-    ------------------
+    Attributes
+    ----------
     cell_size : integer
         The number of sites in a single cell of the system.
 

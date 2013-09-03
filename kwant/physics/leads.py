@@ -27,8 +27,8 @@ Linsys = namedtuple('Linsys', ['eigenproblem', 'v', 'extract'])
 class PropagatingModes(object):
     """The calculated propagating modes of a lead.
 
-    Instance variables
-    ==================
+    Attributes
+    ----------
     wave_functions : numpy array
         The wave functions of the propagating modes.
     momenta : numpy array
@@ -79,8 +79,8 @@ class StabilizedModes(object):
     orthogonalized, and all the propagating modes are normalized to carry unit
     current. Finally the `sqrt_hop` attribute is `v sqrt(s)`.
 
-    Instance variables
-    ==================
+    Attributes
+    ----------
     vecs : numpy array
         Translation eigenvectors.
     vecslmbdainv : numpy array

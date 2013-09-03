@@ -607,8 +607,8 @@ class SMatrix(BlockResult):
     of data corresponding to particular leads are conveniently obtained by
     `~SMatrix.submatrix`.
 
-    Instance Variables
-    ------------------
+    Attributes
+    ----------
     data : NumPy array
         a matrix containing all the requested matrix elements of the scattering
         matrix.
@@ -651,8 +651,8 @@ class GreensFunction(BlockResult):
     to particular leads are conveniently obtained by
     `~GreensFunction.submatrix`.
 
-    Instance Variables
-    ------------------
+    Attributes
+    ----------
     data : NumPy array
         a matrix containing all the requested matrix elements of Green's
         function.

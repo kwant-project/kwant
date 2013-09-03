@@ -67,8 +67,8 @@ class Polyatomic(object):
         If the name of the lattice is given, the names of sublattices are
         obtained by appending their number to the name of the lattice.
 
-    Instance Variables
-    ------------------
+    Attributes
+    ----------
     sublattices : list of `Monatomic`
         Sublattices belonging to this lattice.
 

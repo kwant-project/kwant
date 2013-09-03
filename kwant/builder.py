@@ -378,8 +378,8 @@ class HermConjOfFunc(object):
 class Lead(object):
     """Abstract base class for leads that can be attached to a `Builder`.
 
-    Instance Variables
-    ------------------
+    Attributes
+    ----------
     interface : sequence of sites
     """
     __metaclass__ = abc.ABCMeta

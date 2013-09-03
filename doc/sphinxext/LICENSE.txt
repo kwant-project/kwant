@@ -27,12 +27,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 -------------------------------------------------------------------------------
     The files
-    - numpydoc.py
-    - autosummary.py
-    - autosummary_generate.py
-    - docscrape.py
-    - docscrape_sphinx.py
-    - phantom_import.py
+    - numpydoc/numpydoc.py
+    - numpydoc/docscrape.py
+    - numpydoc/docscrape_sphinx.py
+    - numpydoc/phantom_import.py
     have the following license:
 
 Copyright (C) 2008 Stefan van der Walt <stefan@mentat.za.net>, Pauli Virtanen <pav@iki.fi>
@@ -62,9 +60,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 -------------------------------------------------------------------------------
     The files
-    - compiler_unparse.py
-    - comment_eater.py
-    - traitsdoc.py
+    - numpydoc/compiler_unparse.py
+    - numpydoc/comment_eater.py
+    - numpydoc/traitsdoc.py
     have the following license:
 
 This software is OSI Certified Open Source Software.
@@ -98,10 +96,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 -------------------------------------------------------------------------------
-    The files
-    - only_directives.py
-    - plot_directive.py
-    originate from Matplotlib (http://matplotlib.sf.net/) which has
+    The file
+    - numpydoc/plot_directive.py
+    originates from Matplotlib (http://matplotlib.sf.net/) which has
     the following license:
 
 Copyright (c) 2002-2008 John D. Hunter; All Rights Reserved.

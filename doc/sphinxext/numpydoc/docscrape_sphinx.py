@@ -1,6 +1,15 @@
-import re, inspect, textwrap, pydoc
+from __future__ import division, absolute_import, print_function
+
+import sys, re, inspect, textwrap, pydoc
 import sphinx
-from docscrape import NumpyDocString, FunctionDoc, ClassDoc
+import collections
+from .docscrape import NumpyDocString, FunctionDoc, ClassDoc
+
+if sys.version_info[0] >= 3:
+    sixu = lambda s: s
+else:
+    sixu = lambda s: unicode(s, 'unicode_escape')
+
 
 class SphinxDocString(NumpyDocString):
     def __init__(self, docstring, config={}):
@@ -33,16 +42,37 @@ class SphinxDocString(NumpyDocString):
     def _str_extended_summary(self):
         return self['Extended Summary'] + ['']
 
+    def _str_returns(self):
+        out = []
+        if self['Returns']:
+            out += self._str_field_list('Returns')
+            out += ['']
+            for param, param_type, desc in self['Returns']:
+                if param_type:
+                    out += self._str_indent(['**%s** : %s' % (param.strip(),
+                                                              param_type)])
+                else:
+                    out += self._str_indent([param.strip()])
+                if desc:
+                    out += ['']
+                    out += self._str_indent(desc, 8)
+                out += ['']
+        return out
+
     def _str_param_list(self, name):
         out = []
         if self[name]:
             out += self._str_field_list(name)
             out += ['']
-            for param,param_type,desc in self[name]:
-                out += self._str_indent(['**%s** : %s' % (param.strip(),
-                                                          param_type)])
-                out += ['']
-                out += self._str_indent(desc,8)
+            for param, param_type, desc in self[name]:
+                if param_type:
+                    out += self._str_indent(['**%s** : %s' % (param.strip(),
+                                                              param_type)])
+                else:
+                    out += self._str_indent(['**%s**' % param.strip()])
+                if desc:
+                    out += ['']
+                    out += self._str_indent(desc, 8)
                 out += ['']
         return out
 
@@ -72,7 +102,16 @@ class SphinxDocString(NumpyDocString):
             others = []
             for param, param_type, desc in self[name]:
                 param = param.strip()
-                if not self._obj or hasattr(self._obj, param):
+
+                # Check if the referenced member can have a docstring or not
+                param_obj = getattr(self._obj, param, None)
+                if not (callable(param_obj)
+                        or isinstance(param_obj, property)
+                        or inspect.isgetsetdescriptor(param_obj)):
+                    param_obj = None
+
+                if param_obj and (pydoc.getdoc(param_obj) or not desc):
+                    # Referenced object has a docstring
                     autosum += ["   %s%s" % (prefix, param)]
                 else:
                     others.append((param, param_type, desc))
@@ -82,15 +121,15 @@ class SphinxDocString(NumpyDocString):
                 out += autosum
 
             if others:
-                maxlen_0 = max([len(x[0]) for x in others])
-                maxlen_1 = max([len(x[1]) for x in others])
-                hdr = "="*maxlen_0 + "  " + "="*maxlen_1 + "  " + "="*10
-                fmt = '%%%ds  %%%ds  ' % (maxlen_0, maxlen_1)
-                n_indent = maxlen_0 + maxlen_1 + 4
-                out += [hdr]
+                maxlen_0 = max(3, max([len(x[0]) for x in others]))
+                hdr = sixu("=")*maxlen_0 + sixu("  ") + sixu("=")*10
+                fmt = sixu('%%%ds  %%s  ') % (maxlen_0,)
+                out += ['', hdr]
                 for param, param_type, desc in others:
-                    out += [fmt % (param.strip(), param_type)]
-                    out += self._str_indent(desc, n_indent)
+                    desc = sixu(" ").join(x.strip() for x in desc).strip()
+                    if param_type:
+                        desc = "(%s) %s" % (param_type, desc)
+                    out += [fmt % (param.strip(), desc)]
                 out += [hdr]
             out += ['']
         return out
@@ -127,7 +166,7 @@ class SphinxDocString(NumpyDocString):
             return out
 
         out += ['.. index:: %s' % idx.get('default','')]
-        for section, references in idx.iteritems():
+        for section, references in idx.items():
             if section == 'default':
                 continue
             elif section == 'refguide':
@@ -178,15 +217,16 @@ class SphinxDocString(NumpyDocString):
         out += self._str_index() + ['']
         out += self._str_summary()
         out += self._str_extended_summary()
-        for param_list in ('Parameters', 'Returns', 'Other Parameters',
-                           'Raises', 'Warns'):
+        out += self._str_param_list('Parameters')
+        out += self._str_returns()
+        for param_list in ('Other Parameters', 'Raises', 'Warns'):
             out += self._str_param_list(param_list)
         out += self._str_warnings()
         out += self._str_see_also(func_role)
         out += self._str_section('Notes')
         out += self._str_references()
         out += self._str_examples()
-        for param_list in ('Instance Variables', 'Attributes', 'Methods'):
+        for param_list in ('Attributes', 'Methods'):
             out += self._str_member_list(param_list)
         out = self._str_indent(out,indent)
         return '\n'.join(out)
@@ -212,7 +252,7 @@ def get_doc_object(obj, what=None, doc=None, config={}):
             what = 'class'
         elif inspect.ismodule(obj):
             what = 'module'
-        elif callable(obj):
+        elif isinstance(obj, collections.Callable):
             what = 'function'
         else:
             what = 'object'
