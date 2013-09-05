@@ -21,9 +21,10 @@ this module.
 
 from __future__ import division
 
-from math import pi, log, sqrt, sin, cos
+from math import pi, log, sqrt, cos
 from hashlib import md5
 from struct import unpack
+import sys
 
 __all__ = ['uniform', 'gauss', 'test']
 
@@ -34,13 +35,30 @@ BPF_MASK = 2**53 - 1
 RECIP_BPF = 2**-BPF
 
 
-def uniform2(input, salt=''):
-    """Return two independent [0,1)-distributed numbers."""
-    input = memoryview(input).tobytes() + salt
-    a, b = unpack('qq', md5(input).digest())
-    a &= BPF_MASK
-    b &= BPF_MASK
-    return a * RECIP_BPF, b * RECIP_BPF
+# TODO: Remove the following workaround for Python 2.6 once we do not support it
+# anymore.
+
+if sys.version_info < (2, 7):
+    def uniform2(input, salt=''):
+        """Return two independent [0,1)-distributed numbers."""
+        try:
+            input = bytes(buffer(input)) + salt
+        except TypeError:
+            # Tinyarray does not provide the old buffer protocol, so buffer does
+            # not work.  However, bytearray does work!
+            input = bytearray(input) + salt
+        a, b = unpack('qq', md5(input).digest())
+        a &= BPF_MASK
+        b &= BPF_MASK
+        return a * RECIP_BPF, b * RECIP_BPF
+else:
+    def uniform2(input, salt=''):
+        """Return two independent [0,1)-distributed numbers."""
+        input = memoryview(input).tobytes() + salt
+        a, b = unpack('qq', md5(input).digest())
+        a &= BPF_MASK
+        b &= BPF_MASK
+        return a * RECIP_BPF, b * RECIP_BPF
 
 
 def uniform(input, salt=''):
