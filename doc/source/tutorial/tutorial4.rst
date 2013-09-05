@@ -1,7 +1,7 @@
 .. _tutorial-graphene:
 
-Using a more complicated lattice (graphene)
--------------------------------------------
+Beyond square lattices: graphene
+--------------------------------
 
 In the following example, we are going to calculate the
 conductance through a graphene quantum dot with a p-n junction

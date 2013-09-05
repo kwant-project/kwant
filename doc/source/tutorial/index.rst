@@ -1,4 +1,4 @@
-Tutorial: Learning Kwant through examples
+Tutorial: learning Kwant through examples
 =========================================
 
 .. toctree::

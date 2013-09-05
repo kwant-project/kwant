@@ -1,5 +1,5 @@
-Superconductors: orbital vs lattice degrees of freedom
-------------------------------------------------------
+Superconductors: orbital vs. lattice degrees of freedom
+-------------------------------------------------------
 
 This example deals with superconductivity on the level of the
 Bogoliubov-de Gennes (BdG) equation. In this framework, the Hamiltonian
@@ -21,7 +21,7 @@ For this we restrict ourselves to a simple spin-less system without
 magnetic field, so that :math:`\Delta` is just a number (which we
 choose real), and :math:`\mathcal{T}H\mathcal{T}^{-1}=H_0^*=H_0`.
 
-"Orbital description": Using matrices
+"Orbital description": using matrices
 .....................................
 
 We begin by computing the band structure of a superconducting wire.
@@ -48,7 +48,7 @@ he?
     :download:`tutorial/superconductor_band_structure.py <../../../tutorial/superconductor_band_structure.py>`
 
 
-"Lattice description": Using different lattices
+"Lattice description": using different lattices
 ...............................................
 
 While it seems most natural to implement the BdG Hamiltonian

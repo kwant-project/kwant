@@ -1,5 +1,5 @@
-First steps in Kwant: Setting up a simple system and computing transport
-------------------------------------------------------------------------
+First steps: setting up a simple system and computing conductance
+-----------------------------------------------------------------
 
 Discretization of a Schrödinger Hamiltonian
 ...........................................
@@ -321,20 +321,19 @@ subbands that increases with energy.
 .. [#] http://xkcd.com/353/
 .. [#] Leads are numbered in the python convention, starting from 0.
 
-The same but different: Alternative system building
-...................................................
+Building the same system with less code
+.......................................
 
-Kwant is very flexible, and often allows you more than one way to
-build up your system. The reason is that `~kwant.builder.Builder`
-is essentially just a container, and allows for different
-ways to be filled. Here we present a more compact rewrite of
-the previous example (still with the same results).
+Kwant allows for more than one way to build a system. The reason is that
+`~kwant.builder.Builder` is essentially just a container that can be filled in
+different ways. Here we present a more compact rewrite of the previous example
+(still with the same results).
 
-Also, the previous example was written in the form of a pythons script
-with little structure, and everything governed by global variables.
-This is OK for such a simple example, but for larger projects it makes
-sense to structure different functionality into different functional
-entities. In this example we therefore also aim at more structure.
+Also, the previous example was written in the form of a Python script with
+little structure, and with everything governed by global variables.  This is OK
+for such a simple example, but for larger projects it makes sense to partition
+the code into separate entities. In this example we therefore also aim at more
+structure.
 
 We begin the program collecting all imports in the beginning of the
 file and put the build-up of the system into a separate function

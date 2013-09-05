@@ -1,5 +1,5 @@
-Beyond transport: Band structures and closed systems
-----------------------------------------------------
+Beyond transport: Band structure and closed systems
+---------------------------------------------------
 
 Band structure calculations
 ...........................

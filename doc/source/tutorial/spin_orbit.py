@@ -38,14 +38,14 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
 
     #### Define the scattering region. ####
 #HIDDEN_BEGIN_uxrm
-    sys[(lat(x, y) for x in range(L) for y in range(W))] = 4 * t * sigma_0 + \
-        e_z * sigma_z
+    sys[(lat(x, y) for x in range(L) for y in range(W))] = \
+        4 * t * sigma_0 + e_z * sigma_z
     # hoppings in x-direction
-    sys[kwant.builder.HoppingKind((1, 0), lat, lat)] = -t * sigma_0 - \
-        1j * alpha * sigma_y
+    sys[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
+        -t * sigma_0 - 1j * alpha * sigma_y
     # hoppings in y-directions
-    sys[kwant.builder.HoppingKind((0, 1), lat, lat)] = -t * sigma_0 + \
-        1j * alpha * sigma_x
+    sys[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
+        -t * sigma_0 + 1j * alpha * sigma_x
 #HIDDEN_END_uxrm
 
     #### Define the left lead. ####
@@ -54,11 +54,11 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
 #HIDDEN_BEGIN_yliu
     lead[(lat(0, j) for j in xrange(W))] = 4 * t * sigma_0 + e_z * sigma_z
     # hoppings in x-direction
-    lead[kwant.builder.HoppingKind((1, 0), lat, lat)] = -t * sigma_0 - \
-        1j * alpha * sigma_y
+    lead[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
+        -t * sigma_0 - 1j * alpha * sigma_y
     # hoppings in y-directions
-    lead[kwant.builder.HoppingKind((0, 1), lat, lat)] = -t * sigma_0 + \
-        1j * alpha * sigma_x
+    lead[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
+        -t * sigma_0 + 1j * alpha * sigma_x
 #HIDDEN_END_yliu
 
     #### Attach the leads and return the finalized system. ####

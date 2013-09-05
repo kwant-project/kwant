@@ -1,15 +1,16 @@
-Adding more structure to the problem
-------------------------------------
+More interesting systems: spin, potential, shape
+------------------------------------------------
+
+Each of the following three examples highlights different ways to go beyond the
+very simple examples of the previous section.
 
 .. _tutorial_spinorbit:
 
 Matrix structure of on-site and hopping elements
 ................................................
 
-In the next examples, we will extend the previous examples and add more
-structure. We begin by extending the simple 2DEG-Hamiltonian by
-a Rashba spin-orbit coupling and a Zeeman splitting due to
-an external magnetic field:
+We begin by extending the simple 2DEG-Hamiltonian by a Rashba spin-orbit
+coupling and a Zeeman splitting due to an external magnetic field:
 
 .. math::
 
