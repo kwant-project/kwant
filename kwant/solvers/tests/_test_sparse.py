@@ -63,7 +63,7 @@ def test_output(smatrix):
     s2, modes2 = result2.data, result2.lead_info
     assert s2.shape == (len(modes2[1].momenta) // 2,
                         len(modes2[0].momenta) // 2)
-    assert_almost_equal(s1, s2)
+    assert_almost_equal(abs(s1), abs(s2))
     assert_almost_equal(np.dot(s.T.conj(), s),
                         np.identity(s.shape[0]))
     assert_raises(ValueError, smatrix, fsys, out_leads=[])
