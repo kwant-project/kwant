@@ -15,6 +15,18 @@ libraries.
 Installing from packages
 ************************
 
+Ubuntu (and derivatives)
+========================
+
+Execute the following commands::
+
+        sudo apt-add-repository ppa:kwant-project/ppa
+        sudo apt-get update
+        sudo apt-get install python-kwant
+
+This should provide Kwant for all the versions of Ubuntu >= 12.04.
+
+
 Debian GNU/Linux (and derivatives)
 ==================================
 
@@ -61,12 +73,6 @@ easy::
 
 This method should work for virtually all Debian-derived systems, even for
 exotic architectures.
-
-
-Ubuntu (and derivatives)
-========================
-
-TODO: Tell how to use the Ubuntu PPA.
 
 
 Windows
