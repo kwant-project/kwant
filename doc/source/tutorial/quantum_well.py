@@ -1,3 +1,6 @@
+# Tutorial 2.3.2. Spatially dependent values through functions
+# ============================================================
+#
 # Physics background
 # ------------------
 #  transmission through a quantum well

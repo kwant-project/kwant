@@ -1,3 +1,6 @@
+# Tutorial 2.6.2. "Lattice description": using different lattices
+# ===============================================================
+#
 # Physics background
 # ------------------
 # - conductance of a NS-junction (Andreev reflection, superconducting gap)

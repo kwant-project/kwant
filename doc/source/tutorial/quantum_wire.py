@@ -1,3 +1,6 @@
+# Tutorial 2.2.2. Transport through a quantum wire
+# ================================================
+#
 # Physics background
 # ------------------
 #  Conductance of a quantum wire; subbands

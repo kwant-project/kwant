@@ -1,3 +1,6 @@
+# Tutorial 2.7.1. 2D example: graphene quantum dot
+# ================================================
+#
 # Physics background
 # ------------------
 #  - graphene edge states

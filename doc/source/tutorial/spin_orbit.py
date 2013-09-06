@@ -1,3 +1,6 @@
+# Tutorial 2.3.1. Matrix structure of on-site and hopping elements
+# ================================================================
+#
 # Physics background
 # ------------------
 #  Gaps in quantum wires with spin-orbit coupling and Zeeman splititng,

@@ -1,3 +1,14 @@
+# Tutorial 2.7.2. 3D example: zincblende structure
+# ================================================
+#
+# Physical background
+# -------------------
+#  - 3D Bravais lattices
+#
+# Kwant features highlighted
+# --------------------------
+#  - demonstrate different ways of plotting in 3D
+
 import kwant
 from matplotlib import pyplot
 

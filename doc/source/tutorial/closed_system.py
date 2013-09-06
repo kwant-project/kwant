@@ -1,3 +1,6 @@
+# Tutorial 2.4.2. Closed systems
+# ==============================
+#
 # Physics background
 # ------------------
 #  Fock-darwin spectrum of a quantum dot (energy spectrum in

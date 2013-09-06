@@ -1,3 +1,6 @@
+# Tutorial 2.5. Beyond square lattices: graphene
+# ==============================================
+#
 # Physics background
 # ------------------
 #  Transport through a graphene quantum dot with a pn-junction

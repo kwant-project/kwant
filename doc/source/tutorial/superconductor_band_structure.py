@@ -1,3 +1,6 @@
+# Tutorial 2.6.1. Superconductors - "Orbital description": using matrices
+# =======================================================================
+#
 # Physics background
 # ------------------
 #  band structure of a superconducting quantum wire in tight-binding

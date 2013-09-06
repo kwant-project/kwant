@@ -1,3 +1,6 @@
+# Tutorial 2.2.3. Building the same system with less code
+# =======================================================
+#
 # Physics background
 # ------------------
 #  Conductance of a quantum wire; subbands

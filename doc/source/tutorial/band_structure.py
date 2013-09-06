@@ -1,3 +1,6 @@
+# Tutorial 2.4.1. Band structure calculations
+# ===========================================
+#
 # Physics background
 # ------------------
 #  band structure of a simple quantum wire in tight-binding approximation

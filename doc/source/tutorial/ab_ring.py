@@ -1,3 +1,6 @@
+# Tutorial 2.3.3. Nontrivial shapes
+# =================================
+#
 # Physics background
 # ------------------
 #  Flux-dependent transmission through a quantum ring
