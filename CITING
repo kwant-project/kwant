@@ -16,9 +16,11 @@ reference will be added to this document later, and will also be available at
 
 Kwant owes much of its current performance to the use of the `MUMPS
 <http://graal.ens-lyon.fr/MUMPS/>`_ library for solving systems of sparse linear
-equations.  If you have done high-performance calculations, we suggest citing
-P.R. Amestoy, I.S. Duff, J.S. Koster, J.Y. L’Excellent, SIAM. J. Matrix Anal. &
-Appl. 23 (1), 15 (2001).
+equations.  If you have done high-performance calculations, we suggest citing ::
+
+    P.R. Amestoy, I.S. Duff, J.S. Koster, J.Y. L’Excellent, SIAM. J. Matrix Anal. & Appl. 23 (1), 15 (2001).
 
 Finally, if you use the routine for generation of circular ensembles of random
-matrices, please cite F. Mezzadri, Notices Am. Math. Soc. 54, 592 (2007).
+matrices, please cite ::
+
+    F. Mezzadri, Notices Am. Math. Soc. 54, 592 (2007).
