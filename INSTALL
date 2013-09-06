@@ -2,11 +2,11 @@
 Installation instructions
 =========================
 
-Kwant can be installed either using some prepared packages (on Linux, Mac OSX,
-and Windows), or it can be built and installed from source.
+Kwant can be installed either using some prepared packages (on GNU/Linux, Mac OS
+X, and Windows), or it can be built and installed from source.
 
-Installation from packages is in general advisable, especially for novice
-users. Expert users may find it helpful to build Kwant from source, as this
+In general, installation from packages is advisable, especially for novice
+users.  Expert users may find it helpful to build Kwant from source, as this
 will also allow them to customize Kwant to use certain optimized versions of
 libraries.
 
@@ -15,47 +15,85 @@ libraries.
 Installing from packages
 ************************
 
-Debian/Ubuntu Linux
-===================
+Debian GNU/Linux (and derivatives)
+==================================
 
-You can install Kwant from the Debian repository. To do so you have to
+The easiest way to install Kwant on a Debian system is using the pre-built
+packages we provide.  Our packages are known to work with Debian "wheezy" and
+Debian "jessie", but they may also work on many other recent Debian-derived
+sytems as well.  (For example the following works with recent Ubuntu
+installations as well.)
 
-1. Add the following lines to `/etc/apt/sources.list`::
+The lines prefixed with ``sudo`` have to be run as root.
+
+1. Add the following lines to ``/etc/apt/sources.list``::
 
        deb http://kwant-project.org/debian/ stable main
        deb-src http://kwant-project.org/debian/ stable main
 
-2. (Optional) Add the PGP key used to sign the repositories by executing::
+2. (Optional) Add the OpenPGP key used to sign the repositories by executing::
 
-       sudo apt-key adv --keyserver pgp.mit.edu --recv-key 980F3535
+       sudo apt-key adv --keyserver pgp.mit.edu --recv-key C3F147F5980F3535
+
+   (Feel free to verify the validity of this key using the web of trust!)
 
 3. Update the package data, and install Kwant::
 
        sudo apt-get update
        sudo apt-get install python-kwant python-kwant-doc
 
-   The `python-kwant-doc` package is optional and contains the html
-   documentation for Kwant.
+   The `python-kwant-doc` package is optional and installs the HTML
+   documentation of Kwant in the directory ``/usr/share/doc/python-kwant-doc``.
+
+Should the last command (``apt-get install``) fail due to unresolved
+dependencies, you can try to build your own packages, which is surprisingly
+easy::
+
+       cd /tmp
+
+       sudo apt-get build-dep tinyarray
+       apt-get source --compile tinyarray
+       sudo dpkg -i python-tinyarray_*.deb
+
+       sudo apt-get build-dep kwant
+       apt-get source --compile kwant
+       sudo dpkg -i python-kwant_*.deb python-kwant-doc_*.deb
+
+This method should work for virtually all Debian-derived systems, even for
+exotic architectures.
+
+
+Ubuntu (and derivatives)
+========================
+
+TODO: Tell how to use the Ubuntu PPA.
+
 
 Windows
 =======
 
-There are multiple Python distributions for Windows, the following uses the
-Kwant prerequisites provided by Christoph Gohlke. To install Kwant on Windows
-you have to
+There are multiple distributions of scientific Python software for Windows that
+provide the prerequisites for Kwant.  We recommend to use the packages kindly
+provided by Christoph Gohlke.  To install Kwant on Windows
 
-1. Determine whether you have 32 bit or 64 bit Windows installation by
-   following instructions from http://support.microsoft.com/kb/827218
+1. Determine whether you have a 32-bit or 64-bit Windows installation by
+   following these `instructions <http://support.microsoft.com/kb/827218>`_.
 
-2. Download and install the appropriate version (32 bit or 64 bit) of Python
-   2.7.5 from http://www.python.org/download/
+2. Download and install Python 2.7 for the appropriate architecture (32-bit or
+   64-bit) from the official `Python download site
+   <http://www.python.org/download/>`_.
 
-3. Download and install the latest available versions of `scipy-stack`,
-   `tinyarray`, and `kwant` from http://www.lfd.uci.edu/~gohlke/pythonlibs/
-   Once again you should select the 32 or 64 bit architecture that is
-   appropriate for your system You may receive a warning that says "The
-   publisher could not be verified. Do you want to run this software?". Select
-   "Run".
+3. Download and install ``scipy-stack``, ``tinyarray``, and ``kwant`` for Python
+   2.7 from `Christoph Gohlke's page
+   <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.  Once again you should choose
+   the architecture that is appropriate for your system.  ("win32" means 32-bit,
+   "amd64" means 64-bit -- even if you have a processor from Intel.)  If the
+   download from Gohlke's site is slow, try to download from our `mirror
+   <http://downloads.kwant-project.org/gohlke-mirror/>`_.
+
+   You may see a warning that says "The publisher could not be verified. Do you
+   want to run this software?". Select "Run".
+
 
 Mac OSX
 =======
@@ -115,6 +153,7 @@ In order to install Kwant, you have to
    After that, you will need to close and reopen the terminal to
    have all changes in effect.
 
+
 Notes
 .....
 
@@ -124,6 +163,7 @@ Notes
   `these instructions <https://trac.macports.org/wiki/howto/PortTreeTarball>`_.
 * Of course, if you already have macports installed, you can skip step 1
   and continue with step 2.
+
 
 homebrew
 --------
@@ -260,8 +300,8 @@ directory of the Kwant source distribution.
 System-specific instructions
 ============================
 
-Unix-like systems (Linux)
--------------------------
+Unix-like systems (GNU/Linux)
+-----------------------------
 
 Kwant should run on all recent Unix-like systems.  The following instructions
 have been verified to work on Debian 7 (Wheezy) or newer, and on Ubuntu 12.04 or
@@ -345,6 +385,7 @@ Fortran code must be compiled with the Gnu Fortran compiler (there is
 no Apple Fortran compiler). For this reason we force the Gnu compiler suite
 with the environment variables ``CC`` and ``LDSHARED`` as shown above.
 
+
 Notes on homebrew
 .................
 
@@ -363,90 +404,6 @@ Note that during the installation you will be told which paths to add when you
 want to compile/link against scotch/metis/mumps; you need to add these to the
 build.conf file. Also, when linking against mumps, one needs also to link
 against metis (in addition to the libraries needed for MacPorts).
-
-Microsoft Windows
------------------
-
-This describes one way to build a 32 bit (win32) version of Kwant without MUMPS
-on Windows using free software only.  These instructions were verified in April
-2013 with the following software versions: Windows XP SP3, Python 2.7.4,
-scipy-stack 13.4.9, mingw-get-inst-20120426, OpenBLAS 0.2.6.
-
-32-bit Kwant without MUMPS will be limited to rather small systems and will run
-significantly slower than a Kwant with MUMPS.  Volunteers who would like to
-improve these instructions are welcome.
-
-1. Install the official win32 Python 2.7 distribution from `the official Python
-   download page <http://python.org/download/>`_.  See the point "Python 2.7.x
-   Windows Installer" there.
-
-2. Install the Python packages required by Kwant (NumPy, SciPy, matplotlib).  An
-   easy way to do so is to install the `scipy-stack package
-   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy-stack>`_ (win32-py2.7)
-   kindly provided by Christoph Gohlke.  Please also note the instructions at
-   the top of that page.
-
-3. Install `MinGW <http://mingw.org/wiki/Getting_Started>`_, the "Minimalist GNU
-   for Windows" (look for "mingw-get-inst" on that page).  This is a version of
-   the GNU Compiler Collection (GCC) for Windows.  Check the boxes for the C,
-   C++, and Fortran compilers and the "MSYS Basic System" when asked about which
-   components to install.  Follow the instructions on the web page linked above
-   (section "Environment Settings") to append ``;C:\MinGW\bin`` to the value of
-   the PATH environment variable (or to create it).
-
-4. Make MinGW the default compiler for distutils: Create the file
-   ``c:\python27\lib\distutils\distutils.cfg`` (The exact path depends on where
-   Python has been installed) with the following contents:
-
-       [build]
-       compiler=mingw32
-
-5. Until this `bug in distutils's support for MinGW
-   <http://bugs.python.org/issue12641>`_ is fixed, work around it by editing
-   ``c:\python27/lib/distutils/cygwinccompiler.py`` and removing all the five
-   occurrences of the string ``-mno-cygwin``.
-
-   Now you have a complete environment for compiling Python extensions.  To be
-   able to build Kwant, we need to install the required linear algebra
-   libraries.
-
-6. Download `OpenBLAS <http://xianyi.github.com/OpenBLAS/>`_ (the download link
-   is at the bottom of the page).  Unpack the archive and launch the "MinGW
-   shell".  Inside the shell, the command ``mount`` will inform about how the
-   "drives" of windows are mounted into the single file system of MSYS.
-   Typically, drive C will be /c/.
-
-   Go to the root directory of the OpenBLAS distribution and execute
-
-       mingw-get install msys-wget
-       mingw-get install msys-perl
-       make USE_THREAD=0
-
-   (If you do not want to forcefully disable threading for OpenBLAS, simply use
-   ``make``.)
-
-   This should create a file named like ``libopenblas_nehalem-r0.2.6.lib``
-   where the name of the architecture (here: nehalem) and the version might
-   differ in your case.  Copy this file as ``openblas.lib`` into the library
-   directory of MinGW:
-
-      cp libopenblas_nehalem-r0.2.6.lib /c/MinGW/lib/openblas.lib
-
-7. Unpack Tinyarray, enter its directory. To build and install, run ::
-
-       c:\python27\python setup.py build
-       c:\python27\python setup.py install
-
-8. Inside the Kwant source distribution's root directory create a file
-   ``build.conf`` with the following contents.::
-
-       [lapack]
-       libraries = openblas gfortran
-
-   Finally, build and install Kwant::
-
-       c:\python27\python setup.py build
-       c:\python27\python setup.py install
 
 
 Build configuration
