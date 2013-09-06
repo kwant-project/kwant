@@ -1,6 +1,6 @@
 --- original
 +++ modified
-@@ -6,6 +6,7 @@
+@@ -9,6 +9,7 @@
  # --------------------------
  #  - Functions as values in Builder
  
@@ -8,7 +8,7 @@
  import kwant
  
  # For plotting
-@@ -52,19 +53,25 @@
+@@ -55,19 +56,25 @@
          smatrix = kwant.smatrix(sys, energy, args=[-welldepth])
          data.append(smatrix.transmission(1, 0))
  

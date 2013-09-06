@@ -1,6 +1,6 @@
 --- original
 +++ modified
-@@ -10,6 +10,7 @@
+@@ -13,6 +13,7 @@
  #  - Main motivation is to contrast to the implementation of superconductivity
  #    in tutorial5b.py
  
@@ -8,7 +8,7 @@
  import kwant
  
  import numpy as np
-@@ -46,11 +47,20 @@
+@@ -49,11 +50,20 @@
      # Make system and finalize it right away.
      lead = make_lead().finalized()
  

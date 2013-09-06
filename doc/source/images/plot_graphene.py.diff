@@ -1,6 +1,6 @@
 --- original
 +++ modified
-@@ -6,6 +6,7 @@
+@@ -9,6 +9,7 @@
  # --------------------------
  #  - demonstrate different ways of plotting
  
@@ -8,7 +8,7 @@
  import kwant
  from matplotlib import pyplot
  
-@@ -29,9 +30,11 @@
+@@ -32,9 +33,11 @@
  
  
  def plot_system(sys):
@@ -23,7 +23,7 @@
  
      # use color and linewidths to get a better plot
      def family_color(site):
-@@ -40,7 +43,11 @@
+@@ -43,7 +46,11 @@
      def hopping_lw(site1, site2):
          return 0.04 if site1.family == site2.family else 0.1
  
@@ -36,7 +36,7 @@
  
  
  def plot_data(sys, n):
-@@ -55,7 +62,11 @@
+@@ -58,7 +65,11 @@
      # the usual - works great in general, looks just a bit crufty for
      # small systems
  
@@ -49,7 +49,7 @@
  
      # use two different sort of triangles to cleanly fill the space
      def family_shape(i):
-@@ -65,15 +76,22 @@
+@@ -68,15 +79,22 @@
      def family_color(i):
          return 'black' if sys.site(i).family == a else 'white'
  

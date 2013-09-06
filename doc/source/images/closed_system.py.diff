@@ -1,6 +1,6 @@
 --- original
 +++ modified
-@@ -8,6 +8,7 @@
+@@ -11,6 +11,7 @@
  #  - Use of `hamiltonian_submatrix` in order to obtain a Hamiltonian
  #    matrix.
  
@@ -8,7 +8,7 @@
  from cmath import exp
  import numpy as np
  import kwant
-@@ -65,29 +66,39 @@
+@@ -68,29 +69,39 @@
  
          energies.append(ev)
  

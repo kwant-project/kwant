@@ -1,6 +1,6 @@
 --- original
 +++ modified
-@@ -7,6 +7,7 @@
+@@ -10,6 +10,7 @@
  # - Implementing electron and hole ("orbital") degrees of freedom
  #   using different lattices
  
@@ -8,7 +8,7 @@
  import kwant
  
  # For plotting
-@@ -82,19 +83,24 @@
+@@ -85,19 +86,24 @@
                      smatrix.transmission(0, 0) +
                      smatrix.transmission(1, 0))
  

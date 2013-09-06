@@ -1,6 +1,6 @@
 --- original
 +++ modified
-@@ -9,6 +9,7 @@
+@@ -12,6 +12,7 @@
  #    example, but in the tutorial main text)
  #  - Modifcations of hoppings/sites after they have been added
  
@@ -8,7 +8,7 @@
  from cmath import exp
  from math import pi
  
-@@ -37,12 +38,13 @@
+@@ -40,12 +41,13 @@
      sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
      sys[lat.neighbors()] = -t
  
@@ -28,7 +28,7 @@
          return exp(1j * phi)
  
      def crosses_branchcut(hop):
-@@ -78,6 +80,50 @@
+@@ -81,6 +83,50 @@
      return sys
  
  
@@ -79,7 +79,7 @@
  def plot_conductance(sys, energy, fluxes):
      # compute conductance
  
-@@ -87,18 +133,31 @@
+@@ -90,18 +136,31 @@
          smatrix = kwant.smatrix(sys, energy, args=[flux])
          data.append(smatrix.transmission(1, 0))
  
@@ -116,7 +116,7 @@
  
      # Finalize the system.
      sys = sys.finalized()
-@@ -108,6 +167,17 @@
+@@ -111,6 +170,17 @@
                                                  for i in xrange(100)])
  
  

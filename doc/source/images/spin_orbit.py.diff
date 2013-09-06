@@ -1,6 +1,6 @@
 --- original
 +++ modified
-@@ -10,6 +10,7 @@
+@@ -13,6 +13,7 @@
  # --------------------------
  #  - Numpy matrices as values in Builder
  
@@ -8,7 +8,7 @@
  import kwant
  
  # For plotting
-@@ -67,19 +68,24 @@
+@@ -70,19 +71,24 @@
          smatrix = kwant.smatrix(sys, energy)
          data.append(smatrix.transmission(1, 0))
  
