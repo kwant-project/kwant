@@ -1,6 +1,6 @@
-=====================
-Contributing to Kwant
-=====================
+============================================
+Contributing to Kwant and reporting problems
+============================================
 
 We view Kwant as not just a package with fixed functionality, but also as a
 framework to implement different physics-related algorithms using a common set
@@ -10,13 +10,24 @@ room for growth, and planning to extend it.
 We welcome both external contributions that are well-integrated with Kwant's
 core functionality, such as new solvers type, or algorithms for calculation of
 other observables, as well as code modules that are relatively independent but
-useful with Kwant (such as the random matrix theory module `kwant.rmt`).
+useful with Kwant (such as the random matrix theory module `kwant.rmt`).  We
+also welcome contributions to the reference documentation and the tutorial. It
+is also possible to add complete tutorial sections that illustrate a physical
+phenomenon using Kwant.
 
 The complete development history of Kwant is `publicly available
 <http://git.kwant-project.org/kwant>`_. Any external contribution will be
 clearly marked as such, and papers where it is described (if any) will be
 properly mentioned. Contact us if you are interested in submitting a
 contribution.
+
+When you encounter a bug, first try to reproduce it with as simple of a system
+as possible. Double-check with Kwant documentation that what you observe is
+actually a bug in Kwant. Then please email the bug report the Kwant `mailing
+list <mailto:kwant-discuss@kwant-project.org>`_. A bug report should contain
+the steps required to reproduce the bug, preferably with a simple script that
+reproduces the bug attached. It should also include a description of the bug
+(i.e. what exactly goes wrong).
 
 Technical advice
 ----------------
