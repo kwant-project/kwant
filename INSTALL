@@ -15,6 +15,48 @@ libraries.
 Installing from packages
 ************************
 
+Debian/Ubuntu Linux
+===================
+
+You can install Kwant from the Debian repository. To do so you have to
+
+1. Add the following lines to `/etc/apt/sources.list`::
+
+       deb http://kwant-project.org/debian/ stable main
+       deb-src http://kwant-project.org/debian/ stable main
+
+2. (Optional) Add the PGP key used to sign the repositories by executing::
+
+       sudo apt-key adv --keyserver pgp.mit.edu --recv-key 980F3535
+
+3. Update the package data, and install Kwant::
+
+       sudo apt-get update
+       sudo apt-get install python-kwant python-kwant-doc
+
+   The `python-kwant-doc` package is optional and contains the html
+   documentation for Kwant.
+
+Windows
+=======
+
+There are multiple Python distributions for Windows, the following uses the
+Kwant prerequisites provided by Christoph Gohlke. To install Kwant on Windows
+you have to
+
+1. Determine whether you have 32 bit or 64 bit Windows installation by
+   following instructions from http://support.microsoft.com/kb/827218
+
+2. Download and install the appropriate version (32 bit or 64 bit) of Python
+   2.7.5 from http://www.python.org/download/
+
+3. Download and install the latest available versions of `scipy-stack`,
+   `tinyarray`, and `kwant` from http://www.lfd.uci.edu/~gohlke/pythonlibs/
+   Once again you should select the 32 or 64 bit architecture that is
+   appropriate for your system You may receive a warning that says "The
+   publisher could not be verified. Do you want to run this software?". Select
+   "Run".
+
 Mac OSX
 =======
 
