@@ -9,5 +9,5 @@ Preliminaries
    install
    authors
    citing
-   license
    contribute
+   license

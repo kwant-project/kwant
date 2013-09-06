@@ -2,55 +2,55 @@
 Contributing to Kwant and reporting problems
 ============================================
 
-We view Kwant as not just a package with fixed functionality, but also as a
-framework to implement different physics-related algorithms using a common set
-of concepts and, if possible, a shared interface. We have designed it leaving
-room for growth, and planning to extend it.
+We see Kwant not just as a package with fixed functionality, but rather as a
+framework for implementing different physics-related algorithms using a common
+set of concepts and, if possible, a shared interface.  We have designed it
+leaving room for growth, and plan to keep extending it.
 
-We welcome both external contributions that are well-integrated with Kwant's
-core functionality, such as new solvers type, or algorithms for calculation of
-other observables, as well as code modules that are relatively independent but
-useful with Kwant (such as the random matrix theory module `kwant.rmt`).  We
-also welcome contributions to the reference documentation and the tutorial. It
-is also possible to add complete tutorial sections that illustrate a physical
-phenomenon using Kwant.
+External contributions to Kwant are highly welcome.  You can help to advance the
+project not only by writing code, but also by reporting bugs, and
+fixing/improving the documentation.  A mailing list TODO: add link (also
+usable through a web interface (TODO: add link) ) is available for discussions.
 
-The complete development history of Kwant is `publicly available
-<http://git.kwant-project.org/kwant>`_. Any external contribution will be
-clearly marked as such, and papers where it is described (if any) will be
-properly mentioned. Contact us if you are interested in submitting a
-contribution.
+If you have some code that works well with Kwant, or extends it in some useful
+way, please consider sharing it.  Any external contribution will be clearly
+marked as such, and relevant papers will be added to the list of :doc:`suggested
+acknowledgements <citing>`.  The complete development history is available
+through a `web interface <http://git.kwant-project.org/kwant>`_.
 
-When you encounter a bug, first try to reproduce it with as simple of a system
-as possible. Double-check with Kwant documentation that what you observe is
-actually a bug in Kwant. Then please email the bug report the Kwant `mailing
-list <mailto:kwant-discuss@kwant-project.org>`_. A bug report should contain
-the steps required to reproduce the bug, preferably with a simple script that
-reproduces the bug attached. It should also include a description of the bug
-(i.e. what exactly goes wrong).
+Reporiting bugs
+---------------
 
-Technical advice
-----------------
+If you encounter a problem with Kwant, first try to reproduce it with as simple
+a system as possible.  Double-check with the documentation that what you observe
+is actually a bug in Kwant. If you think it is, please check whether the problem
+is already known by searching the mailing list.  (TODO: tell how).
+
+If the problem is not known yet, please email a bug report to the `Kwant mailing
+list <mailto:kwant-discuss@kwant-project.org>`_. A report should contain:
+
+* The versions of software you are using (Kwant, Python, operating system, etc.)
+
+* A description of the problem, i.e. what exactly goes wrong.
+
+* Enough information to reproduce the bug, preferably in the form of a simple
+  script.
+
+How to contribute
+-----------------
 
 We use the version control system `Git <http://git-scm.com/>`_ to coordinate the
-development of Kwant.  If you are new to Git, we invite you to learn its
-basics.  (There's a plethora of information available on the Web.)
+development of Kwant.  If you are new to Git, we invite you to learn its basics.
+(There's a plethora of information available on the Web.)  Kwant's Git
+repository contains not only the source code, but also all of the reference
+documentation and the tutorial.
 
-It is best to base your development on the latest version of Kwant. ::
+It is best to base your work on the latest version of Kwant::
 
     git clone http://git.kwant-project.org/kwant
 
-To work on Kwant itself it is useful to build it in-place so that it does not
-have to be re-installed after each change.  This can be done with the following
-command ::
-
-    python setup.py build_ext -i
-
-The ``kwant`` subdirectory of the source distribution will be thus turned into
-a proper Python package that can be imported.  To be able to import Kwant from
-within Python, one can either work in the root directory of the distribution
-(where the subdirectory ``kwant`` is located), or make a (symbolic) link from
-somewhere in the Python search path to the the package subdirectory.
+Then you can modify the code, and build Kwant and the documentation as described
+in the :doc:`installation instructions <install>`.
 
 Some things to keep in mind:
 
@@ -64,3 +64,15 @@ Some things to keep in mind:
 
 * Write tests for all the important functionality you add.  Be sure not to
   break existing tests.
+
+A useful trick for working on the source code is to build in-place so that there
+is no need to re-install after each change.  This can be done with the following
+command ::
+
+    python setup.py build_ext -i
+
+The ``kwant`` subdirectory of the source distribution will be thus turned into
+a proper Python package that can be imported.  To be able to import Kwant from
+within Python, one can either work in the root directory of the distribution
+(where the subdirectory ``kwant`` is located), or make a (symbolic) link from
+somewhere in the Python search path to the the package subdirectory.
