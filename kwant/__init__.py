@@ -6,6 +6,8 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+import numpy                    # Needed by C. Gohlke's Windows package.
+
 __all__ = ['system', 'version', 'builder', 'lattice', 'solvers',
            'digest', 'rmt']
 for module in __all__:
