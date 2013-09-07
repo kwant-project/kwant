@@ -111,7 +111,9 @@ pngmath_latex_preamble = r"""\newcommand{\bra}[1]{\left\langle#1\right|}
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'default'
+html_theme = 'kwantdoctheme'
+html_theme_path = ['..']
+html_theme_options = {'collapsiblesidebar': True}
 html_style = 'kwant.css'
 
 # Theme options are theme-specific and customize the look and feel of a theme
