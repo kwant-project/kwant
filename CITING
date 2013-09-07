@@ -7,7 +7,8 @@ service to the physics community.  If you have used Kwant for work that has lead
 to a scientific publication, please mention this explicitly in the text body.
 In addition, we ask you to cite the main paper that introduces Kwant:
 
-  TO-BE-FILLED-IN
+  The reference is provided at the `Kwant website
+  <kwant-project.org/citing.html>`_.
 
 If you have profited from the quantum transport functionality of Kwant, please
 also cite the upcoming paper that describes the relevant algorithms. The
