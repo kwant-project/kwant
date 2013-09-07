@@ -20,11 +20,13 @@ Ubuntu (and derivatives)
 
 Execute the following commands::
 
-        sudo apt-add-repository ppa:kwant-project/ppa
-        sudo apt-get update
-        sudo apt-get install python-kwant
+    sudo apt-add-repository ppa:kwant-project/ppa
+    sudo apt-get update
+    sudo apt-get install python-kwant python-kwant-doc
 
-This should provide Kwant for all the versions of Ubuntu >= 12.04.
+This should provide Kwant for all versions of Ubuntu >= 12.04.  The HTML
+documentation will be installed locally in the directory
+``/usr/share/doc/python-kwant-doc``.
 
 
 Debian GNU/Linux (and derivatives)
@@ -33,8 +35,7 @@ Debian GNU/Linux (and derivatives)
 The easiest way to install Kwant on a Debian system is using the pre-built
 packages we provide.  Our packages are known to work with Debian "wheezy" and
 Debian "jessie", but they may also work on many other recent Debian-derived
-sytems as well.  (For example the following works with recent Ubuntu
-installations as well.)
+sytems as well.  (For example, the following works with recent Ubuntu versions.)
 
 The lines prefixed with ``sudo`` have to be run as root.
 
@@ -54,25 +55,25 @@ The lines prefixed with ``sudo`` have to be run as root.
        sudo apt-get update
        sudo apt-get install python-kwant python-kwant-doc
 
-   The `python-kwant-doc` package is optional and installs the HTML
+   The ``python-kwant-doc`` package is optional and installs the HTML
    documentation of Kwant in the directory ``/usr/share/doc/python-kwant-doc``.
 
 Should the last command (``apt-get install``) fail due to unresolved
-dependencies, you can try to build your own packages, which is surprisingly
-easy::
+dependencies, you can try to build and install your own packages, which is
+surprisingly easy::
 
-       cd /tmp
+    cd /tmp
 
-       sudo apt-get build-dep tinyarray
-       apt-get source --compile tinyarray
-       sudo dpkg -i python-tinyarray_*.deb
+    sudo apt-get build-dep tinyarray
+    apt-get source --compile tinyarray
+    sudo dpkg -i python-tinyarray_*.deb
 
-       sudo apt-get build-dep kwant
-       apt-get source --compile kwant
-       sudo dpkg -i python-kwant_*.deb python-kwant-doc_*.deb
+    sudo apt-get build-dep kwant
+    apt-get source --compile kwant
+    sudo dpkg -i python-kwant_*.deb python-kwant-doc_*.deb
 
-This method should work for virtually all Debian-derived systems, even for
-exotic architectures.
+This method should work for virtually all Debian-derived systems, even on exotic
+architectures.
 
 
 Windows
@@ -94,7 +95,7 @@ provided by Christoph Gohlke.  To install Kwant on Windows
    <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.  Once again you should choose
    the architecture that is appropriate for your system.  ("win32" means 32-bit,
    "amd64" means 64-bit -- even if you have a processor from Intel.)  If the
-   download from Gohlke's site is slow, try to download from our `mirror
+   download from Gohlke's site is slow, try to download from `our mirror
    <http://downloads.kwant-project.org/gohlke-mirror/>`_.
 
    You may see a warning that says "The publisher could not be verified. Do you
@@ -109,8 +110,8 @@ from the Unix/Linux world to Mac OSX. Since the community is quite
 split, we provide Kwant and its dependencies both via the `MacPorts
 <http://www.macports.org>`_ and `homebrew <http://brew.sh>`_ systems.
 
-MacPorts
---------
+Mac OSX: MacPorts
+=================
 
 MacPorts is a full-fledged package manager that recreates a whole Linux-like
 environment on your Mac. It requires little choices to be made by the user,
@@ -159,9 +160,7 @@ In order to install Kwant, you have to
    After that, you will need to close and reopen the terminal to
    have all changes in effect.
 
-
-Notes
-.....
+Notes:
 
 * If you have problems with macports because your institution's firewall
   blocks macports (more precisely, the `rsync` port), resulting in
@@ -171,8 +170,8 @@ Notes
   and continue with step 2.
 
 
-homebrew
---------
+Mac OS X: homebrew
+==================
 
 homebrew is a recent addition to the package managers on Mac OSX. It is
 more lightweight, tries to be as minimalistic as possible and give the user
@@ -230,8 +229,7 @@ you are safe.
        brew install numpy scipy matplotlib
        brew install kwant
 
-Notes
-.....
+Notes:
 
 - If something does not work as expected, use ``brew doctor`` for
   instructions (it will find conflicts and things like that).
@@ -259,7 +257,8 @@ Building Kwant requires
    (For best performance we recommend the free `OpenBLAS
    <http://xianyi.github.com/OpenBLAS/>`_ or the unfree `MKL
    <http://software.intel.com/en-us/intel-mkl>`_.)
- * Tinyarray, a NumPy-like Python package optimized for very small arrays,
+ * `Tinyarray <http://kwant-project.org/tinyarray/>`_, a NumPy-like Python
+   package optimized for very small arrays,
  * An environment which allows to compile Python extensions written in C and
    C++.
 
@@ -275,15 +274,13 @@ The following software is highly recommended though not strictly required:
    tests included with Kwant.
 
 In addition, to build a copy of Kwant that has been checked-out directly from
-version control (git), you will also need `Cython <http://cython.org/>`_ 0.17.1
-or newer.  You do not need Cython to build Kwant that has been unpacked from a
-source .tar.gz-file.
+`its Git repository <http://git.kwant-project.org/kwant>`_, you will also need
+`Cython <http://cython.org/>`_ 0.17.1 or newer.  You do not need Cython to build
+Kwant that has been unpacked from a source .tar.gz-file.
 
 
 Generic instructions
 ====================
-
-Please note the `system-specific instructions`_ below.
 
 Kwant can be built and installed following the `usual Python conventions
 <http://docs.python.org/install/index.html>`_ by running the following commands
@@ -303,11 +300,8 @@ The tutorial examples can be found in the directory ``tutorial`` inside the root
 directory of the Kwant source distribution.
 
 
-System-specific instructions
-============================
-
 Unix-like systems (GNU/Linux)
------------------------------
+=============================
 
 Kwant should run on all recent Unix-like systems.  The following instructions
 have been verified to work on Debian 7 (Wheezy) or newer, and on Ubuntu 12.04 or
@@ -349,8 +343,8 @@ You can make this setting permanent by adding this line to the file
 ``.bashrc`` (or equivalent) in your home directory.
 
 
-Mac OS X
---------
+Mac OS X: MacPorts
+==================
 
 The required dependencies of Kwant are best installed with one of the packaging
 systems. Here we only consider the case of `MacPorts
@@ -392,8 +386,8 @@ no Apple Fortran compiler). For this reason we force the Gnu compiler suite
 with the environment variables ``CC`` and ``LDSHARED`` as shown above.
 
 
-Notes on homebrew
-.................
+Mac OS X: homebrew
+==================
 
 It is also possible to build Kwant using homebrew. The dependencies can be
 installed as ::
