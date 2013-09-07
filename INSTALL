@@ -412,6 +412,21 @@ build.conf file. Also, when linking against mumps, one needs also to link
 against metis (in addition to the libraries needed for MacPorts).
 
 
+Windows
+=======
+
+Our efforts to compile Kwant on Windows using only free software (MinGW) were
+only moderately successful.  At the end of a very complicated process we
+obtained packages that worked, albeit unreliably.  As the only recommended way
+to compile Python extensions on Windows is using Visual C++, it may well be that
+there exists no easy solution.
+
+It is possible to compile Kwant on Windows using non-free compilers, however we
+(the authors of Kwant) have no experience with this.  The existing Windows
+binary installers of Kwant and Tinyarray were kindly prepared by Christoph
+Gohlke.
+
+
 Build configuration
 ===================
 
