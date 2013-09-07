@@ -48,8 +48,6 @@ The lines prefixed with ``sudo`` have to be run as root.
 
        sudo apt-key adv --keyserver pgp.mit.edu --recv-key C3F147F5980F3535
 
-   (Feel free to verify the validity of this key using the web of trust!)
-
 3. Update the package data, and install Kwant::
 
        sudo apt-get update
