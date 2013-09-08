@@ -7,27 +7,33 @@ framework for implementing different physics-related algorithms using a common
 set of concepts and, if possible, a shared interface.  We have designed it
 leaving room for growth, and plan to keep extending it.
 
-External contributions to Kwant are highly welcome.  You can help to advance the
-project not only by writing code, but also by reporting bugs, and
-fixing/improving the documentation.  A mailing list TODO: add link (also
-usable through a web interface (TODO: add link) ) is available for discussions.
+External contributions to Kwant are highly welcome.  You can help to advance
+the project not only by writing code, but also by reporting bugs, and
+fixing/improving the documentation.  A `mailing list
+<http://kwant-project.org/community.html>`_ is available for discussions.
 
 If you have some code that works well with Kwant, or extends it in some useful
 way, please consider sharing it.  Any external contribution will be clearly
-marked as such, and relevant papers will be added to the list of :doc:`suggested
-acknowledgements <citing>`.  The complete development history is available
-through a `web interface <http://git.kwant-project.org/kwant>`_.
+marked as such, and relevant papers will be added to the list of
+:doc:`suggested acknowledgements <citing>`.  The complete development history
+is also made available through a `web interface
+<http://git.kwant-project.org/kwant>`_.  If you plan to contribute, it is best
+to coordinate with us in advance either through the `mailing list
+<http://kwant-project.org/community.html>`__, or directly by `email
+<mailto:authors@kwant-project.org>`_ for matters that you prefer to not discuss
+publicly.
 
 Reporiting bugs
 ---------------
 
 If you encounter a problem with Kwant, first try to reproduce it with as simple
-a system as possible.  Double-check with the documentation that what you observe
-is actually a bug in Kwant. If you think it is, please check whether the problem
-is already known by searching the mailing list.  (TODO: tell how).
+a system as possible.  Double-check with the documentation that what you
+observe is actually a bug in Kwant. If you think it is, please check whether
+the problem is already known by searching the `mailing list
+<http://kwant-project.org/community.html>`__.
 
 If the problem is not known yet, please email a bug report to the `Kwant mailing
-list <mailto:kwant-discuss@kwant-project.org>`_. A report should contain:
+list <http://kwant-project.org/community.html>`__. A report should contain:
 
 * The versions of software you are using (Kwant, Python, operating system, etc.)
 

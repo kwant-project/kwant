@@ -7,9 +7,8 @@ commented extensively. In addition, you will find notes about more subtle,
 technical details at the end of each example. At first reading, these notes may
 be safely skipped.
 
-A scientific article about Kwant is available as well:
-
-TO-BE-FILLED-IN
+A scientific article about Kwant is available as well, see `Kwant
+website <http://kwant-project.org/citing.html>`_.
 
 The article introduces Kwant with a somewhat different focus than the tutorial
 and it is the authors' intention that both texts complement each other.  While
