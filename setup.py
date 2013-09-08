@@ -12,7 +12,6 @@ CONFIG_FILE = 'build.conf'
 README_FILE = 'README'
 STATIC_VERSION_FILE = 'kwant/_static_version.py'
 REQUIRED_CYTHON_VERSION = (0, 17, 1)
-MUMPS_DEBIAN_PACKAGE = 'libmumps-scotch-dev'
 NO_CYTHON_OPTION = '--no-cython'
 TUT_DIR = 'tutorial'
 TUT_GLOB = 'doc/source/tutorial/*.py'
@@ -270,19 +269,26 @@ def packages():
             if '__init__.py' in fnames or root.endswith('/tests')]
 
 
-def debian_mumps():
-    """Return the configuration for debian-provided MUMPS if it is available,
-    or an empty dictionary otherwise."""
+def search_mumps():
+    """Return the configuration for MUMPS if it is available in a known way.
+
+    This is known to work with the MUMPS provided by the Debian package
+    libmumps-scotch-dev."""
+
+    libs = ['zmumps_scotch', 'mumps_common_scotch', 'pord', 'mpiseq_scotch',
+            'gfortran']
+
+    cmd = ['gcc']
+    cmd.extend(['-l' + lib for lib in libs])
+    cmd.extend(['-o/dev/null', '-xc', '-'])
     try:
-        p = subprocess.Popen(
-            ['dpkg-query', '-W', '-f=${Status}', MUMPS_DEBIAN_PACKAGE],
-            stdout=subprocess.PIPE)
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
     except OSError:
         pass
     else:
-        if p.wait() == 0 and p.communicate()[0] == 'install ok installed':
-            return {'libraries': ['zmumps_scotch', 'mumps_common_scotch',
-                                  'pord', 'mpiseq_scotch', 'gfortran']}
+        p.communicate(input='int main() {}\n')
+        if p.wait() == 0:
+            return {'libraries': libs}
     return {}
 
 
@@ -349,10 +355,9 @@ def extensions():
     if kwrds:
         build_summary.append('User-configured MUMPS')
     else:
-        kwrds = debian_mumps()
+        kwrds = search_mumps()
         if kwrds:
-            build_summary.append(
-                'MUMPS from package {0}'.format(MUMPS_DEBIAN_PACKAGE))
+            build_summary.append('Auto-configured MUMPS')
     if kwrds:
         for name, value in lapack.iteritems():
             kwrds.setdefault(name, []).extend(value)
