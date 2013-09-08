@@ -23,8 +23,8 @@ to coordinate with us in advance either through the `mailing list
 <mailto:authors@kwant-project.org>`_ for matters that you prefer to not discuss
 publicly.
 
-Reporiting bugs
----------------
+Reporting bugs
+--------------
 
 If you encounter a problem with Kwant, first try to reproduce it with as simple
 a system as possible.  Double-check with the documentation that what you
