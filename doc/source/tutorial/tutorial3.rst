@@ -27,11 +27,11 @@ invariant system needed for band structure calculations.
 In the previous examples `~kwant.builder.Builder` instances like the one
 created above were attached as leads to the ``Builder`` instance of the
 scattering region and the latter was finalized.  The thus created system
-contained implicitly finalized versions of the attached leads.  But now we are
-working with a single lead and there is no scattering region.  So we have to
-finalized the ``Builder`` of our sole lead explicitly.
+contained implicitly finalized versions of the attached leads. However, now
+we are working with a single lead and there is no scattering region. Hence, we
+have to finalize the ``Builder`` of our sole lead explicitly.
 
-That finalized lead is then passed to `~kwant.plotter.bands`.  This function
+That finalized lead is then passed to `~kwant.plotter.bands`. This function
 calculates energies of various bands at a range of momenta and plots the
 calculated energies. It is really a convenience function, and if one needs to
 do something more profound with the dispersion relation these energies may be
@@ -65,7 +65,7 @@ In this example, we compute the wave functions of a closed circular quantum dot
 and its spectrum as a function of magnetic field (Fock-Darwin spectrum).
 
 To compute the eigenenergies and eigenstates, we will make use of the sparse
-linear algebra functionality of `scipy <http://www.scipy.org>`_, which
+linear algebra functionality of `SciPy <http://www.scipy.org>`_, which
 interfaces the ARPACK package:
 
 .. literalinclude:: closed_system.py

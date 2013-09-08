@@ -84,8 +84,9 @@ The leads are defined almost as before:
 Note the method `~kwant.lattice.Polyatomic.vec` used in calculating the
 parameter for `~kwant.lattice.TranslationalSymmetry`.  The latter expects a
 real-space symmetry vector, but for many lattices symmetry vectors are more
-easily expressed in the natural coordinate system of the lattice.  The ``vec``
-method of lattices maps a lattice vector to a real-space vector.
+easily expressed in the natural coordinate system of the lattice. The
+`~kwant.attices.Polyatomic.vec`-method is thus used to map a lattice vector
+to a real-space vector.
 
 Observe also that the translational vectors ``graphene.vec((-1, 0))`` and
 ``graphene.vec((0, 1))`` are *not* orthogonal any more as they would have been
@@ -108,10 +109,7 @@ in the following piece of code:
     :end-before: #HIDDEN_END_zydk
 
 Here we use in contrast to the previous example a sparse matrix and
-the sparse linear algebra functionality of SciPy (this requires
-SciPy version >= 0.9.0; since the remaining part of the example does not
-depend on this eigenenergy calculation, a ``try``-block simply skips this
-calculation if a lower SciPy version is installed.)
+the sparse linear algebra functionality of SciPy.
 
 The code for computing the band structure and the conductance is identical
 to the previous examples, and needs not be further explained here.

@@ -136,9 +136,9 @@ case of a position-dependent potential:
 
     H = \frac{\hbar^2}{2 m} (\partial_x^2+\partial_y^2) + V(x, y)
 
-The position-dependent potential enters in the onsite energies.
-One possibility would be to again set the onsite matrix elements
-of each lattice point individually (as in tutorial1a.py). However,
+The position-dependent potential enters in the onsite energies. One
+possibility would be to again set the onsite matrix elements of each
+lattice point individually (as in :ref:`tutorial_quantum_wire`). However,
 changing the potential then implies the need to build up the system again.
 
 Instead, we use a python *function* to define the onsite energies. We

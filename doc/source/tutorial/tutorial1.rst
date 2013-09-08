@@ -53,6 +53,8 @@ The remainder of this section demonstrates how to realize the discretized
 Hamiltonian in Kwant and how to perform transmission calculations.  For
 simplicity, we choose to work in such units that :math:`t = a = 1`.
 
+.. _tutorial_quantum_wire:
+
 Transport through a quantum wire
 ................................
 
@@ -416,16 +418,16 @@ And one ``main`` function.
 
 Finally, we use the following standard Python construct [#]_ to execute
 ``main`` if the program is used as a script (i.e. executed as
-``python tutorial1b.py``):
+``python quantum_wire_revisited.py``):
 
 .. literalinclude:: quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_ypbj
     :end-before: #HIDDEN_END_ypbj
 
-If the example, however, is imported inside Python using ``import tutorial1b``,
-``main`` is not executed automatically.  Instead, you can execute it
-manually using ``tutorial1b.main()``.  On the other hand, you also
-have access to the other functions, ``make_system`` and
+If the example, however, is imported inside Python using ``import
+quantum_wire_revisted as qw``, ``main`` is not executed automatically.
+Instead, you can execute it manually using ``qw.main()``.  On the other
+hand, you also have access to the other functions, ``make_system`` and
 ``plot_conductance``, and can thus play with the parameters.
 
 The result of the example should be identical to the previous one.
