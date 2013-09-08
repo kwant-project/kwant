@@ -2,8 +2,9 @@
 Installation instructions
 =========================
 
-Kwant can be installed either using some prepared packages (on GNU/Linux, Mac OS
-X, and Windows), or it can be built and installed from source.
+Kwant can be installed either using prepared packages (Debian and Ubuntu
+variants of GNU/Linux, Mac OS X, and Windows), or it can be built and installed
+from source.
 
 In general, installation from packages is advisable, especially for novice
 users.  Expert users may find it helpful to build Kwant from source, as this
@@ -29,8 +30,8 @@ documentation will be installed locally in the directory
 ``/usr/share/doc/python-kwant-doc``.
 
 
-Debian GNU/Linux (and derivatives)
-==================================
+Debian (and derivatives)
+========================
 
 The easiest way to install Kwant on a Debian system is using the pre-built
 packages we provide.  Our packages are known to work with Debian "wheezy" and
