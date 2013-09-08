@@ -11,19 +11,19 @@ The principal developers of Kwant are
 
 The authors can be reached at authors@kwant-project.org.
 
-The contributions of Christoph and Xavier are part of their work at `CEA
-<http://cea.fr>`_, the French Commissariat à l'énergie atomique et aux énergies
-alternatives.
-
 Other people that have contributed to Kwant include
 
-* Daniel Jaschke
-* Joseph Weston
-
-(To find out who exactly wrote a certain part of Kwant, please use the "blame"
-feature of `Git <http://git-scm.com/>`_, the version control system.)
+* Daniel Jaschke (SPSMS-INAC-CEA Grenoble)
+* Joseph Weston (SPSMS-INAC-CEA Grenoble)
 
 We thank Christoph Gohlke for the creation of Windows installers.
+
+`CEA <http://cea.fr>`_ is the French Commissariat à l'énergie atomique et aux
+énergies alternatives.  The CEA is the copyright holder for the contributions of
+C. W. Groth, X. Waintal, and its other employees involved in Kwant.
+
+To find out who wrote a certain part of Kwant, please use the "blame" feature of
+`Git <http://git-scm.com/>`_, the version control system.
 
 
 Funding

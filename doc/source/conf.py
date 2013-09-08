@@ -43,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Kwant'
-copyright = u'2011-2013, C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, and others'
+copyright = u'2011-2013, C. W. Groth (CEA), M. Wimmer, A. R. Akhmerov, X. Waintal (CEA), and others'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -6,8 +6,10 @@ Kwant license
 ``doc/sphinxext`` subdirectory for which ``doc/sphinxext/LICENSE.txt``
 applies.)
 
-Copyright 2011-2013 C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, and
-others.  All rights reserved.
+Copyright 2011-2013 C. W. Groth (CEA), M. Wimmer, A. R. Akhmerov,
+X. Waintal (CEA), and others.  All rights reserved.
+
+(CEA = Commissariat à l'énergie atomique et aux énergies alternatives)
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
