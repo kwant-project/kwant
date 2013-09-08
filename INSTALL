@@ -41,8 +41,8 @@ The lines prefixed with ``sudo`` have to be run as root.
 
 1. Add the following lines to ``/etc/apt/sources.list``::
 
-       deb http://kwant-project.org/debian/ stable main
-       deb-src http://kwant-project.org/debian/ stable main
+       deb http://dowloads.kwant-project.org/debian/ stable main
+       deb-src http://dowloads.kwant-project.org/debian/ stable main
 
 2. (Optional) Add the OpenPGP key used to sign the repositories by executing::
 
