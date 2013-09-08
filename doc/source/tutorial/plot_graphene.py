@@ -23,7 +23,7 @@ def make_system(r=8, t=-1, tp=-0.1):
         return x**2 + y**2 < r**2
 
     sys = kwant.Builder()
-    sys[lat.shape(circle, (0,0))] = 0
+    sys[lat.shape(circle, (0, 0))] = 0
     sys[lat.neighbors()] = t
     sys.eradicate_dangling()
     if tp:
@@ -67,7 +67,7 @@ def plot_data(sys, n):
     # small systems
 
 #HIDDEN_BEGIN_plotdata2
-    kwant.plotter.map(sys, wf, oversampling=10)
+    kwant.plotter.map(sys, wf, oversampling=10, cmap='gist_heat_r')
 #HIDDEN_END_plotdata2
 
     # use two different sort of triangles to cleanly fill the space
@@ -80,7 +80,7 @@ def plot_data(sys, n):
         return 'black' if sys.site(i).family == a else 'white'
 
     kwant.plot(sys, site_color=wf, site_symbol=family_shape,
-               site_size=0.5, hop_lw=0, cmap='jet')
+               site_size=0.5, hop_lw=0, cmap='gist_heat_r')
 #HIDDEN_END_plotdata3
 
     # plot by changing the symbols itself
@@ -88,7 +88,7 @@ def plot_data(sys, n):
     def site_size(i):
         return 3 * wf[i] / wf.max()
 
-    kwant.plot(sys, site_size=site_size, site_color=(0,0,1,0.3),
+    kwant.plot(sys, site_size=site_size, site_color=(0, 0, 1, 0.3),
                hop_lw=0.1)
 #HIDDEN_END_plotdata4
 

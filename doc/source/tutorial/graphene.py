@@ -101,14 +101,8 @@ def compute_evs(sys):
     # Compute some eigenvalues of the closed system
     sparse_mat = sys.hamiltonian_submatrix(sparse=True)
 
-    try:
-        # This requires SciPy version >= 0.9.0
-        # Failure (i.e. insufficient SciPy version) is not critical
-        # for the remainder of the tutorial, hence the try-block
-        evs = sla.eigs(sparse_mat, 2)[0]
-        print evs
-    except:
-        pass
+    evs = sla.eigs(sparse_mat, 2)[0]
+    print evs.real
 #HIDDEN_END_zydk
 
 

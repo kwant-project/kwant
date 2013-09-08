@@ -4,11 +4,11 @@
 .. module:: kwant.graph
 
 Graphs, as handled by this module, consist of nodes (numbered by integers,
-usually >= 0).  Pairs of nodes can be connected by edges (numbered by integers
->= 0).  An edge is described by a pair (tail, head) of node numbers and is
-always directed.
+usually :math:`\geq 0`).  Pairs of nodes can be connected by edges (numbered by
+integers :math:`\geq 0`).  An edge is described by a pair (tail, head) of node
+numbers and is always directed.
 
-The basic work-flow is to
+The basic workflow is to
 
  (1) create an object of type `Graph`,
 

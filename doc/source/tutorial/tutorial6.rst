@@ -49,7 +49,7 @@ the start end end site of hopping as arguments:
 
 Note that since we are using an unfinalized Builder, a `site` is really an
 instance of `~kwant.builder.Site`. With these adjustments we arrive at a plot
-that is more intelligible, still carrying all information:
+that carries the same information, but is much easier to interpret:
 
 .. image:: ../images/plot_graphene_sys2.*
 
@@ -151,7 +151,7 @@ which shows the edge state nature of the wave function most clearly.
 Zincblende is a very common crystal structure of semiconductors. It is a
 face-centered cubic crystal with two inequivalent atoms in the unit cell
 (i.e. two different types of atoms, unlike diamond which has the same crystal
-structure, but to equivalent atoms per unit cell).
+structure, but two equivalent atoms per unit cell).
 
 It is very easily generated in Kwant with `kwant.lattice.general`:
 
@@ -194,7 +194,7 @@ arbitrarily, allowing for a good inspection of the geometry from all sides.
 
 .. note::
 
-    Interactive 3D plots usually have not the proper aspect ratio, but are a
+    Interactive 3D plots usually do not have the proper aspect ratio, but are a
     bit squashed. This is due to bugs in matplotlib's 3D plotting module that
     does not properly honor the corresponding arguments. By resizing the plot
     window however one can manually adjust the aspect ratio.

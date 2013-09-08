@@ -80,7 +80,7 @@ The typical workflow with Kwant is as follows:
 
 #. Pass the finalized system to a solver.
 
-Please note that even though this tutorial only shows 2-d systems, Kwant is
+Please note that even though this tutorial mostly shows 2-d systems, Kwant is
 completely general with respect to the number of dimensions.  Kwant does not
 care in the least whether systems live in one, two, three, or any other number
 of dimensions.  The only exception is plotting, which out-of-the-box only works

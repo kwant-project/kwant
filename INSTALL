@@ -125,9 +125,9 @@ In order to install Kwant, you have to
    few prerequisites, namely
 
   * the Xcode developer tools (compiler suite for Mac OSX) from
-    `<http://developer.apple.com/downloads>`_. You need an Apple ID to
-    download: Note that if you have one already from using the App store
-    on the Mac/Ipad/Iphone/... you can use this one. You will also need the
+    `<http://developer.apple.com/downloads>`_. You will need an Apple ID to
+    download. Note that if you have one already from using the App store
+    on the Mac/Ipad/Iphone/... you can use that one. You will also need the
     command line tools: Within Xcode 4, you have to download them by going to
     `Xcode->Preferences`, click on `Download`, go to `Components`,
     select `Command Line Tools` and click on `Install`. Alternatively, you can
@@ -138,7 +138,8 @@ In order to install Kwant, you have to
 
 2. After the installation, open a terminal and execute ::
 
-       echo http://downloads.kwant-project.org/macports/ports.tar | sudo tee -a /opt/local/etc/macports/sources.conf >/dev/null
+       echo http://downloads.kwant-project.org/macports/ports.tar |\
+       sudo tee -a /opt/local/etc/macports/sources.conf >/dev/null
 
    (this adds the Kwant MacPorts download link
    `<http://downloads.kwant-project.org/macports/ports.tar>`_ at the end of the
@@ -191,18 +192,17 @@ you are safe.
    installed, in particular
 
   * the Xcode developer tools (compiler suite for Mac OSX) from
-    `<http://developer.apple.com/downloads>`_. You need an Apple ID to
-    download: Note that if you have one already from using the App store
-    on the Mac/Ipad/Iphone/... you can use this one. Note that downloading
-    the command line tools (not the full Xcode suite) suffices. If you have
-    the full Xcode suite installed, you might need to download the command
-    line tools manually if you have version 4 or higher. In this case
-    go to `Xcode->Preferences`, click on `Download`, go to `Components`,
-    select `Command Line Tools` and click on `Install`.
-  * although `brew doctor` might not complain about it right away,
-    while we're at it, you should also install the X11 server from the
-    `XQuartz project <http://xquartz.macosforge.org>`_ if you have Mac
-    OSX 10.8 or higher.
+    `<http://developer.apple.com/downloads>`_. You will need an Apple ID to
+    download. Note that if you have one already from using the App store on the
+    Mac/Ipad/Iphone/... you can use that one. Downloading the command line
+    tools (not the full Xcode suite) is sufficient. If you have the full Xcode
+    suite installed, you might need to download the command line tools manually
+    if you have version 4 or higher. In this case go to `Xcode->Preferences`,
+    click on `Download`, go to `Components`, select `Command Line Tools` and
+    click on `Install`.
+  * although `brew doctor` might not complain about it right away, while we're
+    at it, you should also install the X11 server from the `XQuartz project
+    <http://xquartz.macosforge.org>`_ if you have Mac OSX 10.8 or higher.
 
 3. Add permanently ``/usr/local/bin`` before ``/usr/bin/`` in the ``$PATH$``
    environment variable of your shell, for example by adding ::
@@ -254,7 +254,7 @@ Building Kwant requires
  * `SciPy <http://scipy.org>`_ 0.9 or newer,
  * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
-   <http://xianyi.github.com/OpenBLAS/>`_ or the unfree `MKL
+   <http://xianyi.github.com/OpenBLAS/>`_ or the nonfree `MKL
    <http://software.intel.com/en-us/intel-mkl>`_.)
  * `Tinyarray <http://kwant-project.org/tinyarray/>`_, a NumPy-like Python
    package optimized for very small arrays,
@@ -433,9 +433,9 @@ All these settings can be configured by creating/editing the file
 configuration file consists of sections, one for each dependency, led by a
 [dependency-name] header and followed by name = value entries.  Possible names
 are keyword arguments for ``distutils.core.Extension`` (For a complete list,
-see the third table from top of `this document
-<http://docs.python.org/distutils/apiref.html>`_).  The corresponding values
-are whitespace-separated lists of strings.
+see its `documentation
+<http://docs.python.org/2/distutils/apiref.html#distutils.core.Extension>`_).
+The corresponding values are whitespace-separated lists of strings.
 
 The two currently possible sections are [lapack] and [mumps].  The former
 configures the linking against LAPACK _AND_ BLAS, the latter against MUMPS

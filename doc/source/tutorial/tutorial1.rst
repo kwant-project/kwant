@@ -5,7 +5,7 @@ Discretization of a Schrödinger Hamiltonian
 ...........................................
 
 As first example, we compute the transmission probability through a
-two-dimensional quantum wire.  The wire is governed by the two-dimensional
+two-dimensional quantum wire.  The wire is described by the two-dimensional
 Schrödinger equation
 
 .. math::

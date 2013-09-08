@@ -38,16 +38,15 @@ from the scope of `make_system`, since we keep the potential fixed
 in this example.
 
 As a next step we add the hoppings, making use of
-`~kwant.builder.HoppingKind`. Since we use our home-made
-lattice (instead of `kwant.lattice.honeycomb`), we have to define
-the hoppings ourselves:
+`~kwant.builder.HoppingKind`. For illustration purposes we define
+the hoppings ourselves instead of using ``graphene.neighbors()``:
 
 .. literalinclude:: graphene.py
     :start-after: #HIDDEN_BEGIN_hsmc
     :end-before: #HIDDEN_END_hsmc
 
 The nearest-neighbor model for graphene contains only
-hoppings between different basis atoms. For these type of
+hoppings between different basis atoms. For this type of
 hoppings, it is not enough to specify relative lattice indices,
 but we also need to specify the proper target and source
 sublattices. Remember that the format of the hopping specification
@@ -55,7 +54,7 @@ is ``(i,j), target, source``. In the previous examples (i.e.
 :ref:`tutorial_spinorbit`) ``target=source=lat``, whereas here
 we have to specify different sublattices. Furthermore,
 note that the directions given by the lattice indices
-`(1, 0)` and `(0, 1)` are not orthogonal any more, as they are given with
+`(1, 0)` and `(0, 1)` are not orthogonal anymore, since they are given with
 respect to the two primitive vectors ``[(1, 0), (sin_30, cos_30)]``.
 
 Adding the hoppings however still works the same way:
@@ -144,9 +143,8 @@ Computing the eigenvalues of largest magnitude,
     :start-after: #HIDDEN_BEGIN_jmbi
     :end-before: #HIDDEN_END_jmbi
 
-should yield two eigenvalues similar to `[ 3.07869311 +1.02714523e-17j,
--3.06233144 -6.68085759e-18j]` (round-off might change the imaginary part which
-would be equal to zero for exact arithmetics).
+should yield two eigenvalues equal to ``[ 3.07869311,
+-3.06233144]``.
 
 The remaining code of `main` attaches the leads to the system and plots it
 again:
@@ -159,7 +157,7 @@ It computes the band structure of one of lead 0:
 
 showing all the features of a zigzag lead, including the flat
 edge state bands (note that the band structure is not symmetric around
-zero energy, as we have a potential in the leads).
+zero energy, due to a potential in the leads).
 
 Finally the transmission through the system is computed,
 

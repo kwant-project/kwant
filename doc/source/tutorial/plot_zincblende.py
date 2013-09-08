@@ -13,19 +13,19 @@ import kwant
 from matplotlib import pyplot
 
 #HIDDEN_BEGIN_zincblende1
-lat = kwant.lattice.general([(0,0.5,0.5), (0.5,0,0.5), (0.5,0.5,0)],
-                            [(0,0,0), (0.25,0.25,0.25)])
+lat = kwant.lattice.general([(0, 0.5, 0.5), (0.5, 0, 0.5), (0.5, 0.5, 0)],
+                            [(0, 0, 0), (0.25, 0.25, 0.25)])
 a, b = lat.sublattices
 #HIDDEN_END_zincblende1
 
 #HIDDEN_BEGIN_zincblende2
 def make_cuboid(a=15, b=10, c=5):
-    def cube(pos):
+    def cuboid_shape(pos):
         x, y, z = pos
         return 0 <= x < a and 0 <= y < b and 0 <= z < c
 
     sys = kwant.Builder()
-    sys[lat.shape(cube, (0,0,0))] = None
+    sys[lat.shape(cuboid_shape, (0, 0, 0))] = None
     sys[lat.neighbors()] = None
 
     return sys

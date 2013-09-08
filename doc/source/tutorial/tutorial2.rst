@@ -42,7 +42,7 @@ for small arrays.)
     :start-after: #HIDDEN_BEGIN_xumz
     :end-before: #HIDDEN_END_xumz
 
-For convenience, we define the Pauli-matrices first (with `sigma_0` the
+For convenience, we define the Pauli-matrices first (with :math:`\sigma_0` the
 unit matrix):
 
 .. literalinclude:: spin_orbit.py

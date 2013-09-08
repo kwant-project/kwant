@@ -4,12 +4,12 @@ Beyond transport: Band structure and closed systems
 Band structure calculations
 ...........................
 
-When doing transport simulations, one also often needs to know the
-band structure of the leads, i.e. the energies of the propagating
-plane waves in the leads as a function of momentum. This band structure
-contains information about the number of modes, the velocities, ...
+When doing transport simulations, one also often needs to know the band
+structure of the leads, i.e. the energies of the propagating plane waves in the
+leads as a function of momentum. This band structure contains information about
+the number of modes, their momenta and velocities.
 
-In this example, we aim to compute the bandstructure of a simple
+In this example, we aim to compute the band structure of a simple
 tight-binding wire.
 
 Computing band structures in Kwant is easy. Just define a lead in the
@@ -57,13 +57,12 @@ Hamiltonian is approximating.
 Closed systems
 ..............
 
-Although Kwant is (currently) mainly aimed towards transport problema, it
+Although Kwant is (currently) mainly aimed towards transport problems, it
 can also easily be used to compute properties of closed systems -- after
 all, a closed system is nothing more than a scattering region without leads!
 
-In this example, we compute the wave functions of a closed, (approximately)
-circular quantum dot and its spectrum as a function
-of magnetic field (Fock-Darwin spectrum).
+In this example, we compute the wave functions of a closed circular quantum dot
+and its spectrum as a function of magnetic field (Fock-Darwin spectrum).
 
 To compute the eigenenergies and eigenstates, we will make use of the sparse
 linear algebra functionality of `scipy <http://www.scipy.org>`_, which
@@ -100,7 +99,7 @@ few lowest eigenvalues. Finally, we obtain the result:
 At zero magnetic field several energy levels are degenerate (since our
 quantum dot is rather symmetric). These degeneracies are split
 by the magnetic field, and the eigenenergies flow towards the
-Landau level energies at higher magnetic fields [#]
+Landau level energies at higher magnetic fields [#]_.
 
 The eigenvectors are obtained very similarly, and can be plotted directly
 using `~kwant.plotter.map`:
@@ -131,4 +130,4 @@ better for the special case of a square lattice.
 
 .. [#] Again, in this tutorial example no care was taken into choosing
        appropriate material parameters or units. For this reason, magnetic
-       field is given only in "arbitrary units"
+       field is given only in "arbitrary units".

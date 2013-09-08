@@ -8,7 +8,7 @@
  from math import pi, sqrt, tanh
  
  import kwant
-@@ -103,22 +104,40 @@
+@@ -97,22 +98,40 @@
          smatrix = kwant.smatrix(sys, energy)
          data.append(smatrix.transmission(0, 1))
  
@@ -57,7 +57,7 @@
  
  
  def main():
-@@ -130,8 +149,11 @@
+@@ -124,8 +143,11 @@
      def family_colors(site):
          return 0 if site.family == a else 1
  
@@ -71,7 +71,7 @@
  
      # Compute some eigenvalues.
      compute_evs(sys.finalized())
-@@ -140,9 +162,11 @@
+@@ -134,9 +156,11 @@
      for lead in leads:
          sys.attach_lead(lead)
  

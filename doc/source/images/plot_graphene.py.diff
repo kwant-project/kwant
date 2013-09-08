@@ -8,6 +8,15 @@
  import kwant
  from matplotlib import pyplot
  
+@@ -22,7 +23,7 @@
+         return x**2 + y**2 < r**2
+ 
+     sys = kwant.Builder()
+-    sys[lat.shape(circle, (0, 0))] = 0
++    sys[lat.shape(circle, (0,0))] = 0
+     sys[lat.neighbors()] = t
+     sys.eradicate_dangling()
+     if tp:
 @@ -32,9 +33,11 @@
  
  
@@ -40,10 +49,10 @@
      # the usual - works great in general, looks just a bit crufty for
      # small systems
  
--    kwant.plotter.map(sys, wf, oversampling=10)
+-    kwant.plotter.map(sys, wf, oversampling=10, cmap='gist_heat_r')
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plotter.map(sys, wf, oversampling=10,
++        kwant.plotter.map(sys, wf, oversampling=10, cmap='gist_heat_r',
 +                          file="plot_graphene_data1." + extension,
 +                          fig_size=size, dpi=_defs.dpi)
  
@@ -54,11 +63,11 @@
          return 'black' if sys.site(i).family == a else 'white'
  
 -    kwant.plot(sys, site_color=wf, site_symbol=family_shape,
--               site_size=0.5, hop_lw=0, cmap='jet')
+-               site_size=0.5, hop_lw=0, cmap='gist_heat_r')
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
 +        kwant.plot(sys, site_color=wf, site_symbol=family_shape,
-+                   site_size=0.5, hop_lw=0, cmap='jet',
++                   site_size=0.5, hop_lw=0, cmap='gist_heat_r',
 +                   file="plot_graphene_data2." + extension,
 +                   fig_size=size, dpi=_defs.dpi)
  
@@ -66,7 +75,7 @@
      def site_size(i):
          return 3 * wf[i] / wf.max()
  
--    kwant.plot(sys, site_size=site_size, site_color=(0,0,1,0.3),
+-    kwant.plot(sys, site_size=site_size, site_color=(0, 0, 1, 0.3),
 -               hop_lw=0.1)
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):

@@ -17,7 +17,7 @@ electron and hole degrees of freedom (an artificial doubling -
 be aware of the fact that electron and hole excitations
 are related!), which we now implement in Kwant.
 
-For this we restrict ourselves to a simple spin-less system without
+For this we restrict ourselves to a simple spinless system without
 magnetic field, so that :math:`\Delta` is just a number (which we
 choose real), and :math:`\mathcal{T}H\mathcal{T}^{-1}=H_0^*=H_0`.
 
@@ -41,7 +41,7 @@ Computing the band structure then yields the result
 .. image:: ../images/superconductor_band_structure_result.*
 
 We clearly observe the superconducting gap in the spectrum. That was easy,
-he?
+wasn't it?
 
 .. seealso::
     The full source code can be found in
@@ -74,7 +74,7 @@ of freedom [#]_.
 In the following, we will circumvent this problem by introducing
 separate "leads" for electrons and holes, making use of different
 lattices. The system we consider consists of a normal lead on the left,
-a superconductor on the right, and a tunnel barrier inbetween:
+a superconductor on the right, and a tunnel barrier in between:
 
 .. image:: ../images/superconductor_transport_sketch.*
 
@@ -86,7 +86,7 @@ square lattices representing electron and hole degrees of freedom:
     :end-before: #HIDDEN_END_zuuw
 
 Note that since these two lattices have identical spatial parameters, the
-argument `name` to `~kwant.lattice.square` has to be different.
+argument ``name`` to `~kwant.lattice.square` has to be different.
 Any diagonal entry (kinetic energy, potentials, ...) in the BdG
 Hamiltonian corresponds to on-site energies or hoppings within
 the *same* lattice, whereas any off-diagonal entry (essentially, the

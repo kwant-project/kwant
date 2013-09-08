@@ -8,12 +8,12 @@ to a scientific publication, please mention this explicitly in the text body.
 In addition, we ask you to cite the main paper that introduces Kwant:
 
   The reference is provided at the `Kwant website
-  <kwant-project.org/citing.html>`_.
+  <http://kwant-project.org/paper>`_.
 
 If you have profited from the quantum transport functionality of Kwant, please
 also cite the upcoming paper that describes the relevant algorithms. The
 reference will be added to this document later, and will also be available at
-`<http://kwant-project.org/citing.html>`_.
+`<http://kwant-project.org/citing>`_.
 
 Kwant owes much of its current performance to the use of the `MUMPS
 <http://graal.ens-lyon.fr/MUMPS/>`_ library for solving systems of sparse linear
