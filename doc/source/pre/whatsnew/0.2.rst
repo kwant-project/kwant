@@ -1,4 +1,4 @@
-What's New in Kwant 0.2
+What's new in Kwant 0.2
 =======================
 
 This article explains the user-visible changes in Kwant 0.2.  Kwant 0.2 was
