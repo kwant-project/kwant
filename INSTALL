@@ -210,7 +210,7 @@ you are safe.
        export PATH=/usr/local/bin:$PATH
 
    at the end of your ``.bash_profile`` or ``.profile``. Then close
-   the terminal Terminal and reopen it again.
+   the terminal and reopen it again.
 
 4. Install a few prerequisites ::
 
