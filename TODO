@@ -1,5 +1,7 @@
 Roughly in order of importance.                                     -*-org-*-
 
+* Fix lattice.neighbors() when lattice has lower dimensionality than the space.
+
 * Document the order of sites/orbitals in finalized builders
 
 * Add calculation of current density
