@@ -873,6 +873,9 @@ def strsen(np.ndarray[l_logical] select,
                      <float *>work.data, &lwork,
                      <int *>iwork.data, &liwork, &info)
 
+    if info > 0:
+        raise LinAlgError("Reordering failed; problem is very ill-conditioned")
+
     assert info == 0, "Argument error in strsen"
 
     if wi.nonzero()[0].size:
@@ -927,6 +930,9 @@ def dtrsen(np.ndarray[l_logical] select,
                      <double *>work.data, &lwork,
                      <int *>iwork.data, &liwork, &info)
 
+    if info > 0:
+        raise LinAlgError("Reordering failed; problem is very ill-conditioned")
+
     assert info == 0, "Argument error in dtrsen"
 
     if wi.nonzero()[0].size:
@@ -976,6 +982,9 @@ def ctrsen(np.ndarray[l_logical] select,
                      <float complex *>w.data, &M, NULL, NULL,
                      <float complex *>work.data, &lwork, &info)
 
+    if info > 0:
+        raise LinAlgError("Reordering failed; problem is very ill-conditioned")
+
     assert info == 0, "Argument error in ctrsen"
 
     return filter_args((True, Q is not None, calc_ev), (T, Q, w))
@@ -1019,6 +1028,9 @@ def ztrsen(np.ndarray[l_logical] select,
                      &N, <double complex *>T.data, &N, q_ptr, &N,
                      <double complex *>w.data, &M, NULL, NULL,
                      <double complex *>work.data, &lwork, &info)
+
+    if info > 0:
+        raise LinAlgError("Reordering failed; problem is very ill-conditioned")
 
     assert info == 0, "Argument error in ztrsen"
 
