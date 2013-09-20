@@ -1049,7 +1049,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
     pos_transform : function or `None`
         Transformation to be applied to the site position.
     colorbar : bool
-        Whether to show a colorbar if colormap is used
+        Whether to show a colorbar if colormap is used. Ignored if `ax` is
+        provided.
     file : string or file object or `None`
         The output file.  If `None`, output will be shown instead.
     show : bool
@@ -1352,9 +1353,9 @@ def plot(sys, num_lead_cells=2, unit='nn',
         ax.auto_scale_xyz(*[(i - w, i + w) for i in m], had_data=True)
 
     # add separate colorbars for symbols and hoppings if ncessary
-    if symbol_coll.get_array() is not None and colorbar:
+    if symbol_coll.get_array() is not None and colorbar and fig is not None:
         fig.colorbar(symbol_coll)
-    if line_coll.get_array() is not None and colorbar:
+    if line_coll.get_array() is not None and colorbar and fig is not None:
         fig.colorbar(line_coll)
 
     if fig is not None:
@@ -1449,7 +1450,8 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         builder, or a list of function values for each system site of the
         finalized system.
     colorbar : bool, optional
-        Whether to show a color bar.  Defaults to `True`.
+        Whether to show a color bar if numerical data has to be plotted.
+        Defaults to `True`. If `ax` is provided, the colorbar is never plotted.
     cmap : `matplotlib` color map or `None`
         The color map used for sites and optionally hoppings, if `None`,
         `matplotlib` default is used.
@@ -1532,8 +1534,9 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
              lead_site_symbol='s', lead_site_size=0.501, lead_site_lw=0,
              lead_hop_lw=0, lead_color='black', colorbar=False, ax=ax)
 
-    if colorbar:
+    if colorbar and fig is not None:
         fig.colorbar(image)
+
     if fig is not None:
         return output_fig(fig, file=file, show=show)
 
