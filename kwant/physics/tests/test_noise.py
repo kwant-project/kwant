@@ -10,7 +10,7 @@ import numpy as np
 from nose.tools import assert_raises
 from numpy.testing import assert_almost_equal
 import kwant
-from kwant.physics.noise import two_terminal_shotnoise
+from kwant.physics import two_terminal_shotnoise
 
 n = 5
 chain = kwant.lattice.chain()

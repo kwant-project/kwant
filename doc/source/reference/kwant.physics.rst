@@ -11,5 +11,6 @@ Leads
    Bands
    modes
    selfenergy
+   two_terminal_shotnoise
    PropagatingModes
    StabilizedModes

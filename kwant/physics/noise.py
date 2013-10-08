@@ -7,6 +7,10 @@
 # http://kwant-project.org/authors.
 
 import numpy as np
+from ..solvers.common import SMatrix
+
+__all__ = ['two_terminal_shotnoise']
+
 
 def two_terminal_shotnoise(smatrix):
     """Compute the shot-noise in a two-terminal setup.
@@ -25,7 +29,7 @@ def two_terminal_shotnoise(smatrix):
         Shot noise measured in noise quanta `2 e^3 |V| / pi hbar`.
     """
 
-    if hasattr(smatrix.lead_info[0], 'shape'):
+    if not isinstance(smatrix, SMatrix):
         raise NotImplementedError("Noise expressions in terms of Green's "
                                   "functions are not implemented.")
 
@@ -41,5 +45,5 @@ def two_terminal_shotnoise(smatrix):
 # voltages at various leads as input.  (See
 # http://arxiv.org/abs/cond-mat/9910158) It could still be based on
 # smatrix._a_ttdagger_a_inv, i.e. be also valid also for self-energy leads,
-# provided that only true transmission blocks are used As long as nobody needs
+# provided that only true transmission blocks are used.  As long as nobody needs
 # it though, it does make little sense to make such a routine.
