@@ -11,31 +11,51 @@ import os
 
 __all__ = ['version']
 
+distr_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # When changing this function, remember to also change its twin in ../setup.py.
 def get_version_from_git():
-    kwant_dir = os.path.dirname(os.path.abspath(__file__))
     try:
-        p = subprocess.Popen(['git', 'describe'], cwd=kwant_dir,
+        p = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'],
+                             cwd=distr_root,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     except OSError:
         return
-
     if p.wait() != 0:
         return
-    version = p.communicate()[0].strip()
+    # TODO: use os.path.samefile once we depend on Python >= 3.3.
+    if os.path.normpath(p.communicate()[0].rstrip('\n')) != distr_root:
+        # The top-level directory of the current Git repository is not the same
+        # as the root directory of the Kwant distribution: do not extract the
+        # version from Git.
+        return
+
+    # git describe --first-parent does not take into account tags from branches
+    # that were merged-in.
+    for opts in [['--first-parent'], []]:
+        try:
+            p = subprocess.Popen(['git', 'describe'] + opts, cwd=distr_root,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except OSError:
+            return
+        if p.wait() == 0:
+            break
+    else:
+        return
+    version = p.communicate()[0].rstrip('\n')
 
     if version[0] == 'v':
         version = version[1:]
 
     try:
-        p = subprocess.Popen(['git', 'diff', '--quiet'], cwd=kwant_dir)
+        p = subprocess.Popen(['git', 'diff', '--quiet'], cwd=distr_root)
     except OSError:
         version += '-confused'  # This should never happen.
     else:
         if p.wait() == 1:
             version += '-dirty'
     return version
+
 
 version = get_version_from_git()
 if version is None:
