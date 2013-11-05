@@ -380,9 +380,8 @@ def unified_eigenproblem(a, b=None, tol=1e6):
         # Propagating modes.
         propselect = (abs(abs(alpha) - abs(beta)) < eps * abs(beta))
 
-        warning_settings = np.seterr(divide='ignore', invalid='ignore')
-        ev = alpha / beta
-        np.seterr(**warning_settings)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            ev = alpha / beta
         # Note: the division is OK here, since we later only access
         #       eigenvalues close to the unit circle
 
