@@ -256,8 +256,8 @@ Building Kwant requires
    (For best performance we recommend the free `OpenBLAS
    <http://xianyi.github.com/OpenBLAS/>`_ or the nonfree `MKL
    <http://software.intel.com/en-us/intel-mkl>`_.)
- * `Tinyarray <http://kwant-project.org/tinyarray/>`_, a NumPy-like Python
-   package optimized for very small arrays,
+ * `Tinyarray <http://git.kwant-project.org/tinyarray/about/>`_, a NumPy-like
+   Python package optimized for very small arrays,
  * An environment which allows to compile Python extensions written in C and
    C++.
 
