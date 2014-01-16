@@ -493,7 +493,6 @@ def symbols(axes, pos, symbol='o', size=1, reflen=None, facecolor='k',
     else:
         axes.add_collection3d(coll)
 
-    axes.autoscale_view()
     return coll
 
 
@@ -558,7 +557,6 @@ def lines(axes, pos0, pos1, reflen=None, colors='k', linestyles='solid',
             axes.add_collection(coll)
         else:
             axes.add_collection3d(coll)
-        axes.autoscale_view()
         return coll
 
     had_data = axes.has_data()
@@ -570,21 +568,10 @@ def lines(axes, pos0, pos1, reflen=None, colors='k', linestyles='solid',
     set_colors(colors, coll, cmap, norm)
     coll.update(kwargs)
 
-    min_max = lambda a, b: np.array([min(a.min(), b.min()),
-                                     max(a.max(), b.max())])
-    coord_min_max = [min_max(pos0[:, i], pos1[:, i]) for i in xrange(dim)]
-
     if dim == 2:
         axes.add_collection(coll)
-
-        corners = ((coord_min_max[0][0], coord_min_max[1][0]),
-                   (coord_min_max[0][1], coord_min_max[1][1]))
-
-        axes.update_datalim(corners)
-        axes.autoscale_view()
     else:
         axes.add_collection3d(coll)
-        axes.auto_scale_xyz(*coord_min_max, had_data=had_data)
 
     return coll
 
@@ -1288,7 +1275,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
             fig.set_figheight(fig_size[1])
 
         if dim == 2:
-            ax = fig.add_subplot(1, 1, 1, aspect='equal', adjustable='datalim')
+            ax = fig.add_subplot(1, 1, 1, aspect='equal')
             ax.set_xmargin(0.05)
             ax.set_ymargin(0.05)
         else:
@@ -1341,15 +1328,19 @@ def plot(sys, num_lead_cells=2, unit='nn',
         lines(ax, end, start, reflen, lead_hop_colors, linewidths=lead_hop_lw,
               cmap=lead_cmap, norm=norm, zorder=1)
 
-    if dim == 3:
+    min_ = np.min(sites_pos, 0)
+    max_ = np.max(sites_pos, 0)
+    m = (min_ + max_) / 2
+    if dim == 2:
+        w = np.max([(max_ - min_) / 2, (reflen, reflen)], axis=0)
+        ax.update_datalim((m - w, m + w))
+        ax.autoscale_view(tight=True)
+    else:
         # make axis limits the same in all directions
         # (3D only works decently for equal aspect ratio. Since
         #  this doesn't work out of the box in mplot3d, this is a
         #  workaround)
-        min_ = np.min(sites_pos, 0)
-        max_ = np.max(sites_pos, 0)
         w = np.max(max_ - min_) / 2
-        m = (min_ + max_) / 2
         ax.auto_scale_xyz(*[(i - w, i + w) for i in m], had_data=True)
 
     # add separate colorbars for symbols and hoppings if ncessary
@@ -1520,7 +1511,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         if fig_size is not None:
             fig.set_figwidth(fig_size[0])
             fig.set_figheight(fig_size[1])
-        ax = fig.add_subplot(1, 1, 1, aspect='equal', adjustable='datalim')
+        ax = fig.add_subplot(1, 1, 1, aspect='equal')
     else:
         fig = None
 
