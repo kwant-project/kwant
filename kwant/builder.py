@@ -1130,7 +1130,14 @@ class Builder(object):
                 msg = 'Problem finalizing lead {0}:'.format(lead_nr)
                 e.args = (' '.join((msg,) + e.args),)
                 raise
-            interface = [id_by_site[isite] for isite in lead.interface]
+            try:
+                interface = [id_by_site[isite] for isite in lead.interface]
+            except KeyError, e:
+                t, v, tb = sys.exc_info()
+                msg = "Lead {0} is attached to a site that does not " \
+                      "belong to the scattering region:\n {1}"
+                raise ValueError(msg.format(lead_nr, v))
+
             lead_interfaces.append(np.array(interface))
 
         #### Assemble and return result.
