@@ -446,6 +446,7 @@ def test_builder_with_symmetry():
 
 def test_attach_lead():
     gr = builder.SimpleSiteFamily()
+    gr_noncommensurate = builder.SimpleSiteFamily(name='other')
 
     sys = builder.Builder()
     sys[gr(1)] = 0
@@ -459,16 +460,21 @@ def test_attach_lead():
     assert_raises(ValueError, sys.attach_lead, lead, gr(5))
 
     sys = builder.Builder()
+    # The tag of the site that is added in the following line is an empty tuple.
+    # This simulates a site family that is not commensurate with the symmetry of
+    # the lead.  Such sites may be present in the system, as long as there are
+    # other sites that will interrupt the lead.
+    sys[gr_noncommensurate()] = 2
     sys[gr(1)] = 0
     sys[gr(0)] = 1
     lead[gr(0), gr(1)] = lead[gr(0), gr(2)] = 1
     sys.attach_lead(lead)
-    assert_equal(len(list(sys.sites())), 3)
+    assert_equal(len(list(sys.sites())), 4)
     assert_equal(set(sys.leads[0].interface), set([gr(-1), gr(0)]))
     sys[gr(-10)] = sys[gr(-11)] = 0
     sys.attach_lead(lead)
     assert_equal(set(sys.leads[1].interface), set([gr(-10), gr(-11)]))
-    assert_equal(len(list(sys.sites())), 5)
+    assert_equal(len(list(sys.sites())), 6)
     sys.attach_lead(lead, gr(-5))
     assert_equal(set(sys.leads[0].interface), set([gr(-1), gr(0)]))
     sys.finalized()
