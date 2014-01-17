@@ -1004,9 +1004,7 @@ class Builder(object):
                 break
         else:
             msg = 'Sites with site families {0} do not appear in the system, ' \
-                'hence the system does not interrupt the lead. Note that ' \
-                'different lattice instances with the same parameters are ' \
-                'different site families. See tutorial for more details.'
+                'hence the system does not interrupt the lead.'
             raise ValueError(msg.format(tuple(families)))
 
         all_doms = list(sym.which(site)[0]
