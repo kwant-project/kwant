@@ -8,9 +8,9 @@
 
 try:
     from kwant.linalg.mumps import MUMPSContext, schur_complement
-    _no_mumps = False
+    no_mumps = False
 except ImportError:
-    _no_mumps = True
+    no_mumps = True
 
 from kwant.lattice import honeycomb
 from kwant.builder import Builder, HoppingKind
@@ -19,7 +19,7 @@ import numpy as np
 import scipy.sparse as sp
 from _test_utils import _Random, assert_array_almost_equal
 
-@skipif(_no_mumps)
+@skipif(no_mumps)
 def test_lu_with_dense():
     def _test_lu_with_dense(dtype):
         rand = _Random()
@@ -48,7 +48,7 @@ def test_lu_with_dense():
     _test_lu_with_dense(np.complex128)
 
 
-@skipif(_no_mumps)
+@skipif(no_mumps)
 def test_schur_complement_with_dense():
     def _test_schur_complement_with_dense(dtype):
         rand = _Random()
@@ -60,7 +60,7 @@ def test_schur_complement_with_dense():
     _test_schur_complement_with_dense(np.complex128)
 
 
-@skipif(_no_mumps)
+@skipif(no_mumps)
 def test_error_minus_9(r=10):
     """Test if MUMPSError -9 is properly caught by increasing memory"""
 

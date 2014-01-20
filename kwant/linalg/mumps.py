@@ -23,8 +23,6 @@ orderings = { 'amd' : 0, 'amf' : 2, 'scotch' : 3, 'pord' : 4, 'metis' : 5,
 ordering_name = [ 'amd', 'user-defined', 'amf',
                   'scotch', 'pord', 'metis', 'qamd']
 
-_possible_orderings = None
-
 
 def possible_orderings():
     """Return the ordering options that are available in the current
@@ -41,13 +39,12 @@ def possible_orderings():
        A list of installed orderings that can be used in the `ordering` option
        of MUMPS.
     """
-    global _possible_orderings
 
-    if not _possible_orderings:
+    if not possible_orderings.cached:
         # Try all orderings on a small test matrix, and check which one was
         # actually used.
 
-        _possible_orderings = ['auto']
+        possible_orderings.cached = ['auto']
         for ordering in [0, 2, 3, 4, 5, 6]:
             data = np.asfortranarray([1, 1], dtype=np.complex128)
             row = np.asfortranarray([1, 2], dtype=_mumps.int_dtype)
@@ -60,9 +57,11 @@ def possible_orderings():
             instance.call()
 
             if instance.infog[7] == ordering:
-                _possible_orderings.append(ordering_name[ordering])
+                possible_orderings.cached.append(ordering_name[ordering])
 
-    return _possible_orderings
+    return possible_orderings.cached
+
+possible_orderings.cached = None
 
 
 error_messages = {

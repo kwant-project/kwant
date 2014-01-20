@@ -454,7 +454,7 @@ class SelfEnergyLead(Lead):
     interface : sequence of `Site` instances
     """
     def __init__(self, selfenergy_func, interface):
-        self._selfenergy_func = selfenergy_func
+        self.selfenergy_func = selfenergy_func
         self.interface = tuple(interface)
 
     def finalized(self):
@@ -462,7 +462,7 @@ class SelfEnergyLead(Lead):
         return self
 
     def selfenergy(self, energy, args=()):
-        return self._selfenergy_func(energy, args)
+        return self.selfenergy_func(energy, args)
 
 
 class ModesLead(Lead):

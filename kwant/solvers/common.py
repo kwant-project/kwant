@@ -560,11 +560,11 @@ class BlockResult(object):
         self.lead_info = lead_info
         self.out_leads = out_leads
         self.in_leads = in_leads
-        self._sizes = np.array(sizes)
-        self._in_offsets = np.zeros(len(self.in_leads) + 1, int)
-        self._in_offsets[1 :] = np.cumsum(self._sizes[self.in_leads])
-        self._out_offsets = np.zeros(len(self.out_leads) + 1, int)
-        self._out_offsets[1 :] = np.cumsum(self._sizes[self.out_leads])
+        self.sizes = np.array(sizes)
+        self.in_offsets = np.zeros(len(self.in_leads) + 1, int)
+        self.in_offsets[1 :] = np.cumsum(self.sizes[self.in_leads])
+        self.out_offsets = np.zeros(len(self.out_leads) + 1, int)
+        self.out_offsets[1 :] = np.cumsum(self.sizes[self.out_leads])
 
     def block_coords(self, lead_out, lead_in):
         """
@@ -576,16 +576,16 @@ class BlockResult(object):
         """Return a slice with the rows in the block corresponding to lead_out.
         """
         lead_out = self.out_leads.index(lead_out)
-        return slice(self._out_offsets[lead_out],
-                     self._out_offsets[lead_out + 1])
+        return slice(self.out_offsets[lead_out],
+                     self.out_offsets[lead_out + 1])
 
     def in_block_coords(self, lead_in):
         """
         Return a slice with the columns in the block corresponding to lead_in.
         """
         lead_in = self.in_leads.index(lead_in)
-        return slice(self._in_offsets[lead_in],
-                     self._in_offsets[lead_in + 1])
+        return slice(self.in_offsets[lead_in],
+                     self.in_offsets[lead_in + 1])
 
     def submatrix(self, lead_out, lead_in):
         """Return the matrix elements from lead_in to lead_out."""

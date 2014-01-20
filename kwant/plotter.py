@@ -68,7 +68,7 @@ if mpl_enabled:
             self.reflen = reflen
 
         def set_linewidths(self, linewidths):
-            self._linewidths_orig = nparray_if_array(linewidths)
+            self.linewidths_orig = nparray_if_array(linewidths)
 
         def draw(self, renderer):
             if self.reflen is not None:
@@ -79,7 +79,7 @@ if mpl_enabled:
             else:
                 factor = 1
 
-            super(LineCollection, self).set_linewidths(self._linewidths_orig *
+            super(LineCollection, self).set_linewidths(self.linewidths_orig *
                                                        factor)
             return super(LineCollection, self).draw(renderer)
 
@@ -89,13 +89,13 @@ if mpl_enabled:
             super(PathCollection, self).__init__(paths, sizes=sizes, **kwargs)
 
             self.reflen = reflen
-            self._linewidths_orig = nparray_if_array(self.get_linewidths())
+            self.linewidths_orig = nparray_if_array(self.get_linewidths())
 
-            self._transforms = [matplotlib.transforms.Affine2D().scale(x) for x
+            self.transforms = [matplotlib.transforms.Affine2D().scale(x) for x
                                 in sizes]
 
         def get_transforms(self):
-            return self._transforms
+            return self.transforms
 
         def get_transform(self):
             Affine2D = matplotlib.transforms.Affine2D
@@ -112,7 +112,7 @@ if mpl_enabled:
                 # Note: only works for aspect ratio 1!
                 factor = (self.axes.transData.frozen().to_values()[0] /
                           self.figure.dpi * 72.0 * self.reflen)
-                self.set_linewidths(self._linewidths_orig * factor)
+                self.set_linewidths(self.linewidths_orig * factor)
 
             return collections.Collection.draw(self, renderer)
 
@@ -156,10 +156,10 @@ if mpl_enabled:
             def __init__(self, segments, reflen=None, zorder=0, **kwargs):
                 super(Line3DCollection, self).__init__(segments, **kwargs)
                 self.reflen = reflen
-                self._zorder3d = zorder
+                self.zorder3d = zorder
 
             def set_linewidths(self, linewidths):
-                self._linewidths_orig = nparray_if_array(linewidths)
+                self.linewidths_orig = nparray_if_array(linewidths)
 
             def do_3d_projection(self, renderer):
                 super(Line3DCollection, self).do_3d_projection(renderer)
@@ -168,7 +168,7 @@ if mpl_enabled:
                 # "-" due to the different logic in the 3d plotting, we still
                 # want larger zorder values to be plotted on top of smaller
                 # ones.
-                return -self._zorder3d
+                return -self.zorder3d
 
             def draw(self, renderer):
                 if self.reflen:
@@ -185,7 +185,7 @@ if mpl_enabled:
                     factor = 1
 
                 super(Line3DCollection, self).set_linewidths(
-                                                self._linewidths_orig * factor)
+                                                self.linewidths_orig * factor)
                 super(Line3DCollection, self).draw(renderer)
 
 
@@ -203,38 +203,38 @@ if mpl_enabled:
                     self.set_3d_properties(zs=offsets[:, 2], zdir="z")
 
                 self.reflen = reflen
-                self._zorder3d = zorder
+                self.zorder3d = zorder
 
-                self._paths_orig = np.array(paths, dtype='object')
-                self._linewidths_orig = nparray_if_array(self.get_linewidths())
-                self._linewidths_orig2 = self._linewidths_orig
-                self._array_orig = nparray_if_array(self.get_array())
-                self._facecolors_orig = nparray_if_array(self.get_facecolors())
-                self._edgecolors_orig = nparray_if_array(self.get_edgecolors())
+                self.paths_orig = np.array(paths, dtype='object')
+                self.linewidths_orig = nparray_if_array(self.get_linewidths())
+                self.linewidths_orig2 = self.linewidths_orig
+                self.array_orig = nparray_if_array(self.get_array())
+                self.facecolors_orig = nparray_if_array(self.get_facecolors())
+                self.edgecolors_orig = nparray_if_array(self.get_edgecolors())
 
                 Affine2D = matplotlib.transforms.Affine2D
-                self._orig_transforms = np.array([Affine2D().scale(x) for x in
+                self.orig_transforms = np.array([Affine2D().scale(x) for x in
                                                   sizes], dtype='object')
-                self._transforms = self._orig_transforms
+                self.transforms = self.orig_transforms
 
             def set_array(self, array):
-                self._array_orig = nparray_if_array(array)
+                self.array_orig = nparray_if_array(array)
                 super(Path3DCollection, self).set_array(array)
 
             def set_color(self, colors):
-                self._facecolors_orig = nparray_if_array(colors)
-                self._edgecolors_orig = self._facecolors_orig
+                self.facecolors_orig = nparray_if_array(colors)
+                self.edgecolors_orig = self.facecolors_orig
                 super(Path3DCollection, self).set_color(colors)
 
             def set_edgecolors(self, colors):
                 colors = matplotlib.colors.colorConverter.to_rgba_array(colors)
-                self._edgecolors_orig = nparray_if_array(colors)
+                self.edgecolors_orig = nparray_if_array(colors)
                 super(Path3DCollection, self).set_edgecolors(colors)
 
             def get_transforms(self):
                 # this is exact only for an isometric projection, for the
                 # perspective projection used in mplot3d it's an approximation
-                return self._transforms
+                return self.transforms
 
             def get_transform(self):
                 Affine2D = matplotlib.transforms.Affine2D
@@ -253,7 +253,7 @@ if mpl_enabled:
 
                 # numpy complains about zero-length index arrays
                 if len(xs) == 0:
-                    return -self._zorder3d
+                    return -self.zorder3d
 
                 proj = mplot3d.proj3d.proj_transform_clip
                 vs = np.array(proj(xs, ys, zs, renderer.M)[:3])
@@ -263,41 +263,41 @@ if mpl_enabled:
 
                     self.set_offsets(vs[:2, indx].T)
 
-                    if len(self._paths_orig) > 1:
-                        paths = np.resize(self._paths_orig, (vs.shape[1],))
+                    if len(self.paths_orig) > 1:
+                        paths = np.resize(self.paths_orig, (vs.shape[1],))
                         self.set_paths(paths[indx])
 
-                    if len(self._orig_transforms) > 1:
-                        self._transforms = np.resize(self._orig_transforms,
+                    if len(self.orig_transforms) > 1:
+                        self.transforms = np.resize(self.orig_transforms,
                                                      (vs.shape[1],))
-                        self._transforms = self._transforms[indx]
+                        self.transforms = self.transforms[indx]
 
-                    lw_orig = self._linewidths_orig
+                    lw_orig = self.linewidths_orig
                     if (isinstance(lw_orig, np.ndarray) and len(lw_orig) > 1):
-                        self._linewidths_orig2 = np.resize(lw_orig,
+                        self.linewidths_orig2 = np.resize(lw_orig,
                                                            (vs.shape[1],))[indx]
 
                     # Note: here array, facecolors and edgecolors are
                     #       guaranteed to be 2d numpy arrays or None.  (And
                     #       array is the same length as the coordinates)
 
-                    if self._array_orig is not None:
+                    if self.array_orig is not None:
                         super(Path3DCollection,
-                              self).set_array(self._array_orig[indx])
+                              self).set_array(self.array_orig[indx])
 
-                    if (self._facecolors_orig is not None and
-                        self._facecolors_orig.shape[0] > 1):
-                        shape = list(self._facecolors_orig.shape)
+                    if (self.facecolors_orig is not None and
+                        self.facecolors_orig.shape[0] > 1):
+                        shape = list(self.facecolors_orig.shape)
                         shape[0] = vs.shape[1]
                         super(Path3DCollection, self).set_facecolors(
-                            np.resize(self._facecolors_orig, shape)[indx])
+                            np.resize(self.facecolors_orig, shape)[indx])
 
-                    if (self._edgecolors_orig is not None and
-                        self._edgecolors_orig.shape[0] > 1):
-                        shape = list(self._edgecolors_orig.shape)
+                    if (self.edgecolors_orig is not None and
+                        self.edgecolors_orig.shape[0] > 1):
+                        shape = list(self.edgecolors_orig.shape)
                         shape[0] = vs.shape[1]
                         super(Path3DCollection, self).set_edgecolors(
-                                                np.resize(self._edgecolors_orig,
+                                                np.resize(self.edgecolors_orig,
                                                           shape)[indx])
                 else:
                     self.set_offsets(vs[:2].T)
@@ -316,7 +316,7 @@ if mpl_enabled:
                 proj = mplot3d.proj3d.proj_transform_clip
                 cz = proj(*(list(np.dot(corners, bbox)) + [renderer.M]))[2]
 
-                return -self._zorder3d + vs[2].mean() / cz.ptp()
+                return -self.zorder3d + vs[2].mean() / cz.ptp()
 
             def draw(self, renderer):
                 if self.reflen:
@@ -325,7 +325,7 @@ if mpl_enabled:
                     factor = proj_len * (args[0] +
                                          args[3]) * 0.5 * 72.0 / self.figure.dpi
 
-                    self.set_linewidths(self._linewidths_orig2 * factor)
+                    self.set_linewidths(self.linewidths_orig2 * factor)
 
                 super(Path3DCollection, self).draw(renderer)
 

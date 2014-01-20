@@ -98,8 +98,8 @@ class Polyatomic(object):
         # Sequence of primitive vectors of the lattice.
         self._prim_vecs = prim_vecs
         # Precalculation of auxiliary arrays for real space calculations.
-        self._reduced_vecs, self._transf = lll.lll(prim_vecs)
-        self._voronoi = ta.dot(lll.voronoi(self._reduced_vecs), self._transf)
+        self.reduced_vecs, self.transf = lll.lll(prim_vecs)
+        self.voronoi = ta.dot(lll.voronoi(self.reduced_vecs), self.transf)
 
     def shape(self, function, start):
         """Return a key for all the lattice sites inside a given shape.
@@ -158,7 +158,7 @@ class Polyatomic(object):
                 raise ValueError('Dimensionality of start position does not '
                                  'match the space dimensionality.')
             lats = self.sublattices
-            deltas = list(self._voronoi)
+            deltas = list(self.voronoi)
 
             #### Flood-fill ####
             sites = []
@@ -421,11 +421,11 @@ class Monatomic(builder.SiteFamily, Polyatomic):
         self.offset = offset
 
         # Precalculation of auxiliary arrays for real space calculations.
-        self._reduced_vecs, self._transf = lll.lll(prim_vecs)
-        self._voronoi = ta.dot(lll.voronoi(self._reduced_vecs), self._transf)
+        self.reduced_vecs, self.transf = lll.lll(prim_vecs)
+        self.voronoi = ta.dot(lll.voronoi(self.reduced_vecs), self.transf)
 
         self.dim = dim
-        self._lattice_dim = len(prim_vecs)
+        self.lattice_dim = len(prim_vecs)
 
         if name != '':
             msg = "Monatomic lattice {0}, vectors {1}, origin {2}"
@@ -442,7 +442,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
 
     def normalize_tag(self, tag):
         tag = ta.array(tag, int)
-        if len(tag) != self._lattice_dim:
+        if len(tag) != self.lattice_dim:
             raise ValueError("Dimensionality mismatch.")
         return tag
 
@@ -455,8 +455,8 @@ class Monatomic(builder.SiteFamily, Polyatomic):
             An array with sites coordinates.
         """
         # TODO (Anton): transform to tinyarrays, once ta indexing is better.
-        return np.dot(lll.cvp(pos - self.offset, self._reduced_vecs, n),
-                      self._transf.T)
+        return np.dot(lll.cvp(pos - self.offset, self.reduced_vecs, n),
+                      self.transf.T)
 
     def closest(self, pos):
         """
@@ -497,7 +497,6 @@ class TranslationalSymmetry(builder.Symmetry):
     """
     def __init__(self, *periods):
         self.periods = ta.array(periods)
-        self._periods = self.periods
         if self.periods.ndim != 2:
             # TODO: remove the second part of the following message once
             # everybody got used to it.
@@ -539,18 +538,18 @@ class TranslationalSymmetry(builder.Symmetry):
         ValueError
             If lattice `fam` is incompatible with given periods.
         """
-        dim = self._periods.shape[1]
+        dim = self.periods.shape[1]
         if fam in self.site_family_data:
             raise KeyError('Family already processed, delete it from '
                            'site_family_data first.')
         inv = np.linalg.pinv(fam.prim_vecs)
-        bravais_periods = np.dot(self._periods, inv)
+        bravais_periods = np.dot(self.periods, inv)
         # Absolute tolerance is correct in the following since we want an error
         # relative to the closest integer.
         if not np.allclose(bravais_periods, np.round(bravais_periods),
                            rtol=0, atol=1e-8) or \
            not np.allclose([fam.vec(i) for i in bravais_periods],
-                           self._periods):
+                           self.periods):
             msg = 'Site family {0} does not have commensurate periods with ' +\
                   'symmetry {1}.'
             raise ValueError(msg.format(fam, self))
@@ -655,7 +654,7 @@ class TranslationalSymmetry(builder.Symmetry):
         The resulting symmetry has all the period vectors opposite to the
         original and an identical fundamental domain.
         """
-        result = TranslationalSymmetry(*self._periods)
+        result = TranslationalSymmetry(*self.periods)
         result.site_family_data = self.site_family_data
         result.is_reversed = not self.is_reversed
         result.periods = -self.periods
