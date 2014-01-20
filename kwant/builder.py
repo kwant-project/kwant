@@ -998,19 +998,24 @@ class Builder(object):
         # Check if site families of the lead are present in the system (catches
         # a common and a hard to find bug).
         families = set(site.family for site in H)
+        lead_only_families = families.copy()
         for site in self.H:
-            families.discard(site.family)
-            if not families:
+            lead_only_families.discard(site.family)
+            if not lead_only_families:
                 break
         else:
             msg = 'Sites with site families {0} do not appear in the system, ' \
-                'hence the system does not interrupt the lead. Note that ' \
-                'different lattice instances with the same parameters are ' \
-                'different site families. See tutorial for more details.'
-            raise ValueError(msg.format(tuple(families)))
+                'hence the system does not interrupt the lead.'
+            raise ValueError(msg.format(tuple(lead_only_families)))
 
-        all_doms = list(sym.which(site)[0]
-                        for site in self.H if sym.to_fd(site) in H)
+        all_doms = set()
+        for site in self.H:
+            if site.family not in families:
+                continue
+            ge = sym.which(site)
+            if sym.act(-ge, site) in H:
+                all_doms.add(ge[0])
+
         if origin is not None:
             orig_dom = sym.which(origin)[0]
             all_doms = [dom for dom in all_doms if dom <= orig_dom]
