@@ -11,7 +11,7 @@ import os
 
 __all__ = ['version']
 
-distr_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+distr_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 # When changing this function, remember to also change its twin in ../setup.py.
 def get_version_from_git():
