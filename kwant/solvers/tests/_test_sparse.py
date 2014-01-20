@@ -364,12 +364,12 @@ def test_selfenergy_reflection(greens_function, smatrix):
 
 def test_very_singular_leads(smatrix):
     sys = kwant.Builder()
-    gr = kwant.lattice.chain()
+    chain = kwant.lattice.chain()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
-    sys[gr(0)] = left_lead[gr(0)] = right_lead[gr(0)] = np.identity(2)
-    left_lead[gr(0), gr(1)] = np.zeros((2, 2))
-    right_lead[gr(0), gr(1)] = np.identity(2)
+    sys[chain(0)] = left_lead[chain(0)] = right_lead[chain(0)] = np.identity(2)
+    left_lead[chain(0), chain(1)] = np.zeros((2, 2))
+    right_lead[chain(0), chain(1)] = np.identity(2)
     sys.attach_lead(left_lead)
     sys.attach_lead(right_lead)
     fsys = sys.finalized()
@@ -379,10 +379,10 @@ def test_very_singular_leads(smatrix):
 
 def test_ldos(ldos):
     sys = kwant.Builder()
-    gr = kwant.lattice.chain()
-    lead = kwant.Builder(kwant.TranslationalSymmetry(gr.vec((1,))))
-    sys[gr(0)] = sys[gr(1)] = lead[gr(0)] = 0
-    sys[gr(0), gr(1)] = lead[gr(0), gr(1)] = 1
+    chain = kwant.lattice.chain()
+    lead = kwant.Builder(kwant.TranslationalSymmetry(chain.vec((1,))))
+    sys[chain(0)] = sys[chain(1)] = lead[chain(0)] = 0
+    sys[chain(0), chain(1)] = lead[chain(0), chain(1)] = 1
     sys.attach_lead(lead)
     sys.attach_lead(lead.reversed())
     fsys = sys.finalized()

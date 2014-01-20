@@ -142,7 +142,7 @@ class SiteFamily(object):
         """
         A convenience function.
 
-        This function allows to write sg(1, 2) instead of Site(sg, (1, 2)).
+        This function allows to write fam(1, 2) instead of Site(fam, (1, 2)).
         """
         # Catch a likely and difficult to find mistake.
         if tag and isinstance(tag[0], tuple):
