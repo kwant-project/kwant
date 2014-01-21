@@ -277,9 +277,10 @@ class Polyatomic(object):
         """
         # This algorithm is not designed to be fast and can be improved,
         # however there is no real need.
+        Site = builder.Site
         sls = self.sublattices
-        shortest_hopping = sls[0].n_closest(sls[0](*([0] * sls[0].dim)).pos,
-                                            2)[-1]
+        shortest_hopping = sls[0].n_closest(
+            Site(sls[0], ([0] * sls[0].dim)).pos, 2)[-1]
         eps *= np.linalg.norm(self.vec(shortest_hopping))
         nvec = len(self._prim_vecs)
         sublat_pairs = [(i, j) for (i, j) in product(sls, sls)
@@ -301,10 +302,10 @@ class Polyatomic(object):
             max_dist = []
             sites = []
             for i, j in sublat_pairs:
-                origin = j(*ta.zeros(nvec)).pos
+                origin = Site(j, ta.zeros(nvec)).pos
                 tags = i.n_closest(origin, n=cutoff**nvec)
 
-                ij_dist = [np.linalg.norm(i(*tag).pos - origin)
+                ij_dist = [np.linalg.norm(Site(i, tag).pos - origin)
                               for tag in tags]
                 sites.append((tags, (j, i), ij_dist))
             max_dist = [i[2][-1] for i in sites]
