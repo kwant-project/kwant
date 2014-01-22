@@ -48,6 +48,11 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Verify that selective plotting works.
 
+* Improve support for imperfect lattices / amorphous systems.
+  - Provide a "list of atoms" site group
+  - Allow attaching leads in real space: attach_lead(realspace=True)
+  - Add example / tutorial
+
 * Write an RGF solver that uses graph/slicer.
 
 * Add support for easily adding magnetic field to a system.
