@@ -378,9 +378,14 @@ class HermConjOfFunc(object):
 class Lead(object):
     """Abstract base class for leads that can be attached to a `Builder`.
 
+    To attach a lead to a builder, append it to the builder's `~Builder.leads`
+    instance variable.  See the documentation of `kwant.builder` for the
+    concrete classes of leads derived from this one.
+
     Attributes
     ----------
     interface : sequence of sites
+
     """
     __metaclass__ = abc.ABCMeta
 
@@ -565,6 +570,9 @@ class Builder(object):
     tags which are sequences of integers.  It *makes sense* only when these
     sites live on a regular lattice, like the ones provided by `kwant.lattice`.
 
+    Attaching a lead manually (without the use of `~Builder.attach_lead`)
+    amounts to creating a `Lead` object and appending it to this list.
+
     ``builder0 += builder1`` adds all the sites, hoppings, and leads of
     ``builder1`` to ``builder0``.  Sites and hoppings present in both systems
     are overwritten by those in ``builder1``.  The leads of ``builder1`` are
@@ -575,6 +583,11 @@ class Builder(object):
         If functions are used to set values in a builder with a symmetry, then
         they must satisfy the same symmetry.  There is (currently) no check and
         wrong results will be the consequence of a misbehaving function.
+
+    Attributes
+    ----------
+    leads : list of `Lead` instances
+        The leads that are attached to the system.
 
     Examples
     --------
@@ -593,6 +606,11 @@ class Builder(object):
     Delete a site.
 
     >>> del builder[site3]
+
+    Detach the last lead.  (This does not remove the sites that were added to
+    the scattering region by `~Builder.attach_lead`.)
+
+    >>> del builder.leads[-1]
 
     """
 
