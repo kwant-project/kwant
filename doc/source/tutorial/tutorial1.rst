@@ -58,6 +58,10 @@ simplicity, we choose to work in such units that :math:`t = a = 1`.
 Transport through a quantum wire
 ................................
 
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/quantum_wire.py <../../../tutorial/quantum_wire.py>`
+
 In order to use Kwant, we need to import it:
 
 .. literalinclude:: quantum_wire.py
@@ -232,10 +236,6 @@ value of the conductance is determined by the number of occupied
 subbands that increases with energy.
 
 
-.. seealso::
-     The full source code can be found in
-     :download:`tutorial/quantum_wire.py <../../../tutorial/quantum_wire.py>`
-
 .. specialnote:: Technical details
 
    - In the example above, when building the system, only one direction
@@ -325,6 +325,10 @@ subbands that increases with energy.
 
 Building the same system with less code
 .......................................
+
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/quantum_wire_revisited.py <../../../tutorial/quantum_wire_revisited.py>`
 
 Kwant allows for more than one way to build a system. The reason is that
 `~kwant.builder.Builder` is essentially just a container that can be filled in
@@ -431,10 +435,6 @@ hand, you also have access to the other functions, ``make_system`` and
 ``plot_conductance``, and can thus play with the parameters.
 
 The result of the example should be identical to the previous one.
-
-.. seealso::
-    The full source code can be found in
-    :download:`tutorial/quantum_wire_revisited.py <../../../tutorial/quantum_wire_revisited.py>`
 
 .. specialnote:: Technical details
 

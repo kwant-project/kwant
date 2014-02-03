@@ -4,6 +4,10 @@ Beyond transport: Band structure and closed systems
 Band structure calculations
 ...........................
 
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/band_structure.py <../../../tutorial/band_structure.py>`
+
 When doing transport simulations, one also often needs to know the band
 structure of the leads, i.e. the energies of the propagating plane waves in the
 leads as a function of momentum. This band structure contains information about
@@ -50,12 +54,12 @@ where we observe the cosine-like dispersion of the square lattice. Close
 to ``k=0`` this agrees well with the quadratic dispersion this tight-binding
 Hamiltonian is approximating.
 
-.. seealso::
-     The full source code can be found in
-     :download:`tutorial/band_structure.py <../../../tutorial/band_structure.py>`
-
 Closed systems
 ..............
+
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/closed_system.py <../../../tutorial/closed_system.py>`
 
 Although Kwant is (currently) mainly aimed towards transport problems, it
 can also easily be used to compute properties of closed systems -- after
@@ -113,10 +117,6 @@ using `~kwant.plotter.map`:
 The last two arguments to `~kwant.plotter.map` are optional.  The first prevents
 a colorbar from appearing.  The second, ``oversampling=1``, makes the image look
 better for the special case of a square lattice.
-
-.. seealso::
-    The full source code can be found in
-    :download:`tutorial/closed_system.py <../../../tutorial/closed_system.py>`
 
 .. specialnote:: Technical details
 

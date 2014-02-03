@@ -3,6 +3,10 @@
 Beyond square lattices: graphene
 --------------------------------
 
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/graphene.py <../../../tutorial/graphene.py>`
+
 In the following example, we are going to calculate the
 conductance through a graphene quantum dot with a p-n junction
 and two non-collinear leads. In the process, we will touch
@@ -163,10 +167,6 @@ Finally the transmission through the system is computed,
 
 showing the typical resonance-like transmission probability through
 an open quantum dot
-
-.. seealso::
-    The full source code can be found in
-    :download:`tutorial/graphene.py <../../../tutorial/graphene.py>`
 
 .. specialnote:: Technical details
 
