@@ -10,6 +10,10 @@ these options can be used to achieve various very different objectives.
 2D example: graphene quantum dot
 ................................
 
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/plot_graphene.py <../../../tutorial/plot_graphene.py>`
+
 We begin by first considering a circular graphene quantum dot (similar to what
 has been used in parts of the tutorial :ref:`tutorial-graphene`.)  In contrast
 to previous examples, we will also use hoppings beyond next-nearest neighbors:
@@ -135,10 +139,6 @@ With this, we arrive at
 
 which shows the edge state nature of the wave function most clearly.
 
-.. seealso::
-    The full source code can be found in
-    :download:`tutorial/plot_graphene.py <../../../tutorial/plot_graphene.py>`
-
 .. rubric:: Footnotes
 
 .. [#] A dangling site is defined as having only one hopping connecting it to
@@ -147,6 +147,10 @@ which shows the edge state nature of the wave function most clearly.
 
 3D example: zincblende structure
 ................................
+
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/plot_zincblende.py <../../../tutorial/plot_zincblende.py>`
 
 Zincblende is a very common crystal structure of semiconductors. It is a
 face-centered cubic crystal with two inequivalent atoms in the unit cell
@@ -222,7 +226,3 @@ crystal lattices out there!
       3d module)
     - Plotting hoppings in 3D is inherently much slower than plotting sites.
       Hence, this is not done by default.
-
-.. seealso::
-    The full source code can be found in :download:`tutorial/plot_zincblende.py
-    <../../../tutorial/plot_zincblende.py>`

@@ -9,6 +9,10 @@ very simple examples of the previous section.
 Matrix structure of on-site and hopping elements
 ................................................
 
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/spin_orbit.py <../../../tutorial/spin_orbit.py>`
+
 We begin by extending the simple 2DEG-Hamiltonian by a Rashba spin-orbit
 coupling and a Zeeman splitting due to an external magnetic field:
 
@@ -90,10 +94,6 @@ the following, clearly non-monotonic conductance steps:
 
 .. image:: ../images/spin_orbit_result.*
 
-.. seealso::
-     The full source code can be found in
-     :download:`tutorial/spin_orbit.py <../../../tutorial/spin_orbit.py>`
-
 .. specialnote:: Technical details
 
   - The Tinyarray package, one of the dependencies of Kwant, implements
@@ -126,6 +126,10 @@ the following, clearly non-monotonic conductance steps:
 
 Spatially dependent values through functions
 ............................................
+
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/quantum_well.py <../../../tutorial/quantum_well.py>`
 
 Up to now, all examples had position-independent matrix-elements
 (and thus translational invariance along the wire, which
@@ -190,10 +194,6 @@ of the potential well by passing the potential value. We obtain the result:
 Starting from no potential (well depth = 0), we observe the typical
 oscillatory transmission behavior through resonances in the quantum well.
 
-.. seealso::
-     The full source code can be found in
-     :download:`tutorial/quantum_well.py <../../../tutorial/quantum_well.py>`
-
 .. warning::
 
     If functions are used to set values inside a lead, then they must satisfy
@@ -213,6 +213,10 @@ oscillatory transmission behavior through resonances in the quantum well.
 
 Nontrivial shapes
 .................
+
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/ab_ring.py <../../../tutorial/ab_ring.py>`
 
 Up to now, we only dealt with simple wire geometries. Now we turn to the case
 of a more complex geometry, namely transport through a quantum ring
@@ -312,10 +316,6 @@ Finally you should get the following result:
 
 where one can observe the conductance oscillations with the
 period of one flux quantum.
-
-.. seealso::
-     The full source code can be found in
-     :download:`tutorial/ab_ring.py <../../../tutorial/ab_ring.py>`
 
 .. specialnote:: Technical details
 

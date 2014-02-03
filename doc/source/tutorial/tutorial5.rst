@@ -24,6 +24,10 @@ choose real), and :math:`\mathcal{T}H\mathcal{T}^{-1}=H_0^*=H_0`.
 "Orbital description": using matrices
 .....................................
 
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/superconductor_band_structure.py <../../../tutorial/superconductor_band_structure.py>`
+
 We begin by computing the band structure of a superconducting wire.
 The most natural way to implement the BdG Hamiltonian is by using a
 2x2 matrix structure for all Hamiltonian matrix elements:
@@ -43,13 +47,13 @@ Computing the band structure then yields the result
 We clearly observe the superconducting gap in the spectrum. That was easy,
 wasn't it?
 
-.. seealso::
-    The full source code can be found in
-    :download:`tutorial/superconductor_band_structure.py <../../../tutorial/superconductor_band_structure.py>`
-
 
 "Lattice description": using different lattices
 ...............................................
+
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/superconductor_transport.py <../../../tutorial/superconductor_transport.py>`
 
 While it seems most natural to implement the BdG Hamiltonian
 using a 2x2 matrix structure for the matrix elements of the Hamiltonian,
@@ -152,10 +156,6 @@ Finally, for the default parameters, we obtain the following result:
 We a see a conductance that is proportional to the square of the tunneling
 probability within the gap, and proportional to the tunneling probability
 above the gap. At the gap edge, we observe a resonant Andreev reflection.
-
-.. seealso::
-    The full source code can be found in
-    :download:`tutorial/superconductor_transport.py <../../../tutorial/superconductor_transport.py>`
 
 .. specialnote:: Technical details
 
