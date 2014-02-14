@@ -101,6 +101,10 @@ class Polyatomic(object):
         self.reduced_vecs, self.transf = lll.lll(prim_vecs)
         self.voronoi = ta.dot(lll.voronoi(self.reduced_vecs), self.transf)
 
+    def __str__(self):
+        sl_names = ', '.join(str(sl.name) for sl in self.sublattices)
+        return '<Polyatomic lattice with sublattices {0}>'.format(sl_names)
+
     def shape(self, function, start):
         """Return a key for all the lattice sites inside a given shape.
 
@@ -429,12 +433,10 @@ class Monatomic(builder.SiteFamily, Polyatomic):
         self.lattice_dim = len(prim_vecs)
 
         if name != '':
-            msg = "Monatomic lattice {0}, vectors {1}, origin {2}"
-            self.cached_str = msg.format(name,
-                                         short_array_str(self._prim_vecs),
-                                         short_array_str(self.offset))
+            msg = "<Monatomic lattice {0}>"
+            self.cached_str = msg.format(name)
         else:
-            msg = "unnamed Monatomic lattice, vectors {0}, origin [{1}]"
+            msg = "<unnamed Monatomic lattice, vectors {0}, origin [{1}]>"
             self.cached_str = msg.format(short_array_str(self._prim_vecs),
                                          short_array_str(self.offset))
 

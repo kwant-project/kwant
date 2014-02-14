@@ -75,7 +75,9 @@ class Site(tuple):
         return 'Site({0}, {1})'.format(repr(self.family), repr(self.tag))
 
     def __str__(self):
-        return '{1} of {0}'.format(str(self.family), str(self.tag))
+        sf = self.family
+        return '<Site {1} of {0}>'.format(str(sf.name if sf.name else sf),
+                                          str(self.tag))
 
     @property
     def pos(self):
@@ -113,7 +115,11 @@ class SiteFamily(object):
         return self.canonical_repr
 
     def __str__(self):
-        return '{0} object {1}'.format(self.__class__, self.name)
+        if self.name:
+            msg = '<{0} site family {1}>'
+        else:
+            msg = '<unnamed {0} site family>'
+        return msg.format(self.__class__.__name__, self.name)
 
     def __hash__(self):
         return self.hash
@@ -343,6 +349,13 @@ class HoppingKind(object):
             self.__class__.__name__, repr(tuple(self.delta)),
             repr(self.family_a),
             ', ' + repr(self.family_b) if self.family_a != self.family_b else '')
+
+    def __str__(self):
+        return '{0}({1}, {2}{3})'.format(
+            self.__class__.__name__, str(tuple(self.delta)),
+            str(self.family_a),
+            ', ' + str(self.family_b) if self.family_a != self.family_b else '')
+
 
 
 ################ Support for Hermitian conjugation
