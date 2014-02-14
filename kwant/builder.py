@@ -504,7 +504,8 @@ class ModesLead(Lead):
 
 # A marker, meaning for hopping (i, j): this value is given by the Hermitian
 # conjugate the value of the hopping (j, i).  Used by Builder and System.
-Other = type('Other', (object,), {'__repr__': lambda s: 'Other'})()
+class Other(object):
+    pass
 
 
 def edges(seq):
