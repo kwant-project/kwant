@@ -148,7 +148,7 @@ class SparseSolver(object):
         lhs = lhs - energy * sp.identity(lhs.shape[0], format=self.lhsformat)
         num_orb = lhs.shape[0]
 
-        if check_hermiticity:
+        if check_hermiticity and len(lhs.data):
             rtol = 1e-13
             atol = 1e-300
             tol = rtol * np.max(np.abs(lhs.data)) + atol
