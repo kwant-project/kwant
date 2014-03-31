@@ -10,3 +10,31 @@ Kwant's convention is that momenta are positive in the direction of
 `~kwant.physics.modes` did respect this convention, the momenta read off the
 band structure as given by `~kwant.physics.Bands` had the wrong sign.  This has
 been fixed now.
+
+New option ``add_cells`` of `~kwant.builder.Builder.attach_lead`
+----------------------------------------------------------------
+Before actually attaching a lead to a builder, the method
+`~kwant.builder.Builder.attach_lead` of `~kwant.builder.Builder` prepares a
+"nice" interface by adding "missing" sites such that the first unit cell of the
+lead is completely connected with the system under construction.  These sites
+and their hoppings are taken over from the lead.
+
+By setting the new option ``add_cells``, ``attach_lead`` can now be told to add
+*in* *addition* any number of complete unit cells of the lead to the system
+before attaching it.  Among other things, this can be useful for
+
+- controlling the hopping between the lead and the system (Leads are always
+  attached with their inter-unit-cell hopping to the system, but absorbing one
+  lead unit cell into the system allows to control this),
+
+- creating a buffer for long range disorder present in the system to die away
+  before the translation-invariant lead begins.
+
+To support these applications, ``attach_lead`` now returns a list of all the
+sites that have been added to the system.  Creating a buffer for disorder can
+be thus done as follows::
+
+    sys[sys.attach_lead(lead, add_cells=10)] = onsite
+
+Note how we set the onsite Hamiltonians of the sites that have been added to
+the value used in the system.

@@ -989,7 +989,7 @@ class Builder(object):
         self.leads.extend(other_sys.leads)
         return self
 
-    def attach_lead(self, lead_builder, origin=None):
+    def attach_lead(self, lead_builder, origin=None, add_cells=0):
         """Attach a lead to the builder, possibly adding missing sites.
 
         Parameters
@@ -1000,6 +1000,13 @@ class Builder(object):
             The site which should belong to a domain where the lead should
             begin. It is used to attach a lead inside the system, e.g. to an
             inner radius of a ring.
+        add_cells : int
+            Number of complete unit cells of the lead to be added to the system
+            *after* the missing sites have been added.
+
+        Returns
+        -------
+            added_sites : list of `Site` objects that were added to the system.
 
         Raises
         ------
@@ -1013,6 +1020,9 @@ class Builder(object):
         This method is not fool-proof, i.e. if it returns an error, there is
         no guarantee that the system stayed unaltered.
         """
+        if add_cells < 0 or int(add_cells) != add_cells:
+            raise ValueError('add_cells must be an integer >= 0.')
+
         sym = lead_builder.symmetry
         H = lead_builder.H
 
@@ -1054,12 +1064,13 @@ class Builder(object):
         if len(all_doms) == 0:
             raise ValueError('Builder does not intersect with the lead,'
                              ' this lead cannot be attached.')
-        max_dom = max(all_doms)
+        max_dom = max(all_doms) + add_cells
         min_dom = min(all_doms)
         del all_doms
 
         interface = set()
         added = set()
+        all_added = []
         # Initialize flood-fill: create the outermost sites.
         for site in H:
             for neighbor in lead_builder.neighbors(site):
@@ -1069,6 +1080,7 @@ class Builder(object):
                         self[neighbor] = lead_builder[neighbor]
                         added.add(neighbor)
                     interface.add(neighbor)
+        all_added.extend(added)
 
         # Do flood-fill.
         covered = True
@@ -1093,9 +1105,10 @@ class Builder(object):
                         covered = True
                     self[site_new, site] = lead_builder[site_new, site]
             added = added2
+            all_added.extend(added)
 
         self.leads.append(BuilderLead(lead_builder, tuple(interface)))
-        return len(self.leads) - 1
+        return all_added
 
     def finalized(self):
         """Return a finalized (=usable with solvers) copy of the system.
