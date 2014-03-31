@@ -106,7 +106,8 @@ Roughly in order of importance.                                     -*-org-*-
   hoppings to be distinguishable. Also potentially add arrows to the hoppings.
 
 * Adopt mincut/maxflow algorithm from networkx or python-graph to find the best
-  representation of a lead unit cell.
+  representation of a lead unit cell.  Fixing unit cells could be postponed
+  until a lead is attached.
 
 * Speed up kwant.digest
   by using SipHash and Ziggurat algorithm in C/Cython
@@ -116,3 +117,13 @@ Roughly in order of importance.                                     -*-org-*-
   propagating or evanescent.
 
 * Remove sphinxext and use an external numpydoc once it is available
+
+* Implement a pretty printer for lists/tuples of sites
+
+* Ideas for kwant 2
+
+** Names to be reconsidered
+- lead_info
+
+** Unify the order of indices
+For example in wave_function and in PropagatingModes.
