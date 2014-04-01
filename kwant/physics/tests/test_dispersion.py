@@ -6,9 +6,9 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_almost_equal
 import kwant
-from math import pi, cos
+from math import pi, cos, sin
 
 def test_band_energies(N=5):
     sys = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
@@ -23,3 +23,16 @@ def test_band_energies(N=5):
         energies = band_energies(k)
         assert_array_almost_equal(sorted(energies),
                                   sorted([2 - 2 * cos(k), 4 - 2 * cos(k)]))
+
+def test_same_as_lead():
+    sys = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
+    lat = kwant.lattice.chain()
+    sys[lat(0)] = 0
+    sys[lat(0), lat(1)] = complex(cos(0.2), sin(0.2))
+
+    sys = sys.finalized()
+    momenta = sys.modes()[0].momenta
+    bands = kwant.physics.Bands(sys)
+
+    for momentum in momenta:
+        assert_almost_equal(bands(momentum)[0], 0)

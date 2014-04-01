@@ -49,6 +49,8 @@ class Bands(object):
         self.hop[:, hop.shape[1]:] = 0
 
     def __call__(self, k):
-        mat = self.hop * complex(math.cos(k), math.sin(k))
+        # Note: Equation to solve is
+        #       (V^\dagger e^{ik} + H + V e^{-ik}) \psi = E \psi
+        mat = self.hop * complex(math.cos(k), -math.sin(k))
         mat += mat.conjugate().transpose() + self.ham
         return np.sort(np.linalg.eigvalsh(mat).real)

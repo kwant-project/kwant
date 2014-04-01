@@ -1,0 +1,12 @@
+What's new in Kwant 1.1
+=======================
+
+This article explains the user-visible changes in Kwant 1.1.
+
+Harmonize `~kwant.physics.Bands` with `~kwant.physics.modes`
+------------------------------------------------------------
+Kwant's convention is that momenta are positive in the direction of
+`~kwant.lattice.TranslationalSymmetry`.  While the momenta returned by
+`~kwant.physics.modes` did respect this convention, the momenta read off the
+band structure as given by `~kwant.physics.Bands` had the wrong sign.  This has
+been fixed now.

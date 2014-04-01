@@ -194,8 +194,8 @@ class InfiniteSystem(System):
     def inter_cell_hopping(self, args=(), sparse=False):
         """Hopping Hamiltonian between two cells of the infinite system."""
         cell_sites = xrange(self.cell_size)
-        neighbor_sites = xrange(self.cell_size, self.graph.num_nodes)
-        return self.hamiltonian_submatrix(args, cell_sites, neighbor_sites,
+        interface_sites = xrange(self.cell_size, self.graph.num_nodes)
+        return self.hamiltonian_submatrix(args, cell_sites, interface_sites,
                                           sparse=sparse)
 
     def modes(self, energy=0, args=()):
