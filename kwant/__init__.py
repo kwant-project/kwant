@@ -8,6 +8,14 @@
 
 import numpy                    # Needed by C. Gohlke's Windows package.
 
+try:
+    from . import _system
+except ImportError:
+    msg = """Error importing Kwant: You should not try to import Kwant from
+    its source directory.  Please exit the Kwant source tree, and relaunch
+    your Python intepreter from there."""
+    raise ImportError(msg)
+
 __all__ = ['system', 'version', 'builder', 'lattice', 'solvers',
            'digest', 'rmt']
 for module in __all__:
