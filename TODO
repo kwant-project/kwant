@@ -1,6 +1,13 @@
 Roughly in order of importance.                                     -*-org-*-
 
-* Fix lattice.neighbors() when lattice has lower dimensionality than the space.
+* Improve lattice.neighbors()
+  to support the following cases:
+  - The lattice has lower dimensionality than the space
+  - Hoppings between sites from two separate lattices
+
+  The function should be rewritten in a more robust manner using Delaunay
+  tessellation from Scipy/QHull and a proper choice of the set of sites on
+  which to perform the tessellation.
 
 * Improve error messages by checking for ABCs
   Add a classmethod "ensure_isinstance" that takes an object at makes sure that
