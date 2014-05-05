@@ -1,5 +1,7 @@
 Roughly in order of importance.                                     -*-org-*-
 
+* Make plotter work with matplotlib 1.4
+
 * Improve lattice.neighbors()
   to support the following cases:
   - The lattice has lower dimensionality than the space
@@ -128,6 +130,7 @@ Roughly in order of importance.                                     -*-org-*-
 * Implement a pretty printer for lists/tuples of sites
 
 * Ideas for kwant 2
+** Consider whether to use *args or args in System.hamiltonian
 
 ** Names to be reconsidered
 - lead_info
