@@ -124,7 +124,7 @@ class SiteFamily(object):
         except AttributeError:
             return False
 
-    def __neq__(self, other):
+    def __ne__(self, other):
         try:
             return self.canonical_repr != other.canonical_repr
         except AttributeError:
