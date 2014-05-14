@@ -129,6 +129,8 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Implement a pretty printer for lists/tuples of sites
 
+* Ensure 100% test coverage
+
 * Ideas for kwant 2
 ** Consider whether to use *args or args in System.hamiltonian
 
