@@ -7,6 +7,8 @@
 # http://kwant-project.org/authors.
 
 from numpy.testing import assert_array_almost_equal, assert_almost_equal
+from nose.tools import assert_raises
+
 import kwant
 from math import pi, cos, sin
 
@@ -36,3 +38,11 @@ def test_same_as_lead():
 
     for momentum in momenta:
         assert_almost_equal(bands(momentum)[0], 0)
+
+def test_raise_nonhermitian():
+    sys = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
+    lat = kwant.lattice.chain()
+    sys[lat(0)] = 1j
+    sys[lat(0), lat(1)] = complex(cos(0.2), sin(0.2))
+    sys = sys.finalized()
+    assert_raises(ValueError, kwant.physics.Bands, sys)
