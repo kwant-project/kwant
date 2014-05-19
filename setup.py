@@ -18,6 +18,7 @@ TUT_GLOB = 'doc/source/tutorial/*.py'
 TUT_HIDDEN_PREFIX = '#HIDDEN'
 
 import sys
+import re
 import os
 import glob
 import subprocess
@@ -35,8 +36,14 @@ try:
 except:
     cython_version = ()
 else:
-    cython_version = tuple(
-        int(n) for n in Cython.__version__.split('-')[0].split('.'))
+    match = re.match('([0-9.]*)(.*)', Cython.__version__)
+    cython_version = [int(n) for n in match.group(1).split('.')]
+    # Decrease version if the version string contains a suffix.
+    if match.group(2):
+        while cython_version[-1] == 0:
+            cython_version.pop()
+        cython_version[-1] -= 1
+    cython_version = tuple(cython_version)
 
 try:
     sys.argv.remove(NO_CYTHON_OPTION)
