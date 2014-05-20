@@ -159,7 +159,7 @@ class MUMPSContext(object):
     Solving a small system of equations.
 
     >>> import scipy.sparse as sp
-    >>> sp.coo_matrix([[1.,0],[0,2.]])
+    >>> a = sp.coo_matrix([[1.,0],[0,2.]], dtype=complex)
     >>> ctx = kwant.linalg.mumps.MUMPSContext()
     >>> ctx.factor(a)
     >>> ctx.solve([1., 1.])
