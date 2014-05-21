@@ -16,8 +16,7 @@ def onsite(site, phi, salt):
 def test_qhe(W=16, L=8):
     def central_region(pos):
         x, y = pos
-        return -L < x < L and \
-            abs(y) < W - 5.5 * math.exp(-x**2 / 5**2)
+        return -L < x < L and abs(y) < W - 5.5 * math.exp(-x**2 / 5**2)
 
     lat = kwant.lattice.square()
     sys = kwant.Builder()

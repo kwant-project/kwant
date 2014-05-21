@@ -503,8 +503,8 @@ class TranslationalSymmetry(builder.Symmetry):
         if self.periods.ndim != 2:
             # TODO: remove the second part of the following message once
             # everybody got used to it.
-            msg = "TranslationalSymmetry takes 1d sequences as parameters.\n" \
-                "See What's new in Kwant 0.2 in the documentation."
+            msg = ("TranslationalSymmetry takes 1d sequences as parameters.\n"
+                   "See What's new in Kwant 0.2 in the documentation.")
             raise ValueError(msg)
         if np.linalg.matrix_rank(periods) < len(periods):
             raise ValueError("Translational symmetry periods must be "
@@ -549,12 +549,12 @@ class TranslationalSymmetry(builder.Symmetry):
         bravais_periods = np.dot(self.periods, inv)
         # Absolute tolerance is correct in the following since we want an error
         # relative to the closest integer.
-        if not np.allclose(bravais_periods, np.round(bravais_periods),
-                           rtol=0, atol=1e-8) or \
-           not np.allclose([fam.vec(i) for i in bravais_periods],
-                           self.periods):
-            msg = 'Site family {0} does not have commensurate periods with ' +\
-                  'symmetry {1}.'
+        if (not np.allclose(bravais_periods, np.round(bravais_periods),
+                            rtol=0, atol=1e-8) or
+            not np.allclose([fam.vec(i) for i in bravais_periods],
+                            self.periods)):
+            msg = ('Site family {0} does not have commensurate periods with '
+                   'symmetry {1}.')
             raise ValueError(msg.format(fam, self))
         bravais_periods = np.array(np.round(bravais_periods), dtype='int')
         (num_dir, lat_dim) = bravais_periods.shape
@@ -596,8 +596,7 @@ class TranslationalSymmetry(builder.Symmetry):
             print m
             raise RuntimeError('Adding site family failed.')
 
-        det_x_inv_m = \
-            np.array(np.round(det_m * np.linalg.inv(m)), dtype=int)
+        det_x_inv_m = np.array(np.round(det_m * np.linalg.inv(m)), dtype=int)
         assert (np.dot(m, det_x_inv_m) // det_m == np.identity(lat_dim)).all()
 
         det_x_inv_m_part = det_x_inv_m[:num_dir, :]
@@ -633,20 +632,20 @@ class TranslationalSymmetry(builder.Symmetry):
         if b is None:
             return builder.Site(a.family, a.tag + delta, True)
         elif b.family == a.family:
-            return builder.Site(a.family, a.tag + delta, True), \
-                builder.Site(b.family, b.tag + delta, True)
+            return (builder.Site(a.family, a.tag + delta, True),
+                    builder.Site(b.family, b.tag + delta, True))
         else:
             m_part = self._get_site_family_data(b.family)[0]
             try:
                 delta2 = ta.dot(m_part, element)
             except ValueError:
-                msg = 'Expecting a {0}-tuple group element, ' + \
-                      'but got `{1}` instead.'
+                msg = ('Expecting a {0}-tuple group element, '
+                       'but got `{1}` instead.')
                 raise ValueError(msg.format(self.num_directions, element))
             if self.is_reversed:
                 delta2 = -delta2
-            return builder.Site(a.family, a.tag + delta, True), \
-                builder.Site(b.family, b.tag + delta2, True)
+            return (builder.Site(a.family, a.tag + delta, True),
+                    builder.Site(b.family, b.tag + delta2, True))
 
     def to_fd(self, a, b=None):
         return self.act(-self.which(a), a, b)

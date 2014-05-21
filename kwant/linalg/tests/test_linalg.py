@@ -6,9 +6,10 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from kwant.linalg import lu_factor, lu_solve, rcond_from_lu, gen_eig, schur, \
-    convert_r2c_schur, order_schur, evecs_from_schur, gen_schur, \
-    convert_r2c_gen_schur, order_gen_schur, evecs_from_gen_schur
+from kwant.linalg import (
+    lu_factor, lu_solve, rcond_from_lu, gen_eig, schur,
+    convert_r2c_schur, order_schur, evecs_from_schur, gen_schur,
+    convert_r2c_gen_schur, order_gen_schur, evecs_from_gen_schur)
 from nose.tools import assert_equal, assert_true
 import numpy as np
 from _test_utils import _Random, assert_array_almost_equal

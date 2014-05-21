@@ -172,8 +172,10 @@ class SparseSolver(object):
             if not realspace:
                 prop, stab = lead.modes(energy, args)
                 lead_info.append(prop)
-                u, ulinv, nprop, svd_v = \
-                    stab.vecs, stab.vecslmbdainv, stab.nmodes, stab.sqrt_hop
+                u = stab.vecs
+                ulinv = stab.vecslmbdainv
+                nprop = stab.nmodes
+                svd_v = stab.sqrt_hop
 
                 if len(u) == 0:
                     rhs.append(None)
@@ -190,11 +192,11 @@ class SparseSolver(object):
                 iface_orbs = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                         for i in interface)]
 
-                n_lead_orbs = svd_v.shape[0] if svd_v is not None else \
-                              u_out.shape[0]
+                n_lead_orbs = (svd_v.shape[0] if svd_v is not None
+                               else u_out.shape[0])
                 if n_lead_orbs != len(iface_orbs):
-                    msg = 'Lead {0} has hopping with dimensions ' + \
-                          'incompatible with its interface dimension.'
+                    msg = ('Lead {0} has hopping with dimensions '
+                           'incompatible with its interface dimension.')
                     raise ValueError(msg.format(leadnum))
 
                 coords = np.r_[[np.arange(len(iface_orbs))], [iface_orbs]]
@@ -203,8 +205,8 @@ class SparseSolver(object):
 
                 if svd_v is not None:
                     v_sp = sp.csc_matrix(svd_v.T.conj()) * transf
-                    vdaguout_sp = transf.T * \
-                        sp.csc_matrix(np.dot(svd_v, u_out))
+                    vdaguout_sp = (transf.T *
+                                   sp.csc_matrix(np.dot(svd_v, u_out)))
                     lead_mat = - ulinv_out
                 else:
                     v_sp = transf
@@ -233,9 +235,9 @@ class SparseSolver(object):
                                       for i in interface)]
 
                 if sigma.shape != 2 * vars.shape:
-                    msg = 'Self-energy dimension for lead {0} does not ' + \
-                          'match the total number of orbitals of the ' + \
-                          'sites for which it is defined.'
+                    msg = ('Self-energy dimension for lead {0} does not '
+                           'match the total number of orbitals of the '
+                           'sites for which it is defined.')
                     raise ValueError(msg.format(leadnum))
 
                 y, x = np.meshgrid(vars, vars)
@@ -326,9 +328,9 @@ class SparseSolver(object):
             in_leads = range(n)
         if out_leads is None:
             out_leads = range(n)
-        if sorted(in_leads) != in_leads or sorted(out_leads) != out_leads or \
-            len(set(in_leads)) != len(in_leads) or \
-            len(set(out_leads)) != len(out_leads):
+        if (sorted(in_leads) != in_leads or sorted(out_leads) != out_leads or
+            len(set(in_leads)) != len(in_leads) or
+            len(set(out_leads)) != len(out_leads)):
             raise ValueError("Lead lists must be sorted and "
                              "with unique entries.")
         if len(in_leads) == 0 or len(out_leads) == 0:
@@ -409,9 +411,9 @@ class SparseSolver(object):
             in_leads = range(n)
         if out_leads is None:
             out_leads = range(n)
-        if sorted(in_leads) != in_leads or sorted(out_leads) != out_leads or \
-            len(set(in_leads)) != len(in_leads) or \
-            len(set(out_leads)) != len(out_leads):
+        if (sorted(in_leads) != in_leads or sorted(out_leads) != out_leads or
+            len(set(in_leads)) != len(in_leads) or
+            len(set(out_leads)) != len(out_leads)):
             raise ValueError("Lead lists must be sorted and "
                              "with unique entries.")
         if len(in_leads) == 0 or len(out_leads) == 0:
@@ -471,9 +473,8 @@ class SparseSolver(object):
                 raise NotImplementedError("ldos for leads with only "
                                           "self-energy is not implemented yet.")
 
-        linsys, lead_info = \
-            self._make_linear_sys(sys, xrange(len(sys.leads)), energy, args,
-                                  check_hermiticity)
+        linsys, lead_info = self._make_linear_sys(
+            sys, xrange(len(sys.leads)), energy, args, check_hermiticity)
 
         ldos = np.zeros(linsys.num_orb, float)
         factored = None
@@ -532,12 +533,11 @@ class WaveFunction(object):
         for lead in sys.leads:
             if not hasattr(lead, 'modes'):
                 # TODO: figure out what to do with self-energies.
-                msg = 'Wave functions for leads with only self-energy' + \
-                      ' are not available yet.'
+                msg = ('Wave functions for leads with only self-energy'
+                       ' are not available yet.')
                 raise NotImplementedError(msg)
-        linsys, lead_info = \
-            solver._make_linear_sys(sys, xrange(len(sys.leads)), energy, args,
-                                    check_hermiticity)
+        linsys, lead_info = solver._make_linear_sys(
+            sys, xrange(len(sys.leads)), energy, args, check_hermiticity)
         self.solve = solver._solve_linear_sys
         self.rhs = linsys.rhs
         self.factorized_h = solver._factorized(linsys.lhs)
@@ -630,9 +630,8 @@ class SMatrix(BlockResult):
         return np.linalg.norm(self.submatrix(lead_out, lead_in)) ** 2
 
     def __repr__(self):
-        return "SMatrix(data=%r, lead_info=%r, " \
-            "out_leads=%r, in_leads=%r)" % (self.data, self.lead_info,
-                                            self.out_leads, self.in_leads)
+        return ("SMatrix(data=%r, lead_info=%r, out_leads=%r, in_leads=%r)" %
+                (self.data, self.lead_info, self.out_leads, self.in_leads))
 
 
 class GreensFunction(BlockResult):
@@ -709,6 +708,6 @@ class GreensFunction(BlockResult):
         return result
 
     def __repr__(self):
-        return "GreensFunction(data=%r, lead_info=%r, " \
-            "out_leads=%r, in_leads=%r)" % (self.data, self.lead_info,
-                                            self.out_leads, self.in_leads)
+        return ("GreensFunction(data=%r, lead_info=%r, "
+                "out_leads=%r, in_leads=%r)" %
+                (self.data, self.lead_info, self.out_leads, self.in_leads))

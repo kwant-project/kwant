@@ -16,8 +16,8 @@ from kwant.graph.core cimport CGraph, gintArraySlice
 from kwant.graph.defs cimport gint
 from .graph.defs import gint_dtype
 
-msg = 'Hopping from site {0} to site {1} does not match the ' \
-    'dimensions of onsite Hamiltonians of these sites.'
+msg = ('Hopping from site {0} to site {1} does not match the '
+       'dimensions of onsite Hamiltonians of these sites.')
 
 @cython.boundscheck(False)
 def make_sparse(ham, args, CGraph gr, diag,

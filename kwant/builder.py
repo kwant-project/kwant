@@ -850,8 +850,8 @@ class Builder(object):
         func = None
         for sh in self.expand(key):
             if func is None:
-                func = self._set_site if isinstance(sh, Site) \
-                    else self._set_hopping
+                func = (self._set_site if isinstance(sh, Site)
+                        else self._set_hopping)
             func(sh, value)
 
     def _del_site(self, site):
@@ -899,8 +899,8 @@ class Builder(object):
         func = None
         for sh in self.expand(key):
             if func is None:
-                func = self._del_site if isinstance(sh, Site) \
-                    else self._del_hopping
+                func = (self._del_site if isinstance(sh, Site)
+                        else self._del_hopping)
             func(sh)
 
     def eradicate_dangling(self):
@@ -1030,9 +1030,9 @@ class Builder(object):
             raise ValueError('Only builders with a 1D symmetry are allowed.')
         for hopping in lead_builder.hoppings():
             if not -1 <= sym.which(hopping[1])[0] <= 1:
-                msg = 'Hopping {0} connects non-neighboring lead unit cells.' +\
-                      'Only nearest-cell hoppings are allowed ' +\
-                      '(consider increasing the lead period).'
+                msg = ('Hopping {0} connects non-neighboring lead unit cells. '
+                       'Only nearest-cell hoppings are allowed '
+                       '(consider increasing the lead period).')
                 raise ValueError(msg.format(hopping))
         if not H:
             raise ValueError('Lead to be attached contains no sites.')
@@ -1046,8 +1046,8 @@ class Builder(object):
             if not lead_only_families:
                 break
         else:
-            msg = 'Sites with site families {0} do not appear in the system, ' \
-                'hence the system does not interrupt the lead.'
+            msg = ('Sites with site families {0} do not appear in the system, '
+                   'hence the system does not interrupt the lead.')
             raise ValueError(msg.format(tuple(lead_only_families)))
 
         all_doms = set()
@@ -1098,8 +1098,8 @@ class Builder(object):
                     elif new_dom < min_dom:
                         raise ValueError('Builder does not interrupt the lead,'
                                          ' this lead cannot be attached.')
-                    if site_new not in self \
-                       and sym.which(site_new)[0] != max_dom + 1:
+                    if (site_new not in self
+                        and sym.which(site_new)[0] != max_dom + 1):
                         self[site_new] = lead_builder[site_new]
                         added2.add(site_new)
                         covered = True
@@ -1184,8 +1184,8 @@ class Builder(object):
                 interface = [id_by_site[isite] for isite in lead.interface]
             except KeyError, e:
                 t, v, tb = sys.exc_info()
-                msg = "Lead {0} is attached to a site that does not " \
-                      "belong to the scattering region:\n {1}"
+                msg = ("Lead {0} is attached to a site that does not "
+                       "belong to the scattering region:\n {1}")
                 raise ValueError(msg.format(lead_nr, v))
 
             lead_interfaces.append(np.array(interface))
@@ -1293,8 +1293,8 @@ class Builder(object):
                     # to this one has been added already or will be added.
                     fd = sym.which(head)[0]
                     if fd != 1:
-                        msg = 'Further-than-nearest-neighbor cells ' \
-                              'are connected by hopping\n{0}.'
+                        msg = ('Further-than-nearest-neighbor cells '
+                               'are connected by hopping\n{0}.')
                         raise ValueError(msg.format((tail, head)))
                     continue
                 if head_id >= cell_size:

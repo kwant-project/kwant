@@ -10,8 +10,8 @@ from StringIO import StringIO
 from itertools import izip_longest
 import numpy as np
 from nose.tools import assert_equal, assert_raises
-from kwant.graph.core import \
-    Graph, NodeDoesNotExistError, EdgeDoesNotExistError, DisabledFeatureError
+from kwant.graph.core import (Graph, NodeDoesNotExistError,
+                              EdgeDoesNotExistError, DisabledFeatureError)
 
 def test_empty():
     graph = Graph()

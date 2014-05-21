@@ -100,8 +100,8 @@ def test_plot():
         for color in color_opts:
             for sys in (sys2d, sys3d):
                 fig = plot(sys, site_color=color, cmap='binary', file=out)
-                if color != 'k' and \
-                   isinstance(color(iter(sys2d.sites()).next()), float):
+                if (color != 'k' and
+                    isinstance(color(iter(sys2d.sites()).next()), float)):
                     assert fig.axes[0].collections[0].get_array() is not None
                 assert len(fig.axes[0].collections) == (8 if sys is sys2d else
                                                         6)

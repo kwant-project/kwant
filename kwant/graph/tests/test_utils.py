@@ -9,8 +9,8 @@
 import numpy as np
 from nose.tools import assert_equal, assert_true
 from kwant.graph import Graph
-from kwant.graph.utils import \
- make_undirected, remove_duplicates, induced_subgraph
+from kwant.graph.utils import (make_undirected, remove_duplicates,
+                               induced_subgraph)
 from kwant.graph.defs import gint_dtype
 
 def test_make_undirected():

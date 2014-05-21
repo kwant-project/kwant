@@ -80,8 +80,8 @@ def lll(basis, c=1.34):
     # Main part of LLL algorithm.
     i = 0
     while i < m-1:
-        if np.linalg.norm(vecsstar[i]) ** 2 < \
-           c * np.linalg.norm(vecsstar[i+1]) ** 2:
+        if (np.linalg.norm(vecsstar[i]) ** 2 <
+           c * np.linalg.norm(vecsstar[i+1]) ** 2):
             i += 1
         else:
             vecsstar[i+1] += u[i+1, i] * vecsstar[i]

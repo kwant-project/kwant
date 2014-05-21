@@ -149,7 +149,7 @@ if mpl_enabled:
         corners = np.zeros((3, 8, 6), np.float_)
         corners[0, [0, 1, 2, 3], 0] = corners[0, [4, 5, 6, 7], 1] = \
         corners[0, [0, 1, 4, 5], 2] = corners[0, [2, 3, 6, 7], 3] = \
-        corners[0, [0, 2, 4, 6], 4] = corners[0, [1, 3, 5, 7], 5] = 1.
+        corners[0, [0, 2, 4, 6], 4] = corners[0, [1, 3, 5, 7], 5] = 1.0
 
 
         class Line3DCollection(mplot3d.art3d.Line3DCollection):
@@ -624,8 +624,8 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
         try:
             fake_fig = matplotlib.pyplot.figure()
         except AttributeError:
-            msg = 'matplotlib.pyplot is unavailable.  Execute `import ' \
-            'matplotlib.pyplot` or use a different output mode.'
+            msg = ('matplotlib.pyplot is unavailable.  Execute `import '
+                   'matplotlib.pyplot` or use a different output mode.')
             raise RuntimeError(msg)
         fake_fig.canvas.figure = fig
         fig.canvas = fake_fig.canvas
@@ -699,8 +699,8 @@ def sys_leads_sites(sys, num_lead_cells=2):
         for leadnr, lead in enumerate(sys.leads):
             start = len(sites)
             # We will only plot leads with a graph and with a symmetry.
-            if hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and \
-                    len(sys.lead_interfaces[leadnr]):
+            if (hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and
+                len(sys.lead_interfaces[leadnr])):
                 sites.extend(((site, leadnr, i) for site in
                               xrange(lead.cell_size) for i in
                               xrange(num_lead_cells)))
@@ -844,8 +844,8 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
         for leadnr, lead in enumerate(sys.leads):
             start = len(hoppings)
             # We will only plot leads with a graph and with a symmetry.
-            if hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and \
-                    len(sys.lead_interfaces[leadnr]):
+            if (hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and
+                len(sys.lead_interfaces[leadnr])):
                 hoppings.extend(((hop, leadnr, i) for hop in ll_hoppings(lead)
                                  for i in xrange(num_lead_cells)))
             lead_cells.append(slice(start, len(hoppings)))
@@ -1098,8 +1098,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
     def resize_to_dim(array):
         if array.shape[1] != dim:
             ar = np.zeros((len(array), dim), dtype=float)
-            ar[:, : min(dim, array.shape[1])] = \
-                array[:, : min(dim, array.shape[1])]
+            ar[:, : min(dim, array.shape[1])] = array[
+                :, : min(dim, array.shape[1])]
             return ar
         else:
             return array

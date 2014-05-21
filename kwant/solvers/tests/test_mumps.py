@@ -9,8 +9,8 @@
 #from nose.plugins.skip import Skip, SkipTest
 from numpy.testing.decorators import skipif
 try:
-    from kwant.solvers.mumps import \
-        smatrix, greens_function, ldos, wave_function, options, reset_options
+    from kwant.solvers.mumps import (
+        smatrix, greens_function, ldos, wave_function, options, reset_options)
     import _test_sparse
     no_mumps = False
 except ImportError:

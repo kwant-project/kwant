@@ -282,8 +282,8 @@ def test_algorithm_equivalence():
 
     for vecs, algo in izip(evan_vecs, algos):
         # Evanescent modes must span the same linear space.
-        assert np.linalg.matrix_rank(np.c_[vecs, evan_vecs[0]], tol=1e-12) == \
-               vecs.shape[1], msg.format(algo)
+        assert (np.linalg.matrix_rank(np.c_[vecs, evan_vecs[0]], tol=1e-12) ==
+                vecs.shape[1]), msg.format(algo)
 
 
 def test_for_all_evs_equal():
@@ -308,11 +308,11 @@ def test_dtype_linsys():
                                             h_hop)
     assert lsys.eigenproblem[0].dtype == np.float64
 
-    lsys = kwant.physics.leads.setup_linsys(h_cell.astype(np.complex128) 
+    lsys = kwant.physics.leads.setup_linsys(h_cell.astype(np.complex128)
                                             - 0.3*np.eye(2),
                                             h_hop.astype(np.complex128))
     assert lsys.eigenproblem[0].dtype == np.float64
-    
+
     # energy=1 is an eigenstate of the isolated cell Hamiltonian,
     # i.e. a complex self-energy stabilization is necessary
     lsys = kwant.physics.leads.setup_linsys(h_cell - 1*np.eye(2),

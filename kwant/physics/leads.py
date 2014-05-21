@@ -263,8 +263,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         # the projected one (v^dagger psi lambda^-1, s u^dagger psi).
 
         def extract_wf(psi, lmbdainv):
-            wf = - dot(u, psi[: n_nonsing] * lmbdainv) - \
-                 dot(v, psi[n_nonsing:])
+            wf = -dot(u, psi[: n_nonsing] * lmbdainv) - dot(v, psi[n_nonsing:])
             if need_to_stabilize:
                 wf += 1j * (dot(v, psi[: n_nonsing]) +
                             dot(u, psi[n_nonsing:] * lmbdainv))
@@ -572,14 +571,14 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
     #       False if h_hop is purely imaginary
     if not (np.any(h_hop.real) or np.any(h_hop.imag)):
         v = np.empty((0, m))
-        return PropagatingModes(np.empty((0, n)), np.empty((0,)),
-                                np.empty((0,))), \
-               StabilizedModes(np.empty((0, 0)), np.empty((0, 0)), 0, v)
+        return (PropagatingModes(np.empty((0, n)), np.empty((0,)),
+                                 np.empty((0,))),
+                StabilizedModes(np.empty((0, 0)), np.empty((0, 0)), 0, v))
 
     # Defer most of the calculation to helper routines.
     matrices, v, extract = setup_linsys(h_cell, h_hop, tol, stabilization)
-    ev, evanselect, propselect, vec_gen, ord_schur =\
-         unified_eigenproblem(*(matrices + (tol,)))
+    ev, evanselect, propselect, vec_gen, ord_schur = unified_eigenproblem(
+        *(matrices + (tol,)))
 
     if v is not None:
         n = v.shape[1]
@@ -591,8 +590,8 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
     # Compute the propagating eigenvectors.
     prop_vecs = vec_gen(propselect)
     # Compute their velocity, and, if necessary, rotate them
-    prop_vecs, real_space_data = \
-            make_proper_modes(ev[propselect], prop_vecs, extract, tol)
+    prop_vecs, real_space_data = make_proper_modes(
+        ev[propselect], prop_vecs, extract, tol)
 
     vecs = np.c_[prop_vecs[n:], evan_vecs[n:]]
     vecslmbdainv = np.c_[prop_vecs[:n], evan_vecs[:n]]
@@ -674,6 +673,6 @@ def square_selfenergy(width, hopping, fermi_energy):
     result = np.empty((width, width), dtype=complex)
     for i in xrange(width):
         for j in xrange(width):
-            result[i, j] = hopping * \
-                (psi_p_i[:, i] * psi_p_i[:, j].conj() * f_p).sum()
+            result[i, j] = hopping * (
+                psi_p_i[:, i] * psi_p_i[:, j].conj() * f_p).sum()
     return result

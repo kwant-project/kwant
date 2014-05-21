@@ -143,8 +143,8 @@ def gaussian(n, sym='A', v=1.):
     elif sym == 'CII':
         sigma_z = np.array((n // 4) * [1, 1, -1, -1])
         idx_sigma_x = np.arange(n) + 2 * sigma_z
-        h += sigma_z.reshape(-1, 1) * h[idx_sigma_x][:, idx_sigma_x].conj() * \
-             sigma_z
+        h += (sigma_z.reshape(-1, 1) * h[idx_sigma_x][:, idx_sigma_x].conj() *
+              sigma_z)
         factor /= np.sqrt(2)
 
     h *= factor

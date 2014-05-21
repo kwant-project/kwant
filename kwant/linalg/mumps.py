@@ -97,18 +97,17 @@ class AnalysisStatistics(object):
         self.time = time
 
     def __str__(self):
-        string = " estimated memory for in-core factorization: " + \
-            str(self.est_mem_incore) + " mbytes\n"
-        string += " estimated memory for out-of-core factorization: " + \
-            str(self.est_mem_ooc) + " mbytes\n"
-        string += " estimated number of nonzeros in factors: " + \
-            str(self.est_nonzeros) + "\n"
-        string += " estimated number of flops: " + str(self.est_flops) + "\n"
-        string += " ordering used: " + self.ordering
+        parts = ["estimated memory for in-core factorization:",
+                 str(self.est_mem_incore), "mbytes\n",
+                 "estimated memory for out-of-core factorization:",
+                 str(self.est_mem_ooc), "mbytes\n",
+                 "estimated number of nonzeros in factors:",
+                 str(self.est_nonzeros), "\n",
+                 "estimated number of flops:", str(self.est_flops), "\n",
+                 "ordering used:", self.ordering]
         if hasattr(self, "time"):
-            string += "\n analysis time: " + str(self.time) + " secs"
-
-        return string
+            parts.extend(["\n analysis time:", str(self.time), "secs"])
+        return " ".join(parts)
 
 
 class FactorizationStatistics(object):
@@ -131,19 +130,18 @@ class FactorizationStatistics(object):
             self.time = time
 
     def __str__(self):
-        string = " off-diagonal pivots: " + str(self.offdiag_pivots) + "\n"
-        string += " delayed pivots: " + str(self.delayed_pivots) + "\n"
-        string += " tiny pivots: " + str(self.tiny_pivots) + "\n"
+        parts = ["off-diagonal pivots:", str(self.offdiag_pivots), "\n",
+                 "delayed pivots:", str(self.delayed_pivots), "\n",
+                 "tiny pivots:", str(self.tiny_pivots), "\n"]
         if hasattr(self, "ordering"):
-            string += " ordering used: " + self.ordering + "\n"
-        string += " memory used during factorization : " + str(self.memory) + \
-            " mbytes\n"
-        string += " nonzeros in factored matrix: " + str(self.nonzeros) + "\n"
-        string += " floating point operations: " + str(self.flops)
+            parts.extend(["ordering used:", self.ordering, "\n"])
+        parts.extend(["memory used during factorization:", str(self.memory),
+                      "mbytes\n",
+                      "nonzeros in factored matrix:", str(self.nonzeros), "\n",
+                      "floating point operations:", str(self.flops)])
         if hasattr(self, "time"):
-            string += "\n factorization time: " + str(self.time) +" secs"
-
-        return string
+            parts.extend(["\n factorization time:", str(self.time), "secs"])
+        return " ".join(parts)
 
 
 class MUMPSContext(object):
@@ -348,8 +346,8 @@ class MUMPSContext(object):
         x = np.empty((b.shape[0], b.shape[1]),
                      order='F', dtype=self.data.dtype)
 
-        dtype, col_ptr, row_ind, data = \
-            _make_sparse_rhs_from_csc(b, self.data.dtype)
+        dtype, col_ptr, row_ind, data = _make_sparse_rhs_from_csc(
+            b, self.data.dtype)
 
         if b.shape[0] != self.n:
             raise ValueError("Right hand side has wrong size")
@@ -498,9 +496,8 @@ def schur_complement(a, indices, ordering='auto', ooc=False, pivot_tol=0.01,
     if not calc_stats:
         return schur_compl
     else:
-        return schur_compl, \
-            FactorizationStatistics(mumps_instance, time=t2 - t1,
-                                    include_ordering=True)
+        return (schur_compl, FactorizationStatistics(
+            mumps_instance, time=t2 - t1, include_ordering=True))
 
 
 # Some internal helper functions
