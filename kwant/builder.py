@@ -13,13 +13,12 @@ __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
            'BuilderKeyError', 'format_hopping']
 
 import abc
-import sys
 import warnings
 import operator
 from itertools import izip, islice, chain
 import tinyarray as ta
 import numpy as np
-from . import system, graph, physics
+from . import system, graph
 
 
 class BuilderKeyError(KeyError):
@@ -95,10 +94,9 @@ class Site(tuple):
             return tuple.__new__(cls, (family, tag))
         try:
             tag = family.normalize_tag(tag)
-        except (TypeError, ValueError):
-            t, v, tb = sys.exc_info()
+        except (TypeError, ValueError) as e:
             msg = 'Tag {0} is not allowed for site family {1}: {2}'
-            raise t(msg.format(repr(tag), repr(family), v))
+            raise type(e)(msg.format(repr(tag), repr(family), e.args[0]))
         return tuple.__new__(cls, (family, tag))
 
     def __repr__(self):
@@ -432,7 +430,7 @@ class Lead(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def finalized():
+    def finalized(self):
         """Return a finalized version of the lead.
 
         Returns
@@ -537,7 +535,7 @@ class ModesLead(Lead):
         return self.modes_func(energy, args)
 
     def selfenergy(self, energy, args=()):
-        propagating, stabilized = self.modes(energy, args)
+        stabilized = self.modes(energy, args)[1]
         return stabilized.selfenergy()
 
 
@@ -1214,11 +1212,10 @@ class Builder(object):
                 raise
             try:
                 interface = [id_by_site[isite] for isite in lead.interface]
-            except KeyError, e:
-                t, v, tb = sys.exc_info()
+            except KeyError as e:
                 msg = ("Lead {0} is attached to a site that does not "
                        "belong to the scattering region:\n {1}")
-                raise ValueError(msg.format(lead_nr, v))
+                raise ValueError(msg.format(lead_nr, e.args[0]))
 
             lead_interfaces.append(np.array(interface))
 
