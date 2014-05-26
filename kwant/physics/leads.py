@@ -626,7 +626,7 @@ def selfenergy(h_cell, h_hop, tol=1e6):
     For simplicity this function internally calculates the modes first.
     This may cause a small slowdown, and can be improved if necessary.
     """
-    propagating, stabilized = modes(h_cell, h_hop, tol)
+    stabilized = modes(h_cell, h_hop, tol)[1]
     return stabilized.selfenergy()
 
 

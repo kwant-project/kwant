@@ -17,99 +17,99 @@ int_dtype = cmumps.int_dtype
 # Proxy classes for Python access to the control and info parameters of MUMPS
 
 cdef class mumps_int_array:
-     cdef cmumps.MUMPS_INT *array
+    cdef cmumps.MUMPS_INT *array
 
-     def __init__(self):
-         self.array = NULL
+    def __init__(self):
+        self.array = NULL
 
-     def __getitem__(self, key):
-         return self.array[key-1]
+    def __getitem__(self, key):
+        return self.array[key - 1]
 
-     def __setitem__(self, key, value):
-         self.array[key-1] = value
+    def __setitem__(self, key, value):
+        self.array[key - 1] = value
 
 
 # workaround for the fact that cython cannot pass pointers to an __init__()
 cdef make_mumps_int_array(cmumps.MUMPS_INT *array):
-     wrapper = mumps_int_array()
-     wrapper.array = array
-     return wrapper
+    wrapper = mumps_int_array()
+    wrapper.array = array
+    return wrapper
 
 
 cdef class smumps_real_array:
-     cdef cmumps.SMUMPS_REAL *array
+    cdef cmumps.SMUMPS_REAL *array
 
-     def __init__(self):
-         self.array = NULL
+    def __init__(self):
+        self.array = NULL
 
-     def __getitem__(self, key):
-         return self.array[key-1]
+    def __getitem__(self, key):
+        return self.array[key - 1]
 
-     def __setitem__(self, key, value):
-         self.array[key-1] = value
+    def __setitem__(self, key, value):
+        self.array[key - 1] = value
 
 
 cdef make_smumps_real_array(cmumps.SMUMPS_REAL *array):
-     wrapper = smumps_real_array()
-     wrapper.array = array
-     return wrapper
+    wrapper = smumps_real_array()
+    wrapper.array = array
+    return wrapper
 
 
 cdef class dmumps_real_array:
-     cdef cmumps.DMUMPS_REAL *array
+    cdef cmumps.DMUMPS_REAL *array
 
-     def __init__(self):
-         self.array = NULL
+    def __init__(self):
+        self.array = NULL
 
-     def __getitem__(self, key):
-         return self.array[key-1]
+    def __getitem__(self, key):
+        return self.array[key - 1]
 
-     def __setitem__(self, key, value):
-         self.array[key-1] = value
+    def __setitem__(self, key, value):
+        self.array[key - 1] = value
 
 
 cdef make_dmumps_real_array(cmumps.DMUMPS_REAL *array):
-     wrapper = dmumps_real_array()
-     wrapper.array = array
-     return wrapper
+    wrapper = dmumps_real_array()
+    wrapper.array = array
+    return wrapper
 
 
 cdef class cmumps_real_array:
-     cdef cmumps.CMUMPS_REAL *array
+    cdef cmumps.CMUMPS_REAL *array
 
-     def __init__(self):
-         self.array = NULL
+    def __init__(self):
+        self.array = NULL
 
-     def __getitem__(self, key):
-         return self.array[key-1]
+    def __getitem__(self, key):
+        return self.array[key - 1]
 
-     def __setitem__(self, key, value):
-         self.array[key-1] = value
+    def __setitem__(self, key, value):
+        self.array[key - 1] = value
 
 
 cdef make_cmumps_real_array(cmumps.CMUMPS_REAL *array):
-     wrapper = cmumps_real_array()
-     wrapper.array = array
-     return wrapper
+    wrapper = cmumps_real_array()
+    wrapper.array = array
+    return wrapper
 
 
 cdef class zmumps_real_array:
-     cdef cmumps.ZMUMPS_REAL *array
+    cdef cmumps.ZMUMPS_REAL *array
 
-     def __init__(self):
-         self.array = NULL
+    def __init__(self):
+        self.array = NULL
 
-     def __getitem__(self, key):
-         return self.array[key-1]
+    def __getitem__(self, key):
+        return self.array[key - 1]
 
-     def __setitem__(self, key, value):
-         self.array[key-1] = value
+    def __setitem__(self, key, value):
+        self.array[key - 1] = value
 
 
 cdef make_zmumps_real_array(cmumps.ZMUMPS_REAL *array):
-     wrapper = zmumps_real_array()
-     wrapper.array = array
-     return wrapper
+    wrapper = zmumps_real_array()
+    wrapper.array = array
+    return wrapper
 
 #############################################################
 

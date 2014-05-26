@@ -85,9 +85,9 @@ def make_undirected(CGraph gr, remove_dups=True, calc_weights=False):
         buffer[i] = s - buffer[i]
 
     for i in xrange(gr.num_nodes):
-       for p in xrange(gr.heads_idxs[i], gr.heads_idxs[i+1]):
-           j = gr.heads[p]
-           if j >= 0:
+        for p in xrange(gr.heads_idxs[i], gr.heads_idxs[i+1]):
+            j = gr.heads[p]
+            if j >= 0:
                 ret.heads[buffer[i]] = j
                 buffer[i] += 1
                 ret.heads[buffer[j]] = i

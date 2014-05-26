@@ -134,7 +134,7 @@ class FiniteSystem(System):
                 modes = lead.modes(energy, args)
             if what in ('selfenergy', 'all'):
                 if modes:
-                     selfenergy = modes[1].selfenergy()
+                    selfenergy = modes[1].selfenergy()
                 else:
                     selfenergy = lead.selfenergy(energy, args)
             new_leads.append(PrecalculatedLead(modes, selfenergy))

@@ -20,12 +20,12 @@ import scipy.sparse.linalg.dsolve.linsolve as linsolve
 # TODO: remove the try (only using the except clause) once we depend on
 # scipy >= 0.14.0.
 try:
-	uses_umfpack = linsolve.isUmfpack
+    uses_umfpack = linsolve.isUmfpack
 except AttributeError:
-	uses_umfpack = linsolve.useUmfpack
+    uses_umfpack = linsolve.useUmfpack
 
 if uses_umfpack:
-	umfpack = linsolve.umfpack
+    umfpack = linsolve.umfpack
 
 if uses_umfpack:
     # This patches a memory leak in SciPy:

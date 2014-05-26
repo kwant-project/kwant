@@ -187,9 +187,9 @@ class Polyatomic(object):
                 new_tags = set()
                 for tag in tags:
                     for delta in deltas:
-                         new_tag = tag + delta
-                         if new_tag not in old_tags:
-                             new_tags.add(new_tag)
+                        new_tag = tag + delta
+                        if new_tag not in old_tags:
+                            new_tags.add(new_tag)
 
                 sites = set()
                 for tag in new_tags:

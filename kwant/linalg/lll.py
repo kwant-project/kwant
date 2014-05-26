@@ -63,7 +63,7 @@ def lll(basis, c=1.34):
                          'space dimensionality.')
     vecs_orig = np.copy(vecs)
     vecsstar = np.copy(vecs)
-    m, n = vecs.shape
+    m = vecs.shape[0]
     u = np.identity(m)
     def ll_reduce(i):
         for j in reversed(range(i)):

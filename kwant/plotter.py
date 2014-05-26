@@ -559,8 +559,6 @@ def lines(axes, pos0, pos1, reflen=None, colors='k', linestyles='solid',
             axes.add_collection3d(coll)
         return coll
 
-    had_data = axes.has_data()
-
     segments = np.c_[pos0, pos1].reshape(pos0.shape[0], 2, dim)
 
     coll = Collection(segments, reflen=reflen, linestyles=linestyles,

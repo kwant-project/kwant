@@ -304,14 +304,18 @@ cdef class EdgeIterator:
             self.tail += 1
         return self.tail, self.graph.heads[current_edge_id]
 
+
 class DisabledFeatureError(RuntimeError):
     pass
+
 
 class NodeDoesNotExistError(IndexError):
     pass
 
+
 class EdgeDoesNotExistError(IndexError):
     pass
+
 
 _need_twoway = 'Enable "twoway" during graph compression.'
 

@@ -6,7 +6,7 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from nose.plugins.skip import Skip, SkipTest
+from nose.plugins.skip import SkipTest
 from  kwant.solvers.sparse import smatrix, greens_function, ldos, wave_function
 import kwant.solvers.sparse
 import _test_sparse

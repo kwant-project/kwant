@@ -197,7 +197,7 @@ def check_onsite(fsys, sites, subset=False, check_values=True):
             assert fsys.onsite_hamiltonians[node] is sites[site]
     if not subset:
         # Check that all sites of `fsys` are in `sites`.
-        for site, n in freq.iteritems():
+        for site in freq.iterkeys():
             assert site in sites
     # Check that all sites of `sites` are in `fsys`.
     for site in sites:
@@ -419,7 +419,7 @@ def test_builder_with_symmetry():
 
     # TODO: Once Tinyarray supports "<" the conversion to tuple can be removed.
     assert_equal(sorted(tuple(site.tag) for site in sys.sites()),
-                 sorted(set(tuple(a.tag) for a, b in hoppings_fd)))
+                 sorted(set(tuple(hop[0].tag) for hop in hoppings_fd)))
     for sites in hoppings_fd:
         for site in sites:
             assert site in sys

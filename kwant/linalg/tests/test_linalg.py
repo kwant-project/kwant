@@ -94,7 +94,7 @@ def test_schur():
         rand = _Random()
         a = rand.randmat(5, 5, dtype)
 
-        t, q, ev = schur(a)
+        t, q = schur(a)[:2]
 
         assert_array_almost_equal(dtype, np.dot(np.dot(q, t), np.conj(q.T)), a)
 
@@ -110,7 +110,7 @@ def test_convert_r2c_schur():
         rand = _Random()
         a = rand.randmat(10, 10, dtype)
 
-        t, q, ev = schur(a)
+        t, q = schur(a)[:2]
         t2, q2 = convert_r2c_schur(t, q)
 
         assert_array_almost_equal(dtype, np.dot(np.dot(q, t), np.conj(q.T)), a)
@@ -142,7 +142,7 @@ def test_order_schur():
 
         sel = [False, False, 0, True, True, True, 1, False, False, False]
 
-        t3, q3, ev3 = order_schur(sel, t, q)
+        t3, q3 = order_schur(sel, t, q)[:2]
         assert_array_almost_equal(dtype, np.dot(np.dot(q3, t3), np.conj(q3.T)),
                                   a)
         assert_array_almost_equal(dtype, t2, t3)
@@ -203,7 +203,7 @@ def test_gen_schur():
         a = rand.randmat(5, 5, dtype)
         b = rand.randmat(5, 5, dtype)
 
-        s, t, q, z, alpha, beta = gen_schur(a, b)
+        s, t, q, z = gen_schur(a, b)[:4]
 
         assert_array_almost_equal(dtype, np.dot(np.dot(q, s), z.T.conj()), a)
         assert_array_almost_equal(dtype, np.dot(np.dot(q, t), z.T.conj()), b)
@@ -221,7 +221,7 @@ def test_convert_r2c_gen_schur():
         a = rand.randmat(10, 10, dtype)
         b = rand.randmat(10, 10, dtype)
 
-        s, t, q, z, alpha, beta = gen_schur(a, b)
+        s, t, q, z = gen_schur(a, b)[:4]
         s2, t2, q2, z2 = convert_r2c_gen_schur(s, t, q, z)
 
         assert_array_almost_equal(dtype, np.dot(np.dot(q, s), z.T.conj()), a)
@@ -276,7 +276,7 @@ def test_order_gen_schur():
 
         sel = [False, False, 0, True, True, True, 1, False, False, False]
 
-        s3, t3, q3, z3, alpha3, beta3 = order_gen_schur(sel, s, t, q, z)
+        s3, t3, q3, z3 = order_gen_schur(sel, s, t, q, z)[:4]
         assert_array_almost_equal(dtype, np.dot(np.dot(q3, s3), z3.T.conj()),
                                   a)
         assert_array_almost_equal(dtype, np.dot(np.dot(q3, t3), z3.T.conj()),

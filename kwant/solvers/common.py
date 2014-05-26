@@ -231,24 +231,24 @@ class SparseSolver(object):
             else:
                 sigma = lead.selfenergy(energy, args)
                 lead_info.append(sigma)
-                vars = np.r_[tuple(slice(offsets[i], offsets[i + 1])
+                coords = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                       for i in interface)]
 
-                if sigma.shape != 2 * vars.shape:
+                if sigma.shape != 2 * coords.shape:
                     msg = ('Self-energy dimension for lead {0} does not '
                            'match the total number of orbitals of the '
                            'sites for which it is defined.')
                     raise ValueError(msg.format(leadnum))
 
-                y, x = np.meshgrid(vars, vars)
+                y, x = np.meshgrid(coords, coords)
                 sig_sparse = splhsmat((sigma.flat, [x.flat, y.flat]),
                                       lhs.shape)
                 lhs = lhs + sig_sparse  # __iadd__ is not implemented in v0.7
-                indices.append(vars)
+                indices.append(coords)
                 if leadnum in in_leads:
                     # defer formation of true rhs until the proper system
                     # size is known
-                    rhs.append((vars,))
+                    rhs.append((coords,))
 
         # Resize the right-hand sides to be compatible with the full lhs
         for i, mats in enumerate(rhs):
@@ -339,7 +339,7 @@ class SparseSolver(object):
         linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, args,
                                                   check_hermiticity, False)
 
-        kept_vars = np.concatenate([vars for i, vars in
+        kept_vars = np.concatenate([coords for i, coords in
                                     enumerate(linsys.indices) if i in
                                     out_leads])
 
@@ -422,7 +422,7 @@ class SparseSolver(object):
         linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, args,
                                                   check_hermiticity, True)
 
-        kept_vars = np.concatenate([vars for i, vars in
+        kept_vars = np.concatenate([coords for i, coords in
                                     enumerate(linsys.indices) if i in
                                     out_leads])
 
@@ -473,11 +473,10 @@ class SparseSolver(object):
                 raise NotImplementedError("ldos for leads with only "
                                           "self-energy is not implemented yet.")
 
-        linsys, lead_info = self._make_linear_sys(
-            sys, xrange(len(sys.leads)), energy, args, check_hermiticity)
+        linsys = self._make_linear_sys(sys, xrange(len(sys.leads)), energy,
+                                       args, check_hermiticity)[0]
 
         ldos = np.zeros(linsys.num_orb, float)
-        factored = None
 
         # Do not perform factorization if no further calculation is needed.
         if not sum(i.shape[1] for i in linsys.rhs):
@@ -536,8 +535,8 @@ class WaveFunction(object):
                 msg = ('Wave functions for leads with only self-energy'
                        ' are not available yet.')
                 raise NotImplementedError(msg)
-        linsys, lead_info = solver._make_linear_sys(
-            sys, xrange(len(sys.leads)), energy, args, check_hermiticity)
+        linsys = solver._make_linear_sys(sys, xrange(len(sys.leads)), energy,
+                                         args, check_hermiticity)[0]
         self.solve = solver._solve_linear_sys
         self.rhs = linsys.rhs
         self.factorized_h = solver._factorized(linsys.lhs)

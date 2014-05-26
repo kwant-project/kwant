@@ -6,8 +6,7 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-import numpy as np
-from nose.tools import assert_equal, assert_true
+from nose.tools import assert_true
 from kwant.graph import Graph
 # from kwant.graph.scotch import bisect, reset
 
