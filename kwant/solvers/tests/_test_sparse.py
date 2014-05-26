@@ -356,7 +356,7 @@ def test_selfenergy_reflection(greens_function, smatrix):
     fsys = system.finalized()
     for sys in (fsys.precalculate(what='selfenergy'),
                 fsys.precalculate(what='all')):
-        sol = greens_function(fsys, 0, (), [0], [0])
+        sol = greens_function(sys, 0, (), [0], [0])
         assert_almost_equal(sol.transmission(0,0), t.transmission(0,0))
     assert_raises(ValueError, greens_function, fsys.precalculate(what='modes'),
                   0, (), [0], [0])
