@@ -466,7 +466,7 @@ class SparseSolver(object):
                                       "is not implemented yet.")
 
         for lead in sys.leads:
-            if not hasattr(lead, 'modes'):
+            if not hasattr(lead, 'modes') and hasattr(lead, 'selfenergy'):
                 # TODO: fix this
                 raise NotImplementedError("ldos for leads with only "
                                           "self-energy is not implemented yet.")
