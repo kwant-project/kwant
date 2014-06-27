@@ -1044,7 +1044,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         Linewidth of the lead symbols.
     lead_hop_lw : number or `None`
         Linewidth of the lead hoppings.
-    cmap : `matplotlib` color map or a tuple of two color maps or `None`
+    cmap : `matplotlib` color map or a sequence of two color maps or `None`
         The color map used for sites and optionally hoppings.
     pos_transform : function or `None`
         Transformation to be applied to the site position.
@@ -1272,11 +1272,16 @@ def plot(sys, num_lead_cells=2, unit='nn',
         lead_hop_lw = (hop_lw if not isarray(hop_lw)
                        else defaults['hop_lw'][dim])
 
-    if isinstance(cmap, tuple):
-        hop_cmap = cmap[1]
-        cmap = cmap[0]
-    else:
-        hop_cmap = None
+    hop_cmap = None
+    if not isinstance(cmap, basestring):
+        try:
+            if len(cmap) != 2:
+                raise ValueError("if cmap is a sequence, it must have exactly "
+                                 "two entries")
+            hop_cmap = cmap[1]
+            cmap = cmap[0]
+        except (TypeError, KeyError):
+            pass
 
     # make a new figure unless axes specified
     if not ax:
