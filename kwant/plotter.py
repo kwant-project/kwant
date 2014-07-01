@@ -1275,12 +1275,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
     hop_cmap = None
     if not isinstance(cmap, basestring):
         try:
-            if len(cmap) != 2:
-                raise ValueError("if cmap is a sequence, it must have exactly "
-                                 "two entries")
-            hop_cmap = cmap[1]
-            cmap = cmap[0]
-        except (TypeError, KeyError):
+            cmap, hop_cmap = cmap
+        except TypeError:
             pass
 
     # make a new figure unless axes specified
