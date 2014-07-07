@@ -73,7 +73,7 @@ class FiniteSystem(System):
     For lead ``n``, the method leads[n].selfenergy must return a square matrix
     whose size is ``sum(len(self.hamiltonian(site, site)) for site in
     self.lead_interfaces[n])``. The output of ``leads[n].modes`` has to be a
-    tuple of `~kwant.physics.PropatatingModes, ~kwant.physics.StabilizedModes`.
+    tuple of `~kwant.physics.PropagatingModes, ~kwant.physics.StabilizedModes`.
 
     Often, the elements of `leads` will be instances of `InfiniteSystem`.  If
     this is the case for lead ``n``, the sites ``lead_interfaces[n]`` match
