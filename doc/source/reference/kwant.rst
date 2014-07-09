@@ -3,9 +3,18 @@
 
 .. module:: kwant
 
-The top-level Kwant package serves as a container for sub-packages and does not
-have any functions of its own.  For convenience, short names are provided for a
-few widely used objects from the sub-packages:
+For convenience, short names are provided for a few widely used objects from
+the sub-packages.
+Otherwise, this package has only very limited functionality of its own.
+
+Generic functionality
+---------------------
+The version of Kwant is available under the name ``__version__``.
+
+.. autosummary::
+   :toctree: generated/
+
+   KwantDeprecationWarning
 
 .. currentmodule:: kwant.builder
 
@@ -43,7 +52,3 @@ From `kwant.solvers.default`
    ldos
    smatrix
    wave_function
-
-Version information
--------------------
-The version of Kwant is available under the name ``__version__``.

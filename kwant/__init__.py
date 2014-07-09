@@ -6,6 +6,8 @@
 # the AUTHORS file at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+__all__ = []
+
 import numpy                    # Needed by C. Gohlke's Windows package.
 
 try:
@@ -16,12 +18,14 @@ except ImportError:
     and relaunch your Python intepreter from there."""
     raise ImportError(msg)
 
-__all__ = ['system', 'version', 'builder', 'lattice', 'solvers',
-           'digest', 'rmt']
-for module in __all__:
-    exec 'from . import {0}'.format(module)
+from ._common import KwantDeprecationWarning
+__all__.append('KwantDeprecationWarning')
 
-from .version import version as __version__
+from ._common import version as __version__
+
+for module in ['system', 'builder', 'lattice', 'solvers', 'digest', 'rmt']:
+    exec 'from . import {0}'.format(module)
+    __all__.append(module)
 
 # Make selected functionality available directly in the root namespace.
 available = [('builder', ['Builder', 'HoppingKind']),

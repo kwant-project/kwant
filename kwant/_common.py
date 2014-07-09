@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2014 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
@@ -9,7 +9,7 @@
 import subprocess
 import os
 
-__all__ = ['version']
+__all__ = ['version', 'KwantDeprecationWarning']
 
 distr_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -63,3 +63,14 @@ if version is None:
         from _static_version import version
     except:
         version = "unknown"
+
+
+class KwantDeprecationWarning(Warning):
+    """Class of warnings about a deprecated feature of Kwant.
+
+    DeprecatedWarning has been made invisible by default in Python 2.7 in order
+    to not confuse non-developer users with warnings that are not relevant to
+    them.  In the case of Kwant, by far most users are developers, so we feel
+    that a KwantDeprecationWarning that is visible by default is useful.
+    """
+    pass
