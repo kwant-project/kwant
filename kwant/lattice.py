@@ -546,7 +546,15 @@ class TranslationalSymmetry(builder.Symmetry):
             raise KeyError('Family already processed, delete it from '
                            'site_family_data first.')
         inv = np.linalg.pinv(fam.prim_vecs)
-        bravais_periods = np.dot(self.periods, inv)
+        try:
+            bravais_periods = np.dot(self.periods, inv)
+        except ValueError:
+            fam_space_dim = fam.prim_vecs.shape[1]
+            if dim == fam_space_dim:
+                raise
+            msg = ("{0}-d-embedded lattice is incompatible with "
+                   "{1}-d translational symmetry.")
+            raise ValueError(msg.format(fam_space_dim, dim))
         # Absolute tolerance is correct in the following since we want an error
         # relative to the closest integer.
         if (not np.allclose(bravais_periods, np.round(bravais_periods),
