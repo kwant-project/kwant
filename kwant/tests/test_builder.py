@@ -191,7 +191,7 @@ def random_hopping_integral(rng):
 def check_onsite(fsys, sites, subset=False, check_values=True):
     freq = {}
     for node in xrange(fsys.graph.num_nodes):
-        site = fsys.site(node).tag
+        site = fsys.sites[node].tag
         freq[site] = freq.get(site, 0) + 1
         if check_values and site in sites:
             assert fsys.onsite_hamiltonians[node] is sites[site]
@@ -208,8 +208,8 @@ def check_hoppings(fsys, hops):
     assert_equal(fsys.graph.num_edges, 2 * len(hops))
     for edge_id, edge in enumerate(fsys.graph):
         tail, head = edge
-        tail = fsys.site(tail).tag
-        head = fsys.site(head).tag
+        tail = fsys.sites[tail].tag
+        head = fsys.sites[head].tag
         value = fsys.hoppings[edge_id]
         if value is builder.Other:
             assert (head, tail) in hops
@@ -320,7 +320,7 @@ def test_finalization():
         lead, (builder.Site(fam, n) for n in neighbors))
     fsys = sys.finalized()
     assert_equal(len(fsys.lead_interfaces), 1)
-    assert_equal([fsys.site(i).tag for i in fsys.lead_interfaces[0]],
+    assert_equal([fsys.sites[i].tag for i in fsys.lead_interfaces[0]],
                  neighbors)
 
     # Add a hopping to the lead which couples two next-nearest cells and check
@@ -354,14 +354,14 @@ def test_hamiltonian_evaluation():
     assert_equal(fsys.graph.num_edges, 2 * len(edges))
 
     for i in range(len(tags)):
-        site = fsys.site(i)
+        site = fsys.sites[i]
         assert site in sites
         assert_equal(fsys.hamiltonian(i, i),
                      sys[site](site))
 
     for t, h in fsys.graph:
-        tsite = fsys.site(t)
-        hsite = fsys.site(h)
+        tsite = fsys.sites[t]
+        hsite = fsys.sites[h]
         assert_equal(fsys.hamiltonian(t, h),
                      sys[tsite, hsite](tsite, hsite))
 
@@ -600,7 +600,7 @@ def test_ModesLead_and_SelfEnergyLead():
 
     # Replace lead with it's finalized copy.
     lead = fsys.leads[1]
-    interface = [lat(L-1, lead.site(i).tag[1]) for i in xrange(L)]
+    interface = [lat(L-1, lead.sites[i].tag[1]) for i in xrange(L)]
 
     # Re-attach right lead as ModesLead.
     sys.leads[1] = builder.ModesLead(lead.modes, interface)

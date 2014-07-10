@@ -761,7 +761,7 @@ def sys_leads_pos(sys, site_lead_nr):
         else:
             try:
                 sym = sys.leads[lead_nr].symmetry
-                site = sys.site(sys.lead_interfaces[lead_nr][0])
+                site = sys.sites[sys.lead_interfaces[lead_nr][0]]
             except (AttributeError, IndexError):
                 # empty leads, or leads without symmetry aren't drawn anyways
                 return (0, 0)
@@ -907,7 +907,7 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
         else:
             try:
                 sym = sys.leads[lead_nr].symmetry
-                site = sys.site(sys.lead_interfaces[lead_nr][0])
+                site = sys.sites[sys.lead_interfaces[lead_nr][0]]
             except (AttributeError, IndexError):
                 # empyt leads or leads without symmetry are not drawn anyways
                 return (0, 0)

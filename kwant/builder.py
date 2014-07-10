@@ -18,7 +18,7 @@ import operator
 from itertools import izip, islice, chain
 import tinyarray as ta
 import numpy as np
-from . import system, graph
+from . import system, graph, KwantDeprecationWarning
 
 
 class BuilderKeyError(KeyError):
@@ -1385,6 +1385,9 @@ class FiniteSystem(system.FiniteSystem):
         return value
 
     def site(self, i):
+        warnings.warn("The function `site` will disappear after Kwant 1.1.  "
+                      "Use `sites` instead.", KwantDeprecationWarning,
+                      stacklevel=2)
         return self.sites[i]
 
     def pos(self, i):
@@ -1419,6 +1422,9 @@ class InfiniteSystem(system.InfiniteSystem):
         return value
 
     def site(self, i):
+        warnings.warn("The function `site` will disappear after Kwant 1.1.  "
+                      "Use `sites` instead.", KwantDeprecationWarning,
+                      stacklevel=2)
         return self.sites[i]
 
     def pos(self, i):
