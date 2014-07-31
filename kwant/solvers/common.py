@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2014 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
@@ -326,11 +326,13 @@ class SparseSolver(object):
         n = len(sys.lead_interfaces)
         if in_leads is None:
             in_leads = range(n)
+        else:
+            in_leads = list(in_leads)
         if out_leads is None:
             out_leads = range(n)
-        if (sorted(in_leads) != in_leads or sorted(out_leads) != out_leads or
-            len(set(in_leads)) != len(in_leads) or
-            len(set(out_leads)) != len(out_leads)):
+        else:
+            out_leads = list(out_leads)
+        if (np.any(np.diff(in_leads) <= 0) or np.any(np.diff(out_leads) <= 0)):
             raise ValueError("Lead lists must be sorted and "
                              "with unique entries.")
         if len(in_leads) == 0 or len(out_leads) == 0:
@@ -409,11 +411,13 @@ class SparseSolver(object):
         n = len(sys.lead_interfaces)
         if in_leads is None:
             in_leads = range(n)
+        else:
+            in_leads = list(in_leads)
         if out_leads is None:
             out_leads = range(n)
-        if (sorted(in_leads) != in_leads or sorted(out_leads) != out_leads or
-            len(set(in_leads)) != len(in_leads) or
-            len(set(out_leads)) != len(out_leads)):
+        else:
+            out_leads = list(out_leads)
+        if (np.any(np.diff(in_leads) <= 0) or np.any(np.diff(out_leads) <= 0)):
             raise ValueError("Lead lists must be sorted and "
                              "with unique entries.")
         if len(in_leads) == 0 or len(out_leads) == 0:
@@ -557,13 +561,13 @@ class BlockResult(object):
     def __init__(self, data, lead_info, out_leads, in_leads, sizes):
         self.data = data
         self.lead_info = lead_info
-        self.out_leads = out_leads
-        self.in_leads = in_leads
-        self.sizes = np.array(sizes)
-        self.in_offsets = np.zeros(len(self.in_leads) + 1, int)
-        self.in_offsets[1 :] = np.cumsum(self.sizes[self.in_leads])
+        self.out_leads = out_leads = list(out_leads)
+        self.in_leads = in_leads = list(in_leads)
+        self.sizes = sizes = np.array(sizes)
+        self.in_offsets = np.zeros(len(in_leads) + 1, int)
+        self.in_offsets[1 :] = np.cumsum(self.sizes[in_leads])
         self.out_offsets = np.zeros(len(self.out_leads) + 1, int)
-        self.out_offsets[1 :] = np.cumsum(self.sizes[self.out_leads])
+        self.out_offsets[1 :] = np.cumsum(self.sizes[out_leads])
 
     def block_coords(self, lead_out, lead_in):
         """
@@ -613,7 +617,7 @@ class SMatrix(BlockResult):
         matrix.
     lead_info : list of data
         a list containing `kwant.physics.PropagatingModes` for each lead.
-    out_leads, in_leads : list of integers
+    out_leads, in_leads : sequence of integers
         indices of the leads where current is extracted (out) or injected
         (in). Only those are listed for which SMatrix contains the
         calculated result.
@@ -656,7 +660,7 @@ class GreensFunction(BlockResult):
         function.
     lead_info : list of matrices
         a list with self-energies of each lead.
-    out_leads, in_leads : list of integers
+    out_leads, in_leads : sequence of integers
         indices of the leads where current is extracted (out) or injected
         (in). Only those are listed for which SMatrix contains the
         calculated result.
