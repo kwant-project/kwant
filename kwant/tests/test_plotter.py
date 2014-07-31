@@ -18,7 +18,7 @@ if plotter.mpl_enabled:
 
 def test_importable_without_matplotlib():
     prefix, sep, suffix = plotter.__file__.rpartition('.')
-    if suffix == 'pyc':
+    if suffix in ['pyc', 'pyo']:
         suffix = 'py'
     assert suffix == 'py'
     fname = sep.join((prefix, suffix))
