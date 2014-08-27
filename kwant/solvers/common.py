@@ -9,6 +9,7 @@
 __all__ = ['SparseSolver', 'SMatrix', 'GreensFunction']
 
 from collections import namedtuple
+from itertools import product
 import abc
 import numpy as np
 import scipy.sparse as sp
@@ -107,6 +108,7 @@ class SparseSolver(object):
             Positional arguments to pass to the ``hamiltonian`` method.
         check_hermiticity : bool
             Check if Hamiltonian matrices are in fact Hermitian.
+            Enables deduction of missing transmission coefficients.
         realspace : bool
             Calculate Green's function between the outermost lead
             sites, instead of lead modes. This is almost always
@@ -302,6 +304,7 @@ class SparseSolver(object):
             "all leads".
         check_hermiticity : ``bool``
             Check if the Hamiltonian matrices are Hermitian.
+            Enables deduction of missing transmission coefficients.
 
         Returns
         -------
@@ -349,8 +352,8 @@ class SparseSolver(object):
         len_rhs = sum(i.shape[1] for i in linsys.rhs)
         len_kv = len(kept_vars)
         if not(len_rhs and len_kv):
-            return SMatrix(np.zeros((len_kv, len_rhs)),
-                               lead_info, out_leads, in_leads)
+            return SMatrix(np.zeros((len_kv, len_rhs)), lead_info,
+                           out_leads, in_leads, check_hermiticity)
 
         # See comment about zero-shaped sparse matrices at the top of common.py.
         rhs = sp.bmat([[i for i in linsys.rhs if i.shape[1]]],
@@ -358,7 +361,7 @@ class SparseSolver(object):
         flhs = self._factorized(linsys.lhs)
         data = self._solve_linear_sys(flhs, rhs, kept_vars)
 
-        return SMatrix(data, lead_info, out_leads, in_leads)
+        return SMatrix(data, lead_info, out_leads, in_leads, check_hermiticity)
 
     def greens_function(self, sys, energy=0, args=(),
                         out_leads=None, in_leads=None, check_hermiticity=True):
@@ -384,6 +387,7 @@ class SparseSolver(object):
             "all leads".
         check_hermiticity : ``bool``
             Check if the Hamiltonian matrices are Hermitian.
+            Enables deduction of missing transmission coefficients.
 
         Returns
         -------
@@ -434,8 +438,8 @@ class SparseSolver(object):
         len_rhs = sum(i.shape[1] for i in linsys.rhs)
         len_kv = len(kept_vars)
         if not(len_rhs and len_kv):
-            return GreensFunction(np.zeros((len_kv, len_rhs)),
-                               lead_info, out_leads, in_leads)
+            return GreensFunction(np.zeros((len_kv, len_rhs)), lead_info,
+                                  out_leads, in_leads, check_hermiticity)
 
         # See comment about zero-shaped sparse matrices at the top of common.py.
         rhs = sp.bmat([[i for i in linsys.rhs if i.shape[1]]],
@@ -443,7 +447,8 @@ class SparseSolver(object):
         flhs = self._factorized(linsys.lhs)
         data = self._solve_linear_sys(flhs, rhs, kept_vars)
 
-        return GreensFunction(data, lead_info, out_leads, in_leads)
+        return GreensFunction(data, lead_info, out_leads, in_leads,
+                              check_hermiticity)
 
     def ldos(self, sys, energy=0, args=(), check_hermiticity=True):
         """
@@ -554,16 +559,18 @@ class WaveFunction(object):
 
 class BlockResult(object):
     """
-    Container for a linear system solution with variable grouping.
-
-    This class is not intended to be used directly.
+    ABC for a linear system solution with variable grouping.
     """
-    def __init__(self, data, lead_info, out_leads, in_leads, sizes):
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, data, lead_info, out_leads, in_leads, sizes,
+                 current_conserving=False):
         self.data = data
         self.lead_info = lead_info
         self.out_leads = out_leads = list(out_leads)
         self.in_leads = in_leads = list(in_leads)
         self.sizes = sizes = np.array(sizes)
+        self.current_conserving = current_conserving
         self.in_offsets = np.zeros(len(in_leads) + 1, int)
         self.in_offsets[1 :] = np.cumsum(self.sizes[in_leads])
         self.out_offsets = np.zeros(len(self.out_leads) + 1, int)
@@ -594,6 +601,77 @@ class BlockResult(object):
         """Return the matrix elements from lead_in to lead_out."""
         return self.data[self.block_coords(lead_out, lead_in)]
 
+    @abc.abstractmethod
+    def num_propagating(self, lead):
+        """Return the number of propagating modes in the lead."""
+        pass
+
+    @abc.abstractmethod
+    def _transmission(self, lead_out, lead_in):
+        """Return transmission from lead_in to lead_out.
+
+        The calculation is expected to be done directly from the corresponding
+        matrix elements.
+        """
+        pass
+
+    def transmission(self, lead_out, lead_in):
+        """Return transmission from lead_in to lead_out.
+
+        If the option ``current_conserving`` has been enabled for this object,
+        this method will deduce missing transmission values whenever possible.
+
+        Current conservation is enabled by default for objects returned by
+        `~kwant.solvers.default.smatrix` and
+        `~kwant.solvers.default.greens_function` whenever the Hamiltonian has
+        been verified to be Hermitian (option ``check_hermiticity``, enabled by
+        default).
+
+        """
+        chosen = [lead_out, lead_in]
+        present = self.out_leads, self.in_leads
+        # OK means: chosen (outgoing, incoming) lead is present.
+        ok = [int(c in p) for c, p in zip(chosen, present)]
+        if all(ok):
+            return self._transmission(lead_out, lead_in)
+
+        if self.current_conserving:
+            all_but_one = len(self.lead_info) - 1
+            s_t = self._transmission
+            if sum(ok) == 1:
+                # Calculate the transmission element by summing over a single
+                # row or column.
+                sum_dim, ok_dim = ok
+                if len(present[sum_dim]) == all_but_one:
+                    return (self.num_propagating(chosen[ok_dim]) - sum(
+                        s_t(*chosen) for chosen[sum_dim] in present[sum_dim]))
+            elif all(len(p) == all_but_one for p in present):
+                # Calculate the transmission element at the center of a single
+                # missing row and a single missing column.
+                return (sum(s_t(o, i) - self.num_propagating(o) if o == i else 0
+                            for o, i in product(*present)))
+
+        raise ValueError("Insufficient matrix elements to compute "
+                         "transmission({0}, {1}).".format(*chosen))
+
+    def conductance_matrix(self):
+        """Return the conductance matrix.
+
+        This is the matrix :math:`C` such that :math:`I = CV` where :math:`I`
+        and :math:`V` are, respectively, the vectors of currents and voltages
+        for each lead.
+
+        This matrix is useful for calculating non-local resistances.  See
+        Section 2.4 of the book by S. Datta.
+        """
+        n = len(self.lead_info)
+        rn = xrange(n)
+        result = np.array([[-self.transmission(i, j) if i != j else 0
+                            for j in rn] for i in rn])
+        # Set the diagonal elements such that the sums of columns are zero.
+        result.flat[::n+1] = -result.sum(axis=0)
+        return result
+
 
 class SMatrix(BlockResult):
     """A scattering matrix.
@@ -623,13 +701,17 @@ class SMatrix(BlockResult):
         calculated result.
     """
 
-    def __init__(self, data, lead_info, out_leads, in_leads):
+    def __init__(self, data, lead_info, out_leads, in_leads,
+                 current_conserving=False):
         sizes = [len(i.momenta) // 2 for i in lead_info]
         super(SMatrix, self).__init__(data, lead_info, out_leads, in_leads,
-                                      sizes)
+                                      sizes, current_conserving)
 
-    def transmission(self, lead_out, lead_in):
-        """Return transmission from lead_in to lead_out."""
+    def num_propagating(self, lead):
+        """Return the number of propagating modes in the lead."""
+        return self.sizes[lead]
+
+    def _transmission(self, lead_out, lead_in):
         return np.linalg.norm(self.submatrix(lead_out, lead_in)) ** 2
 
     def __repr__(self):
@@ -666,10 +748,24 @@ class GreensFunction(BlockResult):
         calculated result.
     """
 
-    def __init__(self, data, lead_info, out_leads, in_leads):
+    def __init__(self, data, lead_info, out_leads, in_leads,
+                 current_conserving=False):
         sizes = [i.shape[0] for i in lead_info]
-        super(GreensFunction, self).__init__(data, lead_info, out_leads,
-                                             in_leads, sizes)
+        super(GreensFunction, self).__init__(
+            data, lead_info, out_leads, in_leads, sizes, current_conserving)
+
+    def num_propagating(self, lead):
+        """Return the number of propagating modes in the lead."""
+        gamma = 1j * (self.lead_info[lead] -
+                      self.lead_info[lead].conj().T)
+
+        # The number of channels is given by the number of
+        # nonzero eigenvalues of Gamma
+        # rationale behind the threshold from
+        # Golub; van Loan, chapter 5.5.8
+        eps = np.finfo(gamma.dtype).eps * 1000
+        return np.sum(np.linalg.eigvalsh(gamma) >
+                      eps * np.linalg.norm(gamma, np.inf))
 
     def _a_ttdagger_a_inv(self, lead_out, lead_in):
         """Return t * t^dagger in a certain basis."""
@@ -681,8 +777,7 @@ class GreensFunction(BlockResult):
             factors.append(gf2)
         return reduce(np.dot, factors)
 
-    def transmission(self, lead_out, lead_in):
-        """Return transmission from lead_in to lead_out."""
+    def _transmission(self, lead_out, lead_in):
         gf = self.submatrix(lead_out, lead_in)
         factors = []
         for lead, gf2 in ((lead_out, gf), (lead_in, gf.conj().T)):

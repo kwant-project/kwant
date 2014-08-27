@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2014 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
@@ -37,6 +37,10 @@ def test_singular_graph_system():
 
 def test_tricky_singular_hopping():
     _test_sparse.test_tricky_singular_hopping(smatrix)
+
+
+def test_many_leads():
+    _test_sparse.test_many_leads(greens_function, smatrix)
 
 
 def test_selfenergy():

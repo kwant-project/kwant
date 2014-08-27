@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2014 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
@@ -78,6 +78,14 @@ def test_tricky_singular_hopping():
         reset_options()
         options(**opts)
         _test_sparse.test_tricky_singular_hopping(smatrix)
+
+
+@skipif(no_mumps)
+def test_many_leads():
+    for opts in opt_list:
+        reset_options()
+        options(**opts)
+        _test_sparse.test_many_leads(greens_function, smatrix)
 
 
 @skipif(no_mumps)

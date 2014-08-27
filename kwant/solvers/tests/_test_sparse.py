@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2014 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
@@ -7,6 +7,7 @@
 # http://kwant-project.org/authors.
 
 from __future__ import division
+from math import cos, sin
 import numpy as np
 from nose.tools import assert_raises
 from numpy.testing import assert_equal, assert_almost_equal
@@ -283,6 +284,62 @@ def test_tricky_singular_hopping(smatrix):
     s = smatrix(fsys, -1.3).data
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
+
+
+# Test the consistency of transmission and conductance_matrix for a four-lead
+# system without time-reversal symmetry.
+def test_many_leads(*factories):
+    E=2.1
+    B=0.01
+
+    def phase(a, b):
+        ap = a.pos
+        bp = b.pos
+        phase = -B * (0.5 * (ap[1] + bp[1]) * (bp[0] - ap[0]))
+        return -complex(cos(phase), sin(phase))
+
+    # Build a square system with four leads and a hole in the center.
+    sys = kwant.Builder()
+    sys[(sq(x, y) for x in xrange(-4, 4) for y in xrange(-4, 4)
+         if x**2 + y**2 >= 2)] = 3
+    sys[sq.neighbors()] = phase
+    for r in [xrange(-4, -1), xrange(4)]:
+        lead = kwant.Builder(kwant.TranslationalSymmetry([-1, 0]))
+        lead[(sq(0, y) for y in r)] = 4
+        lead[sq.neighbors()] = phase
+        sys.attach_lead(lead)
+        sys.attach_lead(lead.reversed())
+    sys = sys.finalized()
+
+    r4 = range(4)
+    br = factories[0](sys, E, out_leads=r4, in_leads=r4)
+    trans = np.array([[br._transmission(i, j) for j in r4] for i in r4])
+    cmat = br.conductance_matrix()
+    assert_almost_equal(cmat.sum(axis=0), [0] * 4)
+    assert_almost_equal(cmat.sum(axis=1), [0] * 4)
+    for i in r4:
+        for j in r4:
+            assert_almost_equal(
+                (br.num_propagating(i) if i == j else 0) - cmat[i, j],
+                trans[i, j])
+
+    for out_leads, in_leads in [(r4, r4), ((1, 2, 3), r4), (r4, (0, 2, 3)),
+                                ((1, 3), (1, 2, 3)), ((0, 2), (0, 1, 2)),
+                                ((0, 1,), (1, 2)), ((3,), (3,))]:
+        for f in factories:
+            br = f(sys, E, out_leads=out_leads, in_leads=in_leads)
+            if len(out_leads) == 3:
+                out_leads = r4
+            if len(in_leads) == 3:
+                in_leads = r4
+            for i in r4:
+                for j in r4:
+                    if i in out_leads and j in in_leads:
+                        assert_almost_equal(br.transmission(i, j), trans[i, j])
+                    else:
+                        assert_raises(ValueError, br.transmission, i, j)
+            if len(out_leads) == len(in_leads) == 4:
+                assert_almost_equal(br.conductance_matrix(), cmat)
 
 
 # Test equivalence between self-energy and scattering matrix representations.
