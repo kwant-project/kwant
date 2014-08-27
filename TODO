@@ -57,6 +57,10 @@ Roughly in order of importance.                                     -*-org-*-
     there exists an object of the same name in Kwant.  (Consider the usage of
     linking for the term "Thread" in the document linked above.)
 
+* Harmonize numerical tolerances throughout Kwant
+  By default, a channel should open at the same energy in any solver.
+  If this is possible, we may want to have one central tolerance setting.
+
 * Plotter: show site upon click
 
 * fix physics.noise (docstring, __all__, etc.)
@@ -134,8 +138,17 @@ Roughly in order of importance.                                     -*-org-*-
 * Ideas for kwant 2
 ** Consider whether to use *args or args in System.hamiltonian
 
-** Names to be reconsidered
-- lead_info
+** lead_info
+Currently, lead_info is either of two things, a sequence of propagating modes or a sequence of self-energies.
+- There is no need to have lead_info as an attribute of BlockResult.
+- In the case of SMatrix and GreensFunction this attribute should be renamed to what it is, i.e. propagating_modes and selfenergies.
+- In cases where a common name is needed (i.e. return value of _make_linear_sys), a better name might be lead_data or solved_leads.
+- BlockResult itself could be renamed to something more specific, perhaps GeneralSMatrix.
 
 ** Unify the order of indices
 For example in wave_function and in PropagatingModes.
+
+** Take advantage of when a system is known to be Hermitian
+Either
+- omit the lead with most open channels by default when calling smatrix and greens_function or
+- verify that the scattering matrix is indeed current-conserving (it might be not due to numerical error)
