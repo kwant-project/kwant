@@ -42,6 +42,12 @@ except ImportError:
                   "functions will work.", RuntimeWarning)
     mpl_enabled = False
 
+if mpl_enabled and matplotlib.__version__ == "1.4.0":
+    warnings.warn("matplotlib 1.4.0 has a bug that makes 3D plotting unusable "
+                  "(2D plotting is not affected). Please consider using a "
+                  "different version of matplotlib.", RuntimeWarning)
+
+
 from . import system, builder, physics
 
 __all__ = ['plot', 'map', 'bands', 'sys_leads_sites', 'sys_leads_hoppings',
@@ -91,8 +97,9 @@ if mpl_enabled:
             self.reflen = reflen
             self._linewidths_orig = nparray_if_array(self.get_linewidths())
 
-            self._transforms = [matplotlib.transforms.Affine2D().scale(x) for x
-                                in sizes]
+            self._transforms = np.array([
+                matplotlib.transforms.Affine2D().scale(x).get_matrix() for x
+                in sizes])
 
         def get_transforms(self):
             return self._transforms
@@ -213,8 +220,8 @@ if mpl_enabled:
                 self._edgecolors_orig = nparray_if_array(self.get_edgecolors())
 
                 Affine2D = matplotlib.transforms.Affine2D
-                self._orig_transforms = np.array([Affine2D().scale(x) for x in
-                                                  sizes], dtype='object')
+                self._orig_transforms = np.array([
+                    Affine2D().scale(x).get_matrix() for x in sizes])
                 self._transforms = self._orig_transforms
 
             def set_array(self, array):
