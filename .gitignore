@@ -1,6 +1,7 @@
 *~
 MANIFEST
 *.pyc
+*.pyo
 *.so
 /kwant/*.c
 /kwant/*/*.c
