@@ -1,16 +1,5 @@
 Roughly in order of importance.                                     -*-org-*-
 
-* Make plotter work with matplotlib 1.4
-
-* Improve lattice.neighbors()
-  to support the following cases:
-  - The lattice has lower dimensionality than the space
-  - Hoppings between sites from two separate lattices
-
-  The function should be rewritten in a more robust manner using Delaunay
-  tessellation from Scipy/QHull and a proper choice of the set of sites on
-  which to perform the tessellation.
-
 * Improve error messages by checking for ABCs
   Add a classmethod "ensure_isinstance" that takes an object at makes sure that
   it has the appropriate type.  Otherwise, a non-cryptic error is raised.  The
@@ -40,6 +29,15 @@ Roughly in order of importance.                                     -*-org-*-
   One could then also RLE compress sites in finalized builders.
 
 * Make Kwant objects pickleable
+
+* Improve lattice.neighbors()
+  to support the following cases:
+  - The lattice has lower dimensionality than the space
+  - Hoppings between sites from two separate lattices
+
+  The function should be rewritten in a more robust manner using Delaunay
+  tessellation from Scipy/QHull and a proper choice of the set of sites on
+  which to perform the tessellation.
 
 * Implement "inhomogeneous arrays" for ldos and wavefunc
   The point is to have ldos or wavefunc return objects that behave like 2d
@@ -152,3 +150,7 @@ For example in wave_function and in PropagatingModes.
 Either
 - omit the lead with most open channels by default when calling smatrix and greens_function or
 - verify that the scattering matrix is indeed current-conserving (it might be not due to numerical error)
+
+** lattices
+- In add_site_family, the first argument cannot be a general site family, it must be a lattice from lattice.py.  We should rename site_family -> lattice in this context.  In fact, that argument could be even a Polyatomic lattice (that is not a site family at all).
+- The automatically selected other_vectors could be longer but more orthogonal.
