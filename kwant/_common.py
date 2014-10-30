@@ -74,3 +74,11 @@ class KwantDeprecationWarning(Warning):
     that a KwantDeprecationWarning that is visible by default is useful.
     """
     pass
+
+
+def ensure_isinstance(obj, typ, msg=None):
+    if isinstance(obj, typ):
+        return
+    if msg is None:
+        msg = "Expecting an instance of {}.".format(typ.__name__)
+    raise TypeError(msg)

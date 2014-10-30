@@ -13,6 +13,8 @@ from itertools import product
 import abc
 import numpy as np
 import scipy.sparse as sp
+from .._common import ensure_isinstance
+from .. import system
 
 # Currently, scipy.sparse does not support matrices with one dimension being
 # zero: http://projects.scipy.org/scipy/ticket/1602 We use NumPy dense matrices
@@ -139,6 +141,8 @@ class SparseSolver(object):
         The system of equations that is created will be described in detail
         elsewhere.
         """
+        ensure_isinstance(sys, system.System)
+
         splhsmat = getattr(sp, self.lhsformat + '_matrix')
         sprhsmat = getattr(sp, self.rhsformat + '_matrix')
 
@@ -325,6 +329,7 @@ class SparseSolver(object):
         Both `in_leads` and `out_leads` must be sorted and may only contain
         unique entries.
         """
+        ensure_isinstance(sys, system.System)
 
         n = len(sys.lead_interfaces)
         if in_leads is None:
@@ -411,6 +416,7 @@ class SparseSolver(object):
         Both `in_leads` and `out_leads` must be sorted and may only contain
         unique entries.
         """
+        ensure_isinstance(sys, system.System)
 
         n = len(sys.lead_interfaces)
         if in_leads is None:
@@ -472,6 +478,7 @@ class SparseSolver(object):
         ldos : a NumPy array
             Local density of states at each orbital of the system.
         """
+        ensure_isinstance(sys, system.System)
         if not check_hermiticity:
             raise NotImplementedError("ldos for non-Hermitian Hamiltonians "
                                       "is not implemented yet.")

@@ -8,8 +8,11 @@
 
 import math
 import numpy as np
+from .. import system
+from .._common import ensure_isinstance
 
 __all__ = ['Bands']
+
 
 class Bands(object):
     """
@@ -40,6 +43,7 @@ class Bands(object):
     """
 
     def __init__(self, sys, args=()):
+        ensure_isinstance(sys, system.InfiniteSystem)
         self.ham = sys.cell_hamiltonian(args)
         if not np.allclose(self.ham, self.ham.T.conj()):
             raise ValueError('The cell Hamiltonian is not Hermitian.')

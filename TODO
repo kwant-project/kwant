@@ -1,11 +1,5 @@
 Roughly in order of importance.                                     -*-org-*-
 
-* Improve error messages by checking for ABCs
-  Add a classmethod "ensure_isinstance" that takes an object at makes sure that
-  it has the appropriate type.  Otherwise, a non-cryptic error is raised.  The
-  error message can depend on the type of the argument.  For example, it could
-  inform that a builder needs to be finalized.
-
 * Document the order of sites/orbitals in finalized builders
 
 * Add calculation of current density

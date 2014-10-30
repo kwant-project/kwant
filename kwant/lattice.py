@@ -17,6 +17,7 @@ import numpy as np
 import tinyarray as ta
 from . import builder
 from .linalg import lll
+from ._common import ensure_isinstance
 
 
 def general(prim_vecs, basis=None, name=''):
@@ -541,6 +542,8 @@ class TranslationalSymmetry(builder.Symmetry):
         ValueError
             If lattice `fam` is incompatible with given periods.
         """
+        ensure_isinstance(fam, Monatomic)
+
         dim = self.periods.shape[1]
         if fam in self.site_family_data:
             raise KeyError('Family already processed, delete it from '

@@ -14,7 +14,7 @@ __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 import abc
 import types
 from copy import copy
-from . import physics, _system
+from . import _system
 
 
 class System(object):
@@ -204,6 +204,7 @@ class InfiniteSystem(System):
         See documentation of `~kwant.physics.PropagatingModes` and
         `~kwant.physics.StabilizedModes` for the return format details.
         """
+        from . import physics   # Putting this here avoids a circular import.
         ham = self.cell_hamiltonian(args)
         shape = ham.shape
         assert len(shape) == 2
@@ -219,6 +220,7 @@ class InfiniteSystem(System):
         ``sum(len(self.hamiltonian(i, i)) for i in range(self.graph.num_nodes -
         self.cell_size))``.
         """
+        from . import physics   # Putting this here avoids a circular import.
         ham = self.cell_hamiltonian(args)
         shape = ham.shape
         assert len(shape) == 2

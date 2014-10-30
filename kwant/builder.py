@@ -19,6 +19,7 @@ from itertools import izip, islice, chain
 import tinyarray as ta
 import numpy as np
 from . import system, graph, KwantDeprecationWarning
+from ._common import ensure_isinstance
 
 
 class BuilderKeyError(KeyError):
@@ -354,8 +355,13 @@ class HoppingKind(object):
 
     def __init__(self, delta, family_a, family_b=None):
         self.delta = ta.array(delta, int)
+        ensure_isinstance(family_a, SiteFamily)
         self.family_a = family_a
-        self.family_b = family_b if family_b is not None else family_a
+        if family_b is None:
+            self.family_b = family_a
+        else:
+            ensure_isinstance(family_b, SiteFamily)
+            self.family_b = family_b
 
     def __call__(self, builder):
         delta = self.delta
@@ -658,6 +664,8 @@ class Builder(object):
     def __init__(self, symmetry=None):
         if symmetry is None:
             symmetry = NoSymmetry()
+        else:
+            ensure_isinstance(symmetry, Symmetry)
         self.symmetry = symmetry
         self.leads = []
         self.H = {}
