@@ -391,13 +391,12 @@ Mac OS X: homebrew
 It is also possible to build Kwant using homebrew. The dependencies can be
 installed as ::
 
-    brew install gfortran python
+    brew install gcc python
     brew tap homebrew/science
-    brew tap samueljohn/python
+    brew tap homebrew/python
     brew tap michaelwimmer/kwant
-    pip install nose
+    pip install nose six
     brew install numpy scipy matplotlib
-    brew install mumps_seq
 
 Note that during the installation you will be told which paths to add when you
 want to compile/link against scotch/metis/mumps; you need to add these to the
