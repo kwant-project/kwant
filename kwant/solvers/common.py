@@ -778,14 +778,7 @@ class GreensFunction(BlockResult):
         return reduce(np.dot, factors)
 
     def _transmission(self, lead_out, lead_in):
-        gf = self.submatrix(lead_out, lead_in)
-        factors = []
-        for lead, gf2 in ((lead_out, gf), (lead_in, gf.conj().T)):
-            self_en = self.lead_info[lead]
-            factors.append(1j * (self_en - self_en.conj().T))
-            factors.append(gf2)
-        attdagainv = reduce(np.dot, factors)
-
+        attdagainv = self._a_ttdagger_a_inv(lead_out, lead_in)
         result = np.trace(attdagainv).real
         if lead_out == lead_in:
             # For reflection we have to be more careful
