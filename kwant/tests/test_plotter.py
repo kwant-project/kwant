@@ -9,8 +9,10 @@
 import tempfile
 import warnings
 import nose
+import numpy as np
 import kwant
 from kwant import plotter
+from nose.tools import assert_raises
 if plotter.mpl_enabled:
     from mpl_toolkits import mplot3d
     from matplotlib import pyplot
@@ -142,3 +144,23 @@ def test_map():
                               file=out)
         nose.tools.assert_raises(ValueError, plotter.map, sys,
                                  xrange(len(sys.sites())), file=out)
+
+
+def test_mask_interpolate():
+    # A coordinate array with coordinates of two points almost coinciding.
+    coords = np.random.rand(10, 2)
+    coords[5] *= 1e-8
+    coords[5] += coords[0]
+    
+    warnings.simplefilter("ignore")
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        plotter.mask_interpolate(coords, np.ones(len(coords)), a=1)
+        assert len(w) == 1
+        assert issubclass(w[-1].category, RuntimeWarning)
+        assert "coinciding" in str(w[-1].message)
+
+    assert_raises(ValueError, plotter.mask_interpolate,
+                  coords, np.ones(len(coords)))
+    assert_raises(ValueError, plotter.mask_interpolate, 
+                  coords, np.ones(2 * len(coords)))

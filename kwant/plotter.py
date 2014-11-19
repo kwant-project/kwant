@@ -1404,11 +1404,22 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
 
     tree = spatial.cKDTree(coords)
 
+    points = coords[np.random.randint(len(coords), size=10)]
+    min_dist = np.min(tree.query(points, 2)[0][:, 1])
+    if min_dist < 1e-6 * np.linalg.norm(cmax - cmin):
+        warnings.warn("Some sites have nearly coinciding positions, "
+                      "interpolation may be confusing.",
+                      RuntimeWarning)
+
     if a is None:
-        points = coords[np.random.randint(len(coords), size=10)]
-        a = np.min(tree.query(points, 2)[0][:, 1])
-    elif a <= 0:
-        raise ValueError("The distance a must be strictly positive.")
+        a = min_dist
+
+    if a < 1e-6 * np.linalg.norm(cmax - cmin):
+        raise ValueError("The reference distance a is too small.")
+
+    if len(coords) != len(values):
+        raise ValueError("The number of sites doesn't match the number of"
+                         "provided values.")
 
     shape = (((cmax - cmin) / a + 1) * oversampling).round()
     delta = 0.5 * (oversampling - 1) * a / oversampling
