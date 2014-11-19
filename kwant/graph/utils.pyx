@@ -161,7 +161,7 @@ def remove_duplicates(CGraph gr, np.ndarray[gint, ndim=1] edge_weights=None):
             # with tails < i, as stored in q.)
             if w[j] >= q:
                 # entry is a duplicate
-                if edge_weights != None:
+                if edge_weights is not None:
                     edge_weights[w[j]] += edge_weights[p]
             else:
                 w[j] = nnz
@@ -180,7 +180,7 @@ def remove_duplicates(CGraph gr, np.ndarray[gint, ndim=1] edge_weights=None):
     if not gr.heads:
         raise MemoryError
 
-    if edge_weights != None:
+    if edge_weights is not None:
         edge_weights.resize(nnz, refcheck=False)
 
 @cython.boundscheck(False)
@@ -250,7 +250,7 @@ def induced_subgraph(CGraph gr, select,
     # Allocate the new graph.
     subgr = CGraph_malloc(False, False, sub_num_nodes, sub_num_edges, 0, 0)
 
-    if edge_weights != None:
+    if edge_weights is not None:
         sub_edge_weights = np.empty(sub_num_edges, dtype=gint_dtype)
 
     # Now fill the new edge array.
@@ -262,14 +262,14 @@ def induced_subgraph(CGraph gr, select,
             for iedge in xrange(gr.heads_idxs[i], gr.heads_idxs[i+1]):
                 if indextab[gr.heads[iedge]] > -1:
                     subgr.heads[edge_count] = indextab[gr.heads[iedge]]
-                    if edge_weights != None:
+                    if edge_weights is not None:
                         sub_edge_weights[edge_count] = edge_weights[iedge]
                     edge_count += 1
     subgr.heads_idxs[sub_num_nodes] = edge_count
 
     subgr.num_edges = edge_count
 
-    if edge_weights != None:
+    if edge_weights is not None:
         return subgr, sub_edge_weights
     else:
         return subgr

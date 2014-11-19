@@ -340,7 +340,7 @@ def ggev_postprocess(dtype, alphar, alphai, vl_r=None, vr_r=None):
     if indx.size:
         alpha = alphar + 1j * alphai
 
-        if vl_r != None:
+        if vl_r is not None:
             vl = np.array(vl_r, dtype = dtype)
             for i in indx:
                 vl.imag[:, i] = vl_r[:,i+1]
@@ -348,7 +348,7 @@ def ggev_postprocess(dtype, alphar, alphai, vl_r=None, vr_r=None):
         else:
             vl = None
 
-        if vr_r != None:
+        if vr_r is not None:
             vr = np.array(vr_r, dtype = dtype)
             for i in indx:
                 vr.imag[:, i] = vr_r[:,i+1]
@@ -367,9 +367,12 @@ def sggev(np.ndarray[np.float32_t, ndim=2] A,
           np.ndarray[np.float32_t, ndim=2] B,
           left=False, right=True):
     cdef l_int N, info, lwork
-    cdef char *jobvl, *jobvr
+    cdef char *jobvl
+    cdef char *jobvr
     cdef np.ndarray[np.float32_t, ndim=2] vl_r, vr_r
-    cdef float *vl_ptr, *vr_ptr, qwork
+    cdef float *vl_ptr
+    cdef float *vr_ptr
+    cdef float qwork
     cdef np.ndarray[np.float32_t, ndim=1] work, alphar, alphai, beta
 
     assert_fortran_mat(A, B)
@@ -434,9 +437,12 @@ def dggev(np.ndarray[np.float64_t, ndim=2] A,
           np.ndarray[np.float64_t, ndim=2] B,
           left=False, right=True):
     cdef l_int N, info, lwork
-    cdef char *jobvl, *jobvr
+    cdef char *jobvl
+    cdef char *jobvr
     cdef np.ndarray[np.float64_t, ndim=2] vl_r, vr_r
-    cdef double *vl_ptr, *vr_ptr, qwork
+    cdef double *vl_ptr
+    cdef double *vr_ptr
+    cdef double qwork
     cdef np.ndarray[np.float64_t, ndim=1] work, alphar, alphai, beta
 
     assert_fortran_mat(A, B)
@@ -501,9 +507,12 @@ def cggev(np.ndarray[np.complex64_t, ndim=2] A,
           np.ndarray[np.complex64_t, ndim=2] B,
           left=False, right=True):
     cdef l_int N, info, lwork
-    cdef char *jobvl, *jobvr
+    cdef char *jobvl
+    cdef char *jobvr
     cdef np.ndarray[np.complex64_t, ndim=2] vl, vr
-    cdef float complex *vl_ptr, *vr_ptr, qwork
+    cdef float complex *vl_ptr
+    cdef float complex *vr_ptr
+    cdef float complex qwork
     cdef np.ndarray[np.complex64_t, ndim=1] work, alpha, beta
     cdef np.ndarray[np.float32_t, ndim=1] rwork
 
@@ -568,9 +577,12 @@ def zggev(np.ndarray[np.complex128_t, ndim=2] A,
           np.ndarray[np.complex128_t, ndim=2] B,
           left=False, right=True):
     cdef l_int N, info, lwork
-    cdef char *jobvl, *jobvr
+    cdef char *jobvl
+    cdef char *jobvr
     cdef np.ndarray[np.complex128_t, ndim=2] vl, vr
-    cdef double complex *vl_ptr, *vr_ptr, qwork
+    cdef double complex *vl_ptr
+    cdef double complex *vr_ptr
+    cdef double complex qwork
     cdef np.ndarray[np.complex128_t, ndim=1] work, alpha, beta
     cdef np.ndarray[np.float64_t, ndim=1] rwork
 
@@ -635,7 +647,8 @@ def sgees(np.ndarray[np.float32_t, ndim=2] A,
           calc_q=True, calc_ev=True):
     cdef l_int N, lwork, sdim, info
     cdef char *jobvs
-    cdef float *vs_ptr, qwork
+    cdef float *vs_ptr
+    cdef float qwork
     cdef np.ndarray[np.float32_t, ndim=2] vs
     cdef np.ndarray[np.float32_t] wr, wi, work
 
@@ -686,7 +699,8 @@ def dgees(np.ndarray[np.float64_t, ndim=2] A,
           calc_q=True, calc_ev=True):
     cdef l_int N, lwork, sdim, info
     cdef char *jobvs
-    cdef double *vs_ptr, qwork
+    cdef double *vs_ptr
+    cdef double qwork
     cdef np.ndarray[np.float64_t, ndim=2] vs
     cdef np.ndarray[np.float64_t] wr, wi, work
 
@@ -737,7 +751,8 @@ def cgees(np.ndarray[np.complex64_t, ndim=2] A,
           calc_q=True, calc_ev=True):
     cdef l_int N, lwork, sdim, info
     cdef char *jobvs
-    cdef float complex *vs_ptr, qwork
+    cdef float complex *vs_ptr
+    cdef float complex qwork
     cdef np.ndarray[np.complex64_t, ndim=2] vs
     cdef np.ndarray[np.complex64_t] w, work
     cdef np.ndarray[np.float32_t] rwork
@@ -785,7 +800,8 @@ def zgees(np.ndarray[np.complex128_t, ndim=2] A,
           calc_q=True, calc_ev=True):
     cdef l_int N, lwork, sdim, info
     cdef char *jobvs
-    cdef double complex *vs_ptr, qwork
+    cdef double complex *vs_ptr
+    cdef double complex qwork
     cdef np.ndarray[np.complex128_t, ndim=2] vs
     cdef np.ndarray[np.complex128_t] w, work
     cdef np.ndarray[np.float64_t] rwork
@@ -835,7 +851,8 @@ def strsen(np.ndarray[l_logical] select,
            calc_ev=True):
     cdef l_int N, M, lwork, liwork, qiwork, info
     cdef char *compq
-    cdef float qwork, *q_ptr
+    cdef float qwork
+    cdef float *q_ptr
     cdef np.ndarray[np.float32_t] wr, wi, work
     cdef np.ndarray[l_int] iwork
 
@@ -892,7 +909,8 @@ def dtrsen(np.ndarray[l_logical] select,
            calc_ev=True):
     cdef l_int N, M, lwork, liwork, qiwork, info
     cdef char *compq
-    cdef double qwork, *q_ptr
+    cdef double qwork
+    cdef double *q_ptr
     cdef np.ndarray[np.float64_t] wr, wi, work
     cdef np.ndarray[l_int] iwork
 
@@ -949,7 +967,8 @@ def ctrsen(np.ndarray[l_logical] select,
            calc_ev=True):
     cdef l_int N, M, lwork, info
     cdef char *compq
-    cdef float complex qwork, *q_ptr
+    cdef float complex qwork
+    cdef float complex *q_ptr
     cdef np.ndarray[np.complex64_t] w, work
 
     assert_fortran_mat(T, Q)
@@ -996,7 +1015,8 @@ def ztrsen(np.ndarray[l_logical] select,
            calc_ev=True):
     cdef l_int N, MM, M, lwork, info
     cdef char *compq
-    cdef double complex qwork, *q_ptr
+    cdef double complex qwork
+    cdef double complex *q_ptr
     cdef np.ndarray[np.complex128_t] w, work
 
     assert_fortran_mat(T, Q)
@@ -1082,9 +1102,11 @@ def strevc(np.ndarray[np.float32_t, ndim=2] T,
            np.ndarray[l_logical] select=None,
            left=False, right=True):
     cdef l_int N, info, M, MM
-    cdef char *side, *howmny
+    cdef char *side
+    cdef char *howmny
     cdef np.ndarray[np.float32_t, ndim=2] vl_r, vr_r
-    cdef float *vl_r_ptr, *vr_r_ptr
+    cdef float *vl_r_ptr
+    cdef float *vr_r_ptr
     cdef np.ndarray[l_logical] select_cpy
     cdef l_logical *select_ptr
     cdef np.ndarray[np.float32_t] work
@@ -1184,9 +1206,11 @@ def dtrevc(np.ndarray[np.float64_t, ndim=2] T,
            np.ndarray[l_logical] select=None,
            left=False, right=True):
     cdef l_int N, info, M, MM
-    cdef char *side, *howmny
+    cdef char *side
+    cdef char *howmny
     cdef np.ndarray[np.float64_t, ndim=2] vl_r, vr_r
-    cdef double *vl_r_ptr, *vr_r_ptr
+    cdef double *vl_r_ptr
+    cdef double *vr_r_ptr
     cdef np.ndarray[l_logical] select_cpy
     cdef l_logical *select_ptr
     cdef np.ndarray[np.float64_t] work
@@ -1285,9 +1309,11 @@ def ctrevc(np.ndarray[np.complex64_t, ndim=2] T,
            np.ndarray[l_logical] select=None,
            left=False, right=True):
     cdef l_int N, info, M, MM
-    cdef char *side, *howmny
+    cdef char *side
+    cdef char *howmny
     cdef np.ndarray[np.complex64_t, ndim=2] vl, vr
-    cdef float complex *vl_ptr, *vr_ptr
+    cdef float complex *vl_ptr
+    cdef float complex *vr_ptr
     cdef l_logical *select_ptr
     cdef np.ndarray[np.complex64_t] work
     cdef np.ndarray[np.float32_t] rwork
@@ -1364,9 +1390,11 @@ def ztrevc(np.ndarray[np.complex128_t, ndim=2] T,
            np.ndarray[l_logical] select=None,
            left=False, right=True):
     cdef l_int N, info, M, MM
-    cdef char *side, *howmny
+    cdef char *side
+    cdef char *howmny
     cdef np.ndarray[np.complex128_t, ndim=2] vl, vr
-    cdef double complex *vl_ptr, *vr_ptr
+    cdef double complex *vl_ptr
+    cdef double complex *vr_ptr
     cdef l_logical *select_ptr
     cdef np.ndarray[np.complex128_t] work
     cdef np.ndarray[np.float64_t] rwork
@@ -1443,8 +1471,11 @@ def sgges(np.ndarray[np.float32_t, ndim=2] A,
           np.ndarray[np.float32_t, ndim=2] B,
           calc_q=True, calc_z=True, calc_ev=True):
     cdef l_int N, lwork, sdim, info
-    cdef char *jobvsl, *jobvsr
-    cdef float *vsl_ptr, *vsr_ptr, qwork
+    cdef char *jobvsl
+    cdef char *jobvsr
+    cdef float *vsl_ptr
+    cdef float *vsr_ptr
+    cdef float qwork
     cdef np.ndarray[np.float32_t, ndim=2] vsl, vsr
     cdef np.ndarray[np.float32_t] alphar, alphai, beta, work
 
@@ -1515,8 +1546,11 @@ def dgges(np.ndarray[np.float64_t, ndim=2] A,
           np.ndarray[np.float64_t, ndim=2] B,
           calc_q=True, calc_z=True, calc_ev=True):
     cdef l_int N, lwork, sdim, info
-    cdef char *jobvsl, *jobvsr
-    cdef double *vsl_ptr, *vsr_ptr, qwork
+    cdef char *jobvsl
+    cdef char *jobvsr
+    cdef double *vsl_ptr
+    cdef double *vsr_ptr
+    cdef double qwork
     cdef np.ndarray[np.float64_t, ndim=2] vsl, vsr
     cdef np.ndarray[np.float64_t] alphar, alphai, beta, work
 
@@ -1587,8 +1621,11 @@ def cgges(np.ndarray[np.complex64_t, ndim=2] A,
           np.ndarray[np.complex64_t, ndim=2] B,
           calc_q=True, calc_z=True, calc_ev=True):
     cdef l_int N, lwork, sdim, info
-    cdef char *jobvsl, *jobvsr
-    cdef float complex *vsl_ptr, *vsr_ptr, qwork
+    cdef char *jobvsl
+    cdef char *jobvsr
+    cdef float complex *vsl_ptr
+    cdef float complex *vsr_ptr
+    cdef float complex qwork
     cdef np.ndarray[np.complex64_t, ndim=2] vsl, vsr
     cdef np.ndarray[np.complex64_t] alpha, beta, work
     cdef np.ndarray[np.float32_t] rwork
@@ -1654,8 +1691,11 @@ def zgges(np.ndarray[np.complex128_t, ndim=2] A,
           np.ndarray[np.complex128_t, ndim=2] B,
           calc_q=True, calc_z=True, calc_ev=True):
     cdef l_int N, lwork, sdim, info
-    cdef char *jobvsl, *jobvsr
-    cdef double complex *vsl_ptr, *vsr_ptr, qwork
+    cdef char *jobvsl
+    cdef char *jobvsr
+    cdef double complex *vsl_ptr
+    cdef double complex *vsr_ptr
+    cdef double complex qwork
     cdef np.ndarray[np.complex128_t, ndim=2] vsl, vsr
     cdef np.ndarray[np.complex128_t] alpha, beta, work
     cdef np.ndarray[np.float64_t] rwork
@@ -1726,7 +1766,9 @@ def stgsen(np.ndarray[l_logical] select,
            calc_ev=True):
     cdef l_int N, M, lwork, liwork, qiwork, info, ijob
     cdef l_logical wantq, wantz
-    cdef float qwork, *q_ptr, *z_ptr
+    cdef float qwork
+    cdef float *q_ptr
+    cdef float *z_ptr
     cdef np.ndarray[np.float32_t] alphar, alphai, beta, work
     cdef np.ndarray[l_int] iwork
 
@@ -1803,7 +1845,9 @@ def dtgsen(np.ndarray[l_logical] select,
            calc_ev=True):
     cdef l_int N, M, lwork, liwork, qiwork, info, ijob
     cdef l_logical wantq, wantz
-    cdef double qwork, *q_ptr, *z_ptr
+    cdef double qwork
+    cdef double *q_ptr
+    cdef double *z_ptr
     cdef np.ndarray[np.float64_t] alphar, alphai, beta, work
     cdef np.ndarray[l_int] iwork
 
@@ -1880,7 +1924,9 @@ def ctgsen(np.ndarray[l_logical] select,
            calc_ev=True):
     cdef l_int N, M, lwork, liwork, qiwork, info, ijob
     cdef l_logical wantq, wantz
-    cdef float complex qwork, *q_ptr, *z_ptr
+    cdef float complex qwork
+    cdef float complex *q_ptr
+    cdef float complex *z_ptr
     cdef np.ndarray[np.complex64_t] alpha, beta, work
     cdef np.ndarray[l_int] iwork
 
@@ -1949,7 +1995,9 @@ def ztgsen(np.ndarray[l_logical] select,
            calc_ev=True):
     cdef l_int N, M, lwork, liwork, qiwork, info, ijob
     cdef l_logical wantq, wantz
-    cdef double complex qwork, *q_ptr, *z_ptr
+    cdef double complex qwork
+    cdef double complex *q_ptr
+    cdef double complex *z_ptr
     cdef np.ndarray[np.complex128_t] alpha, beta, work
     cdef np.ndarray[l_int] iwork
 
@@ -2018,9 +2066,11 @@ def stgevc(np.ndarray[np.float32_t, ndim=2] S,
            np.ndarray[l_logical] select=None,
            left=False, right=True):
     cdef l_int N, info, M, MM
-    cdef char *side, *howmny
+    cdef char *side
+    cdef char *howmny
     cdef np.ndarray[np.float32_t, ndim=2] vl_r, vr_r
-    cdef float *vl_r_ptr, *vr_r_ptr
+    cdef float *vl_r_ptr
+    cdef float *vr_r_ptr
     cdef np.ndarray[l_logical] select_cpy
     cdef l_logical *select_ptr
     cdef np.ndarray[np.float32_t] work
@@ -2127,9 +2177,11 @@ def dtgevc(np.ndarray[np.float64_t, ndim=2] S,
            np.ndarray[l_logical] select=None,
            left=False, right=True):
     cdef l_int N, info, M, MM
-    cdef char *side, *howmny
+    cdef char *side
+    cdef char *howmny
     cdef np.ndarray[np.float64_t, ndim=2] vl_r, vr_r
-    cdef double *vl_r_ptr, *vr_r_ptr
+    cdef double *vl_r_ptr
+    cdef double *vr_r_ptr
     cdef np.ndarray[l_logical] select_cpy
     cdef l_logical *select_ptr
     cdef np.ndarray[np.float64_t] work
@@ -2237,9 +2289,11 @@ def ctgevc(np.ndarray[np.complex64_t, ndim=2] S,
            np.ndarray[l_logical] select=None,
            left=False, right=True):
     cdef l_int N, info, M, MM
-    cdef char *side, *howmny
+    cdef char *side
+    cdef char *howmny
     cdef np.ndarray[np.complex64_t, ndim=2] vl, vr
-    cdef float complex *vl_ptr, *vr_ptr
+    cdef float complex *vl_ptr
+    cdef float complex *vr_ptr
     cdef l_logical *select_ptr
     cdef np.ndarray[np.complex64_t] work
     cdef np.ndarray[np.float32_t] rwork
@@ -2324,9 +2378,11 @@ def ztgevc(np.ndarray[np.complex128_t, ndim=2] S,
            np.ndarray[l_logical] select=None,
            left=False, right=True):
     cdef l_int N, info, M, MM
-    cdef char *side, *howmny
+    cdef char *side
+    cdef char *howmny
     cdef np.ndarray[np.complex128_t, ndim=2] vl, vr
-    cdef double complex *vl_ptr, *vr_ptr
+    cdef double complex *vl_ptr
+    cdef double complex *vr_ptr
     cdef l_logical *select_ptr
     cdef np.ndarray[np.complex128_t] work
     cdef np.ndarray[np.float64_t] rwork
