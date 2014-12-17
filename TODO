@@ -148,3 +148,6 @@ Either
 ** lattices
 - In add_site_family, the first argument cannot be a general site family, it must be a lattice from lattice.py.  We should rename site_family -> lattice in this context.  In fact, that argument could be even a Polyatomic lattice (that is not a site family at all).
 - The automatically selected other_vectors could be longer but more orthogonal.
+
+** modes
+When on a band edge, the calculation of modes should fail in a clear way, for example by raising kwant.UndefinedResultError (itself derived from ValueError).  We could also provide a function (tentative name: kwant.tolerate) that turns such exceptions into None values (useful for plotting).
