@@ -84,23 +84,27 @@ class Site(tuple):
 
 
 class SiteFamily(object):
-    """
-    Abstract base class for site families.
+    """Abstract base class for site families.
 
-    A site family is a 'type' of sites.  Site families must be immutable and
-    fully defined by their initial arguments.  They must inherit from this
-    abstract base class and call its __init__ function providing it with two
-    arguments: a canonical representation and a name.  The canonical
-    representation will be returned as the objects representation and must
-    uniquely identify the site family instance.  The name is a string used to
-    distinguish otherwise identical site families.  It may be empty.
+    Site families are the 'type' of `Site` objects.  Within a family, individual
+    sites are uniquely identified by tags.  Valid tags must be hashable Python
+    objects, further details are up to the family.
+
+    Site families must be immutable and fully defined by their initial
+    arguments.  They must inherit from this abstract base class and call its
+    __init__ function providing it with two arguments: a canonical
+    representation and a name.  The canonical representation will be returned as
+    the objects representation and must uniquely identify the site family
+    instance.  The name is a string used to distinguish otherwise identical site
+    families.  It may be empty.
 
     All site families must define the method `normalize_tag` which brings a tag
     to the standard format for this site family.
 
-    Site families which are intended for use with plotting should also provide a
-    method `pos(tag)`, which returns a vector with real-space coordinates of
-    the site belonging to this family with a given tag.
+    Site families that are intended for use with plotting should also provide a
+    method `pos(tag)`, which returns a vector with real-space coordinates of the
+    site belonging to this family with a given tag.
+
     """
     __metaclass__ = abc.ABCMeta
 
