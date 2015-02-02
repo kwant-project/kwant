@@ -104,81 +104,18 @@ provided by Christoph Gohlke.  To install Kwant on Windows
 Mac OSX
 =======
 
-There is a number of different package managers for bringing software
-from the Unix/Linux world to Mac OSX. Since the community is quite
-split, we provide Kwant and its dependencies both via the `MacPorts
-<http://www.macports.org>`_ and `homebrew <http://brew.sh>`_ systems.
-
-Mac OSX: MacPorts
-=================
-
-MacPorts is a full-fledged package manager that recreates a whole Linux-like
-environment on your Mac. It requires little choices to be made by the user,
-and allows for the simplest way to install Kwant.
-
-In order to install Kwant, you have to
-
-1. Install a recent version of MacPorts, as explained in the
-   `installation instructions of MacPorts
-   <http://www.macports.org/install.php>`_.
-   In particular, as explained there, you will have to install also a
-   few prerequisites, namely
-
-  * the Xcode developer tools (compiler suite for Mac OSX) from
-    `<http://developer.apple.com/downloads>`_. You will need an Apple ID to
-    download. Note that if you have one already from using the App store
-    on the Mac/Ipad/Iphone/... you can use that one. You will also need the
-    command line tools: Within Xcode 4, you have to download them by going to
-    `Xcode->Preferences`, click on `Download`, go to `Components`,
-    select `Command Line Tools` and click on `Install`. Alternatively, you can
-    also directly download the command line tools from the
-    Apple developer website.
-  * if you have MacOSX 10.8 or higher, the X11 server from the
-    `XQuartz project <http://xquartz.macosforge.org>`_.
-
-2. After the installation, open a terminal and execute ::
-
-       echo http://downloads.kwant-project.org/macports/ports.tar |\
-       sudo tee -a /opt/local/etc/macports/sources.conf >/dev/null
-
-   (this adds the Kwant MacPorts download link
-   `<http://downloads.kwant-project.org/macports/ports.tar>`_ at the end of the
-   ``sources.conf`` file.)
-
-3. Execute ::
-
-       sudo port selfupdate
-
-4. Now, install Kwant and its prerequisites ::
-
-       sudo port install py27-kwant
-
-5. Finally, we choose python 2.7 to be the default python ::
-
-       sudo port select --set python python27
-
-   After that, you will need to close and reopen the terminal to
-   have all changes in effect.
-
-Notes:
-
-* If you have problems with macports because your institution's firewall
-  blocks macports (more precisely, the `rsync` port), resulting in
-  errors from ``sudo port selfupdate``, follow
-  `these instructions <https://trac.macports.org/wiki/howto/PortTreeTarball>`_.
-* Of course, if you already have macports installed, you can skip step 1
-  and continue with step 2.
+There is a number of different package managers for bringing software from the
+Unix/Linux world to Mac OSX. Since the community is quite split, we provide
+Kwant and its dependencies both via the `homebrew <http://brew.sh>`_ and the
+`MacPorts <http://www.macports.org>`_ systems.
 
 
 Mac OS X: homebrew
 ==================
 
 homebrew is a recent addition to the package managers on Mac OSX. It is
-more lightweight, tries to be as minimalistic as possible and give the user
-more freedom. Because of that, it requires a little more experience on
-the user side compared to MacPorts. The requirements are moderate though,
-if you know how to add directories to the ``$PATH`` variable for your shell,
-you are safe.
+lightweight, tries to be as minimalistic as possible and give the user
+freedom than Macports. We recommend this option if you have no preferences.
 
 1. Open a terminal and install homebrew as described on the `homebrew
    homepage <http://brew.sh>`_ (instructions are towards the end of
@@ -240,6 +177,66 @@ Notes:
 - In principle, you need not install the homebrew python, but could use
   Apple's already installed python. Homebrew's python is more up-to-date,
   though.
+
+
+Mac OSX: MacPorts
+=================
+
+MacPorts is a full-fledged package manager that recreates a whole Linux-like
+environment on your Mac.
+
+In order to install Kwant using MacPorts, you have to
+
+1. Install a recent version of MacPorts, as explained in the
+   `installation instructions of MacPorts
+   <http://www.macports.org/install.php>`_.
+   In particular, as explained there, you will have to install also a
+   few prerequisites, namely
+
+  * the Xcode developer tools (compiler suite for Mac OSX) from
+    `<http://developer.apple.com/downloads>`_. You will need an Apple ID to
+    download. Note that if you have one already from using the App store
+    on the Mac/Ipad/Iphone/... you can use that one. You will also need the
+    command line tools: Within Xcode 4, you have to download them by going to
+    `Xcode->Preferences`, click on `Download`, go to `Components`,
+    select `Command Line Tools` and click on `Install`. Alternatively, you can
+    also directly download the command line tools from the
+    Apple developer website.
+  * if you have MacOSX 10.8 or higher, the X11 server from the
+    `XQuartz project <http://xquartz.macosforge.org>`_.
+
+2. After the installation, open a terminal and execute ::
+
+       echo http://downloads.kwant-project.org/macports/ports.tar |\
+       sudo tee -a /opt/local/etc/macports/sources.conf >/dev/null
+
+   (this adds the Kwant MacPorts download link
+   `<http://downloads.kwant-project.org/macports/ports.tar>`_ at the end of the
+   ``sources.conf`` file.)
+
+3. Execute ::
+
+       sudo port selfupdate
+
+4. Now, install Kwant and its prerequisites ::
+
+       sudo port install py27-kwant
+
+5. Finally, we choose python 2.7 to be the default python ::
+
+       sudo port select --set python python27
+
+   After that, you will need to close and reopen the terminal to
+   have all changes in effect.
+
+Notes:
+
+* If you have problems with macports because your institution's firewall
+  blocks macports (more precisely, the `rsync` port), resulting in
+  errors from ``sudo port selfupdate``, follow
+  `these instructions <https://trac.macports.org/wiki/howto/PortTreeTarball>`_.
+* Of course, if you already have macports installed, you can skip step 1
+  and continue with step 2.
 
 
 ***********************************
