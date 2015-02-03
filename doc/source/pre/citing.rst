@@ -1,1 +1,1 @@
-.. include:: ../../../CITING
+.. include:: ../../../CITING.rst
