@@ -9,7 +9,8 @@
 # http://kwant-project.org/authors.
 
 CONFIG_FILE = 'build.conf'
-README_FILE = 'README'
+README_FILE = 'README.rst'
+README_END_BEFORE = 'See also the files'
 STATIC_VERSION_FILE = 'kwant/_static_version.py'
 REQUIRED_CYTHON_VERSION = (0, 17, 1)
 NO_CYTHON_OPTION = '--no-cython'
@@ -75,7 +76,7 @@ class kwant_build_ext(build_ext):
             print >>sys.stderr, \
 """{0}
 The compilation of Kwant has failed.  Please examine the error message
-above and consult the installation instructions in README.
+above and consult the installation instructions in README.rst.
 You might have to customize {1}.
 {0}
 Build configuration was:
@@ -281,9 +282,11 @@ def long_description():
     try:
         with open(README_FILE) as f:
             for line in f:
-                if line == "\n":
+                if line.startswith(README_END_BEFORE):
                     break
                 text.append(line.rstrip())
+            while text[-1] == "":
+                text.pop()
     except:
         return ''
     return '\n'.join(text)

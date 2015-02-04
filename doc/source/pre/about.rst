@@ -1,5 +1,5 @@
 About Kwant
 ===========
 
-.. include:: ../../../README
-   :end-before: See also the files
+.. include:: ../../../README.rst
+   :end-before: See the

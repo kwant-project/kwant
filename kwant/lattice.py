@@ -55,7 +55,8 @@ class Polyatomic(object):
     """
     A Bravais lattice with an arbitrary number of sites in the basis.
 
-    Contains `Monatomic` sublattices.
+    Contains `Monatomic` sublattices.  Note that an instance of ``Polyatomic`` is
+    not itself a `~kwant.builder.SiteFamily`, only its sublattices are.
 
     Parameters
     ----------
@@ -378,9 +379,14 @@ def short_array_str(array):
 
 class Monatomic(builder.SiteFamily, Polyatomic):
     """
-    A Bravais lattice with a single site in the basis.  Also a site family.
+    A Bravais lattice with a single site in the basis.
 
-    Used on its own and as sublattices of `Polyatomic` lattices.
+    Instances of this class provide the `~kwant.builder.SiteFamily` interface.  Site
+    tags (see `~kwant.builder.SiteFamily`) are sequences of integers and describe
+    the lattice coordinates of a site.
+
+    ``Monatomic`` instances are used as site families on their own or as sublattices
+    of `Polyatomic` lattices.
 
     Parameters
     ----------

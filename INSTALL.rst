@@ -101,84 +101,21 @@ provided by Christoph Gohlke.  To install Kwant on Windows
    want to run this software?". Select "Run".
 
 
-Mac OSX
-=======
+Mac OS X
+========
 
-There is a number of different package managers for bringing software
-from the Unix/Linux world to Mac OSX. Since the community is quite
-split, we provide Kwant and its dependencies both via the `MacPorts
-<http://www.macports.org>`_ and `homebrew <http://brew.sh>`_ systems.
-
-Mac OSX: MacPorts
-=================
-
-MacPorts is a full-fledged package manager that recreates a whole Linux-like
-environment on your Mac. It requires little choices to be made by the user,
-and allows for the simplest way to install Kwant.
-
-In order to install Kwant, you have to
-
-1. Install a recent version of MacPorts, as explained in the
-   `installation instructions of MacPorts
-   <http://www.macports.org/install.php>`_.
-   In particular, as explained there, you will have to install also a
-   few prerequisites, namely
-
-  * the Xcode developer tools (compiler suite for Mac OSX) from
-    `<http://developer.apple.com/downloads>`_. You will need an Apple ID to
-    download. Note that if you have one already from using the App store
-    on the Mac/Ipad/Iphone/... you can use that one. You will also need the
-    command line tools: Within Xcode 4, you have to download them by going to
-    `Xcode->Preferences`, click on `Download`, go to `Components`,
-    select `Command Line Tools` and click on `Install`. Alternatively, you can
-    also directly download the command line tools from the
-    Apple developer website.
-  * if you have MacOSX 10.8 or higher, the X11 server from the
-    `XQuartz project <http://xquartz.macosforge.org>`_.
-
-2. After the installation, open a terminal and execute ::
-
-       echo http://downloads.kwant-project.org/macports/ports.tar |\
-       sudo tee -a /opt/local/etc/macports/sources.conf >/dev/null
-
-   (this adds the Kwant MacPorts download link
-   `<http://downloads.kwant-project.org/macports/ports.tar>`_ at the end of the
-   ``sources.conf`` file.)
-
-3. Execute ::
-
-       sudo port selfupdate
-
-4. Now, install Kwant and its prerequisites ::
-
-       sudo port install py27-kwant
-
-5. Finally, we choose python 2.7 to be the default python ::
-
-       sudo port select --set python python27
-
-   After that, you will need to close and reopen the terminal to
-   have all changes in effect.
-
-Notes:
-
-* If you have problems with macports because your institution's firewall
-  blocks macports (more precisely, the `rsync` port), resulting in
-  errors from ``sudo port selfupdate``, follow
-  `these instructions <https://trac.macports.org/wiki/howto/PortTreeTarball>`_.
-* Of course, if you already have macports installed, you can skip step 1
-  and continue with step 2.
+There is a number of different package managers for bringing software from the
+Unix/Linux world to Mac OS X. Since the community is quite split, we provide
+Kwant and its dependencies both via the `homebrew <http://brew.sh>`_ and the
+`MacPorts <http://www.macports.org>`_ systems.
 
 
 Mac OS X: homebrew
 ==================
 
-homebrew is a recent addition to the package managers on Mac OSX. It is
-more lightweight, tries to be as minimalistic as possible and give the user
-more freedom. Because of that, it requires a little more experience on
-the user side compared to MacPorts. The requirements are moderate though,
-if you know how to add directories to the ``$PATH`` variable for your shell,
-you are safe.
+homebrew is a recent addition to the package managers on Mac OS X. It is
+lightweight, tries to be as minimalistic as possible and give the user
+freedom than Macports. We recommend this option if you have no preferences.
 
 1. Open a terminal and install homebrew as described on the `homebrew
    homepage <http://brew.sh>`_ (instructions are towards the end of
@@ -191,7 +128,7 @@ you are safe.
    and follow its directions. It will ask for a few prerequisites to be
    installed, in particular
 
-  * the Xcode developer tools (compiler suite for Mac OSX) from
+  * the Xcode developer tools (compiler suite for Mac OS X) from
     `<http://developer.apple.com/downloads>`_. You will need an Apple ID to
     download. Note that if you have one already from using the App store on the
     Mac/Ipad/Iphone/... you can use that one. Downloading the command line
@@ -202,7 +139,7 @@ you are safe.
     click on `Install`.
   * although `brew doctor` might not complain about it right away, while we're
     at it, you should also install the X11 server from the `XQuartz project
-    <http://xquartz.macosforge.org>`_ if you have Mac OSX 10.8 or higher.
+    <http://xquartz.macosforge.org>`_ if you have Mac OS X 10.8 or higher.
 
 3. Add permanently ``/usr/local/bin`` before ``/usr/bin/`` in the ``$PATH$``
    environment variable of your shell, for example by adding ::
@@ -240,6 +177,66 @@ Notes:
 - In principle, you need not install the homebrew python, but could use
   Apple's already installed python. Homebrew's python is more up-to-date,
   though.
+
+
+Mac OS X: MacPorts
+==================
+
+MacPorts is a full-fledged package manager that recreates a whole Linux-like
+environment on your Mac.
+
+In order to install Kwant using MacPorts, you have to
+
+1. Install a recent version of MacPorts, as explained in the
+   `installation instructions of MacPorts
+   <http://www.macports.org/install.php>`_.
+   In particular, as explained there, you will have to install also a
+   few prerequisites, namely
+
+  * the Xcode developer tools (compiler suite for Mac OS X) from
+    `<http://developer.apple.com/downloads>`_. You will need an Apple ID to
+    download. Note that if you have one already from using the App store
+    on the Mac/Ipad/Iphone/... you can use that one. You will also need the
+    command line tools: Within Xcode 4, you have to download them by going to
+    `Xcode->Preferences`, click on `Download`, go to `Components`,
+    select `Command Line Tools` and click on `Install`. Alternatively, you can
+    also directly download the command line tools from the
+    Apple developer website.
+  * if you have Mac OS X 10.8 or higher, the X11 server from the
+    `XQuartz project <http://xquartz.macosforge.org>`_.
+
+2. After the installation, open a terminal and execute ::
+
+       echo http://downloads.kwant-project.org/macports/ports.tar |\
+       sudo tee -a /opt/local/etc/macports/sources.conf >/dev/null
+
+   (this adds the Kwant MacPorts download link
+   `<http://downloads.kwant-project.org/macports/ports.tar>`_ at the end of the
+   ``sources.conf`` file.)
+
+3. Execute ::
+
+       sudo port selfupdate
+
+4. Now, install Kwant and its prerequisites ::
+
+       sudo port install py27-kwant
+
+5. Finally, we choose python 2.7 to be the default python ::
+
+       sudo port select --set python python27
+
+   After that, you will need to close and reopen the terminal to
+   have all changes in effect.
+
+Notes:
+
+* If you have problems with macports because your institution's firewall
+  blocks macports (more precisely, the `rsync` port), resulting in
+  errors from ``sudo port selfupdate``, follow
+  `these instructions <https://trac.macports.org/wiki/howto/PortTreeTarball>`_.
+* Of course, if you already have macports installed, you can skip step 1
+  and continue with step 2.
 
 
 ***********************************
@@ -377,7 +374,7 @@ below.
        CC=gcc-mp-4.7 LDSHARED='gcc-mp-4.7 -shared -undefined dynamic_lookup' python setup.py build
        sudo python setup.py install
 
-You might note that installing Kwant on Mac OSX is somewhat more involved than
+You might note that installing Kwant on Mac OS X is somewhat more involved than
 installing on Linux. Part of the reason is that we need to mix Fortran and C
 code in Kwant: While C code is usually compiled using Apple compilers,
 Fortran code must be compiled with the Gnu Fortran compiler (there is
@@ -391,13 +388,12 @@ Mac OS X: homebrew
 It is also possible to build Kwant using homebrew. The dependencies can be
 installed as ::
 
-    brew install gfortran python
+    brew install gcc python
     brew tap homebrew/science
-    brew tap samueljohn/python
+    brew tap homebrew/python
     brew tap michaelwimmer/kwant
-    pip install nose
+    pip install nose six
     brew install numpy scipy matplotlib
-    brew install mumps_seq
 
 Note that during the installation you will be told which paths to add when you
 want to compile/link against scotch/metis/mumps; you need to add these to the
