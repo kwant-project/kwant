@@ -10,7 +10,7 @@
 
 CONFIG_FILE = 'build.conf'
 README_FILE = 'README.rst'
-README_END_BEFORE = 'See also the files'
+README_END_BEFORE = 'See also in this directory:'
 STATIC_VERSION_FILE = 'kwant/_static_version.py'
 REQUIRED_CYTHON_VERSION = (0, 17, 1)
 NO_CYTHON_OPTION = '--no-cython'

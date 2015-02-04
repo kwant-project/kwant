@@ -33,5 +33,5 @@ See the `Kwant web site <http://kwant-project.org/>`_ for the latest version.  A
 discussions, questions, and reporting bugs. The development of Kwant can be
 followed via the `public git repository <http://git.kwant-project.org/kwant>`_.
 
-See also the files INSTALL.rst, LICENSE.rst, AUTHORS.rst, CITING.rst, and
-CONTRIBUTE.rst in this directory.
+See also in this directory: `<INSTALL.rst>`_, `<LICENSE.rst>`_, `<AUTHORS.rst>`_,
+`<CITING.rst>`_, `<CONTRIBUTE.rst>`_.
