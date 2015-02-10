@@ -9,9 +9,13 @@
 __all__ = ['smatrx', 'ldos', 'wave_function', 'greens_function']
 
 # MUMPS usually works best.  Use SciPy as fallback.
+import warnings
 try:
     from . import mumps as smodule
 except ImportError:
+    warnings.warn("MUMPS is not available, "
+                  "SciPy built-in solver will be used as a fallback. "
+                  "Performance can be very poor in this case.", RuntimeWarning)
     from . import sparse as smodule
 
 hidden_instance = smodule.Solver()

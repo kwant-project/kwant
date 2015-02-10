@@ -88,11 +88,9 @@ if uses_umfpack:
         return solve
 else:
     # no UMFPACK found. SuperLU is being used, but usually abysmally slow
-    # (SuperLu is not bad per se, somehow the SciPy version isn't good)
-    warnings.warn("The installed SciPy does not use UMFPACK. Instead, "
-                  "SciPy will use the version of SuperLu it is shipped with. "
-                  "Performance can be very poor in this case.", RuntimeWarning)
-
+    # (SuperLu is not bad per se, somehow the SciPy version isn't good).
+    # Since scipy doesn't include UMFPACK anymore due to software rot,
+    # there is no warning here.
     factorized = linsolve.factorized
 
 
