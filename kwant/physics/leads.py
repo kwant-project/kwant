@@ -129,7 +129,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
     tol : float
         Numbers are considered zero when they are smaller than `tol` times
         the machine precision.
-    stabilization : list of 2 booleans or None
+    stabilization : sequence of 2 booleans or None
         Which steps of the eigenvalue problem stabilization to perform. If the
         value is `None`, then Kwant chooses the fastest (and least stable)
         algorithm that is expected to be sufficient.  For any other value,
@@ -521,7 +521,7 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
     tol : float
         Numbers and differences are considered zero when they are smaller
         than `tol` times the machine precision.
-    stabilization : list of 2 booleans or None
+    stabilization : sequence of 2 booleans or None
         Which steps of the eigenvalue prolem stabilization to perform. If the
         value is `None`, then Kwant chooses the fastest (and least stable)
         algorithm that is expected to be sufficient.  For any other value,

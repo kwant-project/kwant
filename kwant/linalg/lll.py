@@ -43,8 +43,8 @@ def lll(basis, c=1.34):
 
     Parameters
     ----------
-    basis : 2d array-like
-        An array of lattice basis vectors to be reduced.
+    basis : 2d array-like of floats
+        The lattice basis vectors to be reduced.
     c : float
         Reduction parameter for the algorithm. Must be larger than 1 1/3,
         since otherwise a solution is not guaranteed to exist.
@@ -116,10 +116,10 @@ def cvp(vec, basis, n=1):
 
     Parameters
     ----------
-    vec : 1d array-like
-        The lattice vectors closest to `vec` have to be found.
-    basis : 2d array-like
-        The list of basis vectors.
+    vec : 1d array-like of floats
+        The lattice vectors closest to this vector are to be found.
+    basis : 2d array-like of floats
+        Sequence of basis vectors
     n : int
         Number of lattice vectors closest to the point that need to be found.
 
@@ -167,12 +167,12 @@ def voronoi(basis):
 
     Parameters
     ----------
-    basis : 2d array-like
+    basis : 2d array-like of floats
         Basis vectors for which the Voronoi neighbors have to be found.
 
     Returns
     -------
-    voronoi_neighbors : numpy array
+    voronoi_neighbors : numpy array of ints
         All the lattice vectors that may potentially neighbor the origin.
 
     Notes

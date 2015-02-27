@@ -98,7 +98,7 @@ class FiniteSystem(System):
             evaluated.
         args : sequence
             Additional parameters required for calculating the Hamiltionians
-        leads : list of integers or None
+        leads : sequence of integers or None
             Numbers of the leads to be precalculated. If `None`, all are
             precalculated.
         what : 'modes', 'selfenergy', 'all'

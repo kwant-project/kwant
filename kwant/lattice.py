@@ -26,12 +26,12 @@ def general(prim_vecs, basis=None, name=''):
 
     Parameters
     ----------
-    prim_vecs : sequence of sequences of floats
-        The primitive vectors of the Bravais lattice.
-    basis : sequence of floats
-        The coordinates of the basis sites inside the unit cell.
+    prim_vecs : 2d array-like of floats
+        The primitive vectors of the Bravais lattice
+    basis : 2d array-like of floats
+        The coordinates of the basis sites inside the unit cell
     name : string or sequence of strings
-        Name of the lattice, or the list of names of all of the sublattices.
+        Name of the lattice, or sequence of names of all of the sublattices.
         If the name of the lattice is given, the names of sublattices (if any)
         are obtained by appending their number to the name of the lattice.
 
@@ -60,20 +60,20 @@ class Polyatomic(object):
 
     Parameters
     ----------
-    prim_vecs : sequence of sequences of floats
-        The primitive vectors of a Bravais lattice.
-    basis : sequence of sequences of floats
+    prim_vecs : 2d array-like of floats
+        The primitive vectors of the Bravais lattice
+    basis : 2d array-like of floats
         The coordinates of the basis sites inside the unit cell.
     name : string or sequence of strings
-        The name of the lattice, or a list of the names of all the sublattices.
-        If the name of the lattice is given, the names of sublattices are
-        obtained by appending their number to the name of the lattice.
+        The name of the lattice, or a sequence of the names of all the
+        sublattices.  If the name of the lattice is given, the names of
+        sublattices are obtained by appending their number to the name of the
+        lattice.
 
     Attributes
     ----------
-    prim_vecs : sequence of vectors
+    prim_vecs : 2d tinyarray of floats
         ``prim_vecs[i]`` is the `i`-th primitive basis vector of the lattice
-    sublattices : list of `Monatomic`
         Sublattices belonging to this lattice.
 
     Raises
@@ -118,8 +118,8 @@ class Polyatomic(object):
         function : callable
             A function of real space coordinates that returns a truth value:
             true for coordinates inside the shape, and false otherwise.
-        start : float vector
-            The origin for the flood-fill algorithm.
+        start : 1d array-like
+            The real-space origin for the flood-fill algorithm.
 
         Returns
         -------
@@ -212,7 +212,7 @@ class Polyatomic(object):
 
         Parameters
         ----------
-        center : float vector
+        center : 1d array-like of floats
             A point belonging to the axis of the cylinder.
         radius : float
             The radius of the cylinder.
@@ -272,7 +272,7 @@ class Polyatomic(object):
         Returns
         -------
         hoppings : list of kwant.builder.HopplingKind objects
-            A list n-th nearest neighbor hoppings.
+            The n-th nearest neighbor hoppings.
 
         Notes
         -----
@@ -390,7 +390,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
 
     Parameters
     ----------
-    prim_vecs : sequence of sequences of floats
+    prim_vecs : 2d array-like of floats
         Primitive vectors of the Bravais lattice.
     offset : vector of floats
         Displacement of the lattice origin from the real space
@@ -532,7 +532,7 @@ class TranslationalSymmetry(builder.Symmetry):
             previously processed site families from `site_family_data` if you
             want to modify the cache.
 
-        other_vectors : list of lists of integers
+        other_vectors : 2d array-like of integers
             Bravais lattice vectors used to complement the periods in forming
             a basis. The fundamental domain consists of all the lattice sites
             for which the zero coefficients corresponding to the symmetry
