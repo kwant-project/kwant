@@ -83,6 +83,8 @@ class Polyatomic(object):
     """
     def __init__(self, prim_vecs, basis, name=''):
         prim_vecs = ta.array(prim_vecs, float)
+        if prim_vecs.ndim != 2:
+            raise ValueError('`prim_vecs` must be a 2d array-like object.')
         dim = prim_vecs.shape[1]
         if name is None:
             name = ''
@@ -92,6 +94,8 @@ class Polyatomic(object):
             raise ValueError('Number of primitive vectors exceeds '
                              'the space dimensionality.')
         basis = ta.array(basis, float)
+        if basis.ndim != 2:
+            raise ValueError('`basis` must be a 2d array-like object.')
         if basis.shape[1] != dim:
             raise ValueError('Basis dimensionality does not match '
                              'the space dimensionality.')
@@ -407,6 +411,8 @@ class Monatomic(builder.SiteFamily, Polyatomic):
 
     def __init__(self, prim_vecs, offset=None, name=''):
         prim_vecs = ta.array(prim_vecs, float)
+        if prim_vecs.ndim != 2:
+            raise ValueError('`prim_vecs` must be a 2d array-like object.')
         dim = prim_vecs.shape[1]
         if name is None:
             name = ''
@@ -579,6 +585,9 @@ class TranslationalSymmetry(builder.Symmetry):
             other_vectors = np.zeros((0, lat_dim), dtype=int)
         else:
             other_vectors = np.array(other_vectors)
+            if other_vectors.ndim != 2:
+                raise ValueError(
+                    '`other_vectors` must be a 2d array-like object.')
             if np.any(np.round(other_vectors) - other_vectors):
                 raise ValueError('Only integer other_vectors are allowed.')
             other_vectors = np.array(np.round(other_vectors), dtype=int)

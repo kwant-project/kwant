@@ -58,6 +58,8 @@ def lll(basis, c=1.34):
         original one.
     """
     vecs = np.copy(basis)
+    if vecs.ndim != 2:
+        raise ValueError('`vecs` must be a 2d array-like object.')
     if vecs.shape[0] > vecs.shape[1]:
         raise ValueError('The number of basis vectors exceeds the '
                          'space dimensionality.')
@@ -137,6 +139,8 @@ def cvp(vec, basis, n=1):
     """
     # Calculate coordinates of the starting point in this basis.
     basis = np.asarray(basis)
+    if basis.ndim != 2:
+        raise ValueError('`basis` must be a 2d array-like object.')
     vec = np.asarray(vec)
     center_coords = np.array(np.round(np.linalg.lstsq(basis.T, vec)[0]), int)
     # Cutoff radius for n-th nearest neighbor.
@@ -181,6 +185,9 @@ def voronoi(basis):
     and can be optimized. Its main aim is flood-fill, however, and better
     safe than sorry.
     """
+    basis = np.asarray(basis)
+    if basis.ndim != 2:
+        raise ValueError('`basis` must be a 2d array-like object.')
     displacements = list(product(*(len(basis) * [[0, .5]])))[1:]
     vertices = np.array([cvp(np.dot(vec, basis), basis)[0] for vec in
                          displacements])
