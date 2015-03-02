@@ -151,3 +151,6 @@ Either
 
 ** modes
 When on a band edge, the calculation of modes should fail in a clear way, for example by raising kwant.UndefinedResultError (itself derived from ValueError).  We could also provide a function (tentative name: kwant.tolerate) that turns such exceptions into None values (useful for plotting).
+
+** hamiltonian_submatrix and hamiltonian
+Systems have both methods and its confusing which does what.
