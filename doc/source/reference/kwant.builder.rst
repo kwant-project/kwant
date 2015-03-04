@@ -16,13 +16,6 @@ Types
    SelfEnergyLead
    ModesLead
 
-Functions
----------
-.. autosummary::
-   :toctree: generated/
-
-   format_hopping
-
 Abstract base classes
 ---------------------
 .. autosummary::
@@ -31,10 +24,3 @@ Abstract base classes
    SiteFamily
    Symmetry
    Lead
-
-Exceptions
-----------
-.. autosummary::
-   :toctree: generated/
-
-   BuilderKeyError

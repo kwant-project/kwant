@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2015 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
@@ -9,8 +9,7 @@
 from __future__ import division
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
-           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergyLead', 'ModesLead',
-           'BuilderKeyError', 'format_hopping']
+           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergyLead', 'ModesLead']
 
 import abc
 import warnings
@@ -20,34 +19,6 @@ import tinyarray as ta
 import numpy as np
 from . import system, graph, KwantDeprecationWarning
 from ._common import ensure_isinstance
-
-
-class BuilderKeyError(KeyError):
-    """Builder key (site or hopping) not found.
-
-    This class exists to make KeyError exceptions more readable for hoppings.
-    """
-    def __str__(self):
-        try:
-            arg, = self.args
-            return str(arg if isinstance(arg, Site) else format_hopping(arg))
-        except:
-            # If we end up here, there's a bug somewhere.
-            return "BuilderKeyError expects a single site or hopping."
-
-
-def format_hopping(hopping):
-    """Return a readable string representation of a hopping."""
-    a, b = hopping
-    af = a.family
-    bf = b.family
-    if af == bf:
-        return '<Hopping to {0} from {1}; both of {2}>'.format(
-            a.tag, b.tag, af.name if af.name else af)
-    else:
-        return '<Hopping to {0} of {1}, from {2} of {3}>'.format(
-            a.tag, af.name if af.name else af,
-            b.tag, bf.name if bf.name else bf)
 
 
 
@@ -217,6 +188,39 @@ class SimpleSiteFamily(SiteFamily):
                             'its representation.')
         return tag
 
+
+def validate_hopping(hopping):
+    """Verify that the argument is a valid hopping."""
+
+    # This check is essential to maintaining the requirement that hoppings must
+    # be tuples.  Without it, list "hoppings" would work in some cases
+    # (e.g. with Builder.__contains__).
+    if not isinstance(hopping, tuple):
+        raise TypeError("{0} object is not a valid key.".format(
+            type(hopping).__name__))
+
+    # The following check is not strictly necessary (there would be an error
+    # anyway), but the error message would be confusing.
+    try:
+        a, b = hopping
+    except:
+        raise IndexError("Only length 2 tuples (=hoppings) are valid keys.")
+
+    # This check is essential for Builder.__contains__ - without it a builder
+    # would simply "not contain" such invalid hoppings.  In other cases it
+    # provides a nicer error message.
+    for site in hopping:
+        if not isinstance(site, Site):
+            raise TypeError("Hopping elements must be Site objects, not {0}."
+                            .format(type(site).__name__))
+
+    # This again is an essential check.  Without it, builders would accept loop
+    # hoppings.
+    if a == b:
+        raise ValueError("A hopping connects the following site to itself:\n"
+                         "{0}".format(a))
+
+
 
 ################ Symmetries
 
@@ -274,6 +278,7 @@ class Symmetry(object):
         the first element belongs to the fundamental domain.
 
         This default implementation works but may be not efficient.
+
         """
         return self.act(-self.which(a), a, b)
 
@@ -700,7 +705,14 @@ class Builder(object):
         for h, value in edges(self.H[tail]):
             if h == head:
                 return value
-        raise ValueError(tail, head)
+
+        # (tail, head) is not present in the system, but tail is.
+        if head in self.H:
+            raise KeyError((tail, head))
+        else:
+            # If already head is missing, we only report this.  This way the
+            # behavior is symmetric with regard to tail and head.
+            raise KeyError(head)
 
     def _set_edge(self, tail, head, value):
         hvhv = self.H[tail]
@@ -716,15 +728,26 @@ class Builder(object):
     def _del_edge(self, tail, head):
         hvhv = self.H[tail]
         heads = hvhv[2::2]
-        i = 2 + 2 * heads.index(head)
+
+        try:
+            i = 2 + 2 * heads.index(head)
+        except ValueError:
+            # (tail, head) is not present in the system, but tail is.
+            if head in self.H:
+                raise KeyError((tail, head))
+            else:
+                # If already head is missing, we only report this.  This way the
+                # behavior is symmetric with regard to tail and head.
+                raise KeyError(head)
+
         del hvhv[i : i + 2]
 
     def _out_neighbors(self, tail):
-        hvhv = self.H.get(tail, ())
+        hvhv = self.H[tail]
         return islice(hvhv, 2, None, 2)
 
     def _out_degree(self, tail):
-        hvhv = self.H.get(tail, ())
+        hvhv = self.H[tail]
         return len(hvhv) // 2 - 1
 
     # TODO: write a test for this method.
@@ -776,33 +799,30 @@ class Builder(object):
             for key in itr:
                 while callable(key):
                     key = key(self)
-                if isinstance(key, Site) or isinstance(key, tuple):
+                if isinstance(key, tuple):
+                    # Site instances are also tuples.
                     yield key
                 else:
                     iter_stack.append(itr)
-                    itr = iter(key)
+                    try:
+                        itr = iter(key)
+                    except TypeError:
+                        raise TypeError("{0} object is not a valid key."
+                                        .format(type(key).__name__))
                     break
             else:
                 itr = iter_stack.pop()
 
-    def _get_site(self, site):
-        site = self.symmetry.to_fd(site)
-        try:
+    def __getitem__(self, key):
+        """Get the value of a single site or hopping."""
+        if isinstance(key, Site):
+            site = self.symmetry.to_fd(key)
             return self.H[site][1]
-        except KeyError:
-            raise BuilderKeyError(site)
 
-    def _get_hopping(self, hopping):
         sym = self.symmetry
-        try:
-            a, b = hopping
-        except:
-            raise BuilderKeyError(hopping)
-        try:
-            a, b = sym.to_fd(a, b)
-            value = self._get_edge(a, b)
-        except (KeyError, ValueError):
-            raise BuilderKeyError(hopping)
+        validate_hopping(key)
+        a, b = sym.to_fd(*key)
+        value = self._get_edge(a, b)
         if value is Other:
             if not sym.in_fd(b):
                 b, a = sym.to_fd(b, a)
@@ -815,30 +835,21 @@ class Builder(object):
                 value = herm_conj(value)
         return value
 
-    def __getitem__(self, key):
-        """Get the value of a single site or hopping."""
-        if isinstance(key, Site):
-            return self._get_site(key)
-        elif isinstance(key, tuple):
-            return self._get_hopping(key)
-        else:
-            raise BuilderKeyError(key)
-
     def __contains__(self, key):
         """Tell whether the system contains a site or hopping."""
         if isinstance(key, Site):
-            site = self.symmetry.to_fd(key)
-            return site in self.H
-        elif isinstance(key, tuple):
-            a, b = key
-            a, b = self.symmetry.to_fd(a, b)
-            hvhv = self.H.get(a, ())
-            return b in islice(hvhv, 2, None, 2)
-        else:
-            raise BuilderKeyError(key)
+            key = self.symmetry.to_fd(key)
+            return key in self.H
+
+        validate_hopping(key)
+        a, b = self.symmetry.to_fd(*key)
+        hvhv = self.H.get(a, ())
+        return b in islice(hvhv, 2, None, 2)
 
     def _set_site(self, site, value):
         """Set a single site."""
+        if not isinstance(site, Site):
+            raise TypeError('Expecting a site, got {0} instead.'.format(type(site).__name__))
         site = self.symmetry.to_fd(site)
         hvhv = self.H.setdefault(site, [])
         if hvhv:
@@ -848,38 +859,30 @@ class Builder(object):
 
     def _set_hopping(self, hopping, value):
         """Set a single hopping."""
-        # Avoid nested HermConjOfFunc instances.
-        try:
-            a, b = hopping
-        except:
-            raise BuilderKeyError(hopping)
-        if a == b:
-            raise BuilderKeyError(hopping)
-        if isinstance(value, HermConjOfFunc):
-            a, b = b, a
-            value = value.function
-
         sym = self.symmetry
+        validate_hopping(hopping)
+        a, b = sym.to_fd(*hopping)
 
-        try:
-            a, b = sym.to_fd(a, b)
-            if sym.in_fd(b):
-                # These two following lines make sure we do not waste space by
-                # storing different instances of identical sites.  They also
-                # verify that sites a and b already belong to the system.
-                a = self.H[a][0]                 # Might fail.
-                b = self.H[b][0]                 # Might fail.
-                self._set_edge(a, b, value)      # Will work.
-                self._set_edge(b, a, Other)      # Will work.
-            else:
-                b2, a2 = sym.to_fd(b, a)
-                if b2 not in self.H:
-                    raise BuilderKeyError()
-                assert not sym.in_fd(a2)
-                self._set_edge(a, b, value)      # Might fail.
-                self._set_edge(b2, a2, Other)    # Will work.
-        except KeyError:
-            raise BuilderKeyError(hopping)
+        if sym.in_fd(b):
+            # Make sure that we do not waste space by storing multiple instances
+            # of identical sites.
+            a2 = a = self.H[a][0]
+            b2 = b = self.H[b][0]
+        else:
+            b2, a2 = sym.to_fd(b, a)
+            assert not sym.in_fd(a2)
+            if b2 not in self.H:
+                raise KeyError(b)
+
+        # It's important that we have verified that b2 belongs to the system.
+        # Otherwise, we risk ending up with a half-added hopping.
+        if isinstance(value, HermConjOfFunc):
+            # Avoid nested HermConjOfFunc instances.
+            self._set_edge(a, b, Other)            # May raise KeyError(a).
+            self._set_edge(b2, a2, value.function) # Must succeed.
+        else:
+            self._set_edge(a, b, value)            # May raise KeyError(a).
+            self._set_edge(b2, a2, Other)          # Must succeed.
 
     def __setitem__(self, key, value):
         """Set a single site/hopping or a bunch of them."""
@@ -895,43 +898,37 @@ class Builder(object):
 
     def _del_site(self, site):
         """Delete a single site and all associated hoppings."""
+        if not isinstance(site, Site):
+            raise TypeError('Expecting a site, got {0} instead.'.format(
+                type(site).__name__))
+
         tfd = self.symmetry.to_fd
         site = tfd(site)
-        try:
-            for neighbor in self._out_neighbors(site):
-                if neighbor in self.H:
-                    self._del_edge(neighbor, site)
-                else:
-                    assert not self.symmetry.in_fd(neighbor)
-                    a, b = tfd(neighbor, site)
-                    self._del_edge(a, b)
-        except (KeyError, ValueError):
-            raise BuilderKeyError(site)
-        try:
-            del self.H[site]
-        except KeyError:
-            raise BuilderKeyError(site)
+
+        out_neighbors = self._out_neighbors(site)
+
+        for neighbor in out_neighbors:
+            if neighbor in self.H:
+                self._del_edge(neighbor, site)
+            else:
+                assert not self.symmetry.in_fd(neighbor)
+                self._del_edge(*tfd(neighbor, site))
+
+        del self.H[site]
 
     def _del_hopping(self, hopping):
         """Delete a single hopping."""
         sym = self.symmetry
+        validate_hopping(hopping)
+        a, b = sym.to_fd(*hopping)
+        self._del_edge(a, b)
 
-        try:
-            a, b = hopping
-        except:
-            raise BuilderKeyError(hopping)
-        try:
-            a, b = sym.to_fd(a, b)
-            if sym.in_fd(b):
-                self._del_edge(a, b)
-                self._del_edge(b, a)
-            else:
-                self._del_edge(a, b)
-                b, a = sym.to_fd(b, a)
-                assert not sym.in_fd(a)
-                self._del_edge(b, a)
-        except (KeyError, ValueError):
-            raise BuilderKeyError(hopping)
+        if sym.in_fd(b):
+            self._del_edge(b, a)
+        else:
+            b, a = sym.to_fd(b, a)
+            assert not sym.in_fd(a)
+            self._del_edge(b, a)
 
     def __delitem__(self, key):
         """Delete a single site/hopping or bunch of them."""
@@ -1015,11 +1012,17 @@ class Builder(object):
 
     def degree(self, site):
         """Return the number of neighbors of a site."""
+        if not isinstance(site, Site):
+            raise TypeError('Expecting a site, got {0} instead.'.format(
+                type(site).__name__))
         site = self.symmetry.to_fd(site)
         return self._out_degree(site)
 
     def neighbors(self, site):
         """Return an iterator over all neighbors of a site."""
+        if not isinstance(site, Site):
+            raise TypeError('Expecting a site, got {0} instead.'.format(
+                type(site).__name__))
         a = self.symmetry.to_fd(site)
         return self._out_neighbors(a)
 
@@ -1072,9 +1075,9 @@ class Builder(object):
             raise ValueError('Only builders with a 1D symmetry are allowed.')
         for hopping in lead_builder.hoppings():
             if not -1 <= sym.which(hopping[1])[0] <= 1:
-                msg = ('{0} connects non-neighboring lead unit cells. '
-                       'Only nearest-cell hoppings are allowed '
-                       '(consider increasing the lead period).')
+                msg = ('The following hopping connects non-neighboring lead '
+                       'unit cells. Only nearest-cell hoppings are allowed '
+                       '(consider increasing the lead period).\n{0}')
                 raise ValueError(msg.format(hopping))
         if not H:
             raise ValueError('Lead to be attached contains no sites.')

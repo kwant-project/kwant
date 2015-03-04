@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2015 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
@@ -16,16 +16,86 @@ import kwant
 from kwant import builder
 
 
+def test_bad_keys():
+
+    def setitem(key):
+        sys[key] = None
+
+    fam = builder.SimpleSiteFamily()
+    sys = builder.Builder()
+
+    failures = [
+        # Invalid single keys
+        ([sys.__contains__, sys.__getitem__, setitem, sys.__delitem__],
+         [(TypeError, [123,
+                       (0, 1),
+                       (fam(0), 123),
+                       (123, (fam(0)))]),
+          (IndexError, [(fam(0),),
+                        (fam(0), fam(1), fam(2))]),
+          (ValueError, [(fam(0), fam(0)),
+                        (fam(2), fam(2))])]),
+
+        # Hoppings that contain sites that do not belong to the system
+        ([sys.__getitem__, setitem, sys.__delitem__],
+         [(KeyError, [(fam(0), fam(3)), (fam(2), fam(1)),
+                      (fam(2), fam(3))])]),
+
+        # Sequences containing a bad key.
+        ([setitem, sys.__delitem__],
+         [(TypeError, [[fam(0), fam(1), 123],
+                       [fam(0), (fam(1),)],
+                       [fam(0), (fam(1), fam(2))],
+                       [(fam(0), fam(1)), (0, 1)],
+                       [(fam(0), fam(1)), (fam(0), 123)],
+                       [(fam(0), fam(1)), (123, fam(0))],
+                       [(fam(0), fam(1)), fam(2)]]),
+          (IndexError, [[(fam(0), fam(1)), (fam(2),)]]),
+          (ValueError, [[(fam(0), fam(1)), (fam(2), fam(2))],
+                        [(fam(0), fam(0)), (fam(1), fam(0))]]),
+          (KeyError, [[(fam(0), fam(1)), (fam(0), fam(3))],
+                      [(fam(0), fam(1)), (fam(2), fam(1))],
+                      [(fam(1), fam(2)), (fam(0), fam(1))]])]),
+
+        # Sites that do not belong to the system, also as part of a
+        # sequence
+        ([sys.__delitem__],
+         [(KeyError, [fam(123),
+                      [fam(0), fam(123)],
+                      [fam(123), fam(1)]])]),
+
+        # Various things that are not sites present in the system.
+        ([sys.degree, sys.neighbors],
+         [(TypeError, [123,
+                       [0, 1, 2],
+                       (0, 1),
+                       (fam(0), fam(1)),
+                       [fam(0), fam(1)],
+                       [fam(1), fam(2)],
+                       [fam(3), fam(0)]]),
+          (KeyError, [fam(123)])])]
+
+    for funcs, errors in failures:
+        for error, keys in errors:
+            for key in keys:
+                for func in funcs:
+                    sys[[fam(0), fam(1)]] = None
+                    sys[fam(0), fam(1)] = None
+                    try:
+                        assert_raises(error, func, key)
+                    except AssertionError:
+                        print func, error, key
+                        raise
+
+
 def test_site_families():
     sys = builder.Builder()
     fam = builder.SimpleSiteFamily()
     ofam = builder.SimpleSiteFamily()
     yafam = builder.SimpleSiteFamily('another_name')
 
-    assert_raises(KeyError, sys.__setitem__, (0, ), 7)
     sys[fam(0)] = 7
     assert_equal(sys[fam(0)], 7)
-    assert_raises(KeyError, sys.__getitem__, (0, ))
 
     assert len(set([fam, ofam, fam('a'), ofam('a'), yafam])) == 3
     sys[fam(1)] = 123
@@ -57,7 +127,7 @@ class VerySimpleSymmetry(builder.Symmetry):
 # The hoppings have to form a ring.  Some other implicit assumptions are also
 # made.
 def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
-                                    failing_hoppings, sym=None):
+                                    unknown_hoppings, sym=None):
     fam = builder.SimpleSiteFamily()
     sys = builder.Builder(sym)
     t, V = 1.0j, 0.0
@@ -68,7 +138,7 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
     for hopping in hoppings:
         sys[hopping] = t
 
-    for hopping in failing_hoppings:
+    for hopping in unknown_hoppings:
         assert_raises(KeyError, sys.__setitem__, hopping, t)
 
     assert (fam(5), fam(123)) not in sys
@@ -115,11 +185,10 @@ def test_construction_and_indexing():
     hoppings = [(fam(0, 0), fam(0, 1)),
                 (fam(0, 1), fam(1, 0)),
                 (fam(1, 0), fam(0, 0))]
-    failing_hoppings = [(fam(0, 1), fam(0, 1)),
-                        (fam(0, 1), fam(7, 8)),
+    unknown_hoppings = [(fam(0, 1), fam(7, 8)),
                         (fam(12, 14), fam(0, 1))]
     check_construction_and_indexing(sites, sites, hoppings, hoppings,
-                                    failing_hoppings)
+                                    unknown_hoppings)
 
     # With symmetry
     sites = [fam(0, 0), fam(1, 1), fam(2, 1), fam(4, 2)]
@@ -132,12 +201,12 @@ def test_construction_and_indexing():
                    (fam(1, 1), fam(2, 1)),
                    (fam(0, 1), fam(2, 2)),
                    (fam(0, 2), fam(-4, 0))]
-    failing_hoppings = [(fam(0, 0), fam(0, 3)), (fam(0, 4), fam(0, 0)),
+    unknown_hoppings = [(fam(0, 0), fam(0, 3)), (fam(0, 4), fam(0, 0)),
                         (fam(0, 0), fam(2, 3)), (fam(2, 4), fam(0, 0)),
                         (fam(4, 2), fam(6, 3)), (fam(6, 4), fam(4, 2))]
     sym = VerySimpleSymmetry(2)
     check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
-                                    failing_hoppings, sym)
+                                    unknown_hoppings, sym)
 
 
 def test_hermitian_conjugation():
