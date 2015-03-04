@@ -673,9 +673,6 @@ class TranslationalSymmetry(builder.Symmetry):
             return (builder.Site(a.family, a.tag + delta, True),
                     builder.Site(b.family, b.tag + delta2, True))
 
-    def to_fd(self, a, b=None):
-        return self.act(-self.which(a), a, b)
-
     def reversed(self):
         """Return a reversed copy of the symmetry.
 
