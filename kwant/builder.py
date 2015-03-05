@@ -964,6 +964,8 @@ class Builder(object):
     def attach_lead(self, lead_builder, origin=None):
         """Attach a lead to the builder, possibly adding missing sites.
 
+        Returns the lead number (integer) of the attached lead.
+
         Parameters
         ----------
         lead_builder : `Builder` with 1D translational symmetry
@@ -984,6 +986,9 @@ class Builder(object):
         -----
         This method is not fool-proof, i.e. if it returns an error, there is
         no guarantee that the system stayed unaltered.
+
+        The lead numbering starts from zero and increments from there, i.e.
+        the leads are numbered in the order in which they are attached.
         """
         sym = lead_builder.symmetry
         H = lead_builder.H

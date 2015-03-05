@@ -165,8 +165,9 @@ isolated, infinite is attached at the correct position using
     :start-after: #HIDDEN_BEGIN_fskr
     :end-before: #HIDDEN_END_fskr
 
-More details about attaching leads can be found in the tutorial
-:ref:`tutorial-abring`.
+This call returns the lead number which will be used to refer to the lead when
+computing transmissions (further down in this tutorial). More details about
+attaching leads can be found in the tutorial :ref:`tutorial-abring`.
 
 We also want to add a lead on the right side. The only difference to
 the left lead is that the vector of the translational
@@ -216,7 +217,9 @@ We use ``kwant.smatrix`` which is a short name for
 `kwant.solvers.default`.  ``kwant.smatrix`` computes the scattering matrix
 ``smatrix`` solving a sparse linear system.  ``smatrix`` itself allows to
 directly compute the total transmission probability from lead 0 to lead 1 as
-``smatrix.transmission(1, 0)``.
+``smatrix.transmission(1, 0)``. The numbering used to refer to the leads here
+is the same as the numbering assigned by the call to
+`kwant.builder.Builder.attach_lead` earlier in the tutorial.
 
 Finally we can use `matplotlib` to make a plot of the computed data
 (although writing to file and using an external viewer such as
