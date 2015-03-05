@@ -60,3 +60,17 @@ This allows leaving out one lead (preferably the widest) from ``out_leads``
 and ``in_leads``, and still to calculate all transmission probabilities.
 Doing so has been measured to speed up computations by 20% in some
 cases.
+
+Clearer error messages
+----------------------
+The error messages (exceptions) that appear when the Kwant interface is used incorrectly have been improved in many cases.  For example, if instead of ::
+
+    builder[lattice(0, 1)] = 1
+
+one writes ::
+
+    builder[(0, 1)] = 1
+
+the error message will be more helpful now.
+
+Please continue reporting confusing error messages on the Kwant mailing list.
