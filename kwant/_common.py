@@ -68,7 +68,7 @@ if version is None:
 class KwantDeprecationWarning(Warning):
     """Class of warnings about a deprecated feature of Kwant.
 
-    DeprecatedWarning has been made invisible by default in Python 2.7 in order
+    DeprecationWarning has been made invisible by default in Python 2.7 in order
     to not confuse non-developer users with warnings that are not relevant to
     them.  In the case of Kwant, by far most users are developers, so we feel
     that a KwantDeprecationWarning that is visible by default is useful.
