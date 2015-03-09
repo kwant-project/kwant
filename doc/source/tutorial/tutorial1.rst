@@ -219,7 +219,7 @@ We use ``kwant.smatrix`` which is a short name for
 directly compute the total transmission probability from lead 0 to lead 1 as
 ``smatrix.transmission(1, 0)``. The numbering used to refer to the leads here
 is the same as the numbering assigned by the call to
-`kwant.builder.Builder.attach_lead` earlier in the tutorial.
+`~kwant.builder.Builder.attach_lead` earlier in the tutorial.
 
 Finally we can use `matplotlib` to make a plot of the computed data
 (although writing to file and using an external viewer such as
