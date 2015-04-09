@@ -545,6 +545,7 @@ class SparseSolver(object):
 
 class WaveFunction(object):
     def __init__(self, solver, sys, energy, args, check_hermiticity):
+        ensure_isinstance(sys, system.System)
         for lead in sys.leads:
             if not hasattr(lead, 'modes'):
                 # TODO: figure out what to do with self-energies.
