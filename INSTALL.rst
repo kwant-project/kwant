@@ -420,7 +420,7 @@ Build configuration
 ===================
 
 The setup script of Kwant has to know how to link against LAPACK & BLAS, and,
-optionally, MUMPS.  Be default it will assume that LAPACK and BLAS can be found
+optionally, MUMPS.  By default it will assume that LAPACK and BLAS can be found
 under their usual names.  MUMPS will be not linked against by default, except
 on Debian-based systems when the package ``libmumps-scotch-dev`` is installed.
 
