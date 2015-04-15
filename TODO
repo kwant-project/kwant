@@ -2,6 +2,9 @@ Roughly in order of importance.                                     -*-org-*-
 
 * Document the order of sites/orbitals in finalized builders
 
+* Add a pos_transform argument to kwant.plotter.map
+  Check whether other arguments from plot() could be useful.
+
 * Add calculation of current density
 
 * Re-design the interface of low level systems
