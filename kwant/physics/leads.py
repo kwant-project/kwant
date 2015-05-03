@@ -20,6 +20,19 @@ dot = np.dot
 __all__ = ['selfenergy', 'modes', 'PropagatingModes', 'StabilizedModes']
 
 
+if np.__version__ >= '1.8':
+    complex_any = np.any
+else:
+    def complex_any(array):
+        """Check if a complex array has nonzero entries.
+
+        This function is needed due to a bug in numpy<1.8.
+        """
+        # TODO: Remove separate checking of real and imaginary parts once we depend
+        # on numpy>=1.8 (it is present due to a bug in earlier versions).
+        return np.any(array.real) or np.any(array.imag)
+
+
 # Container classes
 Linsys = namedtuple('Linsys', ['eigenproblem', 'v', 'extract'])
 
@@ -162,11 +175,9 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
     if stabilization is not None:
         stabilization = list(stabilization)
 
-    if not (np.any(h_hop.real) or np.any(h_hop.imag)):
+    if not complex_any(h_hop):
         # Inter-cell hopping is zero.  The current algorithm is not suited to
         # treat this extremely singular case.
-        # Note: np.any(h_hop) returns (at least from numpy 1.6.*)
-        #       False if h_hop is purely imaginary
         raise ValueError("Inter-cell hopping is exactly zero.")
 
     # If both h and t are real, it may be possible to use the real eigenproblem.
@@ -495,8 +506,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6):
     order = np.lexsort([velocities, -np.sign(velocities) * momenta,
                         np.sign(velocities)])
 
-    # The following is necessary due to wrong numpy handling of zero length
-    # arrays, which is going to be fixed in numpy 1.8.
+    # TODO: Remove the check once we depende on numpy>=1.8.
     if not len(order):
         order = slice(None)
     velocities = velocities[order]
@@ -567,9 +577,7 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
         h_cell.shape[0] != h_hop.shape[0]):
         raise ValueError("Incompatible matrix sizes for h_cell and h_hop.")
 
-    # Note: np.any(h_hop) returns (at least from numpy 1.6.1 - 1.8-devel)
-    #       False if h_hop is purely imaginary
-    if not (np.any(h_hop.real) or np.any(h_hop.imag)):
+    if not complex_any(h_hop):
         v = np.empty((0, m))
         return (PropagatingModes(np.empty((0, n)), np.empty((0,)),
                                  np.empty((0,))),
