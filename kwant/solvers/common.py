@@ -119,7 +119,7 @@ class SparseSolver(object):
         Returns
         -------
         (lhs, rhs, indices, num_orb) : LinearSys
-            `lhs` is a numpy.sparse.csc_matrix, containing the left hand side
+            `lhs` is a scipy.sparse.csc_matrix, containing the left hand side
             of the system of equations.  `rhs` is a list of matrices with the
             right hand side, with each matrix corresponding to one lead
             mentioned in `in_leads`. `indices` is a list of arrays of variables
