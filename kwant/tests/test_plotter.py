@@ -130,14 +130,24 @@ def test_plot():
             warnings.simplefilter("ignore")
             plot(sys2d.finalized(), file=out)
 
+def good_transform(pos):
+    x, y = pos
+    return y, x
+
+def bad_transform(pos):
+    x, y = pos
+    return x, y, 0
 
 def test_map():
     if not plotter.mpl_enabled:
         raise nose.SkipTest
     sys = sys_2d()
     with tempfile.TemporaryFile('w+b') as out:
-        plotter.map(sys, lambda site: site.tag[0], file=out,
-                          method='linear', a=4, oversampling=4, cmap='flag')
+        plotter.map(sys, lambda site: site.tag[0], pos_transform=good_transform,
+                    file=out, method='linear', a=4, oversampling=4, cmap='flag')
+        nose.tools.assert_raises(ValueError, plotter.map, sys,
+                                 lambda site: site.tag[0],
+                                 pos_transform=bad_transform, file=out)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             plotter.map(sys.finalized(), xrange(len(sys.sites())),
@@ -151,7 +161,7 @@ def test_mask_interpolate():
     coords = np.random.rand(10, 2)
     coords[5] *= 1e-8
     coords[5] += coords[0]
-    
+
     warnings.simplefilter("ignore")
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
@@ -162,5 +172,5 @@ def test_mask_interpolate():
 
     assert_raises(ValueError, plotter.mask_interpolate,
                   coords, np.ones(len(coords)))
-    assert_raises(ValueError, plotter.mask_interpolate, 
+    assert_raises(ValueError, plotter.mask_interpolate,
                   coords, np.ones(2 * len(coords)))

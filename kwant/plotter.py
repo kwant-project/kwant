@@ -1442,7 +1442,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
 
 def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         method='nearest', oversampling=3, num_lead_cells=0, file=None,
-        show=True, dpi=None, fig_size=None, ax=None):
+        show=True, dpi=None, fig_size=None, ax=None, pos_transform=None):
     """Show interpolated map of a function defined for the sites of a system.
 
     Create a pixmap representation of a function of the sites of a system by
@@ -1489,6 +1489,8 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         If `ax` is not `None`, no new figure is created, but the plot is done
         within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
         and `fig_size` are ignored.
+    pos_transform : function or `None`
+        Transformation to be applied to the site position.
 
     Returns
     -------
@@ -1508,8 +1510,13 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
 
     sites = sys_leads_sites(sys, 0)[0]
     coords = sys_leads_pos(sys, sites)
+
+    if pos_transform is not None:
+        coords = np.apply_along_axis(pos_transform, 1, coords)
+
     if coords.shape[1] != 2:
         raise ValueError('Only 2D systems can be plotted this way.')
+
     if callable(value):
         value = [value(site[0]) for site in sites]
     else:

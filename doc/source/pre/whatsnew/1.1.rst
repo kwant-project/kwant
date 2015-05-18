@@ -74,3 +74,8 @@ one writes ::
 the error message will be more helpful now.
 
 Please continue reporting confusing error messages on the Kwant mailing list.
+
+New option ``pos_transform`` of `~kwant.plotter.map`
+----------------------------------------------------------------
+This option which already existed for `kwant.plotter.plot` is now also
+available for `kwant.plotter.map`.
