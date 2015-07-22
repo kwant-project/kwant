@@ -73,7 +73,7 @@ def plot_data(sys, n):
     # use two different sort of triangles to cleanly fill the space
 #HIDDEN_BEGIN_plotdata3
     def family_shape(i):
-        site = sys.site(i)
+        site = sys.sites[i]
         return ('p', 3, 180) if site.family == a else ('p', 3, 0)
 
     def family_color(i):
