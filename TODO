@@ -121,8 +121,6 @@ Roughly in order of importance.                                     -*-org-*-
   Right now a mode with truly zero velocity may be incorrectly identified as
   propagating or evanescent.
 
-* Remove sphinxext and use an external numpydoc once it is available
-
 * Implement a pretty printer for lists/tuples of sites
 
 * Ensure 100% test coverage

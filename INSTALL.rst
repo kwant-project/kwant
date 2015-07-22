@@ -461,10 +461,10 @@ Building the documentation
 ==========================
 
 To build the documentation, the `Sphinx documentation generator
-<http://sphinx.pocoo.org/>`_ is required.  If PDF documentation is to be built,
-the tools from the `libRSVG <http://live.gnome.org/LibRsvg>`_ (Debian/Ubuntu
-package ``librsvg2-bin``) are needed to convert SVG drawings into the PDF
-format.
+<http://sphinx.pocoo.org/>`_ is required with ``numpydoc`` extension
+(version 0.5 or newer).  If PDF documentation is to be built, the tools
+from the `libRSVG <http://live.gnome.org/LibRsvg>`_ (Debian/Ubuntu package
+``librsvg2-bin``) are needed to convert SVG drawings into the PDF format.
 
 As a prerequisite for building the documentation, Kwant must have been built
 successfully using ``./setup.py build`` as described above (or Kwant must be
