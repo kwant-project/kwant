@@ -572,10 +572,10 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
     # Note: np.any(h_hop) returns (at least from numpy 1.6.1 - 1.8-devel)
     #       False if h_hop is purely imaginary
     if not (np.any(h_hop.real) or np.any(h_hop.imag)):
-        v = np.empty((0, m))
-        return PropagatingModes(np.empty((0, n)), np.empty((0,)),
-                                np.empty((0,))), \
-               StabilizedModes(np.empty((0, 0)), np.empty((0, 0)), 0, v)
+        v = np.zeros((0, m))
+        return (PropagatingModes(np.zeros((0, n)), np.zeros((0,)),
+                                 np.zeros((0,))),
+                StabilizedModes(np.zeros((0, 0)), np.zeros((0, 0)), 0, v))
 
     # Defer most of the calculation to helper routines.
     matrices, v, extract = setup_linsys(h_cell, h_hop, tol, stabilization)
