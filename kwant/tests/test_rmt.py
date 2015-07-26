@@ -19,6 +19,8 @@ def test_gaussian():
     for sym in rmt.sym_list:
         if sym not in ('A', 'D', 'AI'):
             assert_raises(ValueError, rmt.gaussian, 5, sym)
+        else:
+            rmt.gaussian(5, sym)  # Check it is allowed.
         h = rmt.gaussian(n, sym)
         if rmt.t(sym):
             t_mat = np.array(rmt.h_t_matrix[sym])

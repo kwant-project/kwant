@@ -106,12 +106,14 @@ def gaussian(n, sym='A', v=1.):
     """
     if sym not in sym_list:
         raise ValueError('Unknown symmetry type.')
-    if (c(sym) or t(sym) == -1 or p(sym) == -1) and n % 2:
-        raise ValueError('Matrix dimension should be even in chosen symmetry'
-                         'class.')
-    else:
-        tau_z = np.array((n // 2) * [1, -1])
-        idx_x = np.arange(n) + tau_z
+    if (c(sym) or t(sym) == -1 or p(sym) == -1):
+        if n % 2:
+            raise ValueError('Matrix dimension should be even in'
+                             ' chosen symmetry class.')
+        else:
+            tau_z = np.array((n // 2) * [1, -1])
+            idx_x = np.arange(n) + tau_z
+
     if sym == 'CII' and n % 4:
         raise ValueError('Matrix dimension should be a multiple of 4 in'
                          'symmetry class CII.')
