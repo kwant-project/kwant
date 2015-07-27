@@ -13,7 +13,7 @@ from kwant import rmt
 assert_allclose = np.testing.assert_allclose
 
 
-def test_gaussian():
+def test_gaussian_symmetries():
     np.random.seed(10)
     n = 8
     for sym in rmt.sym_list:
@@ -37,6 +37,10 @@ def test_gaussian():
             assert_allclose(h, -np.dot(sz, np.dot(h, sz)),
                             err_msg='SLS broken in ' + sym)
 
+
+def test_gaussian_distributions():
+    np.random.seed(1)
+    n = 8
     for sym in rmt.sym_list:
         matrices = np.array([rmt.gaussian(n, sym)[-1, 0] for i in range(3000)])
         matrices = matrices.imag if sym in ('D', 'BDI') else matrices.real
