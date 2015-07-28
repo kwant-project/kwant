@@ -1037,6 +1037,8 @@ class Builder(object):
     def attach_lead(self, lead_builder, origin=None, add_cells=0):
         """Attach a lead to the builder, possibly adding missing sites.
 
+        Returns the lead number (integer) of the attached lead.
+
         Parameters
         ----------
         lead_builder : `Builder` with 1D translational symmetry
@@ -1064,6 +1066,9 @@ class Builder(object):
         -----
         This method is not fool-proof, i.e. if it returns an error, there is
         no guarantee that the system stayed unaltered.
+
+        The lead numbering starts from zero and increments from there, i.e.
+        the leads are numbered in the order in which they are attached.
         """
         if add_cells < 0 or int(add_cells) != add_cells:
             raise ValueError('add_cells must be an integer >= 0.')

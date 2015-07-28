@@ -13,28 +13,33 @@ from kwant import rmt
 assert_allclose = np.testing.assert_allclose
 
 
-def test_gaussian():
+def test_gaussian_symmetries():
     np.random.seed(10)
-    n = 8
-    for sym in rmt.sym_list:
-        if sym not in ('A', 'D', 'AI'):
-            assert_raises(ValueError, rmt.gaussian, 5, sym)
-        h = rmt.gaussian(n, sym)
-        if rmt.t(sym):
-            t_mat = np.array(rmt.h_t_matrix[sym])
-            t_mat = np.kron(np.identity(n / len(t_mat)), t_mat)
-            assert_allclose(h, np.dot(t_mat, np.dot(h.conj(), t_mat)),
-                            err_msg='TRS broken in ' + sym)
-        if rmt.p(sym):
-            p_mat = np.array(rmt.h_p_matrix[sym])
-            p_mat = np.kron(np.identity(n / len(p_mat)), p_mat)
-            assert_allclose(h, -np.dot(p_mat, np.dot(h.conj(), p_mat)),
-                            err_msg='PHS broken in ' + sym)
-        if rmt.c(sym):
-            sz = np.kron(np.identity(n / 2), np.diag([1, -1]))
-            assert_allclose(h, -np.dot(sz, np.dot(h, sz)),
-                            err_msg='SLS broken in ' + sym)
+    for n in (5, 8, 100, 200):
+        for sym in rmt.sym_list:
+            if sym not in ('A', 'D', 'AI') and n % 2:
+                assert_raises(ValueError, rmt.gaussian, 5, sym)
+                continue
+            h = rmt.gaussian(n, sym)
+            if rmt.t(sym):
+                t_mat = np.array(rmt.h_t_matrix[sym])
+                t_mat = np.kron(np.identity(n / len(t_mat)), t_mat)
+                assert_allclose(h, np.dot(t_mat, np.dot(h.conj(), t_mat)),
+                                err_msg='TRS broken in ' + sym)
+            if rmt.p(sym):
+                p_mat = np.array(rmt.h_p_matrix[sym])
+                p_mat = np.kron(np.identity(n / len(p_mat)), p_mat)
+                assert_allclose(h, -np.dot(p_mat, np.dot(h.conj(), p_mat)),
+                                err_msg='PHS broken in ' + sym)
+            if rmt.c(sym):
+                sz = np.kron(np.identity(n / 2), np.diag([1, -1]))
+                assert_allclose(h, -np.dot(sz, np.dot(h, sz)),
+                                err_msg='SLS broken in ' + sym)
 
+
+def test_gaussian_distributions():
+    np.random.seed(1)
+    n = 8
     for sym in rmt.sym_list:
         matrices = np.array([rmt.gaussian(n, sym)[-1, 0] for i in range(3000)])
         matrices = matrices.imag if sym in ('D', 'BDI') else matrices.real
