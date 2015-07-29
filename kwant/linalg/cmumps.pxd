@@ -38,7 +38,8 @@ cdef extern from "zmumps_c.h":
         MUMPS_INT n
 
         MUMPS_INT nz
-        MUMPS_INT *irn, *jcn
+        MUMPS_INT *irn
+        MUMPS_INT *jcn
         ZMUMPS_COMPLEX *a
 
         MUMPS_INT nrhs, lrhs
@@ -49,9 +50,11 @@ cdef extern from "zmumps_c.h":
 
         MUMPS_INT nz_rhs
         ZMUMPS_COMPLEX *rhs_sparse
-        MUMPS_INT *irhs_sparse, *irhs_ptr
+        MUMPS_INT *irhs_sparse
+        MUMPS_INT *irhs_ptr
 
-        MUMPS_INT size_schur, *listvar_schur
+        MUMPS_INT size_schur
+        MUMPS_INT *listvar_schur
         ZMUMPS_COMPLEX *schur
 
     cdef void zmumps_c(ZMUMPS_STRUC_C *)

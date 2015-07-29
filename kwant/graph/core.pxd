@@ -24,14 +24,19 @@ cdef class Graph:
     cdef _add_edges_ndarray_int32(self, np.ndarray[np.int32_t, ndim=2] edges)
 
 cdef class gintArraySlice:
-    cdef gint *data, size
+    cdef gint *data
+    cdef gint size
 
 cdef class CGraph:
     cdef readonly bint twoway, edge_nr_translation
     cdef readonly gint num_nodes, num_edges, num_px_edges, num_xp_edges
-    cdef gint *heads_idxs, *heads
-    cdef gint *tails_idxs, *tails, *edge_ids
-    cdef gint *edge_ids_by_edge_nr, edge_nr_end
+    cdef gint *heads_idxs
+    cdef gint *heads
+    cdef gint *tails_idxs
+    cdef gint *tails
+    cdef gint *edge_ids
+    cdef gint *edge_ids_by_edge_nr
+    cdef gint edge_nr_end
 
     cpdef gintArraySlice out_neighbors(self, gint node)
 
