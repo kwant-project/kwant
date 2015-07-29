@@ -72,7 +72,7 @@ cdef class Graph:
             raise MemoryError
         self.capacity = capacity
 
-    cpdef gint add_edge(self, gint tail, gint head):
+    cpdef gint add_edge(self, gint tail, gint head) except -1:
         """Add the directed edge (`tail`, `head`) to the graph.
 
         Parameters
