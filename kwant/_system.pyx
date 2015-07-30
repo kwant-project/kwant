@@ -12,8 +12,8 @@ import numpy as np
 from scipy import sparse as sp
 from itertools import chain
 
-from kwant.graph.core cimport CGraph, gintArraySlice
-from kwant.graph.defs cimport gint
+from .graph.core cimport CGraph, gintArraySlice
+from .graph.defs cimport gint
 from .graph.defs import gint_dtype
 
 msg = ('Hopping from site {0} to site {1} does not match the '

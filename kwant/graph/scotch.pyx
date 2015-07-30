@@ -13,9 +13,9 @@ __all__ = ['bisect', 'reset']
 cimport libc.stdio
 import numpy as np
 cimport numpy as np
-from kwant.graph cimport core
+from . cimport core
 from . import core, defs
-from kwant.graph.c_scotch cimport *
+from .c_scotch cimport *
 
 DEF SCOTCH_STRATQUALITY = 1
 DEF SCOTCH_STRATSPEED = 2

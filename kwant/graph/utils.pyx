@@ -16,9 +16,9 @@ cimport numpy as np
 from libc.stdlib cimport malloc, realloc, free
 from libc.string cimport memset
 cimport cython
-from kwant.graph.defs cimport gint
+from .defs cimport gint
 from .defs import gint_dtype
-from kwant.graph.core cimport CGraph, CGraph_malloc
+from .core cimport CGraph, CGraph_malloc
 from .core import CGraph, CGraph_malloc
 
 @cython.boundscheck(False)

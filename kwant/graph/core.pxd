@@ -7,7 +7,7 @@
 # http://kwant-project.org/authors.
 
 cimport numpy as np
-from kwant.graph.defs cimport gint
+from .defs cimport gint
 
 cdef struct Edge:
     gint tail, head

@@ -30,7 +30,7 @@ from libc.stdlib cimport malloc, realloc, free
 from libc.string cimport memset
 import numpy as np
 cimport numpy as np
-from kwant.graph.defs cimport gint
+from .defs cimport gint
 
 cdef class Graph:
     """An uncompressed graph.  Used to make compressed graphs.  (See `CGraph`.)

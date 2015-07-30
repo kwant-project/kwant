@@ -10,10 +10,10 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from libc.string cimport memcpy
-from kwant.graph.defs cimport gint
+from .defs cimport gint
 from .defs import gint_dtype
-from kwant.graph.core cimport CGraph
-cimport kwant.graph.c_slicer as c_slicer
+from .core cimport CGraph
+from . cimport c_slicer
 
 __all__ = ['slice']
 
