@@ -271,7 +271,7 @@ The following software is highly recommended though not strictly required:
 
 In addition, to build a copy of Kwant that has been checked-out directly from
 `its Git repository <http://git.kwant-project.org/kwant>`_, you will also need
-`Cython <http://cython.org/>`_ 0.17.1 or newer.  You do not need Cython to build
+`Cython <http://cython.org/>`_ 0.22 or newer.  You do not need Cython to build
 Kwant that has been unpacked from a source .tar.gz-file.
 
 
