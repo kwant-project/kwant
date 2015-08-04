@@ -31,6 +31,7 @@ README_END_BEFORE = 'See also in this directory:'
 STATIC_VERSION_FILE = 'kwant/_static_version.py'
 REQUIRED_CYTHON_VERSION = (0, 22)
 NO_CYTHON_OPTION = '--no-cython'
+NO_GIT_OPTION = '--no-git'
 TUT_DIR = 'tutorial'
 TUT_GLOB = 'doc/source/tutorial/*.py'
 TUT_HIDDEN_PREFIX = '#HIDDEN'
@@ -54,6 +55,12 @@ try:
     cythonize = False
 except ValueError:
     cythonize = True
+
+try:
+    sys.argv.remove(NO_GIT_OPTION)
+    use_git = False
+except ValueError:
+    use_git = True
 
 if cythonize and cython_version:
     from Cython.Distutils import build_ext
@@ -150,6 +157,9 @@ class test(Command):
 
 
 def git_lsfiles():
+    if not use_git:
+        return
+
     try:
         p = subprocess.Popen(['git', 'ls-files'], cwd=distr_root,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -218,6 +228,9 @@ class kwant_sdist(distutils_sdist):
 # it here (because Kwant is not yet built when this scipt is run), so we just
 # include a copy.
 def get_version_from_git():
+    if not use_git:
+        return
+
     try:
         p = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'],
                              cwd=distr_root,
