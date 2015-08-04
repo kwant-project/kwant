@@ -260,7 +260,7 @@ def get_version_from_git():
     return version
 
 
-def get_static_version():
+def read_static_version():
     """Return the version as recorded inside the source code."""
     try:
         with open(STATIC_VERSION_FILE) as f:
@@ -272,15 +272,20 @@ def get_static_version():
         return None
 
 
+def write_static_version(version):
+    """Record the version so that it is available without version control."""
+    with open(STATIC_VERSION_FILE, 'w') as f:
+        f.write("version = '%s'\n" % version)
+
+
 def version():
     """Determine the version of Kwant.  Return it and save it in a file."""
     git_version = get_version_from_git()
-    static_version = get_static_version()
+    static_version = read_static_version()
     if git_version is not None:
         version = git_version
         if static_version != git_version:
-            with open(STATIC_VERSION_FILE, 'w') as f:
-                f.write("version = '%s'\n" % version)
+            write_static_version(version)
     elif static_version is not None:
         version = static_version
     else:
