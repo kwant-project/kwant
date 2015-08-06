@@ -6,7 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from __future__ import division
+
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
            'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergyLead', 'ModesLead']
@@ -14,11 +14,12 @@ __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
 import abc
 import warnings
 import operator
-from itertools import izip, islice, chain
+from itertools import islice, chain
 import tinyarray as ta
 import numpy as np
 from . import system, graph, KwantDeprecationWarning
 from ._common import ensure_isinstance
+import collections
 
 
 
@@ -84,7 +85,7 @@ class Site(tuple):
         return self.family.pos(self.tag)
 
 
-class SiteFamily(object):
+class SiteFamily(object, metaclass=abc.ABCMeta):
     """Abstract base class for site families.
 
     Site families are the 'type' of `Site` objects.  Within a family, individual
@@ -107,7 +108,6 @@ class SiteFamily(object):
     site belonging to this family with a given tag.
 
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, canonical_repr, name):
         self.canonical_repr = canonical_repr
@@ -224,7 +224,7 @@ def validate_hopping(hopping):
 
 ################ Symmetries
 
-class Symmetry(object):
+class Symmetry(object, metaclass=abc.ABCMeta):
     """Abstract base class for spatial symmetries.
 
     Many physical systems possess a discrete spatial symmetry, which results in
@@ -249,7 +249,6 @@ class Symmetry(object):
     typical example of this is when the vector defining a translational
     symmetry is not a lattice vector.
     """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractproperty
     def num_directions(self):
@@ -430,7 +429,7 @@ class HermConjOfFunc(object):
 
 ################ Leads
 
-class Lead(object):
+class Lead(object, metaclass=abc.ABCMeta):
     """Abstract base class for leads that can be attached to a `Builder`.
 
     To attach a lead to a builder, append it to the builder's `~Builder.leads`
@@ -442,7 +441,6 @@ class Lead(object):
     interface : sequence of sites
 
     """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def finalized(self):
@@ -567,7 +565,7 @@ def edges(seq):
     # izip, when given the same iterator twice, turns a sequence into a
     # sequence of pairs.
     seq_iter = iter(seq)
-    result = izip(seq_iter, seq_iter)
+    result = zip(seq_iter, seq_iter)
     next(result)                # Skip the special loop edge.
     return result
 
@@ -766,7 +764,7 @@ class Builder(object):
         result.H = self.H
         return result
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.H)
 
     def expand(self, key):
@@ -797,7 +795,7 @@ class Builder(object):
         iter_stack = [None]
         while iter_stack:
             for key in itr:
-                while callable(key):
+                while isinstance(key, collections.Callable):
                     key = key(self)
                 if isinstance(key, tuple):
                     # Site instances are also tuples.
@@ -828,7 +826,7 @@ class Builder(object):
                 b, a = sym.to_fd(b, a)
                 assert not sym.in_fd(a)
             value = self._get_edge(b, a)
-            if callable(value):
+            if isinstance(value, collections.Callable):
                 assert not isinstance(value, HermConjOfFunc)
                 value = HermConjOfFunc(value)
             else:
@@ -974,13 +972,13 @@ class Builder(object):
         initially (but always the equivalent ones).
         """
         try:
-            return self.H.viewkeys()
+            return self.H.keys()
         except AttributeError:
             return frozenset(self.H)
 
     def site_value_pairs(self):
         """Return an iterator over all (site, value) pairs."""
-        for site, hvhv in self.H.iteritems():
+        for site, hvhv in self.H.items():
             yield site, hvhv[1]
 
     def hoppings(self):
@@ -990,7 +988,7 @@ class Builder(object):
         `Builder` symmetry, and are not necessarily the ones that were set
         initially (but always the equivalent ones).
         """
-        for tail, hvhv in self.H.iteritems():
+        for tail, hvhv in self.H.items():
             for head, value in edges(hvhv):
                 if value is Other:
                     continue
@@ -998,7 +996,7 @@ class Builder(object):
 
     def hopping_value_pairs(self):
         """Return an iterator over all (hopping, value) pairs."""
-        for tail, hvhv in self.H.iteritems():
+        for tail, hvhv in self.H.items():
             for head, value in edges(hvhv):
                 if value is Other:
                     continue
@@ -1201,7 +1199,7 @@ class Builder(object):
         #### Make graph.
         g = graph.Graph()
         g.num_nodes = len(sites)  # Some sites could not appear in any edge.
-        for tail, hvhv in self.H.iteritems():
+        for tail, hvhv in self.H.items():
             for head in islice(hvhv, 2, None, 2):
                 if tail == head:
                     continue
@@ -1225,7 +1223,7 @@ class Builder(object):
                     msg = 'When finalizing lead {0}:'.format(lead_nr)
                     warnings.warn(w.__class__(' '.join((msg,) + w.args)),
                                   stacklevel=3)
-            except ValueError, e:
+            except ValueError as e:
                 # Re-raise the exception with an additional message.
                 msg = 'Problem finalizing lead {0}:'.format(lead_nr)
                 e.args = (' '.join((msg,) + e.args),)
@@ -1387,7 +1385,7 @@ class FiniteSystem(system.FiniteSystem):
     def hamiltonian(self, i, j, *args):
         if i == j:
             value = self.onsite_hamiltonians[i]
-            if callable(value):
+            if isinstance(value, collections.Callable):
                 value = value(self.sites[i], *args)
         else:
             edge_id = self.graph.first_edge_id(i, j)
@@ -1397,7 +1395,7 @@ class FiniteSystem(system.FiniteSystem):
                 i, j = j, i
                 edge_id = self.graph.first_edge_id(i, j)
                 value = self.hoppings[edge_id]
-            if callable(value):
+            if isinstance(value, collections.Callable):
                 sites = self.sites
                 value = value(sites[i], sites[j], *args)
             if conj:
@@ -1421,7 +1419,7 @@ class InfiniteSystem(system.InfiniteSystem):
             if i >= self.cell_size:
                 i -= self.cell_size
             value = self.onsite_hamiltonians[i]
-            if callable(value):
+            if isinstance(value, collections.Callable):
                 value = value(self.symmetry.to_fd(self.sites[i]), *args)
         else:
             edge_id = self.graph.first_edge_id(i, j)
@@ -1431,7 +1429,7 @@ class InfiniteSystem(system.InfiniteSystem):
                 i, j = j, i
                 edge_id = self.graph.first_edge_id(i, j)
                 value = self.hoppings[edge_id]
-            if callable(value):
+            if isinstance(value, collections.Callable):
                 sites = self.sites
                 site_i = sites[i]
                 site_j = sites[j]

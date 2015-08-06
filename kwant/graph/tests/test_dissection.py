@@ -19,13 +19,13 @@ def _DISABLED_test_edge_dissection():
     size = 5
     graph = Graph()
 
-    for i in xrange(size - 1):
+    for i in range(size - 1):
         offset = i * size
-        for j in xrange(size - 1):
+        for j in range(size - 1):
             graph.add_edge(offset + j, offset + j + 1)
             graph.add_edge(offset + j + 1, offset + j)
         if i > 0:
-            for j in xrange(size):
+            for j in range(size):
                 graph.add_edge(offset + j, offset + j - size)
                 graph.add_edge(offset + j - size, offset + j)
     g = graph.compressed()

@@ -17,7 +17,7 @@ from kwant.builder import Builder, HoppingKind
 from numpy.testing.decorators import skipif
 import numpy as np
 import scipy.sparse as sp
-from _test_utils import _Random, assert_array_almost_equal
+from ._test_utils import _Random, assert_array_almost_equal
 
 @skipif(no_mumps)
 def test_lu_with_dense():
@@ -53,7 +53,7 @@ def test_schur_complement_with_dense():
     def _test_schur_complement_with_dense(dtype):
         rand = _Random()
         a = rand.randmat(10, 10, dtype)
-        s = schur_complement(sp.coo_matrix(a), range(3))
+        s = schur_complement(sp.coo_matrix(a), list(range(3)))
         assert_array_almost_equal(dtype, np.linalg.inv(s),
                                   np.linalg.inv(a)[:3, :3])
 

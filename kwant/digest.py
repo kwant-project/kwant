@@ -19,7 +19,7 @@ good enough to pass the "dieharder" battery of tests: see the function `test` of
 this module.
 """
 
-from __future__ import division
+
 
 from math import pi, log, sqrt, cos
 from hashlib import md5
@@ -96,8 +96,8 @@ def test(n=20000):
 
     f = tempfile.NamedTemporaryFile(delete=False)
     try:
-        for x in xrange(n):
-            for y in xrange(n):
+        for x in range(n):
+            for y in range(n):
                 a = array((x, y))
                 i = int(2**32 * uniform(a))
                 f.write(pack('I', i))

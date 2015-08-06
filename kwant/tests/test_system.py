@@ -14,9 +14,9 @@ import kwant
 def test_hamiltonian_submatrix():
     sys = kwant.Builder()
     chain = kwant.lattice.chain()
-    for i in xrange(3):
+    for i in range(3):
         sys[chain(i)] = 0.5 * i
-    for i in xrange(2):
+    for i in range(2):
         sys[chain(i), chain(i + 1)] = 1j * (i + 1)
 
     sys2 = sys.finalized()
@@ -87,8 +87,8 @@ def test_hamiltonian_submatrix():
         return p1 - p2
 
     sys = kwant.Builder()
-    sys[(chain(i) for i in xrange(3))] = onsite
-    sys[((chain(i), chain(i + 1)) for i in xrange(2))] = hopping
+    sys[(chain(i) for i in range(3))] = onsite
+    sys[((chain(i), chain(i + 1)) for i in range(2))] = hopping
     sys2 = sys.finalized()
     mat = sys2.hamiltonian_submatrix((2, 1))
     mat_should_be = [[3, 1, 0], [1, 4, 1], [0, 1, 5]]

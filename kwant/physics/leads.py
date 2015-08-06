@@ -6,10 +6,10 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from __future__ import division
+
 from math import sin, cos, sqrt, pi, copysign
 from collections import namedtuple
-from itertools import izip
+
 import numpy as np
 import numpy.linalg as npl
 import scipy.linalg as la
@@ -434,7 +434,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6):
     if boundaries.shape == (0,) and len(angles):
         boundaries = np.array([0, len(angles)])
 
-    for interval in izip(boundaries[:-1], boundaries[1:]):
+    for interval in zip(boundaries[:-1], boundaries[1:]):
         if interval[1] > boundaries[0] + len(angles):
             break
 
@@ -661,8 +661,8 @@ def square_selfenergy(width, hopping, fermi_energy):
     psi_p_i = np.empty((width, width))
     factor = pi / (width + 1)
     prefactor = sqrt(2 / (width + 1))
-    for p in xrange(width):
-        for i in xrange(width):
+    for p in range(width):
+        for i in range(width):
             psi_p_i[p, i] = prefactor * sin(factor * (p + 1) * (i + 1))
 
     # Precalculate the integrals of the longitudinal wave functions.
@@ -672,15 +672,15 @@ def square_selfenergy(width, hopping, fermi_energy):
         else:
             return q/2 - copysign(sqrt((q / 2) ** 2 - 1), q)
     f_p = np.empty((width,), dtype=complex)
-    for p in xrange(width):
+    for p in range(width):
         e = 2 * hopping * (1 - cos(factor * (p + 1)))
         q = (fermi_energy - e) / hopping - 2
         f_p[p] = f(q)
 
     # Put everything together into the self energy and return it.
     result = np.empty((width, width), dtype=complex)
-    for i in xrange(width):
-        for j in xrange(width):
+    for i in range(width):
+        for j in range(width):
             result[i, j] = hopping * (
                 psi_p_i[:, i] * psi_p_i[:, j].conj() * f_p).sum()
     return result

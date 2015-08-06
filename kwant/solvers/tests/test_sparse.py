@@ -9,7 +9,7 @@
 from nose.plugins.skip import SkipTest
 from  kwant.solvers.sparse import smatrix, greens_function, ldos, wave_function
 import kwant.solvers.sparse
-import _test_sparse
+from . import _test_sparse
 
 def test_output():
     _test_sparse.test_output(smatrix)

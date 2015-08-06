@@ -31,7 +31,7 @@ def test_importable_without_matplotlib():
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        exec code               # Trigger the warning.
+        exec(code)               # Trigger the warning.
         nose.tools.assert_equal(len(w), 1)
         assert issubclass(w[0].category, RuntimeWarning)
         assert "only iterator-providing functions" in str(w[0].message)
@@ -103,7 +103,7 @@ def test_plot():
             for sys in (sys2d, sys3d):
                 fig = plot(sys, site_color=color, cmap='binary', file=out)
                 if (color != 'k' and
-                    isinstance(color(iter(sys2d.sites()).next()), float)):
+                    isinstance(color(next(iter(sys2d.sites()))), float)):
                     assert fig.axes[0].collections[0].get_array() is not None
                 assert len(fig.axes[0].collections) == (8 if sys is sys2d else
                                                         6)
@@ -114,7 +114,7 @@ def test_plot():
             for sys in (sys2d, sys3d):
                 fig = plot(sys2d, hop_color=color, cmap='binary', file=out,
                            fig_size=(2, 10), dpi=30)
-                if color != 'k' and isinstance(color(iter(sys2d.sites()).next(),
+                if color != 'k' and isinstance(color(next(iter(sys2d.sites())),
                                                           None), float):
                     assert fig.axes[0].collections[1].get_array() is not None
 
@@ -150,10 +150,10 @@ def test_map():
                                  pos_transform=bad_transform, file=out)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            plotter.map(sys.finalized(), xrange(len(sys.sites())),
+            plotter.map(sys.finalized(), range(len(sys.sites())),
                               file=out)
         nose.tools.assert_raises(ValueError, plotter.map, sys,
-                                 xrange(len(sys.sites())), file=out)
+                                 range(len(sys.sites())), file=out)
 
 
 def test_mask_interpolate():

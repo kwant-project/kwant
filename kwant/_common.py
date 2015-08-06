@@ -42,7 +42,7 @@ def get_version_from_git():
             break
     else:
         return
-    description = p.communicate()[0].strip('v').rstrip('\n')
+    description = p.communicate()[0].decode().strip('v').rstrip('\n')
 
     release, dev, git = description.rsplit('-', 2)
     version = [release]

@@ -69,7 +69,7 @@ if mpl_enabled:
 # Collections that allow for symbols and linewiths to be given in data space
 # (not for general use, only implement what's needed for plotter)
 def isarray(var):
-    if hasattr(var, '__getitem__') and not isinstance(var, basestring):
+    if hasattr(var, '__getitem__') and not isinstance(var, str):
         return True
     else:
         return False
@@ -717,18 +717,18 @@ def sys_leads_sites(sys, num_lead_cells=2):
             if hasattr(lead, 'builder') and len(lead.interface):
                 sites.extend(((site, leadnr, i) for site in
                               lead.builder.sites() for i in
-                              xrange(num_lead_cells)))
+                              range(num_lead_cells)))
             lead_cells.append(slice(start, len(sites)))
     elif isinstance(sys, system.FiniteSystem):
-        sites = [(i, None, 0) for i in xrange(sys.graph.num_nodes)]
+        sites = [(i, None, 0) for i in range(sys.graph.num_nodes)]
         for leadnr, lead in enumerate(sys.leads):
             start = len(sites)
             # We will only plot leads with a graph and with a symmetry.
             if (hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and
                 len(sys.lead_interfaces[leadnr])):
                 sites.extend(((site, leadnr, i) for site in
-                              xrange(lead.cell_size) for i in
-                              xrange(num_lead_cells)))
+                              range(lead.cell_size) for i in
+                              range(num_lead_cells)))
             lead_cells.append(slice(start, len(sites)))
     else:
         raise TypeError('Unrecognized system type.')
@@ -796,10 +796,10 @@ def sys_leads_pos(sys, site_lead_nr):
         # Conversion to numpy array here useful for efficiency
         vec = np.array(sym.periods)[0]
         return vec, dom
-    vecs_doms = dict((i, get_vec_domain(i)) for i in xrange(len(sys.leads)))
+    vecs_doms = dict((i, get_vec_domain(i)) for i in range(len(sys.leads)))
     vecs_doms[None] = np.zeros((dim,)), 0
-    for k, v in vecs_doms.iteritems():
-        vecs_doms[k] = [v[0] * i for i in xrange(v[1], v[1] + num_lead_cells)]
+    for k, v in vecs_doms.items():
+        vecs_doms[k] = [v[0] * i for i in range(v[1], v[1] + num_lead_cells)]
     pos += [vecs_doms[i[1]][i[2]] for i in site_lead_nr]
     return pos
 
@@ -856,11 +856,11 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
             if hasattr(lead, 'builder') and len(lead.interface):
                 hoppings.extend(((hop, leadnr, i) for hop in
                                  lead_hoppings(lead.builder) for i in
-                                 xrange(num_lead_cells)))
+                                 range(num_lead_cells)))
             lead_cells.append(slice(start, len(hoppings)))
     elif isinstance(sys, system.System):
         def ll_hoppings(sys):
-            for i in xrange(sys.graph.num_nodes):
+            for i in range(sys.graph.num_nodes):
                 for j in sys.graph.out_neighbors(i):
                     if i < j:
                         yield i, j
@@ -872,7 +872,7 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
             if (hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and
                 len(sys.lead_interfaces[leadnr])):
                 hoppings.extend(((hop, leadnr, i) for hop in ll_hoppings(lead)
-                                 for i in xrange(num_lead_cells)))
+                                 for i in range(num_lead_cells)))
             lead_cells.append(slice(start, len(hoppings)))
     else:
         raise TypeError('Unrecognized system type.')
@@ -942,10 +942,10 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
         vec = np.array(sym.periods)[0]
         return np.r_[vec, vec], dom
 
-    vecs_doms = dict((i, get_vec_domain(i)) for i in xrange(len(sys.leads)))
+    vecs_doms = dict((i, get_vec_domain(i)) for i in range(len(sys.leads)))
     vecs_doms[None] = np.zeros((dim,)), 0
-    for k, v in vecs_doms.iteritems():
-        vecs_doms[k] = [v[0] * i for i in xrange(v[1], v[1] + num_lead_cells)]
+    for k, v in vecs_doms.items():
+        vecs_doms[k] = [v[0] * i for i in range(v[1], v[1] + num_lead_cells)]
     pos += [vecs_doms[i[1]][i[2]] for i in hop_lead_nr]
     return np.copy(pos[:, : dim / 2]), np.copy(pos[:, dim / 2:])
 
@@ -1136,7 +1136,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         if name in ('site_size', 'site_lw') and isinstance(value, tuple):
             raise TypeError('{0} may not be a tuple, use list or '
                             'array instead.'.format(name))
-        if isinstance(value, (basestring, tuple)):
+        if isinstance(value, (str, tuple)):
             return
         try:
             if len(value) != n_sys_sites:
@@ -1195,7 +1195,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
     # make all specs proper: either constant or lists/np.arrays:
     def make_proper_site_spec(spec, fancy_indexing=False):
-        if callable(spec):
+        if isinstance(spec, collections.Callable):
             spec = [spec(i[0]) for i in sites if i[1] is None]
         if (fancy_indexing and isarray(spec)
             and not isinstance(spec, np.ndarray)):
@@ -1206,7 +1206,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         return spec
 
     def make_proper_hop_spec(spec, fancy_indexing=False):
-        if callable(spec):
+        if isinstance(spec, collections.Callable):
             spec = [spec(*i[0]) for i in hops if i[1] is None]
         if (fancy_indexing and isarray(spec)
             and not isinstance(spec, np.ndarray)):
@@ -1226,7 +1226,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         for i, symbol in enumerate(site_symbol):
             symbol_dict[symbol].append(i)
         symbol_slcs = []
-        for symbol, indx in symbol_dict.iteritems():
+        for symbol, indx in symbol_dict.items():
             symbol_slcs.append((symbol, np.array(indx)))
         fancy_indexing = True
     else:
@@ -1285,7 +1285,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
                        else defaults['hop_lw'][dim])
 
     hop_cmap = None
-    if not isinstance(cmap, basestring):
+    if not isinstance(cmap, str):
         try:
             cmap, hop_cmap = cmap
         except TypeError:
@@ -1537,7 +1537,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     if coords.shape[1] != 2:
         raise ValueError('Only 2D systems can be plotted this way.')
 
-    if callable(value):
+    if isinstance(value, collections.Callable):
         value = [value(site[0]) for site in sites]
     else:
         if not isinstance(sys, system.FiniteSystem):

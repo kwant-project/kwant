@@ -15,6 +15,7 @@ import numpy as np
 import scipy.sparse as sp
 from .._common import ensure_isinstance
 from .. import system
+from functools import reduce
 
 # Currently, scipy.sparse does not support matrices with one dimension being
 # zero: http://projects.scipy.org/scipy/ticket/1602 We use NumPy dense matrices
@@ -28,7 +29,7 @@ from .. import system
 LinearSys = namedtuple('LinearSys', ['lhs', 'rhs', 'indices', 'num_orb'])
 
 
-class SparseSolver(object):
+class SparseSolver(object, metaclass=abc.ABCMeta):
     """Solver class for computing physical quantities based on solving
     a liner system of equations.
 
@@ -51,7 +52,6 @@ class SparseSolver(object):
       too avoid excessive memory usage, but for some solvers not too small for
       performance reasons.
     """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def _factorized(self, a):
@@ -333,11 +333,11 @@ class SparseSolver(object):
 
         n = len(sys.lead_interfaces)
         if in_leads is None:
-            in_leads = range(n)
+            in_leads = list(range(n))
         else:
             in_leads = list(in_leads)
         if out_leads is None:
-            out_leads = range(n)
+            out_leads = list(range(n))
         else:
             out_leads = list(out_leads)
         if (np.any(np.diff(in_leads) <= 0) or np.any(np.diff(out_leads) <= 0)):
@@ -420,11 +420,11 @@ class SparseSolver(object):
 
         n = len(sys.lead_interfaces)
         if in_leads is None:
-            in_leads = range(n)
+            in_leads = list(range(n))
         else:
             in_leads = list(in_leads)
         if out_leads is None:
-            out_leads = range(n)
+            out_leads = list(range(n))
         else:
             out_leads = list(out_leads)
         if (np.any(np.diff(in_leads) <= 0) or np.any(np.diff(out_leads) <= 0)):
@@ -489,7 +489,7 @@ class SparseSolver(object):
                 raise NotImplementedError("ldos for leads with only "
                                           "self-energy is not implemented yet.")
 
-        linsys = self._make_linear_sys(sys, xrange(len(sys.leads)), energy,
+        linsys = self._make_linear_sys(sys, range(len(sys.leads)), energy,
                                        args, check_hermiticity)[0]
 
         ldos = np.zeros(linsys.num_orb, float)
@@ -503,7 +503,7 @@ class SparseSolver(object):
         # See comment about zero-shaped sparse matrices at the top of common.py.
         rhs = sp.bmat([[i for i in linsys.rhs if i.shape[1]]],
                       format=self.rhsformat)
-        for j in xrange(0, rhs.shape[1], self.nrhs):
+        for j in range(0, rhs.shape[1], self.nrhs):
             jend = min(j + self.nrhs, rhs.shape[1])
             psi = self._solve_linear_sys(factored, rhs[:, j:jend],
                                          slice(linsys.num_orb))
@@ -555,7 +555,7 @@ class WaveFunction(object):
                 msg = ('Wave functions for leads with only self-energy'
                        ' are not available yet.')
                 raise NotImplementedError(msg)
-        linsys = solver._make_linear_sys(sys, xrange(len(sys.leads)), energy,
+        linsys = solver._make_linear_sys(sys, range(len(sys.leads)), energy,
                                          args, check_hermiticity)[0]
         self.solve = solver._solve_linear_sys
         self.rhs = linsys.rhs
@@ -568,11 +568,10 @@ class WaveFunction(object):
         return result.transpose()
 
 
-class BlockResult(object):
+class BlockResult(object, metaclass=abc.ABCMeta):
     """
     ABC for a linear system solution with variable grouping.
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, data, lead_info, out_leads, in_leads, sizes,
                  current_conserving=False):
@@ -676,7 +675,7 @@ class BlockResult(object):
         Section 2.4 of the book by S. Datta.
         """
         n = len(self.lead_info)
-        rn = xrange(n)
+        rn = range(n)
         result = np.array([[-self.transmission(i, j) if i != j else 0
                             for j in rn] for i in rn])
         # Set the diagonal elements such that the sums of columns are zero.

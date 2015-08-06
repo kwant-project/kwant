@@ -84,7 +84,7 @@ class Solver(common.SparseSolver):
             self.nrhs = nrhs
 
         if ordering is not None:
-            if ordering not in mumps.orderings.keys() + ['kwant_decides']:
+            if ordering not in list(mumps.orderings.keys()) + ['kwant_decides']:
                 raise ValueError("Invalid ordering: " + ordering)
             if ordering == 'kwant_decides':
                 # Choose what is considered to be the best ordering.
@@ -111,7 +111,7 @@ class Solver(common.SparseSolver):
         solve = factorized_a.solve
         sols = []
 
-        for j in xrange(0, b.shape[1], self.nrhs):
+        for j in range(0, b.shape[1], self.nrhs):
             tmprhs = b[:, j:min(j + self.nrhs, b.shape[1])]
 
             if not self.sparse_rhs:

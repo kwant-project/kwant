@@ -6,9 +6,9 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from __future__ import division
+
 import numpy as np
-from itertools import product, izip
+from itertools import product
 from numpy.testing import assert_almost_equal
 from kwant.physics import leads
 import kwant
@@ -273,14 +273,14 @@ def test_algorithm_equivalence():
         evan_vecs.append(full_vecs[:, 2 * result.nmodes :])
 
     msg = 'Stabilization {0} failed.'
-    for vecs, algo in izip(prop_vecs, algos):
+    for vecs, algo in zip(prop_vecs, algos):
         # Propagating modes should have identical ordering, and only vary
         # By a phase
         np.testing.assert_allclose(np.abs(np.sum(vecs/prop_vecs[0],
                                                  axis=0)), vecs.shape[0],
                                    err_msg=msg.format(algo))
 
-    for vecs, algo in izip(evan_vecs, algos):
+    for vecs, algo in zip(evan_vecs, algos):
         # Evanescent modes must span the same linear space.
         assert (np.linalg.matrix_rank(np.c_[vecs, evan_vecs[0]], tol=1e-12) ==
                 vecs.shape[1]), msg.format(algo)

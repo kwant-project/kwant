@@ -6,7 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from __future__ import division
+
 import warnings
 from random import Random
 from nose.tools import assert_raises
@@ -84,7 +84,7 @@ def test_bad_keys():
                     try:
                         assert_raises(error, func, key)
                     except AssertionError:
-                        print func, error, key
+                        print(func, error, key)
                         raise
 
 
@@ -259,14 +259,14 @@ def random_hopping_integral(rng):
 
 def check_onsite(fsys, sites, subset=False, check_values=True):
     freq = {}
-    for node in xrange(fsys.graph.num_nodes):
+    for node in range(fsys.graph.num_nodes):
         site = fsys.sites[node].tag
         freq[site] = freq.get(site, 0) + 1
         if check_values and site in sites:
             assert fsys.onsite_hamiltonians[node] is sites[site]
     if not subset:
         # Check that all sites of `fsys` are in `sites`.
-        for site in freq.iterkeys():
+        for site in freq.keys():
             assert site in sites
     # Check that all sites of `sites` are in `fsys`.
     for site in sites:
@@ -327,7 +327,7 @@ def test_finalization():
     set_hops(lead_hops, lead_sites)
     lead_sites_list = list(lead_sites)
     neighbors = set()
-    for i in xrange(n_hops):
+    for i in range(n_hops):
         while True:
             a = rng.choice(lead_sites_list)
             b = rng.choice(possible_neighbors)
@@ -343,9 +343,9 @@ def test_finalization():
     # Build scattering region from blueprint and test it.
     sys = builder.Builder()
     fam = kwant.lattice.general(ta.identity(2))
-    for site, value in sr_sites.iteritems():
+    for site, value in sr_sites.items():
         sys[fam(*site)] = value
-    for hop, value in sr_hops.iteritems():
+    for hop, value in sr_hops.items():
         sys[fam(*hop[0]), fam(*hop[1])] = value
     fsys = sys.finalized()
     check_onsite(fsys, sr_sites)
@@ -353,7 +353,7 @@ def test_finalization():
 
     # Build lead from blueprint and test it.
     lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)))
-    for site, value in lead_sites.iteritems():
+    for site, value in lead_sites.items():
         shift = rng.randrange(-5, 6) * size
         site = site[0] + shift, site[1]
         lead[fam(*site)] = value
@@ -363,7 +363,7 @@ def test_finalization():
         assert_equal(len(w), 1)
         assert issubclass(w[0].category, RuntimeWarning)
         assert "disconnected" in str(w[0].message)
-    for (a, b), value in lead_hops.iteritems():
+    for (a, b), value in lead_hops.items():
         shift = rng.randrange(-5, 6) * size
         a = a[0] + shift, a[1]
         b = b[0] + shift, b[1]
@@ -645,21 +645,21 @@ def test_ModesLead_and_SelfEnergyLead():
     energies = [0.9, 1.7]
 
     sys = builder.Builder()
-    for x in xrange(L):
-        for y in xrange(L):
+    for x in range(L):
+        for y in range(L):
             sys[lat(x, y)] = 4 * t + rng.random() - 0.5
     sys[hoppings] = -t
 
     # Attach a lead from the left.
     lead = builder.Builder(VerySimpleSymmetry(-1))
-    for y in xrange(L):
+    for y in range(L):
         lead[lat(0, y)] = 4 * t
     lead[hoppings] = -t
     sys.attach_lead(lead)
 
     # Make the right lead and attach it.
     lead = builder.Builder(VerySimpleSymmetry(1))
-    for y in xrange(L):
+    for y in range(L):
         lead[lat(0, y)] = 4 * t
     lead[hoppings] = -t
     sys.attach_lead(lead)
@@ -669,7 +669,7 @@ def test_ModesLead_and_SelfEnergyLead():
 
     # Replace lead with it's finalized copy.
     lead = fsys.leads[1]
-    interface = [lat(L-1, lead.sites[i].tag[1]) for i in xrange(L)]
+    interface = [lat(L-1, lead.sites[i].tag[1]) for i in range(L)]
 
     # Re-attach right lead as ModesLead.
     sys.leads[1] = builder.ModesLead(lead.modes, interface)

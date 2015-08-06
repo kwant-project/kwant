@@ -11,7 +11,7 @@ from numpy.testing.decorators import skipif
 try:
     from kwant.solvers.mumps import (
         smatrix, greens_function, ldos, wave_function, options, reset_options)
-    import _test_sparse
+    from . import _test_sparse
     no_mumps = False
 except ImportError:
     no_mumps = True
