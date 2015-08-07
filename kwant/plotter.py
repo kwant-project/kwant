@@ -947,7 +947,7 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
     for k, v in vecs_doms.items():
         vecs_doms[k] = [v[0] * i for i in range(v[1], v[1] + num_lead_cells)]
     pos += [vecs_doms[i[1]][i[2]] for i in hop_lead_nr]
-    return np.copy(pos[:, : dim / 2]), np.copy(pos[:, dim / 2:])
+    return np.copy(pos[:, : dim // 2]), np.copy(pos[:, dim // 2:])
 
 
 # Useful plot functions (to be extended).
@@ -1195,7 +1195,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
     # make all specs proper: either constant or lists/np.arrays:
     def make_proper_site_spec(spec, fancy_indexing=False):
-        if isinstance(spec, collections.Callable):
+        if callable(spec):
             spec = [spec(i[0]) for i in sites if i[1] is None]
         if (fancy_indexing and isarray(spec)
             and not isinstance(spec, np.ndarray)):
@@ -1206,7 +1206,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         return spec
 
     def make_proper_hop_spec(spec, fancy_indexing=False):
-        if isinstance(spec, collections.Callable):
+        if callable(spec):
             spec = [spec(*i[0]) for i in hops if i[1] is None]
         if (fancy_indexing and isarray(spec)
             and not isinstance(spec, np.ndarray)):
@@ -1537,7 +1537,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     if coords.shape[1] != 2:
         raise ValueError('Only 2D systems can be plotted this way.')
 
-    if isinstance(value, collections.Callable):
+    if callable(value):
         value = [value(site[0]) for site in sites]
     else:
         if not isinstance(sys, system.FiniteSystem):
