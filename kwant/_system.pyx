@@ -11,6 +11,7 @@ import tinyarray as ta
 import numpy as np
 from scipy import sparse as sp
 from itertools import chain
+import types
 
 from .graph.core cimport CGraph, gintArraySlice
 from .graph.defs cimport gint
@@ -327,3 +328,13 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
         mat = func(ham, args, self.graph, diag, from_sites,
                    n_by_to_site, to_norb, to_off, from_norb, from_off)
     return (mat, to_norb, from_norb) if return_norb else mat
+
+# workaround for Cython functions not having __get__ and
+# Python 3 getting rid of unbound methods
+cdef class HamiltonianSubmatrix:
+
+    def __get__(self, obj, objtype):
+        if obj is None:
+            return hamiltonian_submatrix
+        else:
+            return types.MethodType(hamiltonian_submatrix, obj)
