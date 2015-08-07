@@ -85,8 +85,15 @@ def make_sparse(ham, args, CGraph gr, diag,
                         rows_cols[1, k] = j + from_off[n_fs]
                         k += 1
 
-    return sp.coo_matrix((data[:k], rows_cols[:, :k]),
-                         shape=(to_off[-1], from_off[-1]))
+    # hack around a bug in Scipy + Python 3 + memoryviews
+    # see https://github.com/scipy/scipy/issues/5123 for details
+    np_data = np.asarray(data)
+    np_rows_cols = np.asarray(rows_cols)
+    np_to_off = np.asarray(to_off)
+    np_from_off = np.asarray(from_off)
+
+    return sp.coo_matrix((np_data[:k], np_rows_cols[:, :k]),
+                         shape=(np_to_off[-1], np_from_off[-1]))
 
 
 @cython.boundscheck(False)
@@ -148,8 +155,15 @@ def make_sparse_full(ham, args, CGraph gr, diag,
                         rows_cols[0, k + 1] = rows_cols[1, k] = j + from_off[fs]
                         k += 2
 
-    return sp.coo_matrix((data[:k], rows_cols[:, :k]),
-                         shape=(to_off[-1], from_off[-1]))
+    # hack around a bug in Scipy + Python 3 + memoryviews
+    # see https://github.com/scipy/scipy/issues/5123 for details
+    np_data = np.asarray(data)
+    np_rows_cols = np.asarray(rows_cols)
+    np_to_off = np.asarray(to_off)
+    np_from_off = np.asarray(from_off)
+
+    return sp.coo_matrix((np_data[:k], np_rows_cols[:, :k]),
+                         shape=(np_to_off[-1], np_from_off[-1]))
 
 
 @cython.boundscheck(False)
