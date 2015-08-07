@@ -35,30 +35,22 @@ BPF_MASK = 2**53 - 1
 RECIP_BPF = 2**-BPF
 
 
-# TODO: Remove the following workaround for Python 2.6 once we do not support it
-# anymore.
+def str_to_bytes(s):
+    """Return bytes if the input is a string, else return the object as-is."""
+    try:
+        return s.encode('utf8')
+    except AttributeError:
+        return s
 
-if sys.version_info < (2, 7):
-    def uniform2(input, salt=''):
-        """Return two independent [0,1)-distributed numbers."""
-        try:
-            input = bytes(buffer(input)) + salt
-        except TypeError:
-            # Tinyarray does not provide the old buffer protocol, so buffer does
-            # not work.  However, bytearray does work!
-            input = bytearray(input) + salt
-        a, b = unpack('qq', md5(input).digest())
-        a &= BPF_MASK
-        b &= BPF_MASK
-        return a * RECIP_BPF, b * RECIP_BPF
-else:
-    def uniform2(input, salt=''):
-        """Return two independent [0,1)-distributed numbers."""
-        input = memoryview(input).tobytes() + salt
-        a, b = unpack('qq', md5(input).digest())
-        a &= BPF_MASK
-        b &= BPF_MASK
-        return a * RECIP_BPF, b * RECIP_BPF
+def uniform2(input, salt=''):
+    """Return two independent [0,1)-distributed numbers."""
+    input = str_to_bytes(input)
+    salt = str_to_bytes(salt)
+    input = memoryview(input).tobytes() + salt
+    a, b = unpack('qq', md5(input).digest())
+    a &= BPF_MASK
+    b &= BPF_MASK
+    return a * RECIP_BPF, b * RECIP_BPF
 
 
 def uniform(input, salt=''):
