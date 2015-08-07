@@ -302,7 +302,7 @@ def test_finalization():
 
     def set_hops(dest, sites):
         while len(dest) < n_hops:
-            a, b = rng.sample(sites, 2)
+            a, b = rng.sample(list(sites), 2)
             if (a, b) not in dest and (b, a) not in dest:
                 dest[a, b] = random_hopping_integral(rng)
 
