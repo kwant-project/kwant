@@ -16,7 +16,7 @@ import os
 import glob
 import imp
 import subprocess
-import ConfigParser
+import configparser
 from setuptools import setup, find_packages, Extension, Command
 from sysconfig import get_platform
 from distutils.errors import DistutilsError, DistutilsModuleError, \
@@ -263,7 +263,7 @@ def search_mumps():
     except OSError:
         pass
     else:
-        p.communicate(input='int main() {}\n')
+        p.communicate(input=b'int main() {}\n')
         if p.wait() == 0:
             return {'libraries': libs}
     return {}
@@ -297,7 +297,7 @@ def extensions():
                       'kwant/graph/c_slicer/slicer.h']})]
 
     #### Add components of Kwant with external compile-time dependencies.
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     try:
         with open(CONFIG_FILE) as f:
             config.readfp(f)
@@ -334,7 +334,7 @@ def extensions():
         if kwrds:
             build_summary.append('Auto-configured MUMPS')
     if kwrds:
-        for name, value in lapack.iteritems():
+        for name, value in lapack.items():
             kwrds.setdefault(name, []).extend(value)
         kwrds.setdefault('depends', []).extend(
             [CONFIG_FILE, 'kwant/linalg/cmumps.pxd'])
