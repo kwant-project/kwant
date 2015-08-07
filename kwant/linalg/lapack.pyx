@@ -245,7 +245,7 @@ def zgetrs(np.ndarray[np.complex128_t, ndim=2] LU,
 # Wrappers for xGECON
 
 def sgecon(np.ndarray[np.float32_t, ndim=2] LU,
-            float normA, char *norm = "1"):
+            float normA, char *norm = b"1"):
     cdef l_int N, info
     cdef float rcond
     cdef np.ndarray[np.float32_t, ndim=1] work
@@ -266,7 +266,7 @@ def sgecon(np.ndarray[np.float32_t, ndim=2] LU,
     return rcond
 
 def dgecon(np.ndarray[np.float64_t, ndim=2] LU,
-            double normA, char *norm = "1"):
+            double normA, char *norm = b"1"):
     cdef l_int N, info
     cdef double rcond
     cdef np.ndarray[np.float64_t, ndim=1] work
@@ -287,7 +287,7 @@ def dgecon(np.ndarray[np.float64_t, ndim=2] LU,
     return rcond
 
 def cgecon(np.ndarray[np.complex64_t, ndim=2] LU,
-            float normA, char *norm = "1"):
+            float normA, char *norm = b"1"):
     cdef l_int N, info
     cdef float rcond
     cdef np.ndarray[np.complex64_t, ndim=1] work
@@ -308,7 +308,7 @@ def cgecon(np.ndarray[np.complex64_t, ndim=2] LU,
     return rcond
 
 def zgecon(np.ndarray[np.complex128_t, ndim=2] LU,
-           double normA, char *norm = "1"):
+           double normA, char *norm = b"1"):
     cdef l_int N, info
     cdef double rcond
     cdef np.ndarray[np.complex128_t, ndim=1] work

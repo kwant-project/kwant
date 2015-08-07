@@ -129,6 +129,7 @@ def rcond_from_lu(xxx_todo_changeme1, norm_a, norm="1"):
     (lu, ipiv, singular) = xxx_todo_changeme1
     if not norm in ("1", "I"):
         raise ValueError("norm in rcond_from_lu must be either '1' or 'I'")
+    norm = norm.encode('utf8')  # lapack expects bytes
 
     ltype, lu = lapack.prepare_for_lapack(False, lu)
 
