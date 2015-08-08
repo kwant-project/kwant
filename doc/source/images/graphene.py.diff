@@ -1,14 +1,13 @@
 --- original
 +++ modified
-@@ -11,6 +11,7 @@
+@@ -11,5 +11,6 @@
  #    lattice, namely graphene
  
- from __future__ import division  # so that 1/2 == 0.5, and not 0
 +import _defs
  from math import pi, sqrt, tanh
  
  import kwant
-@@ -97,22 +98,40 @@
+@@ -96,22 +97,40 @@
          smatrix = kwant.smatrix(sys, energy)
          data.append(smatrix.transmission(0, 1))
  
@@ -57,7 +56,7 @@
  
  
  def main():
-@@ -124,8 +143,11 @@
+@@ -123,8 +142,11 @@
      def family_colors(site):
          return 0 if site.family == a else 1
  
@@ -71,7 +70,7 @@
  
      # Compute some eigenvalues.
      compute_evs(sys.finalized())
-@@ -134,9 +156,11 @@
+@@ -133,9 +155,11 @@
      for lead in leads:
          sys.attach_lead(lead)
  
