@@ -106,7 +106,7 @@ def main():
     try:
         # We should observe energy levels that flow towards Landau
         # level energies with increasing magnetic field.
-        plot_spectrum(sys, [iB * 0.002 for iB in xrange(100)])
+        plot_spectrum(sys, [iB * 0.002 for iB in range(100)])
 
         # Plot an eigenmode of a circular dot. Here we create a larger system for
         # better spatial resolution.
@@ -114,8 +114,8 @@ def main():
         plot_wave_function(sys)
     except ValueError as e:
         if e.message == "Input matrix is not real-valued.":
-            print "The calculation of eigenvalues failed because of a bug in SciPy 0.9."
-            print "Please upgrade to a newer version of SciPy."
+            print("The calculation of eigenvalues failed because of a bug in SciPy 0.9.")
+            print("Please upgrade to a newer version of SciPy.")
         else:
             raise
 

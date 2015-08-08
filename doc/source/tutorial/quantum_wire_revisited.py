@@ -39,7 +39,7 @@ def make_system(a=1, t=1.0, W=10, L=30):
     # Construct the left lead.
 #HIDDEN_BEGIN_iepx
     lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
-    lead[(lat(0, j) for j in xrange(W))] = 4 * t
+    lead[(lat(0, j) for j in range(W))] = 4 * t
     lead[lat.neighbors()] = -t
 #HIDDEN_END_iepx
 
@@ -79,7 +79,7 @@ def main():
     sys = sys.finalized()
 
     # We should see conductance steps.
-    plot_conductance(sys, energies=[0.01 * i for i in xrange(100)])
+    plot_conductance(sys, energies=[0.01 * i for i in range(100)])
 #HIDDEN_END_cjel
 
 

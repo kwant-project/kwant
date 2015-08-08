@@ -43,7 +43,7 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
 
     #### Define and attach the leads. ####
     lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
-    lead[(lat(0, j) for j in xrange(W))] = 4 * t
+    lead[(lat(0, j) for j in range(W))] = 4 * t
     lead[lat.neighbors()] = -t
     sys.attach_lead(lead)
     sys.attach_lead(lead.reversed())
@@ -79,7 +79,7 @@ def main():
 
     # We should see conductance steps.
     plot_conductance(sys, energy=0.2,
-                     welldepths=[0.01 * i for i in xrange(100)])
+                     welldepths=[0.01 * i for i in range(100)])
 
 
 # Call the main function if the script gets executed (as opposed to imported).
