@@ -141,10 +141,10 @@ def test_construction_and_indexing():
 
 
 def test_hermitian_conjugation():
-    def f(i, j):
+    def f(i, j, arg):
         i, j = i.tag, j.tag
         if j[0] == i[0] + 1:
-            return ta.array([[1, 2j], [3 + 1j, 4j]])
+            return arg * ta.array([[1, 2j], [3 + 1j, 4j]])
         else:
             raise ValueError
 
@@ -155,8 +155,8 @@ def test_hermitian_conjugation():
     sys[sg(0), sg(1)] = f
     assert sys[sg(0), sg(1)] is f
     assert isinstance(sys[sg(1), sg(0)], builder.HermConjOfFunc)
-    assert_equal(sys[sg(1), sg(0)](sg(1), sg(0)),
-                 sys[sg(0), sg(1)](sg(0), sg(1)).conjugate().transpose())
+    assert_equal(sys[sg(1), sg(0)](sg(1), sg(0), 2),
+                 sys[sg(0), sg(1)](sg(0), sg(1), 2).conjugate().transpose())
     sys[sg(0), sg(1)] = sys[sg(1), sg(0)]
     assert isinstance(sys[sg(0), sg(1)], builder.HermConjOfFunc)
     assert sys[sg(1), sg(0)] is f
