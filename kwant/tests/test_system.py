@@ -91,10 +91,10 @@ def test_hamiltonian_submatrix():
     sys[((gr(i), gr(i + 1)) for i in xrange(2))] = hopping
     sys2 = sys.finalized()
     mat = sys2.hamiltonian_submatrix((2, 1))
-    mat_should_be = [[5, 1, 0], [1, 4, 1.], [0, 1, 3]]
+    mat_should_be = [[3, 1, 0], [1, 4, 1], [0, 1, 5]]
 
     # Sorting is required due to unknown compression order of builder.
-    onsite_hamiltonians = mat.flat[::3]
+    onsite_hamiltonians = mat.flat[::4]
     perm = np.argsort(onsite_hamiltonians)
     mat = mat[perm, :]
     mat = mat[:, perm]
