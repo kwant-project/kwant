@@ -424,8 +424,8 @@ class HermConjOfFunc(object):
     def __init__(self, function):
         self.function = function
 
-    def __call__(self, i, j):
-        return herm_conj(self.function(j, i))
+    def __call__(self, i, j, *args):
+        return herm_conj(self.function(j, i, *args))
 
 
 ################ Leads
