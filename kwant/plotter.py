@@ -42,16 +42,28 @@ except ImportError:
                   "functions will work.", RuntimeWarning)
     mpl_enabled = False
 
-if mpl_enabled and matplotlib.__version__ == "1.4.0":
-    warnings.warn("matplotlib 1.4.0 has a bug that makes 3D plotting unusable "
-                  "(2D plotting is not affected). Please consider using a "
-                  "different version of matplotlib.", RuntimeWarning)
-
-
 from . import system, builder, physics
 
 __all__ = ['plot', 'map', 'bands', 'sys_leads_sites', 'sys_leads_hoppings',
            'sys_leads_pos', 'sys_leads_hopping_pos', 'mask_interpolate']
+
+
+# TODO: Remove the following once we depend on matplotlib >= 1.4.1.
+def matplotlib_chores():
+    global pre_1_4_matplotlib
+    ver = matplotlib.__version__
+
+    if ver == "1.4.0":
+        warnings.warn("Matplotlib 1.4.0 has a bug that makes 3D plotting "
+                      "unusable (2D plotting is not affected). Please "
+                      "consider using a different version of matplotlib.",
+                      RuntimeWarning)
+
+    pre_1_4_matplotlib = [int(x) for x in ver.split('.')[:2]] < [1, 4]
+
+
+if mpl_enabled:
+    matplotlib_chores()
 
 
 # Collections that allow for symbols and linewiths to be given in data space
@@ -97,9 +109,13 @@ if mpl_enabled:
             self.reflen = reflen
             self.linewidths_orig = nparray_if_array(self.get_linewidths())
 
-            self.transforms = np.array([
-                matplotlib.transforms.Affine2D().scale(x).get_matrix() for x
-                in sizes])
+            if pre_1_4_matplotlib:
+                self.transforms = [matplotlib.transforms.Affine2D().scale(x)
+                                   for x in sizes]
+            else:
+                self.transforms = np.array(
+                    [matplotlib.transforms.Affine2D().scale(x).get_matrix()
+                     for x in sizes])
 
         def get_transforms(self):
             return self.transforms
@@ -220,8 +236,12 @@ if mpl_enabled:
                 self.edgecolors_orig = nparray_if_array(self.get_edgecolors())
 
                 Affine2D = matplotlib.transforms.Affine2D
-                self.orig_transforms = np.array([
-                    Affine2D().scale(x).get_matrix() for x in sizes])
+                if pre_1_4_matplotlib:
+                    self.orig_transforms = np.array(
+                        [Affine2D().scale(x) for x in sizes], dtype='object')
+                else:
+                    self.orig_transforms = np.array(
+                        [Affine2D().scale(x).get_matrix() for x in sizes])
                 self.transforms = self.orig_transforms
 
             def set_array(self, array):

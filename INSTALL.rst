@@ -3,8 +3,8 @@ Installation instructions
 =========================
 
 Kwant can be installed either using prepared packages (Debian and Ubuntu
-variants of GNU/Linux, Mac OS X, and Windows), or it can be built and installed
-from source.
+variants of GNU/Linux, Mac OS X, and Microsoft Windows), or it can be built
+and installed from source.
 
 In general, installation from packages is advisable, especially for novice
 users.  Expert users may find it helpful to build Kwant from source, as this
@@ -15,19 +15,6 @@ libraries.
 ************************
 Installing from packages
 ************************
-
-Ubuntu (and derivatives)
-========================
-
-Execute the following commands::
-
-    sudo apt-add-repository ppa:kwant-project/ppa
-    sudo apt-get update
-    sudo apt-get install python-kwant python-kwant-doc
-
-This should provide Kwant for all versions of Ubuntu >= 12.04.  The HTML
-documentation will be installed locally in the directory
-``/usr/share/doc/python-kwant-doc``.
 
 
 Debian (and derivatives)
@@ -75,30 +62,18 @@ This method should work for virtually all Debian-derived systems, even on exotic
 architectures.
 
 
-Windows
-=======
+Ubuntu (and derivatives)
+========================
 
-There are multiple distributions of scientific Python software for Windows that
-provide the prerequisites for Kwant.  We recommend to use the packages kindly
-provided by Christoph Gohlke.  To install Kwant on Windows
+Execute the following commands::
 
-1. Determine whether you have a 32-bit or 64-bit Windows installation by
-   following these `instructions <http://support.microsoft.com/kb/827218>`_.
+    sudo apt-add-repository ppa:kwant-project/ppa
+    sudo apt-get update
+    sudo apt-get install python-kwant python-kwant-doc
 
-2. Download and install Python 2.7 for the appropriate architecture (32-bit or
-   64-bit) from the official `Python download site
-   <http://www.python.org/download/>`_.
-
-3. Download and install ``scipy-stack``, ``tinyarray``, and ``kwant`` for Python
-   2.7 from `Christoph Gohlke's page
-   <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.  Once again you should choose
-   the architecture that is appropriate for your system.  ("win32" means 32-bit,
-   "amd64" means 64-bit -- even if you have a processor from Intel.)  If the
-   download from Gohlke's site is slow, try to download from `our mirror
-   <http://downloads.kwant-project.org/gohlke-mirror/>`_.
-
-   You may see a warning that says "The publisher could not be verified. Do you
-   want to run this software?". Select "Run".
+This should provide Kwant for all versions of Ubuntu >= 12.04.  The HTML
+documentation will be installed locally in the directory
+``/usr/share/doc/python-kwant-doc``.
 
 
 Mac OS X
@@ -237,6 +212,57 @@ Notes:
   `these instructions <https://trac.macports.org/wiki/howto/PortTreeTarball>`_.
 * Of course, if you already have macports installed, you can skip step 1
   and continue with step 2.
+
+
+Microsoft Windows
+=================
+
+There are multiple distributions of scientific Python software for Windows that
+provide the prerequisites for Kwant.  We recommend to use the packages kindly
+provided by Christoph Gohlke.  To install Kwant on Windows
+
+1. Determine whether you have a 32-bit or 64-bit Windows installation by
+   following these `instructions <http://support.microsoft.com/kb/827218>`_.
+
+2. Download and install Python 2.7 for the appropriate architecture (32-bit or
+   64-bit) from the official `Python download site
+   <http://www.python.org/download/>`_.
+
+3. Open a command prompt, as described in "How do I get a command prompt" at
+   the `Microsoft Windows website <http://windows.microsoft.com/en-us/windows/command-prompt-faq>`_.
+
+4. In the command prompt window, execute::
+
+        C:\Python27\python.exe C:\Python27\Tools\Scripts\win_add2path.py
+
+   (Instead of typing this command, you can also just copy it from here and
+   paste it into the command prompt window). If you did not use the default
+   location to install Python in step 2, then replace ``C:\Python27`` by the
+   actual location where Python is installed.
+
+5. Reboot your computer.
+
+6. Download the necessary packages (with the ending ``.whl``) for your
+   operating system (32 or 64 bit) and Python version (e.g. ``cp27`` for Python
+   2.7) from the `website of Christoph Gohlke
+   <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.  For Kwant, we recommend to download at least `NumPy <http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy>`__, `SciPy <http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy>`__, `Matplotlib <http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib>`__, `Nose <http://www.lfd.uci.edu/~gohlke/pythonlibs/#nose>`__, `Tinyarray <http://www.lfd.uci.edu/~gohlke/pythonlibs/#tinyarray>`__, and `Kwant <http://www.lfd.uci.edu/~gohlke/pythonlibs/#kwant>`__ itself.
+
+7. Now open a command prompt with administrator rights, as described in
+   "How do I run a command with elevated permissions" at the
+   `Microsoft Windows website <http://windows.microsoft.com/en-us/windows/command-prompt-faq>`_.
+
+   In this new command prompt window, execute ::
+
+       pip install <filename>
+
+   for each of the downloaded files (replacing ``<filename>`` with it).
+
+   Now you are done, you can ``import kwant`` from within Python scripts.
+
+(Note that many other userful scientific packages are available in Gohlke’s
+repository.  For example, you might want to install `IPython
+<http://www.lfd.uci.edu/~gohlke/pythonlibs/#ipython>`_ and its various
+dependencies so that you can use the `IPython notebook <http://ipython.org/notebook.html>`_.)
 
 
 ***********************************
