@@ -224,9 +224,9 @@ class kwant_sdist(distutils_sdist):
             print(msg, sep='\n', file=sys.stderr)
 
 
-# This is an exact copy of the function from kwant/_common.py.  We can't import
-# it here (because Kwant is not yet built when this scipt is run), so we just
-# include a copy.
+# Other than the "if not use_git" clause in the beginning, this is an exact copy
+# of the function from kwant/_common.py.  We can't import it here (because Kwant
+# is not yet built when this scipt is run), so we just include a copy.
 def get_version_from_git():
     if not use_git:
         return
