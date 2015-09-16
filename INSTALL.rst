@@ -2,23 +2,20 @@
 Installation instructions
 =========================
 
-Kwant can be installed either using prepared packages (Debian and Ubuntu
-variants of GNU/Linux, Mac OS X, and Microsoft Windows), or it can be built
-and installed from source.
+Kwant can be installed either using prepared packages (Debian, Ubuntu, and Arch variants of GNU/Linux, Mac OS X, Microsoft Windows), or it can be built and installed from source.
 
 In general, installation from packages is advisable, especially for novice
 users.  Expert users may find it helpful to build Kwant from source, as this
 will also allow them to customize Kwant to use certain optimized versions of
 libraries.
 
-
 ************************
 Installing from packages
 ************************
 
 
-Debian (and derivatives)
-========================
+Debian and derivatives
+======================
 
 The easiest way to install Kwant on a Debian system is using the pre-built
 packages we provide.  Our packages are known to work with Debian "wheezy" and
@@ -34,7 +31,10 @@ The lines prefixed with ``sudo`` have to be run as root.
 
 2. (Optional) Add the OpenPGP key used to sign the repositories by executing::
 
-       sudo apt-key adv --keyserver pgp.mit.edu --recv-key C3F147F5980F3535
+       sudo apt-key adv --keyserver pool.sks-keyservers.net --recv-key C3F147F5980F3535
+
+   The fingerprint of the key is 5229 9057 FAD7 9965 3C4F 088A C3F1 47F5 980F
+   3535.
 
 3. Update the package data, and install Kwant::
 
@@ -62,8 +62,8 @@ This method should work for virtually all Debian-derived systems, even on exotic
 architectures.
 
 
-Ubuntu (and derivatives)
-========================
+Ubuntu and derivatives
+======================
 
 Execute the following commands::
 
@@ -74,6 +74,23 @@ Execute the following commands::
 This should provide Kwant for all versions of Ubuntu >= 12.04.  The HTML
 documentation will be installed locally in the directory
 ``/usr/share/doc/python-kwant-doc``.
+
+
+Arch Linux
+==========
+
+`Arch install scripts for Kwant
+<https://aur.archlinux.org/packages/python2-kwant/>`_ are kindly provided by
+Jörg Behrmann (formerly by Max Schlemmer).  To install, follow the `Arch User
+Repository installation instructions
+<https://wiki.archlinux.org/index.php/Arch_User_Repository#Installing_packages>`_.
+Note that for checking the validity of the package you need to add the key
+used for signing to your user's keyring via::
+
+    gpg --keyserver pool.sks-keyservers.net --recv-key C3F147F5980F3535
+
+The fingerprint of the key is 5229 9057 FAD7 9965 3C4F 088A C3F1 47F5 980F
+3535.
 
 
 Mac OS X
