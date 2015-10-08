@@ -52,24 +52,25 @@ version = _common.version
 version_is_from_git = _common.version_is_from_git
 
 try:
-    import Cython
-except:
-    cython_version = ()
-else:
-    match = re.match('([0-9.]*)(.*)', Cython.__version__)
-    cython_version = [int(n) for n in match.group(1).split('.')]
-    # Decrease version if the version string contains a suffix.
-    if match.group(2):
-        while cython_version[-1] == 0:
-            cython_version.pop()
-        cython_version[-1] -= 1
-    cython_version = tuple(cython_version)
-
-try:
     sys.argv.remove(NO_CYTHON_OPTION)
     cythonize = False
 except ValueError:
     cythonize = True
+
+if cythonize:
+    try:
+        import Cython
+    except:
+        cython_version = ()
+    else:
+        match = re.match('([0-9.]*)(.*)', Cython.__version__)
+        cython_version = [int(n) for n in match.group(1).split('.')]
+        # Decrease version if the version string contains a suffix.
+        if match.group(2):
+            while cython_version[-1] == 0:
+                cython_version.pop()
+            cython_version[-1] -= 1
+        cython_version = tuple(cython_version)
 
 if cythonize and cython_version:
     from Cython.Distutils import build_ext
@@ -382,19 +383,23 @@ def extensions():
 def complain_cython_unavailable():
     assert not cythonize or cython_version < REQUIRED_CYTHON_VERSION
     if cythonize:
-        msg = "Install Cython {0} or newer so it can be made or use a source " \
-            "distribution of Kwant."
+        msg = ("Install Cython {0} or newer so it can be made\n"
+               "or use a source distribution of Kwant.")
         ver = '.'.join(str(e) for e in REQUIRED_CYTHON_VERSION)
         print(msg.format(ver), file=sys.stderr)
     else:
-        print("Run setup.py without", NO_CYTHON_OPTION, file=sys.stderr)
+        print("Run setup.py without {}.".format(NO_CYTHON_OPTION),
+              file=sys.stderr)
 
 
 def ext_modules(extensions):
     """Prepare the ext_modules argument for distutils' setup."""
     result = []
+    problematic_files = []
     for args, kwrds in extensions:
         if not cythonize or cython_version < REQUIRED_CYTHON_VERSION:
+            # Cython is not going to be run: replace pyx extension by that of
+            # the shipped translated file.
             if 'language' in kwrds:
                 if kwrds['language'] == 'c':
                     ext = '.c'
@@ -416,6 +421,7 @@ def ext_modules(extensions):
                 sources.append(f)
             args[1] = sources
 
+            # Complain if cythonized files are older than Cython source files.
             try:
                 cythonized_oldest = min(os.stat(f).st_mtime
                                         for f in cythonized_files)
@@ -430,18 +436,30 @@ def ext_modules(extensions):
                     # of the cythonized file, not for the cythonization.
                     continue
                 if os.stat(f).st_mtime > cythonized_oldest:
-                    msg = "error: {} is newer than its source file, but "
-                    if cythonize and not cython_version:
-                        msg += "Cython is not installed."
-                    elif cythonize:
-                        msg += "the installed Cython is too old."
-                    else:
-                        msg += "Cython is not to be run."
-                    print(msg.format(f), file=sys.stderr)
-                    complain_cython_unavailable()
-                    exit(1)
+                    problematic_files.append(f)
 
         result.append(Extension(*args, **kwrds))
+
+    if problematic_files:
+        problematic_files = ", ".join(problematic_files)
+        msg = ("Some Cython source files are newer than files that should have\n"
+               " been derived from them, but {}.\n"
+               "\n"
+               "Affected files: {}")
+        if cythonize:
+            if not cython_version:
+                reason = "Cython is not installed"
+            else:
+                reason = "the installed Cython is too old"
+            print(banner(" Error "), msg.format(reason, problematic_files),
+                  banner(), sep="\n", file=sys.stderr)
+            print()
+            complain_cython_unavailable()
+            exit(1)
+        else:
+            reason = "the option --no-cython has been given"
+            print(banner(" Warning "), msg.format(reason, problematic_files),
+                  banner(), sep='\n', file=sys.stderr)
 
     return result
 
