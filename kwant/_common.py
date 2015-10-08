@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Kwant authors.
+# Copyright 2011-2015 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
@@ -56,11 +56,11 @@ def get_version_from_git():
     return version
 
 
-version = get_version_from_git()
-if version is None:
-    try:
-        from _static_version import version
-    except:
+from _kwant_version import version
+version_is_from_git = (version == "__use_git__")
+if version_is_from_git:
+    version = get_version_from_git()
+    if not version:
         version = "unknown"
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2015 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the
 # LICENSE file found in the top-level directory of this distribution and at
@@ -26,21 +26,30 @@ from distutils.command.sdist import sdist as distutils_sdist
 
 import numpy
 
-_dont_write_bytecode_saved = sys.dont_write_bytecode
-sys.dont_write_bytecode = True
-kwant_common = imp.load_source('kwant_common', 'kwant/_common.py')
-sys.dont_write_bytecode = _dont_write_bytecode_saved
-
 CONFIG_FILE = 'build.conf'
 README_FILE = 'README.rst'
 README_END_BEFORE = 'See also in this directory:'
-STATIC_VERSION_FILE = 'kwant/_static_version.py'
+STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
 REQUIRED_CYTHON_VERSION = (0, 22)
 NO_CYTHON_OPTION = '--no-cython'
-NO_GIT_OPTION = '--no-git'
 TUT_DIR = 'tutorial'
 TUT_GLOB = 'doc/source/tutorial/*.py'
 TUT_HIDDEN_PREFIX = '#HIDDEN'
+
+# Let Kwant itself determine its own version.  We cannot simply import kwant, as
+# it is not built yet.
+_dont_write_bytecode_saved = sys.dont_write_bytecode
+sys.dont_write_bytecode = True
+try:
+    imp.load_source(STATIC_VERSION_PATH[-1].split('.')[0],
+                    os.path.join(*STATIC_VERSION_PATH))
+except IOError:
+    pass
+_common = imp.load_source('_common', 'kwant/_common.py')
+sys.dont_write_bytecode = _dont_write_bytecode_saved
+
+version = _common.version
+version_is_from_git = _common.version_is_from_git
 
 try:
     import Cython
@@ -61,12 +70,6 @@ try:
     cythonize = False
 except ValueError:
     cythonize = True
-
-try:
-    sys.argv.remove(NO_GIT_OPTION)
-    use_git = False
-except ValueError:
-    use_git = True
 
 if cythonize and cython_version:
     from Cython.Distutils import build_ext
@@ -141,6 +144,10 @@ class build_tut(Command):
 class kwant_build(distutils_build):
     sub_commands = [('build_tut', None)] + distutils_build.sub_commands
 
+    def run(self):
+        distutils_build.run(self)
+        write_version(os.path.join(self.build_lib, *STATIC_VERSION_PATH))
+
 
 class test(Command):
     description = "build, then run the unit tests"
@@ -167,7 +174,7 @@ class test(Command):
 
 
 def git_lsfiles():
-    if not use_git:
+    if not version_is_from_git:
         return
 
     try:
@@ -213,7 +220,6 @@ class kwant_sdist(distutils_sdist):
                     if extension == 'pyx':
                         f.write(''.join([a, sep, stem, dot, 'c', '\n']))
                     f.write(name + '\n')
-                f.write(STATIC_VERSION_FILE + '\n')
                 f.write('MANIFEST\n')
 
         distutils_sdist.run(self)
@@ -232,42 +238,21 @@ with a comment).  It may well be incomplete.""",
                   banner(),
                   sep='\n', file=sys.stderr)
 
-def get_version_from_git():
-    if use_git:
-        return kwant_common.get_version_from_git()
+    def make_release_tree(self, base_dir, files):
+        distutils_sdist.make_release_tree(self, base_dir, files)
+        write_version(os.path.join(base_dir, *STATIC_VERSION_PATH))
 
 
-def read_static_version():
-    """Return the version as recorded inside the source code."""
+def write_version(fname):
+    # This could be a hard link, so try to delete it first.  Is there any way
+    # to do this atomically together with opening?
     try:
-        with open(STATIC_VERSION_FILE) as f:
-            contents = f.read()
-            assert contents[:11] == "version = '"
-            assert contents[-2:] == "'\n"
-            return contents[11:-2]
-    except:
-        return None
-
-
-def write_static_version(version):
-    """Record the version so that it is available without version control."""
-    with open(STATIC_VERSION_FILE, 'w') as f:
-        f.write("version = '%s'\n" % version)
-
-
-def version():
-    """Determine the version of Kwant.  Return it and save it in a file."""
-    git_version = get_version_from_git()
-    static_version = read_static_version()
-    if git_version is not None:
-        version = git_version
-        if static_version != git_version:
-            write_static_version(version)
-    elif static_version is not None:
-        version = static_version
-    else:
-        version = 'unknown'
-    return version
+        os.remove(fname)
+    except OSError:
+        pass
+    with open(fname, 'w') as f:
+        f.write("# This file has been created by setup.py.\n")
+        f.write("version = '{}'\n".format(version))
 
 
 def long_description():
@@ -463,7 +448,7 @@ def ext_modules(extensions):
 
 def main():
     setup(name='kwant',
-          version=version(),
+          version=version,
           author='C. W. Groth (CEA), M. Wimmer, '
                  'A. R. Akhmerov, X. Waintal (CEA), and others',
           author_email='authors@kwant-project.org',
