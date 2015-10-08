@@ -14,6 +14,7 @@ import sys
 import re
 import os
 import glob
+import imp
 import subprocess
 import ConfigParser
 from distutils.core import setup, Extension, Command
@@ -24,6 +25,11 @@ from distutils.command.build import build as distutils_build
 from distutils.command.sdist import sdist as distutils_sdist
 
 import numpy
+
+_dont_write_bytecode_saved = sys.dont_write_bytecode
+sys.dont_write_bytecode = True
+kwant_common = imp.load_source('kwant_common', 'kwant/_common.py')
+sys.dont_write_bytecode = _dont_write_bytecode_saved
 
 CONFIG_FILE = 'build.conf'
 README_FILE = 'README.rst'
@@ -226,53 +232,9 @@ with a comment).  It may well be incomplete.""",
                   banner(),
                   sep='\n', file=sys.stderr)
 
-# Other than the "if not use_git" clause in the beginning, this is an exact copy
-# of the function from kwant/_common.py.  We can't import it here (because Kwant
-# is not yet built when this scipt is run), so we just include a copy.
 def get_version_from_git():
-    if not use_git:
-        return
-
-    try:
-        p = subprocess.Popen(['git', 'rev-parse', '--show-toplevel'],
-                             cwd=distr_root,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    except OSError:
-        return
-    if p.wait() != 0:
-        return
-    # TODO: use os.path.samefile once we depend on Python >= 3.3.
-    if os.path.normpath(p.communicate()[0].rstrip('\n')) != distr_root:
-        # The top-level directory of the current Git repository is not the same
-        # as the root directory of the Kwant distribution: do not extract the
-        # version from Git.
-        return
-
-    # git describe --first-parent does not take into account tags from branches
-    # that were merged-in.
-    for opts in [['--first-parent'], []]:
-        try:
-            p = subprocess.Popen(['git', 'describe'] + opts, cwd=distr_root,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        except OSError:
-            return
-        if p.wait() == 0:
-            break
-    else:
-        return
-    version = p.communicate()[0].rstrip('\n')
-
-    if version[0] == 'v':
-        version = version[1:]
-
-    try:
-        p = subprocess.Popen(['git', 'diff', '--quiet'], cwd=distr_root)
-    except OSError:
-        version += '-confused'  # This should never happen.
-    else:
-        if p.wait() == 1:
-            version += '-dirty'
-    return version
+    if use_git:
+        return kwant_common.get_version_from_git()
 
 
 def read_static_version():
