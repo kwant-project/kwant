@@ -1,5 +1,4 @@
 *~
-MANIFEST
 *.pyc
 *.pyo
 *.so
@@ -15,3 +14,5 @@ MANIFEST
 /doc/source/images/.*_flag
 /doc/source/images/[a-zA-Z]*.py
 /build.conf
+/kwant.egg-info/
+/MANIFEST.in
