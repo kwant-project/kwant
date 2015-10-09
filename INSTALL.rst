@@ -2,7 +2,9 @@
 Installation instructions
 =========================
 
-Kwant can be installed either using prepared packages (Debian, Ubuntu, and Arch variants of GNU/Linux, Mac OS X, Microsoft Windows), or it can be built and installed from source.
+Kwant can be installed either using prepared packages (Debian, Ubuntu, and Arch
+variants of GNU/Linux, Mac OS X, Microsoft Windows), or it can be built and
+installed from source.
 
 In general, installation from packages is advisable, especially for novice
 users.  Expert users may find it helpful to build Kwant from source, as this
@@ -246,7 +248,8 @@ provided by Christoph Gohlke.  To install Kwant on Windows
    <http://www.python.org/download/>`_.
 
 3. Open a command prompt, as described in "How do I get a command prompt" at
-   the `Microsoft Windows website <http://windows.microsoft.com/en-us/windows/command-prompt-faq>`_.
+   the `Microsoft Windows website
+   <http://windows.microsoft.com/en-us/windows/command-prompt-faq>`_.
 
 4. In the command prompt window, execute::
 
@@ -262,11 +265,18 @@ provided by Christoph Gohlke.  To install Kwant on Windows
 6. Download the necessary packages (with the ending ``.whl``) for your
    operating system (32 or 64 bit) and Python version (e.g. ``cp27`` for Python
    2.7) from the `website of Christoph Gohlke
-   <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.  For Kwant, we recommend to download at least `NumPy <http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy>`__, `SciPy <http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy>`__, `Matplotlib <http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib>`__, `Nose <http://www.lfd.uci.edu/~gohlke/pythonlibs/#nose>`__, `Tinyarray <http://www.lfd.uci.edu/~gohlke/pythonlibs/#tinyarray>`__, and `Kwant <http://www.lfd.uci.edu/~gohlke/pythonlibs/#kwant>`__ itself.
+   <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_.  For Kwant, we recommend to
+   download at least `NumPy
+   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy>`__, `SciPy
+   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy>`__, `Matplotlib
+   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#matplotlib>`__, `Nose
+   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#nose>`__, `Tinyarray
+   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#tinyarray>`__, and `Kwant
+   <http://www.lfd.uci.edu/~gohlke/pythonlibs/#kwant>`__ itself.
 
-7. Now open a command prompt with administrator rights, as described in
-   "How do I run a command with elevated permissions" at the
-   `Microsoft Windows website <http://windows.microsoft.com/en-us/windows/command-prompt-faq>`_.
+7. Now open a command prompt with administrator rights, as described in "How do
+   I run a command with elevated permissions" at the `Microsoft Windows website
+   <http://windows.microsoft.com/en-us/windows/command-prompt-faq>`_.
 
    In this new command prompt window, execute ::
 
@@ -279,7 +289,8 @@ provided by Christoph Gohlke.  To install Kwant on Windows
 (Note that many other userful scientific packages are available in Gohlke’s
 repository.  For example, you might want to install `IPython
 <http://www.lfd.uci.edu/~gohlke/pythonlibs/#ipython>`_ and its various
-dependencies so that you can use the `IPython notebook <http://ipython.org/notebook.html>`_.)
+dependencies so that you can use the `IPython notebook
+<http://ipython.org/notebook.html>`_.)
 
 
 ***********************************
