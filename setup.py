@@ -25,7 +25,12 @@ from distutils.command.build import build
 from setuptools.command.sdist import sdist
 from setuptools.command.build_ext import build_ext
 
-import numpy
+try:
+    import numpy
+except ImportError:
+    include_dirs = []
+else:
+    include_dirs = [numpy.get_include()]
 
 CONFIG_FILE = 'build.conf'
 README_FILE = 'README.rst'
@@ -432,7 +437,6 @@ def ext_modules(extensions):
 
     return result
 
-
 def main():
     setup(name='kwant',
           version=version,
@@ -451,7 +455,7 @@ def main():
                     'build_ext': kwant_build_ext,
                     'build_tut': kwant_build_tut},
           ext_modules=ext_modules(extensions()),
-          include_dirs=[numpy.get_include()],
+          include_dirs=include_dirs,
           setup_requires=['numpy > 1.6.1', 'nose >= 1.0'],
           install_requires=['numpy > 1.6.1', 'scipy >= 0.9', 'tinyarray'],
           extras_require={'plotting': 'matplotlib >= 1.2'})
