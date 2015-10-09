@@ -21,8 +21,8 @@ from distutils.core import setup, Extension, Command
 from distutils.util import get_platform
 from distutils.errors import DistutilsError, DistutilsModuleError, \
     CCompilerError
-from distutils.command.build import build as distutils_build
-from distutils.command.sdist import sdist as distutils_sdist
+from distutils.command.build import build
+from distutils.command.sdist import sdist
 
 import numpy
 
@@ -116,7 +116,7 @@ class kwant_build_ext(build_ext):
         print(banner())
 
 
-class build_tut(Command):
+class kwant_build_tut(Command):
     description = "build the tutorial scripts"
     user_options = []
 
@@ -142,15 +142,15 @@ class build_tut(Command):
 # Even though the tutorial is not necessary for installation, and "build" is
 # supposed to make everything needed to install, this is a robust way to ensure
 # that the tutorial is present.
-class kwant_build(distutils_build):
-    sub_commands = [('build_tut', None)] + distutils_build.sub_commands
+class kwant_build(build):
+    sub_commands = [('build_tut', None)] + build.sub_commands
 
     def run(self):
-        distutils_build.run(self)
+        build.run(self)
         write_version(os.path.join(self.build_lib, *STATIC_VERSION_PATH))
 
 
-class test(Command):
+class kwant_test(Command):
     description = "build, then run the unit tests"
     user_options = []
 
@@ -193,8 +193,8 @@ def git_lsfiles():
 # distribution in the current state actually builds.  It also makes sure that
 # the Cython-made C files and the tutorial will be included in the source
 # distribution and that they will be up-to-date.
-class kwant_sdist(distutils_sdist):
-    sub_commands = [('build', None)] + distutils_sdist.sub_commands
+class kwant_sdist(sdist):
+    sub_commands = [('build', None)] + sdist.sub_commands
 
     def run(self):
         names = git_lsfiles()
@@ -223,7 +223,7 @@ class kwant_sdist(distutils_sdist):
                     f.write(name + '\n')
                 f.write('MANIFEST\n')
 
-        distutils_sdist.run(self)
+        sdist.run(self)
 
         if names is None:
             print(banner(' Warning '),
@@ -240,7 +240,7 @@ with a comment).  It may well be incomplete.""",
                   sep='\n', file=sys.stderr)
 
     def make_release_tree(self, base_dir, files):
-        distutils_sdist.make_release_tree(self, base_dir, files)
+        sdist.make_release_tree(self, base_dir, files)
         write_version(os.path.join(base_dir, *STATIC_VERSION_PATH))
 
 
@@ -479,8 +479,8 @@ def main():
           cmdclass={'build': kwant_build,
                     'sdist': kwant_sdist,
                     'build_ext': kwant_build_ext,
-                    'build_tut': build_tut,
-                    'test': test},
+                    'build_tut': kwant_build_tut,
+                    'test': kwant_test},
           ext_modules=ext_modules(extensions()),
           include_dirs=[numpy.get_include()])
 
