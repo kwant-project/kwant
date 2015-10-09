@@ -33,7 +33,8 @@ def get_version_from_git():
     # that were merged-in.
     for opts in [['--first-parent'], []]:
         try:
-            p = subprocess.Popen(['git', 'describe'] + opts, cwd=distr_root,
+            p = subprocess.Popen(['git', 'describe', '--long'] + opts,
+                                 cwd=distr_root,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError:
             return
@@ -41,19 +42,29 @@ def get_version_from_git():
             break
     else:
         return
-    version = p.communicate()[0].rstrip('\n')
+    description = p.communicate()[0].strip('v').rstrip('\n')
 
-    if version[0] == 'v':
-        version = version[1:]
+    release, dev, git = description.rsplit('-', 2)
+    version = [release]
+    labels = []
+    if dev != "0":
+        version.append(".dev{}".format(dev))
+        labels.append(git)
 
     try:
         p = subprocess.Popen(['git', 'diff', '--quiet'], cwd=distr_root)
     except OSError:
-        version += '-confused'  # This should never happen.
+        labels.append('confused') # This should never happen.
     else:
         if p.wait() == 1:
-            version += '-dirty'
-    return version
+            labels.append('dirty')
+
+    if labels:
+        version.append('+')
+        version.append(".".join(labels))
+
+    return "".join(version)
+
 
 
 from _kwant_version import version
