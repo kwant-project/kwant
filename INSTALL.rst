@@ -336,11 +336,11 @@ Kwant can be built and installed following the `usual Python conventions
 <http://docs.python.org/install/index.html>`_ by running the following commands
 in the root directory of the Kwant distribution. ::
 
-    python setup.py build
-    python setup.py install
+    pip install .
 
 Depending on your system, you might have to run the second command with
-administrator privileges (e.g. prefixing it with ``sudo``).
+administrator privileges (e.g. prefixing it with ``sudo``). If you use Python
+older than 2.7.9, see `pip installation instructions <https://docs.python.org/2/installing/#install-pip-in-versions-of-python-prior-to-python-2-7-9>`_.
 
 After installation, tests can be run with::
 
@@ -366,31 +366,15 @@ root.
 
 2. Unpack Tinyarray, enter its directory. To build and install, run ::
 
-       python setup.py build
-       sudo python setup.py install
+       sudo pip install .
 
 3. Inside the Kwant source distribution's root directory run ::
 
-       python setup.py build
-       sudo python setup.py install
+       sudo pip install .
 
-By default the package will be installed under ``/usr/local``.  You can
-change this using the ``--prefix`` option, e.g.::
-
-    sudo python setup.py install --prefix=/opt
-
-If you would like to install Kwant into your home directory only you can use ::
-
-    python setup.py install --home=~
-
-This does not require root privileges.  If you install Kwant in this way
-be sure to tell python where to find it.  This can be done by setting the
-``PYTHONPATH`` environment variable::
-
-    export PYTHONPATH=$HOME/lib/python
-
-You can make this setting permanent by adding this line to the file
-``.bashrc`` (or equivalent) in your home directory.
+By default the package will be installed under ``/usr/local``.  Type ``pip help
+install`` for installation options and see `pip documentation
+<https://pip.readthedocs.org>`_ for a detailed description of ``pip``.
 
 
 Mac OS X: MacPorts
