@@ -385,12 +385,12 @@ class Monatomic(builder.SiteFamily, Polyatomic):
     """
     A Bravais lattice with a single site in the basis.
 
-    Instances of this class provide the `~kwant.builder.SiteFamily` interface.  Site
-    tags (see `~kwant.builder.SiteFamily`) are sequences of integers and describe
-    the lattice coordinates of a site.
+    Instances of this class provide the `~kwant.builder.SiteFamily` interface.
+    Site tags (see `~kwant.builder.SiteFamily`) are sequences of integers and
+    describe the lattice coordinates of a site.
 
-    ``Monatomic`` instances are used as site families on their own or as sublattices
-    of `Polyatomic` lattices.
+    ``Monatomic`` instances are used as site families on their own or as
+    sublattices of `Polyatomic` lattices.
 
     Parameters
     ----------
