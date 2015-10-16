@@ -70,12 +70,6 @@ class Polyatomic(object):
         sublattices are obtained by appending their number to the name of the
         lattice.
 
-    Attributes
-    ----------
-    prim_vecs : 2d tinyarray of floats
-        ``prim_vecs[i]`` is the `i`-th primitive basis vector of the lattice
-        Sublattices belonging to this lattice.
-
     Raises
     ------
     ValueError
@@ -354,6 +348,12 @@ class Polyatomic(object):
 
     @property
     def prim_vecs(self):
+        """(sequence of vectors) Primitive vectors
+
+        `prim_vecs[i]`` is the `i`-th primitive basis vector of the lattice
+        displacement of the lattice origin from the real space coordinates
+        origin.
+        """
         return np.array(self._prim_vecs)
 
     def vec(self, int_vec):
@@ -394,19 +394,17 @@ class Monatomic(builder.SiteFamily, Polyatomic):
 
     Parameters
     ----------
-    prim_vecs : 2d array-like of floats
+    prim_vecss : 2d array-like of floats
         Primitive vectors of the Bravais lattice.
+
     offset : vector of floats
         Displacement of the lattice origin from the real space
         coordinates origin.
 
     Attributes
     ----------
-    offset : vector
-        Displacement of the lattice origin from the real space
-        coordinates origin.
-    prim_vecs : sequence of vectors
-        ``prim_vecs[i]`` is the `i`-th primitive basis vector of the lattice
+    ``offset`` : vector
+        Displacement of the lattice origin from the real space coordinates origin
     """
 
     def __init__(self, prim_vecs, offset=None, name=''):
