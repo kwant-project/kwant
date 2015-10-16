@@ -13,10 +13,15 @@ import numpy                    # Needed by C. Gohlke's Windows package.
 try:
     from . import _system
 except ImportError:
-    msg = """Error importing Kwant: You should not try to import Kwant from
-    its source directory.  Please exit the Kwant source distribution directory,
-    and relaunch your Python intepreter from there."""
-    raise ImportError(msg)
+    import inspect
+    if len(inspect.trace()) == 1:
+        msg = """Error importing Kwant:
+        You should not try to import Kwant from its source directory.
+        Please exit the Kwant source distribution directory, and relaunch
+        your Python intepreter from there."""
+        raise ImportError(msg)
+    else:
+        raise
 
 from ._common import KwantDeprecationWarning
 __all__.append('KwantDeprecationWarning')
