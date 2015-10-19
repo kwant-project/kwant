@@ -17,7 +17,7 @@ import glob
 import imp
 import subprocess
 import ConfigParser
-from setuptools import setup, Extension, Command
+from setuptools import setup, find_packages, Extension, Command
 from sysconfig import get_platform
 from distutils.errors import DistutilsError, DistutilsModuleError, \
     CCompilerError
@@ -247,12 +247,6 @@ def long_description():
     return '\n'.join(text)
 
 
-def packages():
-    return [root.replace('/', '.')
-            for root, dnames, fnames in os.walk('kwant')
-            if '__init__.py' in fnames or root.endswith('/tests')]
-
-
 def search_mumps():
     """Return the configuration for MUMPS if it is available in a known way.
 
@@ -448,7 +442,7 @@ def main():
           platforms=["Unix", "Linux", "Mac OS-X", "Windows"],
           url="http://kwant-project.org/",
           license="BSD",
-          packages=packages(),
+          packages=find_packages('.'),
           test_suite = 'nose.collector',
           cmdclass={'build': kwant_build,
                     'sdist': kwant_sdist,
