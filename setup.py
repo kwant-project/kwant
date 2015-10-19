@@ -361,33 +361,39 @@ def complain_cython_unavailable():
 
 
 def ext_modules(extensions):
-    """Prepare the ext_modules argument for distutils' setup."""
+    """Prepare the ext_modules argument for setuptools.
+
+    If Cython is not to be run, replace .pyx extensions with .c or .cpp, and
+    check timestamps.
+    """
     result = []
     problematic_files = []
     for args, kwrds in extensions:
+        name, sources = args
         if not cythonize or cython_version < REQUIRED_CYTHON_VERSION:
             # Cython is not going to be run: replace pyx extension by that of
             # the shipped translated file.
-            if 'language' in kwrds:
-                if kwrds['language'] == 'c':
-                    ext = '.c'
-                elif kwrds['language'] == 'c++':
-                    ext = '.cpp'
-                else:
-                    print('Unknown language', file=sys.stderr)
-                    exit(1)
-            else:
+            language = kwrds.get('language')
+            if language is None:
                 ext = '.c'
+            elif language == 'c':
+                ext = '.c'
+            elif language == 'c++':
+                ext = '.cpp'
+            else:
+                print('Unknown language: {}'.format(language), file=sys.stderr)
+                exit(1)
+
             pyx_files = []
             cythonized_files = []
-            sources = []
-            for f in args[1]:
-                if f[-4:] == '.pyx':
+            new_sources = []
+            for f in sources:
+                if f.endswith('.pyx'):
                     pyx_files.append(f)
-                    f = f[:-4] + ext
+                    f = f.rstrip('.pyx') + ext
                     cythonized_files.append(f)
-                sources.append(f)
-            args[1] = sources
+                new_sources.append(f)
+            sources = new_sources
 
             # Complain if cythonized files are older than Cython source files.
             try:
@@ -406,7 +412,7 @@ def ext_modules(extensions):
                 if os.stat(f).st_mtime > cythonized_oldest:
                     problematic_files.append(f)
 
-        result.append(Extension(*args, **kwrds))
+        result.append(Extension(name, sources, **kwrds))
 
     if problematic_files:
         problematic_files = ", ".join(problematic_files)
