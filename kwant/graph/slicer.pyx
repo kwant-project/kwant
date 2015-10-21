@@ -13,7 +13,10 @@ from libc.string cimport memcpy
 from .defs cimport gint
 from .defs import gint_dtype
 from .core cimport CGraph
-from . cimport c_slicer
+
+cimport c_slicer
+# TODO: Once cythonize() no longer warns about it, replace the above be
+# from . cimport c_slicer
 
 __all__ = ['slice']
 
