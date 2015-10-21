@@ -60,14 +60,15 @@ version_is_from_git = _common.version_is_from_git
 
 try:
     sys.argv.remove(NO_CYTHON_OPTION)
-    cythonize = False
+    use_cython = False
 except ValueError:
-    cythonize = True
+    use_cython = True
 
-if cythonize:
+if use_cython:
     try:
         import Cython
-    except:
+        from Cython.Build import cythonize
+    except ImportError:
         cython_version = ()
     else:
         match = re.match('([0-9.]*)(.*)', Cython.__version__)
@@ -349,8 +350,8 @@ def extensions():
 
 
 def complain_cython_unavailable():
-    assert not cythonize or cython_version < REQUIRED_CYTHON_VERSION
-    if cythonize:
+    assert not use_cython or cython_version < REQUIRED_CYTHON_VERSION
+    if use_cython:
         msg = ("Install Cython {0} or newer so it can be made\n"
                "or use a source distribution of Kwant.")
         ver = '.'.join(str(e) for e in REQUIRED_CYTHON_VERSION)
@@ -366,51 +367,57 @@ def ext_modules(extensions):
     If Cython is not to be run, replace .pyx extensions with .c or .cpp, and
     check timestamps.
     """
+    if use_cython and cython_version >= REQUIRED_CYTHON_VERSION:
+        return cythonize([Extension(*args, **kwrds)
+                          for args, kwrds in extensions])
+
+    # Cython is not going to be run: replace pyx extension by that of
+    # the shipped translated file.
+
     result = []
     problematic_files = []
     for args, kwrds in extensions:
         name, sources = args
-        if not cythonize or cython_version < REQUIRED_CYTHON_VERSION:
-            # Cython is not going to be run: replace pyx extension by that of
-            # the shipped translated file.
-            language = kwrds.get('language')
-            if language is None:
-                ext = '.c'
-            elif language == 'c':
-                ext = '.c'
-            elif language == 'c++':
-                ext = '.cpp'
-            else:
-                print('Unknown language: {}'.format(language), file=sys.stderr)
-                exit(1)
 
-            pyx_files = []
-            cythonized_files = []
-            new_sources = []
-            for f in sources:
-                if f.endswith('.pyx'):
-                    pyx_files.append(f)
-                    f = f.rstrip('.pyx') + ext
-                    cythonized_files.append(f)
-                new_sources.append(f)
-            sources = new_sources
+        language = kwrds.get('language')
+        if language is None:
+            ext = '.c'
+        elif language == 'c':
+            ext = '.c'
+        elif language == 'c++':
+            ext = '.cpp'
+        else:
+            print('Unknown language: {}'.format(language), file=sys.stderr)
+            exit(1)
 
-            # Complain if cythonized files are older than Cython source files.
-            try:
-                cythonized_oldest = min(os.stat(f).st_mtime
-                                        for f in cythonized_files)
-            except OSError:
-                print("error: Cython-generated file {} is missing.".format(f),
-                      file=sys.stderr)
-                complain_cython_unavailable()
-                exit(1)
-            for f in pyx_files + kwrds.get('depends', []):
-                if f == CONFIG_FILE:
-                    # The config file is only a dependency for the compilation
-                    # of the cythonized file, not for the cythonization.
-                    continue
-                if os.stat(f).st_mtime > cythonized_oldest:
-                    problematic_files.append(f)
+        pyx_files = []
+        cythonized_files = []
+        new_sources = []
+        for f in sources:
+            if f.endswith('.pyx'):
+                pyx_files.append(f)
+                f = f.rstrip('.pyx') + ext
+                cythonized_files.append(f)
+            new_sources.append(f)
+        sources = new_sources
+
+        # Complain if cythonized files are older than Cython source files.
+        try:
+            cythonized_oldest = min(os.stat(f).st_mtime
+                                    for f in cythonized_files)
+        except OSError:
+            print("error: Cython-generated file {} is missing.".format(f),
+                  file=sys.stderr)
+            complain_cython_unavailable()
+            exit(1)
+
+        for f in pyx_files + kwrds.get('depends', []):
+            if f == CONFIG_FILE:
+                # The config file is only a dependency for the compilation
+                # of the cythonized file, not for the cythonization.
+                continue
+            if os.stat(f).st_mtime > cythonized_oldest:
+                problematic_files.append(f)
 
         result.append(Extension(name, sources, **kwrds))
 
@@ -420,7 +427,7 @@ def ext_modules(extensions):
                " been derived from them, but {}.\n"
                "\n"
                "Affected files: {}")
-        if cythonize:
+        if use_cython:
             if not cython_version:
                 reason = "Cython is not installed"
             else:
@@ -436,6 +443,7 @@ def ext_modules(extensions):
                   banner(), sep='\n', file=sys.stderr)
 
     return result
+
 
 def main():
     setup(name='kwant',
