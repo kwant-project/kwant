@@ -202,8 +202,10 @@ cdef class Graph:
                                                   self.num_pp_edges,
                                                   self.num_pn_edges,
                                                   self.num_np_edges)
-        cdef gint *hbuf = result.heads_idxs + 1, *heads = result.heads
-        cdef gint *tbuf = result.tails_idxs + 1, *tails = result.tails
+        cdef gint *hbuf = result.heads_idxs + 1
+        cdef gint *heads = result.heads
+        cdef gint *tbuf = result.tails_idxs + 1
+        cdef gint *tails = result.tails
         cdef gint *edge_ids = result.edge_ids
         cdef gint edge_id = 0, num_edges     # = 0 is there to silence warning.
         cdef Edge *edge

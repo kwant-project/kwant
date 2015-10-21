@@ -45,8 +45,10 @@ cdef extern from "zmumps_c.h":
         MUMPS_INT nrhs, lrhs
         ZMUMPS_COMPLEX *rhs
 
-        MUMPS_INT info[40], infog[40]
-        ZMUMPS_REAL rinfo[40], rinfog[40]
+        MUMPS_INT info[40]
+        MUMPS_INT infog[40]
+        ZMUMPS_REAL rinfo[40]
+        ZMUMPS_REAL rinfog[40]
 
         MUMPS_INT nz_rhs
         ZMUMPS_COMPLEX *rhs_sparse
