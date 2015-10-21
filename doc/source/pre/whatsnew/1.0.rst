@@ -2,8 +2,8 @@ What's new in Kwant 1.0
 =======================
 
 This article explains the new features in Kwant 1.0 compared to Kwant 0.2.
-Kwant 1.0 was released on 9 September 2013.  Please consult the
-`full list of changes in Kwant <http://git.kwant-project.org/kwant/log/>`_ for all the changes up to the most recent bugfix release.
+Kwant 1.0 was released on 9 September 2013.
+Please consult the `full list of changes in Kwant <http://git.kwant-project.org/kwant/log/?h=v1.0.5>`_ for all the changes up to the most recent bugfix release.
 
 
 Lattice and shape improvements
