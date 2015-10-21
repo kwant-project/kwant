@@ -394,7 +394,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
 
     Parameters
     ----------
-    prim_vecss : 2d array-like of floats
+    prim_vecs : 2d array-like of floats
         Primitive vectors of the Bravais lattice.
 
     offset : vector of floats
