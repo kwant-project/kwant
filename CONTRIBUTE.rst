@@ -75,10 +75,13 @@ A useful trick for working on the source code is to build in-place so that there
 is no need to re-install after each change.  This can be done with the following
 command ::
 
-    python setup.py build_ext -i
+    python setup.py build_ext -i --cython
 
 The ``kwant`` subdirectory of the source distribution will be thus turned into
 a proper Python package that can be imported.  To be able to import Kwant from
 within Python, one can either work in the root directory of the distribution
 (where the subdirectory ``kwant`` is located), or make a (symbolic) link from
 somewhere in the Python search path to the the package subdirectory.
+
+The option ``--cython`` enables the translation of .pyx files into .c files.
+It is only needed if any .pyx files have been modified.

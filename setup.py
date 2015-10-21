@@ -38,7 +38,7 @@ MANIFEST_IN_FILE = 'MANIFEST.in'
 README_END_BEFORE = 'See also in this directory:'
 STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
 REQUIRED_CYTHON_VERSION = (0, 22)
-NO_CYTHON_OPTION = '--no-cython'
+CYTHON_OPTION = '--cython'
 TUT_DIR = 'tutorial'
 TUT_GLOB = 'doc/source/tutorial/*.py'
 TUT_HIDDEN_PREFIX = '#HIDDEN'
@@ -59,10 +59,10 @@ version = _common.version
 version_is_from_git = _common.version_is_from_git
 
 try:
-    sys.argv.remove(NO_CYTHON_OPTION)
-    use_cython = False
-except ValueError:
+    sys.argv.remove(CYTHON_OPTION)
     use_cython = True
+except ValueError:
+    use_cython = False
 
 if use_cython:
     try:
@@ -424,7 +424,7 @@ def ext_modules(extensions):
     if problematic_files:
         problematic_files = ", ".join(problematic_files)
         msg = ("Some Cython source files are newer than files that should have\n"
-               " been derived from them, but {}.\n"
+               "been derived from them, but {}.\n"
                "\n"
                "Affected files: {}")
         if use_cython:
@@ -438,8 +438,11 @@ def ext_modules(extensions):
             complain_cython_unavailable()
             exit(1)
         else:
-            reason = "the option --no-cython has been given"
-            print(banner(" Warning "), msg.format(reason, problematic_files),
+            reason = "the option {} has not been given".format(CYTHON_OPTION)
+            dontworry = ('(Do not worry about this if you are building Kwant\n'
+                         'from unmodified sources, e.g. with "pip install".)\n')
+            print(banner(" Caution "), dontworry,
+                  msg.format(reason, problematic_files),
                   banner(), sep='\n', file=sys.stderr)
 
     return result
