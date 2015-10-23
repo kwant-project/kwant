@@ -1,0 +1,6 @@
+job:
+  script:
+    - python3 setup.py build
+    - python3 setup.py build_ext -i
+    - make -C doc html
+    - nosetests3 --with-coverage --cover-package kwant
