@@ -47,11 +47,6 @@ TUT_HIDDEN_PREFIX = '#HIDDEN'
 # it is not built yet.
 _dont_write_bytecode_saved = sys.dont_write_bytecode
 sys.dont_write_bytecode = True
-try:
-    imp.load_source(STATIC_VERSION_PATH[-1].split('.')[0],
-                    os.path.join(*STATIC_VERSION_PATH))
-except IOError:
-    pass
 _common = imp.load_source('_common', 'kwant/_common.py')
 sys.dont_write_bytecode = _dont_write_bytecode_saved
 
@@ -228,7 +223,7 @@ def write_version(fname):
         pass
     with open(fname, 'w') as f:
         f.write("# This file has been created by setup.py.\n")
-        f.write("version = '{}'\n".format(version))
+        f.write(version)
 
 
 def long_description():

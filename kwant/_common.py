@@ -11,7 +11,9 @@ import os
 
 __all__ = ['version', 'KwantDeprecationWarning']
 
-distr_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+package_root = os.path.dirname(os.path.realpath(__file__))
+distr_root = os.path.dirname(package_root)
+version_file = '_kwant_version.py'
 
 def get_version_from_git():
     try:
@@ -66,7 +68,14 @@ def get_version_from_git():
 
 
 
-from _kwant_version import version
+# version file contains comments (lines starting with '#')
+# followed by the version string on its own on a single line
+with open(os.path.join(package_root, version_file), 'r') as f:
+    cruft="\"'\n\t\r "  # strip whitespace and quotes
+    line = next(f).strip(cruft)
+    while line.startswith('#'):
+        line = next(f).strip(cruft)
+    version = line
 version_is_from_git = (version == "__use_git__")
 if version_is_from_git:
     version = get_version_from_git()
