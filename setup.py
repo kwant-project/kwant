@@ -51,6 +51,18 @@ CYTHON_OPTION = '--cython'
 TUT_DIR = 'tutorial'
 TUT_GLOB = 'doc/source/tutorial/*.py'
 TUT_HIDDEN_PREFIX = '#HIDDEN'
+CLASSIFIERS = """\
+    Development Status :: 5 - Production/Stable
+    Intended Audience :: Science/Research
+    Intended Audience :: Developers
+    Programming Language :: Python :: 2
+    Topic :: Software Development
+    Topic :: Scientific/Engineering
+    Operating System :: POSIX
+    Operating System :: Unix
+    Operating System :: MacOS :: MacOS X
+    Operating System :: Microsoft :: Windows"""
+
 
 # Let Kwant itself determine its own version.  We cannot simply import kwant, as
 # it is not built yet.
@@ -476,7 +488,8 @@ def main():
           include_dirs=include_dirs,
           setup_requires=['numpy > 1.6.1', 'nose >= 1.0'],
           install_requires=['numpy > 1.6.1', 'scipy >= 0.9', 'tinyarray'],
-          extras_require={'plotting': 'matplotlib >= 1.2'})
+          extras_require={'plotting': 'matplotlib >= 1.2'},
+          classifiers=[c.strip() for c in CLASSIFIERS.split('\n')])
 
 if __name__ == '__main__':
     main()
