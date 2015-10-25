@@ -62,7 +62,7 @@ try:
     sys.argv.remove(CYTHON_OPTION)
     use_cython = True
 except ValueError:
-    use_cython = False
+    use_cython = version_is_from_git
 
 if use_cython:
     try:
