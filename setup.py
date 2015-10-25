@@ -355,7 +355,7 @@ def complain_cython_unavailable():
         ver = '.'.join(str(e) for e in REQUIRED_CYTHON_VERSION)
         print(msg.format(ver), file=sys.stderr)
     else:
-        print("Run setup.py without {}.".format(NO_CYTHON_OPTION),
+        print("Run setup.py with the {} option.".format(CYTHON_OPTION),
               file=sys.stderr)
 
 
