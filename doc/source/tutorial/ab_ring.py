@@ -50,8 +50,8 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
     # define the modified hoppings as a function that takes the flux as its
     # parameter phi.
 #HIDDEN_BEGIN_lvkt
-    def fluxphase(site1, site2, phi):
-        return exp(1j * phi)
+    def hopping_phase(site1, site2, phi):
+        return -t * exp(1j * phi)
 
     def crosses_branchcut(hop):
         ix0, iy0 = hop[0].tag
@@ -65,7 +65,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
         for hop in kwant.builder.HoppingKind((1, 0), lat, lat)(sys):
             if crosses_branchcut(hop):
                 yield hop
-    sys[hops_across_cut] = fluxphase
+    sys[hops_across_cut] = hopping_phase
 #HIDDEN_END_lvkt
 
     #### Define the leads. ####
