@@ -43,7 +43,7 @@ TUT_DIR = 'tutorial'
 TUT_GLOB = 'doc/source/tutorial/*.py'
 TUT_HIDDEN_PREFIX = '#HIDDEN'
 CLASSIFIERS = """\
-    Development Status :: 4 - Beta
+    Development Status :: 5 - Production/Stable
     Intended Audience :: Science/Research
     Intended Audience :: Developers
     Programming Language :: Python :: 3 :: Only
