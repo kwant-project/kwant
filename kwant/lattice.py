@@ -617,7 +617,6 @@ class TranslationalSymmetry(builder.Symmetry):
 
         det_m = int(round(np.linalg.det(m)))
         if det_m == 0:
-            print(m)
             raise RuntimeError('Adding site family failed.')
 
         det_x_inv_m = np.array(np.round(det_m * np.linalg.inv(m)), dtype=int)

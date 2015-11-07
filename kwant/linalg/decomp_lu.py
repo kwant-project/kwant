@@ -61,13 +61,13 @@ def lu_factor(a, overwrite_a=False):
         return lapack.cgetrf(a)
 
 
-def lu_solve(xxx_todo_changeme, b):
+def lu_solve(matrix_factorization, b):
     """Solve a linear system of equations, a x = b, given the LU
     factorization of a
 
     Parameters
     ----------
-    (lu, piv, singular)
+    matrix_factorization
         Factorization of the coefficient matrix a, as given by lu_factor
     b : array (vector or matrix)
         Right-hand side
@@ -77,7 +77,7 @@ def lu_solve(xxx_todo_changeme, b):
     x : array (vector or matrix)
         Solution to the system
     """
-    (lu, ipiv, singular) = xxx_todo_changeme
+    (lu, ipiv, singular) = matrix_factorization
     if singular:
         raise RuntimeWarning("In lu_solve: the flag singular indicates "
                              "a singular matrix. Result of solve step "
@@ -102,7 +102,7 @@ def lu_solve(xxx_todo_changeme, b):
         return lapack.cgetrs(lu, ipiv, b)
 
 
-def rcond_from_lu(xxx_todo_changeme1, norm_a, norm="1"):
+def rcond_from_lu(matrix_factorization, norm_a, norm="1"):
     """Compute the reciprocal condition number from the LU decomposition as
     returned from lu_factor(), given additionally the norm of the matrix a in
     norm_a.
@@ -112,7 +112,7 @@ def rcond_from_lu(xxx_todo_changeme1, norm_a, norm="1"):
 
     Parameters
     ----------
-    (lu, piv, singular)
+    matrix_factorization
         Factorization of the matrix a, as given by lu_factor
     norm_a : float or complex
         norm of the original matrix a (type of norm is specified in norm)
@@ -126,7 +126,7 @@ def rcond_from_lu(xxx_todo_changeme1, norm_a, norm="1"):
         reciprocal condition number of a with respect to the type of matrix
         norm specified in norm
     """
-    (lu, ipiv, singular) = xxx_todo_changeme1
+    (lu, ipiv, singular) = matrix_factorization
     if not norm in ("1", "I"):
         raise ValueError("norm in rcond_from_lu must be either '1' or 'I'")
     norm = norm.encode('utf8')  # lapack expects bytes

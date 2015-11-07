@@ -19,7 +19,6 @@ import tinyarray as ta
 import numpy as np
 from . import system, graph, KwantDeprecationWarning
 from ._common import ensure_isinstance
-import collections
 
 
 
@@ -795,7 +794,7 @@ class Builder(object):
         iter_stack = [None]
         while iter_stack:
             for key in itr:
-                while isinstance(key, collections.Callable):
+                while callable(key):
                     key = key(self)
                 if isinstance(key, tuple):
                     # Site instances are also tuples.
@@ -826,7 +825,7 @@ class Builder(object):
                 b, a = sym.to_fd(b, a)
                 assert not sym.in_fd(a)
             value = self._get_edge(b, a)
-            if isinstance(value, collections.Callable):
+            if callable(value):
                 assert not isinstance(value, HermConjOfFunc)
                 value = HermConjOfFunc(value)
             else:
@@ -1385,7 +1384,7 @@ class FiniteSystem(system.FiniteSystem):
     def hamiltonian(self, i, j, *args):
         if i == j:
             value = self.onsite_hamiltonians[i]
-            if isinstance(value, collections.Callable):
+            if callable(value):
                 value = value(self.sites[i], *args)
         else:
             edge_id = self.graph.first_edge_id(i, j)
@@ -1395,7 +1394,7 @@ class FiniteSystem(system.FiniteSystem):
                 i, j = j, i
                 edge_id = self.graph.first_edge_id(i, j)
                 value = self.hoppings[edge_id]
-            if isinstance(value, collections.Callable):
+            if callable(value):
                 sites = self.sites
                 value = value(sites[i], sites[j], *args)
             if conj:
@@ -1419,7 +1418,7 @@ class InfiniteSystem(system.InfiniteSystem):
             if i >= self.cell_size:
                 i -= self.cell_size
             value = self.onsite_hamiltonians[i]
-            if isinstance(value, collections.Callable):
+            if callable(value):
                 value = value(self.symmetry.to_fd(self.sites[i]), *args)
         else:
             edge_id = self.graph.first_edge_id(i, j)
@@ -1429,7 +1428,7 @@ class InfiniteSystem(system.InfiniteSystem):
                 i, j = j, i
                 edge_id = self.graph.first_edge_id(i, j)
                 value = self.hoppings[edge_id]
-            if isinstance(value, collections.Callable):
+            if callable(value):
                 sites = self.sites
                 site_i = sites[i]
                 site_j = sites[j]

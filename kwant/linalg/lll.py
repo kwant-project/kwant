@@ -68,7 +68,7 @@ def lll(basis, c=1.34):
     m = vecs.shape[0]
     u = np.identity(m)
     def ll_reduce(i):
-        for j in reversed(list(range(i))):
+        for j in reversed(range(i)):
             vecs[i] -= np.round(u[i, j]) * vecs[j]
             u[i] -= np.round(u[i, j]) * u[j]
 

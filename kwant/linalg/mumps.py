@@ -219,7 +219,7 @@ class MUMPSContext(object):
         if a.ndim != 2 or a.shape[0] != a.shape[1]:
             raise ValueError("Input matrix must be square!")
 
-        if not ordering in list(orderings.keys()):
+        if not ordering in orderings.keys():
             raise ValueError("Unknown ordering '"+ordering+"'!")
 
         dtype, row, col, data = _make_assembled_from_coo(a, overwrite_a)
@@ -470,7 +470,7 @@ def schur_complement(a, indices, ordering='auto', ooc=False, pivot_tol=0.01,
     if indices.ndim != 1:
         raise ValueError("Schur indices must be specified in a 1d array!")
 
-    if not ordering in list(orderings.keys()):
+    if not ordering in orderings.keys():
         raise ValueError("Unknown ordering '"+ordering+"'!")
 
     dtype, row, col, data = _make_assembled_from_coo(a, overwrite_a)
