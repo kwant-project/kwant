@@ -68,14 +68,11 @@ def get_version_from_git():
 
 
 
-# version file contains comments (lines starting with '#')
-# followed by the version string on its own on a single line
+# populate the version_info dictionary with values stored in the version file
+version_info = {}
 with open(os.path.join(package_root, version_file), 'r') as f:
-    cruft="\"'\n\t\r "  # strip whitespace and quotes
-    line = next(f).strip(cruft)
-    while line.startswith('#'):
-        line = next(f).strip(cruft)
-    version = line
+    exec(f.read(), {}, version_info)
+version = version_info['version']
 version_is_from_git = (version == "__use_git__")
 if version_is_from_git:
     version = get_version_from_git()

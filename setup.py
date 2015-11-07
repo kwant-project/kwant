@@ -173,7 +173,7 @@ def git_lsfiles():
 
     if p.wait() != 0:
         return
-    return p.communicate()[0].split('\n')[:-1]
+    return p.communicate()[0].decode().split('\n')[:-1]
 
 
 # Make the command "sdist" depend on "build".  This verifies that the
@@ -235,7 +235,7 @@ def write_version(fname):
         pass
     with open(fname, 'w') as f:
         f.write("# This file has been created by setup.py.\n")
-        f.write(version)
+        f.write("version = '{}'".format(version))
 
 
 def long_description():
