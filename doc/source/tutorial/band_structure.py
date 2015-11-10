@@ -24,7 +24,7 @@ def make_lead(a=1, t=1.0, W=10):
 
     # build up one unit cell of the lead, and add the hoppings
     # to the next unit cell
-    for j in xrange(W):
+    for j in range(W):
         lead[lat(0, j)] = 4 * t
 
         if j > 0:

@@ -10,7 +10,6 @@
 #  - Application of all the aspects of tutorials 1-3 to a more complicated
 #    lattice, namely graphene
 
-from __future__ import division  # so that 1/2 == 0.5, and not 0
 from math import pi, sqrt, tanh
 
 import kwant
@@ -102,7 +101,7 @@ def compute_evs(sys):
     sparse_mat = sys.hamiltonian_submatrix(sparse=True)
 
     evs = sla.eigs(sparse_mat, 2)[0]
-    print evs.real
+    print(evs.real)
 #HIDDEN_END_zydk
 
 
@@ -166,11 +165,11 @@ def main():
     sys = sys.finalized()
 
     # Compute the band structure of lead 0.
-    momenta = [-pi + 0.02 * pi * i for i in xrange(101)]
+    momenta = [-pi + 0.02 * pi * i for i in range(101)]
     plot_bandstructure(sys.leads[0], momenta)
 
     # Plot conductance.
-    energies = [-2 * pot + 4. / 50. * pot * i for i in xrange(51)]
+    energies = [-2 * pot + 4. / 50. * pot * i for i in range(51)]
     plot_conductance(sys, energies)
 
 

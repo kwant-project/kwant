@@ -1,12 +1,10 @@
 """The script generating Kwant logo. In addition to Kwant it also needs Python
-image library (PIL)."""
+image library Pillow."""
 
-import Image
-import ImageFont
-import ImageDraw
+from PIL import Image, ImageFont, ImageDraw
 import matplotlib
 import numpy as np
-import scipy
+import scipy.misc
 import kwant
 
 def main():
@@ -86,7 +84,7 @@ def main():
     # result is not too empty or not too dark.
     out = np.zeros(textpos.shape)
     for i, rho in enumerate(ldos**.2):
-        x1, y1 = sys.site(i).tag
+        x1, y1 = sys.sites[i].tag
         out[x1, y1] = rho
     out = normalize_data(out)
 

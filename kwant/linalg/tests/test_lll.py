@@ -6,7 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from __future__ import division
+
 import numpy as np
 from kwant.linalg import lll
 

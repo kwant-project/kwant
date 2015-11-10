@@ -43,16 +43,16 @@ class _Random:
         mat = np.empty((n, m), dtype = dtype)
 
         if issubclass(dtype, np.complexfloating):
-            for i in xrange(n):
-                for j in xrange(m):
+            for i in range(n):
+                for j in range(m):
                     mat[i,j] = self._randf() + 1j * self._randf()
         elif issubclass(dtype, np.floating):
-            for i in xrange(n):
-                for j in xrange(m):
+            for i in range(n):
+                for j in range(m):
                     mat[i,j] = self._randf()
         elif issubclass(dtype, np.integer):
-            for i in xrange(n):
-                for j in xrange(m):
+            for i in range(n):
+                for j in range(m):
                     mat[i,j] = self._randi()
 
         return mat
@@ -61,13 +61,13 @@ class _Random:
         vec = np.empty(n, dtype = dtype)
 
         if issubclass(dtype, np.complexfloating):
-            for i in xrange(n):
+            for i in range(n):
                 vec[i] = self._randf() + 1j * self._randf()
         elif issubclass(dtype, np.floating):
-            for i in xrange(n):
+            for i in range(n):
                 vec[i] = self._randf()
         elif issubclass(dtype, np.integer):
-            for i in xrange(n):
+            for i in range(n):
                 vec[i] = self._randi()
 
         return vec

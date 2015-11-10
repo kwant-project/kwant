@@ -6,7 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from __future__ import division
+
 from math import cos, sin
 import numpy as np
 from nose.tools import assert_raises
@@ -263,18 +263,18 @@ def test_tricky_singular_hopping(smatrix):
     lead = kwant.Builder(kwant.TranslationalSymmetry((4, 0)))
 
     interface = []
-    for i in xrange(n):
+    for i in range(n):
         site = sq(-1, i)
         interface.append(site)
         system[site] = 0
-        for j in xrange(4):
+        for j in range(4):
             lead[sq(j, i)] = 0
-    for i in xrange(n-1):
+    for i in range(n-1):
         system[sq(-1, i), sq(-1, i+1)] = -1
-        for j in xrange(4):
+        for j in range(4):
             lead[sq(j, i), sq(j, i+1)] = -1
-    for i in xrange(n):
-        for j in xrange(4):
+    for i in range(n):
+        for j in range(4):
             lead[sq(j, i), sq(j+1, i)] = -1
     del lead[sq(1, 0), sq(2, 0)]
 
@@ -300,10 +300,10 @@ def test_many_leads(*factories):
 
     # Build a square system with four leads and a hole in the center.
     sys = kwant.Builder()
-    sys[(sq(x, y) for x in xrange(-4, 4) for y in xrange(-4, 4)
+    sys[(sq(x, y) for x in range(-4, 4) for y in range(-4, 4)
          if x**2 + y**2 >= 2)] = 3
     sys[sq.neighbors()] = phase
-    for r in [xrange(-4, -1), xrange(4)]:
+    for r in [range(-4, -1), range(4)]:
         lead = kwant.Builder(kwant.TranslationalSymmetry([-1, 0]))
         lead[(sq(0, y) for y in r)] = 4
         lead[sq.neighbors()] = phase
@@ -311,7 +311,7 @@ def test_many_leads(*factories):
         sys.attach_lead(lead.reversed())
     sys = sys.finalized()
 
-    r4 = range(4)
+    r4 = list(range(4))
     br = factories[0](sys, E, out_leads=r4, in_leads=r4)
     trans = np.array([[br._transmission(i, j) for j in r4] for i in r4])
     cmat = br.conductance_matrix()
@@ -480,7 +480,7 @@ def test_wavefunc_ldos_consistency(wave_function, ldos):
         for energy in [0, 1000]:
             wf = wave_function(sys, energy)
             ldos2 = np.zeros(wf.num_orb, float)
-            for lead in xrange(len(sys.leads)):
+            for lead in range(len(sys.leads)):
                 temp = abs(wf(lead))
                 temp **= 2
                 ldos2 += temp.sum(axis=0)

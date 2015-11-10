@@ -11,7 +11,9 @@ import os
 
 __all__ = ['version', 'KwantDeprecationWarning']
 
-distr_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+package_root = os.path.dirname(os.path.realpath(__file__))
+distr_root = os.path.dirname(package_root)
+version_file = '_kwant_version.py'
 
 def get_version_from_git():
     try:
@@ -22,8 +24,7 @@ def get_version_from_git():
         return
     if p.wait() != 0:
         return
-    # TODO: use os.path.samefile once we depend on Python >= 3.3.
-    if os.path.normpath(p.communicate()[0].rstrip('\n')) != distr_root:
+    if not os.path.samefile(p.communicate()[0].decode().rstrip('\n'), distr_root):
         # The top-level directory of the current Git repository is not the same
         # as the root directory of the Kwant distribution: do not extract the
         # version from Git.
@@ -42,7 +43,7 @@ def get_version_from_git():
             break
     else:
         return
-    description = p.communicate()[0].strip('v').rstrip('\n')
+    description = p.communicate()[0].decode().strip('v').rstrip('\n')
 
     release, dev, git = description.rsplit('-', 2)
     version = [release]
@@ -67,7 +68,11 @@ def get_version_from_git():
 
 
 
-from _kwant_version import version
+# populate the version_info dictionary with values stored in the version file
+version_info = {}
+with open(os.path.join(package_root, version_file), 'r') as f:
+    exec(f.read(), {}, version_info)
+version = version_info['version']
 version_is_from_git = (version == "__use_git__")
 if version_is_from_git:
     version = get_version_from_git()

@@ -8,7 +8,6 @@
 
 """Low-level interface of systems"""
 
-from __future__ import division
 __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 
 import abc
@@ -17,7 +16,7 @@ from copy import copy
 from . import _system
 
 
-class System(object):
+class System(object, metaclass=abc.ABCMeta):
     """Abstract general low-level system.
 
     Attributes
@@ -33,7 +32,6 @@ class System(object):
     Optionally, a class derived from `System` can provide a method `pos` which
     is assumed to return the real-space position of a site given its index.
     """
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def hamiltonian(self, i, j, *args):
@@ -49,11 +47,10 @@ class System(object):
         pass
 
 # Add a C-implemented function as an unbound method to class System.
-System.hamiltonian_submatrix = types.MethodType(
-    _system.hamiltonian_submatrix, None, System)
+System.hamiltonian_submatrix = _system.HamiltonianSubmatrix()
 
 
-class FiniteSystem(System):
+class FiniteSystem(System, metaclass=abc.ABCMeta):
     """Abstract finite low-level system, possibly with leads.
 
     Attributes
@@ -80,7 +77,6 @@ class FiniteSystem(System):
     the first ``len(lead_interfaces[n])`` sites of the InfiniteSystem.
 
     """
-    __metaclass__ = abc.ABCMeta
 
     def precalculate(self, energy=0, args=(), leads=None,
                      what='modes'):
@@ -123,7 +119,7 @@ class FiniteSystem(System):
 
         result = copy(self)
         if leads is None:
-            leads = range(len(self.leads))
+            leads = list(range(len(self.leads)))
         new_leads = []
         for nr, lead in enumerate(self.leads):
             if nr not in leads:
@@ -141,7 +137,7 @@ class FiniteSystem(System):
         result.leads = new_leads
         return result
 
-class InfiniteSystem(System):
+class InfiniteSystem(System, metaclass=abc.ABCMeta):
     """
     Abstract infinite low-level system.
 
@@ -183,18 +179,17 @@ class InfiniteSystem(System):
     infinite system.  The other scheme has the numbers of site 0 and 1
     exchanged, as well as of site 3 and 4.
     """
-    __metaclass__ = abc.ABCMeta
 
     def cell_hamiltonian(self, args=(), sparse=False):
         """Hamiltonian of a single cell of the infinite system."""
-        cell_sites = xrange(self.cell_size)
+        cell_sites = range(self.cell_size)
         return self.hamiltonian_submatrix(args, cell_sites, cell_sites,
                                           sparse=sparse)
 
     def inter_cell_hopping(self, args=(), sparse=False):
         """Hopping Hamiltonian between two cells of the infinite system."""
-        cell_sites = xrange(self.cell_size)
-        interface_sites = xrange(self.cell_size, self.graph.num_nodes)
+        cell_sites = range(self.cell_size)
+        interface_sites = range(self.cell_size, self.graph.num_nodes)
         return self.hamiltonian_submatrix(args, cell_sites, interface_sites,
                                           sparse=sparse)
 

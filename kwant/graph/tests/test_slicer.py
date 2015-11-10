@@ -11,13 +11,13 @@ from kwant.graph import slicer
 
 def assert_sanity(graph, slices):
     # Slices must comprise all of the graph.
-    slclist = [slices[j][i] for j in xrange(len(slices))
-               for i in xrange(len(slices[j]))]
+    slclist = [slices[j][i] for j in range(len(slices))
+               for i in range(len(slices[j]))]
     slclist.sort()
-    assert slclist == [i for i in xrange(graph.num_nodes)]
+    assert slclist == [i for i in range(graph.num_nodes)]
 
     # Nodes may only have neighbors in neighboring slices.
-    for j in xrange(len(slices)):
+    for j in range(len(slices)):
         for node in slices[j]:
             for neigh in graph.out_neighbors(node):
                 if j > 0 and j < len(slices) - 1:
@@ -39,8 +39,8 @@ def test_rectangle():
         sys = kwant.Builder()
         lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
         lat = kwant.lattice.square()
-        lead[(lat(0, i) for i in xrange(w))] = 0
-        sys[(lat(j, i) for j in xrange(l) for i in xrange(w))] = 0
+        lead[(lat(0, i) for i in range(w))] = 0
+        sys[(lat(j, i) for j in range(l) for i in range(w))] = 0
         for s in [lead, sys]:
             for kind in [kwant.builder.HoppingKind((1, 0), lat),
                          kwant.builder.HoppingKind((0, 1), lat)]:
@@ -57,7 +57,7 @@ def test_rectangle():
         # we know that all slices must have the same shape.
         assert len(slices) == l
 
-        for j in xrange(l):
+        for j in range(l):
             assert len(slices[j]) == w
 
         assert_sanity(fsys.graph, slices)

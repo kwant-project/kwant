@@ -17,32 +17,32 @@ def _DISABLED_test_bisect():
     size = 5
     graph = Graph()
 
-    for i in xrange(size-1):
+    for i in range(size - 1):
         offset = i * size
-        for j in xrange(size-1):
+        for j in range(size - 1):
             graph.add_edge(offset + j, offset + j + 1)
             graph.add_edge(offset + j + 1, offset + j)
         if i > 0:
-            for j in xrange(size):
+            for j in range(size):
                 graph.add_edge(offset + j, offset + j - size)
                 graph.add_edge(offset + j - size, offset + j)
     g = graph.compressed()
 
     parts = bisect(g)
-    for i in xrange(g.num_nodes):
+    for i in range(g.num_nodes):
         assert_true(parts[i] == 0 or parts[i] == 1)
 
 def _DISABLED_test_reset():
     size = 5
     graph = Graph()
 
-    for i in xrange(size-1):
+    for i in range(size - 1):
         offset = i * size
-        for j in xrange(size-1):
+        for j in range(size - 1):
             graph.add_edge(offset + j, offset + j + 1)
             graph.add_edge(offset + j + 1, offset + j)
         if i > 0:
-            for j in xrange(size):
+            for j in range(size):
                 graph.add_edge(offset + j, offset + j - size)
                 graph.add_edge(offset + j - size, offset + j)
     g = graph.compressed()

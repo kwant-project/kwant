@@ -11,6 +11,7 @@ import tinyarray as ta
 import numpy as np
 from scipy import sparse as sp
 from itertools import chain
+import types
 
 from .graph.core cimport CGraph, gintArraySlice
 from .graph.defs cimport gint
@@ -84,8 +85,15 @@ def make_sparse(ham, args, CGraph gr, diag,
                         rows_cols[1, k] = j + from_off[n_fs]
                         k += 1
 
-    return sp.coo_matrix((data[:k], rows_cols[:, :k]),
-                         shape=(to_off[-1], from_off[-1]))
+    # hack around a bug in Scipy + Python 3 + memoryviews
+    # see https://github.com/scipy/scipy/issues/5123 for details
+    np_data = np.asarray(data)
+    np_rows_cols = np.asarray(rows_cols)
+    np_to_off = np.asarray(to_off)
+    np_from_off = np.asarray(from_off)
+
+    return sp.coo_matrix((np_data[:k], np_rows_cols[:, :k]),
+                         shape=(np_to_off[-1], np_from_off[-1]))
 
 
 @cython.boundscheck(False)
@@ -147,8 +155,15 @@ def make_sparse_full(ham, args, CGraph gr, diag,
                         rows_cols[0, k + 1] = rows_cols[1, k] = j + from_off[fs]
                         k += 2
 
-    return sp.coo_matrix((data[:k], rows_cols[:, :k]),
-                         shape=(to_off[-1], from_off[-1]))
+    # hack around a bug in Scipy + Python 3 + memoryviews
+    # see https://github.com/scipy/scipy/issues/5123 for details
+    np_data = np.asarray(data)
+    np_rows_cols = np.asarray(rows_cols)
+    np_to_off = np.asarray(to_off)
+    np_from_off = np.asarray(from_off)
+
+    return sp.coo_matrix((np_data[:k], np_rows_cols[:, :k]),
+                         shape=(np_to_off[-1], np_from_off[-1]))
 
 
 @cython.boundscheck(False)
@@ -327,3 +342,13 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
         mat = func(ham, args, self.graph, diag, from_sites,
                    n_by_to_site, to_norb, to_off, from_norb, from_off)
     return (mat, to_norb, from_norb) if return_norb else mat
+
+# workaround for Cython functions not having __get__ and
+# Python 3 getting rid of unbound methods
+cdef class HamiltonianSubmatrix:
+
+    def __get__(self, obj, objtype):
+        if obj is None:
+            return hamiltonian_submatrix
+        else:
+            return types.MethodType(hamiltonian_submatrix, obj)

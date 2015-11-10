@@ -2,13 +2,13 @@
 kwant.Builder.
 """
 
-from __future__ import division
 import numpy as np
 from matplotlib import pyplot
 import kwant
 from kwant.physics.leads import square_selfenergy
 
 __all__ = ['System']
+
 
 class Lead(object):
     def __init__(self, width, t, potential):
@@ -19,6 +19,7 @@ class Lead(object):
     def selfenergy(self, fermi_energy, args=()):
         return square_selfenergy(self.width, self.t,
                                  self.potential + fermi_energy)
+
 
 class System(kwant.system.FiniteSystem):
     def __init__(self, shape, hopping,
@@ -56,7 +57,7 @@ class System(kwant.system.FiniteSystem):
             edges[:shape[across], 1] += increment[along]
             edges[shape[across]:, (0, 1)] = edges[:shape[across], (1, 0)]
             g.add_edges(edges)
-            for i in xrange(shape[along] - 2):
+            for i in range(shape[along] - 2):
                 edges += increment[along]
                 g.add_edges(edges)
         self.graph = g.compressed()
@@ -66,7 +67,7 @@ class System(kwant.system.FiniteSystem):
             # We have to use list here, as numpy.array does not understand
             # generators.
             interface = list(self.nodeid_from_pos((x, y))
-                             for y in xrange(shape[1]))
+                             for y in range(shape[1]))
             self.lead_interfaces.append(np.array(interface))
 
         self.leads = [Lead(shape[1], hopping, lead_potentials[i])
@@ -85,7 +86,7 @@ class System(kwant.system.FiniteSystem):
         return result
 
     def nodeid_from_pos(self, pos):
-        for i in xrange(2):
+        for i in range(2):
             assert int(pos[i]) == pos[i]
             assert pos[i] >= 0 and pos[i] < self.shape[i]
         return pos[0] + pos[1] * self.shape[0]
@@ -98,8 +99,8 @@ class System(kwant.system.FiniteSystem):
 
 def main():
     sys = System((10, 5), 1)
-    energies = [0.04 * i for i in xrange(100)]
-    data = [kwant.smatrix(sys, energy).transmission(1, 0)
+    energies = [0.04 * i for i in range(100)]
+    data = [kwant.greens_function(sys, energy).transmission(1, 0)
             for energy in energies]
 
     pyplot.plot(energies, data)

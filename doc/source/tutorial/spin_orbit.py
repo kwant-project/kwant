@@ -55,7 +55,7 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
     lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
 
 #HIDDEN_BEGIN_yliu
-    lead[(lat(0, j) for j in xrange(W))] = 4 * t * sigma_0 + e_z * sigma_z
+    lead[(lat(0, j) for j in range(W))] = 4 * t * sigma_0 + e_z * sigma_z
     # hoppings in x-direction
     lead[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
         -t * sigma_0 - 1j * alpha * sigma_y
@@ -95,7 +95,7 @@ def main():
     sys = sys.finalized()
 
     # We should see non-monotonic conductance steps.
-    plot_conductance(sys, energies=[0.01 * i - 0.3 for i in xrange(100)])
+    plot_conductance(sys, energies=[0.01 * i - 0.3 for i in range(100)])
 
 
 # Call the main function if the script gets executed (as opposed to imported).

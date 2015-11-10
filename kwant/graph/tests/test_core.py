@@ -6,8 +6,8 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from StringIO import StringIO
-from itertools import izip_longest
+from io import StringIO
+from itertools import zip_longest
 import numpy as np
 from nose.tools import assert_equal, assert_raises
 from kwant.graph.core import (Graph, NodeDoesNotExistError,
@@ -41,12 +41,12 @@ def test_num_nodes():
 def test_large():
     num_edges = 1000
     graph = Graph()
-    for i in xrange(num_edges):
+    for i in range(num_edges):
         graph.add_edge(i, i + 1)
     g = graph.compressed()
     g2 = graph.compressed(twoway=True)
     assert_equal(num_edges, g.num_nodes - 1)
-    for i in xrange(num_edges):
+    for i in range(num_edges):
         assert_equal(tuple(g.out_neighbors(i)), (i + 1,))
         assert_equal(tuple(g2.in_neighbors(i + 1)), (i,))
 
@@ -71,7 +71,7 @@ def test_small():
     check_dot(dot_expect, g)
     g = g.compressed(twoway=True)
 
-    for edge_should, edge_is in izip_longest(edges, g):
+    for edge_should, edge_is in zip_longest(edges, g):
         assert_equal(edge_should, edge_is)
 
     edge_ids = []

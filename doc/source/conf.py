@@ -42,8 +42,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Kwant'
-copyright = u'2011-2015, C. W. Groth (CEA), M. Wimmer, A. R. Akhmerov, X. Waintal (CEA), and others'
+project = 'Kwant'
+copyright = '2011-2015, C. W. Groth (CEA), M. Wimmer, A. R. Akhmerov, X. Waintal (CEA), and others'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -208,7 +208,7 @@ r"""\makeatletter
 # We use "et al." as it is shorter and there's not much space left horizontally.
 latex_documents = [
   ('index', 'kwant.tex', 'Kwant {0} documentation'.format(release),
-   u'C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, et al.',
+   'C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, et al.',
    'manual'),
 ]
 
@@ -249,9 +249,9 @@ class BoundMethodDocumenter(autodoc.FunctionDocumenter):
         # Return True iff `member` is a bound method.  Taken from
         # <http://stackoverflow.com/a/1260881>.
         return (isinstance(member, types.MethodType) and
-                member.im_self is not None and
-                not issubclass(member.im_class, type) and
-                member.im_class is not types.ClassType)
+                member.__self__ is not None and
+                not issubclass(member.__self__.__class__, type) and
+                member.__self__.__class__ is not type)
 
     def format_args(self):
         args = super(BoundMethodDocumenter, self).format_args()

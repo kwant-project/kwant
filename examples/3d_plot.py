@@ -1,6 +1,6 @@
 from math import sqrt
 import scipy.sparse.linalg as sla
-import matplotlib.pyplot
+from matplotlib import pyplot
 import kwant
 
 sys = kwant.Builder()
@@ -9,11 +9,11 @@ lat = kwant.lattice.general([(1,0,0), (0,1,0), (0,0,1)])
 t = 1.0
 R = 10
 
-sys[(lat(x,y,z) for x in xrange(-R-1, R+1)
-     for y in xrange(-R-1, R+1) for z in xrange(R+1)
+sys[(lat(x,y,z) for x in range(-R-1, R+1)
+     for y in range(-R-1, R+1) for z in range(R+1)
      if sqrt(x**2 + y**2 + z**2) < R + 0.01)] = 4 * t
-sys[(lat(x,y,z) for x in xrange(-2*R, 2*R + 1)
-     for y in xrange(-R, R+1) for z in xrange(-R, 0))] = 4 * t
+sys[(lat(x,y,z) for x in range(-2*R, 2*R + 1)
+     for y in range(-R, R+1) for z in range(-R, 0))] = 4 * t
 sys[lat.neighbors()] = -t
 sys = sys.finalized()
 kwant.plot(sys)

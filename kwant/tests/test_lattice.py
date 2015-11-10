@@ -6,7 +6,6 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from __future__ import division
 from math import sqrt
 import numpy as np
 import tinyarray as ta
@@ -63,15 +62,15 @@ def test_shape():
     sites = list(lat.shape(in_circle, (0, 0))())
     sites_alt = list()
     sl0, sl1 = lat.sublattices
-    for x in xrange(-2, 3):
-        for y in xrange(-2, 3):
+    for x in range(-2, 3):
+        for y in range(-2, 3):
             tag = (x, y)
             for site in (sl0(*tag), sl1(*tag)):
                 if in_circle(site.pos):
                     sites_alt.append(site)
     assert len(sites) == len(sites_alt)
     assert_equal(set(sites), set(sites_alt))
-    assert_raises(ValueError, lat.shape(in_circle, (10, 10))().next)
+    assert_raises(ValueError, lat.shape(in_circle, (10, 10))().__next__)
 
     # Check if narrow ribbons work.
     for period in (0, 1), (1, 0), (1, -1):

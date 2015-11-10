@@ -36,7 +36,7 @@ def prepare_for_fortran(overwrite, *args):
 
     # Make sure we have NumPy arrays
     mats = [None]*len(args)
-    for i in xrange(len(args)):
+    for i in range(len(args)):
         if args[i] is not None:
             arr = np.asanyarray(args[i])
             if not np.issubdtype(arr.dtype, np.number):

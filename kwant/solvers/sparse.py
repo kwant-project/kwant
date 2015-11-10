@@ -110,7 +110,7 @@ class Solver(common.SparseSolver):
 
         sols = []
         vec = np.empty(b.shape[0], complex)
-        for j in xrange(b.shape[1]):
+        for j in range(b.shape[1]):
             vec[:] = b[:, j].todense().flatten()
             sols.append(factorized_a(vec)[kept_vars])
 

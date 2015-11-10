@@ -35,8 +35,8 @@ L = 30
 
 # Define the scattering region
 
-for i in xrange(L):
-    for j in xrange(W):
+for i in range(L):
+    for j in range(W):
         # On-site Hamiltonian
         sys[lat(i, j)] = 4 * t
 
@@ -59,7 +59,7 @@ left_lead = kwant.Builder(sym_left_lead)
 #HIDDEN_END_xcmc
 
 #HIDDEN_BEGIN_ndez
-for j in xrange(W):
+for j in range(W):
     left_lead[lat(0, j)] = 4 * t
     if j > 0:
         left_lead[lat(0, j), lat(0, j - 1)] = -t
@@ -75,7 +75,7 @@ sys.attach_lead(left_lead)
 sym_right_lead = kwant.TranslationalSymmetry((a, 0))
 right_lead = kwant.Builder(sym_right_lead)
 
-for j in xrange(W):
+for j in range(W):
     right_lead[lat(0, j)] = 4 * t
     if j > 0:
         right_lead[lat(0, j), lat(0, j - 1)] = -t
@@ -98,7 +98,7 @@ sys = sys.finalized()
 #HIDDEN_BEGIN_buzn
 energies = []
 data = []
-for ie in xrange(100):
+for ie in range(100):
     energy = ie * 0.01
 
     # compute the scattering matrix at a given energy

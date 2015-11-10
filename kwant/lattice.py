@@ -6,8 +6,6 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from __future__ import division
-
 __all__ = ['TranslationalSymmetry', 'general', 'Polyatomic', 'Monatomic',
            'chain', 'square', 'triangular', 'honeycomb', 'kagome']
 
@@ -617,7 +615,6 @@ class TranslationalSymmetry(builder.Symmetry):
 
         det_m = int(round(np.linalg.det(m)))
         if det_m == 0:
-            print m
             raise RuntimeError('Adding site family failed.')
 
         det_x_inv_m = np.array(np.round(det_m * np.linalg.inv(m)), dtype=int)

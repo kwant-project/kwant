@@ -6,12 +6,11 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from __future__ import division
-
 __all__ = ['lll', 'cvp', 'voronoi']
 
 import numpy as np
 from itertools import product
+
 
 def gs_coefficient(a, b):
     """Gram-Schmidt coefficient."""

@@ -12,7 +12,7 @@ from kwant.linalg import (
     convert_r2c_gen_schur, order_gen_schur, evecs_from_gen_schur)
 from nose.tools import assert_equal, assert_true
 import numpy as np
-from _test_utils import _Random, assert_array_almost_equal
+from ._test_utils import _Random, assert_array_almost_equal
 
 def test_gen_eig():
     def _test_gen_eig(dtype):

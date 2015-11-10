@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2011-2015 Kwant authors.
 #
@@ -16,7 +16,7 @@ import os
 import glob
 import imp
 import subprocess
-import ConfigParser
+import configparser
 from setuptools import setup, find_packages, Extension, Command
 from sysconfig import get_platform
 from distutils.errors import DistutilsError, DistutilsModuleError, \
@@ -42,16 +42,23 @@ CYTHON_OPTION = '--cython'
 TUT_DIR = 'tutorial'
 TUT_GLOB = 'doc/source/tutorial/*.py'
 TUT_HIDDEN_PREFIX = '#HIDDEN'
+CLASSIFIERS = """\
+    Development Status :: 5 - Production/Stable
+    Intended Audience :: Science/Research
+    Intended Audience :: Developers
+    Programming Language :: Python :: 3 :: Only
+    Topic :: Software Development
+    Topic :: Scientific/Engineering
+    Operating System :: POSIX
+    Operating System :: Unix
+    Operating System :: MacOS :: MacOS X
+    Operating System :: Microsoft :: Windows"""
+
 
 # Let Kwant itself determine its own version.  We cannot simply import kwant, as
 # it is not built yet.
 _dont_write_bytecode_saved = sys.dont_write_bytecode
 sys.dont_write_bytecode = True
-try:
-    imp.load_source(STATIC_VERSION_PATH[-1].split('.')[0],
-                    os.path.join(*STATIC_VERSION_PATH))
-except IOError:
-    pass
 _common = imp.load_source('_common', 'kwant/_common.py')
 sys.dont_write_bytecode = _dont_write_bytecode_saved
 
@@ -166,7 +173,7 @@ def git_lsfiles():
 
     if p.wait() != 0:
         return
-    return p.communicate()[0].split('\n')[:-1]
+    return p.communicate()[0].decode().split('\n')[:-1]
 
 
 # Make the command "sdist" depend on "build".  This verifies that the
@@ -263,7 +270,7 @@ def search_mumps():
     except OSError:
         pass
     else:
-        p.communicate(input='int main() {}\n')
+        p.communicate(input=b'int main() {}\n')
         if p.wait() == 0:
             return {'libraries': libs}
     return {}
@@ -297,7 +304,7 @@ def extensions():
                       'kwant/graph/c_slicer/slicer.h']})]
 
     #### Add components of Kwant with external compile-time dependencies.
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     try:
         with open(CONFIG_FILE) as f:
             config.readfp(f)
@@ -334,7 +341,7 @@ def extensions():
         if kwrds:
             build_summary.append('Auto-configured MUMPS')
     if kwrds:
-        for name, value in lapack.iteritems():
+        for name, value in lapack.items():
             kwrds.setdefault(name, []).extend(value)
         kwrds.setdefault('depends', []).extend(
             [CONFIG_FILE, 'kwant/linalg/cmumps.pxd'])
@@ -467,7 +474,8 @@ def main():
           include_dirs=include_dirs,
           setup_requires=['numpy > 1.6.1', 'nose >= 1.0'],
           install_requires=['numpy > 1.6.1', 'scipy >= 0.9', 'tinyarray'],
-          extras_require={'plotting': 'matplotlib >= 1.2'})
+          extras_require={'plotting': 'matplotlib >= 1.2'},
+          classifiers=[c.strip() for c in CLASSIFIERS.split('\n')])
 
 if __name__ == '__main__':
     main()

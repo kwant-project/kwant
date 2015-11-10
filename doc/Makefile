@@ -136,5 +136,5 @@ $(foreach name,$(SCRIPTS),$(eval $(call makedep,$(name))))
 
 # Generation of images
 .%_flag: %.py
-	cd $(dir $<) && python $(notdir $<)
+	cd $(dir $<) && python3 $(notdir $<)
 	@touch $@

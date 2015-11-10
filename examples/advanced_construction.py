@@ -1,6 +1,5 @@
 """An example of advanced system creation."""
 
-from __future__ import division
 from math import tanh
 from cmath import exp
 import tinyarray as ta
@@ -48,7 +47,7 @@ def make_system(R):
 
 def main():
     sys = make_system(100)
-    print kwant.smatrix(sys, 1.1, [0.1]).transmission(0, 1)
+    print(kwant.smatrix(sys, 1.1, [0.1]).transmission(0, 1))
 
 
 if __name__ == '__main__':

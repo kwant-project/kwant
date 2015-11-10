@@ -29,7 +29,7 @@ __all__.append('KwantDeprecationWarning')
 from ._common import version as __version__
 
 for module in ['system', 'builder', 'lattice', 'solvers', 'digest', 'rmt']:
-    exec 'from . import {0}'.format(module)
+    exec('from . import {0}'.format(module))
     __all__.append(module)
 
 # Make selected functionality available directly in the root namespace.
@@ -38,7 +38,7 @@ available = [('builder', ['Builder', 'HoppingKind']),
              ('solvers.default',
               ['smatrix', 'greens_function', 'ldos', 'wave_function'])]
 for module, names in available:
-    exec 'from .{0} import {1}'.format(module, ', '.join(names))
+    exec('from .{0} import {1}'.format(module, ', '.join(names)))
     __all__.extend(names)
 
 # Importing plotter might not work, but this does not have to be a problem --
