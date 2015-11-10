@@ -17,9 +17,9 @@ def _DISABLED_test_bisect():
     size = 5
     graph = Graph()
 
-    for i in range(size-1):
+    for i in range(size - 1):
         offset = i * size
-        for j in range(size-1):
+        for j in range(size - 1):
             graph.add_edge(offset + j, offset + j + 1)
             graph.add_edge(offset + j + 1, offset + j)
         if i > 0:
@@ -36,9 +36,9 @@ def _DISABLED_test_reset():
     size = 5
     graph = Graph()
 
-    for i in range(size-1):
+    for i in range(size - 1):
         offset = i * size
-        for j in range(size-1):
+        for j in range(size - 1):
             graph.add_edge(offset + j, offset + j + 1)
             graph.add_edge(offset + j + 1, offset + j)
         if i > 0:

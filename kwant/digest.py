@@ -19,8 +19,6 @@ good enough to pass the "dieharder" battery of tests: see the function `test` of
 this module.
 """
 
-
-
 from math import pi, log, sqrt, cos
 from hashlib import md5
 from struct import unpack

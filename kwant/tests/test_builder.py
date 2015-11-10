@@ -6,7 +6,6 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-
 import warnings
 from random import Random
 from nose.tools import assert_raises

@@ -83,7 +83,7 @@ def test_induced_subgraph():
     num_nodes = 6
 
     graph = Graph()
-    for i in range(num_nodes-1):
+    for i in range(num_nodes - 1):
         graph.add_edge(i, i + 1)
     graph.add_edge(1, 0)
     g = graph.compressed()

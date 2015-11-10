@@ -6,8 +6,6 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-
-
 __all__ = ['gaussian', 'circular']
 
 import numpy as np

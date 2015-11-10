@@ -9,6 +9,7 @@ from kwant.physics.leads import square_selfenergy
 
 __all__ = ['System']
 
+
 class Lead(object):
     def __init__(self, width, t, potential):
         self.width = width

@@ -8,7 +8,6 @@
 
 """Low-level interface of systems"""
 
-
 __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 
 import abc
