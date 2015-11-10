@@ -235,7 +235,7 @@ def write_version(fname):
         pass
     with open(fname, 'w') as f:
         f.write("# This file has been created by setup.py.\n")
-        f.write("version = '{}'".format(version))
+        f.write("version = '{}'\n".format(version))
 
 
 def long_description():
