@@ -97,7 +97,7 @@
      # Finalize the system.
      sys = sys.finalized()
 @@ -111,6 +169,17 @@
-                                                 for i in xrange(100)])
+                                                 for i in range(100)])
  
  
 +    # Finally, some plots needed for the notes
