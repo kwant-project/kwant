@@ -360,7 +360,7 @@ Instead, we now write:
     :end-before: #HIDDEN_END_vvjt
 
 Here, all lattice points are added at once in the first line.  The
-construct ``((i, j) for i in xrange(L) for j in xrange(W))`` is a
+construct ``((i, j) for i in range(L) for j in range(W))`` is a
 generator that iterates over all points in the rectangle as did the
 two ``for``-loops in the previous example. In fact, a
 `~kwant.builder.Builder` can not only be indexed by a single
@@ -463,7 +463,7 @@ The result of the example should be identical to the previous one.
      Let us elaborate a bit more on this using a simpler example:
 
      >>> a = (0, 1, 2, 3)
-     >>> b = (i for i in xrange(4))
+     >>> b = (i for i in range(4))
 
      Here, `a` is a tuple, whereas `b` is a generator. One difference
      is that one can subscript tuples, but not generators:
@@ -489,7 +489,7 @@ The result of the example should be identical to the previous one.
      added at once, these two sites should be encapsulated in a tuple.
      In particular, one must write::
 
-         sys[((lat(0,j+1), lat(0, j)) for j in xrange(W-1)] = ...
+         sys[((lat(0,j+1), lat(0, j)) for j in range(W-1)] = ...
 
      or::
 
