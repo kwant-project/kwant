@@ -86,7 +86,7 @@ class MUMPSError(RuntimeError):
         RuntimeError.__init__(self, msg)
 
 
-class AnalysisStatistics(object):
+class AnalysisStatistics:
     def __init__(self, inst, time=None):
         self.est_mem_incore = inst.infog[17]
         self.est_mem_ooc = inst.infog[27]
@@ -110,7 +110,7 @@ class AnalysisStatistics(object):
         return " ".join(parts)
 
 
-class FactorizationStatistics(object):
+class FactorizationStatistics:
     def __init__(self, inst, time=None, include_ordering=False):
         # information about pivoting
         self.offdiag_pivots = inst.infog[12] if inst.sym == 0 else 0
@@ -144,7 +144,7 @@ class FactorizationStatistics(object):
         return " ".join(parts)
 
 
-class MUMPSContext(object):
+class MUMPSContext:
     """MUMPSContext contains the internal data structures needed by the
     MUMPS library and contains a user-friendly interface.
 

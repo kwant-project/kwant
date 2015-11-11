@@ -29,7 +29,7 @@ from functools import reduce
 LinearSys = namedtuple('LinearSys', ['lhs', 'rhs', 'indices', 'num_orb'])
 
 
-class SparseSolver(object, metaclass=abc.ABCMeta):
+class SparseSolver(metaclass=abc.ABCMeta):
     """Solver class for computing physical quantities based on solving
     a liner system of equations.
 
@@ -546,7 +546,7 @@ class SparseSolver(object, metaclass=abc.ABCMeta):
         return WaveFunction(self, sys, energy, args, check_hermiticity)
 
 
-class WaveFunction(object):
+class WaveFunction:
     def __init__(self, solver, sys, energy, args, check_hermiticity):
         ensure_isinstance(sys, system.System)
         for lead in sys.leads:
@@ -568,7 +568,7 @@ class WaveFunction(object):
         return result.transpose()
 
 
-class BlockResult(object, metaclass=abc.ABCMeta):
+class BlockResult(metaclass=abc.ABCMeta):
     """
     ABC for a linear system solution with variable grouping.
     """

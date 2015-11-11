@@ -82,7 +82,7 @@ class Site(tuple):
         return self.family.pos(self.tag)
 
 
-class SiteFamily(object, metaclass=abc.ABCMeta):
+class SiteFamily(metaclass=abc.ABCMeta):
     """Abstract base class for site families.
 
     Site families are the 'type' of `Site` objects.  Within a family, individual
@@ -221,7 +221,7 @@ def validate_hopping(hopping):
 
 ################ Symmetries
 
-class Symmetry(object, metaclass=abc.ABCMeta):
+class Symmetry(metaclass=abc.ABCMeta):
     """Abstract base class for spatial symmetries.
 
     Many physical systems possess a discrete spatial symmetry, which results in
@@ -321,7 +321,7 @@ class NoSymmetry(Symmetry):
 
 ################ Hopping kinds
 
-class HoppingKind(object):
+class HoppingKind:
     """A pattern for matching hoppings.
 
     A hopping ``(a, b)`` matches precisely when the site family of ``a`` equals
@@ -413,7 +413,7 @@ def herm_conj(value):
     return value
 
 
-class HermConjOfFunc(object):
+class HermConjOfFunc:
     """Proxy returning the hermitian conjugate of the original result."""
     __slots__ = ('function')
 
@@ -426,7 +426,7 @@ class HermConjOfFunc(object):
 
 ################ Leads
 
-class Lead(object, metaclass=abc.ABCMeta):
+class Lead(metaclass=abc.ABCMeta):
     """Abstract base class for leads that can be attached to a `Builder`.
 
     To attach a lead to a builder, append it to the builder's `~Builder.leads`
@@ -554,7 +554,7 @@ class ModesLead(Lead):
 
 # A marker, meaning for hopping (i, j): this value is given by the Hermitian
 # conjugate the value of the hopping (j, i).  Used by Builder and System.
-class Other(object):
+class Other:
     pass
 
 
@@ -567,7 +567,7 @@ def edges(seq):
     return result
 
 
-class Builder(object):
+class Builder:
     """A tight binding system defined on a graph.
 
     This is one of the central types in Kwant.  It is used to construct tight

@@ -16,7 +16,7 @@ from copy import copy
 from . import _system
 
 
-class System(object, metaclass=abc.ABCMeta):
+class System(metaclass=abc.ABCMeta):
     """Abstract general low-level system.
 
     Attributes
@@ -225,7 +225,7 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         return physics.selfenergy(ham, self.inter_cell_hopping(args))
 
 
-class PrecalculatedLead(object):
+class PrecalculatedLead:
     def __init__(self, modes=None, selfenergy=None):
         """A general lead defined by its self energy.
 

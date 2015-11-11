@@ -49,7 +49,7 @@ def general(prim_vecs, basis=None, name=''):
         return Polyatomic(prim_vecs, basis, name=name)
 
 
-class Polyatomic(object):
+class Polyatomic:
     """
     A Bravais lattice with an arbitrary number of sites in the basis.
 

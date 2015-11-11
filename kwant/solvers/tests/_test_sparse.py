@@ -18,7 +18,7 @@ chain = kwant.lattice.chain()
 sq = square = kwant.lattice.square()
 
 
-class LeadWithOnlySelfEnergy(object):
+class LeadWithOnlySelfEnergy:
     def __init__(self, lead):
         self.lead = lead
 

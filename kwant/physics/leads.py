@@ -37,7 +37,7 @@ else:
 Linsys = namedtuple('Linsys', ['eigenproblem', 'v', 'extract'])
 
 
-class PropagatingModes(object):
+class PropagatingModes:
     """The calculated propagating modes of a lead.
 
     Attributes
@@ -68,7 +68,7 @@ class PropagatingModes(object):
         self.__dict__.update(kwargs)
 
 
-class StabilizedModes(object):
+class StabilizedModes:
     """Stabilized eigendecomposition of the translation operator.
 
     Due to the lack of Hermiticity of the translation operator, its

@@ -14,7 +14,7 @@ from .._common import ensure_isinstance
 __all__ = ['Bands']
 
 
-class Bands(object):
+class Bands:
     """
     Class of callable objects for the computation of energy bands.
 
