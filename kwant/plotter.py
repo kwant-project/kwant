@@ -82,7 +82,7 @@ def nparray_if_array(var):
 if mpl_enabled:
     class LineCollection(collections.LineCollection):
         def __init__(self, segments, reflen=None, **kwargs):
-            super(LineCollection, self).__init__(segments, **kwargs)
+            super().__init__(segments, **kwargs)
             self.reflen = reflen
 
         def set_linewidths(self, linewidths):
@@ -97,14 +97,14 @@ if mpl_enabled:
             else:
                 factor = 1
 
-            super(LineCollection, self).set_linewidths(self.linewidths_orig *
+            super().set_linewidths(self.linewidths_orig *
                                                        factor)
-            return super(LineCollection, self).draw(renderer)
+            return super().draw(renderer)
 
 
     class PathCollection(collections.PathCollection):
         def __init__(self, paths, sizes=None, reflen=None, **kwargs):
-            super(PathCollection, self).__init__(paths, sizes=sizes, **kwargs)
+            super().__init__(paths, sizes=sizes, **kwargs)
 
             self.reflen = reflen
             self.linewidths_orig = nparray_if_array(self.get_linewidths())
@@ -177,7 +177,7 @@ if mpl_enabled:
 
         class Line3DCollection(mplot3d.art3d.Line3DCollection):
             def __init__(self, segments, reflen=None, zorder=0, **kwargs):
-                super(Line3DCollection, self).__init__(segments, **kwargs)
+                super().__init__(segments, **kwargs)
                 self.reflen = reflen
                 self.zorder3d = zorder
 
@@ -185,7 +185,7 @@ if mpl_enabled:
                 self.linewidths_orig = nparray_if_array(linewidths)
 
             def do_3d_projection(self, renderer):
-                super(Line3DCollection, self).do_3d_projection(renderer)
+                super().do_3d_projection(renderer)
                 # The whole 3D ordering is flawed in mplot3d when several
                 # collections are added. We just use normal zorder. Note the
                 # "-" due to the different logic in the 3d plotting, we still
@@ -207,9 +207,9 @@ if mpl_enabled:
                 else:
                     factor = 1
 
-                super(Line3DCollection, self).set_linewidths(
+                super().set_linewidths(
                                                 self.linewidths_orig * factor)
-                super(Line3DCollection, self).draw(renderer)
+                super().draw(renderer)
 
 
         class Path3DCollection(mplot3d.art3d.Patch3DCollection):
@@ -220,7 +220,7 @@ if mpl_enabled:
                 if offsets is not None:
                     kwargs['offsets'] = offsets[:, :2]
 
-                super(Path3DCollection, self).__init__(paths, **kwargs)
+                super().__init__(paths, **kwargs)
 
                 if offsets is not None:
                     self.set_3d_properties(zs=offsets[:, 2], zdir="z")
@@ -246,17 +246,17 @@ if mpl_enabled:
 
             def set_array(self, array):
                 self.array_orig = nparray_if_array(array)
-                super(Path3DCollection, self).set_array(array)
+                super().set_array(array)
 
             def set_color(self, colors):
                 self.facecolors_orig = nparray_if_array(colors)
                 self.edgecolors_orig = self.facecolors_orig
-                super(Path3DCollection, self).set_color(colors)
+                super().set_color(colors)
 
             def set_edgecolors(self, colors):
                 colors = matplotlib.colors.colorConverter.to_rgba_array(colors)
                 self.edgecolors_orig = nparray_if_array(colors)
-                super(Path3DCollection, self).set_edgecolors(colors)
+                super().set_edgecolors(colors)
 
             def get_transforms(self):
                 # this is exact only for an isometric projection, for the
@@ -316,14 +316,14 @@ if mpl_enabled:
                         self.facecolors_orig.shape[0] > 1):
                         shape = list(self.facecolors_orig.shape)
                         shape[0] = vs.shape[1]
-                        super(Path3DCollection, self).set_facecolors(
+                        super().set_facecolors(
                             np.resize(self.facecolors_orig, shape)[indx])
 
                     if (self.edgecolors_orig is not None and
                         self.edgecolors_orig.shape[0] > 1):
                         shape = list(self.edgecolors_orig.shape)
                         shape[0] = vs.shape[1]
-                        super(Path3DCollection, self).set_edgecolors(
+                        super().set_edgecolors(
                                                 np.resize(self.edgecolors_orig,
                                                           shape)[indx])
                 else:
@@ -354,7 +354,7 @@ if mpl_enabled:
 
                     self.set_linewidths(self.linewidths_orig2 * factor)
 
-                super(Path3DCollection, self).draw(renderer)
+                super().draw(renderer)
 
 
 # matplotlib helper functions.

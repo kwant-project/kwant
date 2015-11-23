@@ -427,7 +427,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
         cl = self.__module__ + '.' + self.__class__.__name__
         canonical_repr = msg.format(cl, short_array_repr(prim_vecs),
                                     short_array_repr(offset), repr(name))
-        super(Monatomic, self).__init__(canonical_repr, name)
+        super().__init__(canonical_repr, name)
 
         self.sublattices = [self]
         self._prim_vecs = prim_vecs

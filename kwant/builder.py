@@ -173,7 +173,7 @@ class SimpleSiteFamily(SiteFamily):
 
     def __init__(self, name=None):
         canonical_repr = '{0}({1})'.format(self.__class__, repr(name))
-        super(SimpleSiteFamily, self).__init__(canonical_repr, name)
+        super().__init__(canonical_repr, name)
 
     def normalize_tag(self, tag):
         tag = tuple(tag)

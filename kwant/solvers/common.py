@@ -714,7 +714,7 @@ class SMatrix(BlockResult):
     def __init__(self, data, lead_info, out_leads, in_leads,
                  current_conserving=False):
         sizes = [len(i.momenta) // 2 for i in lead_info]
-        super(SMatrix, self).__init__(data, lead_info, out_leads, in_leads,
+        super().__init__(data, lead_info, out_leads, in_leads,
                                       sizes, current_conserving)
 
     def num_propagating(self, lead):
@@ -761,7 +761,7 @@ class GreensFunction(BlockResult):
     def __init__(self, data, lead_info, out_leads, in_leads,
                  current_conserving=False):
         sizes = [i.shape[0] for i in lead_info]
-        super(GreensFunction, self).__init__(
+        super().__init__(
             data, lead_info, out_leads, in_leads, sizes, current_conserving)
 
     def num_propagating(self, lead):
