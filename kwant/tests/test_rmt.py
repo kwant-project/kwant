@@ -23,16 +23,16 @@ def test_gaussian_symmetries():
             h = rmt.gaussian(n, sym)
             if rmt.t(sym):
                 t_mat = np.array(rmt.h_t_matrix[sym])
-                t_mat = np.kron(np.identity(n / len(t_mat)), t_mat)
+                t_mat = np.kron(np.identity(n // len(t_mat)), t_mat)
                 assert_allclose(h, np.dot(t_mat, np.dot(h.conj(), t_mat)),
                                 err_msg='TRS broken in ' + sym)
             if rmt.p(sym):
                 p_mat = np.array(rmt.h_p_matrix[sym])
-                p_mat = np.kron(np.identity(n / len(p_mat)), p_mat)
+                p_mat = np.kron(np.identity(n // len(p_mat)), p_mat)
                 assert_allclose(h, -np.dot(p_mat, np.dot(h.conj(), p_mat)),
                                 err_msg='PHS broken in ' + sym)
             if rmt.c(sym):
-                sz = np.kron(np.identity(n / 2), np.diag([1, -1]))
+                sz = np.kron(np.identity(n // 2), np.diag([1, -1]))
                 assert_allclose(h, -np.dot(sz, np.dot(h, sz)),
                                 err_msg='SLS broken in ' + sym)
 
@@ -50,7 +50,7 @@ def test_gaussian_distributions():
 def test_circular():
     np.random.seed(10)
     n = 6
-    sy = np.kron(np.identity(n / 2), [[0, 1j], [-1j, 0]])
+    sy = np.kron(np.identity(n // 2), [[0, 1j], [-1j, 0]])
     for sym in rmt.sym_list:
         if rmt.t(sym) == -1 or rmt.p(sym) == -1:
             assert_raises(ValueError, rmt.circular, 5, sym)
