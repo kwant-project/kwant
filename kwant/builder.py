@@ -881,9 +881,6 @@ class Builder:
 
     def __setitem__(self, key, value):
         """Set a single site/hopping or a bunch of them."""
-        # TODO: Once we can take Python 3 for granted, get rid of the if-clause
-        # inside the loop by defining a special func that rebinds itself upon
-        # the first call.
         func = None
         for sh in self.expand(key):
             if func is None:
@@ -927,9 +924,6 @@ class Builder:
 
     def __delitem__(self, key):
         """Delete a single site/hopping or bunch of them."""
-        # TODO: Once we can take Python 3 for granted, get rid of the if-clause
-        # inside the loop by defining a special func that rebinds itself upon
-        # the first call.
         func = None
         for sh in self.expand(key):
             if func is None:
