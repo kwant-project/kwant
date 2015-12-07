@@ -62,7 +62,7 @@ try:
     sys.argv.remove(CYTHON_OPTION)
     use_cython = True
 except ValueError:
-    use_cython = False
+    use_cython = version_is_from_git
 
 if use_cython:
     try:
@@ -355,7 +355,7 @@ def complain_cython_unavailable():
         ver = '.'.join(str(e) for e in REQUIRED_CYTHON_VERSION)
         print(msg.format(ver), file=sys.stderr)
     else:
-        print("Run setup.py without {}.".format(NO_CYTHON_OPTION),
+        print("Run setup.py with the {} option.".format(CYTHON_OPTION),
               file=sys.stderr)
 
 
