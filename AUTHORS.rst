@@ -16,6 +16,7 @@ Other contributors to Kwant include
 * Mathieu Istas (INAC/CEA Grenoble)
 * Daniel Jaschke (INAC/CEA Grenoble)
 * Michał Nowak (TU Delft)
+* Viacheslav Ostroukh (Leiden University)
 * Adrien Sorgniard (INAC/CEA Grenoble)
 * Joseph Weston (INAC/CEA Grenoble)
 
