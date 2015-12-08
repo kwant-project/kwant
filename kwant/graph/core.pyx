@@ -384,7 +384,7 @@ cdef class CGraph:
         """
         if node < 0 or node >= self.num_nodes:
             raise NodeDoesNotExistError()
-        return iter(xrange(self.heads_idxs[node], self.heads_idxs[node + 1]))
+        return iter(range(self.heads_idxs[node], self.heads_idxs[node + 1]))
 
     def in_neighbors(self, gint node):
         """Return the nodes which point to a node.
@@ -527,15 +527,15 @@ cdef class CGraph:
         if tail >= self.num_nodes or head >= self.num_nodes:
             raise NodeDoesNotExistError()
         if tail >= 0:
-            for head_index in xrange(self.heads_idxs[tail],
-                                     self.heads_idxs[tail + 1]):
+            for head_index in range(self.heads_idxs[tail],
+                                    self.heads_idxs[tail + 1]):
                 if self.heads[head_index] == head:
                     return head_index
         else:
             if not self.twoway:
                 raise DisabledFeatureError(_need_twoway)
-            for tail_index in xrange(self.tails_idxs[head],
-                                     self.tails_idxs[head + 1]):
+            for tail_index in range(self.tails_idxs[head],
+                                    self.tails_idxs[head + 1]):
                 if self.tails[tail_index] == tail:
                     return self.edge_ids[tail_index]
         raise EdgeDoesNotExistError()
@@ -564,15 +564,15 @@ cdef class CGraph:
             raise NodeDoesNotExistError()
         result = []
         if tail >= 0:
-            for head_index in xrange(self.heads_idxs[tail],
-                                     self.heads_idxs[tail + 1]):
+            for head_index in range(self.heads_idxs[tail],
+                                    self.heads_idxs[tail + 1]):
                 if self.heads[head_index] == head:
                     result.append(head_index)
         else:
             if not self.twoway:
                 raise DisabledFeatureError(_need_twoway)
-            for tail_index in xrange(self.tails_idxs[head],
-                                     self.tails_idxs[head + 1]):
+            for tail_index in range(self.tails_idxs[head],
+                                    self.tails_idxs[head + 1]):
                 if self.tails[tail_index] == tail:
                     result.append(self.edge_ids[tail_index])
         return result

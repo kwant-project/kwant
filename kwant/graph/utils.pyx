@@ -73,19 +73,19 @@ def make_undirected(CGraph gr, remove_dups=True, calc_weights=False):
     # additional buffer array.
     cdef gint *buffer = ret.heads_idxs + 1
 
-    for i in xrange(gr.num_nodes):
-        for p in xrange(gr.heads_idxs[i], gr.heads_idxs[i+1]):
+    for i in range(gr.num_nodes):
+        for p in range(gr.heads_idxs[i], gr.heads_idxs[i+1]):
             if gr.heads[p] >= 0:
                 buffer[i] += 1
                 buffer[gr.heads[p]] += 1
 
     cdef gint s = 0
-    for i in xrange(ret.num_nodes):
+    for i in range(ret.num_nodes):
         s += buffer[i]
         buffer[i] = s - buffer[i]
 
-    for i in xrange(gr.num_nodes):
-        for p in xrange(gr.heads_idxs[i], gr.heads_idxs[i+1]):
+    for i in range(gr.num_nodes):
+        for p in range(gr.heads_idxs[i], gr.heads_idxs[i+1]):
             j = gr.heads[p]
             if j >= 0:
                 ret.heads[buffer[i]] = j
@@ -150,10 +150,10 @@ def remove_duplicates(CGraph gr, np.ndarray[gint, ndim=1] edge_weights=None):
 
     nnz=0
 
-    for i in xrange(gr.num_nodes):
+    for i in range(gr.num_nodes):
         q = nnz
 
-        for p in xrange(gr.heads_idxs[i], gr.heads_idxs[i+1]):
+        for p in range(gr.heads_idxs[i], gr.heads_idxs[i+1]):
             j = gr.heads[p]
 
             # Check if we have found a previous entry (i,j).  (In this case w
@@ -233,7 +233,7 @@ def induced_subgraph(CGraph gr, select,
     else:
         selecttab = select(np.arange(gr.num_nodes, dtype=gint_dtype))
 
-    for i in xrange(gr.num_nodes):
+    for i in range(gr.num_nodes):
         if selecttab[i]:
             indextab[i] = sub_num_nodes
             sub_num_nodes += 1
@@ -241,9 +241,9 @@ def induced_subgraph(CGraph gr, select,
     # Now count the number of new edges.
     sub_num_edges = 0
 
-    for i in xrange(gr.num_nodes):
+    for i in range(gr.num_nodes):
         if indextab[i] > -1:
-            for iedge in xrange(gr.heads_idxs[i], gr.heads_idxs[i + 1]):
+            for iedge in range(gr.heads_idxs[i], gr.heads_idxs[i + 1]):
                 if indextab[gr.heads[iedge]] > -1:
                     sub_num_edges += 1
 
@@ -256,10 +256,10 @@ def induced_subgraph(CGraph gr, select,
     # Now fill the new edge array.
     edge_count = 0
 
-    for i in xrange(gr.num_nodes):
+    for i in range(gr.num_nodes):
         if indextab[i]>-1:
             subgr.heads_idxs[indextab[i]] = edge_count
-            for iedge in xrange(gr.heads_idxs[i], gr.heads_idxs[i+1]):
+            for iedge in range(gr.heads_idxs[i], gr.heads_idxs[i+1]):
                 if indextab[gr.heads[iedge]] > -1:
                     subgr.heads[edge_count] = indextab[gr.heads[iedge]]
                     if edge_weights is not None:
@@ -276,8 +276,5 @@ def induced_subgraph(CGraph gr, select,
 
 
 def print_graph(gr):
-    for i in xrange(gr.num_nodes):
-        print i," -> ",
-        for j in gr.out_neighbors(i):
-            print j,
-        print
+    for i in range(gr.num_nodes):
+        print(i, "->", *gr.out_neighbors(i))

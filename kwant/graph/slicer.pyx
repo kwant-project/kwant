@@ -14,9 +14,7 @@ from .defs cimport gint
 from .defs import gint_dtype
 from .core cimport CGraph
 
-cimport c_slicer
-# TODO: Once cythonize() no longer warns about it, replace the above be
-# from . cimport c_slicer
+from . cimport c_slicer
 
 __all__ = ['slice']
 
@@ -44,7 +42,7 @@ def slice(CGraph graph, left, right):
     # slicing only possible if there is no overlap between
     # left and right slices
     if np.intersect1d(rightarr, leftarr, assume_unique=True).size:
-        return [tuple(xrange(graph.num_nodes))]
+        return [tuple(range(graph.num_nodes))]
 
     slicing = c_slicer.slice(graph.num_nodes,
                              graph.heads_idxs,
@@ -52,7 +50,7 @@ def slice(CGraph graph, left, right):
                              leftarr.size, <gint *>leftarr.data,
                              rightarr.size, <gint *>rightarr.data)
     slices = []
-    for i in xrange(slicing.nslices):
+    for i in range(slicing.nslices):
         slc_size = slicing.slice_ptr[i+1] - slicing.slice_ptr[i]
         slc = np.empty(slc_size, dtype=gint_dtype)
         memcpy(slc.data, slicing.slices + slicing.slice_ptr[i],

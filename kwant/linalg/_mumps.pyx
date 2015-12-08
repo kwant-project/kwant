@@ -8,9 +8,9 @@
 
 cimport numpy as np
 import numpy as np
-cimport cmumps
-import cmumps
-from fortran_helpers import assert_fortran_matvec, assert_fortran_mat
+from . cimport cmumps
+from . import cmumps
+from .fortran_helpers import assert_fortran_matvec, assert_fortran_mat
 
 int_dtype = cmumps.int_dtype
 

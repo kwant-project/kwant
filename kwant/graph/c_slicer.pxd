@@ -6,7 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from defs cimport gint
+from .defs cimport gint
 
 cdef extern from "c_slicer/slicer.h":
     struct Slicing:

@@ -374,7 +374,7 @@ def ext_modules(extensions):
     """
     if use_cython and cython_version >= REQUIRED_CYTHON_VERSION:
         return cythonize([Extension(*args, **kwrds)
-                          for args, kwrds in extensions])
+                          for args, kwrds in extensions], language_level=3)
 
     # Cython is not going to be run: replace pyx extension by that of
     # the shipped translated file.

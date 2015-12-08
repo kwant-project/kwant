@@ -38,7 +38,7 @@ def make_sparse(ham, args, CGraph gr, diag,
 
     # Calculate the data size.
     num_entries = 0
-    for n_fs in xrange(len(from_sites)):
+    for n_fs in range(len(from_sites)):
         fs = from_sites[n_fs]
         if fs in n_by_to_site:
             num_entries += from_norb[n_fs] * from_norb[n_fs]
@@ -52,15 +52,15 @@ def make_sparse(ham, args, CGraph gr, diag,
     data = np.empty(num_entries, complex)
 
     cdef gint k = 0
-    for n_fs in xrange(len(from_sites)):
+    for n_fs in range(len(from_sites)):
         fs = from_sites[n_fs]
         if fs in n_by_to_site:
             n_ts = n_by_to_site[fs]
             h = diag[n_fs]
             if not (h.shape[0] == h.shape[1] == from_norb[n_fs]):
                 raise ValueError(msg.format(fs, fs))
-            for i in xrange(h.shape[0]):
-                for j in xrange(h.shape[1]):
+            for i in range(h.shape[0]):
+                for j in range(h.shape[1]):
                     value = h[i, j]
                     if value != 0:
                         data[k] = value
@@ -76,8 +76,8 @@ def make_sparse(ham, args, CGraph gr, diag,
             h = matrix(ham(ts, fs, *args), complex)
             if h.shape[0] != to_norb[n_ts] or h.shape[1] != from_norb[n_fs]:
                 raise ValueError(msg.format(fs, ts))
-            for i in xrange(h.shape[0]):
-                for j in xrange(h.shape[1]):
+            for i in range(h.shape[0]):
+                for j in range(h.shape[1]):
                     value = h[i, j]
                     if value != 0:
                         data[k] = value
@@ -114,7 +114,7 @@ def make_sparse_full(ham, args, CGraph gr, diag,
 
     # Calculate the data size.
     num_entries = 0
-    for fs in xrange(n):
+    for fs in range(n):
         num_entries += from_norb[fs] * from_norb[fs]
         nbors = gr.out_neighbors(fs)
         for ts in nbors.data[:nbors.size]:
@@ -125,12 +125,12 @@ def make_sparse_full(ham, args, CGraph gr, diag,
     data = np.empty(num_entries, complex)
 
     cdef gint k = 0
-    for fs in xrange(n):
+    for fs in range(n):
         h = diag[fs]
         if not (h.shape[0] == h.shape[1] == from_norb[fs]):
             raise ValueError(msg.format(fs, fs))
-        for i in xrange(h.shape[0]):
-            for j in xrange(h.shape[1]):
+        for i in range(h.shape[0]):
+            for j in range(h.shape[1]):
                 value = h[i, j]
                 if value != 0:
                     data[k] = value
@@ -145,8 +145,8 @@ def make_sparse_full(ham, args, CGraph gr, diag,
             h = matrix(ham(ts, fs, *args), complex)
             if h.shape[0] != to_norb[ts] or h.shape[1] != from_norb[fs]:
                 raise ValueError(msg.format(fs, ts))
-            for i in xrange(h.shape[0]):
-                for j in xrange(h.shape[1]):
+            for i in range(h.shape[0]):
+                for j in range(h.shape[1]):
                     value = h[i, j]
                     if value != 0:
                         data[k] = value
@@ -181,7 +181,7 @@ def make_dense(ham, args, CGraph gr, diag,
 
     h_sub = np.zeros((to_off[-1], from_off[-1]), complex)
     h_sub_view = h_sub
-    for n_fs in xrange(len(from_sites)):
+    for n_fs in range(len(from_sites)):
         fs = from_sites[n_fs]
         if fs in n_by_to_site:
             n_ts = n_by_to_site[fs]
@@ -218,7 +218,7 @@ def make_dense_full(ham, args, CGraph gr, diag,
 
     h_sub = np.zeros((to_off[-1], from_off[-1]), complex)
     h_sub_view = h_sub
-    for fs in xrange(n):
+    for fs in range(n):
         h = diag[fs]
         if not (h.shape[0] ==  h.shape[1] == from_norb[fs]):
             raise ValueError(msg.format(fs, fs))
@@ -284,7 +284,7 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
     if from_sites is None:
         diag = n * [None]
         from_norb = np.empty(n, gint_dtype)
-        for site in xrange(n):
+        for site in range(n):
             diag[site] = h = matrix(ham(site, site, *args), complex)
             from_norb[site] = h.shape[0]
     else:
@@ -306,7 +306,7 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
     else:
         if to_sites is None:
             to_norb = np.empty(n, gint_dtype)
-            for site in xrange(n):
+            for site in range(n):
                 h = matrix(ham(site, site, *args), complex)
                 to_norb[site] = h.shape[0]
         else:

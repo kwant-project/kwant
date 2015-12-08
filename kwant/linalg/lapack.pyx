@@ -25,9 +25,9 @@ cimport numpy as np
 
 # Strangely absolute imports from kwant.linalg.f_lapack don't work here.  So
 # continue using traditional implicit relative imports.
-import f_lapack
-cimport f_lapack
-from f_lapack cimport l_int, l_logical
+from . import f_lapack
+from . cimport f_lapack
+from .f_lapack cimport l_int, l_logical
 
 int_dtype = f_lapack.l_int_dtype
 logical_dtype = f_lapack.l_logical_dtype
@@ -1070,7 +1070,7 @@ def txevc_postprocess(dtype, T, vreal, np.ndarray[l_logical] select):
     v = np.empty((N, M), dtype = dtype, order='F')
 
     indx = 0
-    for m in xrange(M):
+    for m in range(M):
         k = selindx[m]
 
         if k < N-1 and T[k+1,k]:
@@ -2486,7 +2486,7 @@ def prepare_for_lapack(overwrite, *args):
 
     # Make sure we have NumPy arrays
     mats = [None]*len(args)
-    for i in xrange(len(args)):
+    for i in range(len(args)):
         if args[i] is not None:
             arr = np.asanyarray(args[i])
             if not np.issubdtype(arr.dtype, np.number):
