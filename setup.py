@@ -13,10 +13,10 @@ from __future__ import print_function
 import sys
 
 v = sys.version_info
-if v[:2] not in [(2, 7), (2, 6)]:
-    error = "This version of Kwant requires Python 2.6 or 2.7.\n"
-    if v[0] >= 2:
-        error += "Please use Kwant 1.2 or above."
+if v[:2] < (3, 4):
+    error = "This version of Kwant requires Python 3.4 or above.\n"
+    if v[0] == 2:
+        error += "Kwant 1.1 is the last version to support Python 2."
     print(error, file=sys.stderr)
     sys.exit(1)
 
