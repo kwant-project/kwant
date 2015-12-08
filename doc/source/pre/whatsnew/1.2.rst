@@ -1,0 +1,28 @@
+What's new in Kwant 1.2
+=======================
+
+This article explains the user-visible changes in Kwant 1.2, released on 9
+December 2015.  Please consult the `full list of changes in Kwant
+<https://gitlab.kwant-project.org/kwant/kwant/compare/v1.2.2...stable>`_ for
+all the changes up to the most recent bugfix release.
+
+Kwant 1.2 is identical to Kwant 1.1 except that it has been updated to run on
+Python 3.4 and above.  Bugfix releases for the 1.1 and 1.2 series will mirror
+each other, i.e. 1.1.3 and 1.2.3 will fix the same bugs.
+
+Starting with Kwant 1.2, all Kwant development will target Python 3.  We plan,
+however, to maintain Python 2 support with the 1.1 series for several years.
+
+
+How to upgrade Kwant scripts to Python 3
+----------------------------------------
+Even though the interface and functionality of Kwant remain unchanged between
+versions 1.1 and 1.2, scripts using Kwant need to be updated to Python 3.
+This can be done by running the `automatic conversion tool
+<https://docs.python.org/3/library/2to3.html>`_ on the command line::
+
+    2to3 -w example.py
+
+(The above command will rename the original file to ``example.py.bak``.)  The
+necessary changes are typically only superficial, as described in `What’s New
+In Python 3.0 <https://docs.python.org/3/whatsnew/3.0.html>`_.
