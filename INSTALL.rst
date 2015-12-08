@@ -39,7 +39,7 @@ The following software is highly recommended though not strictly required:
    footprint.  (Kwant uses only the sequential, single core version
    of MUMPS.  The advantages due to MUMPS as used by Kwant are thus independent
    of the number of CPU cores of the machine on which Kwant runs.)
- * The `nose <http://nose.readthedocs.org/>`_ testing framework for running the
+ * The `nose testing framework <http://nose.readthedocs.org/>`_ for running the
    tests included with Kwant.
 
 In addition, to build a copy of Kwant that has been checked-out directly from
