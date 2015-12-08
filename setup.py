@@ -307,7 +307,7 @@ def extensions():
     config = configparser.ConfigParser()
     try:
         with open(CONFIG_FILE) as f:
-            config.readfp(f)
+            config.read_file(f)
     except IOError:
         config_file_present = False
     else:
