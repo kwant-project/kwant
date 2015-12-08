@@ -26,7 +26,7 @@ Building Kwant requires
    (For best performance we recommend the free `OpenBLAS
    <http://xianyi.github.com/OpenBLAS/>`_ or the nonfree `MKL
    <http://software.intel.com/en-us/intel-mkl>`_.)
- * `Tinyarray <http://git.kwant-project.org/tinyarray/about/>`_, a NumPy-like
+ * `Tinyarray <https://gitlab.kwant-project.org/kwant/tinyarray>`_, a NumPy-like
    Python package optimized for very small arrays,
  * An environment which allows to compile Python extensions written in C and
    C++.
@@ -43,9 +43,9 @@ The following software is highly recommended though not strictly required:
    tests included with Kwant.
 
 In addition, to build a copy of Kwant that has been checked-out directly from
-`its Git repository <http://git.kwant-project.org/kwant>`_, you will also need
-`Cython <http://cython.org/>`_ 0.22 or newer.  You do not need Cython to build
-Kwant that has been unpacked from a source .tar.gz-file.
+version control, you will also need `Cython <http://cython.org/>`_ 0.22 or
+newer.  You do not need Cython to build Kwant that has been unpacked from a
+source .tar.gz-file.
 
 
 Building and installing Kwant
