@@ -28,10 +28,14 @@ Kwant can calculate
 Other computations involving tight-binding Hamiltonians can be implemented
 easily.
 
-See the `Kwant web site <http://kwant-project.org/>`_ for the latest version.  A
-`mailing list <http://kwant-project.org/community>`_ is available for
-discussions, questions, and reporting bugs. The development of Kwant can be
-followed via the `public git repository <http://git.kwant-project.org/kwant>`_.
+See the `Kwant web site <http://kwant-project.org/>`_ for the latest stable
+version.  The current development version is available via the `Kwant gitlab
+instance <https://gitlab.kwant-project.org/kwant/kwant>`_.  Contributions are
+welcome.
+
+A `mailing list <http://kwant-project.org/community>`_ exists for general
+discussions related to Kwant.  Please report bugs and other issues using the
+`issue tracker <https://gitlab.kwant-project.org/kwant/kwant/issues>`_.
 
 See also in this directory: `<INSTALL.rst>`_, `<LICENSE.rst>`_, `<AUTHORS.rst>`_,
 `<CITING.rst>`_, `<CONTRIBUTE.rst>`_.
