@@ -50,6 +50,8 @@ help:
 	@echo "  changes   to make an overview of all changed/added/deprecated items"
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
+	@echo
+	@echo "Append SPHINXOPTS='-A website_deploy=True' to include web analytics code."
 
 clean:
 	-rm -rf $(BUILDDIR)/* $(GENERATEDPDF)
