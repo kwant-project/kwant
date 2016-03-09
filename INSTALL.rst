@@ -39,7 +39,7 @@ The following software is highly recommended though not strictly required:
    footprint.  (Kwant uses only the sequential, single core version
    of MUMPS.  The advantages due to MUMPS as used by Kwant are thus independent
    of the number of CPU cores of the machine on which Kwant runs.)
- * The `nose testing framework <http://nose.readthedocs.org/>`_ for running the
+ * The `py.test testing framework <http://http://pytest.org/>`_ for running the
    tests included with Kwant.
 
 In addition, to build a copy of Kwant that has been checked-out directly from
@@ -152,7 +152,7 @@ root.
 1. Install the required packages.  On Debian-based systems like Ubuntu this can
    be done by running the command ::
 
-       sudo apt-get install python-dev python-scipy python-matplotlib python-nose g++ gfortran libopenblas-dev liblapack-dev libmumps-scotch-dev
+       sudo apt-get install python3-dev python3-scipy python3-matplotlib python3-pytest g++ gfortran libopenblas-dev liblapack-dev libmumps-scotch-dev
 
 2. Unpack Tinyarray, enter its directory. To build and install, run ::
 
@@ -231,7 +231,7 @@ installed as ::
     brew tap homebrew/science
     brew tap homebrew/python
     brew tap kwant-project/kwant
-    pip install nose six
+    pip install pytest pytest-runner six
     brew install numpy scipy matplotlib
 
 Note that during the installation you will be told which paths to add when you

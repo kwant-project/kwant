@@ -9,7 +9,7 @@
 from math import sqrt
 import numpy as np
 import tinyarray as ta
-from nose.tools import assert_raises, assert_not_equal
+from pytest import raises
 from numpy.testing import assert_equal
 from kwant import lattice, builder
 
@@ -39,7 +39,7 @@ def test_general():
     # Test 2D lattice with 1 vector.
     lat = lattice.general([[1, 0]])
     site = lat(0)
-    assert_raises(ValueError, lat, 0, 1)
+    raises(ValueError, lat, 0, 1)
 
 
 def test_neighbors():
@@ -70,7 +70,7 @@ def test_shape():
                     sites_alt.append(site)
     assert len(sites) == len(sites_alt)
     assert_equal(set(sites), set(sites_alt))
-    assert_raises(ValueError, lat.shape(in_circle, (10, 10))().__next__)
+    raises(ValueError, lat.shape(in_circle, (10, 10))().__next__)
 
     # Check if narrow ribbons work.
     for period in (0, 1), (1, 0), (1, -1):
@@ -106,24 +106,24 @@ def test_translational_symmetry():
     f3 = lattice.general(np.identity(3))
     shifted = lambda site, delta: site.family(*ta.add(site.tag, delta))
 
-    assert_raises(ValueError, ts, (0, 0, 4), (0, 5, 0), (0, 0, 2))
+    raises(ValueError, ts, (0, 0, 4), (0, 5, 0), (0, 0, 2))
     sym = ts((3.3, 0))
-    assert_raises(ValueError, sym.add_site_family, f2)
+    raises(ValueError, sym.add_site_family, f2)
 
     # Test lattices with dimension smaller than dimension of space.
     f2in3 = lattice.general([[4, 4, 0], [4, -4, 0]])
     sym = ts((8, 0, 0))
     sym.add_site_family(f2in3)
     sym = ts((8, 0, 1))
-    assert_raises(ValueError, sym.add_site_family, f2in3)
+    raises(ValueError, sym.add_site_family, f2in3)
 
     # Test automatic fill-in of transverse vectors.
     sym = ts((1, 2))
     sym.add_site_family(f2)
-    assert_not_equal(sym.site_family_data[f2][2], 0)
+    assert sym.site_family_data[f2][2] != 0
     sym = ts((1, 0, 2), (3, 0, 2))
     sym.add_site_family(f3)
-    assert_not_equal(sym.site_family_data[f3][2], 0)
+    assert sym.site_family_data[f3][2] != 0
 
     transl_vecs = np.array([[10, 0], [7, 7]], dtype=int)
     sym = ts(*transl_vecs)
@@ -215,18 +215,18 @@ def test_norbs():
     for l, n in zip(lat.sublattices, [1, 2]):
         assert_equal(l.norbs, n)
     # should raise ValueError for # of norbs different to length of `basis`
-    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=[])
-    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1, 2, 3])
+    raises(ValueError, lattice.general, id_mat, id_mat, norbs=[])
+    raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1, 2, 3])
     # TypeError if Monatomic lattice
-    assert_raises(TypeError, lattice.general, id_mat, norbs=[])
+    raises(TypeError, lattice.general, id_mat, norbs=[])
     # should raise ValueError if norbs not an integer
-    assert_raises(ValueError, lattice.general, id_mat, norbs=1.5)
-    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=1.5)
-    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1.5, 1.5])
+    raises(ValueError, lattice.general, id_mat, norbs=1.5)
+    raises(ValueError, lattice.general, id_mat, id_mat, norbs=1.5)
+    raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1.5, 1.5])
     # test that lattices with different norbs are compared `not equal`
     lat = lattice.general(id_mat, basis=id_mat, norbs=None)
     lat1 = lattice.general(id_mat, basis=id_mat, norbs=1)
     lat2 = lattice.general(id_mat, basis=id_mat, norbs=2)
-    assert_not_equal(lat, lat1)
-    assert_not_equal(lat, lat2)
-    assert_not_equal(lat1, lat2)
+    assert lat != lat1
+    assert lat != lat2
+    assert lat1 != lat2

@@ -6,9 +6,9 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+from pytest import raises
 import numpy as np
 from scipy import sparse
-from nose.tools import assert_raises
 import kwant
 
 def test_hamiltonian_submatrix():
@@ -67,17 +67,17 @@ def test_hamiltonian_submatrix():
     syst3 = syst2.precalculate(.1, what='modes')
     smatrix2 = kwant.smatrix(syst3, .1).data
     np.testing.assert_almost_equal(smatrix, smatrix2)
-    assert_raises(ValueError, kwant.solvers.default.greens_function, syst3, 0.2)
+    raises(ValueError, kwant.solvers.default.greens_function, syst3, 0.2)
 
     # Test for shape errors.
     syst[chain(0), chain(2)] = np.array([[1, 2]])
     syst2 = syst.finalized()
-    assert_raises(ValueError, syst2.hamiltonian_submatrix)
-    assert_raises(ValueError, syst2.hamiltonian_submatrix, sparse=True)
+    raises(ValueError, syst2.hamiltonian_submatrix)
+    raises(ValueError, syst2.hamiltonian_submatrix, sparse=True)
     syst[chain(0), chain(2)] = 1
     syst2 = syst.finalized()
-    assert_raises(ValueError, syst2.hamiltonian_submatrix)
-    assert_raises(ValueError, syst2.hamiltonian_submatrix, sparse=True)
+    raises(ValueError, syst2.hamiltonian_submatrix)
+    raises(ValueError, syst2.hamiltonian_submatrix, sparse=True)
 
     # Test for passing parameters to hamiltonian matrix elements
     def onsite(site, p1, p2=0):

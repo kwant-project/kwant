@@ -6,7 +6,6 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from nose.plugins.skip import SkipTest
 from  kwant.solvers.sparse import smatrix, greens_function, ldos, wave_function
 import kwant.solvers.sparse
 from . import _test_sparse
@@ -53,14 +52,6 @@ def test_selfenergy_reflection():
 
 def test_very_singular_leads():
     _test_sparse.test_very_singular_leads(smatrix)
-
-
-def test_umfpack_del():
-    if kwant.solvers.sparse.uses_umfpack:
-        assert hasattr(kwant.solvers.sparse.umfpack.UmfpackContext,
-                       '__del__')
-    else:
-        raise SkipTest
 
 
 def test_ldos():

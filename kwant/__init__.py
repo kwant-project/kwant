@@ -53,11 +53,11 @@ else:
     __all__.extend(['plotter', 'plot'])
 
 
-def test(verbose=1):
-    from nose.core import run
+def test(verbose=True):
+    from pytest import main
     import os.path
 
-    return run(argv=[__file__, os.path.dirname(os.path.abspath(__file__)),
-                     "-s", "--verbosity="+str(verbose)])
+    return main([os.path.dirname(os.path.abspath(__file__)),
+                     "-s"] + (['-v'] if verbose else []))
 
 test.__test__ = False

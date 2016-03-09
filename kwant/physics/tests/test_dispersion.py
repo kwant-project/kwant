@@ -7,7 +7,7 @@
 # http://kwant-project.org/authors.
 
 from numpy.testing import assert_array_almost_equal, assert_almost_equal
-from nose.tools import assert_raises
+from pytest import raises
 
 import kwant
 from math import pi, cos, sin
@@ -45,4 +45,4 @@ def test_raise_nonhermitian():
     syst[lat(0)] = 1j
     syst[lat(0), lat(1)] = complex(cos(0.2), sin(0.2))
     syst = syst.finalized()
-    assert_raises(ValueError, kwant.physics.Bands, syst)
+    raises(ValueError, kwant.physics.Bands, syst)

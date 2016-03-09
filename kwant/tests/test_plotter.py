@@ -8,11 +8,11 @@
 
 import tempfile
 import warnings
-import nose
 import numpy as np
 import kwant
 from kwant import plotter
-from nose.tools import assert_raises
+import pytest
+
 if plotter.mpl_enabled:
     from mpl_toolkits import mplot3d
     from matplotlib import pyplot
@@ -32,7 +32,7 @@ def test_importable_without_matplotlib():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         exec(code)               # Trigger the warning.
-        nose.tools.assert_equal(len(w), 1)
+        assert len(w) == 1
         assert issubclass(w[0].category, RuntimeWarning)
         assert "only iterator-providing functions" in str(w[0].message)
 
@@ -89,10 +89,9 @@ def syst_3d(W=3, r1=2, r2=4, a=1, t=1.0):
     return syst
 
 
+@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
 def test_plot():
     plot = plotter.plot
-    if not plotter.mpl_enabled:
-        raise nose.SkipTest
     syst2d = syst_2d()
     syst3d = syst_3d()
     color_opts = ['k', (lambda site: site.tag[0]),
@@ -138,22 +137,21 @@ def bad_transform(pos):
     x, y = pos
     return x, y, 0
 
+@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
 def test_map():
-    if not plotter.mpl_enabled:
-        raise nose.SkipTest
     syst = syst_2d()
     with tempfile.TemporaryFile('w+b') as out:
         plotter.map(syst, lambda site: site.tag[0], pos_transform=good_transform,
                     file=out, method='linear', a=4, oversampling=4, cmap='flag')
-        nose.tools.assert_raises(ValueError, plotter.map, syst,
-                                 lambda site: site.tag[0],
-                                 pos_transform=bad_transform, file=out)
+        pytest.raises(ValueError, plotter.map, syst,
+                      lambda site: site.tag[0],
+                      pos_transform=bad_transform, file=out)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             plotter.map(syst.finalized(), range(len(syst.sites())),
                               file=out)
-        nose.tools.assert_raises(ValueError, plotter.map, syst,
-                                 range(len(syst.sites())), file=out)
+        pytest.raises(ValueError, plotter.map, syst,
+                      range(len(syst.sites())), file=out)
 
 
 def test_mask_interpolate():
@@ -170,7 +168,7 @@ def test_mask_interpolate():
         assert issubclass(w[-1].category, RuntimeWarning)
         assert "coinciding" in str(w[-1].message)
 
-    assert_raises(ValueError, plotter.mask_interpolate,
-                  coords, np.ones(len(coords)))
-    assert_raises(ValueError, plotter.mask_interpolate,
-                  coords, np.ones(2 * len(coords)))
+    pytest.raises(ValueError, plotter.mask_interpolate, coords,
+                  np.ones(len(coords)))
+    pytest.raises(ValueError, plotter.mask_interpolate, coords, np.ones(2 *
+                                                                        len(coords)))

@@ -6,7 +6,6 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-#from nose.plugins.skip import Skip, SkipTest
 from numpy.testing.decorators import skipif
 try:
     from kwant.solvers.mumps import (

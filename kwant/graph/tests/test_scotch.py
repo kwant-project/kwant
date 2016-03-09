@@ -6,7 +6,6 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from nose.tools import assert_true
 from kwant.graph import Graph
 # from kwant.graph.scotch import bisect, reset
 
@@ -30,7 +29,7 @@ def _DISABLED_test_bisect():
 
     parts = bisect(g)
     for i in range(g.num_nodes):
-        assert_true(parts[i] == 0 or parts[i] == 1)
+        assert parts[i] == 0 or parts[i] == 1
 
 def _DISABLED_test_reset():
     size = 5
@@ -53,4 +52,4 @@ def _DISABLED_test_reset():
     reset()
     parts2 = bisect(g)
 
-    assert_true((parts1 == parts2).all())
+    assert (parts1 == parts2).all()

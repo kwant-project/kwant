@@ -9,7 +9,7 @@
 import warnings
 from random import Random
 import itertools as it
-from nose.tools import assert_raises, assert_true, assert_not_equal, assert_less
+from pytest import raises
 from numpy.testing import assert_equal, assert_almost_equal
 import tinyarray as ta
 import numpy as np
@@ -83,7 +83,7 @@ def test_bad_keys():
                     syst[[fam(0), fam(1)]] = None
                     syst[fam(0), fam(1)] = None
                     try:
-                        assert_raises(error, func, key)
+                        raises(error, func, key)
                     except AssertionError:
                         print(func, error, key)
                         raise
@@ -102,18 +102,18 @@ def test_site_families():
     syst[fam(1)] = 123
     assert_equal(syst[fam(1)], 123)
     assert_equal(syst[ofam(1)], 123)
-    assert_raises(KeyError, syst.__getitem__, yafam(1))
+    raises(KeyError, syst.__getitem__, yafam(1))
 
     # test site families compare equal/not-equal
     assert_equal(fam, ofam)
-    assert_not_equal(fam, yafam)
-    assert_not_equal(fam, None)
-    assert_not_equal(fam, 'a')
+    assert fam != yafam
+    assert fam != None
+    assert fam != 'a'
 
     # test site families sorting
     fam1 = builder.SimpleSiteFamily(norbs=1)
     fam2 = builder.SimpleSiteFamily(norbs=2)
-    assert_less(fam1, fam2)  # string '1' is lexicographically less than '2'
+    assert fam1 < fam2  # string '1' is lexicographically less than '2'
 
 
 class VerySimpleSymmetry(builder.Symmetry):
@@ -151,14 +151,14 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
         syst[hopping] = t
 
     for hopping in unknown_hoppings:
-        assert_raises(KeyError, syst.__setitem__, hopping, t)
+        raises(KeyError, syst.__setitem__, hopping, t)
 
     assert (fam(5), fam(123)) not in syst
     assert (sites[0], fam(5, 123)) not in syst
     assert (fam(7, 8), sites[0]) not in syst
     for site in sites:
         assert site in syst
-        assert_equal(syst[site], V)
+        assert syst[site] == V
     for hop in hoppings:
         rev_hop = hop[1], hop[0]
         assert hop in syst
@@ -397,12 +397,12 @@ def test_finalization():
 
     # Attach lead to system with empty interface.
     syst.leads.append(builder.BuilderLead(lead, ()))
-    assert_raises(ValueError, syst.finalized)
+    raises(ValueError, syst.finalized)
 
     # Attach lead with improper interface.
     syst.leads[-1] = builder.BuilderLead(
         lead, 2 * tuple(builder.Site(fam, n) for n in neighbors))
-    assert_raises(ValueError, syst.finalized)
+    raises(ValueError, syst.finalized)
 
     # Attach lead properly.
     syst.leads[-1] = builder.BuilderLead(
@@ -413,8 +413,8 @@ def test_finalization():
                  neighbors)
 
     # test that we cannot finalize a system with a badly sorted interface order
-    assert_raises(ValueError, lead._finalized_infinite,
-                  [builder.Site(fam, n) for n in reversed(neighbors)])
+    raises(ValueError, lead._finalized_infinite,
+           [builder.Site(fam, n) for n in reversed(neighbors)])
     # site ordering independent of whether interface was specified
     flead_order = lead._finalized_infinite([builder.Site(fam, n)
                                             for n in neighbors])
@@ -434,7 +434,7 @@ def test_finalization():
     b = rng.choice(possible_neighbors)
     b = b[0] + 2 * size, b[1]
     lead[fam(*a), fam(*b)] = random_hopping_integral(rng)
-    assert_raises(ValueError, lead.finalized)
+    raises(ValueError, lead.finalized)
 
 
 def test_site_ranges():
@@ -517,16 +517,16 @@ def test_hamiltonian_evaluation():
     def test_raising(fsyst, hop):
         a, b = hop
         # exceptions are converted to kwant.UserCodeError and we add our message
-        with assert_raises(kwant.UserCodeError) as ctx:
+        with raises(kwant.UserCodeError) as ctx:
             fsyst.hamiltonian(a, a)
         msg = 'Error occurred in user-supplied value function "onsite_raises"'
-        assert_true(msg in str(ctx.exception))
+        assert msg in ctx.exconly()
 
         for hop in [(a, b), (b, a)]:
-            with assert_raises(kwant.UserCodeError) as ctx:
+            with raises(kwant.UserCodeError) as ctx:
                 fsyst.hamiltonian(*hop)
             msg = 'Error occurred in user-supplied value function "hopping_raises"'
-            assert_true(msg in str(ctx.exception))
+            assert msg in ctx.exconly()
 
     # test with finite system
     new_hop = (fam(-1, 0), fam(0, 0))
@@ -629,13 +629,13 @@ def test_attach_lead():
     syst = builder.Builder()
     syst[fam(1)] = 0
     lead = builder.Builder(VerySimpleSymmetry(-2))
-    assert_raises(ValueError, syst.attach_lead, lead)
+    raises(ValueError, syst.attach_lead, lead)
 
     lead[fam(0)] = 1
-    assert_raises(ValueError, syst.attach_lead, lead)
+    raises(ValueError, syst.attach_lead, lead)
     lead[fam(1)] = 1
     syst.attach_lead(lead)
-    assert_raises(ValueError, syst.attach_lead, lead, fam(5))
+    raises(ValueError, syst.attach_lead, lead, fam(5))
 
     syst = builder.Builder()
     # The tag of the site that is added in the following line is an empty tuple.
@@ -669,7 +669,7 @@ def test_neighbors_not_in_single_domain():
     lead[((fam(0, y), fam(1, y)) for y in range(3))] = 1
     lead[((fam(0, y), fam(0, y + 1)) for y in range(2))] = 1
     sr.leads.append(builder.BuilderLead(lead, [fam(i, i) for i in range(3)]))
-    assert_raises(ValueError, sr.finalized)
+    raises(ValueError, sr.finalized)
 
 
 def test_iadd():
