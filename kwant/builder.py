@@ -321,7 +321,7 @@ class NoSymmetry(Symmetry):
 
 ################ Hopping kinds
 
-class HoppingKind:
+class HoppingKind(tuple):
     """A pattern for matching hoppings.
 
     A hopping ``(a, b)`` matches precisely when the site family of ``a`` equals
@@ -356,17 +356,24 @@ class HoppingKind:
         kinds = [kwant.builder.HoppingKind(v, lat) for v in [(1, 0), (0, 1)]]
         sys[kinds] = 1
     """
-    __slots__ = ('delta', 'family_a', 'family_b')
+    __slots__ = ()
 
-    def __init__(self, delta, family_a, family_b=None):
-        self.delta = ta.array(delta, int)
+    delta = property(operator.itemgetter(0),
+                     doc="The difference between the tags of the hopping's sites")
+    family_a = property(operator.itemgetter(1),
+                        doc="The family of the first site in the hopping")
+    family_b = property(operator.itemgetter(2),
+                        doc="The family of the second site in the hopping")
+
+    def __new__(cls, delta, family_a, family_b=None):
+        delta = ta.array(delta, int)
         ensure_isinstance(family_a, SiteFamily)
-        self.family_a = family_a
         if family_b is None:
-            self.family_b = family_a
+            family_b = family_a
         else:
             ensure_isinstance(family_b, SiteFamily)
-            self.family_b = family_b
+            family_b = family_b
+        return tuple.__new__(cls, (delta, family_a, family_b))
 
     def __call__(self, builder):
         delta = self.delta

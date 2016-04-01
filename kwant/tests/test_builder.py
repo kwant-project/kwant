@@ -633,6 +633,16 @@ def test_HoppingKind():
             assert sym.to_fd(a) == a
             assert_equal(a.tag - b.tag, delta)
 
+        # test hashability and equality
+        hk = builder.HoppingKind((1, 0), g)
+        hk2 = builder.HoppingKind((1, 0), g)
+        hk3 = builder.HoppingKind((1, 0), g, h)
+        assert hk == hk2
+        assert hash(hk) == hash(hk2)
+        assert hk != hk3
+        assert hash(hk) != hash(hk3)
+        assert len({hk: 0, hk2:1, hk3: 2}) == 2
+
 
 def test_ModesLead_and_SelfEnergyLead():
     lat = builder.SimpleSiteFamily()
