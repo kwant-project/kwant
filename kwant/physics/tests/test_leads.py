@@ -324,3 +324,19 @@ def test_dtype_linsys():
     lsys = kwant.physics.leads.setup_linsys(h_cell - 0.3*np.eye(2),
                                             h_hop)
     assert lsys.eigenproblem[0].dtype == np.complex128
+
+
+def test_zero_hopping():
+    h_cell = np.identity(2)
+    h_hop = np.zeros((2, 1))
+    expected = (leads.PropagatingModes(np.zeros((2, 0)), np.zeros((0,)),
+                                       np.zeros((0,))),
+                leads.StabilizedModes(np.zeros((0, 0)), np.zeros((0, 0)), 0,
+                                      np.zeros((1, 0))))
+    actual = leads.modes(h_cell, h_hop)
+    assert all(np.alltrue(getattr(actual[1], attr) ==
+                          getattr(expected[1], attr)) for attr
+                   in ('vecs', 'vecslmbdainv', 'nmodes', 'sqrt_hop'))
+    assert all(np.alltrue(getattr(actual[0], attr) ==
+                          getattr(expected[0], attr)) for attr
+                   in ('wave_functions', 'velocities', 'momenta'))

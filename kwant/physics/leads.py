@@ -578,8 +578,8 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
         raise ValueError("Incompatible matrix sizes for h_cell and h_hop.")
 
     if not complex_any(h_hop):
-        v = np.zeros((0, m))
-        return (PropagatingModes(np.zeros((0, n)), np.zeros((0,)),
+        v = np.zeros((m, 0))
+        return (PropagatingModes(np.zeros((n, 0)), np.zeros((0,)),
                                  np.zeros((0,))),
                 StabilizedModes(np.zeros((0, 0)), np.zeros((0, 0)), 0, v))
 
