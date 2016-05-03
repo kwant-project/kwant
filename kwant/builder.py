@@ -1066,6 +1066,9 @@ class Builder:
         The lead numbering starts from zero and increments from there, i.e.
         the leads are numbered in the order in which they are attached.
         """
+        if self.symmetry.num_directions:
+            raise ValueError("Leads can only be attached to finite systems.")
+
         if add_cells < 0 or int(add_cells) != add_cells:
             raise ValueError('add_cells must be an integer >= 0.')
 
