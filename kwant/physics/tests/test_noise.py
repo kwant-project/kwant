@@ -34,18 +34,18 @@ def twoterminal_system():
 def test_multiterminal_input():
     """Input checks for two_terminal_shotnoise"""
 
-    sys = twoterminal_system()
-    sys.attach_lead(sys.leads[0].builder)
-    sol = kwant.smatrix(sys.finalized(), out_leads=[0], in_leads=[0])
+    syst = twoterminal_system()
+    syst.attach_lead(syst.leads[0].builder)
+    sol = kwant.smatrix(syst.finalized(), out_leads=[0], in_leads=[0])
     assert_raises(ValueError, two_terminal_shotnoise, sol)
 
 
 def test_twoterminal():
     """Shot noise in a two-terminal conductor"""
 
-    fsys = twoterminal_system().finalized()
+    fsyst = twoterminal_system().finalized()
 
-    sol = kwant.smatrix(fsys)
+    sol = kwant.smatrix(fsyst)
     t = sol.submatrix(1, 0)
     Tn = np.linalg.eigvalsh(np.dot(t, t.conj().T))
     noise_should_be = np.sum(Tn * (1 - Tn))

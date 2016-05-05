@@ -35,7 +35,7 @@ class Bands:
 
     Examples
     --------
-    >>> bands = kwant.physics.Bands(some_sys)
+    >>> bands = kwant.physics.Bands(some_syst)
     >>> momenta = numpy.linspace(-numpy.pi, numpy.pi, 101)
     >>> energies = [bands(k) for k in momenta]
     >>> pyplot.plot(momenta, energies)
@@ -43,11 +43,12 @@ class Bands:
     """
 
     def __init__(self, sys, args=()):
-        ensure_isinstance(sys, system.InfiniteSystem)
-        self.ham = sys.cell_hamiltonian(args)
+        syst = sys
+        ensure_isinstance(syst, system.InfiniteSystem)
+        self.ham = syst.cell_hamiltonian(args)
         if not np.allclose(self.ham, self.ham.T.conj()):
             raise ValueError('The cell Hamiltonian is not Hermitian.')
-        hop = sys.inter_cell_hopping(args)
+        hop = syst.inter_cell_hopping(args)
         self.hop = np.empty(self.ham.shape, dtype=complex)
         self.hop[:, : hop.shape[1]] = hop
         self.hop[:, hop.shape[1]:] = 0

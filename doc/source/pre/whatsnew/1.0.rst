@@ -31,11 +31,11 @@ The `~kwant.builder.Builder` method ``possible_hoppings`` has been rendered
 obsolete.  Where previously one would have had ::
 
     for kind in lat.nearest:
-        sys[sys.possible_hoppings(*kind)] = t
+        syst[syst.possible_hoppings(*kind)] = t
 
 now it suffices to write ::
 
-    sys[lat.neighbors()] = t
+    syst[lat.neighbors()] = t
 
 This is possible because `~kwant.builder.Builder` now accepts *functions* as
 keys in addition to `~kwant.builder.Site` objects and tuples of them
@@ -126,7 +126,7 @@ the following prototype::
 then the values of ``t``, ``B`` and ``pot`` for which to solve the system can be
 passed to `~kwant.solvers.default.smatrix` like this::
 
-    kwant.smatrix(sys, energy,
+    kwant.smatrix(syst, energy,
                   args=(2., 3., 4.))
 
 With many parameters it can be less error-prone to collect all of them into a
@@ -147,7 +147,7 @@ collection could be a dictionary, or a class instance, for example::
 
     params = SimpleNamespace(t=1, mu=2)
     for params.B in B_values:
-        kwant.smatrix(sys, energy, args=[params])
+        kwant.smatrix(syst, energy, args=[params])
 
 Arguments can be passed in an equivalent way to
 `~kwant.solvers.default.wave_function`,

@@ -9,17 +9,17 @@
  import kwant
  
 @@ -69,7 +70,10 @@
- sys.attach_lead(right_lead)
+ syst.attach_lead(right_lead)
  
  # Plot it, to make sure it's OK
--kwant.plot(sys)
+-kwant.plot(syst)
 +size = (_defs.figwidth_in, 0.3 * _defs.figwidth_in)
 +for extension in ('pdf', 'png'):
-+    kwant.plot(sys, file="quantum_wire_sys." + extension,
++    kwant.plot(syst, file="quantum_wire_syst." + extension,
 +               fig_size=size, dpi=_defs.dpi)
  
  # Finalize the system
- sys = sys.finalized()
+ syst = syst.finalized()
 @@ -90,8 +94,13 @@
  
  # Use matplotlib to write output

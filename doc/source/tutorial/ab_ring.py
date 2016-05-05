@@ -28,7 +28,7 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
 
     lat = kwant.lattice.square(a)
 
-    sys = kwant.Builder()
+    syst = kwant.Builder()
 
     #### Define the scattering region. ####
     # Now, we aim for a more complex shape, namely a ring (or annulus)
@@ -40,8 +40,8 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
 
     # and add the corresponding lattice points using the `shape`-function
 #HIDDEN_BEGIN_lcak
-    sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
-    sys[lat.neighbors()] = -t
+    syst[lat.shape(ring, (0, r1 + 1))] = 4 * t
+    syst[lat.neighbors()] = -t
 #HIDDEN_END_lcak
 
     # In order to introduce a flux through the ring, we introduce a phase on
@@ -61,11 +61,11 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
         return iy0 < 0 and ix0 == 1  # ix1 == 0 then implied
 
     # Modify only those hopings in x-direction that cross the branch cut
-    def hops_across_cut(sys):
-        for hop in kwant.builder.HoppingKind((1, 0), lat, lat)(sys):
+    def hops_across_cut(syst):
+        for hop in kwant.builder.HoppingKind((1, 0), lat, lat)(syst):
             if crosses_branchcut(hop):
                 yield hop
-    sys[hops_across_cut] = hopping_phase
+    syst[hops_across_cut] = hopping_phase
 #HIDDEN_END_lvkt
 
     #### Define the leads. ####
@@ -84,20 +84,20 @@ def make_system(a=1, t=1.0, W=10, r1=10, r2=20):
 
     #### Attach the leads and return the system. ####
 #HIDDEN_BEGIN_skbz
-    sys.attach_lead(lead)
-    sys.attach_lead(lead.reversed())
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
 #HIDDEN_END_skbz
 
-    return sys
+    return syst
 
 
-def plot_conductance(sys, energy, fluxes):
+def plot_conductance(syst, energy, fluxes):
     # compute conductance
 
     normalized_fluxes = [flux / (2 * pi) for flux in fluxes]
     data = []
     for flux in fluxes:
-        smatrix = kwant.smatrix(sys, energy, args=[flux])
+        smatrix = kwant.smatrix(syst, energy, args=[flux])
         data.append(smatrix.transmission(1, 0))
 
     pyplot.figure()
@@ -108,16 +108,16 @@ def plot_conductance(sys, energy, fluxes):
 
 
 def main():
-    sys = make_system()
+    syst = make_system()
 
     # Check that the system looks as intended.
-    kwant.plot(sys)
+    kwant.plot(syst)
 
     # Finalize the system.
-    sys = sys.finalized()
+    syst = syst.finalized()
 
     # We should see a conductance that is periodic with the flux quantum
-    plot_conductance(sys, energy=0.15, fluxes=[0.01 * i * 3 * 2 * pi
+    plot_conductance(syst, energy=0.15, fluxes=[0.01 * i * 3 * 2 * pi
                                                 for i in range(100)])
 
 

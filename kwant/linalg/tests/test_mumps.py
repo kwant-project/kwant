@@ -71,12 +71,12 @@ def test_error_minus_9(r=10):
         x, y = pos
         return x**2 + y**2 < r**2
 
-    sys = Builder()
-    sys[graphene.shape(circle, (0,0))] = -0.0001
+    syst = Builder()
+    syst[graphene.shape(circle, (0,0))] = -0.0001
     for kind in [((0, 0), b, a), ((0, 1), b, a), ((-1, 1), b, a)]:
-        sys[HoppingKind(*kind)] = - 1
+        syst[HoppingKind(*kind)] = - 1
 
-    ham = sys.finalized().hamiltonian_submatrix(sparse=True)
+    ham = syst.finalized().hamiltonian_submatrix(sparse=True)
 
     # No need to check result, it's enough if no exception is raised
     MUMPSContext().factor(ham)

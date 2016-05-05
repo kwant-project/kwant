@@ -11,23 +11,23 @@
 @@ -22,7 +23,7 @@
          return x**2 + y**2 < r**2
  
-     sys = kwant.Builder()
--    sys[lat.shape(circle, (0, 0))] = 0
-+    sys[lat.shape(circle, (0,0))] = 0
-     sys[lat.neighbors()] = t
-     sys.eradicate_dangling()
+     syst = kwant.Builder()
+-    syst[lat.shape(circle, (0, 0))] = 0
++    syst[lat.shape(circle, (0,0))] = 0
+     syst[lat.neighbors()] = t
+     syst.eradicate_dangling()
      if tp:
 @@ -32,9 +33,11 @@
  
  
- def plot_system(sys):
--    kwant.plot(sys)
+ def plot_system(syst):
+-    kwant.plot(syst)
 -    # the standard plot is ok, but not very intelligible. One can do
 -    # better by playing wioth colors and linewidths
 +    # standard plot - not very intelligible for this particular situation
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, file="plot_graphene_sys1." + extension,
++        kwant.plot(syst, file="plot_graphene_syst1." + extension,
 +                   fig_size=size, dpi=_defs.dpi)
  
      # use color and linewidths to get a better plot
@@ -36,23 +36,23 @@
      def hopping_lw(site1, site2):
          return 0.04 if site1.family == site2.family else 0.1
  
--    kwant.plot(sys, site_lw=0.1, site_color=family_color, hop_lw=hopping_lw)
+-    kwant.plot(syst, site_lw=0.1, site_color=family_color, hop_lw=hopping_lw)
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, site_lw=0.1, site_color=family_color,
-+                   hop_lw=hopping_lw, file="plot_graphene_sys2." + extension,
++        kwant.plot(syst, site_lw=0.1, site_color=family_color,
++                   hop_lw=hopping_lw, file="plot_graphene_syst2." + extension,
 +                   fig_size=size, dpi=_defs.dpi)
  
  
- def plot_data(sys, n):
+ def plot_data(syst, n):
 @@ -58,7 +65,11 @@
      # the usual - works great in general, looks just a bit crufty for
      # small systems
  
--    kwant.plotter.map(sys, wf, oversampling=10, cmap='gist_heat_r')
+-    kwant.plotter.map(syst, wf, oversampling=10, cmap='gist_heat_r')
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plotter.map(sys, wf, oversampling=10, cmap='gist_heat_r',
++        kwant.plotter.map(syst, wf, oversampling=10, cmap='gist_heat_r',
 +                          file="plot_graphene_data1." + extension,
 +                          fig_size=size, dpi=_defs.dpi)
  
@@ -60,13 +60,13 @@
      def family_shape(i):
 @@ -68,15 +79,22 @@
      def family_color(i):
-         return 'black' if sys.site(i).family == a else 'white'
+         return 'black' if syst.site(i).family == a else 'white'
  
--    kwant.plot(sys, site_color=wf, site_symbol=family_shape,
+-    kwant.plot(syst, site_color=wf, site_symbol=family_shape,
 -               site_size=0.5, hop_lw=0, cmap='gist_heat_r')
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, site_color=wf, site_symbol=family_shape,
++        kwant.plot(syst, site_color=wf, site_symbol=family_shape,
 +                   site_size=0.5, hop_lw=0, cmap='gist_heat_r',
 +                   file="plot_graphene_data2." + extension,
 +                   fig_size=size, dpi=_defs.dpi)
@@ -75,11 +75,11 @@
      def site_size(i):
          return 3 * wf[i] / wf.max()
  
--    kwant.plot(sys, site_size=site_size, site_color=(0, 0, 1, 0.3),
+-    kwant.plot(syst, site_size=site_size, site_color=(0, 0, 1, 0.3),
 -               hop_lw=0.1)
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, site_size=site_size, site_color=(0,0,1,0.3),
++        kwant.plot(syst, site_size=site_size, site_color=(0,0,1,0.3),
 +                   hop_lw=0.1, file="plot_graphene_data3." + extension,
 +                   fig_size=size, dpi=_defs.dpi)
  

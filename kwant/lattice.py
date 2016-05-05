@@ -140,9 +140,9 @@ class Polyatomic:
         ...     return x**2 + y**2 < 100
         ...
         >>> lat = kwant.lattice.honeycomb()
-        >>> sys = kwant.Builder()
-        >>> sys[lat.shape(circle, (0, 0))] = 0
-        >>> sys[lat.neighbors()] = 1
+        >>> syst = kwant.Builder()
+        >>> syst[lat.shape(circle, (0, 0))] = 0
+        >>> syst[lat.neighbors()] = 1
         """
         def shape_sites(symmetry=None):
             Site = builder.Site

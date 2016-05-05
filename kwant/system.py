@@ -103,7 +103,7 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
 
         Returns
         -------
-        sys : FiniteSystem
+        syst : FiniteSystem
             A copy of the original system with some leads precalculated.
 
         Notes

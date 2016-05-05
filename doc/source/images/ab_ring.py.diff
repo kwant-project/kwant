@@ -9,18 +9,18 @@
  from math import pi
  
 @@ -81,6 +82,50 @@
-     return sys
+     return syst
  
  
 +def make_system_note1(a=1, t=1.0, W=10, r1=10, r2=20):
 +    lat = kwant.lattice.square(a)
-+    sys = kwant.Builder()
++    syst = kwant.Builder()
 +    def ring(pos):
 +        (x, y) = pos
 +        rsq = x**2 + y**2
 +        return ( r1**2 < rsq < r2**2)
-+    sys[lat.shape(ring, (0, 11))] = 4 * t
-+    sys[lat.neighbors()] = -t
++    syst[lat.shape(ring, (0, 11))] = 4 * t
++    syst[lat.neighbors()] = -t
 +    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
 +    lead0 = kwant.Builder(sym_lead0)
 +    def lead_shape(pos):
@@ -29,20 +29,20 @@
 +    lead0[lat.shape(lead_shape, (0, W))] = 4 * t
 +    lead0[lat.neighbors()] = -t
 +    lead1 = lead0.reversed()
-+    sys.attach_lead(lead0)
-+    sys.attach_lead(lead1)
-+    return sys
++    syst.attach_lead(lead0)
++    syst.attach_lead(lead1)
++    return syst
 +
 +
 +def make_system_note2(a=1, t=1.0, W=10, r1=10, r2=20):
 +    lat = kwant.lattice.square(a)
-+    sys = kwant.Builder()
++    syst = kwant.Builder()
 +    def ring(pos):
 +        (x, y) = pos
 +        rsq = x**2 + y**2
 +        return ( r1**2 < rsq < r2**2)
-+    sys[lat.shape(ring, (0, 11))] = 4 * t
-+    sys[lat.neighbors()] = -t
++    syst[lat.shape(ring, (0, 11))] = 4 * t
++    syst[lat.neighbors()] = -t
 +    sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
 +    lead0 = kwant.Builder(sym_lead0)
 +    def lead_shape(pos):
@@ -51,16 +51,16 @@
 +    lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
 +    lead0[lat.neighbors()] = -t
 +    lead1 = lead0.reversed()
-+    sys.attach_lead(lead0)
-+    sys.attach_lead(lead1, lat(0, 0))
-+    return sys
++    syst.attach_lead(lead0)
++    syst.attach_lead(lead1, lat(0, 0))
++    return syst
 +
 +
- def plot_conductance(sys, energy, fluxes):
+ def plot_conductance(syst, energy, fluxes):
      # compute conductance
  
 @@ -90,18 +135,31 @@
-         smatrix = kwant.smatrix(sys, energy, args=[flux])
+         smatrix = kwant.smatrix(syst, energy, args=[flux])
          data.append(smatrix.transmission(1, 0))
  
 -    pyplot.figure()
@@ -84,30 +84,30 @@
  
  
  def main():
-     sys = make_system()
+     syst = make_system()
  
      # Check that the system looks as intended.
--    kwant.plot(sys)
+-    kwant.plot(syst)
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, file="ab_ring_sys." + extension,
++        kwant.plot(syst, file="ab_ring_syst." + extension,
 +                   fig_size=size, dpi=_defs.dpi)
 +
  
      # Finalize the system.
-     sys = sys.finalized()
+     syst = syst.finalized()
 @@ -111,6 +169,17 @@
                                                  for i in range(100)])
  
  
 +    # Finally, some plots needed for the notes
-+    sys = make_system_note1()
++    syst = make_system_note1()
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, file="ab_ring_note1." + extension,
++        kwant.plot(syst, file="ab_ring_note1." + extension,
 +                   fig_size=size, dpi=_defs.dpi)
-+    sys = make_system_note2()
++    syst = make_system_note2()
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, file="ab_ring_note2." + extension,
++        kwant.plot(syst, file="ab_ring_note2." + extension,
 +                   fig_size=size, dpi=_defs.dpi)
 +
 +

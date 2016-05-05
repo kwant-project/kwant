@@ -97,8 +97,8 @@ a square lattice. For simplicity, we set the lattice constant to unity:
 Since we work with a square lattice, we label the points with two
 integer coordinates `(i, j)`. `~kwant.builder.Builder` then
 allows us to add matrix elements corresponding to lattice points:
-``sys[lat(i, j)] = ...`` sets the on-site energy for the point `(i, j)`,
-and ``sys[lat(i1, j1), lat(i2, j2)] = ...`` the hopping matrix element
+``syst[lat(i, j)] = ...`` sets the on-site energy for the point `(i, j)`,
+and ``syst[lat(i1, j1), lat(i2, j2)] = ...`` the hopping matrix element
 **from** point `(i2, j2)` **to** point `(i1, j1)`.
 
 Note that we need to specify sites for `~kwant.builder.Builder`
@@ -191,7 +191,7 @@ make any mistakes:
 
 This should bring up this picture:
 
-.. image:: /images/quantum_wire_sys.*
+.. image:: /images/quantum_wire_syst.*
 
 The system is represented in the usual way for tight-binding systems:
 dots represent the lattice points `(i, j)`, and for every
@@ -242,26 +242,26 @@ subbands that increases with energy.
 .. specialnote:: Technical details
 
    - In the example above, when building the system, only one direction
-     of hopping is given, i.e. ``sys[lat(i, j), lat(i, j-1)] = ...`` and
-     not also ``sys[lat(i, j-1), lat(i, j)] = ...``. The reason is that
+     of hopping is given, i.e. ``syst[lat(i, j), lat(i, j-1)] = ...`` and
+     not also ``syst[lat(i, j-1), lat(i, j)] = ...``. The reason is that
      `~kwant.builder.Builder` automatically adds the other
      direction of the hopping such that the resulting system is Hermitian.
 
      However, it does not hurt to define the opposite direction of hopping as
      well::
 
-         sys[lat(1, 0), lat(0, 0)] = -t
-         sys[lat(0, 0), lat(1, 0)] = -t.conj()
+         syst[lat(1, 0), lat(0, 0)] = -t
+         syst[lat(0, 0), lat(1, 0)] = -t.conj()
 
      (assuming that `t` is complex) is perfectly fine. However,
      be aware that also
 
      ::
 
-         sys[lat(1, 0), lat(0, 0)] = -1
-         sys[lat(0, 0), lat(1, 0)] = -2
+         syst[lat(1, 0), lat(0, 0)] = -1
+         syst[lat(0, 0), lat(1, 0)] = -2
 
-     is valid code. In the latter case, the hopping ``sys[lat(1, 0),
+     is valid code. In the latter case, the hopping ``syst[lat(1, 0),
      lat(0, 0)]`` is overwritten by the last line and also equals to -2.
 
    - Some more details the relation between `~kwant.builder.Builder`
@@ -286,7 +286,7 @@ subbands that increases with energy.
 
      ::
 
-         sys = sys.finalized()
+         syst = syst.finalized()
 
      In doing so, we transform the `~kwant.builder.Builder` object (with which
      we built up the system step by step) into a `~kwant.system.System`
@@ -301,9 +301,9 @@ subbands that increases with energy.
 
      ::
 
-         fsys = sys.finalized()
-         del sys
-         sys = fsys
+         fsyst = syst.finalized()
+         del syst
+         syst = fsyst
 
    - Even though the vector passed to the
      `~kwant.lattice.TranslationalSymmetry` is specified in real space, it must
@@ -386,10 +386,10 @@ certain kind that can be added to this builder without adding new sites. When
 `~kwant.builder.HoppingKind` is given to `~kwant.builder.Builder` as a key, it
 means that something is done to all the possible hoppings of this kind. A list
 of `~kwant.builder.HoppingKind` objects corresponding to nearest neighbors in
-lattices in Kwant is obtained using ``lat.neighbors()``. ``sys[lat.neighbors()]
+lattices in Kwant is obtained using ``lat.neighbors()``. ``syst[lat.neighbors()]
 = -t`` then sets all of those hopping matrix elements at once. In order to set
 values for all the nth-nearest neighbors at once, one can similarly use
-``sys[lat.neighbors(n)] = -t``. More detailed example of using
+``syst[lat.neighbors(n)] = -t``. More detailed example of using
 `~kwant.builder.HoppingKind` directly will be provided in
 :ref:`tutorial_spinorbit`.
 
@@ -489,22 +489,22 @@ The result of the example should be identical to the previous one.
      added at once, these two sites should be encapsulated in a tuple.
      In particular, one must write::
 
-         sys[((lat(0,j+1), lat(0, j)) for j in range(W-1)] = ...
+         syst[((lat(0,j+1), lat(0, j)) for j in range(W-1)] = ...
 
      or::
 
-         sys[[(site1, site2), (site3, site4), ...]] = ...
+         syst[[(site1, site2), (site3, site4), ...]] = ...
 
      You might wonder, why it is then possible to write for a single hopping::
 
-        sys[site1, site2] = ...
+        syst[site1, site2] = ...
 
      instead of ::
 
-        sys[(site1, site2)] = ...
+        syst[(site1, site2)] = ...
 
-     In fact, due to the way python handles subscripting, ``sys[site1, site2]``
-     is the same as ``sys[(site1, site2)]``.
+     In fact, due to the way python handles subscripting, ``syst[site1, site2]``
+     is the same as ``syst[(site1, site2)]``.
 
      (This is the deeper reason why several sites cannot be added as a tuple --
      it would be impossible to distinguish whether one would like to add two

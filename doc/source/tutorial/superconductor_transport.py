@@ -26,25 +26,25 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
 #HIDDEN_END_zuuw
 
 #HIDDEN_BEGIN_pqmp
-    sys = kwant.Builder()
+    syst = kwant.Builder()
 
     #### Define the scattering region. ####
-    sys[(lat_e(x, y) for x in range(L) for y in range(W))] = 4 * t - mu
-    sys[(lat_h(x, y) for x in range(L) for y in range(W))] = mu - 4 * t
+    syst[(lat_e(x, y) for x in range(L) for y in range(W))] = 4 * t - mu
+    syst[(lat_h(x, y) for x in range(L) for y in range(W))] = mu - 4 * t
 
     # the tunnel barrier
-    sys[(lat_e(x, y) for x in range(barrierpos[0], barrierpos[1])
+    syst[(lat_e(x, y) for x in range(barrierpos[0], barrierpos[1])
          for y in range(W))] = 4 * t + barrier - mu
-    sys[(lat_h(x, y) for x in range(barrierpos[0], barrierpos[1])
+    syst[(lat_h(x, y) for x in range(barrierpos[0], barrierpos[1])
          for y in range(W))] = mu - 4 * t - barrier
 
     # hoppings for both electrons and holes
-    sys[lat_e.neighbors()] = -t
-    sys[lat_h.neighbors()] = t
+    syst[lat_e.neighbors()] = -t
+    syst[lat_h.neighbors()] = t
 
     # Superconducting order parameter enters as hopping between
     # electrons and holes
-    sys[((lat_e(x, y), lat_h(x, y)) for x in range(Deltapos, L)
+    syst[((lat_e(x, y), lat_h(x, y)) for x in range(Deltapos, L)
          for y in range(W))] = Delta
 #HIDDEN_END_pqmp
 
@@ -77,20 +77,20 @@ def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
 
     #### Attach the leads and return the system. ####
 #HIDDEN_BEGIN_ozsr
-    sys.attach_lead(lead0)
-    sys.attach_lead(lead1)
-    sys.attach_lead(lead2)
+    syst.attach_lead(lead0)
+    syst.attach_lead(lead1)
+    syst.attach_lead(lead2)
 
-    return sys
+    return syst
 #HIDDEN_END_ozsr
 
 
 #HIDDEN_BEGIN_jbjt
-def plot_conductance(sys, energies):
+def plot_conductance(syst, energies):
     # Compute conductance
     data = []
     for energy in energies:
-        smatrix = kwant.smatrix(sys, energy)
+        smatrix = kwant.smatrix(syst, energy)
         # Conductance is N - R_ee + R_he
         data.append(smatrix.submatrix(0, 0).shape[0] -
                     smatrix.transmission(0, 0) +
@@ -105,15 +105,15 @@ def plot_conductance(sys, energies):
 
 
 def main():
-    sys = make_system()
+    syst = make_system()
 
     # Check that the system looks as intended.
-    kwant.plot(sys)
+    kwant.plot(syst)
 
     # Finalize the system.
-    sys = sys.finalized()
+    syst = syst.finalized()
 
-    plot_conductance(sys, energies=[0.002 * i for i in range(100)])
+    plot_conductance(syst, energies=[0.002 * i for i in range(100)])
 
 
 # Call the main function if the script gets executed (as opposed to imported).

@@ -35,7 +35,7 @@ To support these applications, ``attach_lead`` now returns a list of all the
 sites that have been added to the system.  Creating a buffer for disorder can
 be thus done as follows::
 
-    sys[sys.attach_lead(lead, add_cells=10)] = onsite
+    syst[syst.attach_lead(lead, add_cells=10)] = onsite
 
 Note how we set the onsite Hamiltonians of the sites that have been added to
 the value used in the system.

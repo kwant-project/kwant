@@ -19,7 +19,7 @@ import kwant
 # First, define the tight-binding system
 
 #HIDDEN_BEGIN_goiq
-sys = kwant.Builder()
+syst = kwant.Builder()
 #HIDDEN_END_goiq
 
 # Here, we are only working with square lattices
@@ -38,15 +38,15 @@ L = 30
 for i in range(L):
     for j in range(W):
         # On-site Hamiltonian
-        sys[lat(i, j)] = 4 * t
+        syst[lat(i, j)] = 4 * t
 
         # Hopping in y-direction
         if j > 0:
-            sys[lat(i, j), lat(i, j - 1)] = -t
+            syst[lat(i, j), lat(i, j - 1)] = -t
 
         # Hopping in x-direction
         if i > 0:
-            sys[lat(i, j), lat(i - 1, j)] = -t
+            syst[lat(i, j), lat(i - 1, j)] = -t
 #HIDDEN_END_zfvr
 
 # Then, define and attach the leads:
@@ -67,7 +67,7 @@ for j in range(W):
 #HIDDEN_END_ndez
 
 #HIDDEN_BEGIN_fskr
-sys.attach_lead(left_lead)
+syst.attach_lead(left_lead)
 #HIDDEN_END_fskr
 
 # Then the lead to the right
@@ -81,17 +81,17 @@ for j in range(W):
         right_lead[lat(0, j), lat(0, j - 1)] = -t
     right_lead[lat(1, j), lat(0, j)] = -t
 
-sys.attach_lead(right_lead)
+syst.attach_lead(right_lead)
 #HIDDEN_END_xhqc
 
 # Plot it, to make sure it's OK
 #HIDDEN_BEGIN_wsgh
-kwant.plot(sys)
+kwant.plot(syst)
 #HIDDEN_END_wsgh
 
 # Finalize the system
 #HIDDEN_BEGIN_dngj
-sys = sys.finalized()
+syst = syst.finalized()
 #HIDDEN_END_dngj
 
 # Now that we have the system, we can compute conductance
@@ -102,7 +102,7 @@ for ie in range(100):
     energy = ie * 0.01
 
     # compute the scattering matrix at a given energy
-    smatrix = kwant.smatrix(sys, energy)
+    smatrix = kwant.smatrix(syst, energy)
 
     # compute the transmission probability from lead 0 to
     # lead 1

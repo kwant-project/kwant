@@ -14,22 +14,22 @@ def test_nodeid_to_from_pos():
     assert_equal(s.pos_from_nodeid(s.nodeid_from_pos((2, 3))), (2, 3))
 
 def test_hamiltonian():
-    sys = square.System((4, 5), 1)
-    for i in range(sys.graph.num_nodes):
-        shape = sys.hamiltonian(i, i).shape
+    syst = square.System((4, 5), 1)
+    for i in range(syst.graph.num_nodes):
+        shape = syst.hamiltonian(i, i).shape
         assert_equal(len(shape), 2)
         assert_equal(shape[0], 1)
-        for j in sys.graph.out_neighbors(i):
-            m = sys.hamiltonian(i, j)
+        for j in syst.graph.out_neighbors(i):
+            m = syst.hamiltonian(i, j)
             shape = m.shape
             m_herm = m.T.conj()
             assert_almost_equal(m, m_herm)
-            assert_almost_equal(m_herm, sys.hamiltonian(j, i))
+            assert_almost_equal(m_herm, syst.hamiltonian(j, i))
 
 def test_selfenergy():
-    sys = square.System((2, 4), 1)
-    for lead in range(len(sys.lead_interfaces)):
-        se = sys.leads[lead].selfenergy(0)
+    syst = square.System((2, 4), 1)
+    for lead in range(len(syst.lead_interfaces)):
+        se = syst.leads[lead].selfenergy(0)
         assert_equal(len(se.shape), 2)
         assert_equal(se.shape[0], se.shape[1])
-        assert_equal(se.shape[0], len(sys.lead_interfaces[lead]))
+        assert_equal(se.shape[0], len(syst.lead_interfaces[lead]))

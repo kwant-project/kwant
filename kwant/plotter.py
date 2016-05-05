@@ -709,23 +709,24 @@ def sys_leads_sites(sys, num_lead_cells=2):
     unfinalized system, and sites of `system.InfiniteSystem` leads are
     returned with a finalized system.
     """
+    syst = sys  # for naming consistency within function bodies
     lead_cells = []
-    if isinstance(sys, builder.Builder):
-        sites = [(site, None, 0) for site in sys.sites()]
-        for leadnr, lead in enumerate(sys.leads):
+    if isinstance(syst, builder.Builder):
+        sites = [(site, None, 0) for site in syst.sites()]
+        for leadnr, lead in enumerate(syst.leads):
             start = len(sites)
             if hasattr(lead, 'builder') and len(lead.interface):
                 sites.extend(((site, leadnr, i) for site in
                               lead.builder.sites() for i in
                               range(num_lead_cells)))
             lead_cells.append(slice(start, len(sites)))
-    elif isinstance(sys, system.FiniteSystem):
-        sites = [(i, None, 0) for i in range(sys.graph.num_nodes)]
-        for leadnr, lead in enumerate(sys.leads):
+    elif isinstance(syst, system.FiniteSystem):
+        sites = [(i, None, 0) for i in range(syst.graph.num_nodes)]
+        for leadnr, lead in enumerate(syst.leads):
             start = len(sites)
             # We will only plot leads with a graph and with a symmetry.
             if (hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and
-                len(sys.lead_interfaces[leadnr])):
+                len(syst.lead_interfaces[leadnr])):
                 sites.extend(((site, leadnr, i) for site in
                               range(lead.cell_size) for i in
                               range(num_lead_cells)))
@@ -762,14 +763,15 @@ def sys_leads_pos(sys, site_lead_nr):
     # (buffer interface seems very slow). It's much faster to first
     # convert to a tuple and then to convert to numpy array ...
 
-    is_builder = isinstance(sys, builder.Builder)
+    syst = sys  # for naming consistency inside function bodies
+    is_builder = isinstance(syst, builder.Builder)
     num_lead_cells = site_lead_nr[-1][2] + 1
     if is_builder:
         pos = np.array(ta.array([i[0].pos for i in site_lead_nr]))
     else:
-        sys_from_lead = lambda lead: (sys if (lead is None)
-                                      else sys.leads[lead])
-        pos = np.array(ta.array([sys_from_lead(i[1]).pos(i[0])
+        syst_from_lead = lambda lead: (syst if (lead is None)
+                                      else syst.leads[lead])
+        pos = np.array(ta.array([syst_from_lead(i[1]).pos(i[0])
                                  for i in site_lead_nr]))
     if pos.dtype == object:  # Happens if not all the pos are same length.
         raise ValueError("pos attribute of the sites does not have consistent"
@@ -780,15 +782,15 @@ def sys_leads_pos(sys, site_lead_nr):
         if lead_nr is None:
             return np.zeros((dim,)), 0
         if is_builder:
-            sym = sys.leads[lead_nr].builder.symmetry
+            sym = syst.leads[lead_nr].builder.symmetry
             try:
-                site = sys.leads[lead_nr].interface[0]
+                site = syst.leads[lead_nr].interface[0]
             except IndexError:
                 return (0, 0)
         else:
             try:
-                sym = sys.leads[lead_nr].symmetry
-                site = sys.sites[sys.lead_interfaces[lead_nr][0]]
+                sym = syst.leads[lead_nr].symmetry
+                site = syst.sites[syst.lead_interfaces[lead_nr][0]]
             except (AttributeError, IndexError):
                 # empty leads, or leads without symmetry aren't drawn anyways
                 return (0, 0)
@@ -796,7 +798,7 @@ def sys_leads_pos(sys, site_lead_nr):
         # Conversion to numpy array here useful for efficiency
         vec = np.array(sym.periods)[0]
         return vec, dom
-    vecs_doms = dict((i, get_vec_domain(i)) for i in range(len(sys.leads)))
+    vecs_doms = dict((i, get_vec_domain(i)) for i in range(len(syst.leads)))
     vecs_doms[None] = np.zeros((dim,)), 0
     for k, v in vecs_doms.items():
         vecs_doms[k] = [v[0] * i for i in range(v[1], v[1] + num_lead_cells)]
@@ -833,10 +835,12 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
     unfinalized system, and hoppings of `system.InfiniteSystem` leads are
     returned with a finalized system.
     """
+
+    syst = sys  # for naming consistency inside function bodies
     hoppings = []
     lead_cells = []
-    if isinstance(sys, builder.Builder):
-        hoppings.extend(((hop, None, 0) for hop in sys.hoppings()))
+    if isinstance(syst, builder.Builder):
+        hoppings.extend(((hop, None, 0) for hop in syst.hoppings()))
 
         def lead_hoppings(lead):
             sym = lead.symmetry
@@ -851,26 +855,26 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
                 shift = max(shift1, shift2)
                 yield sym.act([-shift], site2), sym.act([-shift], site1)
 
-        for leadnr, lead in enumerate(sys.leads):
+        for leadnr, lead in enumerate(syst.leads):
             start = len(hoppings)
             if hasattr(lead, 'builder') and len(lead.interface):
                 hoppings.extend(((hop, leadnr, i) for hop in
                                  lead_hoppings(lead.builder) for i in
                                  range(num_lead_cells)))
             lead_cells.append(slice(start, len(hoppings)))
-    elif isinstance(sys, system.System):
-        def ll_hoppings(sys):
-            for i in range(sys.graph.num_nodes):
-                for j in sys.graph.out_neighbors(i):
+    elif isinstance(syst, system.System):
+        def ll_hoppings(syst):
+            for i in range(syst.graph.num_nodes):
+                for j in syst.graph.out_neighbors(i):
                     if i < j:
                         yield i, j
 
-        hoppings.extend(((hop, None, 0) for hop in ll_hoppings(sys)))
-        for leadnr, lead in enumerate(sys.leads):
+        hoppings.extend(((hop, None, 0) for hop in ll_hoppings(syst)))
+        for leadnr, lead in enumerate(syst.leads):
             start = len(hoppings)
             # We will only plot leads with a graph and with a symmetry.
             if (hasattr(lead, 'graph') and hasattr(lead, 'symmetry') and
-                len(sys.lead_interfaces[leadnr])):
+                len(syst.lead_interfaces[leadnr])):
                 hoppings.extend(((hop, leadnr, i) for hop in ll_hoppings(lead)
                                  for i in range(num_lead_cells)))
             lead_cells.append(slice(start, len(hoppings)))
@@ -902,7 +906,9 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
     site and `sys.pos(sitenr)` for finalized systems.  This function requires
     that all the positions of all the sites have the same dimensionality.
     """
-    is_builder = isinstance(sys, builder.Builder)
+
+    syst = sys  # for naming consistency inside function bodies
+    is_builder = isinstance(syst, builder.Builder)
     if len(hop_lead_nr) == 0:
         return np.empty((0, 3)), np.empty((0, 3))
     num_lead_cells = hop_lead_nr[-1][2] + 1
@@ -911,10 +917,10 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
                                           tuple(i[0][1].pos)) for i in
                                  hop_lead_nr]))
     else:
-        sys_from_lead = lambda lead: (sys if (lead is None) else
-                                      sys.leads[lead])
-        pos = ta.array([ta.array(tuple(sys_from_lead(i[1]).pos(i[0][0])) +
-                                 tuple(sys_from_lead(i[1]).pos(i[0][1]))) for i
+        syst_from_lead = lambda lead: (syst if (lead is None) else
+                                      syst.leads[lead])
+        pos = ta.array([ta.array(tuple(syst_from_lead(i[1]).pos(i[0][0])) +
+                                 tuple(syst_from_lead(i[1]).pos(i[0][1]))) for i
                         in hop_lead_nr])
         pos = np.array(pos)
     if pos.dtype == object:  # Happens if not all the pos are same length.
@@ -926,15 +932,15 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
         if lead_nr is None:
             return np.zeros((dim,)), 0
         if is_builder:
-            sym = sys.leads[lead_nr].builder.symmetry
+            sym = syst.leads[lead_nr].builder.symmetry
             try:
-                site = sys.leads[lead_nr].interface[0]
+                site = syst.leads[lead_nr].interface[0]
             except IndexError:
                 return (0, 0)
         else:
             try:
-                sym = sys.leads[lead_nr].symmetry
-                site = sys.sites[sys.lead_interfaces[lead_nr][0]]
+                sym = syst.leads[lead_nr].symmetry
+                site = syst.sites[syst.lead_interfaces[lead_nr][0]]
             except (AttributeError, IndexError):
                 # empyt leads or leads without symmetry are not drawn anyways
                 return (0, 0)
@@ -942,7 +948,7 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
         vec = np.array(sym.periods)[0]
         return np.r_[vec, vec], dom
 
-    vecs_doms = dict((i, get_vec_domain(i)) for i in range(len(sys.leads)))
+    vecs_doms = dict((i, get_vec_domain(i)) for i in range(len(syst.leads)))
     vecs_doms[None] = np.zeros((dim,)), 0
     for k, v in vecs_doms.items():
         vecs_doms[k] = [v[0] * i for i in range(v[1], v[1] + num_lead_cells)]
@@ -1111,13 +1117,14 @@ def plot(sys, num_lead_cells=2, unit='nn',
         raise RuntimeError("matplotlib was not found, but is required "
                            "for plot()")
 
+    syst = sys  # for naming consistency inside function bodies
     # Generate data.
-    sites, lead_sites_slcs = sys_leads_sites(sys, num_lead_cells)
-    n_sys_sites = sum(i[1] is None for i in sites)
-    sites_pos = sys_leads_pos(sys, sites)
-    hops, lead_hops_slcs = sys_leads_hoppings(sys, num_lead_cells)
-    n_sys_hops = sum(i[1] is None for i in hops)
-    end_pos, start_pos = sys_leads_hopping_pos(sys, hops)
+    sites, lead_sites_slcs = sys_leads_sites(syst, num_lead_cells)
+    n_syst_sites = sum(i[1] is None for i in sites)
+    sites_pos = sys_leads_pos(syst, sites)
+    hops, lead_hops_slcs = sys_leads_hoppings(syst, num_lead_cells)
+    n_syst_hops = sum(i[1] is None for i in hops)
+    end_pos, start_pos = sys_leads_hopping_pos(syst, hops)
 
     # Choose plot type.
     def resize_to_dim(array):
@@ -1139,7 +1146,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         if isinstance(value, (str, tuple)):
             return
         try:
-            if len(value) != n_sys_sites:
+            if len(value) != n_syst_sites:
                 raise ValueError('Length of {0} is not equal to number of '
                                  'system sites.'.format(name))
         except TypeError:
@@ -1166,7 +1173,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
     if unit == 'pt':
         reflen = None
     elif unit == 'nn':
-        if n_sys_hops:
+        if n_syst_hops:
             # If hoppings are present use their lengths to determine the
             # minimal one.
             distances = end_pos - start_pos
@@ -1230,7 +1237,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
             symbol_slcs.append((symbol, np.array(indx)))
         fancy_indexing = True
     else:
-        symbol_slcs = [(site_symbol, slice(n_sys_sites))]
+        symbol_slcs = [(site_symbol, slice(n_syst_sites))]
         fancy_indexing = False
 
     site_size = make_proper_site_spec(site_size, fancy_indexing)
@@ -1256,7 +1263,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
     norm = None
     if len(symbol_slcs) > 1:
         try:
-            if site_color.ndim == 1 and len(site_color) == n_sys_sites:
+            if site_color.ndim == 1 and len(site_color) == n_syst_sites:
                 site_color = np.asarray(site_color, dtype=float)
                 norm = matplotlib.colors.Normalize(site_color.min(),
                                                    site_color.max())
@@ -1324,7 +1331,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
                               facecolor=col, edgecolor=edgecol,
                               linewidth=lw, cmap=cmap, norm=norm, zorder=2)
 
-    end, start = end_pos[: n_sys_hops], start_pos[: n_sys_hops]
+    end, start = end_pos[: n_syst_hops], start_pos[: n_syst_hops]
     line_coll = lines(ax, end, start, reflen, hop_color, linewidths=hop_lw,
                       zorder=1, cmap=hop_cmap)
 
@@ -1528,8 +1535,9 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         raise RuntimeError("matplotlib was not found, but is required "
                            "for map()")
 
-    sites = sys_leads_sites(sys, 0)[0]
-    coords = sys_leads_pos(sys, sites)
+    syst = sys  # for naming consistency inside function bodies
+    sites = sys_leads_sites(syst, 0)[0]
+    coords = sys_leads_pos(syst, sites)
 
     if pos_transform is not None:
         coords = np.apply_along_axis(pos_transform, 1, coords)
@@ -1540,7 +1548,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     if callable(value):
         value = [value(site[0]) for site in sites]
     else:
-        if not isinstance(sys, system.FiniteSystem):
+        if not isinstance(syst, system.FiniteSystem):
             raise ValueError('List of values is only allowed as input '
                              'for finalized systems.')
     value = np.array(value)
@@ -1565,7 +1573,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
                       origin='lower', interpolation='none', cmap=cmap,
                       vmin=vmin, vmax=vmax)
     if num_lead_cells:
-        plot(sys, num_lead_cells, site_symbol='no symbol', hop_lw=0,
+        plot(syst, num_lead_cells, site_symbol='no symbol', hop_lw=0,
              lead_site_symbol='s', lead_site_size=0.501, lead_site_lw=0,
              lead_hop_lw=0, lead_color='black', colorbar=False, ax=ax)
 
@@ -1619,11 +1627,12 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
         raise RuntimeError("matplotlib was not found, but is required "
                            "for bands()")
 
+    syst = sys  # for naming consistency inside function bodies
     momenta = np.array(momenta)
     if momenta.ndim != 1:
         momenta = np.linspace(-np.pi, np.pi, momenta)
 
-    bands = physics.Bands(sys, args)
+    bands = physics.Bands(syst, args)
     energies = [bands(k) for k in momenta]
 
     if ax is None:

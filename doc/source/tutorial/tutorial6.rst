@@ -19,8 +19,8 @@ has been used in parts of the tutorial :ref:`tutorial-graphene`.)  In contrast
 to previous examples, we will also use hoppings beyond next-nearest neighbors:
 
 .. literalinclude:: plot_graphene.py
-    :start-after: #HIDDEN_BEGIN_makesys
-    :end-before: #HIDDEN_END_makesys
+    :start-after: #HIDDEN_BEGIN_makesyst
+    :end-before: #HIDDEN_END_makesyst
 
 Note that adding hoppings hoppings to the `n`-th nearest neighbors can be
 simply done by passing `n` as an argument to
@@ -32,13 +32,13 @@ next-nearest-neighbor hopping [#]_.
 Of course, the system can be plotted simply with default settings:
 
 .. literalinclude:: plot_graphene.py
-    :start-after: #HIDDEN_BEGIN_plotsys1
-    :end-before: #HIDDEN_END_plotsys1
+    :start-after: #HIDDEN_BEGIN_plotsyst1
+    :end-before: #HIDDEN_END_plotsyst1
 
 However, due to the richer structure of the lattice, this results in a rather
 busy plot:
 
-.. image:: ../images/plot_graphene_sys1.*
+.. image:: ../images/plot_graphene_syst1.*
 
 A much clearer plot can be obtained by using different colors for both
 sublattices, and by having different line widths for different hoppings.  This
@@ -48,14 +48,14 @@ must be a function taking one site as argument, for hoppings a function taking
 the start end end site of hopping as arguments:
 
 .. literalinclude:: plot_graphene.py
-    :start-after: #HIDDEN_BEGIN_plotsys2
-    :end-before: #HIDDEN_END_plotsys2
+    :start-after: #HIDDEN_BEGIN_plotsyst2
+    :end-before: #HIDDEN_END_plotsyst2
 
 Note that since we are using an unfinalized Builder, a `site` is really an
 instance of `~kwant.builder.Site`. With these adjustments we arrive at a plot
 that carries the same information, but is much easier to interpret:
 
-.. image:: ../images/plot_graphene_sys2.*
+.. image:: ../images/plot_graphene_syst2.*
 
 Apart from plotting the *system* itself, `~kwant.plotter.plot` can also be used
 to plot *data* living on the system.
@@ -112,7 +112,7 @@ this is interpreted as the radius of the inner circle).
 
 Finally, note that since we are dealing with a finalized system now, a site `i`
 is represented by an integer. In order to obtain the original
-`~kwant.builder.Site`, ``sys.site(i)`` can be used.
+`~kwant.builder.Site`, ``syst.site(i)`` can be used.
 
 With this we arrive at
 
@@ -185,7 +185,7 @@ counterparts:
 
 resulting in
 
-.. image:: ../images/plot_zincblende_sys1.*
+.. image:: ../images/plot_zincblende_syst1.*
 
 You might notice that the standard options for plotting are quite different in
 3D than in 2D. For example, by default hoppings are not printed, but sites are
@@ -214,7 +214,7 @@ depending on the sublattice:
 which results in a 3D plot that allows to interactively (when plotted
 in a window) explore the crystal structure:
 
-.. image:: ../images/plot_zincblende_sys2.*
+.. image:: ../images/plot_zincblende_syst2.*
 
 Hence, a few lines of code using Kwant allow to explore all the different
 crystal lattices out there!

@@ -9,7 +9,7 @@
  
  # For plotting
 @@ -55,19 +56,25 @@
-         smatrix = kwant.smatrix(sys, energy, args=[-welldepth])
+         smatrix = kwant.smatrix(syst, energy, args=[-welldepth])
          data.append(smatrix.transmission(1, 0))
  
 -    pyplot.figure()
@@ -33,11 +33,11 @@
  
  
  def main():
-     sys = make_system()
+     syst = make_system()
  
 -    # Check that the system looks as intended.
--    kwant.plot(sys)
+-    kwant.plot(syst)
 -
      # Finalize the system.
-     sys = sys.finalized()
+     syst = syst.finalized()
  

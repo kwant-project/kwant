@@ -31,29 +31,29 @@
 +        fig.savefig("closed_system_result." + extension, dpi=_defs.dpi)
  
  
- def plot_wave_function(sys):
+ def plot_wave_function(syst):
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +
      # Calculate the wave functions in the system.
-     ham_mat = sys.hamiltonian_submatrix(sparse=True)
+     ham_mat = syst.hamiltonian_submatrix(sparse=True)
      evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
  
      # Plot the probability density of the 10th eigenmode.
--    kwant.plotter.map(sys, np.abs(evecs[:, 9])**2,
+-    kwant.plotter.map(syst, np.abs(evecs[:, 9])**2,
 -                      colorbar=False, oversampling=1)
 +    for extension in ('pdf', 'png'):
 +        kwant.plotter.map(
-+            sys, np.abs(evecs[:, 9])**2, colorbar=False, oversampling=1,
++            syst, np.abs(evecs[:, 9])**2, colorbar=False, oversampling=1,
 +            file="closed_system_eigenvector." + extension,
 +            fig_size=size, dpi=_defs.dpi)
  
  
  def main():
-     sys = make_system()
+     syst = make_system()
  
 -    # Check that the system looks as intended.
--    kwant.plot(sys)
+-    kwant.plot(syst)
 -
      # Finalize the system.
-     sys = sys.finalized()
+     syst = syst.finalized()
  

@@ -346,7 +346,7 @@ class HoppingKind(tuple):
     present in the system.  For example::
 
         kind = kwant.builder.HoppingKind((1, 0), lat)
-        sys[kind(sys)] = 1
+        syst[kind(syst)] = 1
 
     Because a `~kwant.builder.Builder` can be indexed with functions or
     iterables of functions, ``HoppingKind`` instances (or any non-tuple
@@ -354,7 +354,7 @@ class HoppingKind(tuple):
     setting or deleting hoppings::
 
         kinds = [kwant.builder.HoppingKind(v, lat) for v in [(1, 0), (0, 1)]]
-        sys[kinds] = 1
+        syst[kinds] = 1
     """
     __slots__ = ()
 
@@ -607,10 +607,10 @@ class Builder:
     are possible as well that allow to manipulate multiple sites/hoppings in a
     single operation.  Such keys are internally expanded into a sequence of
     simple keys by using the method `Builder.expand`.  For example,
-    ``sys[general_key] = value`` is equivalent to ::
+    ``syst[general_key] = value`` is equivalent to ::
 
-        for simple_key in sys.expand(general_key):
-            sys[simple_key] = value
+        for simple_key in syst.expand(general_key):
+            syst[simple_key] = value
 
     Builder instances automatically ensure that every hopping is Hermitian, so
     that if ``builder[a, b]`` has been set, there is no need to set
@@ -791,8 +791,8 @@ class Builder:
               by `~kwant.lattice.Polyatomic.shape`.
 
         This method is internally used to expand the keys when getting or
-        deleting items of a builder (i.e. ``sys[key] = value`` or ``del
-        sys[key]``).
+        deleting items of a builder (i.e. ``syst[key] = value`` or ``del
+        syst[key]``).
 
         """
         itr = iter((key,))
@@ -1022,12 +1022,12 @@ class Builder:
         a = self.symmetry.to_fd(site)
         return self._out_neighbors(a)
 
-    def __iadd__(self, other_sys):
-        for site, value in other_sys.site_value_pairs():
+    def __iadd__(self, other):
+        for site, value in other.site_value_pairs():
             self[site] = value
-        for hop, value in other_sys.hopping_value_pairs():
+        for hop, value in other.hopping_value_pairs():
             self[hop] = value
-        self.leads.extend(other_sys.leads)
+        self.leads.extend(other.leads)
         return self
 
     def attach_lead(self, lead_builder, origin=None, add_cells=0):

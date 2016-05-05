@@ -170,7 +170,7 @@ first argument to the function `onsite`. The values of any additional
 parameters, which can be used to alter the Hamiltonian matrix elements
 at a later stage, are specified later during the call to `smatrix`.
 Note that we had to define `onsite`, as it is
-not possible to mix values and functions as in ``sys[...] = 4 * t +
+not possible to mix values and functions as in ``syst[...] = 4 * t +
 potential``.
 
 For the leads, we just use constant values as before. If we passed a
@@ -307,7 +307,7 @@ the lead is attached:
 
 After the lead has been attached, the system should look like this:
 
-.. image:: ../images/ab_ring_sys.*
+.. image:: ../images/ab_ring_syst.*
 
 The computation of the conductance goes in the same fashion as before.
 Finally you should get the following result:
@@ -338,7 +338,7 @@ period of one flux quantum.
     by providing an alternative starting point from where
     the lead is traced back::
 
-        sys.attach_lead(lead1, lat(0, 0))
+        syst.attach_lead(lead1, lat(0, 0))
 
     starts the trace-back in the middle of the ring, resulting
     in the lead being attached to the inner circle:

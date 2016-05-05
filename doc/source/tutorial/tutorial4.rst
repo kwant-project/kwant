@@ -137,7 +137,7 @@ independent on the overall figure size.
 
 Plotting the closed system gives this result:
 
-.. image:: ../images/graphene_sys1.*
+.. image:: ../images/graphene_syst1.*
 
 Computing the eigenvalues of largest magnitude,
 
@@ -151,7 +151,7 @@ should yield two eigenvalues equal to ``[ 3.07869311,
 The remaining code of `main` attaches the leads to the system and plots it
 again:
 
-.. image:: ../images/graphene_sys2.*
+.. image:: ../images/graphene_syst2.*
 
 It computes the band structure of one of lead 0:
 
@@ -176,16 +176,16 @@ an open quantum dot
    For example, you can add lattice points for all sublattices in the
    current example using::
 
-       sys[graphene.shape(...)] = ...
+       syst[graphene.shape(...)] = ...
 
    or just for a single sublattice::
 
-       sys[a.shape(...)] = ...
+       syst[a.shape(...)] = ...
 
    and the same of course with `b`. Also, you can selectively remove points::
 
-       del sys[graphene.shape(...)]
-       del sys[a.shape(...)]
+       del syst[graphene.shape(...)]
+       del syst[a.shape(...)]
 
    where the first line removes points in both sublattices, whereas the
    second line removes only points in one sublattice.

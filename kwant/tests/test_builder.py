@@ -18,14 +18,14 @@ from kwant import builder
 def test_bad_keys():
 
     def setitem(key):
-        sys[key] = None
+        syst[key] = None
 
     fam = builder.SimpleSiteFamily()
-    sys = builder.Builder()
+    syst = builder.Builder()
 
     failures = [
         # Invalid single keys
-        ([sys.__contains__, sys.__getitem__, setitem, sys.__delitem__],
+        ([syst.__contains__, syst.__getitem__, setitem, syst.__delitem__],
          [(TypeError, [123,
                        (0, 1),
                        (fam(0), 123),
@@ -36,12 +36,12 @@ def test_bad_keys():
                         (fam(2), fam(2))])]),
 
         # Hoppings that contain sites that do not belong to the system
-        ([sys.__getitem__, setitem, sys.__delitem__],
+        ([syst.__getitem__, setitem, syst.__delitem__],
          [(KeyError, [(fam(0), fam(3)), (fam(2), fam(1)),
                       (fam(2), fam(3))])]),
 
         # Sequences containing a bad key.
-        ([setitem, sys.__delitem__],
+        ([setitem, syst.__delitem__],
          [(TypeError, [[fam(0), fam(1), 123],
                        [fam(0), (fam(1),)],
                        [fam(0), (fam(1), fam(2))],
@@ -58,13 +58,13 @@ def test_bad_keys():
 
         # Sites that do not belong to the system, also as part of a
         # sequence
-        ([sys.__delitem__],
+        ([syst.__delitem__],
          [(KeyError, [fam(123),
                       [fam(0), fam(123)],
                       [fam(123), fam(1)]])]),
 
         # Various things that are not sites present in the system.
-        ([sys.degree, sys.neighbors],
+        ([syst.degree, syst.neighbors],
          [(TypeError, [123,
                        [0, 1, 2],
                        (0, 1),
@@ -78,8 +78,8 @@ def test_bad_keys():
         for error, keys in errors:
             for key in keys:
                 for func in funcs:
-                    sys[[fam(0), fam(1)]] = None
-                    sys[fam(0), fam(1)] = None
+                    syst[[fam(0), fam(1)]] = None
+                    syst[fam(0), fam(1)] = None
                     try:
                         assert_raises(error, func, key)
                     except AssertionError:
@@ -88,19 +88,19 @@ def test_bad_keys():
 
 
 def test_site_families():
-    sys = builder.Builder()
+    syst = builder.Builder()
     fam = builder.SimpleSiteFamily()
     ofam = builder.SimpleSiteFamily()
     yafam = builder.SimpleSiteFamily('another_name')
 
-    sys[fam(0)] = 7
-    assert_equal(sys[fam(0)], 7)
+    syst[fam(0)] = 7
+    assert_equal(syst[fam(0)], 7)
 
     assert len(set([fam, ofam, fam('a'), ofam('a'), yafam])) == 3
-    sys[fam(1)] = 123
-    assert_equal(sys[fam(1)], 123)
-    assert_equal(sys[ofam(1)], 123)
-    assert_raises(KeyError, sys.__getitem__, yafam(1))
+    syst[fam(1)] = 123
+    assert_equal(syst[fam(1)], 123)
+    assert_equal(syst[ofam(1)], 123)
+    assert_raises(KeyError, syst.__getitem__, yafam(1))
 
 
 class VerySimpleSymmetry(builder.Symmetry):
@@ -128,53 +128,53 @@ class VerySimpleSymmetry(builder.Symmetry):
 def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
                                     unknown_hoppings, sym=None):
     fam = builder.SimpleSiteFamily()
-    sys = builder.Builder(sym)
+    syst = builder.Builder(sym)
     t, V = 1.0j, 0.0
-    sys[sites] = V
+    syst[sites] = V
     for site in sites:
-        sys[site] = V
-    sys[hoppings] = t
+        syst[site] = V
+    syst[hoppings] = t
     for hopping in hoppings:
-        sys[hopping] = t
+        syst[hopping] = t
 
     for hopping in unknown_hoppings:
-        assert_raises(KeyError, sys.__setitem__, hopping, t)
+        assert_raises(KeyError, syst.__setitem__, hopping, t)
 
-    assert (fam(5), fam(123)) not in sys
-    assert (sites[0], fam(5, 123)) not in sys
-    assert (fam(7, 8), sites[0]) not in sys
+    assert (fam(5), fam(123)) not in syst
+    assert (sites[0], fam(5, 123)) not in syst
+    assert (fam(7, 8), sites[0]) not in syst
     for site in sites:
-        assert site in sys
-        assert_equal(sys[site], V)
+        assert site in syst
+        assert_equal(syst[site], V)
     for hop in hoppings:
         rev_hop = hop[1], hop[0]
-        assert hop in sys
-        assert rev_hop in sys
-        assert_equal(sys[hop], t)
-        assert_equal(sys[rev_hop], t.conjugate())
+        assert hop in syst
+        assert rev_hop in syst
+        assert_equal(syst[hop], t)
+        assert_equal(syst[rev_hop], t.conjugate())
 
-    assert_equal(sys.degree(sites[0]), 2)
-    assert_equal(sorted(s for s in sys.neighbors(sites[0])),
+    assert_equal(syst.degree(sites[0]), 2)
+    assert_equal(sorted(s for s in syst.neighbors(sites[0])),
                  sorted([sites[1], sites[-1]]))
 
-    del sys[hoppings]
-    assert_equal(list(sys.hoppings()), [])
-    sys[hoppings] = t
+    del syst[hoppings]
+    assert_equal(list(syst.hoppings()), [])
+    syst[hoppings] = t
 
-    del sys[sites[0]]
+    del syst[sites[0]]
     assert_equal(sorted(tuple(s)
-                        for s in sys.sites()), sorted(sites_fd[1:]))
+                        for s in syst.sites()), sorted(sites_fd[1:]))
     assert_equal(sorted((a, b)
-                        for a, b in sys.hoppings()),
+                        for a, b in syst.hoppings()),
                  sorted(hoppings_fd[1:-1]))
 
     assert_equal(sorted((tuple(site.tag), value)
-                        for site, value in sys.site_value_pairs()),
-                 sorted((tuple(site.tag), sys[site]) for site in sys.sites()))
+                        for site, value in syst.site_value_pairs()),
+                 sorted((tuple(site.tag), syst[site]) for site in syst.sites()))
     assert_equal(sorted((tuple(a.tag), tuple(b.tag), value)
-                        for (a, b), value in sys.hopping_value_pairs()),
-                 sorted((tuple(a.tag), tuple(b.tag), sys[a, b])
-                        for a, b in sys.hoppings()))
+                        for (a, b), value in syst.hopping_value_pairs()),
+                 sorted((tuple(a.tag), tuple(b.tag), syst[a, b])
+                        for a, b in syst.hoppings()))
 
 
 def test_construction_and_indexing():
@@ -216,36 +216,36 @@ def test_hermitian_conjugation():
         else:
             raise ValueError
 
-    sys = builder.Builder()
+    syst = builder.Builder()
     fam = builder.SimpleSiteFamily()
-    sys[fam(0)] = sys[fam(1)] = ta.identity(2)
+    syst[fam(0)] = syst[fam(1)] = ta.identity(2)
 
-    sys[fam(0), fam(1)] = f
-    assert sys[fam(0), fam(1)] is f
-    assert isinstance(sys[fam(1), fam(0)], builder.HermConjOfFunc)
-    assert_equal(sys[fam(1), fam(0)](fam(1), fam(0), 2),
-                 sys[fam(0), fam(1)](fam(0), fam(1), 2).conjugate().transpose())
-    sys[fam(0), fam(1)] = sys[fam(1), fam(0)]
-    assert isinstance(sys[fam(0), fam(1)], builder.HermConjOfFunc)
-    assert sys[fam(1), fam(0)] is f
+    syst[fam(0), fam(1)] = f
+    assert syst[fam(0), fam(1)] is f
+    assert isinstance(syst[fam(1), fam(0)], builder.HermConjOfFunc)
+    assert_equal(syst[fam(1), fam(0)](fam(1), fam(0), 2),
+                 syst[fam(0), fam(1)](fam(0), fam(1), 2).conjugate().transpose())
+    syst[fam(0), fam(1)] = syst[fam(1), fam(0)]
+    assert isinstance(syst[fam(0), fam(1)], builder.HermConjOfFunc)
+    assert syst[fam(1), fam(0)] is f
 
 
 def test_value_equality_and_identity():
     m = ta.array([[1, 2], [3j, 4j]])
-    sys = builder.Builder()
+    syst = builder.Builder()
     fam = builder.SimpleSiteFamily()
 
-    sys[fam(0)] = m
-    sys[fam(1)] = m
-    assert sys[fam(1)] is m
+    syst[fam(0)] = m
+    syst[fam(1)] = m
+    assert syst[fam(1)] is m
 
-    sys[fam(0), fam(1)] = m
-    assert_equal(sys[fam(1), fam(0)], m.transpose().conjugate())
-    assert sys[fam(0), fam(1)] is m
+    syst[fam(0), fam(1)] = m
+    assert_equal(syst[fam(1), fam(0)], m.transpose().conjugate())
+    assert syst[fam(0), fam(1)] is m
 
-    sys[fam(1), fam(0)] = m
-    assert_equal(sys[fam(0), fam(1)], m.transpose().conjugate())
-    assert sys[fam(1), fam(0)] is m
+    syst[fam(1), fam(0)] = m
+    assert_equal(syst[fam(0), fam(1)], m.transpose().conjugate())
+    assert syst[fam(1), fam(0)] is m
 
 
 def random_onsite_hamiltonian(rng):
@@ -256,29 +256,29 @@ def random_hopping_integral(rng):
     return complex(2 * rng.random() - 1, 2 * rng.random() - 1)
 
 
-def check_onsite(fsys, sites, subset=False, check_values=True):
+def check_onsite(fsyst, sites, subset=False, check_values=True):
     freq = {}
-    for node in range(fsys.graph.num_nodes):
-        site = fsys.sites[node].tag
+    for node in range(fsyst.graph.num_nodes):
+        site = fsyst.sites[node].tag
         freq[site] = freq.get(site, 0) + 1
         if check_values and site in sites:
-            assert fsys.onsite_hamiltonians[node] is sites[site]
+            assert fsyst.onsite_hamiltonians[node] is sites[site]
     if not subset:
-        # Check that all sites of `fsys` are in `sites`.
+        # Check that all sites of `fsyst` are in `sites`.
         for site in freq.keys():
             assert site in sites
-    # Check that all sites of `sites` are in `fsys`.
+    # Check that all sites of `sites` are in `fsyst`.
     for site in sites:
         assert_equal(freq[site], 1)
 
 
-def check_hoppings(fsys, hops):
-    assert_equal(fsys.graph.num_edges, 2 * len(hops))
-    for edge_id, edge in enumerate(fsys.graph):
+def check_hoppings(fsyst, hops):
+    assert_equal(fsyst.graph.num_edges, 2 * len(hops))
+    for edge_id, edge in enumerate(fsyst.graph):
         tail, head = edge
-        tail = fsys.sites[tail].tag
-        head = fsys.sites[head].tag
-        value = fsys.hoppings[edge_id]
+        tail = fsyst.sites[tail].tag
+        head = fsyst.sites[head].tag
+        value = fsyst.hoppings[edge_id]
         if value is builder.Other:
             assert (head, tail) in hops
         else:
@@ -340,15 +340,15 @@ def test_finalization():
     neighbors = sorted(neighbors)
 
     # Build scattering region from blueprint and test it.
-    sys = builder.Builder()
+    syst = builder.Builder()
     fam = kwant.lattice.general(ta.identity(2))
     for site, value in sr_sites.items():
-        sys[fam(*site)] = value
+        syst[fam(*site)] = value
     for hop, value in sr_hops.items():
-        sys[fam(*hop[0]), fam(*hop[1])] = value
-    fsys = sys.finalized()
-    check_onsite(fsys, sr_sites)
-    check_hoppings(fsys, sr_hops)
+        syst[fam(*hop[0]), fam(*hop[1])] = value
+    fsyst = syst.finalized()
+    check_onsite(fsyst, sr_sites)
+    check_hoppings(fsyst, sr_hops)
 
     # Build lead from blueprint and test it.
     lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)))
@@ -375,20 +375,20 @@ def test_finalization():
     check_hoppings(flead, lead_hops)
 
     # Attach lead to system with empty interface.
-    sys.leads.append(builder.BuilderLead(lead, ()))
-    assert_raises(ValueError, sys.finalized)
+    syst.leads.append(builder.BuilderLead(lead, ()))
+    assert_raises(ValueError, syst.finalized)
 
     # Attach lead with improper interface.
-    sys.leads[-1] = builder.BuilderLead(
+    syst.leads[-1] = builder.BuilderLead(
         lead, 2 * tuple(builder.Site(fam, n) for n in neighbors))
-    assert_raises(ValueError, sys.finalized)
+    assert_raises(ValueError, syst.finalized)
 
     # Attach lead properly.
-    sys.leads[-1] = builder.BuilderLead(
+    syst.leads[-1] = builder.BuilderLead(
         lead, (builder.Site(fam, n) for n in neighbors))
-    fsys = sys.finalized()
-    assert_equal(len(fsys.lead_interfaces), 1)
-    assert_equal([fsys.sites[i].tag for i in fsys.lead_interfaces[0]],
+    fsyst = syst.finalized()
+    assert_equal(len(fsyst.lead_interfaces), 1)
+    assert_equal([fsyst.sites[i].tag for i in fsyst.lead_interfaces[0]],
                  neighbors)
 
     # Add a hopping to the lead which couples two next-nearest cells and check
@@ -411,27 +411,27 @@ def test_hamiltonian_evaluation():
     tags = [(0, 0), (1, 1), (2, 2), (3, 3)]
     edges = [(0, 1), (0, 2), (0, 3), (1, 2)]
 
-    sys = builder.Builder()
+    syst = builder.Builder()
     fam = builder.SimpleSiteFamily()
     sites = [fam(*tag) for tag in tags]
-    sys[(fam(*tag) for tag in tags)] = f_onsite
-    sys[((fam(*tags[i]), fam(*tags[j])) for (i, j) in edges)] = f_hopping
-    fsys = sys.finalized()
+    syst[(fam(*tag) for tag in tags)] = f_onsite
+    syst[((fam(*tags[i]), fam(*tags[j])) for (i, j) in edges)] = f_hopping
+    fsyst = syst.finalized()
 
-    assert_equal(fsys.graph.num_nodes, len(tags))
-    assert_equal(fsys.graph.num_edges, 2 * len(edges))
+    assert_equal(fsyst.graph.num_nodes, len(tags))
+    assert_equal(fsyst.graph.num_edges, 2 * len(edges))
 
     for i in range(len(tags)):
-        site = fsys.sites[i]
+        site = fsyst.sites[i]
         assert site in sites
-        assert_equal(fsys.hamiltonian(i, i),
-                     sys[site](site))
+        assert_equal(fsyst.hamiltonian(i, i),
+                     syst[site](site))
 
-    for t, h in fsys.graph:
-        tsite = fsys.sites[t]
-        hsite = fsys.sites[h]
-        assert_equal(fsys.hamiltonian(t, h),
-                     sys[tsite, hsite](tsite, hsite))
+    for t, h in fsyst.graph:
+        tsite = fsyst.sites[t]
+        hsite = fsyst.sites[h]
+        assert_equal(fsyst.hamiltonian(t, h),
+                     syst[tsite, hsite](tsite, hsite))
 
 
 def test_dangling():
@@ -439,36 +439,36 @@ def test_dangling():
         #        1
         #       / \
         #    3-0---2-4-5  6-7  8
-        sys = builder.Builder()
+        syst = builder.Builder()
         fam = builder.SimpleSiteFamily()
-        sys[(fam(i) for i in range(9))] = None
-        sys[[(fam(0), fam(1)), (fam(1), fam(2)), (fam(2), fam(0))]] = None
-        sys[[(fam(0), fam(3)), (fam(2), fam(4)), (fam(4), fam(5))]] = None
-        sys[fam(6), fam(7)] = None
-        return sys
+        syst[(fam(i) for i in range(9))] = None
+        syst[[(fam(0), fam(1)), (fam(1), fam(2)), (fam(2), fam(0))]] = None
+        syst[[(fam(0), fam(3)), (fam(2), fam(4)), (fam(4), fam(5))]] = None
+        syst[fam(6), fam(7)] = None
+        return syst
 
-    sys0 = make_system()
-    assert_equal(sorted(site.tag for site in sys0.dangling()),
+    syst0 = make_system()
+    assert_equal(sorted(site.tag for site in syst0.dangling()),
                  sorted([(3,), (5,), (6,), (7,), (8,)]))
-    sys0.eradicate_dangling()
+    syst0.eradicate_dangling()
 
-    sys1 = make_system()
+    syst1 = make_system()
     while True:
-        dangling = list(sys1.dangling())
+        dangling = list(syst1.dangling())
         if not dangling:
             break
-        del sys1[dangling]
+        del syst1[dangling]
 
-    assert_equal(sorted(site.tag for site in sys0.sites()),
+    assert_equal(sorted(site.tag for site in syst0.sites()),
                  sorted([(0,), (1,), (2,)]))
-    assert_equal(sorted(site.tag for site in sys0.sites()),
-                 sorted(site.tag for site in sys1.sites()))
+    assert_equal(sorted(site.tag for site in syst0.sites()),
+                 sorted(site.tag for site in syst1.sites()))
 
 
 def test_builder_with_symmetry():
     g = kwant.lattice.general(ta.identity(3))
     sym = kwant.TranslationalSymmetry((0, 0, 3), (0, 2, 0))
-    sys = builder.Builder(sym)
+    syst = builder.Builder(sym)
 
     t, V = 1.0j, 0.0
     hoppings = [(g(5, 0, 0), g(0, 5, 0)),
@@ -482,33 +482,33 @@ def test_builder_with_symmetry():
                    (g(0, 1, 0), g(0, -2, 5)),
                    (g(0, 1, 0), g(5, 0, 0))]
 
-    sys[(a for a, b in hoppings)] = V
-    sys[hoppings] = t
+    syst[(a for a, b in hoppings)] = V
+    syst[hoppings] = t
 
     # TODO: Once Tinyarray supports "<" the conversion to tuple can be removed.
-    assert_equal(sorted(tuple(site.tag) for site in sys.sites()),
+    assert_equal(sorted(tuple(site.tag) for site in syst.sites()),
                  sorted(set(tuple(hop[0].tag) for hop in hoppings_fd)))
     for sites in hoppings_fd:
         for site in sites:
-            assert site in sys
-            assert_equal(sys[site], V)
+            assert site in syst
+            assert_equal(syst[site], V)
 
     # TODO: Once Tinyarray supports "<" the conversion to tuple can be removed.
     assert_equal(sorted((tuple(a.tag), tuple(b.tag))
-                        for a, b in sys.hoppings()),
+                        for a, b in syst.hoppings()),
                  sorted((tuple(a.tag), tuple(b.tag)) for a, b in hoppings_fd))
     for hop in hoppings_fd:
         rhop = hop[1], hop[0]
-        assert hop in sys
-        assert rhop in sys
-        assert_equal(sys[hop], t)
-        assert_equal(sys[rhop], t.conjugate())
+        assert hop in syst
+        assert rhop in syst
+        assert_equal(syst[hop], t)
+        assert_equal(syst[rhop], t.conjugate())
 
-    del sys[g(0, 6, -4), g(0, 11, -9)]
-    assert (g(0, 1, 0), g(0, -4, 5)) not in sys
+    del syst[g(0, 6, -4), g(0, 11, -9)]
+    assert (g(0, 1, 0), g(0, -4, 5)) not in syst
 
-    del sys[g(0, 3, -3)]
-    assert_equal(list((a.tag, b.tag) for a, b in sys.hoppings()),
+    del syst[g(0, 3, -3)]
+    assert_equal(list((a.tag, b.tag) for a, b in syst.hoppings()),
                  [((0, 0, 2), (5, 0, -3))])
 
 
@@ -516,36 +516,36 @@ def test_attach_lead():
     fam = builder.SimpleSiteFamily()
     fam_noncommensurate = builder.SimpleSiteFamily(name='other')
 
-    sys = builder.Builder()
-    sys[fam(1)] = 0
+    syst = builder.Builder()
+    syst[fam(1)] = 0
     lead = builder.Builder(VerySimpleSymmetry(-2))
-    assert_raises(ValueError, sys.attach_lead, lead)
+    assert_raises(ValueError, syst.attach_lead, lead)
 
     lead[fam(0)] = 1
-    assert_raises(ValueError, sys.attach_lead, lead)
+    assert_raises(ValueError, syst.attach_lead, lead)
     lead[fam(1)] = 1
-    sys.attach_lead(lead)
-    assert_raises(ValueError, sys.attach_lead, lead, fam(5))
+    syst.attach_lead(lead)
+    assert_raises(ValueError, syst.attach_lead, lead, fam(5))
 
-    sys = builder.Builder()
+    syst = builder.Builder()
     # The tag of the site that is added in the following line is an empty tuple.
     # This simulates a site family that is not commensurate with the symmetry of
     # the lead.  Such sites may be present in the system, as long as there are
     # other sites that will interrupt the lead.
-    sys[fam_noncommensurate()] = 2
-    sys[fam(1)] = 0
-    sys[fam(0)] = 1
+    syst[fam_noncommensurate()] = 2
+    syst[fam(1)] = 0
+    syst[fam(0)] = 1
     lead[fam(0), fam(1)] = lead[fam(0), fam(2)] = 1
-    sys.attach_lead(lead)
-    assert_equal(len(list(sys.sites())), 4)
-    assert_equal(set(sys.leads[0].interface), set([fam(-1), fam(0)]))
-    sys[fam(-10)] = sys[fam(-11)] = 0
-    sys.attach_lead(lead)
-    assert_equal(set(sys.leads[1].interface), set([fam(-10), fam(-11)]))
-    assert_equal(len(list(sys.sites())), 6)
-    sys.attach_lead(lead, fam(-5))
-    assert_equal(set(sys.leads[0].interface), set([fam(-1), fam(0)]))
-    sys.finalized()
+    syst.attach_lead(lead)
+    assert_equal(len(list(syst.sites())), 4)
+    assert_equal(set(syst.leads[0].interface), set([fam(-1), fam(0)]))
+    syst[fam(-10)] = syst[fam(-11)] = 0
+    syst.attach_lead(lead)
+    assert_equal(set(syst.leads[1].interface), set([fam(-10), fam(-11)]))
+    assert_equal(len(list(syst.sites())), 6)
+    syst.attach_lead(lead, fam(-5))
+    assert_equal(set(syst.leads[0].interface), set([fam(-1), fam(0)]))
+    syst.finalized()
 
 
 def test_neighbors_not_in_single_domain():
@@ -565,34 +565,34 @@ def test_neighbors_not_in_single_domain():
 def test_iadd():
     lat = builder.SimpleSiteFamily()
 
-    sys = builder.Builder()
-    sys[[lat(0,), lat(1,)]] = 1
-    sys[lat(0,), lat(1,)] = 1
+    syst = builder.Builder()
+    syst[[lat(0,), lat(1,)]] = 1
+    syst[lat(0,), lat(1,)] = 1
 
-    other_sys = builder.Builder()
-    other_sys[[lat(1,), lat(2,)]] = 2
-    other_sys[lat(1,), lat(2,)] = 1
+    other_syst = builder.Builder()
+    other_syst[[lat(1,), lat(2,)]] = 2
+    other_syst[lat(1,), lat(2,)] = 1
 
     lead0 = builder.Builder(VerySimpleSymmetry(-1))
     lead0[lat(0,)] = 1
     lead0[(lat(0,), lat(1,))] = 1
     lead0 = builder.BuilderLead(lead0, [lat(0,)])
-    sys.leads.append(lead0)
+    syst.leads.append(lead0)
 
     lead1 = builder.Builder(VerySimpleSymmetry(1))
     lead1[lat(2,)] = 1
     lead1[(lat(2,), lat(1,))] = 1
     lead1 = builder.BuilderLead(lead1, [lat(2,)])
-    other_sys.leads.append(lead1)
+    other_syst.leads.append(lead1)
 
-    sys += other_sys
-    assert_equal(sys.leads, [lead0, lead1])
+    syst += other_syst
+    assert_equal(syst.leads, [lead0, lead1])
     expected = sorted([[(0,), 1], [(1,), 2], [(2,), 2]])
-    assert_equal(sorted(((s.tag, v) for s, v in sys.site_value_pairs())),
+    assert_equal(sorted(((s.tag, v) for s, v in syst.site_value_pairs())),
                  expected)
     expected = sorted([[(0,), (1,), 1], [(1,), (2,), 1]])
     assert_equal(sorted(((a.tag, b.tag, v)
-                         for (a, b), v in sys.hopping_value_pairs())),
+                         for (a, b), v in syst.hopping_value_pairs())),
                  expected)
 
 
@@ -607,22 +607,22 @@ def test_HoppingKind():
     g = kwant.lattice.general(ta.identity(3), name='some_lattice')
     h = kwant.lattice.general(ta.identity(3), name='another_lattice')
     sym = kwant.TranslationalSymmetry((0, 2, 0))
-    sys = builder.Builder(sym)
-    sys[((h if max(x, y, z) % 2 else g)(x, y, z)
+    syst = builder.Builder(sym)
+    syst[((h if max(x, y, z) % 2 else g)(x, y, z)
          for x in range(4) for y in range(2) for z in range(4))] = None
     for delta, ga, gb, n in [((1, 0, 0), g, h, 4),
                              ((1, 0, 0), h, g, 7),
                              ((0, 1, 0), g, h, 1),
                              ((0, 4, 0), h, h, 21),
                              ((0, 0, 1), g, h, 4)]:
-        ph = list(builder.HoppingKind(delta, ga, gb)(sys))
+        ph = list(builder.HoppingKind(delta, ga, gb)(syst))
         assert_equal(len(ph), n)
         ph = set(ph)
         assert_equal(len(ph), n)
 
         ph2 = list((
                 sym.to_fd(b, a) for a, b in
-                builder.HoppingKind(ta.negative(delta), gb, ga)(sys)))
+                builder.HoppingKind(ta.negative(delta), gb, ga)(syst)))
         assert_equal(len(ph2), n)
         ph2 = set(ph2)
         assert_equal(ph2, ph)
@@ -653,41 +653,41 @@ def test_ModesLead_and_SelfEnergyLead():
     t = 1
     energies = [0.9, 1.7]
 
-    sys = builder.Builder()
+    syst = builder.Builder()
     for x in range(L):
         for y in range(L):
-            sys[lat(x, y)] = 4 * t + rng.random() - 0.5
-    sys[hoppings] = -t
+            syst[lat(x, y)] = 4 * t + rng.random() - 0.5
+    syst[hoppings] = -t
 
     # Attach a lead from the left.
     lead = builder.Builder(VerySimpleSymmetry(-1))
     for y in range(L):
         lead[lat(0, y)] = 4 * t
     lead[hoppings] = -t
-    sys.attach_lead(lead)
+    syst.attach_lead(lead)
 
     # Make the right lead and attach it.
     lead = builder.Builder(VerySimpleSymmetry(1))
     for y in range(L):
         lead[lat(0, y)] = 4 * t
     lead[hoppings] = -t
-    sys.attach_lead(lead)
+    syst.attach_lead(lead)
 
-    fsys = sys.finalized()
-    ts = [kwant.smatrix(fsys, e).transmission(1, 0) for e in energies]
+    fsyst = syst.finalized()
+    ts = [kwant.smatrix(fsyst, e).transmission(1, 0) for e in energies]
 
     # Replace lead with it's finalized copy.
-    lead = fsys.leads[1]
+    lead = fsyst.leads[1]
     interface = [lat(L-1, lead.sites[i].tag[1]) for i in range(L)]
 
     # Re-attach right lead as ModesLead.
-    sys.leads[1] = builder.ModesLead(lead.modes, interface)
-    fsys = sys.finalized()
-    ts2 = [kwant.smatrix(fsys, e).transmission(1, 0) for e in energies]
+    syst.leads[1] = builder.ModesLead(lead.modes, interface)
+    fsyst = syst.finalized()
+    ts2 = [kwant.smatrix(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)
 
     # Re-attach right lead as SelfEnergyLead.
-    sys.leads[1] = builder.SelfEnergyLead(lead.selfenergy, interface)
-    fsys = sys.finalized()
-    ts2 = [kwant.greens_function(fsys, e).transmission(1, 0) for e in energies]
+    syst.leads[1] = builder.SelfEnergyLead(lead.selfenergy, interface)
+    fsyst = syst.finalized()
+    ts2 = [kwant.greens_function(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)

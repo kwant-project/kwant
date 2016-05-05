@@ -30,11 +30,11 @@
  
  
  def main():
-     sys = make_system()
+     syst = make_system()
  
 -    # Check that the system looks as intended.
--    kwant.plot(sys)
+-    kwant.plot(syst)
 -
      # Finalize the system.
-     sys = sys.finalized()
+     syst = syst.finalized()
  

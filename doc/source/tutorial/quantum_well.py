@@ -21,7 +21,7 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
     # `a` is the lattice constant (by default set to 1 for simplicity.
     lat = kwant.lattice.square(a)
 
-    sys = kwant.Builder()
+    syst = kwant.Builder()
 
     #### Define the scattering region. ####
     # Potential profile
@@ -37,27 +37,27 @@ def make_system(a=1, t=1.0, W=10, L=30, L_well=10):
     def onsite(site, pot=0):
         return 4 * t + potential(site, pot)
 
-    sys[(lat(x, y) for x in range(L) for y in range(W))] = onsite
-    sys[lat.neighbors()] = -t
+    syst[(lat(x, y) for x in range(L) for y in range(W))] = onsite
+    syst[lat.neighbors()] = -t
 #HIDDEN_END_coid
 
     #### Define and attach the leads. ####
     lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
     lead[(lat(0, j) for j in range(W))] = 4 * t
     lead[lat.neighbors()] = -t
-    sys.attach_lead(lead)
-    sys.attach_lead(lead.reversed())
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
 
-    return sys
+    return syst
 
 
-def plot_conductance(sys, energy, welldepths):
+def plot_conductance(syst, energy, welldepths):
 #HIDDEN_BEGIN_sqvr
 
     # Compute conductance
     data = []
     for welldepth in welldepths:
-        smatrix = kwant.smatrix(sys, energy, args=[-welldepth])
+        smatrix = kwant.smatrix(syst, energy, args=[-welldepth])
         data.append(smatrix.transmission(1, 0))
 
     pyplot.figure()
@@ -69,16 +69,16 @@ def plot_conductance(sys, energy, welldepths):
 
 
 def main():
-    sys = make_system()
+    syst = make_system()
 
     # Check that the system looks as intended.
-    kwant.plot(sys)
+    kwant.plot(syst)
 
     # Finalize the system.
-    sys = sys.finalized()
+    syst = syst.finalized()
 
     # We should see conductance steps.
-    plot_conductance(sys, energy=0.2,
+    plot_conductance(syst, energy=0.2,
                      welldepths=[0.01 * i for i in range(100)])
 
 

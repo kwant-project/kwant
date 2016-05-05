@@ -39,7 +39,7 @@ def make_system(r=10, w=2.0, pot=0.1):
         x, y = pos
         return x ** 2 + y ** 2 < r ** 2
 
-    sys = kwant.Builder()
+    syst = kwant.Builder()
 
     # w: width and pot: potential maximum of the p-n junction
     def potential(site):
@@ -47,7 +47,7 @@ def make_system(r=10, w=2.0, pot=0.1):
         d = y * cos_30 + x * sin_30
         return pot * tanh(d / w)
 
-    sys[graphene.shape(circle, (0, 0))] = potential
+    syst[graphene.shape(circle, (0, 0))] = potential
 #HIDDEN_END_shzy
 
     # specify the hoppings of the graphene lattice in the
@@ -56,13 +56,13 @@ def make_system(r=10, w=2.0, pot=0.1):
     hoppings = (((0, 0), a, b), ((0, 1), a, b), ((-1, 1), a, b))
 #HIDDEN_END_hsmc
 #HIDDEN_BEGIN_bfwb
-    sys[[kwant.builder.HoppingKind(*hopping) for hopping in hoppings]] = -1
+    syst[[kwant.builder.HoppingKind(*hopping) for hopping in hoppings]] = -1
 #HIDDEN_END_bfwb
 
     # Modify the scattering region
 #HIDDEN_BEGIN_efut
-    del sys[a(0, 0)]
-    sys[a(-2, 1), b(2, 2)] = -1
+    del syst[a(0, 0)]
+    syst[a(-2, 1), b(2, 2)] = -1
 #HIDDEN_END_efut
 
     #### Define the leads. ####
@@ -91,25 +91,25 @@ def make_system(r=10, w=2.0, pot=0.1):
 #HIDDEN_END_aakh
 
 #HIDDEN_BEGIN_kmmw
-    return sys, [lead0, lead1]
+    return syst, [lead0, lead1]
 #HIDDEN_END_kmmw
 
 
 #HIDDEN_BEGIN_zydk
-def compute_evs(sys):
+def compute_evs(syst):
     # Compute some eigenvalues of the closed system
-    sparse_mat = sys.hamiltonian_submatrix(sparse=True)
+    sparse_mat = syst.hamiltonian_submatrix(sparse=True)
 
     evs = sla.eigs(sparse_mat, 2)[0]
     print(evs.real)
 #HIDDEN_END_zydk
 
 
-def plot_conductance(sys, energies):
+def plot_conductance(syst, energies):
     # Compute transmission as a function of energy
     data = []
     for energy in energies:
-        smatrix = kwant.smatrix(sys, energy)
+        smatrix = kwant.smatrix(syst, energy)
         data.append(smatrix.transmission(0, 1))
 
     pyplot.figure()
@@ -137,7 +137,7 @@ def plot_bandstructure(flead, momenta):
 #HIDDEN_BEGIN_itkk
 def main():
     pot = 0.1
-    sys, leads = make_system(pot=pot)
+    syst, leads = make_system(pot=pot)
 
     # To highlight the two sublattices of graphene, we plot one with
     # a filled, and the other one with an open circle:
@@ -145,32 +145,32 @@ def main():
         return 0 if site.family == a else 1
 
     # Plot the closed system without leads.
-    kwant.plot(sys, site_color=family_colors, site_lw=0.1, colorbar=False)
+    kwant.plot(syst, site_color=family_colors, site_lw=0.1, colorbar=False)
 #HIDDEN_END_itkk
 
     # Compute some eigenvalues.
 #HIDDEN_BEGIN_jmbi
-    compute_evs(sys.finalized())
+    compute_evs(syst.finalized())
 #HIDDEN_END_jmbi
 
     # Attach the leads to the system.
     for lead in leads:
-        sys.attach_lead(lead)
+        syst.attach_lead(lead)
 
     # Then, plot the system with leads.
-    kwant.plot(sys, site_color=family_colors, site_lw=0.1,
+    kwant.plot(syst, site_color=family_colors, site_lw=0.1,
                lead_site_lw=0, colorbar=False)
 
     # Finalize the system.
-    sys = sys.finalized()
+    syst = syst.finalized()
 
     # Compute the band structure of lead 0.
     momenta = [-pi + 0.02 * pi * i for i in range(101)]
-    plot_bandstructure(sys.leads[0], momenta)
+    plot_bandstructure(syst.leads[0], momenta)
 
     # Plot conductance.
     energies = [-2 * pot + 4. / 50. * pot * i for i in range(51)]
-    plot_conductance(sys, energies)
+    plot_conductance(syst, energies)
 
 
 # Call the main function if the script gets executed (as opposed to imported).

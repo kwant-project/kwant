@@ -88,15 +88,15 @@ def test_wire():
     vecs[0] = [1, 0, 0]
     center = np.random.randn(3)
     lat = lattice.general(vecs, np.random.randn(4, 3))
-    sys = builder.Builder(lattice.TranslationalSymmetry((2, 0, 0)))
+    syst = builder.Builder(lattice.TranslationalSymmetry((2, 0, 0)))
     def wire_shape(pos):
         pos = np.array(pos)
         return np.linalg.norm(pos[1:] - center[1:])**2 <= 8.6**2
-    sys[lat.shape(wire_shape, center)] = 0
-    sites2 = set(sys.sites())
-    sys = builder.Builder(lattice.TranslationalSymmetry((2, 0, 0)))
-    sys[lat.wire(center, 8.6)] = 1
-    sites1 = set(sys.sites())
+    syst[lat.shape(wire_shape, center)] = 0
+    sites2 = set(syst.sites())
+    syst = builder.Builder(lattice.TranslationalSymmetry((2, 0, 0)))
+    syst[lat.wire(center, 8.6)] = 1
+    sites1 = set(syst.sites())
     assert_equal(sites1, sites2)
 
 

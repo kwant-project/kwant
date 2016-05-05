@@ -141,14 +141,16 @@ class SparseSolver(metaclass=abc.ABCMeta):
         The system of equations that is created will be described in detail
         elsewhere.
         """
-        ensure_isinstance(sys, system.System)
+
+        syst = sys  # ensure consistent naming across function bodies
+        ensure_isinstance(syst, system.System)
 
         splhsmat = getattr(sp, self.lhsformat + '_matrix')
         sprhsmat = getattr(sp, self.rhsformat + '_matrix')
 
-        if not sys.lead_interfaces:
+        if not syst.lead_interfaces:
             raise ValueError('System contains no leads.')
-        lhs, norb = sys.hamiltonian_submatrix(args, sparse=True,
+        lhs, norb = syst.hamiltonian_submatrix(args, sparse=True,
                                               return_norb=True)[:2]
         lhs = getattr(lhs, 'to' + self.lhsformat)()
         lhs = lhs - energy * sp.identity(lhs.shape[0], format=self.lhsformat)
@@ -173,8 +175,8 @@ class SparseSolver(metaclass=abc.ABCMeta):
         indices = []
         rhs = []
         lead_info = []
-        for leadnum, interface in enumerate(sys.lead_interfaces):
-            lead = sys.leads[leadnum]
+        for leadnum, interface in enumerate(syst.lead_interfaces):
+            lead = syst.leads[leadnum]
             if not realspace:
                 prop, stab = lead.modes(energy, args)
                 lead_info.append(prop)
@@ -329,9 +331,11 @@ class SparseSolver(metaclass=abc.ABCMeta):
         Both `in_leads` and `out_leads` must be sorted and may only contain
         unique entries.
         """
-        ensure_isinstance(sys, system.System)
 
-        n = len(sys.lead_interfaces)
+        syst = sys  # ensure consistent naming across function bodies
+        ensure_isinstance(syst, system.System)
+
+        n = len(syst.lead_interfaces)
         if in_leads is None:
             in_leads = list(range(n))
         else:
@@ -346,7 +350,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
         if len(in_leads) == 0 or len(out_leads) == 0:
             raise ValueError("No output is requested.")
 
-        linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, args,
+        linsys, lead_info = self._make_linear_sys(syst, in_leads, energy, args,
                                                   check_hermiticity, False)
 
         kept_vars = np.concatenate([coords for i, coords in
@@ -416,9 +420,11 @@ class SparseSolver(metaclass=abc.ABCMeta):
         Both `in_leads` and `out_leads` must be sorted and may only contain
         unique entries.
         """
-        ensure_isinstance(sys, system.System)
 
-        n = len(sys.lead_interfaces)
+        syst = sys  # ensure consistent naming across function bodies
+        ensure_isinstance(syst, system.System)
+
+        n = len(syst.lead_interfaces)
         if in_leads is None:
             in_leads = list(range(n))
         else:
@@ -433,7 +439,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
         if len(in_leads) == 0 or len(out_leads) == 0:
             raise ValueError("No output is requested.")
 
-        linsys, lead_info = self._make_linear_sys(sys, in_leads, energy, args,
+        linsys, lead_info = self._make_linear_sys(syst, in_leads, energy, args,
                                                   check_hermiticity, True)
 
         kept_vars = np.concatenate([coords for i, coords in
@@ -478,18 +484,20 @@ class SparseSolver(metaclass=abc.ABCMeta):
         ldos : a NumPy array
             Local density of states at each orbital of the system.
         """
-        ensure_isinstance(sys, system.System)
+
+        syst = sys  # ensure consistent naming across function bodies
+        ensure_isinstance(syst, system.System)
         if not check_hermiticity:
             raise NotImplementedError("ldos for non-Hermitian Hamiltonians "
                                       "is not implemented yet.")
 
-        for lead in sys.leads:
+        for lead in syst.leads:
             if not hasattr(lead, 'modes') and hasattr(lead, 'selfenergy'):
                 # TODO: fix this
                 raise NotImplementedError("ldos for leads with only "
                                           "self-energy is not implemented yet.")
 
-        linsys = self._make_linear_sys(sys, range(len(sys.leads)), energy,
+        linsys = self._make_linear_sys(syst, range(len(syst.leads)), energy,
                                        args, check_hermiticity)[0]
 
         ldos = np.zeros(linsys.num_orb, float)
@@ -539,7 +547,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
 
         Examples
         --------
-        >>> wf = kwant.solvers.default.wave_function(some_sys, some_energy)
+        >>> wf = kwant.solvers.default.wave_function(some_syst, some_energy)
         >>> wfs_of_lead_2 = wf(2)
 
         """
@@ -548,14 +556,15 @@ class SparseSolver(metaclass=abc.ABCMeta):
 
 class WaveFunction:
     def __init__(self, solver, sys, energy, args, check_hermiticity):
-        ensure_isinstance(sys, system.System)
-        for lead in sys.leads:
+        syst = sys  # ensure consistent naming across function bodies
+        ensure_isinstance(syst, system.System)
+        for lead in syst.leads:
             if not hasattr(lead, 'modes'):
                 # TODO: figure out what to do with self-energies.
                 msg = ('Wave functions for leads with only self-energy'
                        ' are not available yet.')
                 raise NotImplementedError(msg)
-        linsys = solver._make_linear_sys(sys, range(len(sys.leads)), energy,
+        linsys = solver._make_linear_sys(syst, range(len(syst.leads)), energy,
                                          args, check_hermiticity)[0]
         self.solve = solver._solve_linear_sys
         self.rhs = linsys.rhs

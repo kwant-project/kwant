@@ -9,7 +9,7 @@
  
  import kwant
 @@ -96,22 +97,40 @@
-         smatrix = kwant.smatrix(sys, energy)
+         smatrix = kwant.smatrix(syst, energy)
          data.append(smatrix.transmission(0, 1))
  
 -    pyplot.figure()
@@ -62,27 +62,27 @@
          return 0 if site.family == a else 1
  
 -    # Plot the closed system without leads.
--    kwant.plot(sys, site_color=family_colors, site_lw=0.1, colorbar=False)
+-    kwant.plot(syst, site_color=family_colors, site_lw=0.1, colorbar=False)
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, site_color=family_colors, site_lw=0.1, colorbar=False,
-+                   file="graphene_sys1." + extension,
++        kwant.plot(syst, site_color=family_colors, site_lw=0.1, colorbar=False,
++                   file="graphene_syst1." + extension,
 +                   fig_size=size, dpi=_defs.dpi)
  
      # Compute some eigenvalues.
-     compute_evs(sys.finalized())
+     compute_evs(syst.finalized())
 @@ -133,9 +155,11 @@
      for lead in leads:
-         sys.attach_lead(lead)
+         syst.attach_lead(lead)
  
 -    # Then, plot the system with leads.
--    kwant.plot(sys, site_color=family_colors, site_lw=0.1,
+-    kwant.plot(syst, site_color=family_colors, site_lw=0.1,
 -               lead_site_lw=0, colorbar=False)
 +    size = (_defs.figwidth_in, 0.9 * _defs.figwidth_in)
 +    for extension in ('pdf', 'png'):
-+        kwant.plot(sys, site_color=family_colors, colorbar=False, site_lw=0.1,
-+                   file="graphene_sys2." + extension,
++        kwant.plot(syst, site_color=family_colors, colorbar=False, site_lw=0.1,
++                   file="graphene_syst2." + extension,
 +                   fig_size=size, dpi=_defs.dpi, lead_site_lw=0)
  
      # Finalize the system.
-     sys = sys.finalized()
+     syst = syst.finalized()

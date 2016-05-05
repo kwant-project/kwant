@@ -24,15 +24,15 @@ def make_system(a=1, t=1.0, W=10, L=30):
     # `a` is the lattice constant (by default set to 1 for simplicity.
     lat = kwant.lattice.square(a)
 
-    sys = kwant.Builder()
+    syst = kwant.Builder()
 #HIDDEN_END_xkzy
 
     #### Define the scattering region. ####
 #HIDDEN_BEGIN_vvjt
-    sys[(lat(x, y) for x in range(L) for y in range(W))] = 4 * t
+    syst[(lat(x, y) for x in range(L) for y in range(W))] = 4 * t
 #HIDDEN_END_vvjt
 #HIDDEN_BEGIN_nooi
-    sys[lat.neighbors()] = -t
+    syst[lat.neighbors()] = -t
 #HIDDEN_END_nooi
 
     #### Define and attach the leads. ####
@@ -45,19 +45,19 @@ def make_system(a=1, t=1.0, W=10, L=30):
 
     # Attach the left lead and its reversed copy.
 #HIDDEN_BEGIN_yxot
-    sys.attach_lead(lead)
-    sys.attach_lead(lead.reversed())
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
 
-    return sys
+    return syst
 #HIDDEN_END_yxot
 
 
 #HIDDEN_BEGIN_ayuk
-def plot_conductance(sys, energies):
+def plot_conductance(syst, energies):
     # Compute conductance
     data = []
     for energy in energies:
-        smatrix = kwant.smatrix(sys, energy)
+        smatrix = kwant.smatrix(syst, energy)
         data.append(smatrix.transmission(1, 0))
 
     pyplot.figure()
@@ -70,16 +70,16 @@ def plot_conductance(sys, energies):
 
 #HIDDEN_BEGIN_cjel
 def main():
-    sys = make_system()
+    syst = make_system()
 
     # Check that the system looks as intended.
-    kwant.plot(sys)
+    kwant.plot(syst)
 
     # Finalize the system.
-    sys = sys.finalized()
+    syst = syst.finalized()
 
     # We should see conductance steps.
-    plot_conductance(sys, energies=[0.01 * i for i in range(100)])
+    plot_conductance(syst, energies=[0.01 * i for i in range(100)])
 #HIDDEN_END_cjel
 
 

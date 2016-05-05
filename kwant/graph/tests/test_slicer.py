@@ -36,22 +36,22 @@ def test_rectangle():
     w = 5
 
     for l in [1, 2, 5, 10]:
-        sys = kwant.Builder()
+        syst = kwant.Builder()
         lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
         lat = kwant.lattice.square()
         lead[(lat(0, i) for i in range(w))] = 0
-        sys[(lat(j, i) for j in range(l) for i in range(w))] = 0
-        for s in [lead, sys]:
+        syst[(lat(j, i) for j in range(l) for i in range(w))] = 0
+        for s in [lead, syst]:
             for kind in [kwant.builder.HoppingKind((1, 0), lat),
                          kwant.builder.HoppingKind((0, 1), lat)]:
                 s[kind] = -1
-        sys.attach_lead(lead)
-        sys.attach_lead(lead.reversed())
-        fsys = sys.finalized()
+        syst.attach_lead(lead)
+        syst.attach_lead(lead.reversed())
+        fsyst = syst.finalized()
 
-        slices = slicer.slice(fsys.graph,
-                              fsys.lead_interfaces[0],
-                              fsys.lead_interfaces[1])
+        slices = slicer.slice(fsyst.graph,
+                              fsyst.lead_interfaces[0],
+                              fsyst.lead_interfaces[1])
 
         # In the rectangle case, the slicing is very constricted and
         # we know that all slices must have the same shape.
@@ -60,4 +60,4 @@ def test_rectangle():
         for j in range(l):
             assert len(slices[j]) == w
 
-        assert_sanity(fsys.graph, slices)
+        assert_sanity(fsyst.graph, slices)

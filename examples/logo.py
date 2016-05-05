@@ -49,17 +49,17 @@ def main():
     gaps = borders[1:-1].reshape(-1, 2)
 
     # Construct the system, and calculate LDOS.
-    sys = kwant.Builder()
+    syst = kwant.Builder()
     lat = kwant.lattice.square()
-    sys[(lat(*coord) for coord in np.argwhere(geometry))] = mu_system
-    sys[lat.neighbors()] = -1
+    syst[(lat(*coord) for coord in np.argwhere(geometry))] = mu_system
+    syst[lat.neighbors()] = -1
     lead = kwant.Builder(kwant.TranslationalSymmetry((1, 0)))
     for y1 in range(ymin - dy, ymax + dy):
         lead[lat(0, y1)] = mu_system
     lead[lat.neighbors()[0]] = -3
-    sys.attach_lead(lead)
-    sys = sys.finalized()
-    ldos = kwant.solvers.default.ldos(sys, energy=0)
+    syst.attach_lead(lead)
+    syst = syst.finalized()
+    ldos = kwant.solvers.default.ldos(syst, energy=0)
 
     # Due to the letters having different overall thickness, the LDOS is larger
     # in some letters, which makes them have visually different colors. We
@@ -84,7 +84,7 @@ def main():
     # result is not too empty or not too dark.
     out = np.zeros(textpos.shape)
     for i, rho in enumerate(ldos**.2):
-        x1, y1 = sys.sites[i].tag
+        x1, y1 = syst.sites[i].tag
         out[x1, y1] = rho
     out = normalize_data(out)
 

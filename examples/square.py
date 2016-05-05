@@ -98,9 +98,9 @@ class System(kwant.system.FiniteSystem):
 
 
 def main():
-    sys = System((10, 5), 1)
+    syst = System((10, 5), 1)
     energies = [0.04 * i for i in range(100)]
-    data = [kwant.greens_function(sys, energy).transmission(1, 0)
+    data = [kwant.greens_function(syst, energy).transmission(1, 0)
             for energy in energies]
 
     pyplot.plot(energies, data)

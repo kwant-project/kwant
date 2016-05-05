@@ -19,18 +19,18 @@ def test_qhe(W=16, L=8):
         return -L < x < L and abs(y) < W - 5.5 * math.exp(-x**2 / 5**2)
 
     lat = kwant.lattice.square()
-    sys = kwant.Builder()
+    syst = kwant.Builder()
 
-    sys[lat.shape(central_region, (0, 0))] = onsite
-    sys[lat.neighbors()] = hopping
+    syst[lat.shape(central_region, (0, 0))] = onsite
+    syst[lat.neighbors()] = hopping
 
     lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
     lead[(lat(0, y) for y in range(-W + 1, W))] = 4
     lead[lat.neighbors()] = hopping
 
-    sys.attach_lead(lead)
-    sys.attach_lead(lead.reversed())
-    sys = sys.finalized()
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+    syst = syst.finalized()
 
     #### The following chunk of code can be uncommented to visualize the
     #### conductance plateaus.
@@ -39,7 +39,7 @@ def test_qhe(W=16, L=8):
     # reciprocal_phis = numpy.linspace(0.1, 7, 200)
     # conductances = []
     # for phi in 1 / reciprocal_phis:
-    #     smatrix = kwant.smatrix(sys, 1.0, [phi, ""])
+    #     smatrix = kwant.smatrix(syst, 1.0, [phi, ""])
     #     conductances.append(smatrix.transmission(1, 0))
     # pyplot.plot(reciprocal_phis, conductances)
     # pyplot.show()
@@ -49,7 +49,7 @@ def test_qhe(W=16, L=8):
                                        ((5.2, 5.5), 3, 1e-1)]:
         for r_phi in r_phis:
             args = (1.0 / r_phi, "")
-            pc = sys.precalculate(1.0, args, what='all')
+            pc = syst.precalculate(1.0, args, what='all')
             for result in [kwant.smatrix(pc, 1, args),
                            kwant.solvers.default.greens_function(pc, 1, args)]:
                 assert abs(T_nominal - result.transmission(1, 0)) < max_err

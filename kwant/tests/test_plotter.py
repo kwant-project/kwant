@@ -37,19 +37,19 @@ def test_importable_without_matplotlib():
         assert "only iterator-providing functions" in str(w[0].message)
 
 
-def sys_2d(W=3, r1=3, r2=8):
+def syst_2d(W=3, r1=3, r2=8):
     a = 1
     t = 1.0
     lat = kwant.lattice.square(a)
-    sys = kwant.Builder()
+    syst = kwant.Builder()
 
     def ring(pos):
         (x, y) = pos
         rsq = x ** 2 + y ** 2
         return r1 ** 2 < rsq < r2 ** 2
 
-    sys[lat.shape(ring, (0, r1 + 1))] = 4 * t
-    sys[lat.neighbors()] = -t
+    syst[lat.shape(ring, (0, r1 + 1))] = 4 * t
+    syst[lat.neighbors()] = -t
     sym_lead0 = kwant.TranslationalSymmetry(lat.vec((-1, 0)))
     lead0 = kwant.Builder(sym_lead0)
     lead2 = kwant.Builder(sym_lead0)
@@ -58,24 +58,24 @@ def sys_2d(W=3, r1=3, r2=8):
 
     lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
     lead2[lat.shape(lead_shape, (0, 0))] = 4 * t
-    sys.attach_lead(lead2)
+    syst.attach_lead(lead2)
     lead0[lat.neighbors()] = - t
     lead1 = lead0.reversed()
-    sys.attach_lead(lead0)
-    sys.attach_lead(lead1)
-    return sys
+    syst.attach_lead(lead0)
+    syst.attach_lead(lead1)
+    return syst
 
 
-def sys_3d(W=3, r1=2, r2=4, a=1, t=1.0):
+def syst_3d(W=3, r1=2, r2=4, a=1, t=1.0):
     lat = kwant.lattice.general(((a, 0, 0), (0, a, 0), (0, 0, a)))
-    sys = kwant.Builder()
+    syst = kwant.Builder()
 
     def ring(pos):
         (x, y, z) = pos
         rsq = x ** 2 + y ** 2
         return (r1 ** 2 < rsq < r2 ** 2) and abs(z) < 2
-    sys[lat.shape(ring, (0, -r2 + 1, 0))] = 4 * t
-    sys[lat.neighbors()] = - t
+    syst[lat.shape(ring, (0, -r2 + 1, 0))] = 4 * t
+    syst[lat.neighbors()] = - t
     sym_lead0 = kwant.TranslationalSymmetry(lat.vec((-1, 0, 0)))
     lead0 = kwant.Builder(sym_lead0)
 
@@ -84,51 +84,51 @@ def sys_3d(W=3, r1=2, r2=4, a=1, t=1.0):
     lead0[lat.shape(lead_shape, (0, 0, 0))] = 4 * t
     lead0[lat.neighbors()] = - t
     lead1 = lead0.reversed()
-    sys.attach_lead(lead0)
-    sys.attach_lead(lead1)
-    return sys
+    syst.attach_lead(lead0)
+    syst.attach_lead(lead1)
+    return syst
 
 
 def test_plot():
     plot = plotter.plot
     if not plotter.mpl_enabled:
         raise nose.SkipTest
-    sys2d = sys_2d()
-    sys3d = sys_3d()
+    syst2d = syst_2d()
+    syst3d = syst_3d()
     color_opts = ['k', (lambda site: site.tag[0]),
                   lambda site: (abs(site.tag[0] / 100),
                                 abs(site.tag[1] / 100), 0)]
     with tempfile.TemporaryFile('w+b') as out:
         for color in color_opts:
-            for sys in (sys2d, sys3d):
-                fig = plot(sys, site_color=color, cmap='binary', file=out)
+            for syst in (syst2d, syst3d):
+                fig = plot(syst, site_color=color, cmap='binary', file=out)
                 if (color != 'k' and
-                    isinstance(color(next(iter(sys2d.sites()))), float)):
+                    isinstance(color(next(iter(syst2d.sites()))), float)):
                     assert fig.axes[0].collections[0].get_array() is not None
-                assert len(fig.axes[0].collections) == (8 if sys is sys2d else
+                assert len(fig.axes[0].collections) == (8 if syst is syst2d else
                                                         6)
         color_opts = ['k', (lambda site, site2: site.tag[0]),
                       lambda site, site2: (abs(site.tag[0] / 100),
                                            abs(site.tag[1] / 100), 0)]
         for color in color_opts:
-            for sys in (sys2d, sys3d):
-                fig = plot(sys2d, hop_color=color, cmap='binary', file=out,
+            for syst in (syst2d, syst3d):
+                fig = plot(syst2d, hop_color=color, cmap='binary', file=out,
                            fig_size=(2, 10), dpi=30)
-                if color != 'k' and isinstance(color(next(iter(sys2d.sites())),
+                if color != 'k' and isinstance(color(next(iter(syst2d.sites())),
                                                           None), float):
                     assert fig.axes[0].collections[1].get_array() is not None
 
-        assert isinstance(plot(sys3d, file=out).axes[0], mplot3d.axes3d.Axes3D)
+        assert isinstance(plot(syst3d, file=out).axes[0], mplot3d.axes3d.Axes3D)
 
-        sys2d.leads = []
-        plot(sys2d, file=out)
-        del sys2d[list(sys2d.hoppings())]
-        plot(sys2d, file=out)
+        syst2d.leads = []
+        plot(syst2d, file=out)
+        del syst2d[list(syst2d.hoppings())]
+        plot(syst2d, file=out)
 
-        plot(sys3d, file=out)
+        plot(syst3d, file=out)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            plot(sys2d.finalized(), file=out)
+            plot(syst2d.finalized(), file=out)
 
 def good_transform(pos):
     x, y = pos
@@ -141,19 +141,19 @@ def bad_transform(pos):
 def test_map():
     if not plotter.mpl_enabled:
         raise nose.SkipTest
-    sys = sys_2d()
+    syst = syst_2d()
     with tempfile.TemporaryFile('w+b') as out:
-        plotter.map(sys, lambda site: site.tag[0], pos_transform=good_transform,
+        plotter.map(syst, lambda site: site.tag[0], pos_transform=good_transform,
                     file=out, method='linear', a=4, oversampling=4, cmap='flag')
-        nose.tools.assert_raises(ValueError, plotter.map, sys,
+        nose.tools.assert_raises(ValueError, plotter.map, syst,
                                  lambda site: site.tag[0],
                                  pos_transform=bad_transform, file=out)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            plotter.map(sys.finalized(), range(len(sys.sites())),
+            plotter.map(syst.finalized(), range(len(syst.sites())),
                               file=out)
-        nose.tools.assert_raises(ValueError, plotter.map, sys,
-                                 range(len(sys.sites())), file=out)
+        nose.tools.assert_raises(ValueError, plotter.map, syst,
+                                 range(len(syst.sites())), file=out)
 
 
 def test_mask_interpolate():

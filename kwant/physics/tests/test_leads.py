@@ -235,12 +235,12 @@ def test_modes():
 def test_modes_bearded_ribbon():
     # Check if bearded graphene ribbons work.
     lat = kwant.lattice.honeycomb()
-    sys = kwant.Builder(kwant.TranslationalSymmetry((1, 0)))
-    sys[lat.shape((lambda pos: -20 < pos[1] < 20),
+    syst = kwant.Builder(kwant.TranslationalSymmetry((1, 0)))
+    syst[lat.shape((lambda pos: -20 < pos[1] < 20),
                   (0, 0))] = 0.3
-    sys[lat.neighbors()] = -1
-    sys = sys.finalized()
-    h, t = sys.cell_hamiltonian(), sys.inter_cell_hopping()
+    syst[lat.neighbors()] = -1
+    syst = syst.finalized()
+    h, t = syst.cell_hamiltonian(), syst.inter_cell_hopping()
     # The number of expected modes is calculated by plotting the dispersion.
     assert leads.modes(h, t)[1].nmodes == 8
 
@@ -304,26 +304,26 @@ def test_dtype_linsys():
     h_cell = np.array([[2.0, -1.0], [-1.0, 2.0]], dtype=np.float64)
     h_hop = np.array([[0.0],[-1.0]], dtype=np.float64)
 
-    lsys = kwant.physics.leads.setup_linsys(h_cell - 0.3*np.eye(2),
+    lsyst = kwant.physics.leads.setup_linsys(h_cell - 0.3*np.eye(2),
                                             h_hop)
-    assert lsys.eigenproblem[0].dtype == np.float64
+    assert lsyst.eigenproblem[0].dtype == np.float64
 
-    lsys = kwant.physics.leads.setup_linsys(h_cell.astype(np.complex128)
+    lsyst = kwant.physics.leads.setup_linsys(h_cell.astype(np.complex128)
                                             - 0.3*np.eye(2),
                                             h_hop.astype(np.complex128))
-    assert lsys.eigenproblem[0].dtype == np.float64
+    assert lsyst.eigenproblem[0].dtype == np.float64
 
     # energy=1 is an eigenstate of the isolated cell Hamiltonian,
     # i.e. a complex self-energy stabilization is necessary
-    lsys = kwant.physics.leads.setup_linsys(h_cell - 1*np.eye(2),
+    lsyst = kwant.physics.leads.setup_linsys(h_cell - 1*np.eye(2),
                                             h_hop)
-    assert lsys.eigenproblem[0].dtype == np.complex128
+    assert lsyst.eigenproblem[0].dtype == np.complex128
 
     # with complex input, output must be complex, too
     h_hop = np.array([[0.0],[-1.0 + 0.1j]], dtype=np.complex128)
-    lsys = kwant.physics.leads.setup_linsys(h_cell - 0.3*np.eye(2),
+    lsyst = kwant.physics.leads.setup_linsys(h_cell - 0.3*np.eye(2),
                                             h_hop)
-    assert lsys.eigenproblem[0].dtype == np.complex128
+    assert lsyst.eigenproblem[0].dtype == np.complex128
 
 
 def test_zero_hopping():

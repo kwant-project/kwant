@@ -31,7 +31,7 @@ def make_system(a=1, t=1.0, r=10):
 #HIDDEN_BEGIN_qlyd
     lat = kwant.lattice.square(a)
 
-    sys = kwant.Builder()
+    syst = kwant.Builder()
 
     # Define the quantum dot
     def circle(pos):
@@ -44,19 +44,19 @@ def make_system(a=1, t=1.0, r=10):
         y = site1.pos[1]
         return -t * exp(-1j * B * y)
 
-    sys[lat.shape(circle, (0, 0))] = 4 * t
+    syst[lat.shape(circle, (0, 0))] = 4 * t
     # hoppings in x-direction
-    sys[kwant.builder.HoppingKind((1, 0), lat, lat)] = hopx
+    syst[kwant.builder.HoppingKind((1, 0), lat, lat)] = hopx
     # hoppings in y-directions
-    sys[kwant.builder.HoppingKind((0, 1), lat, lat)] = -t
+    syst[kwant.builder.HoppingKind((0, 1), lat, lat)] = -t
 
     # It's a closed system for a change, so no leads
-    return sys
+    return syst
 #HIDDEN_END_qlyd
 
 
 #HIDDEN_BEGIN_yvri
-def plot_spectrum(sys, Bfields):
+def plot_spectrum(syst, Bfields):
 
     # In the following, we compute the spectrum of the quantum dot
     # using dense matrix methods. This works in this toy example, as
@@ -66,7 +66,7 @@ def plot_spectrum(sys, Bfields):
     energies = []
     for B in Bfields:
         # Obtain the Hamiltonian as a dense matrix
-        ham_mat = sys.hamiltonian_submatrix(args=[B], sparse=True)
+        ham_mat = syst.hamiltonian_submatrix(args=[B], sparse=True)
 
         # we only calculate the 15 lowest eigenvalues
         ev = sla.eigsh(ham_mat, k=15, which='SM', return_eigenvectors=False)
@@ -82,36 +82,36 @@ def plot_spectrum(sys, Bfields):
 
 
 #HIDDEN_BEGIN_wave
-def plot_wave_function(sys):
+def plot_wave_function(syst):
     # Calculate the wave functions in the system.
-    ham_mat = sys.hamiltonian_submatrix(sparse=True)
+    ham_mat = syst.hamiltonian_submatrix(sparse=True)
     evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
 
     # Plot the probability density of the 10th eigenmode.
-    kwant.plotter.map(sys, np.abs(evecs[:, 9])**2,
+    kwant.plotter.map(syst, np.abs(evecs[:, 9])**2,
                       colorbar=False, oversampling=1)
 #HIDDEN_END_wave
 
 
 def main():
-    sys = make_system()
+    syst = make_system()
 
     # Check that the system looks as intended.
-    kwant.plot(sys)
+    kwant.plot(syst)
 
     # Finalize the system.
-    sys = sys.finalized()
+    syst = syst.finalized()
 
     # The following try-clause can be removed once SciPy 0.9 becomes uncommon.
     try:
         # We should observe energy levels that flow towards Landau
         # level energies with increasing magnetic field.
-        plot_spectrum(sys, [iB * 0.002 for iB in range(100)])
+        plot_spectrum(syst, [iB * 0.002 for iB in range(100)])
 
         # Plot an eigenmode of a circular dot. Here we create a larger system for
         # better spatial resolution.
-        sys = make_system(r=30).finalized()
-        plot_wave_function(sys)
+        syst = make_system(r=30).finalized()
+        plot_wave_function(syst)
     except ValueError as e:
         if e.message == "Input matrix is not real-valued.":
             print("The calculation of eigenvalues failed because of a bug in SciPy 0.9.")

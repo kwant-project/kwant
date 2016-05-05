@@ -32,22 +32,22 @@ def make_system(R):
 
     lat = kwant.lattice.honeycomb()
 
-    sys = kwant.Builder()
-    sys[lat.shape(in_ring, (3 * R / 4, 0))] = pot
-    sys[lat.neighbors()] = hop
+    syst = kwant.Builder()
+    syst[lat.shape(in_ring, (3 * R / 4, 0))] = pot
+    syst[lat.neighbors()] = hop
 
     lead = kwant.Builder(kwant.TranslationalSymmetry(lat.vec((-1, 0))))
     lead[lat.shape(in_lead, (0, 0))] = sigma_0
     lead[lat.neighbors()] = sigma_x
-    sys.attach_lead(lead)
-    sys.attach_lead(lead.reversed())
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
 
-    return sys.finalized()
+    return syst.finalized()
 
 
 def main():
-    sys = make_system(100)
-    print(kwant.smatrix(sys, 1.1, [0.1]).transmission(0, 1))
+    syst = make_system(100)
+    print(kwant.smatrix(syst, 1.1, [0.1]).transmission(0, 1))
 
 
 if __name__ == '__main__':

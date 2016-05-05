@@ -24,11 +24,11 @@ def make_cuboid(a=15, b=10, c=5):
         x, y, z = pos
         return 0 <= x < a and 0 <= y < b and 0 <= z < c
 
-    sys = kwant.Builder()
-    sys[lat.shape(cuboid_shape, (0, 0, 0))] = None
-    sys[lat.neighbors()] = None
+    syst = kwant.Builder()
+    syst[lat.shape(cuboid_shape, (0, 0, 0))] = None
+    syst[lat.neighbors()] = None
 
-    return sys
+    return syst
 #HIDDEN_END_zincblende2
 
 
@@ -36,19 +36,19 @@ def main():
     # the standard plotting style for 3D is mainly useful for
     # checking shapes:
 #HIDDEN_BEGIN_plot1
-    sys = make_cuboid()
+    syst = make_cuboid()
 
-    kwant.plot(sys)
+    kwant.plot(syst)
 #HIDDEN_END_plot1
 
     # visualize the crystal structure better for a very small system
 #HIDDEN_BEGIN_plot2
-    sys = make_cuboid(a=1.5, b=1.5, c=1.5)
+    syst = make_cuboid(a=1.5, b=1.5, c=1.5)
 
     def family_colors(site):
         return 'r' if site.family == a else 'g'
 
-    kwant.plot(sys, site_size=0.18, site_lw=0.01, hop_lw=0.05,
+    kwant.plot(syst, site_size=0.18, site_lw=0.01, hop_lw=0.05,
                site_color=family_colors)
 #HIDDEN_END_plot2
 

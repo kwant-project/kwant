@@ -37,17 +37,17 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
     # `a` is the lattice constant (by default set to 1 for simplicity).
     lat = kwant.lattice.square(a)
 
-    sys = kwant.Builder()
+    syst = kwant.Builder()
 
     #### Define the scattering region. ####
 #HIDDEN_BEGIN_uxrm
-    sys[(lat(x, y) for x in range(L) for y in range(W))] = \
+    syst[(lat(x, y) for x in range(L) for y in range(W))] = \
         4 * t * sigma_0 + e_z * sigma_z
     # hoppings in x-direction
-    sys[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
+    syst[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
         -t * sigma_0 - 1j * alpha * sigma_y
     # hoppings in y-directions
-    sys[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
+    syst[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
         -t * sigma_0 + 1j * alpha * sigma_x
 #HIDDEN_END_uxrm
 
@@ -65,17 +65,17 @@ def make_system(a=1, t=1.0, alpha=0.5, e_z=0.08, W=10, L=30):
 #HIDDEN_END_yliu
 
     #### Attach the leads and return the finalized system. ####
-    sys.attach_lead(lead)
-    sys.attach_lead(lead.reversed())
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
 
-    return sys
+    return syst
 
 
-def plot_conductance(sys, energies):
+def plot_conductance(syst, energies):
     # Compute conductance
     data = []
     for energy in energies:
-        smatrix = kwant.smatrix(sys, energy)
+        smatrix = kwant.smatrix(syst, energy)
         data.append(smatrix.transmission(1, 0))
 
     pyplot.figure()
@@ -86,16 +86,16 @@ def plot_conductance(sys, energies):
 
 
 def main():
-    sys = make_system()
+    syst = make_system()
 
     # Check that the system looks as intended.
-    kwant.plot(sys)
+    kwant.plot(syst)
 
     # Finalize the system.
-    sys = sys.finalized()
+    syst = syst.finalized()
 
     # We should see non-monotonic conductance steps.
-    plot_conductance(sys, energies=[0.01 * i - 0.3 for i in range(100)])
+    plot_conductance(syst, energies=[0.01 * i - 0.3 for i in range(100)])
 
 
 # Call the main function if the script gets executed (as opposed to imported).
