@@ -15,6 +15,7 @@ The version of Kwant is available under the name ``__version__``.
    :toctree: generated/
 
    KwantDeprecationWarning
+   UserCodeError
 
 .. currentmodule:: kwant.builder
 

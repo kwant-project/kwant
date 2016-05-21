@@ -23,8 +23,9 @@ except ImportError:
     else:
         raise
 
-from ._common import KwantDeprecationWarning
-__all__.append('KwantDeprecationWarning')
+from ._common import KwantDeprecationWarning, UserCodeError
+
+__all__.extend(['KwantDeprecationWarning', 'UserCodeError'])
 
 from ._common import version as __version__
 

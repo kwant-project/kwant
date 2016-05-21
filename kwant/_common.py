@@ -9,7 +9,7 @@
 import subprocess
 import os
 
-__all__ = ['version', 'KwantDeprecationWarning']
+__all__ = ['version', 'KwantDeprecationWarning', 'UserCodeError']
 
 package_root = os.path.dirname(os.path.realpath(__file__))
 distr_root = os.path.dirname(package_root)
@@ -87,6 +87,19 @@ class KwantDeprecationWarning(Warning):
     to not confuse non-developer users with warnings that are not relevant to
     them.  In the case of Kwant, by far most users are developers, so we feel
     that a KwantDeprecationWarning that is visible by default is useful.
+    """
+    pass
+
+
+class UserCodeError(Exception):
+    """Class for errors that occur in user-provided code.
+
+    Usually users will define value functions that Kwant calls in order to
+    evaluate the Hamiltonian.  If one of these function raises an exception
+    then it is caught and this error is raised in its place. This makes it
+    clear that the error is from the user's code (and not a bug in Kwant) and
+    also makes it possible for any libraries that wrap Kwant to detect when a
+    user's function causes an error.
     """
     pass
 

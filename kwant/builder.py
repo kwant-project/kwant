@@ -15,7 +15,7 @@ import operator
 from itertools import islice, chain
 import tinyarray as ta
 import numpy as np
-from . import system, graph, KwantDeprecationWarning
+from . import system, graph, KwantDeprecationWarning, UserCodeError
 from ._common import ensure_isinstance
 
 
@@ -1377,6 +1377,12 @@ class Builder:
 
 ################ Finalized systems
 
+def _raise_user_error(exc, func):
+    msg = ('Error occurred in user-supplied value function "{0}".\n'
+           'See the upper part of the above backtrace for more information.')
+    raise UserCodeError(msg.format(func.__name__)) from exc
+
+
 class FiniteSystem(system.FiniteSystem):
     """
     Finalized `Builder` with leads.
@@ -1387,7 +1393,10 @@ class FiniteSystem(system.FiniteSystem):
         if i == j:
             value = self.onsite_hamiltonians[i]
             if callable(value):
-                value = value(self.sites[i], *args)
+                try:
+                    value = value(self.sites[i], *args)
+                except Exception as exc:
+                    _raise_user_error(exc, value)
         else:
             edge_id = self.graph.first_edge_id(i, j)
             value = self.hoppings[edge_id]
@@ -1398,7 +1407,10 @@ class FiniteSystem(system.FiniteSystem):
                 value = self.hoppings[edge_id]
             if callable(value):
                 sites = self.sites
-                value = value(sites[i], sites[j], *args)
+                try:
+                    value = value(sites[i], sites[j], *args)
+                except Exception as exc:
+                    _raise_user_error(exc, value)
             if conj:
                 value = herm_conj(value)
         return value
@@ -1421,7 +1433,10 @@ class InfiniteSystem(system.InfiniteSystem):
                 i -= self.cell_size
             value = self.onsite_hamiltonians[i]
             if callable(value):
-                value = value(self.symmetry.to_fd(self.sites[i]), *args)
+                try:
+                    value = value(self.symmetry.to_fd(self.sites[i]), *args)
+                except Exception as exc:
+                    _raise_user_error(exc, value)
         else:
             edge_id = self.graph.first_edge_id(i, j)
             value = self.hoppings[edge_id]
@@ -1435,7 +1450,10 @@ class InfiniteSystem(system.InfiniteSystem):
                 site_i = sites[i]
                 site_j = sites[j]
                 site_i, site_j = self.symmetry.to_fd(site_i, site_j)
-                value = value(site_i, site_j, *args)
+                try:
+                    value = value(site_i, site_j, *args)
+                except Exception as exc:
+                    _raise_user_error(exc, value)
             if conj:
                 value = herm_conj(value)
         return value

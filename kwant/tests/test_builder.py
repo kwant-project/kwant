@@ -8,7 +8,7 @@
 
 import warnings
 from random import Random
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_true
 from numpy.testing import assert_equal, assert_almost_equal
 import tinyarray as ta
 import kwant
@@ -432,6 +432,42 @@ def test_hamiltonian_evaluation():
         hsite = fsyst.sites[h]
         assert_equal(fsyst.hamiltonian(t, h),
                      syst[tsite, hsite](tsite, hsite))
+
+    # test when user-function raises errors
+    def onsite_raises(site):
+        raise ValueError()
+
+    def hopping_raises(a, b):
+        raise ValueError('error message')
+
+    def test_raising(fsyst, hop):
+        a, b = hop
+        # exceptions are converted to kwant.UserCodeError and we add our message
+        with assert_raises(kwant.UserCodeError) as ctx:
+            fsyst.hamiltonian(a, a)
+        msg = 'Error occurred in user-supplied value function "onsite_raises"'
+        assert_true(msg in str(ctx.exception))
+
+        for hop in [(a, b), (b, a)]:
+            with assert_raises(kwant.UserCodeError) as ctx:
+                fsyst.hamiltonian(*hop)
+            msg = 'Error occurred in user-supplied value function "hopping_raises"'
+            assert_true(msg in str(ctx.exception))
+
+    # test with finite system
+    new_hop = (fam(-1, 0), fam(0, 0))
+    syst[new_hop[0]] = onsite_raises
+    syst[new_hop] = hopping_raises
+    fsyst = syst.finalized()
+    hop = tuple(map(fsyst.sites.index, new_hop))
+    test_raising(fsyst, hop)
+
+    # test with infinite system
+    inf_syst = kwant.Builder(VerySimpleSymmetry(2))
+    inf_syst += syst
+    inf_fsyst = inf_syst.finalized()
+    hop = tuple(map(inf_fsyst.sites.index, new_hop))
+    test_raising(inf_fsyst, hop)
 
 
 def test_dangling():
