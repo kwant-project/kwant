@@ -6,6 +6,28 @@ Please consult the `full list of changes in Kwant
 <https://gitlab.kwant-project.org/kwant/kwant/compare/v1.3.0...stable>`_ for
 all the changes up to the most recent bugfix release.
 
+Calculating charges and currents using the ``operator`` module
+--------------------------------------------------------------
+Often one may wish to calculate quantities that are defined over sites of
+the system (such as charge density, spin density along some axis etc),
+or over hoppings of the system (such as current or spin current). With
+the introduction of the ``operator`` module it has now become much easier
+to calculate such quantities. To calculate the regular density and current
+everywhere in a system due to a wavefunction ``wf``, one only needs to do
+the following::
+
+    syst = make_system().finalized()
+    wfs = kwant.wave_function(syst)
+    wf = wfs[0]
+    # create the operators
+    Q = kwant.physics.LocalOperator(syst)
+    J = kwant.physics.Current(syst)
+    # evaluate the operator matrix elements
+    q = Q(wf)
+    j = J(wf)
+
+See the Kwant tutorial for more details.
+
 Sites in finalized builders have consistent ordering
 ----------------------------------------------------
 In Python 3 the internal ordering of dictionaries is not deterministic. This

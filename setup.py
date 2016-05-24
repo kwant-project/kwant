@@ -306,6 +306,8 @@ def extensions():
     result = [
         (['kwant._system', ['kwant/_system.pyx']],
          {'include_dirs': ['kwant/graph']}),
+        (['kwant.operator', ['kwant/operator.pyx']],
+         {'include_dirs': ['kwant/graph']}),
         (['kwant.graph.core', ['kwant/graph/core.pyx']],
          {'depends': ['kwant/graph/core.pxd', 'kwant/graph/defs.h',
                       'kwant/graph/defs.pxd']}),

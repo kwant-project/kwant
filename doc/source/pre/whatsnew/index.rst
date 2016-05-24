@@ -2,6 +2,7 @@ What's new in Kwant
 ===================
 
 .. toctree::
+    1.3
     1.2
     1.1
     1.0

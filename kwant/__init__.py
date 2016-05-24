@@ -29,7 +29,8 @@ __all__.extend(['KwantDeprecationWarning', 'UserCodeError'])
 
 from ._common import version as __version__
 
-for module in ['system', 'builder', 'lattice', 'solvers', 'digest', 'rmt']:
+for module in ['system', 'builder', 'lattice', 'solvers', 'digest', 'rmt',
+               'operator']:
     exec('from . import {0}'.format(module))
     __all__.append(module)
 

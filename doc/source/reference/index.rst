@@ -34,5 +34,6 @@ The following modules provide functionality for special applications.
 .. toctree::
    :maxdepth: 1
 
+   kwant.operator
    kwant.digest
    kwant.rmt
