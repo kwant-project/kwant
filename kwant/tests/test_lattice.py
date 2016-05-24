@@ -197,3 +197,36 @@ def test_monatomic_lattice():
     lat2 = lattice.general(np.identity(2))
     lat3 = lattice.square(name='no')
     assert len(set([lat, lat2, lat3, lat(0, 0), lat2(0, 0), lat3(0, 0)])) == 4
+
+
+def test_norbs():
+    id_mat = np.identity(2)
+    # Monatomic lattices
+    assert_equal(lattice.general(id_mat).norbs, None)
+    assert_equal(lattice.general(id_mat, norbs=2).norbs, 2)
+    # Polyatomic lattices
+    lat = lattice.general(id_mat, basis=id_mat, norbs=None)
+    for l in lat.sublattices:
+        assert_equal(l.norbs, None)
+    lat = lattice.general(id_mat, basis=id_mat, norbs=2)
+    for l in lat.sublattices:
+        assert_equal(l.norbs, 2)
+    lat = lattice.general(id_mat, basis=id_mat, norbs=[1, 2])
+    for l, n in zip(lat.sublattices, [1, 2]):
+        assert_equal(l.norbs, n)
+    # should raise ValueError for # of norbs different to length of `basis`
+    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=[])
+    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1, 2, 3])
+    # TypeError if Monatomic lattice
+    assert_raises(TypeError, lattice.general, id_mat, norbs=[])
+    # should raise ValueError if norbs not an integer
+    assert_raises(ValueError, lattice.general, id_mat, norbs=1.5)
+    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=1.5)
+    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1.5, 1.5])
+    # test that lattices with different norbs are compared `not equal`
+    lat = lattice.general(id_mat, basis=id_mat, norbs=None)
+    lat1 = lattice.general(id_mat, basis=id_mat, norbs=1)
+    lat2 = lattice.general(id_mat, basis=id_mat, norbs=2)
+    assert_not_equal(lat, lat1)
+    assert_not_equal(lat, lat2)
+    assert_not_equal(lat1, lat2)

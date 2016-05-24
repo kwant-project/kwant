@@ -18,7 +18,7 @@ from .linalg import lll
 from ._common import ensure_isinstance
 
 
-def general(prim_vecs, basis=None, name=''):
+def general(prim_vecs, basis=None, name='', norbs=None):
     """
     Create a Bravais lattice of any dimensionality, with any number of sites.
 
@@ -32,6 +32,9 @@ def general(prim_vecs, basis=None, name=''):
         Name of the lattice, or sequence of names of all of the sublattices.
         If the name of the lattice is given, the names of sublattices (if any)
         are obtained by appending their number to the name of the lattice.
+    norbs : int or sequence of ints, optional
+        The number of orbitals per site on the lattice, or a sequence
+        of the number of orbitals of sites on each of the sublattices.
 
     Returns
     -------
@@ -44,9 +47,9 @@ def general(prim_vecs, basis=None, name=''):
     lattices.
     """
     if basis is None:
-        return Monatomic(prim_vecs, name=name)
+        return Monatomic(prim_vecs, name=name, norbs=norbs)
     else:
-        return Polyatomic(prim_vecs, basis, name=name)
+        return Polyatomic(prim_vecs, basis, name=name, norbs=norbs)
 
 
 class Polyatomic:
@@ -62,18 +65,21 @@ class Polyatomic:
         The primitive vectors of the Bravais lattice
     basis : 2d array-like of floats
         The coordinates of the basis sites inside the unit cell.
-    name : string or sequence of strings
+    name : string or sequence of strings, optional
         The name of the lattice, or a sequence of the names of all the
         sublattices.  If the name of the lattice is given, the names of
         sublattices are obtained by appending their number to the name of the
         lattice.
+    norbs : int or sequence of ints, optional
+        The number of orbitals per site on the lattice, or a sequence
+        of the number of orbitals of sites on each of the sublattices.
 
     Raises
     ------
     ValueError
         If dimensionalities do not match.
     """
-    def __init__(self, prim_vecs, basis, name=''):
+    def __init__(self, prim_vecs, basis, name='', norbs=None):
         prim_vecs = ta.array(prim_vecs, float)
         if prim_vecs.ndim != 2:
             raise ValueError('`prim_vecs` must be a 2d array-like object.')
@@ -82,6 +88,7 @@ class Polyatomic:
             name = ''
         if isinstance(name, str):
             name = [name + str(i) for i in range(len(basis))]
+
         if prim_vecs.shape[0] > dim:
             raise ValueError('Number of primitive vectors exceeds '
                              'the space dimensionality.')
@@ -91,8 +98,17 @@ class Polyatomic:
         if basis.shape[1] != dim:
             raise ValueError('Basis dimensionality does not match '
                              'the space dimensionality.')
-        self.sublattices = [Monatomic(prim_vecs, offset, sname)
-                            for offset, sname in zip(basis, name)]
+
+        try:
+            norbs = list(norbs)
+            if len(norbs) != len(basis):
+                raise ValueError('Length of `norbs` is not the same as '
+                                 'the number of basis vectors')
+        except TypeError:
+            norbs = [norbs] * len(basis)
+
+        self.sublattices = [Monatomic(prim_vecs, offset, sname, norb)
+                            for offset, sname, norb in zip(basis, name, norbs)]
         # Sequence of primitive vectors of the lattice.
         self._prim_vecs = prim_vecs
         # Precalculation of auxiliary arrays for real space calculations.
@@ -405,7 +421,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
         Displacement of the lattice origin from the real space coordinates origin
     """
 
-    def __init__(self, prim_vecs, offset=None, name=''):
+    def __init__(self, prim_vecs, offset=None, name='', norbs=None):
         prim_vecs = ta.array(prim_vecs, float)
         if prim_vecs.ndim != 2:
             raise ValueError('`prim_vecs` must be a 2d array-like object.')
@@ -423,11 +439,12 @@ class Monatomic(builder.SiteFamily, Polyatomic):
                 raise ValueError('Dimensionality of offset does not match '
                                  'that of the space.')
 
-        msg = '{0}({1}, {2}, {3})'
+        msg = '{0}({1}, {2}, {3}, {4})'
         cl = self.__module__ + '.' + self.__class__.__name__
         canonical_repr = msg.format(cl, short_array_repr(prim_vecs),
-                                    short_array_repr(offset), repr(name))
-        super().__init__(canonical_repr, name)
+                                    short_array_repr(offset),
+                                    repr(name), repr(norbs))
+        super().__init__(canonical_repr, name, norbs)
 
         self.sublattices = [self]
         self._prim_vecs = prim_vecs
@@ -442,12 +459,14 @@ class Monatomic(builder.SiteFamily, Polyatomic):
         self.lattice_dim = len(prim_vecs)
 
         if name != '':
-            msg = "<Monatomic lattice {0}>"
-            self.cached_str = msg.format(name)
+            msg = "<Monatomic lattice {0}{1}>"
+            orbs = ' with {0} orbitals'.format(self.norbs) if self.norbs else ''
+            self.cached_str = msg.format(name, orbs)
         else:
-            msg = "<unnamed Monatomic lattice, vectors {0}, origin [{1}]>"
+            msg = "<unnamed Monatomic lattice, vectors {0}, origin [{1}]{2}>"
+            orbs = ', with {0} orbitals'.format(norbs) if norbs else ''
             self.cached_str = msg.format(short_array_str(self._prim_vecs),
-                                         short_array_str(self.offset))
+                                         short_array_str(self.offset), orbs)
 
     def __str__(self):
         return self.cached_str
@@ -684,33 +703,35 @@ class TranslationalSymmetry(builder.Symmetry):
 
 ################ Library of lattices
 
-def chain(a=1, name=''):
+def chain(a=1, name='', norbs=None):
     """Make a one-dimensional lattice."""
-    return Monatomic(((a,),), name=name)
+    return Monatomic(((a,),), name=name, norbs=norbs)
 
 
-def square(a=1, name=''):
+def square(a=1, name='', norbs=None):
     """Make a square lattice."""
-    return Monatomic(((a, 0), (0, a)), name=name)
+    return Monatomic(((a, 0), (0, a)), name=name, norbs=norbs)
 
 
 tri = ta.array(((1, 0), (0.5, 0.5 * sqrt(3))))
 
-def triangular(a=1, name=''):
+def triangular(a=1, name='', norbs=None):
     """Make a triangular lattice."""
-    return Monatomic(a * tri, name=name)
+    return Monatomic(a * tri, name=name, norbs=norbs)
 
 
-def honeycomb(a=1, name=''):
+def honeycomb(a=1, name='', norbs=None):
     """Make a honeycomb lattice."""
-    lat = Polyatomic(a * tri, ((0, 0), (0, a / sqrt(3))), name=name)
+    lat = Polyatomic(a * tri, ((0, 0), (0, a / sqrt(3))),
+                     name=name, norbs=norbs)
     lat.a, lat.b = lat.sublattices
     return lat
 
 
-def kagome(a=1, name=''):
+def kagome(a=1, name='', norbs=None):
     """Make a kagome lattice."""
-    lat = Polyatomic(a * tri, ((0, 0),) + tuple(0.5 * a * tri), name=name)
+    lat = Polyatomic(a * tri, ((0, 0),) + tuple(0.5 * a * tri),
+                     name=name, norbs=norbs)
     lat.a, lat.b, lat.c = lat.sublattices
     return lat
 

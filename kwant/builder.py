@@ -95,7 +95,10 @@ class SiteFamily(metaclass=abc.ABCMeta):
     representation and a name.  The canonical representation will be returned as
     the objects representation and must uniquely identify the site family
     instance.  The name is a string used to distinguish otherwise identical site
-    families.  It may be empty.
+    families.  It may be empty. ``norbs`` defines the number of orbitals
+    on sites associated with this site family; it may be `None`, in which case
+    the number of orbitals is not specified.
+
 
     All site families must define the method `normalize_tag` which brings a tag
     to the standard format for this site family.
@@ -104,22 +107,37 @@ class SiteFamily(metaclass=abc.ABCMeta):
     method `pos(tag)`, which returns a vector with real-space coordinates of the
     site belonging to this family with a given tag.
 
+    If the ``norbs`` of a site family are provided, and sites of this family
+    are used to populate a `~kwant.builder.Builder`, then the associated
+    Hamiltonian values must have the correct shape. That is, if a site family
+    has ``norbs = 2``, then any on-site terms for sites belonging to this
+    family should be 2x2 matrices. Similarly, any hoppings to/from sites
+    belonging to this family must have a matrix structure where there are two
+    rows/columns. This condition applies equally to Hamiltonian values that
+    are given by functions. If this condition is not satisfied, an error will
+    be raised.
     """
 
-    def __init__(self, canonical_repr, name):
+    def __init__(self, canonical_repr, name, norbs):
         self.canonical_repr = canonical_repr
         self.hash = hash(canonical_repr)
         self.name = name
+        if norbs is not None:
+            if int(norbs) != norbs or norbs <= 0:
+                raise ValueError('The norbs parameter must be an integer > 0.')
+            norbs = int(norbs)
+        self.norbs = norbs
 
     def __repr__(self):
         return self.canonical_repr
 
     def __str__(self):
         if self.name:
-            msg = '<{0} site family {1}>'
+            msg = '<{0} site family {1}{2}>'
         else:
-            msg = '<unnamed {0} site family>'
-        return msg.format(self.__class__.__name__, self.name)
+            msg = '<unnamed {0} site family{2}>'
+        orbs = ' with {0} orbitals'.format(self.norbs) if self.norbs else ''
+        return msg.format(self.__class__.__name__, self.name, orbs)
 
     def __hash__(self):
         return self.hash
@@ -171,9 +189,10 @@ class SimpleSiteFamily(SiteFamily):
     `SimpleSiteFamily` when `kwant.lattice.Monatomic` would also work.
     """
 
-    def __init__(self, name=None):
-        canonical_repr = '{0}({1})'.format(self.__class__, repr(name))
-        super().__init__(canonical_repr, name)
+    def __init__(self, name=None, norbs=None):
+        canonical_repr = '{0}({1}, {2})'.format(self.__class__, repr(name),
+                                                repr(norbs))
+        super().__init__(canonical_repr, name, norbs)
 
     def normalize_tag(self, tag):
         tag = tuple(tag)
