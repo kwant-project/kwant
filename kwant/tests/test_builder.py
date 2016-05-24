@@ -291,6 +291,10 @@ def check_hoppings(fsyst, hops):
             assert (tail, head) in hops
             assert value is hops[tail, head]
 
+def check_id_by_site(fsyst):
+    for i, site in enumerate(fsyst.sites):
+        assert_equal(fsyst.id_by_site[site], i)
+
 
 def test_finalization():
     """Test the finalization of finite and infinite systems.
@@ -353,6 +357,7 @@ def test_finalization():
     for hop, value in sr_hops.items():
         syst[fam(*hop[0]), fam(*hop[1])] = value
     fsyst = syst.finalized()
+    check_id_by_site(fsyst)
     check_onsite(fsyst, sr_sites)
     check_hoppings(fsyst, sr_hops)
 
@@ -376,6 +381,7 @@ def test_finalization():
     flead = lead.finalized()
     all_sites = list(lead_sites)
     all_sites.extend((x - size, y) for (x, y) in neighbors)
+    check_id_by_site(fsyst)
     check_onsite(flead, all_sites, check_values=False)
     check_onsite(flead, lead_sites, subset=True)
     check_hoppings(flead, lead_hops)

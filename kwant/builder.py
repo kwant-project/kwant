@@ -1242,6 +1242,7 @@ class Builder:
         result = FiniteSystem()
         result.graph = g
         result.sites = sites
+        result.id_by_site = id_by_site
         result.leads = finalized_leads
         result.hoppings = [self._get_edge(sites[tail], sites[head])
                            for tail, head in g]
@@ -1350,7 +1351,6 @@ class Builder:
                     # correspond to one left out just above.
                     g.add_edge(head_id, tail_id)
                 g.add_edge(tail_id, head_id)
-        del id_by_site
         g = g.compressed()
 
         #### Extract hoppings.
@@ -1368,6 +1368,7 @@ class Builder:
         result = InfiniteSystem()
         result.cell_size = cell_size
         result.sites = sites
+        result.id_by_site = id_by_site
         result.graph = g
         result.hoppings = hoppings
         result.onsite_hamiltonians = onsite_hamiltonians
@@ -1384,11 +1385,19 @@ def _raise_user_error(exc, func):
 
 
 class FiniteSystem(system.FiniteSystem):
-    """
-    Finalized `Builder` with leads.
+    """Finalized `Builder` with leads.
 
     Usable as input for the solvers in `kwant.solvers`.
+
+    Attributes
+    ----------
+    sites : sequence
+        ``sites[i]`` is the `~kwant.builder.Site` instance that corresponds
+        to the integer-labeled site ``i`` of the low-level system.
+    id_by_site : dict
+        The inverse of ``sites``; maps from ``i`` to ``sites[i]``.
     """
+
     def hamiltonian(self, i, j, *args):
         if i == j:
             value = self.onsite_hamiltonians[i]
@@ -1426,7 +1435,17 @@ class FiniteSystem(system.FiniteSystem):
 
 
 class InfiniteSystem(system.InfiniteSystem):
-    """Finalized infinite system, extracted from a `Builder`."""
+    """Finalized infinite system, extracted from a `Builder`.
+
+    Attributes
+    ----------
+    sites : sequence
+        Mapping from site IDs (integers) to the associated
+        `~kwant.builder.Site` objects.
+    id_by_site : dict
+        The inverse of the ``sites`` mapping.
+    """
+
     def hamiltonian(self, i, j, *args):
         if i == j:
             if i >= self.cell_size:
