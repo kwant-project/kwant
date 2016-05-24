@@ -111,6 +111,23 @@ def test_site_families():
     assert_not_equal(fam, 'a')
 
 
+def test_site_families_sorting():
+    fam1 = builder.SimpleSiteFamily('fam1')
+    fam2 = builder.SimpleSiteFamily('fam2')
+
+    rng = Random(123)
+
+    tags = [(rng.randint(0,10), rng.randint(0,10)) for i in range(10)]
+    tags_sorted = [t for t in sorted(tags)]
+
+    sites = [fam1(*t) for t in tags] + [fam2(*t) for t in tags]
+    rng.shuffle(sites)
+    sites_sorted = ([fam1(*t) for t in tags_sorted] +
+                    [fam2(*t) for t in tags_sorted])
+
+    assert_equal(list(sorted(sites)), sites_sorted)
+
+
 class VerySimpleSymmetry(builder.Symmetry):
     def __init__(self, period):
         self.period = period

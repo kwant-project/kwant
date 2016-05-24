@@ -12,6 +12,7 @@ __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
 import abc
 import warnings
 import operator
+from functools import total_ordering
 from itertools import islice, chain
 import tinyarray as ta
 import numpy as np
@@ -82,6 +83,7 @@ class Site(tuple):
         return self.family.pos(self.tag)
 
 
+@total_ordering
 class SiteFamily(metaclass=abc.ABCMeta):
     """Abstract base class for site families.
 
@@ -153,6 +155,12 @@ class SiteFamily(metaclass=abc.ABCMeta):
             return self.canonical_repr != other.canonical_repr
         except AttributeError:
             return True
+
+    def __lt__(self, other):
+        try:
+            return self.canonical_repr < other.canonical_repr
+        except AttributeError:
+            return False
 
     @abc.abstractmethod
     def normalize_tag(self, tag):
