@@ -9,7 +9,7 @@
 from __future__ import division
 import warnings
 from random import Random
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_not_equal
 from numpy.testing import assert_equal, assert_almost_equal
 import tinyarray as ta
 import kwant
@@ -102,6 +102,12 @@ def test_site_families():
     assert_equal(sys[fam(1)], 123)
     assert_equal(sys[ofam(1)], 123)
     assert_raises(KeyError, sys.__getitem__, yafam(1))
+
+    # test site families compare equal/not-equal
+    assert_equal(fam, ofam)
+    assert_not_equal(fam, yafam)
+    assert_not_equal(fam, None)
+    assert_not_equal(fam, 'a')
 
 
 class VerySimpleSymmetry(builder.Symmetry):
