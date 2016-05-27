@@ -134,7 +134,7 @@ class SiteFamily(metaclass=abc.ABCMeta):
         try:
             return self.canonical_repr != other.canonical_repr
         except AttributeError:
-            return False
+            return True
 
     @abc.abstractmethod
     def normalize_tag(self, tag):
