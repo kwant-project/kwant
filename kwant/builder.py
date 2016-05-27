@@ -593,6 +593,32 @@ def edges(seq):
     return result
 
 
+def _site_ranges(sites):
+    """Return a sequence of ranges for ``sites``.
+
+    Here, "ranges" are defined as sequences of sites that have the same site
+    family. Because site families now have a fixed number of orbitals,
+    this coincides with the definition given in `~kwant.system.System`.
+    """
+    # we shall start a new range of different `SiteFamily`s separately,
+    # even if they happen to contain the same number of orbitals.
+    total_norbs = 0
+    current_fam = None
+    site_ranges = []
+    for idx, fam in enumerate(s.family for s in sites):
+        if not fam.norbs:
+            # can't provide site_ranges if norbs not given
+            return None
+        if fam != current_fam:  # start a new run
+            current_fam = fam
+            current_norbs = fam.norbs
+            site_ranges.append((idx, current_norbs, total_norbs))
+        total_norbs += current_norbs
+    # add sentinel to the end
+    site_ranges.append((len(sites), 0, total_norbs))
+    return site_ranges
+
+
 class Builder:
     """A tight binding system defined on a graph.
 
@@ -1261,6 +1287,7 @@ class Builder:
         result = FiniteSystem()
         result.graph = g
         result.sites = sites
+        result.site_ranges = _site_ranges(sites)
         result.id_by_site = id_by_site
         result.leads = finalized_leads
         result.hoppings = [self._get_edge(sites[tail], sites[head])
@@ -1388,6 +1415,7 @@ class Builder:
         result.cell_size = cell_size
         result.sites = sites
         result.id_by_site = id_by_site
+        result.site_ranges = _site_ranges(sites)
         result.graph = g
         result.hoppings = hoppings
         result.onsite_hamiltonians = onsite_hamiltonians

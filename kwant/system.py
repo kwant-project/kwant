@@ -23,6 +23,14 @@ class System(metaclass=abc.ABCMeta):
     ----------
     graph : kwant.graph.CGraph
         The system graph.
+    site_ranges : None or sorted sequence of triples of integers
+        If provided, encodes ranges of sites that have the same number of
+        orbitals. Each triple consists of ``(first_site, norbs, orb_offset)``:
+        the first site in the range, the number of orbitals on each site in the
+        range, and the offset of the first orbital of the first site in the
+        range.  In addition, the final triple should have the form
+        ``(len(graph.num_nodes), tot_norbs, 0)`` where ``tot_norbs`` is the
+        total number of orbitals in the system.
 
     Notes
     -----
@@ -31,6 +39,13 @@ class System(metaclass=abc.ABCMeta):
 
     Optionally, a class derived from `System` can provide a method `pos` which
     is assumed to return the real-space position of a site given its index.
+
+    Due to the ordering semantics of sequences, and the fact that a given
+    ``first_site`` can only appear *at most once* in ``site_ranges``,
+    ``site_ranges`` is ordered according to ``first_site``.
+
+    Consecutive elements in ``site_ranges`` are not required to have different
+    numbers of orbitals.
     """
 
     @abc.abstractmethod

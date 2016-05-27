@@ -8,9 +8,11 @@
 
 import warnings
 from random import Random
+import itertools as it
 from nose.tools import assert_raises, assert_true, assert_not_equal
 from numpy.testing import assert_equal, assert_almost_equal
 import tinyarray as ta
+import numpy as np
 import kwant
 from kwant import builder
 
@@ -410,6 +412,43 @@ def test_finalization():
     b = b[0] + 2 * size, b[1]
     lead[fam(*a), fam(*b)] = random_hopping_integral(rng)
     assert_raises(ValueError, lead.finalized)
+
+
+def test_site_ranges():
+    lat1a = kwant.lattice.chain(norbs=1, name='a')
+    lat1b = kwant.lattice.chain(norbs=1, name='b')
+    lat2 = kwant.lattice.chain(norbs=2)
+    site_ranges = builder._site_ranges
+
+    # simple case -- single site family
+    for lat in (lat1a, lat2):
+        sites = list(map(lat, range(10)))
+        ranges = site_ranges(sites)
+        expected = [(0, lat.norbs, 0), (10, 0, 10 * lat.norbs)]
+        assert_equal(ranges, expected)
+
+    # pair of site families
+    sites = it.chain(map(lat1a, range(4)), map(lat1b, range(6)),
+                     map(lat1a, range(4)))
+    expected = [(0, 1, 0), (4, 1, 4), (10, 1, 10), (14, 0, 14)]
+    assert_equal(expected, site_ranges(tuple(sites)))
+    sites = it.chain(map(lat2, range(4)), map(lat1a, range(6)),
+                     map(lat1b, range(4)))
+    expected = [(0, 2, 0), (4, 1, 4*2), (10, 1, 4*2+6), (14, 0, 4*2+10)]
+    assert_equal(expected, site_ranges(tuple(sites)))
+
+    # test with an actual builder
+    for lat in (lat1a, lat2):
+        sites = list(map(lat, range(10)))
+        syst = kwant.Builder()
+        syst[sites] = np.eye(lat.norbs)
+        ranges = syst.finalized().site_ranges
+        expected = [(0, lat.norbs, 0), (10, 0, 10 * lat.norbs)]
+        assert_equal(ranges, expected)
+        # poison system with a single site with no norbs defined
+        syst[kwant.lattice.chain()(0)] = 1
+        ranges = syst.finalized().site_ranges
+        assert_equal(ranges, None)
 
 
 def test_hamiltonian_evaluation():
