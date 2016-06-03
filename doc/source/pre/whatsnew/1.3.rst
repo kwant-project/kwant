@@ -1,0 +1,23 @@
+What's new in Kwant 1.3
+=======================
+
+This article explains the user-visible changes in Kwant 1.3.
+Please consult the `full list of changes in Kwant
+<https://gitlab.kwant-project.org/kwant/kwant/compare/v1.3.0...stable>`_ for
+all the changes up to the most recent bugfix release.
+
+Sites in finalized builders have consistent ordering
+----------------------------------------------------
+In Python 3 the internal ordering of dictionaries is not deterministic. This
+meant that running a Kwant script twice would produce systems with different
+ordering of sites, which lead to non-reproducible calculations. Now, sites
+in finalized builders are always ordered first by their site family, then by
+their tag.
+
+Coincidentally, this means that you can plot a wavefunction in a simple 1D
+system by just saying::
+
+    lattice_1D = chain()
+    syst = make_system(lattice_1D)
+    h = syst.hamiltonian_submatrix()
+    pyplot.plot(np.eigs(h)[1][0])
