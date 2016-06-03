@@ -157,10 +157,9 @@ class SiteFamily(metaclass=abc.ABCMeta):
             return True
 
     def __lt__(self, other):
-        try:
-            return self.canonical_repr < other.canonical_repr
-        except AttributeError:
-            return False
+        # If this raises an AttributeError, we were trying
+        # to compare it to something non-comparable anyway.
+        return self.canonical_repr < other.canonical_repr
 
     @abc.abstractmethod
     def normalize_tag(self, tag):
