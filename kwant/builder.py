@@ -505,6 +505,13 @@ class BuilderLead(Lead):
         Sequence of sites in the scattering region to which the lead is
         attached.
 
+    Attributes
+    ----------
+    builder : `Builder`
+        The tight-binding system of a lead.
+    interface : list of `Site` instances
+        A sorted list of interface sites.
+
     Notes
     -----
     The hopping from the scattering region to the lead is assumed to be equal to
@@ -512,15 +519,13 @@ class BuilderLead(Lead):
     symmetry vector (i.e. the lead is 'leaving' the system and starts with a
     hopping).
 
-    The given order of interface sites is preserved throughout finalization.
-
     Every system has an attribute `leads`, which stores a list of
     `BuilderLead` objects with all the information about the leads that are
     attached.
     """
     def __init__(self, builder, interface):
         self.builder = builder
-        self.interface = tuple(interface)
+        self.interface = tuple(sorted(interface))
 
     def finalized(self):
         """Return a `kwant.system.InfiniteSystem` corresponding to the
@@ -1244,7 +1249,7 @@ class Builder:
         assert self.symmetry.num_directions == 0
 
         #### Make translation tables.
-        sites = tuple(self.H)
+        sites = tuple(sorted(self.H))
         id_by_site = {}
         for site_id, site in enumerate(sites):
             id_by_site[site] = site_id
@@ -1316,6 +1321,7 @@ class Builder:
         sym = self.symmetry
         assert sym.num_directions == 1
 
+
         #### For each site of the fundamental domain, determine whether it has
         #### neighbors in the previous domain or not.
         lsites_with = []       # Fund. domain sites with neighbors in prev. dom
@@ -1340,7 +1346,9 @@ class Builder:
         minus_one = ta.array((-1,))
         plus_one = ta.array((1,))
         if interface_order is None:
+            # interface must be sorted
             interface = [sym.act(minus_one, s) for s in lsites_with]
+            interface.sort()
         else:
             lsites_with_set = set(lsites_with)
             lsites_with = []
@@ -1370,9 +1378,13 @@ class Builder:
             if lsites_with_set:
                 raise ValueError(
                     'interface_order did not contain all interface sites.')
+            # `interface_order` *must* be sorted, hence `interface` should also
+            if interface != sorted(interface):
+                raise ValueError('Interface sites must be sorted.')
             del lsites_with_set
 
-        sites = lsites_with + lsites_without + interface
+        # we previously sorted the interface, so don't sort it again
+        sites = sorted(lsites_with) + sorted(lsites_without) + interface
         del lsites_with
         del lsites_without
         del interface
@@ -1447,7 +1459,8 @@ class FiniteSystem(system.FiniteSystem):
     ----------
     sites : sequence
         ``sites[i]`` is the `~kwant.builder.Site` instance that corresponds
-        to the integer-labeled site ``i`` of the low-level system.
+        to the integer-labeled site ``i`` of the low-level system. The sites
+        are ordered first by their family and then by their tag.
     id_by_site : dict
         The inverse of ``sites``; maps from ``i`` to ``sites[i]``.
     """
@@ -1494,10 +1507,17 @@ class InfiniteSystem(system.InfiniteSystem):
     Attributes
     ----------
     sites : sequence
-        Mapping from site IDs (integers) to the associated
-        `~kwant.builder.Site` objects.
+        ``sites[i]`` is the `~kwant.builder.Site` instance that corresponds
+        to the integer-labeled site ``i`` of the low-level system.
     id_by_site : dict
-        The inverse of the ``sites`` mapping.
+        The inverse of ``sites``; maps from ``i`` to ``sites[i]``.
+
+    Notes
+    -----
+    In infinite systems ``sites`` consists of 3 parts: sites in the fundamental
+    domain (FD) with hoppings to neighboring cells, sites in the FD with no
+    hoppings to neighboring cells, and sites in FD+1 attached to the FD by
+    hoppings. Each of these three subsequences is individually sorted.
     """
 
     def hamiltonian(self, i, j, *args):

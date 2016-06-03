@@ -9,7 +9,7 @@
 import warnings
 from random import Random
 import itertools as it
-from nose.tools import assert_raises, assert_true, assert_not_equal
+from nose.tools import assert_raises, assert_true, assert_not_equal, assert_less
 from numpy.testing import assert_equal, assert_almost_equal
 import tinyarray as ta
 import numpy as np
@@ -367,6 +367,8 @@ def test_finalization():
     check_id_by_site(fsyst)
     check_onsite(fsyst, sr_sites)
     check_hoppings(fsyst, sr_hops)
+    # check that sites are sorted
+    assert_equal(fsyst.sites, sorted(fam(*site) for site in sr_sites))
 
     # Build lead from blueprint and test it.
     lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)))
@@ -403,6 +405,22 @@ def test_finalization():
     assert_raises(ValueError, syst.finalized)
 
     # Attach lead properly.
+    syst.leads[-1] = builder.BuilderLead(
+        lead, (builder.Site(fam, n) for n in neighbors))
+    fsyst = syst.finalized()
+    assert_equal(len(fsyst.lead_interfaces), 1)
+    assert_equal([fsyst.sites[i].tag for i in fsyst.lead_interfaces[0]],
+                 neighbors)
+
+    # test that we cannot finalize a system with a badly sorted interface order
+    assert_raises(ValueError, lead._finalized_infinite,
+                  [builder.Site(fam, n) for n in reversed(neighbors)])
+    # site ordering independent of whether interface was specified
+    flead_order = lead._finalized_infinite([builder.Site(fam, n)
+                                            for n in neighbors])
+    assert_equal(flead.sites, flead_order.sites)
+
+
     syst.leads[-1] = builder.BuilderLead(
         lead, (builder.Site(fam, n) for n in neighbors))
     fsyst = syst.finalized()
