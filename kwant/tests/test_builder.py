@@ -10,7 +10,7 @@ import warnings
 from random import Random
 import itertools as it
 from pytest import raises
-from numpy.testing import assert_equal, assert_almost_equal
+from numpy.testing import assert_almost_equal
 import tinyarray as ta
 import numpy as np
 import kwant
@@ -96,16 +96,16 @@ def test_site_families():
     yafam = builder.SimpleSiteFamily('another_name')
 
     syst[fam(0)] = 7
-    assert_equal(syst[fam(0)], 7)
+    assert syst[fam(0)] == 7
 
     assert len(set([fam, ofam, fam('a'), ofam('a'), yafam])) == 3
     syst[fam(1)] = 123
-    assert_equal(syst[fam(1)], 123)
-    assert_equal(syst[ofam(1)], 123)
+    assert syst[fam(1)] == 123
+    assert syst[ofam(1)] == 123
     raises(KeyError, syst.__getitem__, yafam(1))
 
     # test site families compare equal/not-equal
-    assert_equal(fam, ofam)
+    assert fam == ofam
     assert fam != yafam
     assert fam != None
     assert fam != 'a'
@@ -163,31 +163,29 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
         rev_hop = hop[1], hop[0]
         assert hop in syst
         assert rev_hop in syst
-        assert_equal(syst[hop], t)
-        assert_equal(syst[rev_hop], t.conjugate())
+        assert syst[hop] == t
+        assert syst[rev_hop] == t.conjugate()
 
-    assert_equal(syst.degree(sites[0]), 2)
-    assert_equal(sorted(s for s in syst.neighbors(sites[0])),
-                 sorted([sites[1], sites[-1]]))
+    assert syst.degree(sites[0]) == 2
+    assert (sorted(s for s in syst.neighbors(sites[0])) ==
+            sorted([sites[1], sites[-1]]))
 
     del syst[hoppings]
-    assert_equal(list(syst.hoppings()), [])
+    assert list(syst.hoppings()) == []
     syst[hoppings] = t
 
     del syst[sites[0]]
-    assert_equal(sorted(tuple(s)
-                        for s in syst.sites()), sorted(sites_fd[1:]))
-    assert_equal(sorted((a, b)
-                        for a, b in syst.hoppings()),
-                 sorted(hoppings_fd[1:-1]))
+    assert sorted(tuple(s) for s in syst.sites()) == sorted(sites_fd[1:])
+    assert (sorted((a, b) for a, b in syst.hoppings()) ==
+            sorted(hoppings_fd[1:-1]))
 
-    assert_equal(sorted((tuple(site.tag), value)
-                        for site, value in syst.site_value_pairs()),
-                 sorted((tuple(site.tag), syst[site]) for site in syst.sites()))
-    assert_equal(sorted((tuple(a.tag), tuple(b.tag), value)
-                        for (a, b), value in syst.hopping_value_pairs()),
-                 sorted((tuple(a.tag), tuple(b.tag), syst[a, b])
-                        for a, b in syst.hoppings()))
+    assert (sorted((tuple(site.tag), value)
+                        for site, value in syst.site_value_pairs()) ==
+            sorted((tuple(site.tag), syst[site]) for site in syst.sites()))
+    assert (sorted((tuple(a.tag), tuple(b.tag), value)
+                   for (a, b), value in syst.hopping_value_pairs()) ==
+            sorted((tuple(a.tag), tuple(b.tag), syst[a, b])
+                   for a, b in syst.hoppings()))
 
 
 def test_construction_and_indexing():
@@ -236,8 +234,8 @@ def test_hermitian_conjugation():
     syst[fam(0), fam(1)] = f
     assert syst[fam(0), fam(1)] is f
     assert isinstance(syst[fam(1), fam(0)], builder.HermConjOfFunc)
-    assert_equal(syst[fam(1), fam(0)](fam(1), fam(0), 2),
-                 syst[fam(0), fam(1)](fam(0), fam(1), 2).conjugate().transpose())
+    assert (syst[fam(1), fam(0)](fam(1), fam(0), 2) ==
+            syst[fam(0), fam(1)](fam(0), fam(1), 2).conjugate().transpose())
     syst[fam(0), fam(1)] = syst[fam(1), fam(0)]
     assert isinstance(syst[fam(0), fam(1)], builder.HermConjOfFunc)
     assert syst[fam(1), fam(0)] is f
@@ -253,11 +251,11 @@ def test_value_equality_and_identity():
     assert syst[fam(1)] is m
 
     syst[fam(0), fam(1)] = m
-    assert_equal(syst[fam(1), fam(0)], m.transpose().conjugate())
+    assert syst[fam(1), fam(0)] == m.transpose().conjugate()
     assert syst[fam(0), fam(1)] is m
 
     syst[fam(1), fam(0)] = m
-    assert_equal(syst[fam(0), fam(1)], m.transpose().conjugate())
+    assert syst[fam(0), fam(1)] == m.transpose().conjugate()
     assert syst[fam(1), fam(0)] is m
 
 
@@ -282,11 +280,11 @@ def check_onsite(fsyst, sites, subset=False, check_values=True):
             assert site in sites
     # Check that all sites of `sites` are in `fsyst`.
     for site in sites:
-        assert_equal(freq[site], 1)
+        assert freq[site] == 1
 
 
 def check_hoppings(fsyst, hops):
-    assert_equal(fsyst.graph.num_edges, 2 * len(hops))
+    assert fsyst.graph.num_edges == 2 * len(hops)
     for edge_id, edge in enumerate(fsyst.graph):
         tail, head = edge
         tail = fsyst.sites[tail].tag
@@ -300,7 +298,7 @@ def check_hoppings(fsyst, hops):
 
 def check_id_by_site(fsyst):
     for i, site in enumerate(fsyst.sites):
-        assert_equal(fsyst.id_by_site[site], i)
+        assert fsyst.id_by_site[site] == i
 
 
 def test_finalization():
@@ -368,7 +366,7 @@ def test_finalization():
     check_onsite(fsyst, sr_sites)
     check_hoppings(fsyst, sr_hops)
     # check that sites are sorted
-    assert_equal(fsyst.sites, sorted(fam(*site) for site in sr_sites))
+    assert fsyst.sites == tuple(sorted(fam(*site) for site in sr_sites))
 
     # Build lead from blueprint and test it.
     lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)))
@@ -379,7 +377,7 @@ def test_finalization():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         lead.finalized()        # Trigger the warning.
-        assert_equal(len(w), 1)
+        assert len(w) == 1
         assert issubclass(w[0].category, RuntimeWarning)
         assert "disconnected" in str(w[0].message)
     for (a, b), value in lead_hops.items():
@@ -408,9 +406,9 @@ def test_finalization():
     syst.leads[-1] = builder.BuilderLead(
         lead, (builder.Site(fam, n) for n in neighbors))
     fsyst = syst.finalized()
-    assert_equal(len(fsyst.lead_interfaces), 1)
-    assert_equal([fsyst.sites[i].tag for i in fsyst.lead_interfaces[0]],
-                 neighbors)
+    assert len(fsyst.lead_interfaces) == 1
+    assert ([fsyst.sites[i].tag for i in fsyst.lead_interfaces[0]] ==
+            neighbors)
 
     # test that we cannot finalize a system with a badly sorted interface order
     raises(ValueError, lead._finalized_infinite,
@@ -418,15 +416,15 @@ def test_finalization():
     # site ordering independent of whether interface was specified
     flead_order = lead._finalized_infinite([builder.Site(fam, n)
                                             for n in neighbors])
-    assert_equal(flead.sites, flead_order.sites)
+    assert flead.sites == flead_order.sites
 
 
     syst.leads[-1] = builder.BuilderLead(
         lead, (builder.Site(fam, n) for n in neighbors))
     fsyst = syst.finalized()
-    assert_equal(len(fsyst.lead_interfaces), 1)
-    assert_equal([fsyst.sites[i].tag for i in fsyst.lead_interfaces[0]],
-                 neighbors)
+    assert len(fsyst.lead_interfaces) == 1
+    assert ([fsyst.sites[i].tag for i in fsyst.lead_interfaces[0]] ==
+            neighbors)
 
     # Add a hopping to the lead which couples two next-nearest cells and check
     # whether this leads to an error.
@@ -448,17 +446,17 @@ def test_site_ranges():
         sites = list(map(lat, range(10)))
         ranges = site_ranges(sites)
         expected = [(0, lat.norbs, 0), (10, 0, 10 * lat.norbs)]
-        assert_equal(ranges, expected)
+        assert ranges == expected
 
     # pair of site families
     sites = it.chain(map(lat1a, range(4)), map(lat1b, range(6)),
                      map(lat1a, range(4)))
     expected = [(0, 1, 0), (4, 1, 4), (10, 1, 10), (14, 0, 14)]
-    assert_equal(expected, site_ranges(tuple(sites)))
+    assert expected == site_ranges(tuple(sites))
     sites = it.chain(map(lat2, range(4)), map(lat1a, range(6)),
                      map(lat1b, range(4)))
     expected = [(0, 2, 0), (4, 1, 4*2), (10, 1, 4*2+6), (14, 0, 4*2+10)]
-    assert_equal(expected, site_ranges(tuple(sites)))
+    assert expected == site_ranges(tuple(sites))
 
     # test with an actual builder
     for lat in (lat1a, lat2):
@@ -467,11 +465,11 @@ def test_site_ranges():
         syst[sites] = np.eye(lat.norbs)
         ranges = syst.finalized().site_ranges
         expected = [(0, lat.norbs, 0), (10, 0, 10 * lat.norbs)]
-        assert_equal(ranges, expected)
+        assert ranges == expected
         # poison system with a single site with no norbs defined
         syst[kwant.lattice.chain()(0)] = 1
         ranges = syst.finalized().site_ranges
-        assert_equal(ranges, None)
+        assert ranges == None
 
 
 def test_hamiltonian_evaluation():
@@ -492,20 +490,18 @@ def test_hamiltonian_evaluation():
     syst[((fam(*tags[i]), fam(*tags[j])) for (i, j) in edges)] = f_hopping
     fsyst = syst.finalized()
 
-    assert_equal(fsyst.graph.num_nodes, len(tags))
-    assert_equal(fsyst.graph.num_edges, 2 * len(edges))
+    assert fsyst.graph.num_nodes == len(tags)
+    assert fsyst.graph.num_edges == 2 * len(edges)
 
     for i in range(len(tags)):
         site = fsyst.sites[i]
         assert site in sites
-        assert_equal(fsyst.hamiltonian(i, i),
-                     syst[site](site))
+        assert fsyst.hamiltonian(i, i) == syst[site](site)
 
     for t, h in fsyst.graph:
         tsite = fsyst.sites[t]
         hsite = fsyst.sites[h]
-        assert_equal(fsyst.hamiltonian(t, h),
-                     syst[tsite, hsite](tsite, hsite))
+        assert fsyst.hamiltonian(t, h) == syst[tsite, hsite](tsite, hsite)
 
     # test when user-function raises errors
     def onsite_raises(site):
@@ -525,7 +521,8 @@ def test_hamiltonian_evaluation():
         for hop in [(a, b), (b, a)]:
             with raises(kwant.UserCodeError) as ctx:
                 fsyst.hamiltonian(*hop)
-            msg = 'Error occurred in user-supplied value function "hopping_raises"'
+            msg = ('Error occurred in user-supplied '
+                   'value function "hopping_raises"')
             assert msg in ctx.exconly()
 
     # test with finite system
@@ -558,8 +555,8 @@ def test_dangling():
         return syst
 
     syst0 = make_system()
-    assert_equal(sorted(site.tag for site in syst0.dangling()),
-                 sorted([(3,), (5,), (6,), (7,), (8,)]))
+    assert (sorted(site.tag for site in syst0.dangling()) ==
+            sorted([(3,), (5,), (6,), (7,), (8,)]))
     syst0.eradicate_dangling()
 
     syst1 = make_system()
@@ -569,10 +566,10 @@ def test_dangling():
             break
         del syst1[dangling]
 
-    assert_equal(sorted(site.tag for site in syst0.sites()),
-                 sorted([(0,), (1,), (2,)]))
-    assert_equal(sorted(site.tag for site in syst0.sites()),
-                 sorted(site.tag for site in syst1.sites()))
+    assert (sorted(site.tag for site in syst0.sites()) ==
+            sorted([(0,), (1,), (2,)]))
+    assert (sorted(site.tag for site in syst0.sites()) ==
+            sorted(site.tag for site in syst1.sites()))
 
 
 def test_builder_with_symmetry():
@@ -596,30 +593,29 @@ def test_builder_with_symmetry():
     syst[hoppings] = t
 
     # TODO: Once Tinyarray supports "<" the conversion to tuple can be removed.
-    assert_equal(sorted(tuple(site.tag) for site in syst.sites()),
-                 sorted(set(tuple(hop[0].tag) for hop in hoppings_fd)))
+    assert (sorted(tuple(site.tag) for site in syst.sites()) ==
+            sorted(set(tuple(hop[0].tag) for hop in hoppings_fd)))
     for sites in hoppings_fd:
         for site in sites:
             assert site in syst
-            assert_equal(syst[site], V)
+            assert syst[site] == V
 
     # TODO: Once Tinyarray supports "<" the conversion to tuple can be removed.
-    assert_equal(sorted((tuple(a.tag), tuple(b.tag))
-                        for a, b in syst.hoppings()),
-                 sorted((tuple(a.tag), tuple(b.tag)) for a, b in hoppings_fd))
+    assert (sorted((tuple(a.tag), tuple(b.tag)) for a, b in syst.hoppings()) ==
+            sorted((tuple(a.tag), tuple(b.tag)) for a, b in hoppings_fd))
     for hop in hoppings_fd:
         rhop = hop[1], hop[0]
         assert hop in syst
         assert rhop in syst
-        assert_equal(syst[hop], t)
-        assert_equal(syst[rhop], t.conjugate())
+        assert syst[hop] == t
+        assert syst[rhop] == t.conjugate()
 
     del syst[g(0, 6, -4), g(0, 11, -9)]
     assert (g(0, 1, 0), g(0, -4, 5)) not in syst
 
     del syst[g(0, 3, -3)]
-    assert_equal(list((a.tag, b.tag) for a, b in syst.hoppings()),
-                 [((0, 0, 2), (5, 0, -3))])
+    assert (list((a.tag, b.tag) for a, b in syst.hoppings()) == [((0, 0, 2),
+                                                                  (5, 0, -3))])
 
 
 def test_attach_lead():
@@ -647,14 +643,14 @@ def test_attach_lead():
     syst[fam(0)] = 1
     lead[fam(0), fam(1)] = lead[fam(0), fam(2)] = 1
     syst.attach_lead(lead)
-    assert_equal(len(list(syst.sites())), 4)
-    assert_equal(set(syst.leads[0].interface), set([fam(-1), fam(0)]))
+    assert len(list(syst.sites())) == 4
+    assert set(syst.leads[0].interface) == set([fam(-1), fam(0)])
     syst[fam(-10)] = syst[fam(-11)] = 0
     syst.attach_lead(lead)
-    assert_equal(set(syst.leads[1].interface), set([fam(-10), fam(-11)]))
-    assert_equal(len(list(syst.sites())), 6)
+    assert set(syst.leads[1].interface) == set([fam(-10), fam(-11)])
+    assert len(list(syst.sites())) == 6
     syst.attach_lead(lead, fam(-5))
-    assert_equal(set(syst.leads[0].interface), set([fam(-1), fam(0)]))
+    assert set(syst.leads[0].interface) == set([fam(-1), fam(0)])
     syst.finalized()
 
 
@@ -696,14 +692,12 @@ def test_iadd():
     other_syst.leads.append(lead1)
 
     syst += other_syst
-    assert_equal(syst.leads, [lead0, lead1])
-    expected = sorted([[(0,), 1], [(1,), 2], [(2,), 2]])
-    assert_equal(sorted(((s.tag, v) for s, v in syst.site_value_pairs())),
-                 expected)
-    expected = sorted([[(0,), (1,), 1], [(1,), (2,), 1]])
-    assert_equal(sorted(((a.tag, b.tag, v)
-                         for (a, b), v in syst.hopping_value_pairs())),
-                 expected)
+    assert syst.leads == [lead0, lead1]
+    expected = sorted([((0,), 1), ((1,), 2), ((2,), 2)])
+    assert sorted(((s.tag, v) for s, v in syst.site_value_pairs())) == expected
+    expected = sorted([((0,), (1,), 1), ((1,), (2,), 1)])
+    assert (sorted(((a.tag, b.tag, v) for (a, b), v in
+                    syst.hopping_value_pairs())) == expected)
 
 
 # y=0:    y=1:
@@ -726,22 +720,22 @@ def test_HoppingKind():
                              ((0, 4, 0), h, h, 21),
                              ((0, 0, 1), g, h, 4)]:
         ph = list(builder.HoppingKind(delta, ga, gb)(syst))
-        assert_equal(len(ph), n)
+        assert len(ph) == n
         ph = set(ph)
-        assert_equal(len(ph), n)
+        assert len(ph) == n
 
         ph2 = list((
                 sym.to_fd(b, a) for a, b in
                 builder.HoppingKind(ta.negative(delta), gb, ga)(syst)))
-        assert_equal(len(ph2), n)
+        assert len(ph2) == n
         ph2 = set(ph2)
-        assert_equal(ph2, ph)
+        assert ph2 == ph
 
         for a, b in ph:
             assert a.family == ga
             assert b.family == gb
             assert sym.to_fd(a) == a
-            assert_equal(a.tag - b.tag, delta)
+            assert a.tag - b.tag == delta
 
         # test hashability and equality
         hk = builder.HoppingKind((1, 0), g)

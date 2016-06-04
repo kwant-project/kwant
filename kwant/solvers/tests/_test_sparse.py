@@ -10,7 +10,7 @@
 from math import cos, sin
 import numpy as np
 from pytest import raises
-from numpy.testing import assert_equal, assert_almost_equal
+from numpy.testing import assert_almost_equal
 import kwant
 
 n = 5
@@ -214,7 +214,7 @@ def test_graph_system(smatrix):
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
     n_modes = len(leads[0].momenta) // 2
-    assert_equal(len(leads[1].momenta) // 2, n_modes)
+    assert len(leads[1].momenta) // 2 == n_modes
     assert_almost_equal(s[: n_modes, : n_modes], 0)
     t_elements = np.sort(abs(np.asarray(s[n_modes:, :n_modes])),
                          axis=None)
