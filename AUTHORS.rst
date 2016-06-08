@@ -8,6 +8,7 @@ The principal developers of Kwant are
 * Michael Wimmer (TU Delft)
 * Anton R. Akhmerov (TU Delft)
 * Xavier Waintal (INAC/CEA Grenoble)
+* Joseph Weston (INAC/CEA Grenoble)
 
 The authors can be reached at authors@kwant-project.org.
 
@@ -18,7 +19,6 @@ Other contributors to Kwant include
 * Michał Nowak (TU Delft)
 * Viacheslav Ostroukh (Leiden University)
 * Adrien Sorgniard (INAC/CEA Grenoble)
-* Joseph Weston (INAC/CEA Grenoble)
 
 We thank Christoph Gohlke for the creation of installers for Microsoft Windows.
 
