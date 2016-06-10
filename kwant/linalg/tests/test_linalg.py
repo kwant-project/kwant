@@ -10,7 +10,6 @@ from kwant.linalg import (
     lu_factor, lu_solve, rcond_from_lu, gen_eig, schur,
     convert_r2c_schur, order_schur, evecs_from_schur, gen_schur,
     convert_r2c_gen_schur, order_gen_schur, evecs_from_gen_schur)
-from nose.tools import assert_equal, assert_true
 import numpy as np
 from ._test_utils import _Random, assert_array_almost_equal
 
@@ -79,8 +78,8 @@ def test_rcond_from_lu():
         #the assertions here
         #Note: in my experience the estimate is excellent for somewhat
         #larger matrices
-        assert_true(err1/rcond1 < 0.1)
-        assert_true(errI/rcondI < 0.1)
+        assert err1/rcond1 < 0.1
+        assert errI/rcondI < 0.1
 
     _test_rcond_from_lu(np.float32)
     _test_rcond_from_lu(np.float64)
@@ -174,8 +173,8 @@ def test_evecs_from_schur():
 
         vl, vr = evecs_from_schur(t, q, select, left=True, right=True)
 
-        assert_equal(vr.shape[1], 2)
-        assert_equal(vl.shape[1], 2)
+        assert vr.shape[1] == 2
+        assert vl.shape[1] == 2
         assert_array_almost_equal(dtype, np.dot(a, vr),
                                   np.dot(vr, np.diag(ev[select])))
         assert_array_almost_equal(dtype, np.dot(vl.T.conj(), a),
@@ -183,8 +182,8 @@ def test_evecs_from_schur():
 
         vl, vr = evecs_from_schur(t, q, lambda i: i<2, left=True, right=True)
 
-        assert_equal(vr.shape[1], 2)
-        assert_equal(vl.shape[1], 2)
+        assert vr.shape[1] == 2
+        assert vl.shape[1] == 2
         assert_array_almost_equal(dtype, np.dot(a, vr),
                                   np.dot(vr, np.diag(ev[select])))
         assert_array_almost_equal(dtype, np.dot(vl.T.conj(), a),
@@ -318,8 +317,8 @@ def test_evecs_from_gen_schur():
         vl, vr = evecs_from_gen_schur(s, t, q, z, select,
                                       left=True, right=True)
 
-        assert_equal(vr.shape[1], 2)
-        assert_equal(vl.shape[1], 2)
+        assert vr.shape[1] == 2
+        assert vl.shape[1] == 2
         assert_array_almost_equal(dtype,
                                   np.dot(a, np.dot(vr,
                                                    np.diag(beta[select]))),
@@ -336,8 +335,8 @@ def test_evecs_from_gen_schur():
         vl, vr = evecs_from_gen_schur(s, t, q, z, lambda i: i<2, left=True,
                                       right=True)
 
-        assert_equal(vr.shape[1], 2)
-        assert_equal(vl.shape[1], 2)
+        assert vr.shape[1] == 2
+        assert vl.shape[1] == 2
         assert_array_almost_equal(dtype,
                                   np.dot(a, np.dot(vr,
                                                    np.diag(beta[select]))),

@@ -8,7 +8,7 @@
 
 import numpy as np
 from scipy import stats
-from nose.tools import assert_raises
+from pytest import raises
 from kwant import rmt
 assert_allclose = np.testing.assert_allclose
 
@@ -18,7 +18,7 @@ def test_gaussian_symmetries():
     for n in (5, 8, 100, 200):
         for sym in rmt.sym_list:
             if sym not in ('A', 'D', 'AI') and n % 2:
-                assert_raises(ValueError, rmt.gaussian, 5, sym)
+                raises(ValueError, rmt.gaussian, 5, sym)
                 continue
             h = rmt.gaussian(n, sym)
             if rmt.t(sym):
@@ -53,7 +53,7 @@ def test_circular():
     sy = np.kron(np.identity(n // 2), [[0, 1j], [-1j, 0]])
     for sym in rmt.sym_list:
         if rmt.t(sym) == -1 or rmt.p(sym) == -1:
-            assert_raises(ValueError, rmt.circular, 5, sym)
+            raises(ValueError, rmt.circular, 5, sym)
         s = rmt.circular(n, sym)
         assert_allclose(np.dot(s, s.T.conj()), np.identity(n), atol=1e-9,
                         err_msg='Unitarity broken in ' + sym)

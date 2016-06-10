@@ -9,8 +9,8 @@
 
 from math import cos, sin
 import numpy as np
-from nose.tools import assert_raises
-from numpy.testing import assert_equal, assert_almost_equal
+from pytest import raises
+from numpy.testing import assert_almost_equal
 import kwant
 
 n = 5
@@ -67,7 +67,7 @@ def test_output(smatrix):
     assert_almost_equal(abs(s1), abs(s2))
     assert_almost_equal(np.dot(s.T.conj(), s),
                         np.identity(s.shape[0]))
-    assert_raises(ValueError, smatrix, fsyst, out_leads=[])
+    raises(ValueError, smatrix, fsyst, out_leads=[])
     modes = smatrix(fsyst).lead_info
     h = fsyst.leads[0].cell_hamiltonian()
     t = fsyst.leads[0].inter_cell_hopping()
@@ -101,7 +101,7 @@ def test_one_lead(smatrix):
         assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                             np.identity(s.shape[0]))
 
-    assert_raises(ValueError, smatrix, fsyst.precalculate(what='selfenergy'))
+    raises(ValueError, smatrix, fsyst.precalculate(what='selfenergy'))
 
 # Test that a system with one lead with no propagating modes has a
 # 0x0 S-matrix.
@@ -175,7 +175,7 @@ def test_two_equal_leads(smatrix):
     fsyst = system.finalized()
     for syst in (fsyst, fsyst.precalculate(), fsyst.precalculate(what='all')):
         check_fsyst(syst)
-    assert_raises(ValueError, check_fsyst, fsyst.precalculate(what='selfenergy'))
+    raises(ValueError, check_fsyst, fsyst.precalculate(what='selfenergy'))
 
     # Test the same, but with a larger scattering region.
     system = kwant.Builder()
@@ -186,7 +186,7 @@ def test_two_equal_leads(smatrix):
     fsyst = system.finalized()
     for syst in (fsyst, fsyst.precalculate(), fsyst.precalculate(what='all')):
         check_fsyst(syst)
-    assert_raises(ValueError, check_fsyst, fsyst.precalculate(what='selfenergy'))
+    raises(ValueError, check_fsyst, fsyst.precalculate(what='selfenergy'))
 
 
 # Test a more complicated graph with non-singular hopping.
@@ -214,7 +214,7 @@ def test_graph_system(smatrix):
     assert_almost_equal(np.dot(s.conjugate().transpose(), s),
                         np.identity(s.shape[0]))
     n_modes = len(leads[0].momenta) // 2
-    assert_equal(len(leads[1].momenta) // 2, n_modes)
+    assert len(leads[1].momenta) // 2 == n_modes
     assert_almost_equal(s[: n_modes, : n_modes], 0)
     t_elements = np.sort(abs(np.asarray(s[n_modes:, :n_modes])),
                          axis=None)
@@ -337,7 +337,7 @@ def test_many_leads(*factories):
                     if i in out_leads and j in in_leads:
                         assert_almost_equal(br.transmission(i, j), trans[i, j])
                     else:
-                        assert_raises(ValueError, br.transmission, i, j)
+                        raises(ValueError, br.transmission, i, j)
             if len(out_leads) == len(in_leads) == 4:
                 assert_almost_equal(br.conductance_matrix(), cmat)
 
@@ -386,7 +386,7 @@ def test_selfenergy(greens_function, smatrix):
     for syst in (fsyst, fsyst.precalculate(what='selfenergy'),
                 fsyst.precalculate(what='all')):
         check_fsyst(syst)
-    assert_raises(ValueError, check_fsyst, fsyst.precalculate(what='modes'))
+    raises(ValueError, check_fsyst, fsyst.precalculate(what='modes'))
 
 
 def test_selfenergy_reflection(greens_function, smatrix):
@@ -415,7 +415,7 @@ def test_selfenergy_reflection(greens_function, smatrix):
                 fsyst.precalculate(what='all')):
         sol = greens_function(syst, 0, (), [0], [0])
         assert_almost_equal(sol.transmission(0,0), t.transmission(0,0))
-    assert_raises(ValueError, greens_function, fsyst.precalculate(what='modes'),
+    raises(ValueError, greens_function, fsyst.precalculate(what='modes'),
                   0, (), [0], [0])
 
 
@@ -448,9 +448,9 @@ def test_ldos(ldos):
                    fsyst.precalculate(what='all')):
         assert_almost_equal(ldos(finsyst, 0),
                             np.array([1, 1]) / (2 * np.pi))
-    assert_raises(ValueError, ldos, fsyst.precalculate(what='selfenergy'), 0)
+    raises(ValueError, ldos, fsyst.precalculate(what='selfenergy'), 0)
     fsyst.leads[0] = LeadWithOnlySelfEnergy(fsyst.leads[0])
-    assert_raises(NotImplementedError, ldos, fsyst, 0)
+    raises(NotImplementedError, ldos, fsyst, 0)
 
 
 def test_wavefunc_ldos_consistency(wave_function, ldos):
@@ -491,6 +491,6 @@ def test_wavefunc_ldos_consistency(wave_function, ldos):
     for fsyst in (syst, syst.precalculate(what='modes'),
                  syst.precalculate(what='all')):
         check(fsyst)
-    assert_raises(ValueError, check, syst.precalculate(what='selfenergy'))
+    raises(ValueError, check, syst.precalculate(what='selfenergy'))
     syst.leads[0] = LeadWithOnlySelfEnergy(syst.leads[0])
-    assert_raises(NotImplementedError, check, syst)
+    raises(NotImplementedError, check, syst)

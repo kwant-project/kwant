@@ -9,8 +9,7 @@
 from math import sqrt
 import numpy as np
 import tinyarray as ta
-from nose.tools import assert_raises, assert_not_equal
-from numpy.testing import assert_equal
+from pytest import raises
 from kwant import lattice, builder
 
 
@@ -24,7 +23,7 @@ def test_closest():
     lat = lattice.general(np.random.randn(3, 3))
     for i in range(50):
         tag = np.random.randint(10, size=(3,))
-        assert_equal(lat.closest(lat(*tag).pos), tag)
+        assert lat.closest(lat(*tag).pos) == tag
 
 
 def test_general():
@@ -34,12 +33,12 @@ def test_general():
         for sl in lat.sublattices:
             tag = (-5, 33)
             site = sl(*tag)
-            assert_equal(tag, sl.closest(site.pos))
+            assert tag == sl.closest(site.pos)
 
     # Test 2D lattice with 1 vector.
     lat = lattice.general([[1, 0]])
     site = lat(0)
-    assert_raises(ValueError, lat, 0, 1)
+    raises(ValueError, lat, 0, 1)
 
 
 def test_neighbors():
@@ -69,8 +68,8 @@ def test_shape():
                 if in_circle(site.pos):
                     sites_alt.append(site)
     assert len(sites) == len(sites_alt)
-    assert_equal(set(sites), set(sites_alt))
-    assert_raises(ValueError, lat.shape(in_circle, (10, 10))().__next__)
+    assert set(sites) == set(sites_alt)
+    raises(ValueError, lat.shape(in_circle, (10, 10))().__next__)
 
     # Check if narrow ribbons work.
     for period in (0, 1), (1, 0), (1, -1):
@@ -97,7 +96,7 @@ def test_wire():
     syst = builder.Builder(lattice.TranslationalSymmetry((2, 0, 0)))
     syst[lat.wire(center, 8.6)] = 1
     sites1 = set(syst.sites())
-    assert_equal(sites1, sites2)
+    assert sites1 == sites2
 
 
 def test_translational_symmetry():
@@ -106,47 +105,47 @@ def test_translational_symmetry():
     f3 = lattice.general(np.identity(3))
     shifted = lambda site, delta: site.family(*ta.add(site.tag, delta))
 
-    assert_raises(ValueError, ts, (0, 0, 4), (0, 5, 0), (0, 0, 2))
+    raises(ValueError, ts, (0, 0, 4), (0, 5, 0), (0, 0, 2))
     sym = ts((3.3, 0))
-    assert_raises(ValueError, sym.add_site_family, f2)
+    raises(ValueError, sym.add_site_family, f2)
 
     # Test lattices with dimension smaller than dimension of space.
     f2in3 = lattice.general([[4, 4, 0], [4, -4, 0]])
     sym = ts((8, 0, 0))
     sym.add_site_family(f2in3)
     sym = ts((8, 0, 1))
-    assert_raises(ValueError, sym.add_site_family, f2in3)
+    raises(ValueError, sym.add_site_family, f2in3)
 
     # Test automatic fill-in of transverse vectors.
     sym = ts((1, 2))
     sym.add_site_family(f2)
-    assert_not_equal(sym.site_family_data[f2][2], 0)
+    assert sym.site_family_data[f2][2] != 0
     sym = ts((1, 0, 2), (3, 0, 2))
     sym.add_site_family(f3)
-    assert_not_equal(sym.site_family_data[f3][2], 0)
+    assert sym.site_family_data[f3][2] != 0
 
     transl_vecs = np.array([[10, 0], [7, 7]], dtype=int)
     sym = ts(*transl_vecs)
-    assert_equal(sym.num_directions, 2)
+    assert sym.num_directions == 2
     sym2 = ts(*transl_vecs[: 1, :])
     sym2.add_site_family(f2, transl_vecs[1:, :])
     for site in [f2(0, 0), f2(4, 0), f2(2, 1), f2(5, 5), f2(15, 6)]:
         assert sym.in_fd(site)
         assert sym2.in_fd(site)
-        assert_equal(sym.which(site), (0, 0))
-        assert_equal(sym2.which(site), (0,))
+        assert sym.which(site), (0 == 0)
+        assert sym2.which(site) == (0,)
         for v in [(1, 0), (0, 1), (-1, 0), (0, -1), (5, 10), (-111, 573)]:
             site2 = shifted(site, np.dot(v, transl_vecs))
             assert not sym.in_fd(site2)
             assert (v[0] != 0) != sym2.in_fd(site2)
-            assert_equal(sym.to_fd(site2), site)
+            assert sym.to_fd(site2) == site
             assert (v[1] == 0) == (sym2.to_fd(site2) == site)
-            assert_equal(sym.which(site2), v)
-            assert_equal(sym2.which(site2), v[:1])
+            assert sym.which(site2) == v
+            assert sym2.which(site2) == v[:1]
 
             for hop in [(0, 0), (100, 0), (0, 5), (-2134, 3213)]:
-                assert_equal(sym.to_fd(site2, shifted(site2, hop)),
-                             (site, shifted(site, hop)))
+                assert (sym.to_fd(site2, shifted(site2, hop)) ==
+                        (site, shifted(site, hop)))
 
     # Test act for hoppings belonging to different lattices.
     f2p = lattice.general(2 * np.identity(2))
@@ -184,10 +183,10 @@ def test_translational_symmetry_reversed():
                 sym = lattice.TranslationalSymmetry(*periods)
                 rsym = sym.reversed()
                 for site in sites:
-                    assert_equal(sym.to_fd(site), rsym.to_fd(site))
-                    assert_equal(sym.which(site), -rsym.which(site))
+                    assert sym.to_fd(site) == rsym.to_fd(site)
+                    assert sym.which(site) == -rsym.which(site)
                     vec = np.array([1, 1, 1])
-                    assert_equal(sym.act(vec, site), rsym.act(-vec, site))
+                    assert sym.act(vec, site), rsym.act(-vec == site)
             except ValueError:
                 pass
 
@@ -202,31 +201,31 @@ def test_monatomic_lattice():
 def test_norbs():
     id_mat = np.identity(2)
     # Monatomic lattices
-    assert_equal(lattice.general(id_mat).norbs, None)
-    assert_equal(lattice.general(id_mat, norbs=2).norbs, 2)
+    assert lattice.general(id_mat).norbs == None
+    assert lattice.general(id_mat, norbs=2).norbs == 2
     # Polyatomic lattices
     lat = lattice.general(id_mat, basis=id_mat, norbs=None)
     for l in lat.sublattices:
-        assert_equal(l.norbs, None)
+        assert l.norbs == None
     lat = lattice.general(id_mat, basis=id_mat, norbs=2)
     for l in lat.sublattices:
-        assert_equal(l.norbs, 2)
+        assert l.norbs == 2
     lat = lattice.general(id_mat, basis=id_mat, norbs=[1, 2])
     for l, n in zip(lat.sublattices, [1, 2]):
-        assert_equal(l.norbs, n)
+        assert l.norbs == n
     # should raise ValueError for # of norbs different to length of `basis`
-    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=[])
-    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1, 2, 3])
+    raises(ValueError, lattice.general, id_mat, id_mat, norbs=[])
+    raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1, 2, 3])
     # TypeError if Monatomic lattice
-    assert_raises(TypeError, lattice.general, id_mat, norbs=[])
+    raises(TypeError, lattice.general, id_mat, norbs=[])
     # should raise ValueError if norbs not an integer
-    assert_raises(ValueError, lattice.general, id_mat, norbs=1.5)
-    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=1.5)
-    assert_raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1.5, 1.5])
+    raises(ValueError, lattice.general, id_mat, norbs=1.5)
+    raises(ValueError, lattice.general, id_mat, id_mat, norbs=1.5)
+    raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1.5, 1.5])
     # test that lattices with different norbs are compared `not equal`
     lat = lattice.general(id_mat, basis=id_mat, norbs=None)
     lat1 = lattice.general(id_mat, basis=id_mat, norbs=1)
     lat2 = lattice.general(id_mat, basis=id_mat, norbs=2)
-    assert_not_equal(lat, lat1)
-    assert_not_equal(lat, lat2)
-    assert_not_equal(lat1, lat2)
+    assert lat != lat1
+    assert lat != lat2
+    assert lat1 != lat2

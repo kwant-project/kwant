@@ -7,7 +7,7 @@
 # http://kwant-project.org/authors.
 
 import numpy as np
-from nose.tools import assert_raises
+from pytest import raises
 from numpy.testing import assert_almost_equal
 import kwant
 from kwant.physics import two_terminal_shotnoise
@@ -37,7 +37,7 @@ def test_multiterminal_input():
     syst = twoterminal_system()
     syst.attach_lead(syst.leads[0].builder)
     sol = kwant.smatrix(syst.finalized(), out_leads=[0], in_leads=[0])
-    assert_raises(ValueError, two_terminal_shotnoise, sol)
+    raises(ValueError, two_terminal_shotnoise, sol)
 
 
 def test_twoterminal():

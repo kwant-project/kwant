@@ -6,7 +6,6 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from nose.tools import assert_true
 import numpy as np
 # from kwant.graph import Graph, dissection
 # from kwant.graph.dissection import edge_dissection
@@ -41,4 +40,4 @@ def _DISABLED_test_edge_dissection():
             found[entry] += 1
 
     parse_tree(tree)
-    assert_true((found == 1).all())
+    assert (found == 1).all()
