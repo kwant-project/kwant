@@ -11,7 +11,6 @@
 __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 
 import abc
-import types
 from copy import copy
 from . import _system
 

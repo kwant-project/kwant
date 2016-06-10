@@ -22,7 +22,6 @@ this module.
 from math import pi, log, sqrt, cos
 from hashlib import md5
 from struct import unpack
-import sys
 
 __all__ = ['uniform', 'gauss', 'test']
 

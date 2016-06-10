@@ -3,4 +3,4 @@ job:
     - python3 setup.py build
     - python3 setup.py build_ext -i
     - make -C doc clean && make -C doc html
-    - py.test --cov=kwant kwant
+    - py.test --cov=kwant --flakes kwant

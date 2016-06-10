@@ -6,7 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['smatrx', 'ldos', 'wave_function', 'greens_function']
+__all__ = ['smatrix', 'ldos', 'wave_function', 'greens_function']
 
 # MUMPS usually works best.  Use SciPy as fallback.
 import warnings
