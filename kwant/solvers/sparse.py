@@ -8,7 +8,6 @@
 
 __all__ = ['smatrix', 'greens_function', 'ldos', 'wave_function', 'Solver']
 
-import warnings
 import numpy as np
 import scipy.sparse as sp
 from . import common

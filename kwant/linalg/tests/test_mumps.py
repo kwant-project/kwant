@@ -81,3 +81,10 @@ def test_error_minus_9(r=10):
 
     # No need to check result, it's enough if no exception is raised
     MUMPSContext().factor(ham)
+
+
+def test_factor_warning():
+    """Test that a warning is raised if factor is asked without analysis."""
+    a = sp.identity(10, dtype=complex)
+    with pytest.warns(RuntimeWarning):
+        MUMPSContext().factor(a, reuse_analysis=True)

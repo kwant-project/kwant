@@ -15,7 +15,7 @@ import pytest
 
 if plotter.mpl_enabled:
     from mpl_toolkits import mplot3d
-    from matplotlib import pyplot
+    from matplotlib import pyplot  # pragma: no flakes
 
 
 def test_importable_without_matplotlib():

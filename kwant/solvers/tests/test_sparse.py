@@ -7,7 +7,6 @@
 # http://kwant-project.org/authors.
 
 from  kwant.solvers.sparse import smatrix, greens_function, ldos, wave_function
-import kwant.solvers.sparse
 from . import _test_sparse
 
 def test_output():
