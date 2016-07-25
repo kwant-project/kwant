@@ -1,6 +1,6 @@
 job:
   script:
-    - python3 setup.py build
-    - python3 setup.py build_ext -i
+    - python3 setup.py build --cython-trace
+    - python3 setup.py build_ext --cython-trace -i
     - make -C doc clean && make -C doc html
     - py.test --cov=kwant --flakes kwant

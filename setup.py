@@ -48,6 +48,7 @@ README_END_BEFORE = 'See also in this directory:'
 STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
 REQUIRED_CYTHON_VERSION = (0, 22)
 CYTHON_OPTION = '--cython'
+CYTHON_TRACE_OPTION = '--cython-trace'
 TUT_DIR = 'tutorial'
 TUT_GLOB = 'doc/source/tutorial/*.py'
 TUT_HIDDEN_PREFIX = '#HIDDEN'
@@ -79,6 +80,16 @@ try:
     use_cython = True
 except ValueError:
     use_cython = version_is_from_git
+
+try:
+    sys.argv.remove(CYTHON_TRACE_OPTION)
+    trace_cython = True
+    if not use_cython:
+        print('error: --cython-trace provided, but cython will not be run',
+              file=sys.stderr)
+        exit(1)
+except ValueError:
+    trace_cython = False
 
 if use_cython:
     try:
@@ -312,6 +323,13 @@ def extensions():
                       'kwant/graph/c_slicer/partitioner.h',
                       'kwant/graph/c_slicer/slicer.h']})]
 
+    #### Add cython tracing macro
+    if trace_cython:
+        for args, kwargs in result:
+            macros = kwargs.get('define_macros', [])
+            macros.append(('CYTHON_TRACE', '1'))
+            kwargs['define_macros'] = macros
+
     #### Add components of Kwant with external compile-time dependencies.
     config = configparser.ConfigParser()
     try:
@@ -383,7 +401,9 @@ def ext_modules(extensions):
     """
     if use_cython and cython_version >= REQUIRED_CYTHON_VERSION:
         return cythonize([Extension(*args, **kwrds)
-                          for args, kwrds in extensions], language_level=3)
+                          for args, kwrds in extensions], language_level=3,
+                         compiler_directives={'linetrace': trace_cython}
+                        )
 
     # Cython is not going to be run: replace pyx extension by that of
     # the shipped translated file.
