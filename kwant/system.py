@@ -36,7 +36,7 @@ class System(metaclass=abc.ABCMeta):
     The sites of the system are indexed by integers ranging from 0 to
     ``self.graph.num_nodes - 1``.
 
-    Optionally, a class derived from `System` can provide a method `pos` which
+    Optionally, a class derived from ``System`` can provide a method ``pos`` which
     is assumed to return the real-space position of a site given its index.
 
     Due to the ordering semantics of sequences, and the fact that a given
@@ -49,11 +49,11 @@ class System(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def hamiltonian(self, i, j, *args):
-        """Return the hamiltonian matrix element for sites `i` and `j`.
+        """Return the hamiltonian matrix element for sites ``i`` and ``j``.
 
-        If ``i == j``, return the on-site Hamiltonian of site `i`.
+        If ``i == j``, return the on-site Hamiltonian of site ``i``.
 
-        if ``i != j``, return the hopping between site `i` and `j`.
+        if ``i != j``, return the hopping between site ``i`` and ``j``.
 
         Hamiltonians may depend (optionally) on positional and
         keyword arguments
@@ -79,12 +79,12 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
 
     Notes
     -----
-    The length of `leads` must be equal to the length of `lead_interfaces`.
+    The length of ``leads`` must be equal to the length of ``lead_interfaces``.
 
     For lead ``n``, the method leads[n].selfenergy must return a square matrix
     whose size is ``sum(len(self.hamiltonian(site, site)) for site in
     self.lead_interfaces[n])``. The output of ``leads[n].modes`` has to be a
-    tuple of `~kwant.physics.PropagatingModes, ~kwant.physics.StabilizedModes`.
+    tuple of `~kwant.physics.PropagatingModes`, `~kwant.physics.StabilizedModes`.
 
     Often, the elements of `leads` will be instances of `InfiniteSystem`.  If
     this is the case for lead ``n``, the sites ``lead_interfaces[n]`` match
@@ -109,7 +109,7 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
         args : sequence
             Additional parameters required for calculating the Hamiltionians
         leads : sequence of integers or None
-            Numbers of the leads to be precalculated. If `None`, all are
+            Numbers of the leads to be precalculated. If ``None``, all are
             precalculated.
         what : 'modes', 'selfenergy', 'all'
             The quantitity to precompute. 'all' will compute both
@@ -152,8 +152,7 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
         return result
 
 class InfiniteSystem(System, metaclass=abc.ABCMeta):
-    """
-    Abstract infinite low-level system.
+    """Abstract infinite low-level system.
 
     An infinite system consists of an infinite series of identical cells.
     Adjacent cells are connected by identical inter-cell hoppings.
@@ -167,13 +166,13 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
     -----
     The system graph of an infinite systems contains a single cell, as well as
     the part of the previous cell which is connected to it.  The first
-    `cell_size` sites form one complete single cell.  The remaining `N` sites of
-    the graph (`N` equals ``graph.num_nodes - cell_size``) belong to the
+    `cell_size` sites form one complete single cell.  The remaining ``N`` sites
+    of the graph (``N`` equals ``graph.num_nodes - cell_size``) belong to the
     previous cell.  They are included so that hoppings between cells can be
-    represented.  The N sites of the previous cell correspond to the first `N`
-    sites of the fully included cell.  When an InfiniteSystem is used as a lead,
-    `N` acts also as the number of interface sites to which it must be
-    connected.
+    represented.  The N sites of the previous cell correspond to the first
+    ``N`` sites of the fully included cell.  When an ``InfiniteSystem`` is used
+    as a lead, ``N`` acts also as the number of interface sites to which it
+    must be connected.
 
     The drawing shows three cells of an infinite system.  Each cell consists
     of three sites.  Numbers denote sites which are included into the system
@@ -192,6 +191,7 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
     The numbering of sites in the drawing is one of the two valid ones for that
     infinite system.  The other scheme has the numbers of site 0 and 1
     exchanged, as well as of site 3 and 4.
+
     """
 
     def cell_hamiltonian(self, args=(), sparse=False):
@@ -252,7 +252,7 @@ class PrecalculatedLead:
 
         Notes
         -----
-        At least one of `modes` and `selfenergy` must be provided.
+        At least one of ``modes`` and ``selfenergy`` must be provided.
         """
         if modes is None and selfenergy is None:
             raise ValueError("No precalculated values provided.")

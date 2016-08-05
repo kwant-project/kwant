@@ -4,7 +4,7 @@ Installation of Kwant
 
 Ready-to-use Kwant packages are available for many platforms (like GNU/Linux,
 Mac OS X, Microsoft Windows).  See the `installation page of the Kwant website
-<http://kwant-project.org/install>`_ for instructions on how to install Kwant
+<https://kwant-project.org/install>`_ for instructions on how to install Kwant
 on your platform.  This is the recommended way for new users.
 
 The remainder of this section documents how to build Kwant from source.  This
@@ -19,27 +19,27 @@ Prerequisites
 =============
 
 Building Kwant requires
- * `Python <http://python.org>`_ 3.4 or above (Kwant 1.1 is the last version to
-   support Python 2),
+ * `Python <https://www.python.org>`_ 3.4 or above (Kwant 1.1 is the last
+   version to support Python 2),
  * `SciPy <http://scipy.org>`_ 0.9 or newer,
  * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
-   <http://xianyi.github.com/OpenBLAS/>`_ or the nonfree `MKL
-   <http://software.intel.com/en-us/intel-mkl>`_.)
+   <http://www.openblas.net/>`_ or the nonfree `MKL
+   <https://software.intel.com/en-us/intel-mkl>`_.)
  * `Tinyarray <https://gitlab.kwant-project.org/kwant/tinyarray>`_, a NumPy-like
    Python package optimized for very small arrays,
  * An environment which allows to compile Python extensions written in C and
    C++.
 
 The following software is highly recommended though not strictly required:
- * `matplotlib <http://matplotlib.sourceforge.net/>`_ 1.1 or newer, for Kwant's
+ * `matplotlib <http://matplotlib.org/>`_ 1.1 or newer, for Kwant's
    plotting module and the tutorial,
  * `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
    that will in many cases speed up Kwant several times and reduce the memory
    footprint.  (Kwant uses only the sequential, single core version
    of MUMPS.  The advantages due to MUMPS as used by Kwant are thus independent
    of the number of CPU cores of the machine on which Kwant runs.)
- * The `py.test testing framework <http://http://pytest.org/>`_ for running the
+ * The `py.test testing framework <http://pytest.org/>`_ for running the
    tests included with Kwant.
 
 In addition, to build a copy of Kwant that has been checked-out directly from
@@ -52,8 +52,8 @@ Building and installing Kwant
 =============================
 
 Kwant can be built and installed following the `usual Python conventions
-<http://docs.python.org/install/index.html>`_ by running the following commands
-in the root directory of the Kwant distribution. ::
+<https://docs.python.org/3/install/index.html>`_ by running the following
+commands in the root directory of the Kwant distribution. ::
 
     python3 setup.py build
     python3 setup.py install
@@ -88,7 +88,7 @@ configuration file consists of sections, one for each dependency, led by a
 [dependency-name] header and followed by name = value entries.  Possible names
 are keyword arguments for ``distutils.core.Extension`` (For a complete list,
 see its `documentation
-<http://docs.python.org/3/distutils/apiref.html#distutils.core.Extension>`_).
+<https://docs.python.org/3/distutils/apiref.html#distutils.core.Extension>`_).
 The corresponding values are whitespace-separated lists of strings.
 
 The two currently possible sections are [lapack] and [mumps].  The former
@@ -111,14 +111,14 @@ Example ``build.conf`` for linking Kwant with Intel MKL.::
 
 The detailed syntax of ``build.conf`` is explained in the `documentation of
 Python's configparser module
-<http://docs.python.org/3/library/configparser.html#supported-ini-file-structure>`_.
+<https://docs.python.org/3/library/configparser.html#supported-ini-file-structure>`_.
 
 
 Building the documentation
 ==========================
 
 To build the documentation, the `Sphinx documentation generator
-<http://sphinx.pocoo.org/>`_ is required with ``numpydoc`` extension
+<http://www.sphinx-doc.org/en/stable/>`_ is required with ``numpydoc`` extension
 (version 0.5 or newer).  If PDF documentation is to be built, the tools
 from the `libRSVG <http://live.gnome.org/LibRsvg>`_ (Debian/Ubuntu package
 ``librsvg2-bin``) are needed to convert SVG drawings into the PDF format.
@@ -176,13 +176,13 @@ to be updated for Kwant 1.2.  (Help is welcome.)
 
 The required dependencies of Kwant are best installed with one of the packaging
 systems. Here we only consider the case of `MacPorts
-<http://www.macports.org>`_ in detail. Some remarks for homebrew are given
+<https://www.macports.org>`_ in detail. Some remarks for homebrew are given
 below.
 
 1. Install a recent version of MacPorts, as explained in the `installation
-   instructions of MacPorts <http://www.macports.org/install.php>`_.  `The
+   instructions of MacPorts <https://www.macports.org/install.php>`_.  `The
    MacPorts section of the Kwant website
-   <http://kwant-project.org/install#mac-os-x-macports>`_ may be also of
+   <https://kwant-project.org/install#mac-os-x-macports>`_ may be also of
    interest.  (Note that it describes how to install Kwant using a ports file,
    while the aim here is to install from source manually.)
 

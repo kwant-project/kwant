@@ -1,6 +1,77 @@
-job:
+image: kwant/testing
+
+stages:
+  - build
+  - test
+  - deploy
+
+build package:
+  stage: build
   script:
-    - python3 setup.py build --cython-trace
-    - python3 setup.py build_ext --cython-trace -i
-    - make -C doc clean && make -C doc html
+    - ./setup.py build --cython-trace
+    - ./setup.py build_ext --cython-trace -i
+  artifacts:
+    untracked: true
+    expire_in: 1 hour
+
+check for whitespace:
+  stage: build
+  script:
+    - "! for f in `git ls-files | grep -v \\.diff$`; do file $f | grep -q ' text' && grep -l '[[:blank:]]$' $f; done | grep . >&2"
+  allow_failure: true
+
+check for dependencies installed:
+  stage: test
+  script:
+    - if [ -d .eggs ]; then echo "$(ls -d .eggs/*/) downloaded by build, update build environment" >&2; fi
+  allow_failure: true
+
+build documentation:
+  stage: test
+  script:
+    - make -C doc realclean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W'
+  artifacts:
+    paths:
+      - doc/build/html/
+    expire_in: 1 month
+
+run tests:
+  stage: test
+  script:
     - py.test --cov=kwant --flakes kwant
+
+check for broken links in doc:
+  stage: test
+  script:
+    - make -C doc linkcheck
+  allow_failure: true
+
+upload documentation to the test server:
+  stage: deploy
+  only:
+    - branches@kwant/kwant
+  script:
+    - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
+    - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    - rsync -rlv --delete doc/build/html/* kwant@kwant-project.org:doc/dev
+    - rm -rf ~/.ssh
+
+upload dev version docs:
+  stage: deploy
+  only:
+    - master@kwant/kwant
+  script:
+    - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
+    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    - rsync -rlv --delete doc/build/html/* kwant@kwant-project.org:doc/dev
+    - rm -rf ~/.ssh
+
+upload docs of tagged build:
+  stage: deploy
+  only:
+     - /^v[0-9]+\.[0-9]+.[0-9]+$/@kwant/kwant
+  script:
+    - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
+    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    - rsync -rlv --delete doc/build/html/* kwant@kwant-project.org:doc/test$(echo $CI_BUILD_TAG | sed 's/v\([0-9]\+\.[0-9]\+\)\.[0-9]\+/\1/')
+    - rm -rf ~/.ssh

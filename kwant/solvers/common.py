@@ -409,7 +409,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
         This function can be used to calculate the conductance and other
         transport properties of a system.  It is often slower and less stable
         than the scattering matrix-based calculation executed by
-        `~kwant.smatrix`, and is currently provided mostly for testing
+        `~kwant.solvers.common.smatrix`, and is currently provided mostly for testing
         purposes and compatibility with RGF code.
 
         It returns an object encapsulating the Green's function elements

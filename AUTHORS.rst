@@ -22,12 +22,12 @@ Other contributors to Kwant include
 
 We thank Christoph Gohlke for the creation of installers for Microsoft Windows.
 
-`CEA <http://cea.fr>`_ is the French Commissariat à l'énergie atomique et aux
+`CEA <http://www.cea.fr>`_ is the French Commissariat à l'énergie atomique et aux
 énergies alternatives.  The CEA is the copyright holder for the contributions of
 C. W. Groth, X. Waintal, and its other employees involved in Kwant.
 
 To find out who wrote a certain part of Kwant, please use the "blame" feature of
-`Git <http://git-scm.com/>`_, the version control system.
+`Git <https://git-scm.com/>`_, the version control system.
 
 
 Funding

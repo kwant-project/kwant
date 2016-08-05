@@ -1,8 +1,10 @@
 What's new in Kwant 1.1
 =======================
 
-This article explains the user-visible changes in Kwant 1.1, released on 21 October 2015.
-Please consult the `full list of changes in Kwant <http://git.kwant-project.org/kwant/log/?h=stable>`_ for all the changes up to the most recent bugfix release.
+This article explains the user-visible changes in Kwant 1.1, released on 21
+October 2015.  Please consult the `full list of changes in Kwant
+<https://git.kwant-project.org/kwant/log/?h=stable>`_ for all the changes up to
+the most recent bugfix release.
 
 Harmonize `~kwant.physics.Bands` with `~kwant.physics.modes`
 ------------------------------------------------------------
@@ -51,11 +53,11 @@ book by S. Datta.
 
 Deduction of transmission probabilities
 ---------------------------------------
-If `kwant.smatrix` or `kwant.greens_function` have been called with
-``check_hermicity=True`` (on by default) and a restricted number of leads in
-the ``out_leads`` and ``in_leads`` parameters, calls to ``transmission`` and
-``conductance_matrix`` will work whenever it is possible to deduce the result
-from current conservation.
+If `~kwant.solvers.common.smatrix` or `~kwant.solvers.common.greens_function`
+have been called with ``check_hermicity=True`` (on by default) and a restricted
+number of leads in the ``out_leads`` and ``in_leads`` parameters, calls to
+``transmission`` and ``conductance_matrix`` will work whenever it is possible
+to deduce the result from current conservation.
 
 This allows leaving out one lead (preferably the widest) from ``out_leads``
 and ``in_leads``, and still to calculate all transmission probabilities.
@@ -76,7 +78,7 @@ the error message will be more helpful now.
 
 Please continue reporting confusing error messages on the Kwant mailing list.
 
-New option ``pos_transform`` of `~kwant.plotter.map`
+New option ``pos_transform`` of `kwant.plotter.map`
 ----------------------------------------------------------------
 This option which already existed for `kwant.plotter.plot` is now also
 available for `kwant.plotter.map`.

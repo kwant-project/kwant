@@ -89,6 +89,6 @@ wave function in the scattering region due to any mode of any lead.
 Return value of sparse solver
 -----------------------------
 The function `~kwant.solvers.default.solve` of sparse solvers now
-always returns a single instance of `~kwant.solvers.common.BlockResult`.  The
+always returns a single instance of ``BlockResult``.  The
 latter has been generalized to include more information for leads defined as
 infinite systems.

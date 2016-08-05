@@ -2,8 +2,9 @@ What's new in Kwant 1.0
 =======================
 
 This article explains the new features in Kwant 1.0 compared to Kwant 0.2.
-Kwant 1.0 was released on 9 September 2013.
-Please consult the `full list of changes in Kwant <http://git.kwant-project.org/kwant/log/?h=v1.0.5>`_ for all the changes up to the most recent bugfix release.
+Kwant 1.0 was released on 9 September 2013.  Please consult the `full list of
+changes in Kwant <https://git.kwant-project.org/kwant/log/?h=v1.0.5>`_ for all
+the changes up to the most recent bugfix release.
 
 
 Lattice and shape improvements
@@ -61,7 +62,7 @@ Some renames
   scattering matrix, the latter the retarded Green's function between the sites
   adjacent to the leads. It is temporarily not possible to mix self-energy and
   modes leads within the same system.
-* The object that contained the results, `BlockResult` was also split into
+* The object that contained the results, ``BlockResult`` was also split into
   `~kwant.solvers.common.SMatrix` and `~kwant.solvers.common.GreensFunction`.
 
 Band structure plots
@@ -71,8 +72,8 @@ structure was implemented.
 
 Immutable site families
 -----------------------
-In order to make naming more consistent, `kwant.make_lattice` was renamed and
-can be found now as `~kwant.lattice.general`. Classes ``Chain``, ``Square``,
+In order to make naming more consistent, ``kwant.make_lattice`` was renamed and
+can be found now as `kwant.lattice.general`. Classes ``Chain``, ``Square``,
 and ``Honeycomb`` from `~kwant.lattice` were made functions
 `~kwant.lattice.chain`, `~kwant.lattice.square`, and
 `~kwant.lattice.honeycomb`.

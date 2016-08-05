@@ -39,7 +39,7 @@ realistic parameters).
 The tight-binding model corresponding to the Rashba-Hamiltonian naturally
 exhibits a 2x2-matrix structure of onsite energies and hoppings.  In order to
 use matrices in our program, we import the Tinyarray package.  (`NumPy
-<http://numpy.scipy.org/>`_ would work as well, but Tinyarray is much faster
+<http://www.numpy.org/>`_ would work as well, but Tinyarray is much faster
 for small arrays.)
 
 .. literalinclude:: spin_orbit.py

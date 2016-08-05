@@ -7,8 +7,7 @@ commented extensively. In addition, you will find notes about more subtle,
 technical details at the end of each example. At first reading, these notes may
 be safely skipped.
 
-A scientific article about Kwant is available as well, see `Kwant
-website <http://kwant-project.org/citing.html>`_.
+A scientific article about Kwant is available as well, see :doc:`/pre/citing`.
 
 The article introduces Kwant with a somewhat different focus than the tutorial
 and it is the authors' intention that both texts complement each other.  While
@@ -26,14 +25,14 @@ transport in mesoscopic systems" by Supriyo Datta.
 The Python programming language
 ...............................
 
-Kwant is a library for `Python <http://python.org/>`_.  Care was taken to fit
-well with the spirit of the language and to take advantage of its expressive
-power.  If you do not know Python yet, do not fear: Python is widely regarded
-as one of the most accessible programming languages.  For an introduction we
-recommend the `official Python Tutorial <http://docs.python.org/2/tutorial/>`_.
-The `Beginner's Guide to Python <http://wiki.python.org/moin/BeginnersGuide>`_
-contains a wealth of links to other tutorials, guides and books including some
-for absolute beginners.
+Kwant is a library for `Python <https://www.python.org/>`_.  Care was taken to
+fit well with the spirit of the language and to take advantage of its
+expressive power.  If you do not know Python yet, do not fear: Python is widely
+regarded as one of the most accessible programming languages.  For an
+introduction we recommend the `official Python Tutorial
+<https://docs.python.org/3/tutorial/>`_.  The `Beginner's Guide to Python
+<https://wiki.python.org/moin/BeginnersGuide>`_ contains a wealth of links to
+other tutorials, guides and books including some for absolute beginners.
 
 Kwant
 .....

@@ -16,7 +16,7 @@ except ImportError:
     no_mumps = True
 
 pytestmark = pytest.mark.skipif(no_mumps, reason="MUMPS not installed")
-    
+
 opt_list=[{},
           {'nrhs' : 1},
           {'nrhs' : 10},

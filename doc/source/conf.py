@@ -260,3 +260,13 @@ class BoundMethodDocumenter(autodoc.FunctionDocumenter):
 
 def setup(app):
     app.add_autodocumenter(BoundMethodDocumenter)
+
+
+# IOP times out on check but the link verified and correct.
+linkcheck_ignore = [r'https://iopscience.iop.org/1367-2630/16/6/063065/article']
+
+nitpick_ignore = [('py:class', 'Warning'), ('py:class', 'Exception'),
+                  ('py:class', 'object'), ('py:class', 'tuple'),
+                  ('py:class', 'kwant.operator._LocalOperator'),
+                  ('py:class', 'numpy.ndarray'),
+                  ('py:class', 'kwant.solvers.common.BlockResult')]

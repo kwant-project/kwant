@@ -1,7 +1,7 @@
 :mod:`kwant.system` -- Low-level interface of systems
 *****************************************************
 
-.. currentmodule:: kwant.system
+.. automodule:: kwant.system
 
 This module is the binding link between constructing tight-binding systems and
 doing calculations with these systems.  It defines the interface which any

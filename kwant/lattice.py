@@ -123,7 +123,7 @@ class Polyatomic:
         """Return a key for all the lattice sites inside a given shape.
 
         The object returned by this method is primarily meant to be used as a
-        key for indexing `kwant.Builder` instances.  See example below.
+        key for indexing `~kwant.builder.Builder` instances.  See example below.
 
         Parameters
         ----------
@@ -219,7 +219,7 @@ class Polyatomic:
 
         This method makes it easy to define cylindrical (2d: rectangular) leads
         that point in any direction.  The object returned by this method is
-        primarily meant to be used as a key for indexing `kwant.Builder`
+        primarily meant to be used as a key for indexing `~kwant.builder.Builder`
         instances.  See example below.
 
         Parameters
@@ -424,7 +424,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
     def __init__(self, prim_vecs, offset=None, name='', norbs=None):
         prim_vecs = ta.array(prim_vecs, float)
         if prim_vecs.ndim != 2:
-            raise ValueError('`prim_vecs` must be a 2d array-like object.')
+            raise ValueError('``prim_vecs`` must be a 2d array-like object.')
         dim = prim_vecs.shape[1]
         if name is None:
             name = ''
@@ -491,7 +491,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
 
     def closest(self, pos):
         """
-        Find the lattice coordinates of the site closest to position `pos`.
+        Find the lattice coordinates of the site closest to position ``pos``.
         """
         return ta.array(self.n_closest(pos)[0])
 

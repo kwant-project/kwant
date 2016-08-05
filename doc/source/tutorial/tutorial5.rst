@@ -168,7 +168,7 @@ above the gap. At the gap edge, we observe a resonant Andreev reflection.
     - It is in fact possible to separate electron and hole degrees of
       freedom in the scattering matrix, even if one uses matrices for
       these degrees of freedom. In the solve step,
-      `~kwant.solvers.common.SparseSolver.smatrix` returns an array containing
+      `~kwant.solvers.common.smatrix` returns an array containing
       the transverse wave functions of the lead modes (in
       `SMatrix.lead_info <kwant.solvers.common.SMatrix.lead_info>`.
       By inspecting the wave functions, electron and hole wave

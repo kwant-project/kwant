@@ -41,7 +41,7 @@ class Solver(common.SparseSolver):
             (at the cost of slower performance). Default value is 6.
         ordering : string
             one of the ordering methods supported by the MUMPS solver (see
-            `~kwant.linalg.mumps`. The availability of certain orderings
+            ``kwant.linalg.mumps``. The availability of certain orderings
             depends on the MUMPS installation.), or 'kwant_decides'.  If
             ``ordering=='kwant_decides'``, the ordering that typically gives
             the best performance is chosen from the available ones.  One can

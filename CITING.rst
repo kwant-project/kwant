@@ -15,7 +15,7 @@ cite the main paper that introduces Kwant:
   C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal,
   *Kwant: a software package for quantum transport*,
   `New J. Phys. 16, 063065 (2014)
-  <http://iopscience.iop.org/1367-2630/16/6/063065/article>`_.
+  <https://iopscience.iop.org/1367-2630/16/6/063065/article>`_.
 
 
 Other references we ask you to consider

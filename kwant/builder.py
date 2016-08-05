@@ -283,7 +283,7 @@ class Symmetry(metaclass=abc.ABCMeta):
         """Calculate the domain of the site.
 
         Return the group element whose action on a certain site from the
-        fundamental domain will result in the given `site`.
+        fundamental domain will result in the given ``site``.
         """
         pass
 
@@ -295,8 +295,8 @@ class Symmetry(metaclass=abc.ABCMeta):
     def to_fd(self, a, b=None):
         """Map a site or hopping to the fundamental domain.
 
-        If `b` is None, return a site equivalent to `a` within the fundamental
-        domain.  Otherwise, return a hopping equivalent to `(a, b)` but where
+        If ``b`` is None, return a site equivalent to ``a`` within the fundamental
+        domain.  Otherwise, return a hopping equivalent to ``(a, b)`` but where
         the first element belongs to the fundamental domain.
 
         This default implementation works but may be not efficient.
@@ -305,7 +305,7 @@ class Symmetry(metaclass=abc.ABCMeta):
         return self.act(-self.which(a), a, b)
 
     def in_fd(self, site):
-        """Tell whether `site` lies within the fundamental domain."""
+        """Tell whether ``site`` lies within the fundamental domain."""
         for d in self.which(site):
             if d != 0:
                 return False
@@ -1492,8 +1492,8 @@ class FiniteSystem(system.FiniteSystem):
         return value
 
     def site(self, i):
-        warnings.warn("The function `site` will disappear after Kwant 1.1.  "
-                      "Use `sites` instead.", KwantDeprecationWarning,
+        warnings.warn("The function ``site`` will disappear after Kwant 1.1.  "
+                      "Use ``sites`` instead.", KwantDeprecationWarning,
                       stacklevel=2)
         return self.sites[i]
 
@@ -1552,8 +1552,8 @@ class InfiniteSystem(system.InfiniteSystem):
         return value
 
     def site(self, i):
-        warnings.warn("The function `site` will disappear after Kwant 1.1.  "
-                      "Use `sites` instead.", KwantDeprecationWarning,
+        warnings.warn("The function ``site`` will disappear after Kwant 1.1.  "
+                      "Use ``sites`` instead.", KwantDeprecationWarning,
                       stacklevel=2)
         return self.sites[i]
 

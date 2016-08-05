@@ -252,9 +252,9 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
     to_sites : sequence of sites or None (default)
     from_sites : sequence of sites or None (default)
     sparse : bool
-        Whether to return a sparse or a dense matrix. Defaults to `False`.
+        Whether to return a sparse or a dense matrix. Defaults to ``False``.
     return_norb : bool
-        Whether to return arrays of numbers of orbitals.  Defaults to `False`.
+        Whether to return arrays of numbers of orbitals.  Defaults to ``False``.
 
     Returns
     -------
@@ -262,16 +262,16 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
         Submatrix of Hamiltonian of the system.
     to_norb : array of integers
         Numbers of orbitals on each site in to_sites.  Only returned when
-        `return_norb` is true.
+        ``return_norb`` is true.
     from_norb : array of integers
         Numbers of orbitals on each site in from_sites.  Only returned when
-        `return_norb` is true.
+        ``return_norb`` is true.
 
     Notes
     -----
     The returned submatrix contains all the Hamiltonian matrix elements
-    from `from_sites` to `to_sites`.  The default for `from_sites` and
-    `to_sites` is `None` which means to use all sites of the system in the
+    from ``from_sites`` to ``to_sites``.  The default for ``from_sites`` and
+    ``to_sites`` is ``None`` which means to use all sites of the system in the
     order in which they appear.
     """
     cdef gint [:] to_norb, from_norb

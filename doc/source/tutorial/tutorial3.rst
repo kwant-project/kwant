@@ -122,7 +122,7 @@ better for the special case of a square lattice.
 
   - `~kwant.system.System.hamiltonian_submatrix` can also return a sparse
     matrix, if the optional argument ``sparse=True``. The sparse matrix is in
-    SciPy's `scipy.sparse.coo_matrix` format, which can be easily be converted
+    SciPy's ``scipy.sparse.coo_matrix`` format, which can be easily be converted
     to various other sparse matrix formats (see `SciPy's documentation
     <http://docs.scipy.org/doc/scipy/reference/>`_).
 

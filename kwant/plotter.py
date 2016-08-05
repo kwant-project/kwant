@@ -365,11 +365,11 @@ def set_colors(color, collection, cmap, norm=None):
     Parameters
     ----------
     color : color specification
-    collection : instance of a subclass of `matplotlib.collections.Collection`
+    collection : instance of a subclass of ``matplotlib.collections.Collection``
         Collection to which the color is added.
-    cmap : `matplotlib` color map specification or None
+    cmap : ``matplotlib`` color map specification or None
         Color map to be used if colors are specified as floats.
-    norm : `matplotlib` color norm
+    norm : ``matplotlib`` color norm
         Norm to be used if colors are specified as floats.
     """
 
@@ -402,7 +402,7 @@ def set_colors(color, collection, cmap, norm=None):
 symbol_dict = {'O': 'o', 's': ('p', 4, 45), 'S': ('P', 4, 45)}
 
 def get_symbol(symbols):
-    """Return the path corresponding to the description in `symbol`"""
+    """Return the path corresponding to the description in ``symbols``"""
     # Figure out if list of symbols or single symbol.
     if not hasattr(symbols, '__getitem__'):
         symbols = [symbols]
@@ -459,25 +459,25 @@ def symbols(axes, pos, symbol='o', size=1, reflen=None, facecolor='k',
     size: float or 1d array
         Size(s) of the symbols. Defaults to 1.
     reflen: float or None, optional
-        If `reflen` is `None`, the symbol sizes and linewidths are
+        If ``reflen`` is ``None``, the symbol sizes and linewidths are
         given in points (absolute size in the figure space). If
-        `reflen` is a number, the symbol sizes and linewidths are
-        given in units of `reflen` in data space (i.e. scales with the
-        scale of the plot). Defaults to `None`.
+        ``reflen`` is a number, the symbol sizes and linewidths are
+        given in units of ``reflen`` in data space (i.e. scales with the
+        scale of the plot). Defaults to ``None``.
     facecolor: color definition, optional
     edgecolor: color definition, optional
         Defines the fill and edge color of the symbol, repsectively.
         Either a single object that is a proper matplotlib color
         definition or a sequence of such objects of appropriate
         length.  Defaults to all black.
-    cmap : `matplotlib` color map specification or None
+    cmap : ``matplotlib`` color map specification or None
         Color map to be used if colors are specified as floats.
-    norm : `matplotlib` color norm
+    norm : ``matplotlib`` color norm
         Norm to be used if colors are specified as floats.
     zorder: int
         Order in which different collections are drawn: larger
-        `zorder` means the collection is drawn over collections with
-        smaller `zorder` values.
+        ``zorder`` means the collection is drawn over collections with
+        smaller ``zorder`` values.
     **kwargs : dict keyword arguments to
         pass to `PathCollection` or `Path3DCollection`, respectively.
 
@@ -548,9 +548,9 @@ def lines(axes, pos0, pos1, reflen=None, colors='k', linestyles='solid',
         Either a single object that is a proper matplotlib line style
         definition or a sequence of such objects of appropriate length.
         Defaults to all segments solid.
-    cmap : `matplotlib` color map specification or None
+    cmap : ``matplotlib`` color map specification or None
         Color map to be used if colors are specified as floats.
-    norm : `matplotlib` color norm
+    norm : ``matplotlib`` color norm
         Norm to be used if colors are specified as floats.
     zorder: int
         Order in which different collections are drawn: larger
@@ -623,9 +623,9 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
         The name of the target file or the target file itself
         (opened for writing).
     savefile_opts : (list, dict) or None
-        args and kwargs passed to `print_figure` of `matplotlib`
+        args and kwargs passed to `print_figure` of ``matplotlib``
     show : bool
-        Whether to call `matplotlib.pyplot.show()`.  Only has an effect if the
+        Whether to call ``matplotlib.pyplot.show()``.  Only has an effect if the
         output uses pyplot.
 
     Notes
@@ -695,7 +695,7 @@ def sys_leads_sites(sys, num_lead_cells=2):
     Returns
     -------
     sites : list of (site, lead_number, copy_number) tuples
-        A site is a `builder.Site` instance if the system is not finalized,
+        A site is a `~kwant.builder.Site` instance if the system is not finalized,
         and an integer otherwise.  For system sites `lead_number` is `None` and
         `copy_number` is `0`, for leads both are integers.
     lead_cells : list of slices
@@ -705,8 +705,8 @@ def sys_leads_sites(sys, num_lead_cells=2):
     Notes
     -----
     Leads are only supported if they are of the same type as the original
-    system, i.e.  sites of `builder.BuilderLead` leads are returned with an
-    unfinalized system, and sites of `system.InfiniteSystem` leads are
+    system, i.e.  sites of `~kwant.builder.BuilderLead` leads are returned with an
+    unfinalized system, and sites of ``system.InfiniteSystem`` leads are
     returned with a finalized system.
     """
     syst = sys  # for naming consistency within function bodies
@@ -821,7 +821,7 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
     Returns
     -------
     hoppings : list of (hopping, lead_number, copy_number) tuples
-        A site is a `builder.Site` instance if the system is not finalized,
+        A site is a `~kwant.builder.Site` instance if the system is not finalized,
         and an integer otherwise.  For system sites `lead_number` is `None` and
         `copy_number` is `0`, for leads both are integers.
     lead_cells : list of slices
@@ -831,8 +831,8 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
     Notes
     -----
     Leads are only supported if they are of the same type as the original
-    system, i.e.  hoppings of `builder.BuilderLead` leads are returned with an
-    unfinalized system, and hoppings of `system.InfiniteSystem` leads are
+    system, i.e.  hoppings of `~kwant.builder.BuilderLead` leads are returned with an
+    unfinalized system, and hoppings of `~kwant.system.InfiniteSystem` leads are
     returned with a finalized system.
     """
 
@@ -888,9 +888,9 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
 
     Parameters
     ----------
-    sys : `kwant.builder.Builder` or `kwant.system.System` instance
+    sys : ``~kwant.builder.Builder`` or ``~kwant.system.System`` instance
         The system, coordinates of sites of which should be returned.
-    hoppings : list of `(hopping, leadnr, copynr)` tuples
+    hoppings : list of ``(hopping, leadnr, copynr)`` tuples
         Output of `sys_leads_hoppings` applied to the system.
 
     Returns
@@ -902,8 +902,8 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
 
     Notes
     -----
-    This function uses `site.pos` property to get the position of a builder
-    site and `sys.pos(sitenr)` for finalized systems.  This function requires
+    This function uses ``site.pos`` property to get the position of a builder
+    site and ``sys.pos(sitenr)`` for finalized systems.  This function requires
     that all the positions of all the sites have the same dimensionality.
     """
 
@@ -1009,8 +1009,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
         - 'o': circle with radius of 1 unit.
         - 's': square with inner circle radius of 1 unit.
-        - `('p', nvert, angle)`: regular polygon with `nvert` vertices,
-          rotated by `angle`. `angle` is given in degrees, and ``angle=0``
+        - ``('p', nvert, angle)``: regular polygon with ``nvert`` vertices,
+          rotated by ``angle``. ``angle`` is given in degrees, and ``angle=0``
           corresponds to one edge of the polygon pointing upward. The
           radius of the inner circle is 1 unit.
         - 'no symbol': no symbol is plotted.
@@ -1026,17 +1026,17 @@ def plot(sys, num_lead_cells=2, unit='nn',
         symbols specifications (only for kwant.system.FiniteSystem).
     site_size : number, function, array, or `None`
         Relative (linear) size of the site symbol.
-    site_color : `matplotlib` color description, function, array, or `None`
+    site_color : ``matplotlib`` color description, function, array, or `None`
         A color used for plotting a site in the system. If a colormap is used,
         it should be a function returning single floats or a one-dimensional
         array of floats.
-    site_edgecolor : `matplotlib` color description, function, array, or `None`
+    site_edgecolor : ``matplotlib`` color description, function, array, or `None`
         Color used for plotting the edges of the site symbols. Only
         valid matplotlib color descriptions are allowed (and no
         combination of floats and colormap as for site_color).
     site_lw : number, function, array, or `None`
         Linewidth of the site symbol edges.
-    hop_color : `matplotlib` color description or a function
+    hop_color : ``matplotlib`` color description or a function
         Same as `site_color`, but for hoppings.  A function is passed two sites
         in this case. (arrays are not allowed in this case).
     hop_lw : number, function, or `None`
@@ -1050,19 +1050,19 @@ def plot(sys, num_lead_cells=2, unit='nn',
         below.
     lead_site_size : number or `None`
         Relative (linear) size of the lead symbol
-    lead_color : `matplotlib` color description or `None`
+    lead_color : ``matplotlib`` color description or `None`
         For the leads, `num_lead_cells` copies of the lead unit cell
         are plotted. They are plotted in color fading from `lead_color`
         to white (alpha values in `lead_color` are supported) when moving
         from the system into the lead. Is also applied to the
         hoppings.
-    lead_site_edgecolor : `matplotlib` color description or `None`
+    lead_site_edgecolor : ``matplotlib`` color description or `None`
         Color of the symbol edges (no fading done).
     lead_site_lw : number or `None`
         Linewidth of the lead symbols.
     lead_hop_lw : number or `None`
         Linewidth of the lead hoppings.
-    cmap : `matplotlib` color map or a sequence of two color maps or `None`
+    cmap : ``matplotlib`` color map or a sequence of two color maps or `None`
         The color map used for sites and optionally hoppings.
     pos_transform : function or `None`
         Transformation to be applied to the site position.
@@ -1072,15 +1072,15 @@ def plot(sys, num_lead_cells=2, unit='nn',
     file : string or file object or `None`
         The output file.  If `None`, output will be shown instead.
     show : bool
-        Whether `matplotlib.pyplot.show()` is to be called, and the output is
+        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
         to be shown immediately.  Defaults to `True`.
     dpi : float or `None`
-        Number of pixels per inch.  If not set the `matplotlib` default is
+        Number of pixels per inch.  If not set the ``matplotlib`` default is
         used.
     fig_size : tuple or `None`
         Figure size `(width, height)` in inches.  If not set, the default
-        `matplotlib` value is used.
-    ax : `matplotlib.axes.Axes` instance or `None`
+        ``matplotlib`` value is used.
+    ax : ``matplotlib.axes.Axes`` instance or `None`
         If `ax` is not `None`, no new figure is created, but the plot is done
         within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
         and `fig_size` are ignored.
@@ -1403,7 +1403,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
         Reference length.  If not given, it is determined as a typical
         nearest neighbor distance.
     method : string, optional
-        Passed to `scipy.interpolate.griddata`: "nearest" (default), "linear",
+        Passed to ``scipy.interpolate.griddata``: "nearest" (default), "linear",
         or "cubic"
     oversampling : integer, optional
         Number of pixels per reference length.  Defaults to 3.
@@ -1414,7 +1414,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
         The interpolated values.
     min, max : vectors
         The real-space coordinates of the two extreme ([0, 0] and [-1, -1])
-        points of `array`.
+        points of ``array``.
 
     Notes
     -----
@@ -1487,9 +1487,9 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     colorbar : bool, optional
         Whether to show a color bar if numerical data has to be plotted.
         Defaults to `True`. If `ax` is provided, the colorbar is never plotted.
-    cmap : `matplotlib` color map or `None`
+    cmap : ``matplotlib`` color map or `None`
         The color map used for sites and optionally hoppings, if `None`,
-        `matplotlib` default is used.
+        ``matplotlib`` default is used.
     vmin : float, optional
         The lower saturation limit for the colormap; values returned by
         `value` which are smaller than this will saturate
@@ -1500,7 +1500,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         Reference length.  If not given, it is determined as a typical
         nearest neighbor distance.
     method : string, optional
-        Passed to `scipy.interpolate.griddata`: "nearest" (default), "linear",
+        Passed to ``scipy.interpolate.griddata``: "nearest" (default), "linear",
         or "cubic"
     oversampling : integer, optional
         Number of pixels per reference length.  Defaults to 3.
@@ -1510,9 +1510,9 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     file : string or file object or `None`
         The output file.  If `None`, output will be shown instead.
     show : bool
-        Whether `matplotlib.pyplot.show()` is to be called, and the output is
+        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
         to be shown immediately.  Defaults to `True`.
-    ax : `matplotlib.axes.Axes` instance or `None`
+    ax : ``matplotlib.axes.Axes`` instance or `None`
         If `ax` is not `None`, no new figure is created, but the plot is done
         within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
         and `fig_size` are ignored.
@@ -1600,15 +1600,15 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
     file : string or file object or `None`
         The output file.  If `None`, output will be shown instead.
     show : bool
-        Whether `matplotlib.pyplot.show()` is to be called, and the output is
+        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
         to be shown immediately.  Defaults to `True`.
     dpi : float
-        Number of pixels per inch.  If not set the `matplotlib` default is
+        Number of pixels per inch.  If not set the ``matplotlib`` default is
         used.
     fig_size : tuple
         Figure size `(width, height)` in inches.  If not set, the default
-        `matplotlib` value is used.
-    ax : `matplotlib.axes.Axes` instance or `None`
+        ``matplotlib`` value is used.
+    ax : ``matplotlib.axes.Axes`` instance or `None`
         If `ax` is not `None`, no new figure is created, but the plot is done
         within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
         and `fig_size` are ignored.
@@ -1620,7 +1620,7 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
 
     Notes
     -----
-    See `physics.Bands` for the calculation of dispersion without plotting.
+    See `~kwant.physics.Bands` for the calculation of dispersion without plotting.
     """
 
     if not mpl_enabled:

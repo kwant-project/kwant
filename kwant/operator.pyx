@@ -424,7 +424,7 @@ cdef class _LocalOperator:
 
         Parameters
         ----------
-        bra, ket : `~numpy.ndarray`
+        bra, ket : ``numpy.ndarray``
             Must have the same length as the number of orbitals
             in the system. If only one is provided, both ``bra``
             and ``ket`` are taken as equal.
@@ -477,7 +477,7 @@ cdef class _LocalOperator:
 
         Parameters
         ----------
-        ket : `~numpy.ndarray`
+        ket : ``numpy.ndarray``
             Wavefunctions defined over all the orbitals of the system.
         args : tuple
             The extra arguments to the Hamiltonian value functions and
@@ -485,7 +485,7 @@ cdef class _LocalOperator:
 
         Returns
         -------
-        `~numpy.ndarray`
+        ``numpy.ndarray``
             The result of acting on the wavefunction with the operator
         """
         if (self._bound_onsite or self._bound_hamiltonian) and args:

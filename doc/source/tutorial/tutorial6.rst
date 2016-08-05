@@ -51,7 +51,7 @@ the start end end site of hopping as arguments:
     :start-after: #HIDDEN_BEGIN_plotsyst2
     :end-before: #HIDDEN_END_plotsyst2
 
-Note that since we are using an unfinalized Builder, a `site` is really an
+Note that since we are using an unfinalized Builder, a ``site`` is really an
 instance of `~kwant.builder.Site`. With these adjustments we arrive at a plot
 that carries the same information, but is much easier to interpret:
 
@@ -92,8 +92,8 @@ in `~kwant.plotter.map`). However, we can also use `~kwant.plotter.plot` to
 achieve a similar, but smoother result.
 
 For this note that `~kwant.plotter.plot` can also take an array of floats (or
-function returning floats) as value for the `site_color` argument (the same
-holds for the hoppings). Via the colormap specified in `cmap` these are mapped
+function returning floats) as value for the ``site_color`` argument (the same
+holds for the hoppings). Via the colormap specified in ``cmap`` these are mapped
 to color, just as `~kwant.plotter.map` does! In addition, we can also change
 the symbol shape depending on the sublattice. With a triangle pointing up and
 down on the respective sublattice, the symbols used by plot fill the space

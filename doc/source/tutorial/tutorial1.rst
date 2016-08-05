@@ -221,7 +221,7 @@ directly compute the total transmission probability from lead 0 to lead 1 as
 is the same as the numbering assigned by the call to
 `~kwant.builder.Builder.attach_lead` earlier in the tutorial.
 
-Finally we can use `matplotlib` to make a plot of the computed data
+Finally we can use ``matplotlib`` to make a plot of the computed data
 (although writing to file and using an external viewer such as
 gnuplot or xmgrace is just as viable)
 
@@ -512,4 +512,4 @@ The result of the example should be identical to the previous one.
 
 .. rubric:: Footnotes
 
-.. [#] http://docs.python.org/library/__main__.html
+.. [#] https://docs.python.org/3/library/__main__.html
