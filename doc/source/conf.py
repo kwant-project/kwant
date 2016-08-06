@@ -26,7 +26,7 @@ import kwant
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-              'sphinx.ext.todo', 'sphinx.ext.pngmath', 'numpydoc',
+              'sphinx.ext.todo', 'sphinx.ext.mathjax', 'numpydoc',
               'kwantdoc']
 
 # Add any paths that contain templates here, relative to this directory.
@@ -96,14 +96,6 @@ pygments_style = 'sphinx'
 numpydoc_show_class_members = False
 
 # -- Options for HTML output ---------------------------------------------------
-
-# http://stackoverflow.com/questions/9728292/creating-latex-math-macros-within-sphinx
-pngmath_latex_preamble = r"""\newcommand{\bra}[1]{\left\langle#1\right|}
-\newcommand{\ket}[1]{\left|#1\right>}
-\newcommand{\braket}[2]{\left\langle#1|#2\right\rangle}
-\newcommand{\ri}{\text{i}}
-\newcommand{\rd}{\text{d}}
-"""
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
@@ -201,7 +193,13 @@ r"""\makeatletter
     \renewcommand{\footrulewidth}{0.4pt}
   }
 \makeatother
-""" + pngmath_latex_preamble}
+
+\newcommand{\bra}[1]{\left\langle#1\right|}
+\newcommand{\ket}[1]{\left|#1\right>}
+\newcommand{\braket}[2]{\left\langle#1|#2\right\rangle}
+\newcommand{\ri}{\text{i}}
+\newcommand{\rd}{\text{d}}
+"""}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
