@@ -73,5 +73,5 @@ upload docs of tagged build:
   script:
     - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
     - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
-    - rsync -rlv --delete doc/build/html/* kwant@kwant-project.org:doc/test$(echo $CI_BUILD_TAG | sed 's/v\([0-9]\+\.[0-9]\+\)\.[0-9]\+/\1/')
+    - rsync -rlv --delete doc/build/html/* kwant@kwant-project.org:doc/$(echo $CI_BUILD_TAG | sed 's/v\([0-9]\+\.[0-9]\+\)\.[0-9]\+/\1/')
     - rm -rf ~/.ssh
