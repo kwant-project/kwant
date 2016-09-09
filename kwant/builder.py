@@ -79,7 +79,10 @@ class Site(tuple):
 
     @property
     def pos(self):
-        """Real space position of the site."""
+        """Real space position of the site.
+
+        This relies on ``family`` having a ``pos`` method (see `SiteFamily`).
+        """
         return self.family.pos(self.tag)
 
 
