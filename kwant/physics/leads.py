@@ -198,22 +198,22 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
     if (n_nonsing == n and stabilization is None):
         # The hopping matrix is well-conditioned and can be safely inverted.
         # Hence the regular transfer matrix may be used.
-        hop_inv = la.inv(h_hop)
+        h_hop_sqrt = sqrt(np.linalg.norm(h_hop))
+        A = h_hop / h_hop_sqrt
+        B = h_hop_sqrt
+        B_H_inv = 1.0 / B     # just a real scalar here
+        A_inv = la.inv(A)
 
-        A = np.zeros((2*n, 2*n), dtype=np.common_type(h_cell, h_hop))
-        A[:n, :n] = dot(hop_inv, -h_cell)
-        A[:n, n:] = -hop_inv
-        A[n:, :n] = h_hop.T.conj()
-
-        # The function that can extract the full wave function psi from the
-        # projected one. Here it is almost trivial, but used for simplifying
-        # the logic.
+        lhs = np.zeros((2*n, 2*n), dtype=np.common_type(h_cell, h_hop))
+        lhs[:n, :n] = -dot(A_inv, h_cell) * B_H_inv
+        lhs[:n, n:] = -A_inv * B
+        lhs[n:, :n] = A.T.conj() * B_H_inv
 
         def extract_wf(psi, lmbdainv):
-            return np.copy(psi[:n])
+            return B_H_inv * np.copy(psi[:n])
 
-        matrices = (A, None)
-        v_out = None
+        matrices = (lhs, None)
+        v_out = h_hop_sqrt * np.eye(n)
     else:
         if stabilization is None:
             stabilization = [None, False]
