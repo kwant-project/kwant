@@ -8,7 +8,6 @@
 
 
 import numpy as np
-from itertools import product
 from numpy.testing import assert_almost_equal
 from kwant.physics import leads
 import kwant
