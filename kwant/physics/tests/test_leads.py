@@ -224,7 +224,7 @@ def test_modes():
     v = 2 * t * np.sin(k)
     prop, stab = leads.modes(np.array([[h]]), np.array([[t]]))
     assert stab.nmodes == 1
-    assert stab.sqrt_hop is None
+    assert stab.sqrt_hop[0] == np.sqrt(np.linalg.norm(t))
     np.testing.assert_almost_equal(prop.velocities, [-v, v])
     np.testing.assert_almost_equal(prop.momenta, [k, -k])
     # Test for normalization by current.
@@ -255,7 +255,7 @@ def test_algorithm_equivalence():
     u, v = u * np.sqrt(s), vh.T.conj() * np.sqrt(s)
     prop_vecs = []
     evan_vecs = []
-    algos = [None] + list(product(*(2 * [(True, False)])))
+    algos = [None, (True, True), (True, False), (False, True), (False, False)]
     for algo in algos:
         result = leads.modes(h, t, stabilization=algo)[1]
 
@@ -266,7 +266,9 @@ def test_algorithm_equivalence():
             vecs = np.dot(v, vecs)
             np.testing.assert_almost_equal(result.sqrt_hop, v)
         else:
-            vecslmbdainv = np.dot(v.T.conj(), vecslmbdainv)
+            vecslmbdainv = (np.dot(v.T.conj(), vecslmbdainv) /
+                            np.sqrt(np.linalg.norm(t)))
+            vecs = vecs * np.sqrt(np.linalg.norm(t))
         full_vecs = np.r_[vecslmbdainv, vecs]
 
         prop_vecs.append(full_vecs[:, : 2 * result.nmodes])
@@ -340,3 +342,18 @@ def test_zero_hopping():
     assert all(np.alltrue(getattr(actual[0], attr) ==
                           getattr(expected[0], attr)) for attr
                    in ('wave_functions', 'velocities', 'momenta'))
+
+
+def make_clean_lead(W, E, t):
+    syst = kwant.Builder(kwant.TranslationalSymmetry((1, 0)))
+    lat = kwant.lattice.square()
+    syst[(lat(0, j) for j in range(W))] = E
+    syst[lat.neighbors()] = -t
+    return syst.finalized()
+
+
+def test_momenta():
+    """Test whether the two systems have the same momenta,
+    these should not change when the Hamiltonian is scaled."""
+    momenta = [make_clean_lead(10, s, s).modes()[0].momenta for s in [1, 1e20]]
+    assert_almost_equal(*momenta)

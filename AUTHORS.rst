@@ -11,10 +11,11 @@ The principal developers of Kwant are
 
 The authors can be reached at authors@kwant-project.org.
 
-Other contributors to Kwant include
+Contributors to Kwant include
 
 * Mathieu Istas (INAC/CEA Grenoble)
 * Daniel Jaschke (INAC/CEA Grenoble)
+* Bas Nijholt (TU Delft)
 * Michał Nowak (TU Delft)
 * Viacheslav Ostroukh (Leiden University)
 * Adrien Sorgniard (INAC/CEA Grenoble)
