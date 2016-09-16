@@ -12,10 +12,11 @@ The principal developers of Kwant are
 * `Xavier Waintal <http://inac.cea.fr/Pisp/xavier.waintal>`_ (INAC/CEA Grenoble)
 * `Joseph Weston <http://josephweston.org>`_ (INAC/CEA Grenoble)
 
-Other contributors to Kwant include
+Contributors to Kwant include
 
 * Mathieu Istas (INAC/CEA Grenoble)
 * Daniel Jaschke (INAC/CEA Grenoble)
+* Bas Nijholt (TU Delft)
 * Michał Nowak (TU Delft)
 * Viacheslav Ostroukh (Leiden University)
 * Adrien Sorgniard (INAC/CEA Grenoble)
