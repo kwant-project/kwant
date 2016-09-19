@@ -34,12 +34,6 @@ from distutils.command.build import build
 from setuptools.command.sdist import sdist
 from setuptools.command.build_ext import build_ext
 
-try:
-    import numpy
-except ImportError:
-    include_dirs = []
-else:
-    include_dirs = [numpy.get_include()]
 
 CONFIG_FILE = 'build.conf'
 README_FILE = 'README.rst'
@@ -505,9 +499,8 @@ def main():
                     'build_ext': kwant_build_ext,
                     'build_tut': kwant_build_tut},
           ext_modules=maybe_cythonize(extensions()),
-          include_dirs=include_dirs,
-          setup_requires=['numpy > 1.6.1', 'pytest-runner >= 2.7'],
-          tests_require=['pytest >= 2.6.3'],
+          setup_requires=['pytest-runner >= 2.7'],
+          tests_require=['numpy > 1.6.1', 'pytest >= 2.6.3'],
           install_requires=['numpy > 1.6.1', 'scipy >= 0.9', 'tinyarray'],
           extras_require={'plotting': 'matplotlib >= 1.2'},
           classifiers=[c.strip() for c in CLASSIFIERS.split('\n')])
