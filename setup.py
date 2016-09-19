@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2011-2015 Kwant authors.
+# Copyright 2011-2016 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -395,11 +395,15 @@ def complain_cython_unavailable():
               file=sys.stderr)
 
 
-def ext_modules(extensions):
-    """Prepare the ext_modules argument for setuptools.
+def maybe_cythonize(extensions):
+    """Prepare a list of `Extension` instances, ready for `setup()`.
 
-    If Cython is not to be run, replace .pyx extensions with .c or .cpp, and
-    check timestamps.
+    The argument `extensions` must be a sequence of (args, kwrds) to be passed on
+    to `Extension`.
+
+    If Cython is to be run, create the extensions and calls `cythonize()` on
+    them.  If Cython is not to be run, replace .pyx file with .c or .cpp,
+    check timestamps, and create the extensions.
     """
     if use_cython and cython_version >= REQUIRED_CYTHON_VERSION:
         return cythonize([Extension(*args, **kwrds)
@@ -500,7 +504,7 @@ def main():
                     'sdist': kwant_sdist,
                     'build_ext': kwant_build_ext,
                     'build_tut': kwant_build_tut},
-          ext_modules=ext_modules(extensions()),
+          ext_modules=maybe_cythonize(extensions()),
           include_dirs=include_dirs,
           setup_requires=['numpy > 1.6.1', 'pytest-runner >= 2.7'],
           tests_require=['pytest >= 2.6.3'],
