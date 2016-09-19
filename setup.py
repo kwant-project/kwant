@@ -107,18 +107,6 @@ def banner(title=''):
     starred = title.center(79, '*')
     return '\n' + starred if title else starred
 
-error_msg = """{header}
-The compilation of Kwant has failed.  Please examine the error message
-above and consult the installation instructions in README.rst.
-You might have to customize {{file}}.
-
-Build configuration was:
-
-{{summary}}
-{sep}
-"""
-error_msg = error_msg.format(header=banner(' Error '), sep=banner())
-
 
 class kwant_build_ext(build_ext):
     def run(self):
@@ -133,12 +121,25 @@ class kwant_build_ext(build_ext):
         try:
             build_ext.run(self)
         except (DistutilsError, CCompilerError):
+            error_msg = self.__error_msg.format(
+                header=banner(' Error '), sep=banner())
             print(error_msg.format(file=CONFIG_FILE, summary=build_summary),
                   file=sys.stderr)
             raise
         print(banner(' Build summary '))
         print(build_summary)
         print(banner())
+
+    __error_msg = """{header}
+The compilation of Kwant has failed.  Please examine the error message
+above and consult the installation instructions in README.rst.
+You might have to customize {{file}}.
+
+Build configuration was:
+
+{{summary}}
+{sep}
+"""
 
 
 class kwant_build_tut(Command):
