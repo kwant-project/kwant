@@ -59,49 +59,58 @@ CLASSIFIERS = """\
     Operating System :: Microsoft :: Windows"""
 
 
-# Let Kwant itself determine its own version.  We cannot simply import kwant, as
-# it is not built yet.
-_dont_write_bytecode_saved = sys.dont_write_bytecode
-sys.dont_write_bytecode = True
-_common = imp.load_source('_common', 'kwant/_common.py')
-sys.dont_write_bytecode = _dont_write_bytecode_saved
-
-version = _common.version
-version_is_from_git = _common.version_is_from_git
-
-try:
-    sys.argv.remove(CYTHON_OPTION)
-    use_cython = True
-except ValueError:
-    use_cython = version_is_from_git
-
-try:
-    sys.argv.remove(CYTHON_TRACE_OPTION)
-    trace_cython = True
-    if not use_cython:
-        print('error: --cython-trace provided, but cython will not be run',
-              file=sys.stderr)
-        exit(1)
-except ValueError:
-    trace_cython = False
-
-if use_cython:
-    try:
-        import Cython
-        from Cython.Build import cythonize
-    except ImportError:
-        cython_version = ()
-    else:
-        match = re.match('([0-9.]*)(.*)', Cython.__version__)
-        cython_version = [int(n) for n in match.group(1).split('.')]
-        # Decrease version if the version string contains a suffix.
-        if match.group(2):
-            while cython_version[-1] == 0:
-                cython_version.pop()
-            cython_version[-1] -= 1
-        cython_version = tuple(cython_version)
-
 distr_root = os.path.dirname(os.path.abspath(__file__))
+
+
+def get_version():
+    global version, version_is_from_git
+
+    # Let Kwant itself determine its own version.  We cannot simply import
+    # kwant, as it is not built yet.
+    _dont_write_bytecode_saved = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    _common = imp.load_source('_common', 'kwant/_common.py')
+    sys.dont_write_bytecode = _dont_write_bytecode_saved
+
+    version = _common.version
+    version_is_from_git = _common.version_is_from_git
+
+
+def init_cython():
+    global use_cython, cython_version, trace_cython, cythonize
+
+    try:
+        sys.argv.remove(CYTHON_OPTION)
+        use_cython = True
+    except ValueError:
+        use_cython = version_is_from_git
+
+    try:
+        sys.argv.remove(CYTHON_TRACE_OPTION)
+        trace_cython = True
+        if not use_cython:
+            print('error: --cython-trace provided, but cython will not be run',
+                  file=sys.stderr)
+            exit(1)
+    except ValueError:
+        trace_cython = False
+
+    if use_cython:
+        try:
+            import Cython
+            from Cython.Build import cythonize
+        except ImportError:
+            cython_version = ()
+        else:
+            match = re.match('([0-9.]*)(.*)', Cython.__version__)
+            cython_version = [int(n) for n in match.group(1).split('.')]
+            # Decrease version if the version string contains a suffix.
+            if match.group(2):
+                while cython_version[-1] == 0:
+                    cython_version.pop()
+                cython_version[-1] -= 1
+            cython_version = tuple(cython_version)
+
 
 def banner(title=''):
     starred = title.center(79, '*')
@@ -483,6 +492,9 @@ def maybe_cythonize(extensions):
 
 
 def main():
+    get_version()
+    init_cython()
+
     setup(name='kwant',
           version=version,
           author='C. W. Groth (CEA), M. Wimmer, '
