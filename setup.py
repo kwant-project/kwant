@@ -12,13 +12,17 @@ from __future__ import print_function
 
 import sys
 
-v = sys.version_info
-if v[:2] < (3, 4):
-    error = "This version of Kwant requires Python 3.4 or above.\n"
-    if v[0] == 2:
-        error += "Kwant 1.1 is the last version to support Python 2."
-    print(error, file=sys.stderr)
-    sys.exit(1)
+def ensure_python(required_version):
+    v = sys.version_info
+    if v[:3] < required_version:
+        error = "This version of Kwant requires Python {} or above.".format(
+            ".".join(str(p) for p in required_version))
+        if v[0] == 2:
+            error += "\nKwant 1.1 is the last version to support Python 2."
+        print(error, file=sys.stderr)
+        sys.exit(1)
+
+ensure_python((3, 4))
 
 import re
 import os
