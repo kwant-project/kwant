@@ -267,10 +267,10 @@ class kwant_sdist(sdist):
         sdist.run(self)
 
         if names is None:
-            print(banner(' Caution '),
-        """Git was not available to generate the list of files to be included in the
-source distribution.  The old {} was used.""".format(MANIFEST_IN_FILE),
-                  banner(), sep='\n', file=sys.stderr)
+            msg = ("Git was not available to generate the list of files to be "
+                   "included in the\nsource distribution. The old {} was used.")
+            msg = msg.format(MANIFEST_IN_FILE)
+            print(banner(' Caution '), msg, banner(), sep='\n', file=sys.stderr)
 
     def make_release_tree(self, base_dir, files):
         sdist.make_release_tree(self, base_dir, files)
