@@ -30,6 +30,7 @@ import glob
 import imp
 import subprocess
 import configparser
+import collections
 from setuptools import setup, find_packages, Extension, Command
 from sysconfig import get_platform
 from distutils.errors import DistutilsError, DistutilsModuleError, \
@@ -62,8 +63,125 @@ CLASSIFIERS = """\
     Operating System :: MacOS :: MacOS X
     Operating System :: Microsoft :: Windows"""
 
+EXTENSIONS = [
+    ('kwant._system',
+     {'sources': ['kwant/_system.pyx'],
+      'include_dirs': ['kwant/graph']}),
+
+    ('kwant.operator',
+     {'sources': ['kwant/operator.pyx'],
+      'include_dirs': ['kwant/graph']}),
+
+    ('kwant.graph.core',
+     {'sources': ['kwant/graph/core.pyx'],
+      'depends': ['kwant/graph/core.pxd', 'kwant/graph/defs.h',
+                  'kwant/graph/defs.pxd']}),
+
+    ('kwant.graph.utils',
+     {'sources': ['kwant/graph/utils.pyx'],
+      'depends': ['kwant/graph/defs.h', 'kwant/graph/defs.pxd',
+                  'kwant/graph/core.pxd']}),
+
+    ('kwant.graph.slicer',
+     {'sources': ['kwant/graph/slicer.pyx',
+                  'kwant/graph/c_slicer/partitioner.cc',
+                  'kwant/graph/c_slicer/slicer.cc'],
+
+     'depends': ['kwant/graph/defs.h', 'kwant/graph/defs.pxd',
+                 'kwant/graph/core.pxd',
+                 'kwant/graph/c_slicer.pxd',
+                 'kwant/graph/c_slicer/bucket_list.h',
+                 'kwant/graph/c_slicer/graphwrap.h',
+                 'kwant/graph/c_slicer/partitioner.h',
+                 'kwant/graph/c_slicer/slicer.h']}),
+
+    ('kwant.linalg.lapack',
+     {'sources': ['kwant/linalg/lapack.pyx'],
+      'depends': ['kwant/linalg/f_lapack.pxd']}),
+
+    ('kwant.linalg._mumps',
+     {'sources': ['kwant/linalg/_mumps.pyx'],
+      'depends': ['kwant/linalg/cmumps.pxd']})]
+
+EXTENSION_ALIASES = [('lapack', 'kwant.linalg.lapack'),
+                     ('mumps', 'kwant.linalg._mumps')]
 
 distr_root = os.path.dirname(os.path.abspath(__file__))
+
+
+def configure_extensions(exts, aliases=(), build_summary=None):
+    """Modify extension configuration according to the configuration file
+
+    `exts` must be a dict of (name, kwargs) tuples that can be used like this:
+    `Extension(name, **kwargs).  This function modifies the kwargs according to
+    the configuration file `CONFIG_FILE`.
+    """
+    global config_file_present
+
+    #### Add cython tracing macro
+    if trace_cython:
+        for name, kwargs in exts.items():
+            macros = kwargs.get('define_macros', [])
+            macros.append(('CYTHON_TRACE', '1'))
+            kwargs['define_macros'] = macros
+
+    #### Read build configuration file.
+    configs = configparser.ConfigParser()
+    try:
+        with open(CONFIG_FILE) as f:
+            configs.read_file(f)
+    except IOError:
+        config_file_present = False
+    else:
+        config_file_present = True
+
+    #### Handle section aliases.
+    for short, long in aliases:
+        if short in configs:
+            if long in configs:
+                print('Error: both {} and {} sections present in {}.'.format(
+                    short, long, CONFIG_FILE))
+                exit(1)
+            configs[long] = configs[short]
+            del configs[short]
+
+    #### Apply config from file.  Use [DEFAULT] section for missing sections.
+    defaultconfig = configs.defaults()
+    for name, kwargs in exts.items():
+        config = configs[name] if name in configs else defaultconfig
+        for key, value in config.items():
+
+            # Most, but not all, keys are lists of strings
+            if key == 'language':
+                pass
+            elif key == 'optional':
+                value = bool(int(value))
+            else:
+                value = value.split()
+
+            if key == 'define_macros':
+                value = [tuple(entry.split('=', maxsplit=1))
+                         for entry in value]
+                value = [(entry[0], None) if len(entry) == 1 else entry
+                         for entry in value]
+
+            if key in kwargs:
+                msg = 'Caution: user config in file {} shadows {}.{}.'
+                if build_summary is not None:
+                    build_summary.append(msg.format(CONFIG_FILE, name, key))
+            kwargs[key] = value
+
+        kwargs.setdefault('depends', []).append(CONFIG_FILE)
+        if config is not defaultconfig:
+            del configs[name]
+
+    unknown_sections = configs.sections()
+    if unknown_sections:
+        print('Error: Unknown sections in file {}: {}'.format(
+            CONFIG_FILE, ', '.join(unknown_sections)))
+        exit(1)
+
+    return exts
 
 
 def get_version():
@@ -166,8 +284,7 @@ class kwant_build_ext(build_ext):
             print(error_msg.format(file=CONFIG_FILE, summary=build_summary),
                   file=sys.stderr)
             raise
-        print(banner(' Build summary '))
-        print(build_summary)
+        print(banner(' Build summary '), *build_summary, sep='\n')
         print(banner())
 
     __error_msg = """{header}
@@ -331,106 +448,53 @@ def search_mumps():
     return {}
 
 
-def extensions():
-    """Return a list of tuples (args, kwrds) to be passed to Extension."""
-
-    global build_summary, config_file_present
-    build_summary = []
-
-    #### Add components of Kwant without external compile-time dependencies.
-    result = [
-        (['kwant._system', ['kwant/_system.pyx']],
-         {'include_dirs': ['kwant/graph']}),
-        (['kwant.operator', ['kwant/operator.pyx']],
-         {'include_dirs': ['kwant/graph']}),
-        (['kwant.graph.core', ['kwant/graph/core.pyx']],
-         {'depends': ['kwant/graph/core.pxd', 'kwant/graph/defs.h',
-                      'kwant/graph/defs.pxd']}),
-        (['kwant.graph.utils', ['kwant/graph/utils.pyx']],
-         {'depends': ['kwant/graph/defs.h', 'kwant/graph/defs.pxd',
-                      'kwant/graph/core.pxd']}),
-        (['kwant.graph.slicer', ['kwant/graph/slicer.pyx',
-                                 'kwant/graph/c_slicer/partitioner.cc',
-                                 'kwant/graph/c_slicer/slicer.cc']],
-         {'depends': ['kwant/graph/defs.h', 'kwant/graph/defs.pxd',
-                      'kwant/graph/core.pxd',
-                      'kwant/graph/c_slicer.pxd',
-                      'kwant/graph/c_slicer/bucket_list.h',
-                      'kwant/graph/c_slicer/graphwrap.h',
-                      'kwant/graph/c_slicer/partitioner.h',
-                      'kwant/graph/c_slicer/slicer.h']})]
-
-    #### Add cython tracing macro
-    if trace_cython:
-        for args, kwargs in result:
-            macros = kwargs.get('define_macros', [])
-            macros.append(('CYTHON_TRACE', '1'))
-            kwargs['define_macros'] = macros
-
-    #### Add components of Kwant with external compile-time dependencies.
-    config = configparser.ConfigParser()
-    try:
-        with open(CONFIG_FILE) as f:
-            config.read_file(f)
-    except IOError:
-        config_file_present = False
-    else:
-        config_file_present = True
-
-    kwrds_by_section = {}
-    for section in config.sections():
-        kwrds_by_section[section] = kwrds = {}
-        for name, value in config.items(section):
-            kwrds[name] = value.split()
-
-    # Setup LAPACK.
-    lapack = kwrds_by_section.get('lapack')
-    if lapack:
+def configure_special_extensions(exts, build_summary):
+    #### Special config for LAPACK.
+    lapack = exts['kwant.linalg.lapack']
+    if 'libraries' in lapack:
         build_summary.append('User-configured LAPACK and BLAS')
     else:
-        lapack = {'libraries': ['lapack', 'blas']}
+        lapack['libraries'] = ['lapack', 'blas']
         build_summary.append('Default LAPACK and BLAS')
-    kwrds = lapack.copy()
-    kwrds.setdefault('depends', []).extend(
-        [CONFIG_FILE, 'kwant/linalg/f_lapack.pxd'])
-    result.append((['kwant.linalg.lapack', ['kwant/linalg/lapack.pyx']],
-                   kwrds))
 
-    # Setup MUMPS.
-    kwrds = kwrds_by_section.get('mumps')
-    if kwrds:
+    #### Special config for MUMPS.
+    mumps = exts['kwant.linalg._mumps']
+    if 'libraries' in mumps:
         build_summary.append('User-configured MUMPS')
     else:
-        kwrds = search_mumps()
-        if kwrds:
+        kwargs = search_mumps()
+        if kwargs:
+            for key, value in kwargs.items():
+                mumps.setdefault(key, []).extend(value)
             build_summary.append('Auto-configured MUMPS')
-    if kwrds:
-        for name, value in lapack.items():
-            kwrds.setdefault(name, []).extend(value)
-        kwrds.setdefault('depends', []).extend(
-            [CONFIG_FILE, 'kwant/linalg/cmumps.pxd'])
-        result.append((['kwant.linalg._mumps', ['kwant/linalg/_mumps.pyx']],
-                       kwrds))
-    else:
-        build_summary.append('No MUMPS support')
+        else:
+            mumps = None
+            del exts['mumps']
+            build_summary.append('No MUMPS support')
 
-    build_summary = '\n'.join(build_summary)
-    return result
+    if mumps:
+        # Copy config from LAPACK.
+        for key, value in lapack.items():
+            if key not in ['sources', 'depends']:
+                mumps.setdefault(key, []).extend(value)
+
+    return exts
 
 
-def maybe_cythonize(extensions):
+def maybe_cythonize(exts):
     """Prepare a list of `Extension` instances, ready for `setup()`.
 
-    The argument `extensions` must be a sequence of (args, kwrds) to be passed on
-    to `Extension`.
+    The argument `exts` must be a mapping of names to kwargs to be passed
+    on to `Extension`.
 
     If Cython is to be run, create the extensions and calls `cythonize()` on
     them.  If Cython is not to be run, replace .pyx file with .c or .cpp,
     check timestamps, and create the extensions.
     """
     if cythonize:
-        return cythonize([Extension(*args, **kwrds)
-                          for args, kwrds in extensions], language_level=3,
+        return cythonize([Extension(name, **kwargs)
+                          for name, kwargs in exts.items()],
+                         language_level=3,
                          compiler_directives={'linetrace': trace_cython})
 
     # Cython is not going to be run: replace pyx extension by that of
@@ -438,10 +502,8 @@ def maybe_cythonize(extensions):
 
     result = []
     problematic_files = []
-    for args, kwrds in extensions:
-        name, sources = args
-
-        language = kwrds.get('language')
+    for name, kwargs in exts.items():
+        language = kwargs.get('language')
         if language is None:
             ext = '.c'
         elif language == 'c':
@@ -454,14 +516,14 @@ def maybe_cythonize(extensions):
 
         pyx_files = []
         cythonized_files = []
-        new_sources = []
-        for f in sources:
+        sources = []
+        for f in kwargs['sources']:
             if f.endswith('.pyx'):
                 pyx_files.append(f)
                 f = f.rstrip('.pyx') + ext
                 cythonized_files.append(f)
-            new_sources.append(f)
-        sources = new_sources
+            sources.append(f)
+        kwargs['sources'] = sources
 
         # Complain if cythonized files are older than Cython source files.
         try:
@@ -473,7 +535,7 @@ def maybe_cythonize(extensions):
                   cython_help, banner(), sep="\n", file=sys.stderr)
             exit(1)
 
-        for f in pyx_files + kwrds.get('depends', []):
+        for f in pyx_files + kwargs.get('depends', []):
             if f == CONFIG_FILE:
                 # The config file is only a dependency for the compilation
                 # of the cythonized file, not for the cythonization.
@@ -481,7 +543,7 @@ def maybe_cythonize(extensions):
             if os.stat(f).st_mtime > cythonized_oldest:
                 problematic_files.append(f)
 
-        result.append(Extension(name, sources, **kwrds))
+        result.append(Extension(name, **kwargs))
 
     if problematic_files:
         msg = ("Some Cython source files are newer than files that have "
@@ -506,8 +568,16 @@ def maybe_cythonize(extensions):
 
 
 def main():
+    global build_summary
+
     get_version()
     init_cython()
+
+    build_summary = []
+    exts = collections.OrderedDict(EXTENSIONS)
+    exts = configure_extensions(exts, EXTENSION_ALIASES, build_summary)
+    exts = configure_special_extensions(exts, build_summary)
+    exts = maybe_cythonize(exts)
 
     setup(name='kwant',
           version=version,
@@ -525,7 +595,7 @@ def main():
                     'sdist': kwant_sdist,
                     'build_ext': kwant_build_ext,
                     'build_tut': kwant_build_tut},
-          ext_modules=maybe_cythonize(extensions()),
+          ext_modules=exts,
           setup_requires=['pytest-runner >= 2.7'],
           tests_require=['numpy > 1.6.1', 'pytest >= 2.6.3'],
           install_requires=['numpy > 1.6.1', 'scipy >= 0.9', 'tinyarray'],

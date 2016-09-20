@@ -77,23 +77,40 @@ default can be overridden by giving the ``--cython`` option to setup.py.)
 Build configuration
 ===================
 
-The setup script of Kwant has to know how to link against LAPACK & BLAS, and,
-optionally, MUMPS.  By default it will assume that LAPACK and BLAS can be found
-under their usual names.  MUMPS will be not linked against by default, except
-on Debian-based systems when the package ``libmumps-scotch-dev`` is installed.
+Kwant contains several extension modules.  The compilation and linking of these modules can be configured by editing a build configuration file ``build.conf`` in the
+root directory of the Kwant distribution.  This configuration file consists of
+sections, one for each extension modules that is contained in Kwant, led by a
+``[section name]`` header and followed by ``key = value`` lines.
 
-All these settings can be configured by creating/editing the file
-``build.conf`` in the root directory of the Kwant distribution.  This
-configuration file consists of sections, one for each dependency, led by a
-[dependency-name] header and followed by name = value entries.  Possible names
-are keyword arguments for ``distutils.core.Extension`` (For a complete list,
-see its `documentation
+The sections bear the names of the extension modules, for example
+``[kwant.operator]`` or ``[kwant.linalg.lapack]``.  There can be also a
+``[DEFAULT]`` section that provides default values for all extensions, also
+those not explicitly present in the file.
+
+Possible keys are the keyword arguments for ``distutils.core.Extension`` (For a
+complete list, see its `documentation
 <https://docs.python.org/3/distutils/apiref.html#distutils.core.Extension>`_).
 The corresponding values are whitespace-separated lists of strings.
 
-The two currently possible sections are [lapack] and [mumps].  The former
-configures the linking against LAPACK _AND_ BLAS, the latter against MUMPS
-(without LAPACK and BLAS).
+Example ``build.conf`` for compiling Kwant with enabled C assertions::
+
+    [DEFAULT]
+    undef_macros = NDEBUG
+
+Kwant must be linked against LAPACK & BLAS, and, optionally, MUMPS.  The main
+application of build configuration is adopting the build process to the various
+(deployment) variants of these libraries.  By default ``setup.py`` assumes that
+LAPACK and BLAS can be found under their usual names.  MUMPS will be not linked
+against by default, except on Debian-based systems when the package
+``libmumps-scotch-dev`` is installed.
+
+The sections ``[kwant.linalg.lapack]`` and ``[kwant.linalg._mumps]`` may be
+used to adapt the build process.  (For simplicity and backwards compatibility,
+``[lapack]`` and ``[mumps]`` are aliases for the above.)
+
+The section ``[lapack]`` configures the linking against LAPACK _AND_ BLAS, the
+section ``[mumps]`` against MUMPS.  The contents of ``[lapack]`` are
+appended to the configuration for MUMPS itself needs LAPACK and BLAS as well.
 
 Example ``build.conf`` for linking Kwant against a self-compiled MUMPS, `SCOTCH
 <http://www.labri.fr/perso/pelegrin/scotch/>`_ and `METIS
