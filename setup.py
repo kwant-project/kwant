@@ -77,31 +77,46 @@ def get_version():
 
 
 def init_cython():
-    global use_cython, cython_version, trace_cython, cythonize
+    """Set the global variable `cythonize` (and other related globals).
+
+    The variable `cythonize` can be in three states:
+
+    * If Cython should be run and is ready, it contains the `cythonize()`
+      function.
+
+    * If Cython is not to be run, it contains `False`.
+
+    * If Cython should, but cannot be run it contains `None`.  A help message
+      on how to solve the problem is stored in `cython_help`.
+
+    This function modifies `sys.argv`.
+    """
+    global cythonize, cython_help, trace_cython
 
     try:
         sys.argv.remove(CYTHON_OPTION)
-        use_cython = True
+        cythonize = True
     except ValueError:
-        use_cython = version_is_from_git
+        cythonize = version_is_from_git
 
     try:
         sys.argv.remove(CYTHON_TRACE_OPTION)
         trace_cython = True
-        if not use_cython:
-            print('error: --cython-trace provided, but cython will not be run',
+        if not cythonize:
+            print('Error: --cython-trace provided, but Cython will not be run.',
                   file=sys.stderr)
             exit(1)
     except ValueError:
         trace_cython = False
 
-    if use_cython:
+    if cythonize:
         try:
             import Cython
             from Cython.Build import cythonize
         except ImportError:
-            cython_version = ()
+            cythonize = None
         else:
+            #### Get Cython version.
             match = re.match('([0-9.]*)(.*)', Cython.__version__)
             cython_version = [int(n) for n in match.group(1).split('.')]
             # Decrease version if the version string contains a suffix.
@@ -110,6 +125,18 @@ def init_cython():
                     cython_version.pop()
                 cython_version[-1] -= 1
             cython_version = tuple(cython_version)
+
+            if cython_version < REQUIRED_CYTHON_VERSION:
+                cythonize = None
+
+            if cythonize is None:
+                msg = ("Install Cython >= {0} or use"
+                       " a source distribution (tarball) of Kwant.")
+                ver = '.'.join(str(e) for e in REQUIRED_CYTHON_VERSION)
+                cython_help = msg.format(ver)
+    else:
+        msg = "Run setup.py with the {} option to enable Cython."
+        cython_help = msg.format(CYTHON_OPTION)
 
 
 def banner(title=''):
@@ -387,18 +414,6 @@ def extensions():
     return result
 
 
-def complain_cython_unavailable():
-    assert not use_cython or cython_version < REQUIRED_CYTHON_VERSION
-    if use_cython:
-        msg = ("Install Cython {0} or newer so it can be made\n"
-               "or use a source distribution of Kwant.")
-        ver = '.'.join(str(e) for e in REQUIRED_CYTHON_VERSION)
-        print(msg.format(ver), file=sys.stderr)
-    else:
-        print("Run setup.py with the {} option.".format(CYTHON_OPTION),
-              file=sys.stderr)
-
-
 def maybe_cythonize(extensions):
     """Prepare a list of `Extension` instances, ready for `setup()`.
 
@@ -409,7 +424,7 @@ def maybe_cythonize(extensions):
     them.  If Cython is not to be run, replace .pyx file with .c or .cpp,
     check timestamps, and create the extensions.
     """
-    if use_cython and cython_version >= REQUIRED_CYTHON_VERSION:
+    if cythonize:
         return cythonize([Extension(*args, **kwrds)
                           for args, kwrds in extensions], language_level=3,
                          compiler_directives={'linetrace': trace_cython})
@@ -449,9 +464,9 @@ def maybe_cythonize(extensions):
             cythonized_oldest = min(os.stat(f).st_mtime
                                     for f in cythonized_files)
         except OSError:
-            print("error: Cython-generated file {} is missing.".format(f),
-                  file=sys.stderr)
-            complain_cython_unavailable()
+            msg = "Cython-generated file {} is missing."
+            print(banner(" Error "), msg.format(f), "",
+                  cython_help, banner(), sep="\n", file=sys.stderr)
             exit(1)
 
         for f in pyx_files + kwrds.get('depends', []):
@@ -465,28 +480,23 @@ def maybe_cythonize(extensions):
         result.append(Extension(name, sources, **kwrds))
 
     if problematic_files:
-        problematic_files = ", ".join(problematic_files)
-        msg = ("Some Cython source files are newer than files that should have\n"
-               "been derived from them, but {}.\n"
-               "\n"
-               "Affected files: {}")
-        if use_cython:
-            if not cython_version:
-                reason = "Cython is not installed"
-            else:
-                reason = "the installed Cython is too old"
-            print(banner(" Error "), msg.format(reason, problematic_files),
-                  banner(), sep="\n", file=sys.stderr)
-            print()
-            complain_cython_unavailable()
+        msg = ("Some Cython source files are newer than files that have "
+               "been derived from them:\n{}")
+        msg = msg.format(", ".join(problematic_files))
+
+        # Cython should be run but won't.  Signal an error if this is because
+        # Cython *cannot* be run, warn otherwise.
+        error = cythonize is None
+        if cythonize is False:
+            dontworry = ('(Do not worry about this if you are building Kwant '
+                         'from unmodified sources,\n'
+                         'e.g. with "pip install".)\n\n')
+            msg = dontworry + msg
+
+        print(banner(" Error " if error else " Caution "), msg, "",
+              cython_help, banner(), sep="\n", file=sys.stderr)
+        if error:
             exit(1)
-        else:
-            reason = "the option {} has not been given".format(CYTHON_OPTION)
-            dontworry = ('(Do not worry about this if you are building Kwant\n'
-                         'from unmodified sources, e.g. with "pip install".)\n')
-            print(banner(" Caution "), dontworry,
-                  msg.format(reason, problematic_files),
-                  banner(), sep='\n', file=sys.stderr)
 
     return result
 
