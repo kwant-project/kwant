@@ -92,10 +92,12 @@ complete list, see its `documentation
 <https://docs.python.org/3/distutils/apiref.html#distutils.core.Extension>`_).
 The corresponding values are whitespace-separated lists of strings.
 
-Example ``build.conf`` for compiling Kwant with enabled C assertions::
+Example ``build.conf`` for compiling Kwant with C assertions and Cython's line
+trace feature::
 
     [DEFAULT]
     undef_macros = NDEBUG
+    define_macros = CYTHON_TRACE=1
 
 Kwant must be linked against LAPACK & BLAS, and, optionally, MUMPS.  The main
 application of build configuration is adopting the build process to the various

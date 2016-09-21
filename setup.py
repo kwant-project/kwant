@@ -47,7 +47,6 @@ README_END_BEFORE = 'See also in this directory:'
 STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
 REQUIRED_CYTHON_VERSION = (0, 22)
 CYTHON_OPTION = '--cython'
-CYTHON_TRACE_OPTION = '--cython-trace'
 TUT_DIR = 'tutorial'
 TUT_GLOB = 'doc/source/tutorial/*.py'
 TUT_HIDDEN_PREFIX = '#HIDDEN'
@@ -117,13 +116,6 @@ def configure_extensions(exts, aliases=(), build_summary=None):
     the configuration file `CONFIG_FILE`.
     """
     global config_file_present
-
-    #### Add cython tracing macro
-    if trace_cython:
-        for name, kwargs in exts.items():
-            macros = kwargs.get('define_macros', [])
-            macros.append(('CYTHON_TRACE', '1'))
-            kwargs['define_macros'] = macros
 
     #### Read build configuration file.
     configs = configparser.ConfigParser()
@@ -213,23 +205,13 @@ def init_cython():
 
     This function modifies `sys.argv`.
     """
-    global cythonize, cython_help, trace_cython
+    global cythonize, cython_help
 
     try:
         sys.argv.remove(CYTHON_OPTION)
         cythonize = True
     except ValueError:
         cythonize = version_is_from_git
-
-    try:
-        sys.argv.remove(CYTHON_TRACE_OPTION)
-        trace_cython = True
-        if not cythonize:
-            print('Error: --cython-trace provided, but Cython will not be run.',
-                  file=sys.stderr)
-            exit(1)
-    except ValueError:
-        trace_cython = False
 
     if cythonize:
         try:
@@ -495,7 +477,7 @@ def maybe_cythonize(exts):
         return cythonize([Extension(name, **kwargs)
                           for name, kwargs in exts.items()],
                          language_level=3,
-                         compiler_directives={'linetrace': trace_cython})
+                         compiler_directives={'linetrace': True})
 
     # Cython is not going to be run: replace pyx extension by that of
     # the shipped translated file.

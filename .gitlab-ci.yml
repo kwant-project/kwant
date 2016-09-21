@@ -8,8 +8,9 @@ stages:
 build package:
   stage: build
   script:
-    - ./setup.py build --cython-trace
-    - ./setup.py build_ext --cython-trace -i
+    - echo -e "[DEFAULT]\ndefine_macros = CYTHON_TRACE=1" >build.conf
+    - ./setup.py build
+    - ./setup.py build_ext -i
   artifacts:
     untracked: true
     expire_in: 1 hour
