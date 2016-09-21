@@ -77,8 +77,12 @@ default can be overridden by giving the ``--cython`` option to setup.py.)
 Build configuration
 ===================
 
-Kwant contains several extension modules.  The compilation and linking of these modules can be configured by editing a build configuration file ``build.conf`` in the
-root directory of the Kwant distribution.  This configuration file consists of
+Kwant contains several extension modules.  The compilation and linking of these
+modules can be configured by editing a build configuration file.  By default,
+this file is ``build.conf`` in the root directory of the Kwant distribution.  A
+different path may be provided using the ``--configfile=PATH`` option.
+
+This configuration file consists of
 sections, one for each extension modules that is contained in Kwant, led by a
 ``[section name]`` header and followed by ``key = value`` lines.
 

@@ -40,7 +40,6 @@ from setuptools.command.sdist import sdist
 from setuptools.command.build_ext import build_ext
 
 
-CONFIG_FILE = 'build.conf'
 STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
 
 distr_root = os.path.dirname(os.path.abspath(__file__))
@@ -51,14 +50,32 @@ def configure_extensions(exts, aliases=(), build_summary=None):
 
     `exts` must be a dict of (name, kwargs) tuples that can be used like this:
     `Extension(name, **kwargs).  This function modifies the kwargs according to
-    the configuration file `CONFIG_FILE`.
+    the configuration file.
+
+    This function modifies `sys.argv`.
     """
-    global config_file_present
+    global config_file, config_file_present
+
+    #### Determine the name of the configuration file.
+    config_file_option = '--configfile'
+    # Handle command line option
+    for i, opt in enumerate(sys.argv):
+        if not opt.startswith(config_file_option):
+            continue
+        l, _, config_file = opt.partition('=')
+        if l != config_file_option or not config_file:
+            print('error: Expecting {}=PATH'.format(config_file_option),
+                  file=sys.stderr)
+            exit(1)
+        sys.argv.pop(i)
+        break
+    else:
+        config_file = 'build.conf'
 
     #### Read build configuration file.
     configs = configparser.ConfigParser()
     try:
-        with open(CONFIG_FILE) as f:
+        with open(config_file) as f:
             configs.read_file(f)
     except IOError:
         config_file_present = False
@@ -70,7 +87,7 @@ def configure_extensions(exts, aliases=(), build_summary=None):
         if short in configs:
             if long in configs:
                 print('Error: both {} and {} sections present in {}.'.format(
-                    short, long, CONFIG_FILE))
+                    short, long, config_file))
                 exit(1)
             configs[long] = configs[short]
             del configs[short]
@@ -98,17 +115,17 @@ def configure_extensions(exts, aliases=(), build_summary=None):
             if key in kwargs:
                 msg = 'Caution: user config in file {} shadows {}.{}.'
                 if build_summary is not None:
-                    build_summary.append(msg.format(CONFIG_FILE, name, key))
+                    build_summary.append(msg.format(config_file, name, key))
             kwargs[key] = value
 
-        kwargs.setdefault('depends', []).append(CONFIG_FILE)
+        kwargs.setdefault('depends', []).append(config_file)
         if config is not defaultconfig:
             del configs[name]
 
     unknown_sections = configs.sections()
     if unknown_sections:
         print('Error: Unknown sections in file {}: {}'.format(
-            CONFIG_FILE, ', '.join(unknown_sections)))
+            config_file, ', '.join(unknown_sections)))
         exit(1)
 
     return exts
@@ -195,15 +212,16 @@ class kwant_build_ext(build_ext):
             # extensions will not be rebuilt each time.  Only depending on the
             # config file if it is present would make it impossible to detect a
             # necessary rebuild due to a deleted config file.
-            with open(CONFIG_FILE, 'w') as f:
-                f.write('# Created by setup.py - feel free to modify.\n')
+            with open(config_file, 'w') as f:
+                f.write('# Build configuration created by setup.py '
+                        '- feel free to modify.\n')
 
         try:
             build_ext.run(self)
         except (DistutilsError, CCompilerError):
             error_msg = self.__error_msg.format(
                 header=banner(' Error '), sep=banner())
-            print(error_msg.format(file=CONFIG_FILE, summary=build_summary),
+            print(error_msg.format(file=config_file, summary=build_summary),
                   file=sys.stderr)
             raise
         print(banner(' Build summary '), *build_summary, sep='\n')
@@ -460,7 +478,7 @@ def maybe_cythonize(exts):
             exit(1)
 
         for f in pyx_files + kwargs.get('depends', []):
-            if f == CONFIG_FILE:
+            if f == config_file:
                 # The config file is only a dependency for the compilation
                 # of the cythonized file, not for the cythonization.
                 continue
