@@ -41,69 +41,7 @@ from setuptools.command.build_ext import build_ext
 
 
 CONFIG_FILE = 'build.conf'
-README_FILE = 'README.rst'
-MANIFEST_IN_FILE = 'MANIFEST.in'
-README_END_BEFORE = 'See also in this directory:'
 STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
-REQUIRED_CYTHON_VERSION = (0, 22)
-CYTHON_OPTION = '--cython'
-TUT_DIR = 'tutorial'
-TUT_GLOB = 'doc/source/tutorial/*.py'
-TUT_HIDDEN_PREFIX = '#HIDDEN'
-CLASSIFIERS = """\
-    Development Status :: 5 - Production/Stable
-    Intended Audience :: Science/Research
-    Intended Audience :: Developers
-    Programming Language :: Python :: 3 :: Only
-    Topic :: Software Development
-    Topic :: Scientific/Engineering
-    Operating System :: POSIX
-    Operating System :: Unix
-    Operating System :: MacOS :: MacOS X
-    Operating System :: Microsoft :: Windows"""
-
-EXTENSIONS = [
-    ('kwant._system',
-     {'sources': ['kwant/_system.pyx'],
-      'include_dirs': ['kwant/graph']}),
-
-    ('kwant.operator',
-     {'sources': ['kwant/operator.pyx'],
-      'include_dirs': ['kwant/graph']}),
-
-    ('kwant.graph.core',
-     {'sources': ['kwant/graph/core.pyx'],
-      'depends': ['kwant/graph/core.pxd', 'kwant/graph/defs.h',
-                  'kwant/graph/defs.pxd']}),
-
-    ('kwant.graph.utils',
-     {'sources': ['kwant/graph/utils.pyx'],
-      'depends': ['kwant/graph/defs.h', 'kwant/graph/defs.pxd',
-                  'kwant/graph/core.pxd']}),
-
-    ('kwant.graph.slicer',
-     {'sources': ['kwant/graph/slicer.pyx',
-                  'kwant/graph/c_slicer/partitioner.cc',
-                  'kwant/graph/c_slicer/slicer.cc'],
-
-     'depends': ['kwant/graph/defs.h', 'kwant/graph/defs.pxd',
-                 'kwant/graph/core.pxd',
-                 'kwant/graph/c_slicer.pxd',
-                 'kwant/graph/c_slicer/bucket_list.h',
-                 'kwant/graph/c_slicer/graphwrap.h',
-                 'kwant/graph/c_slicer/partitioner.h',
-                 'kwant/graph/c_slicer/slicer.h']}),
-
-    ('kwant.linalg.lapack',
-     {'sources': ['kwant/linalg/lapack.pyx'],
-      'depends': ['kwant/linalg/f_lapack.pxd']}),
-
-    ('kwant.linalg._mumps',
-     {'sources': ['kwant/linalg/_mumps.pyx'],
-      'depends': ['kwant/linalg/cmumps.pxd']})]
-
-EXTENSION_ALIASES = [('lapack', 'kwant.linalg.lapack'),
-                     ('mumps', 'kwant.linalg._mumps')]
 
 distr_root = os.path.dirname(os.path.abspath(__file__))
 
@@ -207,8 +145,9 @@ def init_cython():
     """
     global cythonize, cython_help
 
+    cython_option = '--cython'
     try:
-        sys.argv.remove(CYTHON_OPTION)
+        sys.argv.remove(cython_option)
         cythonize = True
     except ValueError:
         cythonize = version_is_from_git
@@ -230,17 +169,18 @@ def init_cython():
                 cython_version[-1] -= 1
             cython_version = tuple(cython_version)
 
-            if cython_version < REQUIRED_CYTHON_VERSION:
+            required_cython_version = (0, 22)
+            if cython_version < required_cython_version:
                 cythonize = None
 
             if cythonize is None:
                 msg = ("Install Cython >= {0} or use"
                        " a source distribution (tarball) of Kwant.")
-                ver = '.'.join(str(e) for e in REQUIRED_CYTHON_VERSION)
+                ver = '.'.join(str(e) for e in required_cython_version)
                 cython_help = msg.format(ver)
     else:
         msg = "Run setup.py with the {} option to enable Cython."
-        cython_help = msg.format(CYTHON_OPTION)
+        cython_help = msg.format(cython_option)
 
 
 def banner(title=''):
@@ -292,14 +232,15 @@ class kwant_build_tut(Command):
         pass
 
     def run(self):
-        if not os.path.exists(TUT_DIR):
-            os.mkdir(TUT_DIR)
-        for in_fname in glob.glob(TUT_GLOB):
-            out_fname = os.path.join(TUT_DIR, os.path.basename(in_fname))
+        tut_dir = 'tutorial'
+        if not os.path.exists(tut_dir):
+            os.mkdir(tut_dir)
+        for in_fname in glob.glob('doc/source/tutorial/*.py'):
+            out_fname = os.path.join(tut_dir, os.path.basename(in_fname))
             with open(in_fname) as in_file:
                 with open(out_fname, 'w') as out_file:
                     for line in in_file:
-                        if not line.startswith(TUT_HIDDEN_PREFIX):
+                        if not line.startswith('#HIDDEN'):
                             out_file.write(line)
 
 
@@ -347,11 +288,12 @@ class kwant_sdist(sdist):
         should be there.  Setting include_package_data to True makes setuptools
         include *.pyx and other source files in the binary distribution.
         """
-        manifest = os.path.join(distr_root, MANIFEST_IN_FILE)
+        manifest_in_file = 'MANIFEST.in'
+        manifest = os.path.join(distr_root, manifest_in_file)
         names = git_lsfiles()
         if names is None:
             if not (os.path.isfile(manifest) and os.access(manifest, os.R_OK)):
-                print("Error:", MANIFEST_IN_FILE,
+                print("Error:", manifest_in_file,
                       "file is missing and Git is not available"
                       " to regenerate it.", file=sys.stderr)
                 exit(1)
@@ -372,7 +314,7 @@ class kwant_sdist(sdist):
         if names is None:
             msg = ("Git was not available to generate the list of files to be "
                    "included in the\nsource distribution. The old {} was used.")
-            msg = msg.format(MANIFEST_IN_FILE)
+            msg = msg.format(manifest_in_file)
             print(banner(' Caution '), msg, banner(), sep='\n', file=sys.stderr)
 
     def make_release_tree(self, base_dir, files):
@@ -395,9 +337,9 @@ def write_version(fname):
 def long_description():
     text = []
     try:
-        with open(README_FILE) as f:
+        with open('README.rst') as f:
             for line in f:
-                if line.startswith(README_END_BEFORE):
+                if line.startswith('See also in this directory:'):
                     break
                 text.append(line.rstrip())
             while text[-1] == "":
@@ -550,16 +492,61 @@ def maybe_cythonize(exts):
 
 
 def main():
-    global build_summary
+    exts = collections.OrderedDict([
+        ('kwant._system',
+         dict(sources=['kwant/_system.pyx'],
+              include_dirs=['kwant/graph'])),
+        ('kwant.operator',
+         dict(sources=['kwant/operator.pyx'],
+              include_dirs=['kwant/graph'])),
+        ('kwant.graph.core',
+         dict(sources=['kwant/graph/core.pyx'],
+              depends=['kwant/graph/core.pxd', 'kwant/graph/defs.h',
+                       'kwant/graph/defs.pxd'])),
+        ('kwant.graph.utils',
+         dict(sources=['kwant/graph/utils.pyx'],
+              depends=['kwant/graph/defs.h', 'kwant/graph/defs.pxd',
+                       'kwant/graph/core.pxd'])),
+        ('kwant.graph.slicer',
+         dict(sources=['kwant/graph/slicer.pyx',
+                       'kwant/graph/c_slicer/partitioner.cc',
+                       'kwant/graph/c_slicer/slicer.cc'],
+              depends=['kwant/graph/defs.h', 'kwant/graph/defs.pxd',
+                       'kwant/graph/core.pxd', 'kwant/graph/c_slicer.pxd',
+                       'kwant/graph/c_slicer/bucket_list.h',
+                       'kwant/graph/c_slicer/graphwrap.h',
+                       'kwant/graph/c_slicer/partitioner.h',
+                       'kwant/graph/c_slicer/slicer.h'])),
+        ('kwant.linalg.lapack',
+         dict(sources=['kwant/linalg/lapack.pyx'],
+              depends=['kwant/linalg/f_lapack.pxd'])),
+        ('kwant.linalg._mumps',
+         dict(sources=['kwant/linalg/_mumps.pyx'],
+              depends=['kwant/linalg/cmumps.pxd']))])
+
+    aliases = [('lapack', 'kwant.linalg.lapack'),
+               ('mumps', 'kwant.linalg._mumps')]
 
     get_version()
     init_cython()
 
+    global build_summary
     build_summary = []
-    exts = collections.OrderedDict(EXTENSIONS)
-    exts = configure_extensions(exts, EXTENSION_ALIASES, build_summary)
+    exts = configure_extensions(exts, aliases, build_summary)
     exts = configure_special_extensions(exts, build_summary)
     exts = maybe_cythonize(exts)
+
+    classifiers = """\
+        Development Status :: 5 - Production/Stable
+        Intended Audience :: Science/Research
+        Intended Audience :: Developers
+        Programming Language :: Python :: 3 :: Only
+        Topic :: Software Development
+        Topic :: Scientific/Engineering
+        Operating System :: POSIX
+        Operating System :: Unix
+        Operating System :: MacOS :: MacOS X
+        Operating System :: Microsoft :: Windows"""
 
     setup(name='kwant',
           version=version,
@@ -582,7 +569,7 @@ def main():
           tests_require=['numpy > 1.6.1', 'pytest >= 2.6.3'],
           install_requires=['numpy > 1.6.1', 'scipy >= 0.9', 'tinyarray'],
           extras_require={'plotting': 'matplotlib >= 1.2'},
-          classifiers=[c.strip() for c in CLASSIFIERS.split('\n')])
+          classifiers=[c.strip() for c in classifiers.split('\n')])
 
 if __name__ == '__main__':
     main()
