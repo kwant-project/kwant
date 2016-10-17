@@ -1,0 +1,555 @@
+from collections import defaultdict
+
+import numpy as np
+import tinyarray as ta
+import sympy
+
+from sympy.utilities.lambdify import lambdastr
+from sympy.printing.lambdarepr import LambdaPrinter
+from sympy.printing.precedence import precedence
+
+from sympy.core.function import AppliedUndef
+
+from ..builder import Builder, HoppingKind
+from ..lattice import Monatomic, TranslationalSymmetry
+
+from ._common import sympify, gcd
+from ._common import position_operators, momentum_operators
+from ._common import matrix_monomials
+
+
+################ Globals variables and definitions
+
+_wf = sympy.Function('_internal_unique_name', commutative=False)
+_position_operators = {s.name: s for s in position_operators}
+_displacements = {s: sympy.Symbol('_internal_a_{}'.format(s)) for s in 'xyz'}
+
+
+################ Interface functions
+
+def discretize(hamiltonian, discrete_coordinates=None, lattice_constant=1,
+               substitutions=None, verbose=False):
+    """Construct a tight-binding model from a continuum Hamiltonian.
+
+    Parameters
+    ----------
+    hamiltonian : sympy.Expr or sympy.Matrix, or string
+        Symbolic representation of a continous Hamiltonian. When providing
+        a sympy expression, it is recommended to use operators
+        defined in `~kwant.continuum.momentum_operators` in order to provide
+        proper commutation properties. If a string is provided it will be
+        converted to a sympy expression using `kwant.continuum.sympify`.
+    discrete_coordinates : sequence of strings, or ``None`` (default)
+        Set of coordinates for which momentum operators will be treated as
+        differential operators. For example ``discrete_coordinates=('x', 'y')``.
+        If not provided they will be obtained from the input hamiltonian by
+        reading present coordinates and momentum operators. Order of discrete
+        coordinates is always lexical, even if provided otherwise.
+    lattice_constant : int or float, default: 1
+        Lattice constant for the template Builder.
+    substitutions : dict, defaults to empty
+        A namespace to be passed to `kwant.continuum.sympify` when
+        ``hamiltonian`` is a string. Could be used to simplify matrix input:
+        ``sympify('k_x**2 * s_z', substitutions={'s_z': [[1, 0], [0, -1]]})``.
+    verbose : bool, default: False
+        If ``True`` additional information will be printed.
+
+    Returns
+    -------
+    `~kwant.builder.Builder` with translational symmetry,
+    which can be used as a template.
+    """
+
+    args = hamiltonian, discrete_coordinates, substitutions, verbose
+    tb, coords = discretize_symbolic(*args)
+    return build_discretized(tb, coords, lattice_constant, substitutions, verbose)
+
+
+def discretize_symbolic(hamiltonian, discrete_coordinates=None, substitutions=None,
+                        verbose=False):
+    """Discretize a continuous Hamiltonian into a tight-binding representation.
+
+    Parameters
+    ----------
+    hamiltonian : sympy.Expr or sympy.Matrix, or string
+        Symbolic representation of a continous Hamiltonian. When providing
+        a sympy expression, it is recommended to use operators
+        defined in `~kwant.continuum.momentum_operators` in order to provide
+        proper commutation properties. If a string is provided it will be
+        converted to a sympy expression using `kwant.continuum.sympify`.
+    discrete_coordinates : sequence of strings, or ``None`` (default)
+        Set of coordinates for which momentum operators will be treated as
+        differential operators. For example ``discrete_coordinates=('x', 'y')``.
+        If not provided they will be obtained from the input hamiltonian by
+        reading present coordinates and momentum operators. Order of discrete
+        coordinates is always lexical, even if provided otherwise.
+    substitutions : dict, defaults to empty
+        A namespace to be passed to `kwant.continuum.sympify` when
+        ``hamiltonian`` is a string. Could be used to simplify matrix input:
+        ``sympify('k_x**2 * s_z', substitutions={'s_z': [[1, 0], [0, -1]]})``.
+    verbose : bool, default: False
+        If ``True`` additional information will be printed.
+
+    Returns
+    -------
+    (discrete_hamiltonian, discrete_coordinates)
+        discrete_hamiltonian: dict
+            Keys are tuples of integers; the offsets of the hoppings
+            ((0, 0, 0) for the onsite). Values are symbolic expressions
+            for the hoppings/onsite.
+        discrete_coordinates : sequence of strings
+            The coordinates that have been discretized.
+    """
+    if not isinstance(hamiltonian, (sympy.Expr, sympy.matrices.MatrixBase)):
+        hamiltonian = sympify(hamiltonian, substitutions)
+
+    atoms = hamiltonian.atoms(sympy.Symbol)
+    if not all('a' != s.name for s in atoms):
+        raise ValueError("'a' is a symbol used internally to represent "
+                         "lattice spacing; please use a different symbol.")
+
+    hamiltonian = sympy.expand(hamiltonian)
+    if discrete_coordinates is None:
+        used_momenta = set(momentum_operators) & set(atoms)
+        discrete_coordinates = {k.name[-1] for k in used_momenta}
+    else:
+        discrete_coordinates = set(discrete_coordinates)
+        if not discrete_coordinates <= set('xyz'):
+            msg = "Discrete coordinates must only contain 'x', 'y', or 'z'."
+            raise ValueError(msg)
+
+    discrete_coordinates = sorted(discrete_coordinates)
+
+    if len(discrete_coordinates) == 0:
+        raise ValueError("Failed to read any discrete coordinates. This is "
+                         "probably due to a lack of momentum operators in "
+                         "your input. You can use the 'discrete_coordinates'"
+                         "parameter to provide them.")
+
+    if verbose:
+        print('Discrete coordinates set to: ',
+              discrete_coordinates, end='\n\n')
+
+    onsite_zeros = (0,) * len(discrete_coordinates)
+
+    if not isinstance(hamiltonian, sympy.matrices.MatrixBase):
+        hamiltonian = sympy.Matrix([hamiltonian])
+        _input_format = 'expression'
+    else:
+        _input_format = 'matrix'
+
+    shape = hamiltonian.shape
+    tb = defaultdict(lambda: sympy.zeros(*shape))
+    tb[onsite_zeros] = sympy.zeros(*shape)
+
+    for (i, j), expression in np.ndenumerate(hamiltonian):
+        hoppings = _discretize_expression(expression, discrete_coordinates)
+
+        for offset, hop in hoppings.items():
+            tb[offset][i, j] += hop
+
+    # do not include Hermitian conjugates of hoppings
+    wanted_hoppings = sorted(list(tb))[len(list(tb)) // 2:]
+    tb = {k: v for k, v in tb.items() if k in wanted_hoppings}
+
+    if _input_format == 'expression':
+        tb = {k: v[0, 0] for k, v in tb.items()}
+
+    return tb, discrete_coordinates
+
+
+def build_discretized(tb_hamiltonian, discrete_coordinates,
+                      lattice_constant=1, substitutions=None, verbose=False):
+    """Create a template Builder from a symbolic tight-binding Hamiltonian.
+
+    Parameters
+    ----------
+    tb_hamiltonian : dict
+        Keys are tuples of integers: the offsets of the hoppings
+        ((0, 0, 0) for the onsite). Values are symbolic expressions
+        for the hoppings/onsite or expressions that can by sympified using
+        `kwant.continuum.sympify`.
+    discrete_coordinates : sequence of strings
+        Set of coordinates for which momentum operators will be treated as
+        differential operators. For example ``discrete_coordinates=('x', 'y')``.
+    lattice_constant : int or float, default: 1
+        Lattice constant for the template Builder.
+    substitutions : dict, defaults to empty
+        A namespace to be passed to `kwant.continuum.sympify` when
+        ``tb_hamiltonian`` is a string. Could be used to simplify matrix input:
+        ``sympify('k_x**2 * s_z', substitutions={'s_z': [[1, 0], [0, -1]]})``.
+    verbose : bool, default: False
+        If ``True`` additional information will be printed.
+
+    Returns
+    -------
+    `~kwant.builder.Builder` with translational symmetry,
+    which can be used as a template.
+    """
+    if len(discrete_coordinates) == 0:
+        raise ValueError('Discrete coordinates cannot be empty.')
+
+    for k, v in tb_hamiltonian.items():
+        if not isinstance(v, (sympy.Expr, sympy.matrices.MatrixBase)):
+            tb_hamiltonian[k] = sympify(v, substitutions)
+
+    discrete_coordinates = sorted(discrete_coordinates)
+
+    tb = {}
+    for n, (offset, hopping) in enumerate(tb_hamiltonian.items()):
+        if verbose:
+            print("Function generated for {}:".format(offset))
+
+        onsite = all(i == 0 for i in offset)
+
+        if onsite:
+            name = 'onsite'
+        else:
+            name = 'hopping_{}'.format(n)
+
+        tb[offset] = _value_function(hopping, discrete_coordinates,
+                                     lattice_constant, onsite, name,
+                                     verbose=verbose)
+
+    dim = len(discrete_coordinates)
+    onsite_zeros = (0,) * dim
+
+    prim_vecs = lattice_constant * np.eye(dim)
+    random_element = next(iter(tb_hamiltonian.values()))
+    norbs = (1 if isinstance(random_element, sympy.Expr)
+             else random_element.shape[0])
+    lattice = Monatomic(prim_vecs, norbs=norbs)
+
+    onsite = tb.pop(onsite_zeros)
+    # 'delta' parameter to HoppingKind is the negative of the 'hopping offset'
+    hoppings = {HoppingKind(tuple(-i for i in d), lattice): val
+                for d, val in tb.items()}
+
+    syst = Builder(TranslationalSymmetry(*prim_vecs))
+    syst[lattice(*onsite_zeros)] = onsite
+    for hop, val in hoppings.items():
+        syst[hop] = val
+
+    return syst
+
+
+def _differentiate(expression, coordinate_name):
+    """Calculate derivative of an expression for given coordinate.
+
+    Parameters:
+    -----------
+    expression : sympy.Expr
+        Sympy expression containing function to be derivated.
+    coordinate_name : string
+        Coordinate over which derivative is calculated.
+
+    Returns
+    -------
+    sympy.Expr
+    """
+    assert coordinate_name in 'xyz'
+    coordinate = _position_operators[coordinate_name]
+    h = _displacements[coordinate_name]
+
+    expr1 = expression.subs(coordinate, coordinate + h)
+    expr2 = expression.subs(coordinate, coordinate - h)
+
+    return (expr1 - expr2) / (2 * h)
+
+
+def _discretize_summand(summand, discrete_coordinates):
+    """Discretize a product of factors.
+
+    Parameters
+    ----------
+    summand : sympy.Expr
+    discrete_coordinates : sequence of strings
+        Must be a subset of ``{'x', 'y', 'z'}``.
+
+    Returns
+    -------
+    sympy.Expr
+    """
+    assert not isinstance(summand, sympy.Add), "Input should be one summand."
+    momenta = ['k_{}'.format(s) for s in discrete_coordinates]
+
+    factors = reversed(summand.as_ordered_factors())
+    result = 1
+    for factor in factors:
+        symbol, exponent = factor.as_base_exp()
+        if isinstance(symbol, sympy.Symbol) and symbol.name in momenta:
+            for i in range(exponent):
+                coordinate = symbol.name[-1]
+                # apply momentum as differential operator '-i d/dx'
+                result = -sympy.I * _differentiate(result, coordinate)
+        else:
+            result = factor * result
+
+    return sympy.expand(result)
+
+
+def _discretize_expression(expression, discrete_coordinates):
+    """Discretize an expression into a discrete (tight-binding) representation.
+
+    Parameters
+    ----------
+    expression : sympy.Expr
+    discrete_coordinates : sequence of strings
+        Must be a subset of ``{'x', 'y', 'z'}``.
+
+    Returns
+    -------
+    dict
+        Keys are tuples of integers; the offsets of the hoppings
+        ((0, 0, 0) for the onsite). Values are symbolic expressions
+        for the hoppings/onsite.
+    """
+    def _read_offset(wf):
+        # e.g. wf(x + h, y, z + h) -> (1, 0, 1)
+        assert wf.func == _wf
+
+        offset = []
+        for c, arg in zip(discrete_coordinates, wf.args):
+            coefficients = arg.as_coefficients_dict()
+            assert coefficients[_position_operators[c]] == 1
+
+            ai = _displacements[c]
+            offset.append(coefficients.pop(ai, 0))
+        return tuple(offset)
+
+    def _extract_hoppings(expr):
+        """Read hoppings and perform shortening operation."""
+        expr = sympy.expand(expr)
+        summands = expr.args if expr.func == sympy.Add else [expr]
+
+        offset = [_read_offset(s.args[-1]) for s in summands]
+        coeffs = [sympy.Mul(*s.args[:-1]) for s in summands]
+        offset = np.array(offset, dtype=int)
+        # rescale the offsets for each coordinate by their greatest
+        # common divisor across the summands. e.g:
+        # wf(x+2h) + wf(x+4h) --> wf(x+h) + wf(x+2h) and a_x //= 2
+        subs = {}
+        for i, xi in enumerate(discrete_coordinates):
+            factor = int(gcd(*offset[:, i]))
+            if factor < 1:
+                continue
+            offset[:, i] //= factor
+            subs[_displacements[xi]] = sympy.symbols('a') / factor
+        # apply the rescaling to the hoppings
+        output = defaultdict(lambda: sympy.Integer(0))
+        for n, c in enumerate(coeffs):
+            output[tuple(offset[n].tolist())] += c.subs(subs)
+        return dict(output)
+
+    # main function body starts here
+    if (isinstance(expression, (int, float, sympy.Integer, sympy.Float))
+            or not expression.atoms(sympy.Symbol) & set(momentum_operators)):
+        n = len(discrete_coordinates)
+        return {(0,) * n: expression}
+
+    assert isinstance(expression, sympy.Expr)
+
+    # make sure we have list of summands
+    summands = expression.as_ordered_terms()
+
+    # discretize every summand
+    coordinates = tuple(_position_operators[s] for s in discrete_coordinates)
+    wf = _wf(*coordinates)
+
+    discrete_expression = defaultdict(int)
+    for summand in summands:
+        summand = _discretize_summand(summand * wf, discrete_coordinates)
+        hops = _extract_hoppings(summand)
+        for k, v in hops.items():
+            discrete_expression[k] += v
+
+    return dict(discrete_expression)
+
+
+################ string processing
+
+class _NumericPrinter(LambdaPrinter):
+
+    def _print_ImaginaryUnit(self, expr):
+        # prevent sympy from printing 'I' for imaginary unit
+        return "1j"
+
+    def _print_Pow(self, expr):
+        # copied from sympy's StrPrinter with the code paths
+        # to print 'sqrt' removed.
+        PREC = precedence(expr)
+
+        if expr.is_commutative and expr.exp is -sympy.S.One:
+            return '1/%s' % self.parenthesize(expr.base, PREC)
+
+        e = self.parenthesize(expr.exp, PREC)
+        if (self.printmethod == '_sympyrepr' and
+            expr.exp.is_Rational and expr.exp.q != 1):
+            if e.startswith('(Rational'):
+                return '%s**%s' % (self.parenthesize(expr.base, PREC), e[1:-1])
+        return '%s**%s' % (self.parenthesize(expr.base, PREC), e)
+
+
+def _print_sympy(expr):
+    return lambdastr((), expr, printer=_NumericPrinter)[len('lambda : '):]
+
+
+def _return_string(expr, discrete_coordinates):
+    """Process a sympy expression into an evaluatable Python return statement.
+
+    Parameters
+    ----------
+    expr : sympy.Expr
+
+    Returns
+    -------
+    output : string
+        A return string that can be used to assemble a Kwant value function.
+    map_function_calls : dict
+        mapping of function calls to assigned constants.
+    const_symbols : sequance of sympy.Symbol
+        All constants that appear in the expression.
+    _cache: dict
+        mapping of cache symbols to cached matrices.
+    """
+    _cache = {}
+    def cache(x):
+        s = sympy.symbols('_cache_{}'.format(len(_cache)))
+        _cache[str(s)] = ta.array(x.tolist(), complex)
+        return s
+
+    blacklisted = set(discrete_coordinates) | {'site', 'site1', 'site2'}
+    const_symbols = {s for s in expr.atoms(sympy.Symbol)
+                     if s.name not in blacklisted}
+
+    # functions will be evaluated within the function body and the
+    # result assigned to a symbol '_const_<n>', so we replace all
+    # function calls by these symbols in the return statement.
+    map_function_calls = expr.atoms(AppliedUndef, sympy.Function)
+    map_function_calls = {s: sympy.symbols('_const_{}'.format(n))
+                    for n, s in enumerate(map_function_calls)}
+
+    expr = expr.subs(map_function_calls)
+
+    if isinstance(expr, sympy.matrices.MatrixBase):
+        # express matrix return values in terms of sums of known matrices,
+        # which will be assigned to '_cache_n' in the function body.
+        mons = matrix_monomials(expr, *expr.atoms(sympy.Symbol))
+        mons = {k: cache(v) for k, v in mons.items()}
+        mons = ["{} * {}".format(_print_sympy(k), _print_sympy(v))
+                for k, v in mons.items()]
+        output = " + ".join(mons)
+    else:
+        output = _print_sympy(expr)
+
+    return 'return {}'.format(output), map_function_calls, const_symbols, _cache
+
+
+def _assign_symbols(map_function_calls, lattice_constant,
+                    discrete_coordinates, onsite):
+    """Generate a series of assignments.
+
+    Parameters
+    ----------
+    map_function_calls : dict
+        mapping of function calls to assigned constants.
+    lattice_constant : int or float
+        Used to get site.pos from site.tag
+    discrete_coordinates : sequence of strings
+        If left as None coordinates will not be read from a site.
+    onsite : bool
+        True if function is called for onsite, false for hoppings
+
+    Returns
+    -------
+    assignments : list of strings
+        List of lines used for including in a function.
+    """
+    lines = []
+
+    if discrete_coordinates:
+        site = 'site' if onsite else 'site1'
+        args = ', '.join(discrete_coordinates), str(lattice_constant), site
+        lines.append('({}, ) = {} * {}.tag'.format(*args))
+
+    for k, v in map_function_calls.items():
+        lines.append("{} = {}".format(v, _print_sympy(k)))
+
+    return lines
+
+
+def _value_function(expr, discrete_coordinates, lattice_constant, onsite,
+                    name='_anonymous_func', verbose=False):
+    """Generate a numeric function from a sympy expression.
+
+    Parameters
+    ----------
+    expr : sympy.Expr or sympy.matrix
+        Expr that from which value function will be generated.
+    discrete_coordinates : sequence of strings
+        List of coodinates present in the system.
+    lattice_constant : int or float
+        Lattice spacing of the system
+    verbose : bool, default: False
+        If True, the function body is printed.
+
+    Returns
+    -------
+    numerical function that can be used with Kwant.
+    """
+
+    expr = expr.subs({sympy.Symbol('a'): lattice_constant})
+    return_string, map_function_calls, const_symbols, _cache = \
+        _return_string(expr, discrete_coordinates=discrete_coordinates)
+
+    # first check if value function needs to read coordinates
+    if not ({_position_operators[s] for s in discrete_coordinates} &
+            expr.atoms(sympy.Symbol)):
+        discrete_coordinates = None
+
+    # constants and functions in the sympy input will be passed
+    # as keyword-only arguments to the value function
+    required_kwargs = set.union({s.name for s in const_symbols},
+                                {str(k.func) for k in map_function_calls})
+    required_kwargs = ', '.join(sorted(required_kwargs))
+
+    if (not required_kwargs) and (discrete_coordinates is None):
+        # we can just use a constant value instead of a value function
+        if isinstance(expr, sympy.MatrixBase):
+            output = ta.array(expr.tolist(), complex)
+        else:
+            output = complex(expr)
+
+        if verbose:
+            print("\n{}\n\n".format(output))
+
+        return output
+
+    lines = _assign_symbols(map_function_calls, onsite=onsite,
+                            lattice_constant=lattice_constant,
+                            discrete_coordinates=discrete_coordinates)
+
+    lines.append(return_string)
+
+    separator = '\n' + 4 * ' '
+    # 'site_string' is tightly coupled to the symbols used in '_assign_symbol'
+    site_string = 'site' if onsite else 'site1, site2'
+    if required_kwargs:
+        header_str = 'def {}({}, *, {}):'
+        header = header_str.format(name, site_string, required_kwargs)
+    else:
+        header = 'def {}({}):'.format(name, site_string)
+    func_code = separator.join([header] + list(lines))
+
+    namespace = {'pi': np.pi}
+    namespace.update(_cache)
+
+    if verbose:
+        for k, v in _cache.items():
+            print("\n{} = (\n{})".format(k, repr(np.array(v))))
+        print('\n' + func_code + '\n\n')
+
+    exec(func_code, namespace)
+    f = namespace[name]
+
+    return f
