@@ -16,3 +16,7 @@
 /build.conf
 /kwant.egg-info/
 /MANIFEST.in
+.cache/
+.coverage
+.eggs/
+htmlcov/
