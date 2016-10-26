@@ -43,3 +43,13 @@ system by just saying::
     syst = make_system(lattice_1D)
     h = syst.hamiltonian_submatrix()
     pyplot.plot(np.eigs(h)[1][0])
+
+Improved build configuration
+------------------------------------------
+The name of the build configuration file, ``build.conf`` by default, is now
+configurable with the ``--configfile=PATH`` option to ``setup.py``.  (This
+makes build configuration usable with the ``pip`` tool.)  The build
+configuration as specified in this file is now more general, allowing to
+modify any build parameter for any of the compiled extensions contained in
+Kwant.  See the :ref:`Installation instructions <build-configuration>` for
+details.

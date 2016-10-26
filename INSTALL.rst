@@ -74,6 +74,8 @@ cythonization is disabled when building not from git.  If ever necessary, this
 default can be overridden by giving the ``--cython`` option to setup.py.)
 
 
+.. _build-configuration:
+
 Build configuration
 ===================
 
