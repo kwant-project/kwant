@@ -83,7 +83,7 @@ this file is ``build.conf`` in the root directory of the Kwant distribution.  A
 different path may be provided using the ``--configfile=PATH`` option.
 
 This configuration file consists of
-sections, one for each extension modules that is contained in Kwant, led by a
+sections, one for each extension module that is contained in Kwant, led by a
 ``[section name]`` header and followed by ``key = value`` lines.
 
 The sections bear the names of the extension modules, for example
