@@ -12,6 +12,7 @@ from __future__ import print_function
 
 import sys
 
+
 def ensure_python(required_version):
     v = sys.version_info
     if v[:3] < required_version:
@@ -32,9 +33,7 @@ import subprocess
 import configparser
 import collections
 from setuptools import setup, find_packages, Extension, Command
-from sysconfig import get_platform
-from distutils.errors import DistutilsError, DistutilsModuleError, \
-    CCompilerError
+from distutils.errors import DistutilsError, CCompilerError
 from distutils.command.build import build
 from setuptools.command.sdist import sdist
 from setuptools.command.build_ext import build_ext
@@ -163,6 +162,7 @@ def init_cython():
     global cythonize, cython_help
 
     cython_option = '--cython'
+    required_cython_version = (0, 22)
     try:
         sys.argv.remove(cython_option)
         cythonize = True
@@ -186,15 +186,14 @@ def init_cython():
                 cython_version[-1] -= 1
             cython_version = tuple(cython_version)
 
-            required_cython_version = (0, 22)
             if cython_version < required_cython_version:
                 cythonize = None
 
-            if cythonize is None:
-                msg = ("Install Cython >= {0} or use"
-                       " a source distribution (tarball) of Kwant.")
-                ver = '.'.join(str(e) for e in required_cython_version)
-                cython_help = msg.format(ver)
+        if cythonize is None:
+            msg = ("Install Cython >= {0} or use"
+                    " a source distribution (tarball) of Kwant.")
+            ver = '.'.join(str(e) for e in required_cython_version)
+            cython_help = msg.format(ver)
     else:
         msg = "Run setup.py with the {} option to enable Cython."
         cython_help = msg.format(cython_option)
@@ -411,7 +410,7 @@ def configure_special_extensions(exts, build_summary):
             build_summary.append('Auto-configured MUMPS')
         else:
             mumps = None
-            del exts['mumps']
+            del exts['kwant.linalg._mumps']
             build_summary.append('No MUMPS support')
 
     if mumps:
