@@ -585,7 +585,7 @@ def main():
           ext_modules=exts,
           setup_requires=['pytest-runner >= 2.7'],
           tests_require=['numpy > 1.6.1', 'pytest >= 2.6.3'],
-          install_requires=['numpy > 1.6.1', 'scipy >= 0.9', 'tinyarray'],
+          install_requires=['numpy > 1.6.1', 'scipy >= 0.11.0', 'tinyarray'],
           extras_require={'plotting': 'matplotlib >= 1.2'},
           classifiers=[c.strip() for c in classifiers.split('\n')])
 

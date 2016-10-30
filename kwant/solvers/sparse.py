@@ -27,16 +27,6 @@ if uses_umfpack:
     umfpack = linsolve.umfpack
 
 if uses_umfpack:
-    # This patches a memory leak in SciPy:
-    # https://github.com/scipy/scipy/issues/2122
-    #
-    # TODO: Remove this code once we depend on scipy >= 0.10.1.
-    def del_for_umfpackcontext(self):
-        self.free()
-    if not hasattr(umfpack.UmfpackContext, '__del__'):
-        umfpack.UmfpackContext.__del__ = del_for_umfpackcontext
-    del del_for_umfpackcontext
-
     def factorized(A, piv_tol=1.0, sym_piv_tol=1.0):
         """
         Return a fuction for solving a sparse linear system, with A

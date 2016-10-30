@@ -17,14 +17,17 @@ from .._common import ensure_isinstance
 from .. import system
 from functools import reduce
 
-# Currently, scipy.sparse does not support matrices with one dimension being
-# zero: http://projects.scipy.org/scipy/ticket/1602 We use NumPy dense matrices
-# as a replacement.
+# Until v0.13.0, scipy.sparse did not support making block matrices out of
+# matrices with one dimension being zero:
+# https://github.com/scipy/scipy/issues/2127 Additionally, 'scipy.sparse.bmat'
+# didn't support matrices with zero size until v0.18:
+# https://github.com/scipy/scipy/issues/5976. For now we use NumPy dense
+# matrices as a replacement.
 
-# TODO: Once this issue is fixed, code for the special cases can be removed
-# from _make_linear_sys, _solve_linear_sys and possibly other places marked by
-# the line "See comment about zero-shaped sparse matrices at the top of
-# common.py".
+# TODO: Once we depend on scipy >= 0.18, code for the special cases can be
+# removed from _make_linear_sys, _solve_linear_sys and possibly other places
+# marked by the line "See comment about zero-shaped sparse matrices at the top
+# of common.py".
 
 LinearSys = namedtuple('LinearSys', ['lhs', 'rhs', 'indices', 'num_orb'])
 
