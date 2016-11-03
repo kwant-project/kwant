@@ -5,6 +5,24 @@ stages:
   - test
   - deploy
 
+mirror repository:
+    stage: build
+    only:
+        - branches@kwant/kwant
+    variables:
+      REPOS: "git@github.com:kwant-project/kwant.git git@gitlab.com:kwant/kwant.git"
+    before_script:
+      - HOSTS=$(for REPO in $REPOS; do echo ${REPO%:*} | cut -d'@' -f2; done)
+      - mkdir ~/.ssh && chmod 700 ~/.ssh
+      - for HOST in $HOSTS; do ssh-keyscan $HOST >> ~/.ssh/known_hosts; done
+      - echo "$DEPLOY_KEY" > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    after_script:
+      - rm -rf ~/.ssh
+    script:
+      - ORIGIN_URL=$(git config --get remote.origin.url)
+      - cd $(mktemp -d); git clone --bare $ORIGIN_URL .
+      - for REPO in $REPOS; do git push --mirror $REPO; done
+
 build package:
   stage: build
   script:
