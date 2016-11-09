@@ -152,7 +152,7 @@ root.
 1. Install the required packages.  On Debian-based systems like Ubuntu this can
    be done by running the command ::
 
-       sudo apt-get install python-dev python-scipy python-matplotlib python-nose g++ gfortran libopenblas-dev liblapack-dev libmumps-scotch-dev
+       sudo apt-get install python3-dev python3-scipy python3-matplotlib python3-nose g++ gfortran libopenblas-dev liblapack-dev libmumps-scotch-dev
 
 2. Unpack Tinyarray, enter its directory. To build and install, run ::
 
