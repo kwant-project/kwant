@@ -541,6 +541,17 @@ def main():
          dict(sources=['kwant/linalg/_mumps.pyx'],
               depends=['kwant/linalg/cmumps.pxd']))])
 
+    # Add NumPy header path to include_dirs of all the extensions.
+    try:
+        import numpy
+    except ImportError:
+        print(banner(' Caution '), 'NumPy header directory cannot be determined'
+              ' ("import numpy" failed).', banner(), sep='\n', file=sys.stderr)
+    else:
+        numpy_include = numpy.get_include()
+        for ext in exts.values():
+            ext.setdefault('include_dirs', []).append(numpy_include)
+
     aliases = [('lapack', 'kwant.linalg.lapack'),
                ('mumps', 'kwant.linalg._mumps')]
 
@@ -552,13 +563,6 @@ def main():
     exts = configure_extensions(exts, aliases, build_summary)
     exts = configure_special_extensions(exts, build_summary)
     exts = maybe_cythonize(exts)
-
-    try:
-        import numpy
-    except ImportError:
-        numpy_include_dirs = []
-    else:
-        numpy_include_dirs = [numpy.get_include()]
 
     classifiers = """\
         Development Status :: 5 - Production/Stable
@@ -589,7 +593,6 @@ def main():
                     'build_ext': kwant_build_ext,
                     'build_tut': kwant_build_tut},
           ext_modules=exts,
-          include_dirs=numpy_include_dirs,
           setup_requires=['pytest-runner >= 2.7'],
           tests_require=['numpy > 1.6.1', 'pytest >= 2.6.3'],
           install_requires=['numpy > 1.6.1', 'scipy >= 0.11.0', 'tinyarray'],
