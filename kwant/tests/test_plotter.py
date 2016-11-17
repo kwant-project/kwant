@@ -149,18 +149,15 @@ def test_map():
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             plotter.map(syst.finalized(), range(len(syst.sites())),
-                              file=out)
+                        file=out)
         pytest.raises(ValueError, plotter.map, syst,
                       range(len(syst.sites())), file=out)
 
 
 def test_mask_interpolate():
     # A coordinate array with coordinates of two points almost coinciding.
-    coords = np.random.rand(10, 2)
-    coords[5] *= 1e-8
-    coords[5] += coords[0]
+    coords = np.array([[0, 0], [1e-7, 1e-7], [1, 1], [1, 0]])
 
-    warnings.simplefilter("ignore")
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         plotter.mask_interpolate(coords, np.ones(len(coords)), a=1)
@@ -168,7 +165,9 @@ def test_mask_interpolate():
         assert issubclass(w[-1].category, RuntimeWarning)
         assert "coinciding" in str(w[-1].message)
 
-    pytest.raises(ValueError, plotter.mask_interpolate, coords,
-                  np.ones(len(coords)))
-    pytest.raises(ValueError, plotter.mask_interpolate, coords, np.ones(2 *
-                                                                        len(coords)))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        pytest.raises(ValueError, plotter.mask_interpolate,
+                      coords, np.ones(len(coords)))
+        pytest.raises(ValueError, plotter.mask_interpolate,
+                      coords, np.ones(2 * len(coords)))
