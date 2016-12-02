@@ -33,10 +33,10 @@ build package:
     untracked: true
     expire_in: 1 hour
 
-check for whitespace:
+check whitespace style:
   stage: build
   script:
-    - "! for f in `git ls-files | grep -v \\.diff$`; do file $f | grep -q ' text' && grep -l '[[:blank:]]$' $f; done | grep . >&2"
+    - "! for f in `git ls-files | grep -v \\.diff$`; do file $f | grep -q ' text' || continue; grep -q '[[:blank:]]$' $f && echo $f: trailing whitespace; tail -n1 $f | read -r _ || echo $f: no newline at end of file; tail -n1 $f | grep -q '^$' && echo $f: empty line at end of file; done | grep . >&2"
   allow_failure: true
 
 check for dependencies installed:
