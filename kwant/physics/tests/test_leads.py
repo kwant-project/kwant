@@ -9,6 +9,8 @@
 
 import numpy as np
 from numpy.testing import assert_almost_equal
+import scipy.linalg as la
+import numpy.linalg as npl
 from kwant.physics import leads
 import kwant
 
@@ -244,19 +246,16 @@ def test_modes_bearded_ribbon():
     assert leads.modes(h, t)[1].nmodes == 8
 
 
-def test_algorithm_equivalence():
-    np.random.seed(400)
-    n = 12
-    h = np.random.randn(n, n) + 1j * np.random.randn(n, n)
-    h += h.T.conj()
-    t = np.random.randn(n, n) + 1j * np.random.randn(n, n)
+def check_equivalence(h, t, n, sym='', particle_hole=None, chiral=None, time_reversal=None):
+    """Compare modes stabilization algorithms for a given Hamiltonian."""
     u, s, vh = np.linalg.svd(t)
     u, v = u * np.sqrt(s), vh.T.conj() * np.sqrt(s)
     prop_vecs = []
     evan_vecs = []
     algos = [None, (True, True), (True, False), (False, True), (False, False)]
     for algo in algos:
-        result = leads.modes(h, t, stabilization=algo)[1]
+        result = leads.modes(h, t, stabilization=algo, chiral=chiral,
+                             particle_hole=particle_hole, time_reversal=time_reversal)[1]
 
         vecs, vecslmbdainv = result.vecs, result.vecslmbdainv
 
@@ -279,12 +278,51 @@ def test_algorithm_equivalence():
         # By a phase
         np.testing.assert_allclose(np.abs(np.sum(vecs/prop_vecs[0],
                                                  axis=0)), vecs.shape[0],
-                                   err_msg=msg.format(algo))
+                                   err_msg=msg.format(algo)+' in symmetry class '+sym)
 
     for vecs, algo in zip(evan_vecs, algos):
         # Evanescent modes must span the same linear space.
-        assert (np.linalg.matrix_rank(np.c_[vecs, evan_vecs[0]], tol=1e-12) ==
-                vecs.shape[1]), msg.format(algo)
+        mat = np.c_[vecs, evan_vecs[0]]
+        # Scale largest singular value to 1 if the array is not empty
+        mat = mat/np.linalg.norm(mat, ord=2)
+        # As a tolerance, take the square root of machine precision times the largest
+        # matrix dimension.
+        tol = np.abs(np.sqrt(max(mat.shape)*np.finfo(mat.dtype).eps))
+        assert (np.linalg.matrix_rank(mat, tol=tol) ==
+                vecs.shape[1]), msg.format(algo)+' in symmetry class '+sym
+
+
+def test_symm_algorithm_equivalence():
+    """Test different stabilization methods in the computation of modes,
+    in the presence and/or absence of the discrete symmetries."""
+    np.random.seed(400)
+    for n in (12, 20, 40, 60):
+        for sym in kwant.rmt.sym_list:
+            # Random onsite and hopping matrices in symmetry class
+            h_cell = kwant.rmt.gaussian(n, sym)
+            # Hopping is an offdiagonal block of a Hamiltonian. We rescale it
+            # to ensure that there are modes at the Fermi level.
+            h_hop = 10 * kwant.rmt.gaussian(2*n, sym)[:n, n:]
+
+            if kwant.rmt.p(sym):
+                p_mat = np.array(kwant.rmt.h_p_matrix[sym])
+                p_mat = np.kron(np.identity(n // len(p_mat)), p_mat)
+            else:
+                p_mat = None
+
+            if kwant.rmt.t(sym):
+                t_mat = np.array(kwant.rmt.h_t_matrix[sym])
+                t_mat = np.kron(np.identity(n // len(t_mat)), t_mat)
+            else:
+                t_mat = None
+
+            if kwant.rmt.c(sym):
+                c_mat = np.kron(np.identity(n // 2), np.diag([1, -1]))
+            else:
+                c_mat = None
+
+            check_equivalence(h_cell, h_hop, n, sym=sym, particle_hole=p_mat,
+                              chiral=c_mat, time_reversal=t_mat)
 
 
 def test_for_all_evs_equal():
@@ -356,3 +394,214 @@ def test_momenta():
     these should not change when the Hamiltonian is scaled."""
     momenta = [make_clean_lead(10, s, s).modes()[0].momenta for s in [1, 1e20]]
     assert_almost_equal(*momenta)
+
+
+def check_PHS(TRIM, moms, velocities, wfs, pmat):
+    """Check PHS of incident or outgoing modes at a TRIM momentum. Input are momenta,
+    velocities and wave functions of incident or outgoing modes. """
+    # Pick out TRIM momenta - in this test, all momenta are either 0 or -pi,
+    # so the boundaries of the interval here are not important.
+    TRIM_moms = (TRIM-0.1 < moms) * (moms < TRIM+0.1)
+    assert np.allclose(moms[TRIM_moms], TRIM)
+    # At a given momentum, incident modes are sorted in ascending order by velocity.
+    # Pick out modes with the same velocity.
+    vels = velocities[TRIM_moms]
+    inds = [ind+1 for ind, vel in enumerate(vels[:-1])
+            if np.abs(vel-vels[ind+1])>1e-8]
+    inds = [0] + inds + [len(vels)]
+    inds = zip(inds[:-1], inds[1:])
+    for ind_tuple in inds:
+        vel_wfs = wfs[:, slice(*ind_tuple)]
+        assert np.allclose(vels[slice(*ind_tuple)], vels[slice(*ind_tuple)][0])
+        assert_almost_equal(vel_wfs[:, 1::2], pmat.dot(vel_wfs[:, ::2].conj()),
+                            err_msg='Particle-hole symmetry broken at a TRIM')
+
+def test_PHS_TRIM_degenerate_ordering():
+    """ Test PHS at a TRIM, both when it squares to 1 and -1.
+
+    Take a Hamiltonian with 3 degenerate bands, the degeneracy of each is given
+    in the tuple dims. The bands have different velocities. All bands intersect
+    zero energy only at k = 0 and at the edge of the BZ, so all momenta are 0
+    or -pi. We thus have multiple TRIM modes, both with the same and different
+    velocities.
+
+    If P^2 = 1, all TRIM modes are eigenmodes of P.
+    If P^2 = -1, TRIM modes come in pairs of particle-hole partners, ordered by
+    a predefined convention."""
+    sy = np.array([[0,-1j],[1j,0]])
+    sz = np.array([[1,0],[0,-1]])
+    ### P squares to 1 ###
+    np.random.seed(42)
+    dims = (4, 10, 20)
+    ts = (1.0, 1.7, 13.8)
+    rand_hop = 1j*(0.1+np.random.rand())
+    hop = la.block_diag(*[t*rand_hop*np.eye(dim) for t, dim in zip(ts, dims)])
+
+    # Particle-hole operator
+    pmat = np.eye(sum(dims))
+    onsite = np.zeros(hop.shape, dtype=complex)
+    prop, stab = leads.modes(onsite, hop, particle_hole=pmat)
+    # All momenta are either 0 or -pi.
+    assert np.all([np.any(ele - np.array([0, -np.pi])) for ele in prop.momenta])
+    # All modes are eigenmodes of P.
+    assert np.all([np.allclose(wf, pmat.dot(wf.conj())) for wf in prop.wave_functions.T])
+    ###########
+
+    ### P squares to -1 ###
+    np.random.seed(1337)
+    dims = (1, 4, 40)
+    ts = (1.0, 1.7, 13.4)
+
+    hop_mat = np.kron(sz, 1j*(0.1+np.random.rand())*np.eye(2))
+    blocks = []
+    for t, dim in zip(ts, dims):
+        blocks += dim*[t*hop_mat]
+    hop = la.block_diag(*blocks)
+    # Particle-hole operator
+    pmat = np.kron(np.eye(sum(dims)), 1j*np.kron(sz, sy))
+
+    # P squares to -1
+    assert np.allclose(pmat.dot(pmat.conj()), -np.eye(pmat.shape[0]))
+    # The Hamiltonian anticommutes with P
+    assert np.allclose(pmat.dot(hop.conj()).dot(npl.inv(pmat)), -hop)
+
+    onsite = np.zeros(hop.shape, dtype=complex)
+    prop, stab = leads.modes(onsite, hop, particle_hole=pmat)
+    # By design, all momenta are either 0 or -pi.
+    assert np.all([np.any(ele - np.array([0, -np.pi])) for ele in prop.momenta])
+
+    wfs = prop.wave_functions
+    momenta = prop.momenta
+    velocities = prop.velocities
+    nmodes = stab.nmodes
+
+    # By design, all modes are at a TRIM here. Each must thus have a particle-hole
+    # partner at the same TRIM and with the same velocity.
+    # Incident modes
+    check_PHS(0, momenta[:nmodes], velocities[:nmodes], wfs[:, :nmodes], pmat)
+    check_PHS(-np.pi, momenta[:nmodes], velocities[:nmodes], wfs[:, :nmodes], pmat)
+    # Outgoing modes
+    check_PHS(0, momenta[nmodes:], velocities[nmodes:], wfs[:, nmodes:], pmat)
+    check_PHS(-np.pi, momenta[nmodes:], velocities[nmodes:], wfs[:, nmodes:], pmat)
+    ###########
+
+
+def test_modes_symmetries():
+    np.random.seed(10)
+    for n in (4, 8, 40, 100):
+        for sym in kwant.rmt.sym_list:
+            # Random onsite and hopping matrices in symmetry class
+            h_cell = kwant.rmt.gaussian(n, sym)
+            # Hopping is an offdiagonal block of a Hamiltonian. We rescale it
+            # to ensure that there are modes at the Fermi level.
+            h_hop = 10 * kwant.rmt.gaussian(2*n, sym)[:n, n:]
+
+            if kwant.rmt.p(sym):
+                p_mat = np.array(kwant.rmt.h_p_matrix[sym])
+                p_mat = np.kron(np.identity(n // len(p_mat)), p_mat)
+            else:
+                p_mat = None
+
+            if kwant.rmt.t(sym):
+                t_mat = np.array(kwant.rmt.h_t_matrix[sym])
+                t_mat = np.kron(np.identity(n // len(t_mat)), t_mat)
+            else:
+                t_mat = None
+
+            if kwant.rmt.c(sym):
+                c_mat = np.kron(np.identity(n // 2), np.diag([1, -1]))
+            else:
+                c_mat = None
+
+            prop_modes, stab_modes = leads.modes(h_cell, h_hop, particle_hole=p_mat,
+                                                 time_reversal=t_mat, chiral=c_mat)
+            wave_functions = prop_modes.wave_functions
+            momenta = prop_modes.momenta
+            nmodes = stab_modes.nmodes
+
+            if t_mat is not None:
+                assert_almost_equal(wave_functions[:, nmodes:],
+                        t_mat.dot(wave_functions[:, :nmodes].conj()),
+                        err_msg='TRS broken in ' + sym)
+
+            if c_mat is not None:
+                assert_almost_equal(wave_functions[:, nmodes:],
+                        c_mat.dot(wave_functions[:, :nmodes:-1]),
+                        err_msg='SLS broken in ' + sym)
+
+            if p_mat is not None:
+                # If P^2 = -1, then P psi(-k) = -psi(k) for k>0, so one must look at
+                # positive and negative momenta separately.
+                # Test positive momenta.
+                in_positive_k = (np.pi > momenta[:nmodes]) * (momenta[:nmodes] > 0)
+                out_positive_k = (np.pi > momenta[nmodes:]) * (momenta[nmodes:] > 0)
+
+                assert_almost_equal(wave_functions[:, :nmodes][:, in_positive_k[::-1]],
+                        p_mat.dot((wave_functions[:, :nmodes][:, in_positive_k][:, ::-1]).conj()),
+                        err_msg='PHS broken in ' + sym)
+                assert_almost_equal(wave_functions[:, nmodes:][:, out_positive_k[::-1]],
+                        p_mat.dot((wave_functions[:, nmodes:][:, out_positive_k][:, ::-1]).conj()),
+                        err_msg='PHS broken in ' + sym)
+
+                # Test negative momenta. Need the sign of P^2 here.
+                p_squared_sign = np.sign(p_mat.dot(p_mat.conj())[0, 0].real)
+                in_neg_k = (-np.pi < momenta[:nmodes]) * (momenta[:nmodes] < 0)
+                out_neg_k = (-np.pi < momenta[nmodes:]) * (momenta[nmodes:] < 0)
+
+                assert_almost_equal(p_squared_sign*wave_functions[:, :nmodes][:, in_neg_k[::-1]],
+                        p_mat.dot((wave_functions[:, :nmodes][:, in_neg_k][:, ::-1]).conj()),
+                        err_msg='PHS broken in ' + sym)
+                assert_almost_equal(p_squared_sign*wave_functions[:, nmodes:][:, out_neg_k[::-1]],
+                        p_mat.dot((wave_functions[:, nmodes:][:, out_neg_k][:, ::-1]).conj()),
+                        err_msg='PHS broken in ' + sym)
+
+
+def test_PHS_TRIM():
+    """Test the function that makes particle-hole symmetric modes at a TRIM. """
+    np.random.seed(10)
+    for n in (4, 8, 16, 40, 100):
+        for sym in kwant.rmt.sym_list:
+            if kwant.rmt.p(sym):
+                p_mat = np.array(kwant.rmt.h_p_matrix[sym])
+                p_mat = np.kron(np.identity(n // len(p_mat)), p_mat)
+                P_squared = 1 if np.all(np.abs(p_mat.conj().dot(p_mat) -
+                                               np.eye(*p_mat.shape)) < 1e-10) else -1
+                if P_squared == 1:
+                    for nmodes in (1, 3, n//4, n//2, n):
+                        # Random matrix of 'modes.' Take part of a unitary matrix to
+                        # ensure that the modes form a basis.
+                        modes = np.random.rand(n, n) + 1j*np.random.rand(n, n)
+                        modes = la.expm(1j*(modes + modes.T.conj()))[:n, :nmodes]
+                        # Ensure modes are particle-hole symmetric and normalized
+                        modes = modes + p_mat.dot(modes.conj())
+                        modes = np.array([col/np.linalg.norm(col) for col in modes.T]).T
+                        # Mix the modes with a random unitary transformation
+                        U = np.random.rand(nmodes, nmodes) + 1j*np.random.rand(nmodes, nmodes)
+                        U = la.expm(1j*(U + U.T.conj()))
+                        modes = modes.dot(U)
+                        # Make the modes PHS symmetric using the method for a TRIM.
+                        phs_modes = leads.phs_symmetrization(modes, p_mat)[0]
+                        assert_almost_equal(phs_modes, p_mat.dot(phs_modes.conj()),
+                                            err_msg='PHS broken at a TRIM in ' + sym)
+                        assert_almost_equal(phs_modes.T.conj().dot(phs_modes), np.eye(phs_modes.shape[1]),
+                                           err_msg='Modes are not orthonormal, TRIM PHS in ' + sym)
+                elif P_squared == -1:
+                    # Need even number of modes =< n
+                    for nmodes in (2, 4, n//2, n):
+                        # Random matrix of 'modes.' Take part of a unitary matrix to
+                        # ensure that the modes form a basis.
+                        modes = np.random.rand(n, n) + 1j*np.random.rand(n, n)
+                        modes = la.expm(1j*(modes + modes.T.conj()))[:n, :nmodes]
+                        # Ensure modes are particle-hole symmetric and orthonormal.
+                        modes[:, nmodes//2:] = p_mat.dot(modes[:, :nmodes//2].conj())
+                        modes = la.qr(modes, mode='economic')[0]
+                        # Mix the modes with a random unitary transformation
+                        U = np.random.rand(nmodes, nmodes) + 1j*np.random.rand(nmodes, nmodes)
+                        U = la.expm(1j*(U + U.T.conj()))
+                        modes = modes.dot(U)
+                        # Make the modes PHS symmetric using the method for a TRIM.
+                        phs_modes = leads.phs_symmetrization(modes, p_mat)[0]
+                        assert_almost_equal(phs_modes[:, 1::2], p_mat.dot(phs_modes[:, ::2].conj()),
+                                            err_msg='PHS broken at a TRIM in ' + sym)
+                        assert_almost_equal(phs_modes.T.conj().dot(phs_modes), np.eye(phs_modes.shape[1]),
+                                           err_msg='Modes are not orthonormal, TRIM PHS in ' + sym)

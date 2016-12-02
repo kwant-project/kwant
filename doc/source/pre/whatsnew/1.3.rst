@@ -53,3 +53,12 @@ configuration as specified in this file is now more general, allowing to
 modify any build parameter for any of the compiled extensions contained in
 Kwant.  See the :ref:`Installation instructions <build-configuration>` for
 details.
+
+Scattering states with discrete symmetries
+------------------------------------------
+Three discrete symmetries are especially relevant in condensed matter physics,
+namely time-reversal symmetry, particle-hole symmetry and chiral (or
+sublattice) symmetry. When one or more of these symmetries are present,
+and it can be useful to have leads with scattering states that reflect this.
+It is now possible to these discrete symmetries in Kwant, which then uses
+them to construct scattering states that are accordingly symmetric.

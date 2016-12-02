@@ -402,7 +402,159 @@ def unified_eigenproblem(a, b=None, tol=1e6):
     return ev, select, propselect, vec_gen, ord_schur
 
 
-def make_proper_modes(lmbdainv, psi, extract, tol=1e6):
+def phs_symmetrization(wfs, particle_hole):
+    """Makes the wave functions that have the same velocity at a time-reversal
+    invariant momentum (TRIM) particle-hole symmetric.
+
+    If P is the particle-hole operator and P^2 = 1, then a particle-hole
+    symmetric wave function at a TRIM is an eigenstate of P with eigenvalue 1.
+    If P^2 = -1, wave functions with the same velocity at a TRIM come in pairs.
+    Such a pair is particle-hole symmetric if the wave functions are related by
+    P, i. e. the pair can be expressed as [psi_n, P psi_n] where psi_n is a wave
+    function.
+
+    To ensure proper ordering of modes, this function also returns an array
+    of indices which ensures that particle-hole partners are properly ordered
+    in this subspace of modes. These are later used with np.lexsort to ensure
+    proper ordering.
+
+    Parameters
+    ----------
+    wfs : numpy array
+        A matrix of propagating wave functions at a TRIM that all have the same
+        velocity. The wave functions form the columns of this matrix.
+    particle_hole : numpy array
+        The matrix representation of the unitary part of the particle-hole
+        operator, expressed in the tight binding basis.
+
+    Returns
+    -------
+    new_wfs : numpy array
+        The matrix of particle-hole symmetric wave functions.
+    TRIM_sort: numpy integer array
+        Index array that stores the proper sort order of particle-hole symmetric
+        wave functions in this subspace.
+    """
+
+    def Pdot(mat):
+        """Apply the particle-hole operator to an array. """
+        return particle_hole.dot(mat.conj())
+
+    # P always squares to 1 or -1.
+    P_squared = np.sign(particle_hole[0,:].dot(particle_hole[:,0].conj()))
+    # np.sign returns the same data type as its argument. Make sure
+    # that the comparison with integers is okay.
+    assert P_squared in (-1, 1)
+
+    if P_squared == 1:
+        # Make particle hole eigenstates.
+        # Phase factor ensures they are not numerically close.
+        phases = np.diag([np.exp(1j*np.angle(wf.T.conj().dot(
+                            Pdot(wf)))*0.5) for wf in wfs.T])
+        new_wfs = wfs.dot(phases) + Pdot(wfs.dot(phases))
+        # Orthonormalize the modes using QR on the matrix of eigenstates of P.
+        # So long as the matrix of coefficients R is purely real, any linear
+        # combination of these modes remains an eigenstate of P. From the way
+        # we construct eigenstates of P, the coefficients of R are real.
+        new_wfs, r = la.qr(new_wfs, mode='economic', pivoting=True)[:2]
+        if not np.allclose(r.imag, np.zeros(r.shape)):
+            raise RuntimeError("Numerical instability in finding particle-hole \
+                                symmetric modes.")
+        # If P^2 = 1, there is no need to sort the modes further.
+        TRIM_sort = np.zeros((wfs.shape[1],), dtype=int)
+    elif P_squared == -1:
+        # We start by trying to construct explicit particle-hole partners,
+        # and then using QR to make then orthonormal. If this does not yield
+        # correct particle-hole symmetric TRIM modes, we use a different
+        # algorithm.
+        ### Try the first algorithm ###
+        # Iterate over pairs of wave function vectors and make them
+        # particle-hole partners.
+        new_wfs = np.empty(wfs.shape, dtype=complex)
+        new_wfs[:, ::2] = wfs[:, ::2] + Pdot(wfs[:, 1::2])
+        new_wfs[:, 1::2] = Pdot(wfs[:, ::2]) - wfs[:, 1::2]
+        assert np.allclose(Pdot(new_wfs[:, ::2]), new_wfs[:, 1::2])
+        # Orthonormalize the modes. This usually gives pairs of orthonormal
+        # modes that are particle-hole partners up to a sign.
+        wf_mat = la.qr(new_wfs, mode='economic', pivoting=True)[0]
+        # Pick the correct sign to have particle-hole partners.
+        new_wfs[:, 1::2] = np.array([odd_col if np.allclose(
+            odd_col, Pdot(even_col)) else -odd_col for even_col, odd_col
+            in zip(wf_mat[:, ::2].T, wf_mat[:, 1::2].T)]).T
+        new_wfs[:, ::2] = wf_mat[:, ::2]
+        # At this stage, the modes within this subspace are properly ordered by
+        # particle-hole symmetry. Store the ordering in an array of indices
+        # that is also returned.
+        TRIM_sort = np.array(range(new_wfs.shape[1]))
+        ###############################
+        # We now check if the modes obey particle-hole symmetry. If they do, the
+        # QR factorization was sufficient, and we're done.
+        if not np.allclose(new_wfs[:, 1::2], Pdot(new_wfs[:, ::2])):
+            # If the modes are not particle-hole symmetric, we use a more
+            # expensive algorithm that definitely works.
+            ### Use the second algorithm ###
+            new_wfs = []
+            # Iterate over wave functions to construct
+            # particle-hole partners.
+            # The number of modes. This is always an even number >=2.
+            N_modes = wfs.shape[1]
+            # If there are only two modes in this subspace, they are orthogonal
+            # so we replace the second one with the P applied to the first one.
+            if N_modes == 2:
+                wf = wfs[:,0]
+                # Store psi_n and P psi_n.
+                new_wfs.append(wf)
+                new_wfs.append(Pdot(wf))
+            # If there are more than two modes, iterate over wave functions
+            # and construct their particle-hole partners one by one.
+            else:
+                # We construct pairs of modes that are particle-hole partners.
+                # Need to iterate over all pairs except the final one.
+                iterations = range((N_modes-2)//2)
+                for i in iterations:
+                    # Take a mode psi_n from the basis - the first column
+                    # of the matrix of remaining modes.
+                    wf = wfs[:,0]
+                    # Store psi_n and P psi_n.
+                    new_wfs.append(wf)
+                    P_wf = Pdot(wf)
+                    new_wfs.append(P_wf)
+                    # Remove psi_n and P psi_n from the basis matrix of modes.
+                    # First remove psi_n.
+                    wfs = wfs[:,1:]
+                    # Now we project the remaining modes onto the orthogonal
+                    # complement of P psi_n. Projector:
+                    Projector = wfs.dot(wfs.T.conj()) - \
+                                np.outer(P_wf, P_wf.T.conj())
+                    # After the projection, the mode matrix is rank deficient -
+                    # the span of the column space has dimension one less than
+                    # the number of columns.
+                    wfs = Projector.dot(wfs)
+                    wfs = la.qr(wfs, mode='economic', pivoting=True)[0]
+                    # Remove the redundant column.
+                    wfs = wfs[:, :-1]
+                    # If this is the final iteration, we only have two modes
+                    # left and can construct particle-hole partners without
+                    # the projection.
+                    if i == iterations[-1]:
+                        assert wfs.shape[1] == 2
+                        wf = wfs[:,0]
+                        # Store psi_n and P psi_n.
+                        new_wfs.append(wf)
+                        P_wf = Pdot(wf)
+                        new_wfs.append(P_wf)
+                    assert np.allclose(wfs.T.conj().dot(wfs),
+                                       np.eye(wfs.shape[1]))
+            new_wfs = np.hstack([col.reshape(len(col), 1)/npl.norm(col) for
+                                 col in new_wfs])
+            assert np.allclose(new_wfs[:, 1::2], Pdot(new_wfs[:, ::2]))
+            ############################
+    assert np.allclose(new_wfs.T.conj().dot(new_wfs), np.eye(new_wfs.shape[1]))
+    return new_wfs, TRIM_sort
+
+
+def make_proper_modes(lmbdainv, psi, extract, tol=1e6, *, particle_hole=None,
+                      time_reversal=None, chiral=None):
     """
     Find, normalize and sort the propagating eigenmodes.
 
@@ -417,6 +569,9 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6):
 
     # Array for the velocities.
     velocities = np.empty(nmodes, dtype=float)
+
+    # Array of indices to sort modes at a TRIM by PHS.
+    TRIM_PHS_sort = np.zeros(nmodes, dtype=int)
 
     # Calculate the full wave function in real space.
     full_psi = extract(psi, lmbdainv)
@@ -496,29 +651,160 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6):
         full_psi[:, indx] = dot(full_psi[:, indx], rot)
         velocities[indx] = vel_vals
 
+        # With particle-hole symmetry, treat TRIMs individually.
+        # Particle-hole conserves velocity.
+        # If P^2 = 1, we can pick modes at a TRIM as particle-hole eigenstates.
+        # If P^2 = -1, a mode at a TRIM and its particle-hole partner are
+        # orthogonal, and we pick modes such that they are related by
+        # particle-hole symmetry.
+
+        # At a TRIM, propagating translation eigenvalues are +1 or -1.
+        if (particle_hole is not None and
+            (np.abs(np.abs(lmbdainv[indx].real) - 1) < eps).all()):
+            assert not len(indx) % 2
+            # Set the eigenvalues to the exact TRIM values.
+            if (np.abs(lmbdainv[indx].real - 1) < eps).all():
+                lmbdainv[indx] = 1
+            else:
+            # Momenta are the negative arguments of the translation eigenvalues,
+            # as computed below using np.angle. np.angle of -1 is pi, so this
+            # assigns k = -pi to modes with translation eigenvalue -1.
+                lmbdainv[indx] = -1
+
+            # Original wave functions
+            orig_wf = full_psi[:, indx]
+
+            # Modes are already sorted by velocity in ascending order, as
+            # returned by la.eigh above. The first half is thus incident,
+            # and the second half outgoing.
+            # Here we work within a subspace of modes with a fixed velocity.
+            # Mostly, this is done to ensure that modes of different velocities
+            # are not mixed when particle-hole partners are constructed for
+            # P^2 = -1. First, we identify which modes have the same velocity.
+            # In each such subspace of modes, we construct wave functions that
+            # are particle-hole partners.
+            vels = velocities[indx]
+            # Velocities are sorted in ascending order. Find the indices of the
+            # last instance of each unique velocity.
+            inds = [ind+1 for ind, vel in enumerate(vels[:-1])
+                    if np.abs(vel-vels[ind+1])>vel_eps]
+            inds = [0] + inds + [len(vels)]
+            inds = zip(inds[:-1], inds[1:])
+            # Now possess an iterator over tuples, where each tuple (i,j)
+            # contains the starting and final indices i and j of a submatrix
+            # of the modes matrix, such that all modes in the submatrix
+            # have the same velocity.
+
+            # Iterate over all submatrices of modes with the same velocity.
+            new_wf = []
+            TRIM_sorts = []
+            for ind_tuple in inds:
+                # Pick out wave functions that have a given velocity
+                wfs = orig_wf[:, slice(*ind_tuple)]
+                # Make particle-hole symmetric modes
+                new_modes, TRIM_sort = phs_symmetrization(wfs, particle_hole)
+                new_wf.append(new_modes)
+                # Store sorting indices of the TRIM modes with the given
+                # velocity.
+                TRIM_sorts.append(TRIM_sort)
+            # Gather into a matrix of modes
+            new_wf = np.hstack(new_wf)
+            # Store the sort order of all modes at the TRIM.
+            # Used later with np.lexsort when the ordering
+            # of modes is done.
+            TRIM_PHS_sort[indx] = np.hstack(TRIM_sorts)
+            # Replace the old modes.
+            full_psi[:, indx] = new_wf
+            # For both cases P^2 = +-1, must rotate wave functions in the
+            # singular value basis. Find the rotation from new basis to old.
+            rot = new_wf.T.conj().dot(orig_wf)
+            # Rotate the wave functions in the singular value basis
+            psi[:, indx] = psi[:, indx].dot(rot.T.conj())
+
+        # Ensure proper usage of chiral symmetry.
+        if chiral is not None and time_reversal is None:
+            out_orig = full_psi[:, indx[len(indx)//2:]]
+            out = chiral.dot(full_psi[:, indx[:len(indx)//2]])
+            rot = out_orig.T.conj().dot(out)
+            full_psi[:, indx[len(indx)//2:]] = out
+            psi[:, indx[len(indx)//2:]] = psi[:, indx[len(indx)//2:]].dot(rot)
+
     if np.any(abs(velocities) < vel_eps):
         raise RuntimeError("Found a mode with zero or close to zero velocity.")
     if 2 * np.sum(velocities < 0) != len(velocities):
         raise RuntimeError("Numbers of left- and right-propagating "
                            "modes differ, possibly due to a numerical "
                            "instability.")
-    momenta = -np.angle(lmbdainv)
-    order = np.lexsort([velocities, -np.sign(velocities) * momenta,
-                        np.sign(velocities)])
 
-    # TODO: Remove the check once we depende on numpy>=1.8.
+    momenta = -np.angle(lmbdainv)
+    # Sort the modes. The modes are sorted first by velocity and momentum,
+    # and finally TRIM modes are properly ordered.
+    order = np.lexsort([TRIM_PHS_sort, velocities,
+                        -np.sign(velocities) * momenta, np.sign(velocities)])
+
+    # TODO: Remove the check once we depend on numpy>=1.8.
     if not len(order):
         order = slice(None)
     velocities = velocities[order]
-    norm = np.sqrt(abs(velocities))
-    full_psi = full_psi[:, order] / norm
-    psi = psi[:, order] / norm
     momenta = momenta[order]
+    full_psi = full_psi[:, order]
+    psi = psi[:, order]
+
+    # Use particle-hole symmetry to relate modes that propagate in the
+    # same direction but at opposite momenta.
+    # Modes are sorted by velocity (first incident, then outgoing).
+    # Incident modes are then sorted by momentum in ascending order,
+    # and outgoing modes in descending order.
+    # Adopted convention is to get modes with negative k (both in and out)
+    # by applying particle-hole operator to modes with positive k.
+    if particle_hole is not None:
+        N = nmodes//2  # Number of incident or outgoing modes.
+        # With particle-hole symmetry, N must be an even number.
+        # Incident modes
+        positive_k = (np.pi - eps > momenta[:N]) * (momenta[:N] > eps)
+        # Original wave functions with negative values of k
+        orig_neg_k = full_psi[:, :N][:, positive_k[::-1]]
+        # For incident modes, ordering of wfs by momentum as returned by kwant
+        # is [-k2, -k1, k1, k2], if k2, k1 > 0 and k2 > k1.
+        # To maintain this ordering with ki and -ki as particle-hole partners,
+        # reverse the order of the product at the end.
+        wf_neg_k = particle_hole.dot((full_psi[:, :N][:, positive_k]).conj())[:, ::-1]
+        rot = orig_neg_k.T.conj().dot(wf_neg_k)
+        full_psi[:, :N][:, positive_k[::-1]] = wf_neg_k
+        psi[:, :N][:, positive_k[::-1]] = psi[:, :N][:, positive_k[::-1]].dot(rot)
+
+        # Outgoing modes
+        positive_k = (np.pi - eps > momenta[N:]) * (momenta[N:] > eps)
+        # Original wave functions with negative values of k
+        orig_neg_k = full_psi[:, N:][:, positive_k[::-1]]
+        # For outgoing modes, ordering of wfs by momentum as returned by kwant
+        # is like [k2, k1, -k1, -k2], if k2, k1 > 0 and k2 > k1.
+        # Reverse order with [::-1] at the end to match momenta of opposite sign.
+        wf_neg_k = particle_hole.dot(full_psi[:, N:][:, positive_k].conj())[:, ::-1]
+        rot = orig_neg_k.T.conj().dot(wf_neg_k)
+        full_psi[:, N:][:, positive_k[::-1]] = wf_neg_k
+        psi[:, N:][:, positive_k[::-1]] = psi[:, N:][:, positive_k[::-1]].dot(rot)
+
+    # Modes are ordered by velocity.
+    # Use time-reversal symmetry to relate modes of opposite velocity.
+    if time_reversal is not None:
+        # Note: within this function, nmodes refers to the total number
+        # of propagating modes, not either left or right movers.
+        out_orig = full_psi[:, nmodes//2:]
+        out = time_reversal.dot(full_psi[:, :nmodes//2].conj())
+        rot = out_orig.T.conj().dot(out)
+        full_psi[:, nmodes//2:] = out
+        psi[:, nmodes//2:] = psi[:, nmodes//2:].dot(rot)
+
+    norm = np.sqrt(abs(velocities))
+    full_psi = full_psi / norm
+    psi = psi / norm
 
     return psi, PropagatingModes(full_psi, velocities, momenta)
 
 
-def modes(h_cell, h_hop, tol=1e6, stabilization=None):
+def modes(h_cell, h_hop, tol=1e6, stabilization=None, *, particle_hole=None,
+          time_reversal=None, chiral=None):
     """Compute the eigendecomposition of a translation operator of a lead.
 
     Parameters
@@ -544,6 +830,12 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
         to the regular one.  If it is `False`, reduction to a regular problem
         is performed if possible.  Selecting the stabilization manually is
         mostly necessary for testing purposes.
+    particle_hole : sparse or dense square matrix
+        The unitary part of the particle-hole symmetry operator.
+    time_reversal : sparse or dense square matrix
+        The unitary part of the time-reversal symmetry operator.
+    chiral : sparse or dense square matrix
+        The chiral symmetry operator.
 
     Returns
     -------
@@ -599,7 +891,8 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None):
     prop_vecs = vec_gen(propselect)
     # Compute their velocity, and, if necessary, rotate them
     prop_vecs, real_space_data = make_proper_modes(
-        ev[propselect], prop_vecs, extract, tol)
+        ev[propselect], prop_vecs, extract, tol, particle_hole=particle_hole,
+        time_reversal=time_reversal, chiral=chiral)
 
     vecs = np.c_[prop_vecs[n:], evan_vecs[n:]]
     vecslmbdainv = np.c_[prop_vecs[:n], evan_vecs[:n]]
