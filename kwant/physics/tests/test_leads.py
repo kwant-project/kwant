@@ -296,7 +296,7 @@ def test_symm_algorithm_equivalence():
     """Test different stabilization methods in the computation of modes,
     in the presence and/or absence of the discrete symmetries."""
     np.random.seed(400)
-    for n in (12, 20, 40, 60):
+    for n in (12, 20, 40):
         for sym in kwant.rmt.sym_list:
             # Random onsite and hopping matrices in symmetry class
             h_cell = kwant.rmt.gaussian(n, sym)
@@ -449,8 +449,8 @@ def test_PHS_TRIM_degenerate_ordering():
 
     ### P squares to -1 ###
     np.random.seed(1337)
-    dims = (1, 4, 40)
-    ts = (1.0, 1.7, 13.4)
+    dims = (1, 4, 16)
+    ts = (1.0, 17.2, 13.4)
 
     hop_mat = np.kron(sz, 1j*(0.1+np.random.rand())*np.eye(2))
     blocks = []
@@ -488,7 +488,7 @@ def test_PHS_TRIM_degenerate_ordering():
 
 def test_modes_symmetries():
     np.random.seed(10)
-    for n in (4, 8, 40, 100):
+    for n in (4, 8, 40, 60):
         for sym in kwant.rmt.sym_list:
             # Random onsite and hopping matrices in symmetry class
             h_cell = kwant.rmt.gaussian(n, sym)
@@ -559,7 +559,7 @@ def test_modes_symmetries():
 def test_PHS_TRIM():
     """Test the function that makes particle-hole symmetric modes at a TRIM. """
     np.random.seed(10)
-    for n in (4, 8, 16, 40, 100):
+    for n in (4, 8, 16, 40, 60):
         for sym in kwant.rmt.sym_list:
             if kwant.rmt.p(sym):
                 p_mat = np.array(kwant.rmt.h_p_matrix[sym])
