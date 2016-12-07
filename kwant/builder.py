@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Kwant authors.
+# Copyright 2011-2016 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -76,6 +76,9 @@ class Site(tuple):
     def __str__(self):
         sf = self.family
         return '<Site {0} of {1}>'.format(self.tag, sf.name if sf.name else sf)
+
+    def __getnewargs__(self):
+        return (self.family, self.tag, True)
 
     @property
     def pos(self):

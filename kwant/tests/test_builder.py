@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Kwant authors.
+# Copyright 2011-2016 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -7,6 +7,7 @@
 # http://kwant-project.org/authors.
 
 import warnings
+import pickle
 from random import Random
 import itertools as it
 from pytest import raises
@@ -795,3 +796,8 @@ def test_ModesLead_and_SelfEnergyLead():
     fsyst = syst.finalized()
     ts2 = [kwant.greens_function(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)
+
+
+def test_site_pickle():
+    site = kwant.lattice.square()(0, 0)
+    assert pickle.loads(pickle.dumps(site)) == site
