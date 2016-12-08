@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2016 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -6,6 +6,8 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+import pickle
+import copy
 from pytest import raises
 import numpy as np
 from scipy import sparse
@@ -99,3 +101,23 @@ def test_hamiltonian_submatrix():
     mat = mat[perm, :]
     mat = mat[:, perm]
     np.testing.assert_array_equal(mat, mat_should_be)
+
+
+def test_pickling():
+    syst = kwant.Builder()
+    lead = kwant.Builder(symmetry=kwant.TranslationalSymmetry([1.]))
+    lat = kwant.lattice.chain()
+    syst[lat(0)] = syst[lat(1)] = 0
+    syst[lat(0), lat(1)] = 1
+    lead[lat(0)] = syst[lat(1)] = 0
+    lead[lat(0), lat(1)] = 1
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+    syst_copy1 = copy.copy(syst).finalized()
+    syst_copy2 = pickle.loads(pickle.dumps(syst)).finalized()
+    syst = syst.finalized()
+    syst_copy3 = copy.copy(syst)
+    syst_copy4 = pickle.loads(pickle.dumps(syst))
+    s = kwant.smatrix(syst, 0.1)
+    for other in (syst_copy1, syst_copy2, syst_copy3, syst_copy4):
+        assert np.all(kwant.smatrix(other, 0.1).data == s.data)

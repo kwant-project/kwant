@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2016 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -6,6 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+import pickle
 from io import StringIO
 from itertools import zip_longest
 import numpy as np
@@ -179,3 +180,28 @@ def test_edge_ids():
 
     g = gr.compressed(edge_nr_translation=True, allow_lost_edges=True)
     raises(EdgeDoesNotExistError, g.edge_id, 1)
+
+
+def test_pickle():
+    gr = Graph(allow_negative_nodes=True)
+    edges = [(0, -1), (-1, 0), (1, 2), (1, 2), (0, -1), (-1, 0), (-1, 0)]
+    gr.add_edges(edges)
+    g = gr.compressed(twoway=True, edge_nr_translation=True)
+    g2 = pickle.loads(pickle.dumps(g))
+    s = StringIO('')
+    g.write_dot(s)
+    s2 = StringIO('')
+    g2.write_dot(s2)
+    assert s.getvalue() == s2.getvalue()
+    assert g.__getstate__() == g2.__getstate__()
+
+    gr = Graph(allow_negative_nodes=False)
+    edges = [(0, 1), (1, 2), (1, 2), (0, 2)]
+    g = gr.compressed(twoway=False, edge_nr_translation=False)
+    g2 = pickle.loads(pickle.dumps(g))
+    s = StringIO('')
+    g.write_dot(s)
+    s2 = StringIO('')
+    g2.write_dot(s2)
+    assert s.getvalue() == s2.getvalue()
+    assert g.__getstate__() == g2.__getstate__()

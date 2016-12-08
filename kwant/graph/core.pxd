@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2016 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -7,6 +7,7 @@
 # http://kwant-project.org/authors.
 
 cimport numpy as np
+from cpython cimport array
 from .defs cimport gint
 
 cdef struct Edge:
@@ -30,11 +31,17 @@ cdef class gintArraySlice:
 cdef class CGraph:
     cdef readonly bint twoway, edge_nr_translation
     cdef readonly gint num_nodes, num_edges, num_px_edges, num_xp_edges
+    cdef array.array _heads_idxs
     cdef gint *heads_idxs
+    cdef array.array _heads
     cdef gint *heads
+    cdef array.array _tails_idxs
     cdef gint *tails_idxs
+    cdef array.array _tails
     cdef gint *tails
+    cdef array.array _edge_ids
     cdef gint *edge_ids
+    cdef array.array _edge_ids_by_edge_nr
     cdef gint *edge_ids_by_edge_nr
     cdef gint edge_nr_end
 

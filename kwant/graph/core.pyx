@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2016 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -28,6 +28,8 @@ __all__ = ['Graph', 'CGraph']
 
 from libc.stdlib cimport malloc, realloc, free
 from libc.string cimport memset
+from cpython cimport array
+import array
 import numpy as np
 cimport numpy as np
 from .defs cimport gint
@@ -661,33 +663,42 @@ cdef class CGraph:
 cdef class CGraph_malloc(CGraph):
     """A CGraph which allocates and frees its own memory."""
 
-    def __cinit__(self, twoway, edge_nr_translation, num_nodes,
+    def __init__(self, twoway, edge_nr_translation, num_nodes,
                   num_pp_edges, num_pn_edges, num_np_edges):
         self.twoway = twoway
         self.edge_nr_translation = edge_nr_translation
         self.num_nodes = num_nodes
         self.num_px_edges = num_pp_edges + num_pn_edges
         self.edge_nr_end = num_pp_edges + num_pn_edges + num_np_edges
-
-        self.heads_idxs = <gint*>malloc((num_nodes + 1) * sizeof(gint))
+        self._heads_idxs = array.array('i', ())
+        array.resize(self._heads_idxs, (num_nodes + 1))
+        self.heads_idxs = <gint*>self._heads_idxs.data.as_ints
         if self.twoway:
             # The graph is two-way. n->p edges will exist in the compressed
             # graph.
             self.num_xp_edges = num_pp_edges + num_np_edges
             self.num_edges = self.edge_nr_end
-            self.tails_idxs = <gint*>malloc((num_nodes + 1) * sizeof(gint))
-            self.tails = <gint*>malloc(
-                self.num_xp_edges * sizeof(gint))
-            self.edge_ids = <gint*>malloc(
-                self.num_xp_edges * sizeof(gint))
+            self._tails_idxs = array.array('i', ())
+            array.resize(self._tails_idxs, (num_nodes + 1))
+            self.tails_idxs = <gint*>self._tails_idxs.data.as_ints
+            self._tails = array.array('i', ())
+            array.resize(self._tails, self.num_xp_edges)
+            self.tails = <gint*>self._tails.data.as_ints
+            self._edge_ids = array.array('i', ())
+            array.resize(self._edge_ids, self.num_xp_edges)
+            self.edge_ids = <gint*>self._edge_ids.data.as_ints
         else:
             # The graph is one-way. n->p edges will be ignored.
             self.num_xp_edges = num_pp_edges
             self.num_edges = self.num_px_edges
-        self.heads = <gint*>malloc(self.num_edges * sizeof(gint))
+        self._heads = array.array('i', ())
+        array.resize(self._heads, self.num_edges)
+        self.heads = <gint*>self._heads.data.as_ints
         if edge_nr_translation:
-            self.edge_ids_by_edge_nr = <gint*>malloc(
-                self.edge_nr_end * sizeof(gint))
+            self._edge_ids_by_edge_nr = array.array('i', ())
+            array.resize(self._edge_ids_by_edge_nr, self.edge_nr_end)
+            self.edge_ids_by_edge_nr = (<gint*>self._edge_ids_by_edge_nr
+                                        .data.as_ints)
         if (not self.heads_idxs or not self.heads
             or (twoway and (not self.tails_idxs
                              or not self.tails
@@ -695,10 +706,28 @@ cdef class CGraph_malloc(CGraph):
             or (edge_nr_translation and not self.edge_ids_by_edge_nr)):
             raise MemoryError
 
-    def __dealloc__(self):
-        free(self.edge_ids_by_edge_nr)
-        free(self.heads)
-        free(self.edge_ids)
-        free(self.tails)
-        free(self.tails_idxs)
-        free(self.heads_idxs)
+    def __getstate__(self):
+        twoway = self.twoway
+        edge_nr_translation = self.edge_nr_translation
+        num_nodes = self.num_nodes
+        num_np_edges = self.edge_nr_end - self.num_px_edges
+        if twoway:
+            num_pp_edges = self.num_xp_edges - num_np_edges
+        else:
+            num_pp_edges = self.num_xp_edges
+        num_pn_edges = self.num_px_edges - num_pp_edges
+        init_args = (twoway, edge_nr_translation, num_nodes,
+                num_pp_edges, num_pn_edges, num_np_edges)
+
+        return (init_args, self._heads_idxs, self._heads, self._tails_idxs,
+                self._tails, self._edge_ids, self._edge_ids_by_edge_nr)
+
+    def __setstate__(self, state):
+        self.__init__(*state[0])
+        array_attributes = (self._heads_idxs, self._heads, self._tails_idxs,
+                            self._tails, self._edge_ids,
+                            self._edge_ids_by_edge_nr)
+        for attribute, value in zip(array_attributes, state[1:]):
+            if attribute is None:
+                continue
+            attribute[:] = value
