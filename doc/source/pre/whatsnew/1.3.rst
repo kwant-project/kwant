@@ -62,3 +62,7 @@ sublattice) symmetry. When one or more of these symmetries are present,
 and it can be useful to have leads with scattering states that reflect this.
 It is now possible to these discrete symmetries in Kwant, which then uses
 them to construct scattering states that are accordingly symmetric.
+
+Pickling support
+----------------
+It is now possible to pickle and unpickle Kwant ``Builder`` and ``System``.
