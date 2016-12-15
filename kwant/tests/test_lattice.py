@@ -132,7 +132,7 @@ def test_translational_symmetry():
     for site in [f2(0, 0), f2(4, 0), f2(2, 1), f2(5, 5), f2(15, 6)]:
         assert sym.in_fd(site)
         assert sym2.in_fd(site)
-        assert sym.which(site), (0 == 0)
+        assert sym.which(site) == (0, 0)
         assert sym2.which(site) == (0,)
         for v in [(1, 0), (0, 1), (-1, 0), (0, -1), (5, 10), (-111, 573)]:
             site2 = shifted(site, np.dot(v, transl_vecs))
