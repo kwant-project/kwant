@@ -648,7 +648,7 @@ class Builder:
 
     Print the value of a site.
 
-    >>> print builder[site]
+    >>> print(builder[site])
 
     Define a hopping.
 
