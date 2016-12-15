@@ -49,7 +49,7 @@ def _perfect_lead(N, norbs=1):
     return  lat, syst
 
 
-def test_opservables_construction():
+def test_operator_construction():
     lat, syst = _random_square_system(3)
     fsyst = syst.finalized()
     N = len(fsyst.sites)
@@ -141,17 +141,25 @@ def test_opservables_construction():
 
 def _test(A, bra, ket=None, per_el_val=None, reduced_val=None, args=()):
     if per_el_val is not None:
-        val, where = A(bra, ket, args=args)
+        val = A(bra, ket, args=args)
+        print(A.sum)
         assert np.allclose(val, per_el_val)
         # with bound args
-        val, where = A.bind(args)(bra, ket)
+        val = A.bind(args)(bra, ket)
         assert np.allclose(val, per_el_val)
     # test that inner products give the same thing
     ket = bra if ket is None else ket
     act_val = np.dot(bra.conj(), A.act(ket, args=args))
-    inner_val, where = A(bra, ket, args=args)
-    inner_val = np.sum(inner_val)
+    inner_val = np.sum(A(bra, ket, args=args))
+    # check also when sum is done internally by operator
+    A.sum = True
+    try:
+        sum_inner_val = A(bra, ket, args=args)
+    finally:
+        A.sum = False
+
     assert np.isclose(act_val, inner_val)
+    assert np.isclose(sum_inner_val, inner_val)
     if reduced_val is not None:
         assert np.isclose(inner_val, reduced_val)
 

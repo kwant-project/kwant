@@ -5,7 +5,7 @@
 # http://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
-r"""Tools for working with operators for acting on wavefunctions."""
+"""Tools for working with operators for acting on wavefunctions."""
 
 __all__ = ['Density', 'Current', 'Source']
 
@@ -379,10 +379,6 @@ cdef class _LocalOperator:
     syst : `~kwant.system.System`
         The system for which this operator is defined. Must have the
         number of orbitals defined for all site families.
-    where : 2D array of `int` or `None`
-        where to evaluate the operator. A list of sites for on-site
-        operators (accessed like `where[n, 0]`), otherwise a list of pairs
-        of sites (accessed like `where[n, 0]` and `where[n, 1]`).
     onsite : complex 2D array, or callable
         If a complex array, then the same onsite is used everywhere.
         Otherwise, function that can be called with a single site (integer) and
@@ -391,18 +387,23 @@ cdef class _LocalOperator:
         same shape as that returned by the system Hamiltonian evaluated on the
         same site.  The extra arguments must be the same as the extra arguments
         to ``syst.hamiltonian``.
+    where : 2D array of `int` or `None`
+        where to evaluate the operator. A list of sites for on-site
+        operators (accessed like `where[n, 0]`), otherwise a list of pairs
+        of sites (accessed like `where[n, 0]` and `where[n, 1]`).
     check_hermiticity : bool
         If True, checks that ``onsite``, as well as any relevant parts
         of the Hamiltonian are hermitian.
     """
 
-    cdef public int check_hermiticity
+    cdef public int check_hermiticity, sum
     cdef public object syst, onsite
     cdef public gint[:, :]  where, _site_ranges
     cdef public BlockSparseMatrix _bound_onsite, _bound_hamiltonian
 
     @cython.embedsignature
-    def __init__(self, syst, onsite, where, check_hermiticity):
+    def __init__(self, syst, onsite, where, *,
+                 check_hermiticity=True, sum=False):
         if syst.site_ranges is None:
             raise ValueError('Number of orbitals not defined.\n'
                              'Declare the number of orbitals using the '
@@ -412,19 +413,24 @@ cdef class _LocalOperator:
         self.syst = syst
         self.onsite = _normalize_onsite(syst, onsite, check_hermiticity)
         self.check_hermiticity = check_hermiticity
+        self.sum = sum
         self._site_ranges = np.asarray(syst.site_ranges, dtype=gint_dtype)
+        self.where = where
         self._bound_onsite = None
         self._bound_hamiltonian = None
-        self.where = None
-        # NOTE: subclasses should populate `where`
 
     @cython.embedsignature
     def __call__(self, bra, ket=None, args=()):
         """Return the matrix elements of the operator.
 
+        For an operator :math:`Q_{iαβ}`, ``bra`` :math:`φ_α`
+        and ``ket`` :math:`ψ_β` this computes
+        :math:`q_i = ∑_{αβ} φ^*_α Q_{iαβ} ψ_β`. if ``self.sum``
+        is False, otherwise computes :math:`q = ∑_{iαβ} φ^*_α Q_{iαβ} ψ_β`.
+
         Parameters
         ----------
-        bra, ket : ``numpy.ndarray``
+        bra, ket : sequence of complex
             Must have the same length as the number of orbitals
             in the system. If only one is provided, both ``bra``
             and ``ket`` are taken as equal.
@@ -434,12 +440,8 @@ cdef class _LocalOperator:
 
         Returns
         -------
-        (values, where)
-            both elements of the tuple are arrays of the same length.
-            ``values`` is an array of `float` if ``check_hermiticity`` is True,
-            otherwise it is `complex`. ``where`` is an array of `int` that
-            specifies the sites/hoppings for which the matrix elements
-            are calculated.
+        Array of `float` if ``check_hermiticity`` is True,
+        otherwise an array of `complex`.
         """
         if (self._bound_onsite or self._bound_hamiltonian) and args:
             raise ValueError('Extra arguments are already bound to this '
@@ -469,15 +471,18 @@ cdef class _LocalOperator:
         if self.check_hermiticity:
             assert np.allclose(result.imag, 0)
             result = result.real
-        return (result, where)
+        return np.sum(result) if self.sum else result
 
     @cython.embedsignature
     def act(self, ket, args=()):
         """Act with the operator on a wavefunction.
 
+        For an operator :math:`Q_{iαβ}` and ``ket`` :math:`ψ_β`
+        this computes :math:`∑_{iβ} Q_{iαβ} ψ_β`.
+
         Parameters
         ----------
-        ket : ``numpy.ndarray``
+        ket : sequence of complex
             Wavefunctions defined over all the orbitals of the system.
         args : tuple
             The extra arguments to the Hamiltonian value functions and
@@ -485,8 +490,7 @@ cdef class _LocalOperator:
 
         Returns
         -------
-        ``numpy.ndarray``
-            The result of acting on the wavefunction with the operator
+        Array of `complex`.
         """
         if (self._bound_onsite or self._bound_hamiltonian) and args:
             raise ValueError('Extra arguments are already bound to this '
@@ -580,10 +584,11 @@ cdef class _LocalOperator:
 cdef class Density(_LocalOperator):
     """An operator for calculating general densities.
 
-    Examples of "densities" include charge and spin, and are defined by a
-    square matrix on each site (of the size of the number of orbitals on the
-    site).
-
+    In general, if there is a certain "density" (e.g. charge or spin) that is
+    represented by a square matrix :math:`M_i` associated with each site
+    :math:`i` then an instance of this class represents the tensor
+    :math:`Q_{iαβ}` which is equal to :math:`M_i` when α and β are orbitals on
+    site :math:`i`, and zero otherwise.
 
     Parameters
     ----------
@@ -604,38 +609,16 @@ cdef class Density(_LocalOperator):
         Hermitian, then an error will be raised when the operator is
         evaluated.
 
-    Notes
-    -----
-    When this class is called in the following way::
-
-        Q = kwant.physics.operator.Density(fsyst, M_a)
-        Q(phi, psi)
-
-    the following expression is calculated for each site ``a``
-    in ``where``::
-
-        phi[i:j].conjugate().dot(M_a.dot(psi[i:j]))
-
-    where ``i:j`` is a slice over all the orbitals on site ``a``,
-    and ``M_a`` is a square matrix associated with site ``a``.
-
-    When used in the following way::
-
-        phi = Q.act(psi)
-
-    this is equivalent to performing the following operation
-    for each site ``a`` in ``where``::
-
-        phi[i:j] += M_a.dot(psi[i:j])
-
     .. rubric:: Special Methods
     .. automethod:: __call__
     """
 
     @cython.embedsignature
-    def __init__(self, syst, onsite=1, where=None, check_hermiticity=True):
-        super().__init__(syst, onsite, where, check_hermiticity)
-        self.where = _normalize_site_where(syst, where)
+    def __init__(self, syst, onsite=1, where=None, *,
+                 check_hermiticity=True, sum=False):
+        where = _normalize_site_where(syst, where)
+        super().__init__(syst, onsite, where,
+                        check_hermiticity=check_hermiticity)
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -683,11 +666,16 @@ cdef class Density(_LocalOperator):
 cdef class Current(_LocalOperator):
     """An operator for calculating general currents.
 
-    Examples of "currents" include charge currents and spin currents.
-    If there is a certain "density" (e.g. charge or spin) that is
-    represented by the operator ``M``, then the associated current
-    is represented by the off-diagonal part of the commutator between
-    the Hamiltonian and ``M``: ``[H, M]``.
+    In general, if there is a certain "density" (e.g. charge or spin) that is
+    represented by a square matrix :math:`M_i` associated with each site
+    :math:`i` and :math:`H_{ij}` is the hopping Hamiltonian from site :math:`j`
+    to site `i`, then an instance of this class represents the tensor
+    :math:`J_{ijαβ}` which is equal to :math:`(H_{ij})^† M_i - M_i H_{ij}` when
+    α and β are orbitals on sites :math:`i` and :math:`j` respectively, and
+    zero otherwise.
+
+    The tensor :math:`J_{ijαβ}` will also be referred to as :math:`Q_{nαβ}`,
+    where :math:`n` is the index of hopping :math:`(i, j)` in ``where``.
 
     Parameters
     ----------
@@ -710,47 +698,16 @@ cdef class Current(_LocalOperator):
         is not Hermitian, then an error will be raised when the
         operator is evaluated.
 
-    Notes
-    -----
-    Calculates the flux of a quantity ``M_a`` through hoppings.
-
-    When this class is called in the following way::
-
-        J = kwant.physics.operator.Current(fsyst, M_a)
-        J(phi, psi)
-
-    the following expression is calculated for each pair of sites
-    ``(a, b)`` in ``where``::
-
-        1j * (phi[bi:bj].conjugate().dot(
-                H_ab.conjugate().transpose().dot(M_a.dot(psi[ai:aj])))
-              -
-              phi[ai:aj].conjugate().dot(
-                M_a.dot(H_ab.dot(psi[bi:bj])))
-             )
-
-    where ``ai:aj`` and ``bi:bj`` are slices over all the orbitals on sites
-    ``a`` and ``b`` respectively. ``M_a`` is a square matrix and ``H_ab`` is
-    the Hamiltonian matrix element between the sites.
-
-    When used in the following way::
-
-        phi = J.act(psi)
-
-    this is equivalent to performing the following operations
-    for each pair of sites ``(a, b)`` in ``where``::
-
-        phi[bi:bj] += 1j * H_ab.conjugate().transpose().dot(M_a.dot(psi[ai:aj]))
-        phi[ai:aj] += -1j * M_a.dot(H_ab.dot(psi[bi:bj]))
-
     .. rubric:: Special Methods
     .. automethod:: __call__
     """
 
     @cython.embedsignature
-    def __init__(self, syst, onsite=1, where=None, check_hermiticity=True):
-        super().__init__(syst, onsite, where, check_hermiticity)
-        self.where = _normalize_hopping_where(syst, where)
+    def __init__(self, syst, onsite=1, where=None, *,
+                 check_hermiticity=True, sum=False):
+        where = _normalize_hopping_where(syst, where)
+        super().__init__(syst, onsite, where,
+                         check_hermiticity=check_hermiticity)
 
     @cython.embedsignature
     def bind(self, args=()):
@@ -823,11 +780,13 @@ cdef class Current(_LocalOperator):
 cdef class Source(_LocalOperator):
     """An operator for calculating general sources.
 
-    An example of a "source" is a spin torque. In general,
-    if there is a certain "density" (e.g. charge or spin) that is
-    represented by the operator ``M``, then the associated source
-    is represented by the diagonal part of the commutator between
-    the Hamiltonian and ``M``: ``[H, M]``.
+    An example of a "source" is a spin torque. In general, if there is a
+    certain "density" (e.g. charge or spin) that is represented by  a square
+    matrix :math:`M_i` associated with each site :math:`i`, and :math:`H_{i}`
+    is the onsite Hamiltonian on site site `i`, then an instance of this class
+    represents the tensor :math:`Q_{iαβ}` which is equal to :math:`(H_{i})^†
+    M_i - M_i H_{i}` when α and β are orbitals on site :math:`i`, and zero
+    otherwise.
 
     Parameters
     ----------
@@ -849,46 +808,16 @@ cdef class Source(_LocalOperator):
         Hermitian, then an error will be raised when the operator is
         evaluated.
 
-    Notes
-    -----
-    Calculates the source of a quantity ``M_a`` on different sites.
-
-    When this class is called in the following way::
-
-        K = kwant.physics.operator.Source(fsyst, M_a)
-        K(phi, psi)
-
-    the following expression is calculated for each site ``a``
-    in ``where``::
-
-        1j * (phi[i:j].conjugate().dot(
-                H_aa.conjugate().transpose().dot(M_a.dot(psi[i:j])))
-              -
-              phi[i:j].conjugate().dot(
-                M_a.dot(H_aa.dot(psi[i:j])))
-             )
-
-    where ``i:j`` is a slice over all the orbitals on site ``a`` ``M_a`` is a
-    square matrix and ``H_aa`` is the onsite Hamiltonian matrix element for
-    site ``a``.
-
-    When used in the following way::
-
-        phi = K.act(psi)
-
-    this is equivalent to performing the following operation
-    for each element in ``where``::
-
-        phi[i:j] += M_a.dot(psi[i:j])
-
     .. rubric:: Special Methods
     .. automethod:: __call__
     """
 
     @cython.embedsignature
-    def __init__(self, syst, onsite=1, where=None, check_hermiticity=True):
-        super().__init__(syst, onsite, where, check_hermiticity)
-        self.where = _normalize_site_where(syst, where)
+    def __init__(self, syst, onsite=1, where=None, *,
+                 check_hermiticity=True, sum=False):
+        where = _normalize_site_where(syst, where)
+        super().__init__(syst, onsite, where,
+                         check_hermiticity=check_hermiticity)
 
     @cython.embedsignature
     def bind(self, args=()):
