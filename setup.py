@@ -66,7 +66,7 @@ def configure_extensions(exts, aliases=(), build_summary=None):
         if l != config_file_option or not config_file:
             print('error: Expecting {}=PATH'.format(config_file_option),
                   file=sys.stderr)
-            exit(1)
+            sys.exit(1)
         sys.argv.pop(i)
         break
     else:
@@ -88,7 +88,7 @@ def configure_extensions(exts, aliases=(), build_summary=None):
             if long in configs:
                 print('Error: both {} and {} sections present in {}.'.format(
                     short, long, config_file))
-                exit(1)
+                sys.exit(1)
             configs[long] = configs[short]
             del configs[short]
 
@@ -126,7 +126,7 @@ def configure_extensions(exts, aliases=(), build_summary=None):
     if unknown_sections:
         print('Error: Unknown sections in file {}: {}'.format(
             config_file, ', '.join(unknown_sections)))
-        exit(1)
+        sys.exit(1)
 
     return exts
 
@@ -314,7 +314,7 @@ class sdist(sdist_orig):
                 print("Error:", manifest_in_file,
                       "file is missing and Git is not available"
                       " to regenerate it.", file=sys.stderr)
-                exit(1)
+                sys.exit(1)
         else:
             with open(manifest, 'w') as f:
                 for name in names:
@@ -356,7 +356,7 @@ class test(test_orig):
         except:
             print('The Python package "pytest" is required to run tests.',
                   file=sys.stderr)
-            exit(1)
+            sys.exit(1)
         errno = pytest.main(shlex.split(self.pytest_args))
         sys.exit(errno)
 
@@ -475,7 +475,7 @@ def maybe_cythonize(exts):
             ext = '.cpp'
         else:
             print('Unknown language: {}'.format(language), file=sys.stderr)
-            exit(1)
+            sys.exit(1)
 
         pyx_files = []
         cythonized_files = []
@@ -496,7 +496,7 @@ def maybe_cythonize(exts):
             msg = "Cython-generated file {} is missing."
             print(banner(" Error "), msg.format(f), "",
                   cython_help, banner(), sep="\n", file=sys.stderr)
-            exit(1)
+            sys.exit(1)
 
         for f in pyx_files + kwargs.get('depends', []):
             if f == config_file:
@@ -525,7 +525,7 @@ def maybe_cythonize(exts):
         print(banner(" Error " if error else " Caution "), msg, "",
               cython_help, banner(), sep="\n", file=sys.stderr)
         if error:
-            exit(1)
+            sys.exit(1)
 
     return result
 
