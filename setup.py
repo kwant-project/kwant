@@ -33,10 +33,17 @@ from distutils.errors import DistutilsError, DistutilsModuleError, \
 from distutils.command.build import build as build_orig
 from setuptools.command.sdist import sdist as sdist_orig
 from setuptools.command.build_ext import build_ext as build_ext_orig
+from setuptools.command.test import test as test_orig
+
+def banner(title=''):
+    starred = title.center(79, '*')
+    return '\n' + starred if title else starred
 
 try:
     import numpy
 except ImportError:
+    print(banner(' Caution '), 'NumPy header directory cannot be determined'
+          ' ("import numpy" failed).', banner(), sep='\n', file=sys.stderr)
     include_dirs = []
 else:
     include_dirs = [numpy.get_include()]
@@ -102,10 +109,6 @@ if use_cython:
         cython_version = tuple(cython_version)
 
 distr_root = os.path.dirname(os.path.abspath(__file__))
-
-def banner(title=''):
-    starred = title.center(79, '*')
-    return '\n' + starred if title else starred
 
 error_msg = """{header}
 The compilation of Kwant has failed.  Please examine the error message
@@ -236,8 +239,21 @@ source distribution.  The old {} was used.""".format(MANIFEST_IN_FILE),
                   banner(), sep='\n', file=sys.stderr)
 
     def make_release_tree(self, base_dir, files):
-        sdist.make_release_tree(self, base_dir, files)
+        sdist_orig.make_release_tree(self, base_dir, files)
         write_version(os.path.join(base_dir, *STATIC_VERSION_PATH))
+
+
+# The only purpose of this class is to provide a better error message when
+# "nose" is not available.
+class test(test_orig):
+    def run(self):
+        try:
+            import nose
+        except ImportError:
+            print('The Python package "nose" is required to run tests.',
+                  file=sys.stderr)
+            exit(1)
+        test_orig.run(self)
 
 
 def write_version(fname):
@@ -484,10 +500,10 @@ def main():
           cmdclass={'build': build,
                     'sdist': sdist,
                     'build_ext': build_ext,
-                    'build_tut': build_tut},
+                    'build_tut': build_tut,
+                    'test': test},
           ext_modules=ext_modules(extensions()),
           include_dirs=include_dirs,
-          setup_requires=['numpy > 1.6.1', 'nose >= 1.0'],
           install_requires=['numpy > 1.6.1', 'scipy >= 0.9', 'tinyarray'],
           extras_require={'plotting': 'matplotlib >= 1.2'},
           classifiers=[c.strip() for c in CLASSIFIERS.split('\n')])
