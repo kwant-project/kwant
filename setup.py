@@ -30,13 +30,20 @@ from setuptools import setup, find_packages, Extension, Command
 from sysconfig import get_platform
 from distutils.errors import DistutilsError, DistutilsModuleError, \
     CCompilerError
-from distutils.command.build import build
-from setuptools.command.sdist import sdist
-from setuptools.command.build_ext import build_ext
+from distutils.command.build import build as build_orig
+from setuptools.command.sdist import sdist as sdist_orig
+from setuptools.command.build_ext import build_ext as build_ext_orig
+from setuptools.command.test import test as test_orig
+
+def banner(title=''):
+    starred = title.center(79, '*')
+    return '\n' + starred if title else starred
 
 try:
     import numpy
 except ImportError:
+    print(banner(' Caution '), 'NumPy header directory cannot be determined'
+          ' ("import numpy" failed).', banner(), sep='\n', file=sys.stderr)
     include_dirs = []
 else:
     include_dirs = [numpy.get_include()]
@@ -98,10 +105,6 @@ if use_cython:
 
 distr_root = os.path.dirname(os.path.abspath(__file__))
 
-def banner(title=''):
-    starred = title.center(79, '*')
-    return '\n' + starred if title else starred
-
 error_msg = """{header}
 The compilation of Kwant has failed.  Please examine the error message
 above and consult the installation instructions in README.rst.
@@ -115,7 +118,7 @@ Build configuration was:
 error_msg = error_msg.format(header=banner(' Error '), sep=banner())
 
 
-class kwant_build_ext(build_ext):
+class build_ext(build_ext_orig):
     def run(self):
         if not config_file_present:
             # Create an empty config file if none is present so that the
@@ -126,7 +129,7 @@ class kwant_build_ext(build_ext):
                 f.write('# Created by setup.py - feel free to modify.\n')
 
         try:
-            build_ext.run(self)
+            build_ext_orig.run(self)
         except (DistutilsError, CCompilerError):
             print(error_msg.format(file=CONFIG_FILE, summary=build_summary),
                   file=sys.stderr)
@@ -136,7 +139,7 @@ class kwant_build_ext(build_ext):
         print(banner())
 
 
-class kwant_build_tut(Command):
+class build_tut(Command):
     description = "build the tutorial scripts"
     user_options = []
 
@@ -162,11 +165,11 @@ class kwant_build_tut(Command):
 # Even though the tutorial is not necessary for installation, and "build" is
 # supposed to make everything needed to install, this is a robust way to ensure
 # that the tutorial is present.
-class kwant_build(build):
-    sub_commands = [('build_tut', None)] + build.sub_commands
+class build(build_orig):
+    sub_commands = [('build_tut', None)] + build_orig.sub_commands
 
     def run(self):
-        build.run(self)
+        build_orig.run(self)
         write_version(os.path.join(self.build_lib, *STATIC_VERSION_PATH))
 
 
@@ -189,8 +192,8 @@ def git_lsfiles():
 # distribution in the current state actually builds.  It also makes sure that
 # the Cython-made C files and the tutorial will be included in the source
 # distribution and that they will be up-to-date.
-class kwant_sdist(sdist):
-    sub_commands = [('build', None)] + sdist.sub_commands
+class sdist(sdist_orig):
+    sub_commands = [('build', None)] + sdist_orig.sub_commands
 
     def run(self):
         """
@@ -222,7 +225,7 @@ class kwant_sdist(sdist):
                         f.write(''.join([' ', a, sep, stem, dot, 'c']))
                     f.write('\n')
 
-        sdist.run(self)
+        sdist_orig.run(self)
 
         if names is None:
             print(banner(' Caution '),
@@ -231,8 +234,21 @@ source distribution.  The old {} was used.""".format(MANIFEST_IN_FILE),
                   banner(), sep='\n', file=sys.stderr)
 
     def make_release_tree(self, base_dir, files):
-        sdist.make_release_tree(self, base_dir, files)
+        sdist_orig.make_release_tree(self, base_dir, files)
         write_version(os.path.join(base_dir, *STATIC_VERSION_PATH))
+
+
+# The only purpose of this class is to provide a better error message when
+# "nose" is not available.
+class test(test_orig):
+    def run(self):
+        try:
+            import nose
+        except ImportError:
+            print('The Python package "nose" is required to run tests.',
+                  file=sys.stderr)
+            exit(1)
+        test_orig.run(self)
 
 
 def write_version(fname):
@@ -476,13 +492,13 @@ def main():
           license="BSD",
           packages=find_packages('.'),
           test_suite = 'nose.collector',
-          cmdclass={'build': kwant_build,
-                    'sdist': kwant_sdist,
-                    'build_ext': kwant_build_ext,
-                    'build_tut': kwant_build_tut},
+          cmdclass={'build': build,
+                    'sdist': sdist,
+                    'build_ext': build_ext,
+                    'build_tut': build_tut,
+                    'test': test},
           ext_modules=ext_modules(extensions()),
           include_dirs=include_dirs,
-          setup_requires=['numpy > 1.6.1', 'nose >= 1.0'],
           install_requires=['numpy > 1.6.1', 'scipy >= 0.9', 'tinyarray'],
           extras_require={'plotting': 'matplotlib >= 1.2'},
           classifiers=[c.strip() for c in CLASSIFIERS.split('\n')])
