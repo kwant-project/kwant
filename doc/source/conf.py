@@ -221,9 +221,6 @@ latex_documents = [
 # Documents to append as an appendix to all manuals.
 #latex_appendices = []
 
-# If false, no module index is generated.
-latex_use_modindex = False
-
 # This is needed too.
 latex_domain_indices = False
 
