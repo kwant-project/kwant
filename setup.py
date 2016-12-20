@@ -34,9 +34,10 @@ import configparser
 import collections
 from setuptools import setup, find_packages, Extension, Command
 from distutils.errors import DistutilsError, CCompilerError
-from distutils.command.build import build
-from setuptools.command.sdist import sdist
-from setuptools.command.build_ext import build_ext
+from distutils.command.build import build as build_orig
+from setuptools.command.sdist import sdist as sdist_orig
+from setuptools.command.build_ext import build_ext as build_ext_orig
+from setuptools.command.test import test as test_orig
 
 
 STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
@@ -204,7 +205,7 @@ def banner(title=''):
     return '\n' + starred if title else starred
 
 
-class kwant_build_ext(build_ext):
+class build_ext(build_ext_orig):
     def run(self):
         if not config_file_present:
             # Create an empty config file if none is present so that the
@@ -216,7 +217,7 @@ class kwant_build_ext(build_ext):
                         '- feel free to modify.\n')
 
         try:
-            build_ext.run(self)
+            super().run()
         except (DistutilsError, CCompilerError):
             error_msg = self.__error_msg.format(
                 header=banner(' Error '), sep=banner())
@@ -238,7 +239,7 @@ Build configuration was:
 """
 
 
-class kwant_build_tut(Command):
+class build_tut(Command):
     description = "build the tutorial scripts"
     user_options = []
 
@@ -265,11 +266,11 @@ class kwant_build_tut(Command):
 # Even though the tutorial is not necessary for installation, and "build" is
 # supposed to make everything needed to install, this is a robust way to ensure
 # that the tutorial is present.
-class kwant_build(build):
-    sub_commands = [('build_tut', None)] + build.sub_commands
+class build(build_orig):
+    sub_commands = [('build_tut', None)] + build_orig.sub_commands
 
     def run(self):
-        build.run(self)
+        super().run()
         write_version(os.path.join(self.build_lib, *STATIC_VERSION_PATH))
 
 
@@ -292,8 +293,8 @@ def git_lsfiles():
 # distribution in the current state actually builds.  It also makes sure that
 # the Cython-made C files and the tutorial will be included in the source
 # distribution and that they will be up-to-date.
-class kwant_sdist(sdist):
-    sub_commands = [('build', None)] + sdist.sub_commands
+class sdist(sdist_orig):
+    sub_commands = [('build', None)] + sdist_orig.sub_commands
 
     def run(self):
         """
@@ -326,7 +327,7 @@ class kwant_sdist(sdist):
                         f.write(''.join([' ', a, sep, stem, dot, 'c']))
                     f.write('\n')
 
-        sdist.run(self)
+        super().run()
 
         if names is None:
             msg = ("Git was not available to generate the list of files to be "
@@ -335,8 +336,29 @@ class kwant_sdist(sdist):
             print(banner(' Caution '), msg, banner(), sep='\n', file=sys.stderr)
 
     def make_release_tree(self, base_dir, files):
-        sdist.make_release_tree(self, base_dir, files)
+        super().make_release_tree(base_dir, files)
         write_version(os.path.join(base_dir, *STATIC_VERSION_PATH))
+
+
+# The following class is based on a recipe in
+# http://doc.pytest.org/en/latest/goodpractices.html#manual-integration.
+class test(test_orig):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+
+    def initialize_options(self):
+        super().initialize_options()
+        self.pytest_args = ''
+
+    def run_tests(self):
+        import shlex
+        try:
+            import pytest
+        except:
+            print('The Python package "pytest" is required to run tests.',
+                  file=sys.stderr)
+            exit(1)
+        errno = pytest.main(shlex.split(self.pytest_args))
+        sys.exit(errno)
 
 
 def write_version(fname):
@@ -588,12 +610,12 @@ def main():
           url="http://kwant-project.org/",
           license="BSD",
           packages=find_packages('.'),
-          cmdclass={'build': kwant_build,
-                    'sdist': kwant_sdist,
-                    'build_ext': kwant_build_ext,
-                    'build_tut': kwant_build_tut},
+          cmdclass={'build': build,
+                    'sdist': sdist,
+                    'build_ext': build_ext,
+                    'build_tut': build_tut,
+                    'test': test},
           ext_modules=exts,
-          setup_requires=['pytest-runner >= 2.7'],
           tests_require=['numpy > 1.6.1', 'pytest >= 2.6.3'],
           install_requires=['numpy > 1.6.1', 'scipy >= 0.11.0', 'tinyarray'],
           extras_require={'plotting': 'matplotlib >= 1.2'},
