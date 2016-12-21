@@ -1270,12 +1270,22 @@ class Builder:
 
         if sym.num_directions != 1:
             raise ValueError('Only builders with a 1D symmetry are allowed.')
-        for hopping in lead_builder.hoppings():
-            if not -1 <= sym.which(hopping[1])[0] <= 1:
-                msg = ('The following hopping connects non-neighboring lead '
-                       'unit cells. Only nearest-cell hoppings are allowed '
-                       '(consider increasing the lead period).\n{0}')
-                raise ValueError(msg.format(hopping))
+
+        try:
+            hop_range = max(abs(sym.which(hopping[1])[0])
+                            for hopping in lead_builder.hoppings())
+        except ValueError:  # if there are no hoppings max() will raise
+            hop_range = 0
+
+        if hop_range > 1:
+            # Automatically increase the period, potentially warn the user.
+            new_lead = Builder(sym.subgroup((hop_range,)))
+            new_lead.fill(lead_builder, next(iter(lead_builder.sites())),
+                          max_sites=float('inf'))
+            lead_builder = new_lead
+            sym = lead_builder.symmetry
+            H = lead_builder.H
+
         if not H:
             raise ValueError('Lead to be attached contains no sites.')
 

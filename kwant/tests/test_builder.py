@@ -755,6 +755,19 @@ def test_attach_lead():
     assert len(list(syst.sites())) == 6
     syst.attach_lead(lead, fam(-5))
     assert set(syst.leads[0].interface) == set([fam(-1), fam(0)])
+
+    # add some further-than-nearest-neighbor hoppings
+    hop_range = 3
+    lead = builder.Builder(VerySimpleSymmetry(1))
+    lead[fam(0)] = 1
+    for i in range(1, hop_range + 1):
+        lead[fam(0), fam(i)] = 1
+    syst.attach_lead(lead)
+    expanded_lead = syst.leads[-1].builder
+    assert expanded_lead.symmetry.period == hop_range
+    assert len(list(expanded_lead.sites())) == hop_range
+
+    # check that we can actually finalize the system
     syst.finalized()
 
 
