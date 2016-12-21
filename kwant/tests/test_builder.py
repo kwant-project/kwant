@@ -635,6 +635,93 @@ def test_builder_with_symmetry():
                                                                   (5, 0, -3))])
 
 
+def test_fill():
+    # Use function as a value since otherwise a hopping in the opposite
+    # direction may be stored after fill.
+    def f(*sites): pass
+    g = kwant.lattice.square()
+    sym_x = kwant.TranslationalSymmetry((-1, 0))
+    sym_xy = kwant.TranslationalSymmetry((-1, 0), (0, 1))
+
+    template_1d = builder.Builder(sym_x)
+    template_1d[g(0, 0)] = f
+    template_1d[g.neighbors()] = f
+
+    def line_200(site):
+        return -100 <= site.pos[0] < 100
+
+    ## test max_sites
+    target = builder.Builder()
+    for max_sites in (-1, 0):
+        with raises(ValueError):
+            target.fill(template_1d, g(0, 0), max_sites=max_sites)
+    target = builder.Builder()
+    with raises(RuntimeError):
+        target.fill(template_1d, g(0, 0), shape=line_200, max_sites=10)
+    ## test filling
+    target = builder.Builder()
+    added_sites = target.fill(template_1d, g(0, 0), shape=line_200)
+    assert len(added_sites) == 200
+    ## test overwrite=False
+    added_sites = target.fill(template_1d, g(0, 0), shape=line_200)
+    assert len(added_sites) == 0
+    ## test overwrite=True
+    added_sites = target.fill(template_1d, g(0, 0),
+                              shape=line_200, overwrite=True)
+    assert len(added_sites) == 200
+
+
+    ## test multiplying unit cell size in 1D
+    n_cells = 10
+    sym_nx = kwant.TranslationalSymmetry(*(sym_x.periods * n_cells))
+    target = builder.Builder(sym_nx)
+    target.fill(template_1d, g(0, 0))
+
+    should_be_syst = builder.Builder(sym_nx)
+    should_be_syst[(g(i, 0) for i in range(n_cells))] = f
+    should_be_syst[g.neighbors()] = f
+
+    assert sorted(target.sites()) == sorted(should_be_syst.sites())
+    assert sorted(target.hoppings()) == sorted(should_be_syst.hoppings())
+
+
+    ## test multiplying unit cell size in 2D
+    template_2d = builder.Builder(sym_xy)
+    template_2d[g(0, 0)] = f
+    template_2d[g.neighbors()] = f
+    template_2d[builder.HoppingKind((2, 2), g)] = f
+
+    nm_cells = (3, 5)
+    sym_nmxy = kwant.TranslationalSymmetry(*(sym_xy.periods * nm_cells))
+    target = builder.Builder(sym_nmxy)
+    target.fill(template_2d, g(0, 0))
+
+    should_be_syst = builder.Builder(sym_nmxy)
+    should_be_syst[(g(i, j) for i in range(10) for j in range(10))] = f
+    should_be_syst[g.neighbors()] = f
+    should_be_syst[builder.HoppingKind((2, 2), g)] = f
+
+    assert sorted(target.sites()) == sorted(should_be_syst.sites())
+    assert sorted(target.hoppings()) == sorted(should_be_syst.hoppings())
+
+
+    ## test filling 0D builder with 2D builder
+    def square_shape(site):
+        x, y = site.tag
+        return 0 <= x < 10 and 0 <= y < 10
+
+    target = builder.Builder()
+    target.fill(template_2d, g(0, 0), square_shape)
+
+    should_be_syst = builder.Builder()
+    should_be_syst[(g(i, j) for i in range(10) for j in range(10))] = f
+    should_be_syst[g.neighbors()] = f
+    should_be_syst[builder.HoppingKind((2, 2), g)] = f
+
+    assert sorted(target.sites()) == sorted(should_be_syst.sites())
+    assert sorted(target.hoppings()) == sorted(should_be_syst.hoppings())
+
+
 def test_attach_lead():
     fam = builder.SimpleSiteFamily()
     fam_noncommensurate = builder.SimpleSiteFamily(name='other')
