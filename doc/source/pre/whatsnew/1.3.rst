@@ -66,3 +66,16 @@ them to construct scattering states that are accordingly symmetric.
 Pickling support
 ----------------
 It is now possible to pickle and unpickle Kwant ``Builder`` and ``System``.
+
+Using Builders as templates with Builder.fill()
+-----------------------------------------------
+Builders now have a fill() method that fills the Builder with copies of
+a template Builder (passed as a parameter). This can be used to "cut out"
+shapes from high-symmetry models, or to increase the symmetry period of
+a lead.
+
+attach_lead() can now handle leads with greater than nearest-neighbor hoppings
+------------------------------------------------------------------------------
+When attaching a lead with greater than nearest-neighbor hoppings, the symmetry
+period of the finalized lead is suitably extended and the unit cell size is
+increased.
