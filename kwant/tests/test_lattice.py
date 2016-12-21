@@ -229,3 +229,28 @@ def test_norbs():
     assert lat != lat1
     assert lat != lat2
     assert lat1 != lat2
+
+
+def test_symmetry_subgroup():
+    rng = np.random.RandomState(0)
+    ## test whether actual subgroups are detected as such
+    vecs = rng.randn(3, 3)
+    sym1 = lattice.TranslationalSymmetry(*vecs)
+    assert sym1 >= sym1
+    assert sym1 >= builder.NoSymmetry()
+    assert sym1 >= lattice.TranslationalSymmetry(2 * vecs[0],
+                                                 3 * vecs[1] + 4 * vecs[2])
+    assert not sym1 <= lattice.TranslationalSymmetry(*(0.8 * vecs))
+
+    ## test subgroup creation
+    for dim in range(1, 4):
+        generators = rng.randint(10, size=(dim, 3))
+        assert sym1.subgroup(*generators) <= sym1
+
+    # generators are not linearly independent
+    with raises(ValueError):
+        sym1.subgroup(*rng.randint(10, size=(4, 3)))
+
+    # generators are not integer sequences
+    with raises(ValueError):
+        sym1.subgroup(*rng.rand(1, 3))

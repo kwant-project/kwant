@@ -125,6 +125,22 @@ class VerySimpleSymmetry(builder.Symmetry):
     def num_directions(self):
         return 1
 
+    def isstrictsupergroup(self, other):
+        if isinstance(other, builder.NoSymmetry):
+            return True
+        elif isinstance(other, VerySimpleSymmetry):
+            return not other.period % self.period
+        else:
+            return False
+
+    def subgroup(self, *generators):
+        generators = ta.array(generators)
+        assert generators.shape == (1, 1)
+        if generators.dtype != int:
+            raise ValueError('Generators must be sequences of integers.')
+        g = generators[0, 0]
+        return VerySimpleSymmetry(g * self.period)
+
     def which(self, site):
         return ta.array((site.tag[0] // self.period,), int)
 
