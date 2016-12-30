@@ -10,7 +10,6 @@
 import numpy as np
 from numpy.testing import assert_almost_equal
 import scipy.linalg as la
-import numpy.linalg as npl
 from kwant.physics import leads
 import kwant
 
@@ -463,7 +462,7 @@ def test_PHS_TRIM_degenerate_ordering():
     # P squares to -1
     assert np.allclose(pmat.dot(pmat.conj()), -np.eye(pmat.shape[0]))
     # The Hamiltonian anticommutes with P
-    assert np.allclose(pmat.dot(hop.conj()).dot(npl.inv(pmat)), -hop)
+    assert np.allclose(pmat.dot(hop.conj()).dot(np.linalg.inv(pmat)), -hop)
 
     onsite = np.zeros(hop.shape, dtype=complex)
     prop, stab = leads.modes(onsite, hop, particle_hole=pmat)
