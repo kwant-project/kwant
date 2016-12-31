@@ -9,6 +9,7 @@ mirror repository:
     stage: build
     only:
         - branches@kwant/kwant
+    allow_failure: true
     variables:
       REPOS: "git@github.com:kwant-project/kwant.git git@gitlab.com:kwant/kwant.git"
     before_script:
