@@ -80,36 +80,69 @@ upload coverage:
     - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
     - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
-    - rsync -rlv --delete htmlcov/* kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
+    - mv htmlcov $CI_BUILD_REF_SLUG
+    - rsync -rlv --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
   after_script:
     - rm -rf ~/.ssh
 
 upload documentation to the test server:
   stage: deploy
+  environment:
+    name: docs review/$CI_BUILD_REF_NAME
+    url: https://test.kwant-project.org/doc/$CI_BUILD_REF_SLUG
+    on_stop: remove_docs
   only:
     - branches@kwant/kwant
-  script:
+  before_script:
     - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
     - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
-    - rsync -rlv --delete doc/build/html/* kwant@kwant-project.org:doc/dev
+  script:
+    - rsync -rlv --delete doc/build/html/* kwant@kwant-project.org:doc/$CI_BUILD_REF_SLUG
+  after_script:
     - rm -rf ~/.ssh
+
+
+remove_docs:
+  stage: deploy
+  when: manual
+  environment:
+    name: docs review/$CI_BUILD_REF_NAME
+    action: stop
+  before_script:
+    - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
+    - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+  script:
+    - mkdir empty
+    - rsync -arv --delete empty/ kwant@kwant-project.org:doc/$CI_BUILD_REF_SLUG/
+  after_script:
+    - rm -rf ~/.ssh
+
 
 upload dev version docs:
   stage: deploy
+  environment:
+    name: production
+    url: https://kwant-project.org/doc/dev
   only:
     - master@kwant/kwant
-  script:
+  before_script:
     - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
     - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+  script:
     - rsync -rlv --delete doc/build/html/* kwant@kwant-project.org:doc/dev
+  after_script:
     - rm -rf ~/.ssh
 
 upload docs of tagged build:
   stage: deploy
+  environment:
+    name: production
   only:
      - /^v[0-9]+\.[0-9]+.[0-9]+$/@kwant/kwant
-  script:
+  before_script:
     - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
     - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+  script:
     - rsync -rlv --delete doc/build/html/* kwant@kwant-project.org:doc/$(echo $CI_BUILD_TAG | sed 's/v\([0-9]\+\.[0-9]\+\)\.[0-9]\+/\1/')
+  after_script:
     - rm -rf ~/.ssh
