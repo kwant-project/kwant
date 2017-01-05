@@ -76,6 +76,7 @@ upload coverage:
   environment:
     name: coverage/$CI_BUILD_REF_NAME
     url: https://kwant-project.org/coverage/$CI_BUILD_REF_SLUG
+    on_stop: remove_coverage
   before_script:
     - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
     - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
@@ -84,6 +85,24 @@ upload coverage:
     - rsync -rlv --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
   after_script:
     - rm -rf ~/.ssh
+
+remove_coverage:
+  stage: deploy
+  only:
+    - branches@kwant/kwant
+  when: manual
+  environment:
+    name: coverage/$CI_BUILD_REF_NAME
+    action: stop
+  before_script:
+    - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
+    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+  script:
+    - mkdir empty/
+    - rsync -rlv --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
+  after_script:
+    - rm -rf ~/.ssh
+
 
 upload documentation to the test server:
   stage: deploy
@@ -105,6 +124,8 @@ upload documentation to the test server:
 remove_docs:
   stage: deploy
   when: manual
+  only:
+    - branches@kwant/kwant
   environment:
     name: docs review/$CI_BUILD_REF_NAME
     action: stop
