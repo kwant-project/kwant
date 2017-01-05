@@ -57,13 +57,32 @@ build documentation:
 run tests:
   stage: test
   script:
-    - py.test --cov=kwant --flakes kwant
+    - py.test --cov=kwant --cov-report term --cov-report html --flakes kwant
+  artifacts:
+    paths:
+      - htmlcov
 
 check for broken links in doc:
   stage: test
   script:
     - make -C doc linkcheck
   allow_failure: true
+
+
+upload coverage:
+  stage: deploy
+  only:
+    - branches@kwant/kwant
+  environment:
+    name: coverage/$CI_BUILD_REF_NAME
+    url: https://kwant-project.org/coverage/$CI_BUILD_REF_SLUG
+  before_script:
+    - mkdir -p ~/.ssh && ssh-keyscan kwant-project.org >> ~/.ssh/known_hosts
+    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+  script:
+    - rsync -rlv --delete htmlcov/* kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
+  after_script:
+    - rm -rf ~/.ssh
 
 upload documentation to the test server:
   stage: deploy
