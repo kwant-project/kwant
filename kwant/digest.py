@@ -72,7 +72,7 @@ def gauss(input, salt=''):
     return cos(a * TWOPI) * sqrt(-2.0 * log(1.0 - b))
 
 
-def test(n=20000):
+def test(n=20000):  # skip coverage
     """Test the generator with the dieharder suite generating n**2 samples.
 
     Executing this function may take a very long time.
