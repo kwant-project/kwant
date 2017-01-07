@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2016 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -10,10 +10,15 @@
 from math import sin, cos, sqrt, pi, copysign
 from collections import namedtuple
 
+import warnings
+from itertools import combinations_with_replacement
 import numpy as np
 import numpy.linalg as npl
 import scipy.linalg as la
 from .. import linalg as kla
+from scipy.linalg import block_diag
+from scipy.sparse import (identity as sp_identity, hstack as sp_hstack,
+                          csr_matrix)
 
 dot = np.dot
 
@@ -28,9 +33,80 @@ else:
 
         This function is needed due to a bug in numpy<1.8.
         """
-        # TODO: Remove separate checking of real and imaginary parts once we depend
-        # on numpy>=1.8 (it is present due to a bug in earlier versions).
+        # TODO: Remove separate checking of real and imaginary parts once we
+        # depend on numpy>=1.8 (it is present due to a bug in earlier
+        # versions).
         return np.any(array.real) or np.any(array.imag)
+
+
+# TODO: Once Kwant depends on numpy >= 1.11, remove the fix
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    split_fixed = np.split(np.zeros((0, 2)), 2)[0].shape == (0, 2)
+if split_fixed:  # skip coverage
+    split = np.split
+else:  # skip coverage
+    def split(array, n, axis=0):
+        if array.shape[axis] != 0:
+            return np.split(array, n, axis)
+        else:
+            return n * [array]
+
+
+# TODO: Use scipy block_diag once we depend on scipy>=0.19
+try:
+    # Throws ValueError, but if fixed ensure that works as intended
+    bdiag_broken = block_diag(np.zeros((1,1)), np.zeros((2,0))).shape != (3, 1)
+except ValueError:  # skip coverage
+    bdiag_broken = True
+if bdiag_broken:  # skip coverage
+    def block_diag(*matrices):
+        """Construct a block diagonal matrix out of the input matrices.
+
+        Like scipy.linalg.block_diag, but works for zero size matrices."""
+        rows, cols = np.sum([mat.shape for mat in matrices], axis=0)
+        b_mat = np.zeros((rows,cols), dtype='complex')
+        rows, cols = 0, 0
+        for mat in matrices:
+            new_rows = rows + mat.shape[0]
+            new_cols = cols + mat.shape[1]
+            b_mat[rows:new_rows, cols:new_cols] = mat
+            rows, cols = new_rows, new_cols
+        return b_mat
+
+
+def nonzero_symm_projection(matrix):
+    """Check whether a discrete symmetry relation between two blocks of the
+    Hamiltonian vanishes or not.
+
+    For a discrete symmetry S, the projection that maps from the block i to
+    block j of the Hamiltonian with projectors P_i and P_j is
+    S_ji = P_j^+ S P_i.
+    This function determines whether S_ji vanishes or not, i. e. whether a
+    symmetry relation exists between blocks i and j.
+
+    Here, discrete symmetries and projectors are in canonical form, such that
+    S maps each block at most either to itself or to a single other block.
+    In other words, for each j, the block S_ji is nonzero at most for one i,
+    while all other blocks vanish. If a nonzero block exists, it is unitary
+    and hence has norm 1. To identify nonzero blocks without worrying about
+    numerical errors, we thus check that its norm is larger than 0.5.
+    """
+    if not isinstance(matrix, np.ndarray):
+        matrix = matrix.data
+    return np.linalg.norm(matrix) > 0.5
+
+
+def group_halves(arr_list):
+    """Split and rearrange a list of arrays.
+
+    Combine a list of arrays into a single array where the first halves
+    of each array appear first:
+    `[a b], [c d], [e f] -> [a c e b d f]`
+    """
+    list_ = [split(arr, 2) for arr in arr_list]
+    lefts, rights = zip(*list_)
+    return np.r_[tuple(lefts + rights)]
 
 
 # Container classes
@@ -48,6 +124,9 @@ class PropagatingModes:
         Momenta of the modes.
     velocities : numpy array
         Velocities of the modes.
+    block_nmodes: list of integers
+        Number of left or right moving propagating modes
+        per conservation law block of the Hamiltonian.
 
     Notes
     =====
@@ -61,6 +140,12 @@ class PropagatingModes:
     mode is normalized to carry unit current. If several modes have the same
     momentum and velocity, an arbitrary orthonormal basis in the subspace of
     these modes is chosen.
+
+    If a conservation law is specified to block diagonalize the Hamiltonian
+    to N blocks, then `block_nmodes[i]` is the number of left or right moving
+    propagating modes in conservation law block `i`. The ordering of blocks
+    is the same as the ordering of the projectors used to block diagonalize
+    the Hamiltonian.
     """
     def __init__(self, wave_functions, velocities, momenta):
         kwargs = locals()
@@ -123,10 +208,7 @@ class StabilizedModes:
         v = self.sqrt_hop
         vecs = self.vecs[:, self.nmodes:]
         vecslmbdainv = self.vecslmbdainv[:, self.nmodes:]
-        if v is not None:
-            return dot(v, dot(vecs, la.solve(vecslmbdainv, v.T.conj())))
-        else:
-            return la.solve(vecslmbdainv.T, vecs.T).T
+        return dot(v, dot(vecs, la.solve(vecslmbdainv, v.T.conj())))
 
 
 # Auxiliary functions that perform different parts of the calculation.
@@ -457,12 +539,12 @@ def phs_symmetrization(wfs, particle_hole):
         # combination of these modes remains an eigenstate of P. From the way
         # we construct eigenstates of P, the coefficients of R are real.
         new_wfs, r = la.qr(new_wfs, mode='economic', pivoting=True)[:2]
-        if not np.allclose(r.imag, np.zeros(r.shape)):
+        if not np.allclose(r.imag, np.zeros(r.shape)):  # skip coverage
             raise RuntimeError("Numerical instability in finding particle-hole \
                                 symmetric modes.")
         # If P^2 = 1, there is no need to sort the modes further.
         TRIM_sort = np.zeros((wfs.shape[1],), dtype=int)
-    elif P_squared == -1:
+    else:
         # We start by trying to construct explicit particle-hole partners,
         # and then using QR to make then orthonormal. If this does not yield
         # correct particle-hole symmetric TRIM modes, we use a different
@@ -553,8 +635,8 @@ def phs_symmetrization(wfs, particle_hole):
     return new_wfs, TRIM_sort
 
 
-def make_proper_modes(lmbdainv, psi, extract, tol=1e6, *, particle_hole=None,
-                      time_reversal=None, chiral=None):
+def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
+                      time_reversal, chiral):
     """
     Find, normalize and sort the propagating eigenmodes.
 
@@ -768,10 +850,12 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6, *, particle_hole=None,
         # is [-k2, -k1, k1, k2], if k2, k1 > 0 and k2 > k1.
         # To maintain this ordering with ki and -ki as particle-hole partners,
         # reverse the order of the product at the end.
-        wf_neg_k = particle_hole.dot((full_psi[:, :N][:, positive_k]).conj())[:, ::-1]
+        wf_neg_k = particle_hole.dot(
+                (full_psi[:, :N][:, positive_k]).conj())[:, ::-1]
         rot = orig_neg_k.T.conj().dot(wf_neg_k)
         full_psi[:, :N][:, positive_k[::-1]] = wf_neg_k
-        psi[:, :N][:, positive_k[::-1]] = psi[:, :N][:, positive_k[::-1]].dot(rot)
+        psi[:, :N][:, positive_k[::-1]] = \
+                psi[:, :N][:, positive_k[::-1]].dot(rot)
 
         # Outgoing modes
         positive_k = (np.pi - eps > momenta[N:]) * (momenta[N:] > eps)
@@ -779,11 +863,14 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6, *, particle_hole=None,
         orig_neg_k = full_psi[:, N:][:, positive_k[::-1]]
         # For outgoing modes, ordering of wfs by momentum as returned by kwant
         # is like [k2, k1, -k1, -k2], if k2, k1 > 0 and k2 > k1.
-        # Reverse order with [::-1] at the end to match momenta of opposite sign.
-        wf_neg_k = particle_hole.dot(full_psi[:, N:][:, positive_k].conj())[:, ::-1]
+
+        # Reverse order at the end to match momenta of opposite sign.
+        wf_neg_k = particle_hole.dot(
+                full_psi[:, N:][:, positive_k].conj())[:, ::-1]
         rot = orig_neg_k.T.conj().dot(wf_neg_k)
         full_psi[:, N:][:, positive_k[::-1]] = wf_neg_k
-        psi[:, N:][:, positive_k[::-1]] = psi[:, N:][:, positive_k[::-1]].dot(rot)
+        psi[:, N:][:, positive_k[::-1]] = \
+                psi[:, N:][:, positive_k[::-1]].dot(rot)
 
     # Modes are ordered by velocity.
     # Use time-reversal symmetry to relate modes of opposite velocity.
@@ -803,8 +890,112 @@ def make_proper_modes(lmbdainv, psi, extract, tol=1e6, *, particle_hole=None,
     return psi, PropagatingModes(full_psi, velocities, momenta)
 
 
+def compute_block_modes(h_cell, h_hop, tol, stabilization,
+                        time_reversal, particle_hole, chiral):
+    """Calculate modes corresponding to a single projector. """
+    n, m = h_hop.shape
+
+    # Defer most of the calculation to helper routines.
+    matrices, v, extract = setup_linsys(h_cell, h_hop, tol, stabilization)
+    ev, evanselect, propselect, vec_gen, ord_schur = unified_eigenproblem(
+        *(matrices + (tol,)))
+
+    # v is never None.
+    # h_hop.shape[0] and v.shape[1] not always the same.
+    # Adding this makes the difference for some tests
+    n = v.shape[1]
+
+    nrightmovers = np.sum(propselect) // 2
+    nevan = n - nrightmovers
+    evan_vecs = ord_schur(evanselect)[:, :nevan]
+
+    # Compute the propagating eigenvectors.
+    prop_vecs = vec_gen(propselect)
+    # Compute their velocity, and, if necessary, rotate them.
+
+    # prop_vecs here is 'psi' in make_proper_modes, i.e. the wf in the SVD
+    # basis.  It is in turn used to construct vecs and vecslmbdainv (the
+    # propagating parts).  The evanescent parts of vecs and vecslmbdainv come
+    # from evan_vecs above.
+    prop_vecs, real_space_data = make_proper_modes(ev[propselect], prop_vecs,
+                                                   extract, tol, particle_hole,
+                                                   time_reversal, chiral)
+
+    vecs = np.c_[prop_vecs[n:], evan_vecs[n:]]
+    vecslmbdainv = np.c_[prop_vecs[:n], evan_vecs[:n]]
+
+    # Prepare output for a single block
+    wave_functions = real_space_data.wave_functions
+    momenta = real_space_data.momenta
+    velocities = real_space_data.velocities
+
+    return (wave_functions, momenta, velocities, vecs, vecslmbdainv, v)
+
+
+def transform_modes(modes_data, unitary=None, time_reversal=None,
+                    particle_hole=None, chiral=None):
+    """Transform the modes data for a given block of the Hamiltonian using a
+    discrete symmetry (see arguments). The symmetry operator can also be
+    specified as can also be identity, for the case when blocks are identical.
+
+    Assume that modes_data has the form returned by compute_block_modes, i.e. a
+    tuple (wave_functions, momenta, velocities, nmodes, vecs, vecslmbdainv, v)
+    containing the block modes data.
+
+    Assume that the symmetry operator is written in the proper basis (block
+    basis, not full TB).
+
+    """
+    wave_functions, momenta, velocities, vecs, vecslmbdainv, v = modes_data
+    nmodes = wave_functions.shape[1] // 2
+
+    if unitary is not None:
+        perm = np.arange(2*nmodes)
+        conj = False
+        flip_velocity = False
+    elif time_reversal is not None:
+        unitary = time_reversal
+        perm = np.arange(2*nmodes)[::-1]
+        conj = True
+        flip_velocity = True
+    elif particle_hole is not None:
+        unitary = particle_hole
+        perm = ((-1-np.arange(2*nmodes)) % nmodes +
+                nmodes * (np.arange(2*nmodes) // nmodes))
+        conj = True
+        flip_velocity = False
+    elif chiral is not None:
+        unitary = chiral
+        perm = (np.arange(2*nmodes) % nmodes +
+                nmodes * (np.arange(2*nmodes) < nmodes))
+        conj = False
+        flip_velocity = True
+    else:  # skip coverage
+        raise ValueError("No relation between blocks was provided.")
+
+    if conj:
+        momenta *= -1
+        vecs = vecs.conj()
+        vecslmbdainv = vecslmbdainv.conj()
+        wave_functions = wave_functions.conj()
+        v = v.conj()
+
+    wave_functions = unitary.dot(wave_functions)[:, perm]
+    v = unitary.dot(v)
+    # Copy to not overwrite modes from previous blocks
+    vecs = vecs.copy()
+    vecs[:, :2*nmodes] = vecs[:, perm]
+    vecslmbdainv = vecslmbdainv.copy()
+    vecslmbdainv[:, :2*nmodes] = vecslmbdainv[:, perm]
+    velocities = velocities[perm]
+    momenta = momenta[perm]
+    if flip_velocity:
+        velocities *= -1
+    return (wave_functions, momenta, velocities, vecs, vecslmbdainv, v)
+
+
 def modes(h_cell, h_hop, tol=1e6, stabilization=None, *, particle_hole=None,
-          time_reversal=None, chiral=None):
+          time_reversal=None, chiral=None, projectors=None):
     """Compute the eigendecomposition of a translation operator of a lead.
 
     Parameters
@@ -836,6 +1027,9 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *, particle_hole=None,
         The unitary part of the time-reversal symmetry operator.
     chiral : sparse or dense square matrix
         The chiral symmetry operator.
+    projectors : an iterable of sparse or dense matrices
+        Projectors that block diagonalize the Hamiltonian in accordance
+        with a conservation law.
 
     Returns
     -------
@@ -862,42 +1056,124 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *, particle_hole=None,
     the mode decomposition that the Kwant authors are aware about. Its details
     are to be published.
     """
-    m = h_hop.shape[1]
-    n = h_cell.shape[0]
+    n, m = h_hop.shape
 
-    if (h_cell.shape[0] != h_cell.shape[1] or
-        h_cell.shape[0] != h_hop.shape[0]):
+    if h_cell.shape != (n, n):
         raise ValueError("Incompatible matrix sizes for h_cell and h_hop.")
 
     if not complex_any(h_hop):
+        wf = np.zeros((n, 0))
         v = np.zeros((m, 0))
-        return (PropagatingModes(np.zeros((n, 0)), np.zeros((0,)),
-                                 np.zeros((0,))),
-                StabilizedModes(np.zeros((0, 0)), np.zeros((0, 0)), 0, v))
+        m = np.zeros((0, 0))
+        vec = np.zeros((0,))
+        return (PropagatingModes(wf, vec, vec), StabilizedModes(m, m, 0, v))
 
-    # Defer most of the calculation to helper routines.
-    matrices, v, extract = setup_linsys(h_cell, h_hop, tol, stabilization)
-    ev, evanselect, propselect, vec_gen, ord_schur = unified_eigenproblem(
-        *(matrices + (tol,)))
+    ham = h_cell
+    # Avoid the trouble of dealing with non-square hopping matrices.
+    # TODO: How to avoid this while not doing a lot of book-keeping?
+    hop = np.empty_like(ham, dtype=h_hop.dtype)
+    hop[:, :m] = h_hop
+    hop[:, m:] = 0
 
-    if v is not None:
-        n = v.shape[1]
+    # Provide default values to not deal with special cases.
+    if projectors is None:
+        projectors = [sp_identity(ham.shape[0], format='csr')]
 
-    nrightmovers = np.sum(propselect) // 2
-    nevan = n - nrightmovers
-    evan_vecs = ord_schur(evanselect)[:, :nevan]
+    def to_dense_or_csr(matrix):
+        if matrix is None:
+            return csr_matrix(ham.shape)
+        try:
+            return matrix.tocsr()
+        except AttributeError:
+            return matrix
 
-    # Compute the propagating eigenvectors.
-    prop_vecs = vec_gen(propselect)
-    # Compute their velocity, and, if necessary, rotate them
-    prop_vecs, real_space_data = make_proper_modes(
-        ev[propselect], prop_vecs, extract, tol, particle_hole=particle_hole,
-        time_reversal=time_reversal, chiral=chiral)
+    symmetries = map(to_dense_or_csr,
+                     (time_reversal, particle_hole, chiral))
+    time_reversal, particle_hole, chiral = symmetries
 
-    vecs = np.c_[prop_vecs[n:], evan_vecs[n:]]
-    vecslmbdainv = np.c_[prop_vecs[:n], evan_vecs[:n]]
+    offsets = np.cumsum([0] + [projector.shape[1] for projector in projectors])
+    indices = [slice(*i) for i in np.vstack([offsets[:-1], offsets[1:]]).T]
+    projection_op = sp_hstack(projectors)
 
-    return real_space_data, StabilizedModes(vecs, vecslmbdainv, nrightmovers, v)
+    def basis_change(a, antiunitary=False):
+        b = projection_op
+        # We need the extra transposes to ensure that sparse dot is used.
+        if antiunitary:
+            # b.T.conj() @ a @ b.conj()
+            return (b.T.conj().dot((b.T.conj().dot(a)).T)).T
+        else:
+            # b.T.conj() @ a @ b
+            return (b.T.dot((b.T.conj().dot(a)).T)).T
+
+    # Conservation law basis
+    ham_cons = basis_change(ham)
+    hop_cons = basis_change(hop)
+    trs = basis_change(time_reversal, True)
+    phs = basis_change(particle_hole, True)
+    sls = basis_change(chiral)
+
+    # Check that the Hamiltonian has the conservation law
+    block_modes = len(projectors) * [None]
+    numbers_coords = combinations_with_replacement(enumerate(indices), 2)
+    for (i, x), (j, y) in numbers_coords:
+        h = ham_cons[x, y]
+        t = hop_cons[x, y]
+        # Symmetries that project from block x to block y
+        symmetries = [symm[y, x] for symm in (trs, phs, sls)]
+        symmetries = [(symm if nonzero_symm_projection(symm) else None) for
+                      symm in symmetries]
+        if i == j:
+            if block_modes[i] is not None:
+                continue
+            # We did not compute this block yet.
+            block_modes[i] = compute_block_modes(h, t, tol, stabilization,
+                                                 *symmetries)
+        else:
+            if block_modes[j] is not None:
+                # Modes in the block already computed.
+                continue
+            x, y = tuple(np.mgrid[x, x]), tuple(np.mgrid[y, y])
+
+            if ham_cons[x].shape != ham_cons[y].shape:
+                continue
+            if (np.allclose(ham_cons[x], ham_cons[y]) and
+                np.allclose(hop_cons[x], hop_cons[y])):
+                unitary = sp_identity(h.shape[0])
+            else:
+                unitary = None
+            if any(op is not None for op in symmetries + [unitary]):
+                block_modes[j] = transform_modes(block_modes[i], unitary,
+                                                 *symmetries)
+    (wave_functions, momenta, velocities,
+     vecs, vecslmbdainv, sqrt_hops) = zip(*block_modes)
+
+    # Reorder by direction of propagation
+    wave_functions = group_halves([(projector.dot(wf)).T for wf, projector in
+                                   zip(wave_functions, projectors)]).T
+    # Propagating modes object to return
+    prop_modes = PropagatingModes(wave_functions, group_halves(velocities),
+                                  group_halves(momenta))
+    nmodes = [len(v) // 2 for v in velocities]
+    # Store the number of modes per block as an attribute.
+    # nmodes[i] is the number of left or right moving modes in block i.
+    # In the module that makes leads with conservation laws, this is necessary
+    # to keep track of the block structure of the scattering matrix.
+    prop_modes.block_nmodes = nmodes
+
+    parts = zip(*([v[:, :n], v[:, n:2*n], v[:, 2*n:]]
+                  for n, v in zip(nmodes, vecs)))
+    vecs = np.hstack([block_diag(*part) for part in parts])
+
+    parts = zip(*([v[:, :n], v[:, n:2*n], v[:, 2*n:]]
+                  for n, v in zip(nmodes, vecslmbdainv)))
+    vecslmbdainv = np.hstack([block_diag(*part) for part in parts])
+
+    sqrt_hops = np.hstack([projector.dot(hop) for projector, hop in
+                             zip(projectors, sqrt_hops)])[:h_hop.shape[1]]
+
+    stab_modes = StabilizedModes(vecs, vecslmbdainv, sum(nmodes), sqrt_hops)
+
+    return prop_modes, stab_modes
 
 
 def selfenergy(h_cell, h_hop, tol=1e6):

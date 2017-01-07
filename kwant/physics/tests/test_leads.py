@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2016 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -10,11 +10,13 @@
 import numpy as np
 from numpy.testing import assert_almost_equal
 import scipy.linalg as la
+from scipy import sparse
 from kwant.physics import leads
 from kwant._common import ensure_rng
 import kwant
 
 modes_se = leads.selfenergy
+
 
 def h_cell_s_func(t, w, e):
     h = (4 * t - e) * np.identity(w)
@@ -55,7 +57,23 @@ def test_regular_fully_degenerate():
     g[w:, w:] = leads.square_selfenergy(w, t, e)
 
     assert_almost_equal(g, modes_se(h_cell, h_hop))
+    # Now with conservation laws and symmetries.
+    conserved = np.identity(2*w)
+    projectors = [sparse.csr_matrix(i) for i in [conserved[:, :w],
+                                                 conserved[:, w:]]]
+    modes2 = leads.modes(h_cell, h_hop, projectors=projectors)
+    assert_almost_equal(g, modes2[1].selfenergy())
 
+    trs = sparse.identity(2*w)
+    modes3 = leads.modes(h_cell, h_hop, projectors=projectors,
+                         time_reversal=trs)
+    assert_almost_equal(g, modes3[1].selfenergy())
+
+    phs = np.eye(2*w, 2*w, w) + np.eye(2*w, 2*w, -w)
+
+    modes4 = leads.modes(h_cell, h_hop, projectors=projectors,
+                         time_reversal=trs, particle_hole=phs)
+    assert_almost_equal(g, modes4[1].selfenergy())
 
 def test_regular_degenerate_with_crossing():
     """This is a testcase with invertible hopping matrices,
@@ -69,7 +87,6 @@ def test_regular_degenerate_with_crossing():
     t = 0.5                     # hopping element
     e = 1.8                     # Fermi energy
 
-    global h_hop
     h_hop_s = -t * np.identity(w)
     h_cell_s = h_cell_s_func(t, w, e)
 
@@ -246,7 +263,8 @@ def test_modes_bearded_ribbon():
     assert leads.modes(h, t)[1].nmodes == 8
 
 
-def check_equivalence(h, t, n, sym='', particle_hole=None, chiral=None, time_reversal=None):
+def check_equivalence(h, t, n, sym='', particle_hole=None, chiral=None,
+                      time_reversal=None):
     """Compare modes stabilization algorithms for a given Hamiltonian."""
     u, s, vh = np.linalg.svd(t)
     u, v = u * np.sqrt(s), vh.T.conj() * np.sqrt(s)
@@ -255,7 +273,8 @@ def check_equivalence(h, t, n, sym='', particle_hole=None, chiral=None, time_rev
     algos = [None, (True, True), (True, False), (False, True), (False, False)]
     for algo in algos:
         result = leads.modes(h, t, stabilization=algo, chiral=chiral,
-                             particle_hole=particle_hole, time_reversal=time_reversal)[1]
+                             particle_hole=particle_hole,
+                             time_reversal=time_reversal)[1]
 
         vecs, vecslmbdainv = result.vecs, result.vecslmbdainv
 
@@ -272,21 +291,21 @@ def check_equivalence(h, t, n, sym='', particle_hole=None, chiral=None, time_rev
         prop_vecs.append(full_vecs[:, : 2 * result.nmodes])
         evan_vecs.append(full_vecs[:, 2 * result.nmodes :])
 
-    msg = 'Stabilization {0} failed.'
+    msg = 'Stabilization {0} failed.in symmetry class {1}'
     for vecs, algo in zip(prop_vecs, algos):
         # Propagating modes should have identical ordering, and only vary
         # By a phase
-        np.testing.assert_allclose(np.abs(np.sum(vecs/prop_vecs[0],
-                                                 axis=0)), vecs.shape[0],
-                                   err_msg=msg.format(algo)+' in symmetry class '+sym)
+        np.testing.assert_allclose(np.abs(np.sum(vecs/prop_vecs[0], axis=0)),
+                                   vecs.shape[0],
+                                   err_msg=msg.format(algo, sym))
 
     for vecs, algo in zip(evan_vecs, algos):
         # Evanescent modes must span the same linear space.
         mat = np.c_[vecs, evan_vecs[0]]
         # Scale largest singular value to 1 if the array is not empty
         mat = mat/np.linalg.norm(mat, ord=2)
-        # As a tolerance, take the square root of machine precision times the largest
-        # matrix dimension.
+        # As a tolerance, take the square root of machine precision times the
+        # largest matrix dimension.
         tol = np.abs(np.sqrt(max(mat.shape)*np.finfo(mat.dtype).eps))
         assert (np.linalg.matrix_rank(mat, tol=tol) ==
                 vecs.shape[1]), msg.format(algo)+' in symmetry class '+sym
@@ -397,14 +416,17 @@ def test_momenta():
 
 
 def check_PHS(TRIM, moms, velocities, wfs, pmat):
-    """Check PHS of incident or outgoing modes at a TRIM momentum. Input are momenta,
-    velocities and wave functions of incident or outgoing modes. """
+    """Check PHS of incident or outgoing modes at a TRIM momentum.
+
+    Input are momenta, velocities and wave functions of incident or outgoing
+    modes.
+    """
     # Pick out TRIM momenta - in this test, all momenta are either 0 or -pi,
     # so the boundaries of the interval here are not important.
     TRIM_moms = (TRIM-0.1 < moms) * (moms < TRIM+0.1)
-    assert np.allclose(moms[TRIM_moms], TRIM)
-    # At a given momentum, incident modes are sorted in ascending order by velocity.
-    # Pick out modes with the same velocity.
+    assert_almost_equal(moms[TRIM_moms], TRIM)
+    # At a given momentum, incident modes are sorted in ascending order by
+    # velocity. Pick out modes with the same velocity.
     vels = velocities[TRIM_moms]
     inds = [ind+1 for ind, vel in enumerate(vels[:-1])
             if np.abs(vel-vels[ind+1])>1e-8]
@@ -412,7 +434,7 @@ def check_PHS(TRIM, moms, velocities, wfs, pmat):
     inds = zip(inds[:-1], inds[1:])
     for ind_tuple in inds:
         vel_wfs = wfs[:, slice(*ind_tuple)]
-        assert np.allclose(vels[slice(*ind_tuple)], vels[slice(*ind_tuple)][0])
+        assert_almost_equal(vels[slice(*ind_tuple)], vels[slice(*ind_tuple)][0])
         assert_almost_equal(vel_wfs[:, 1::2], pmat.dot(vel_wfs[:, ::2].conj()),
                             err_msg='Particle-hole symmetry broken at a TRIM')
 
@@ -430,60 +452,58 @@ def test_PHS_TRIM_degenerate_ordering():
     a predefined convention."""
     sy = np.array([[0,-1j],[1j,0]])
     sz = np.array([[1,0],[0,-1]])
-    ### P squares to 1 ###
+
+    # P squares to 1.
     rng = ensure_rng(42)
     dims = (4, 10, 20)
     ts = (1.0, 1.7, 13.8)
     rand_hop = 1j*(0.1+rng.random_sample())
     hop = la.block_diag(*[t*rand_hop*np.eye(dim) for t, dim in zip(ts, dims)])
 
-    # Particle-hole operator
     pmat = np.eye(sum(dims))
     onsite = np.zeros(hop.shape, dtype=complex)
     prop, stab = leads.modes(onsite, hop, particle_hole=pmat)
-    # All momenta are either 0 or -pi.
-    assert np.all([np.any(ele - np.array([0, -np.pi])) for ele in prop.momenta])
-    # All modes are eigenmodes of P.
-    assert np.all([np.allclose(wf, pmat.dot(wf.conj())) for wf in prop.wave_functions.T])
-    ###########
+    assert np.all([np.any(momentum - np.array([0, -np.pi])) for momentum in
+                   prop.momenta])
+    assert np.all([np.allclose(wf, pmat.dot(wf.conj())) for wf in
+                   prop.wave_functions.T])
 
-    ### P squares to -1 ###
-    ensure_rng(1337)
-    dims = (1, 4, 16)
+    # P squares to -1
+    dims = (1, 4, 40)
     ts = (1.0, 17.2, 13.4)
 
-    hop_mat = np.kron(sz, 1j*(0.1+rng.random_sample())*np.eye(2))
+    hop_mat = np.kron(sz, 1j * (0.1 + rng.random_sample()) * np.eye(2))
     blocks = []
     for t, dim in zip(ts, dims):
         blocks += dim*[t*hop_mat]
     hop = la.block_diag(*blocks)
-    # Particle-hole operator
     pmat = np.kron(np.eye(sum(dims)), 1j*np.kron(sz, sy))
 
-    # P squares to -1
-    assert np.allclose(pmat.dot(pmat.conj()), -np.eye(pmat.shape[0]))
+    assert_almost_equal(pmat.dot(pmat.conj()), -np.eye(pmat.shape[0]))
     # The Hamiltonian anticommutes with P
-    assert np.allclose(pmat.dot(hop.conj()).dot(np.linalg.inv(pmat)), -hop)
+    assert_almost_equal(pmat.dot(hop.conj()).dot(np.linalg.inv(pmat)), -hop)
 
     onsite = np.zeros(hop.shape, dtype=complex)
     prop, stab = leads.modes(onsite, hop, particle_hole=pmat)
     # By design, all momenta are either 0 or -pi.
-    assert np.all([np.any(ele - np.array([0, -np.pi])) for ele in prop.momenta])
+    assert np.all([np.any(momentum - np.array([0, -np.pi])) for momentum in
+                   prop.momenta])
 
     wfs = prop.wave_functions
     momenta = prop.momenta
     velocities = prop.velocities
     nmodes = stab.nmodes
 
-    # By design, all modes are at a TRIM here. Each must thus have a particle-hole
-    # partner at the same TRIM and with the same velocity.
+    # By design, all modes are at a TRIM here. Each must thus have a
+    # particle-hole partner at the same TRIM and with the same velocity.
     # Incident modes
     check_PHS(0, momenta[:nmodes], velocities[:nmodes], wfs[:, :nmodes], pmat)
-    check_PHS(-np.pi, momenta[:nmodes], velocities[:nmodes], wfs[:, :nmodes], pmat)
+    check_PHS(-np.pi, momenta[:nmodes], velocities[:nmodes], wfs[:, :nmodes],
+              pmat)
     # Outgoing modes
     check_PHS(0, momenta[nmodes:], velocities[nmodes:], wfs[:, nmodes:], pmat)
-    check_PHS(-np.pi, momenta[nmodes:], velocities[nmodes:], wfs[:, nmodes:], pmat)
-    ###########
+    check_PHS(-np.pi, momenta[nmodes:], velocities[nmodes:], wfs[:, nmodes:],
+              pmat)
 
 
 def test_modes_symmetries():
@@ -513,8 +533,10 @@ def test_modes_symmetries():
             else:
                 c_mat = None
 
-            prop_modes, stab_modes = leads.modes(h_cell, h_hop, particle_hole=p_mat,
-                                                 time_reversal=t_mat, chiral=c_mat)
+            prop_modes, stab_modes = leads.modes(h_cell, h_hop,
+                                                 particle_hole=p_mat,
+                                                 time_reversal=t_mat,
+                                                 chiral=c_mat)
             wave_functions = prop_modes.wave_functions
             momenta = prop_modes.momenta
             nmodes = stab_modes.nmodes
@@ -526,82 +548,578 @@ def test_modes_symmetries():
 
             if c_mat is not None:
                 assert_almost_equal(wave_functions[:, nmodes:],
-                        c_mat.dot(wave_functions[:, :nmodes:-1]),
+                        c_mat.dot(wave_functions[:, :nmodes][:, ::-1]),
                         err_msg='SLS broken in ' + sym)
 
             if p_mat is not None:
-                # If P^2 = -1, then P psi(-k) = -psi(k) for k>0, so one must look at
-                # positive and negative momenta separately.
-                # Test positive momenta.
-                in_positive_k = (np.pi > momenta[:nmodes]) * (momenta[:nmodes] > 0)
-                out_positive_k = (np.pi > momenta[nmodes:]) * (momenta[nmodes:] > 0)
+                # If P^2 = -1, then P psi(-k) = -psi(k) for k>0, so one must
+                # look at positive and negative momenta separately.  Test
+                # positive momenta.
+                first, last = momenta[:nmodes], momenta[nmodes:]
+                in_positive_k = (np.pi > first) * (first > 0)
+                out_positive_k = (np.pi > last) * (last > 0)
 
-                assert_almost_equal(wave_functions[:, :nmodes][:, in_positive_k[::-1]],
-                        p_mat.dot((wave_functions[:, :nmodes][:, in_positive_k][:, ::-1]).conj()),
+                wf_first = wave_functions[:, :nmodes]
+                wf_last = wave_functions[:, nmodes:]
+                assert_almost_equal(wf_first[:, in_positive_k[::-1]],
+                        p_mat.dot((wf_first[:, in_positive_k][:, ::-1]).conj()),
                         err_msg='PHS broken in ' + sym)
-                assert_almost_equal(wave_functions[:, nmodes:][:, out_positive_k[::-1]],
-                        p_mat.dot((wave_functions[:, nmodes:][:, out_positive_k][:, ::-1]).conj()),
+                assert_almost_equal(wf_last[:, out_positive_k[::-1]],
+                        p_mat.dot((wf_last[:, out_positive_k][:, ::-1]).conj()),
                         err_msg='PHS broken in ' + sym)
 
                 # Test negative momenta. Need the sign of P^2 here.
                 p_squared_sign = np.sign(p_mat.dot(p_mat.conj())[0, 0].real)
-                in_neg_k = (-np.pi < momenta[:nmodes]) * (momenta[:nmodes] < 0)
-                out_neg_k = (-np.pi < momenta[nmodes:]) * (momenta[nmodes:] < 0)
+                in_neg_k = (-np.pi < first) * (first < 0)
+                out_neg_k = (-np.pi < last) * (last < 0)
 
-                assert_almost_equal(p_squared_sign*wave_functions[:, :nmodes][:, in_neg_k[::-1]],
-                        p_mat.dot((wave_functions[:, :nmodes][:, in_neg_k][:, ::-1]).conj()),
+                assert_almost_equal(p_squared_sign*wf_first[:, in_neg_k[::-1]],
+                        p_mat.dot((wf_first[:, in_neg_k][:, ::-1]).conj()),
                         err_msg='PHS broken in ' + sym)
-                assert_almost_equal(p_squared_sign*wave_functions[:, nmodes:][:, out_neg_k[::-1]],
-                        p_mat.dot((wave_functions[:, nmodes:][:, out_neg_k][:, ::-1]).conj()),
+                assert_almost_equal(p_squared_sign*wf_last[:, out_neg_k[::-1]],
+                        p_mat.dot((wf_last[:, out_neg_k][:, ::-1]).conj()),
                         err_msg='PHS broken in ' + sym)
+
+
+def test_chiral_symm():
+    """Test modes for a single block Hamiltonian with chiral symmetry.
+
+    To ensure that there are modes at the Fermi level, a conservation law is
+    included, no projectors are used.
+    """
+    for n in (2, 8, 20):
+        h_cell, h_hop = random_onsite_hop(n)
+        c_mat = np.kron(np.identity(n // 2), np.diag([1, -1]))
+        sx = np.array([[0, 1], [1, 0]])
+        C = np.kron(sx, c_mat)
+        H_cell = la.block_diag(h_cell, -c_mat.dot(h_cell).dot(c_mat.T.conj()))
+        H_hop = 10*la.block_diag(h_hop, -c_mat.dot(h_hop).dot(c_mat.T.conj()))
+        assert_almost_equal(C.dot(C.T.conj()), np.eye(2*n))
+        assert_almost_equal(H_cell.dot(C) + C.dot(H_cell), 0)
+        assert_almost_equal(H_hop.dot(C) + C.dot(H_hop), 0)
+        prop_modes, stab_modes = kwant.physics.leads.modes(H_cell, H_hop,
+                                                           chiral=C)
+        wave_functions = prop_modes.wave_functions
+        nmodes = stab_modes.nmodes
+        assert_almost_equal(wave_functions[:, nmodes:],
+                            C.dot(wave_functions[:, :nmodes][:, ::-1]))
 
 
 def test_PHS_TRIM():
     """Test the function that makes particle-hole symmetric modes at a TRIM. """
     rng = ensure_rng(10)
-    for n in (4, 8, 16, 40, 60):
+    for n in (4, 8, 16, 60):
         for sym in kwant.rmt.sym_list:
             if kwant.rmt.p(sym):
                 p_mat = np.array(kwant.rmt.h_p_matrix[sym])
                 p_mat = np.kron(np.identity(n // len(p_mat)), p_mat)
-                P_squared = 1 if np.all(np.abs(p_mat.conj().dot(p_mat) -
-                                               np.eye(*p_mat.shape)) < 1e-10) else -1
+                P_squared = 1 if np.allclose(p_mat.conj().dot(p_mat),
+                                             np.eye(*p_mat.shape)) else -1
                 if P_squared == 1:
                     for nmodes in (1, 3, n//4, n//2, n):
-                        # Random matrix of 'modes.' Take part of a unitary matrix to
-                        # ensure that the modes form a basis.
-                        modes = rng.random_sample((n, n)) + 1j*rng.random_sample((n, n))
-                        modes = la.expm(1j*(modes + modes.T.conj()))[:n, :nmodes]
-                        # Ensure modes are particle-hole symmetric and normalized
+                        # Random matrix of 'modes.' Take part of a unitary
+                        # matrix to ensure that the modes form a basis.
+                        modes = (rng.random_sample((n, n))
+                                 + 1j*rng.random_sample((n, n)))
+                        modes = la.expm(1j*(modes
+                                            + modes.T.conj()))[:n, :nmodes]
+                        # Ensure modes are particle-hole symmetric and
+                        # normalized
                         modes = modes + p_mat.dot(modes.conj())
-                        modes = np.array([col/np.linalg.norm(col) for col in modes.T]).T
+                        modes = np.array([col/np.linalg.norm(col) for col
+                                          in modes.T]).T
                         # Mix the modes with a random unitary transformation
-                        U = rng.random_sample((nmodes, nmodes)) + 1j*rng.random_sample((nmodes, nmodes))
-                        U = la.expm(1j*(U + U.T.conj()))
+                        U = kwant.rmt.circular(nmodes, 'A', rng=rng)
                         modes = modes.dot(U)
-                        # Make the modes PHS symmetric using the method for a TRIM.
+                        # Make the modes PHS symmetric using the method for a
+                        # TRIM.
                         phs_modes = leads.phs_symmetrization(modes, p_mat)[0]
-                        assert_almost_equal(phs_modes, p_mat.dot(phs_modes.conj()),
-                                            err_msg='PHS broken at a TRIM in ' + sym)
-                        assert_almost_equal(phs_modes.T.conj().dot(phs_modes), np.eye(phs_modes.shape[1]),
-                                           err_msg='Modes are not orthonormal, TRIM PHS in ' + sym)
+                        assert_almost_equal(phs_modes,
+                                            p_mat.dot(phs_modes.conj()),
+                                            err_msg='PHS broken at a TRIM in '
+                                                    + sym)
+                        assert_almost_equal(phs_modes.T.conj().dot(phs_modes),
+                                            np.eye(phs_modes.shape[1]),
+                                            err_msg='Modes are not orthonormal,'
+                                                    'TRIM PHS in ' + sym)
                 elif P_squared == -1:
                     # Need even number of modes =< n
                     for nmodes in (2, 4, n//2, n):
-                        # Random matrix of 'modes.' Take part of a unitary matrix to
-                        # ensure that the modes form a basis.
-                        modes = rng.random_sample((n, n)) + 1j*rng.random_sample((n, n))
-                        modes = la.expm(1j*(modes + modes.T.conj()))[:n, :nmodes]
-                        # Ensure modes are particle-hole symmetric and orthonormal.
-                        modes[:, nmodes//2:] = p_mat.dot(modes[:, :nmodes//2].conj())
+                        # Random matrix of 'modes.' Take part of a unitary
+                        # matrix to ensure that the modes form a basis.
+                        modes = rng.rand(n, n) + 1j * rng.rand(n, n)
+                        modes = la.expm(1j*(modes +
+                                            modes.T.conj()))[:n, :nmodes]
+                        # Ensure modes are particle-hole symmetric and
+                        # orthonormal.
+                        modes[:, nmodes//2:] = \
+                                p_mat.dot(modes[:, :nmodes//2].conj())
                         modes = la.qr(modes, mode='economic')[0]
                         # Mix the modes with a random unitary transformation
-                        U = rng.random_sample((nmodes, nmodes)) + 1j*rng.random_sample((nmodes, nmodes))
+                        U = (rng.random_sample((nmodes, nmodes))
+                             + 1j*rng.random_sample((nmodes, nmodes)))
                         U = la.expm(1j*(U + U.T.conj()))
                         modes = modes.dot(U)
-                        # Make the modes PHS symmetric using the method for a TRIM.
+                        # Make the modes PHS symmetric using the method for a
+                        # TRIM.
                         phs_modes = leads.phs_symmetrization(modes, p_mat)[0]
-                        assert_almost_equal(phs_modes[:, 1::2], p_mat.dot(phs_modes[:, ::2].conj()),
-                                            err_msg='PHS broken at a TRIM in ' + sym)
-                        assert_almost_equal(phs_modes.T.conj().dot(phs_modes), np.eye(phs_modes.shape[1]),
-                                           err_msg='Modes are not orthonormal, TRIM PHS in ' + sym)
+                        assert_almost_equal(phs_modes[:, 1::2],
+                                            p_mat.dot(phs_modes[:, ::2].conj()),
+                                            err_msg='PHS broken at a TRIM in '
+                                                    + sym)
+                        assert_almost_equal(phs_modes.T.conj().dot(phs_modes),
+                                            np.eye(phs_modes.shape[1]),
+                                            err_msg='Modes are not orthonormal,'
+                                                    ' TRIM PHS in ' + sym)
+
+
+
+def random_onsite_hop(n, rng=0):
+    rng = ensure_rng(rng)
+    onsite = rng.randn(n, n) + 1j * rng.randn(n, n)
+    onsite = onsite + onsite.T.conj()
+    hop = rng.rand(n, n) + 1j * rng.rand(n, n)
+    return onsite, hop
+
+def test_cons_singular_hopping():
+    # Conservation law with square but singular hopping
+    n = 20
+    hc1, hh1 = random_onsite_hop(n)
+    hc2, hh2 = random_onsite_hop(n)
+    # Square but singular hopping matrices
+    hh1[:, n//2:] = 0
+    hh2[:, ::2] = 0
+    H_cell = la.block_diag(hc1, hc2)
+    H_hop = la.block_diag(hh1, hh2)
+    # Eigenvalues of conservation law - two blocks,
+    # eigenvalues -1 and 1.
+    cs = np.diag(n*[-1] + n*[1])
+    assert_almost_equal(H_cell.dot(cs) - cs.dot(H_cell), 0)
+    assert_almost_equal(H_hop.dot(cs) - cs.dot(H_hop), 0)
+    # Mix the blocks with a random unitary
+    U = kwant.rmt.circular(2*n, 'A', rng=78)
+    cs_t = U.T.conj().dot(cs).dot(U)
+    H_cell_t = U.T.conj().dot(H_cell).dot(U)
+    H_hop_t = U.T.conj().dot(H_hop).dot(U)
+    assert_almost_equal(cs_t.dot(H_cell_t) - H_cell_t.dot(cs_t), 0)
+    assert_almost_equal(cs_t.dot(H_hop_t) - H_hop_t.dot(cs_t), 0)
+    # Get the projectors.
+    evals, evecs = np.linalg.eigh(cs_t)
+    # Make sure the ordering is correct.
+    assert_almost_equal(evals-np.array(n*[-1] + n*[1]), 0)
+    # First projector projects onto block with
+    # eigenvalue -1, second to eigenvalue 1.
+    # Both blocks are of size n.
+    projectors = [np.reshape(evecs[:,:n], (2*n, n)),
+                  np.reshape(evecs[:,n:2*n], (2*n, n))]
+    # Check that projectors are correctly defined.
+    assert_almost_equal(evecs, np.hstack(projectors))
+    # Make the projectors sparse.
+    projectors = [sparse.csr_matrix(p) for p in projectors]
+    # Without projectors
+    modes1 = kwant.physics.leads.modes(H_cell_t, H_hop_t)
+    # With projectors
+    modes2 = kwant.physics.leads.modes(H_cell_t, H_hop_t, projectors=projectors)
+    assert_almost_equal(modes1[1].selfenergy(), modes2[1].selfenergy())
+
+def test_cons_rectangular_hopping():
+    # Conservation law with rectangular (singular) hopping
+    n = 20
+    hc1, hh1 = random_onsite_hop(n)
+    hc2, hh2 = random_onsite_hop(n)
+
+    H_cell = la.block_diag(hc1, hc2)
+    H_hop = la.block_diag(hh1, hh2)
+    # Remove half of block 1 from the hopping.
+    H_hop = H_hop[:, :-n//2]
+
+    # Get the projectors.
+    projectors = np.split(np.eye(2*n), 2, 1)
+    projectors = [np.reshape(p, (2*n, n)) for p in projectors]
+    # Make the projectors sparse.
+    projectors = [sparse.csr_matrix(p) for p in projectors]
+    # Without projectors
+    modes1 = kwant.physics.leads.modes(H_cell, H_hop)
+    # With projectors
+    modes2 = kwant.physics.leads.modes(H_cell, H_hop, projectors=projectors)
+    assert_almost_equal(modes1[1].selfenergy(), modes2[1].selfenergy())
+
+def check_bdiag_modes(modes, block_rows, block_cols):
+    for vs in modes:
+        # Now check that the blocks do not vanish, and that the arrays are 0
+        # outside of the block diagonal.
+        for rows, cols in zip(block_rows, block_cols):
+            # Check that the block is not the empty,
+            # i.e. that there are modes in the block
+            if vs[rows, cols].size:
+                # If there are modes, this block should not vanish.
+                assert not np.allclose(vs[rows, cols], 0)
+                # Now set this block to zero - to check that with all
+                # blocks set to zero, the array is filled with 0.
+                vs[rows, cols] = np.zeros(vs[rows, cols].shape)
+        assert_almost_equal(vs, 0)
+
+def test_cons_blocks_sizes():
+    # Hamiltonian with a conservation law consisting of three blocks of
+    # different size.
+    n = 4
+    # Three blocks of different sizes.
+    cs = np.diag(n*[-1] + 2*n*[1] + 3*n*[2])
+    # Onsite and hopping
+    hc, hh = random_onsite_hop(6*n)
+    hc[:n, n:] = 0
+    hc[n:, :n] = 0
+    hc[n:3*n, 3*n:] = 0
+    hc[3*n:, n:3*n] = 0
+    assert_almost_equal(cs.dot(hc) - hc.dot(cs), 0)
+    hh[:n, n:] = 0
+    hh[n:, :n] = 0
+    hh[n:3*n, 3*n:] = 0
+    hh[3*n:, n:3*n] = 0
+    assert_almost_equal(cs.dot(hh) - hh.dot(cs), 0)
+    # Mix them with a random unitary
+    U = kwant.rmt.circular(6*n, 'A', rng=23)
+    cs_t = U.T.conj().dot(cs).dot(U)
+    hc_t = U.T.conj().dot(hc).dot(U)
+    hh_t = U.T.conj().dot(hh).dot(U)
+    assert_almost_equal(cs_t.dot(hc_t) - hc_t.dot(cs_t), 0)
+    assert_almost_equal(cs_t.dot(hh_t) - hh_t.dot(cs_t), 0)
+    # Get the projectors. There are three of them, composed of
+    # the eigenvectors of the conservation law.
+    evals, evecs = np.linalg.eigh(cs_t)
+    # Make sure the ordering is correct.
+    assert_almost_equal(evals-np.array(n*[-1] + 2*n*[1] + 3*n*[2]), 0)
+    # First projector projects onto block with
+    # eigenvalue -1 of size n, second to eigenvalue 1 of
+    # size 2n, third onto block with eigenvalue 2 of size 3n.
+    projectors = [np.reshape(evecs[:,:n], (6*n, n)),
+                  np.reshape(evecs[:,n:3*n], (6*n, 2*n)),
+                  np.reshape(evecs[:,3*n:6*n], (6*n, 3*n))]
+    # Check that projectors are correctly defined.
+    assert_almost_equal(evecs, np.hstack(projectors))
+
+    ########
+    # Compute self energy with and without specifying projectors.
+    # Make the projectors sparse.
+    projectors = [sparse.csr_matrix(p) for p in projectors]
+    # Modes without projectors
+    modes1 = leads.modes(hc_t, hh_t)
+    # With projectors
+    modes2 = leads.modes(hc_t, hh_t, projectors=projectors)
+    assert_almost_equal(modes1[1].selfenergy(), modes2[1].selfenergy())
+
+    ########
+    # Check that the number of modes per block with projectors matches the
+    # total number of modes, with and without projectors.
+    prop1, stab1 = modes1  # No projectors
+    prop2, stab2 = modes2  # Projectors
+    assert_almost_equal(stab1.nmodes, sum(prop1.block_nmodes))
+    assert_almost_equal(stab2.nmodes, sum(prop2.block_nmodes))
+    assert_almost_equal(stab1.nmodes, sum(prop2.block_nmodes))
+
+    ########
+    # Check that with projectors specified, in/out propagating modes and
+    # evanescent modes in vecs and vecslmbdainv are block diagonal.
+    # Do this by checking explicitly that the blocks are nonzero, and that
+    # if all blocks are set to zero manually, the stabilized modes only contain
+    # zeros (meaning that anything off the block diagonal is zero).
+    nmodes = stab2.nmodes
+    block_nmodes = prop2.block_nmodes
+    vecs, vecslmbdainv = stab2.vecs, stab2.vecslmbdainv
+    # Row indices for the blocks.
+    # The first block is of size n, second of size 2n
+    # and the third of size 3n.
+    block_rows = [slice(0, n), slice(n, 3*n), slice(3*n, 6*n)]
+    ### Check propagating modes ###
+    # Column indices for the blocks.
+    offsets = np.cumsum([0]+block_nmodes)
+    block_cols = [slice(*i) for i in np.vstack([offsets[:-1], offsets[1:]]).T]
+    prop_modes = (vecs[:, :nmodes], vecs[:, nmodes:2*nmodes],
+                  vecslmbdainv[:, :nmodes], vecslmbdainv[:, nmodes:2*nmodes])
+    check_bdiag_modes(prop_modes, block_rows, block_cols)
+    ### Check evanescent modes ###
+    # First figure out the number of evanescent modes per block.
+    # The number of relevant evanescent modes (outward decaying) in a block is
+    # N - nmodes, where N is the dimension of the block and nmodes the number
+    # of incident or outgoing propagating modes.
+    block_cols = [N - nmodes for nmodes, N in zip(block_nmodes, [n, 2*n, 3*n])]
+    offsets = np.cumsum([0]+block_cols)
+    block_cols = [slice(*i) for i in np.vstack([offsets[:-1], offsets[1:]]).T]
+    ev_modes = (vecs[:, 2*nmodes:], vecslmbdainv[:, 2*nmodes:])
+    check_bdiag_modes(ev_modes, block_rows, block_cols)
+
+
+def check_identical_modes(modes, block_rows, block_cols):
+    for vs in modes:
+        rows0, cols0 = block_rows[0], block_cols[0]
+        rows1, cols1 = block_rows[1], block_cols[1]
+        if vs[rows0, cols0].size:
+            assert_almost_equal(vs[rows0, cols0], vs[rows1, cols1])
+        else:
+            # If one is empty, so is the other one.
+            assert not vs[rows1, cols1].size
+
+def test_block_relations_cons_PHS():
+    # Four blocks. Two identical blocks, each with particle-hole symmetry. Then
+    # two blocks, related by particle-hole symmetry, but neither possessing it
+    # on its own. These two blocks are not identical.  There is a conservation
+    # law relating the first two, and a discrete symmetry relating the latter
+    # two.  Also check the case when the latter two blocks have singular
+    # hopping.
+    n = 20
+    rng = ensure_rng(99)
+    sym = 'C'  # Particle-hole squares to -1
+    # Onsite and hopping blocks with particle-hole symm
+    hP_cell = kwant.rmt.gaussian(n, sym, rng=rng)
+    hP_hop = 10 * kwant.rmt.gaussian(2*n, sym, rng=rng)[:n, n:]
+    p_mat = np.array(kwant.rmt.h_p_matrix[sym])
+    p_mat = np.kron(np.identity(n // len(p_mat)), p_mat)
+    # Random onsite and hopping blocks
+    h_cell, h_hop = random_onsite_hop(n)
+    # Full onsite and hoppings
+    H_cell = la.block_diag(hP_cell, hP_cell, h_cell,
+                           -p_mat.dot(h_cell.conj()).dot(p_mat.T.conj()))
+    H_hop = la.block_diag(hP_hop, hP_hop, h_hop,
+                          -p_mat.dot(h_hop.conj()).dot(p_mat.T.conj()))
+    # Also check the case when the hopping is singular (but square) in the
+    # second two blocks.
+    h_hop[:, ::2] = 0
+    H_hop_s = la.block_diag(hP_hop, hP_hop, h_hop,
+                            -p_mat.dot(h_hop.conj()).dot(p_mat.T.conj()))
+    sx = np.array([[0,1],[1,0]])
+    # Particle-hole symmetry operator
+    P_mat = la.block_diag(p_mat, p_mat, np.kron(sx, p_mat))
+    assert_almost_equal(P_mat.dot(H_cell.conj()) + H_cell.dot(P_mat), 0)
+    assert_almost_equal(P_mat.dot(H_hop.conj()) + H_hop.dot(P_mat), 0)
+    assert_almost_equal(P_mat.dot(H_hop_s.conj()) + H_hop_s.dot(P_mat), 0)
+    assert_almost_equal(P_mat.dot(P_mat.conj()), -np.eye(P_mat.shape[0]))
+
+    # Projectors
+    projectors = np.split(np.eye(4*n), 4, 1)
+    # Make the projectors sparse.
+    projectors = [sparse.csr_matrix(p) for p in projectors]
+
+    # Cover both singular and nonsingular hopping
+    Ham = [(H_cell, H_hop), (H_cell, H_hop_s)]
+    for (H_cell, H_hop) in Ham:
+        prop, stab = kwant.physics.leads.modes(H_cell, H_hop,
+                                               particle_hole=P_mat,
+                                               projectors=projectors)
+        nmodes = stab.nmodes
+        block_nmodes = prop.block_nmodes
+        vecs, vecslmbdainv = stab.vecs, stab.vecslmbdainv
+        # Row indices for the blocks.
+        # All 4 blocks are of size n.
+        block_rows = [slice(0, n), slice(n, 2*n),
+                      slice(2*n, 3*n), slice(3*n, 4*n)]
+
+        ######## Check that the first two blocks are identical.
+        ### Propagating modes ###
+        # Column indices for the blocks.
+        offsets = np.cumsum([0]+block_nmodes)
+        block_cols = [slice(*i) for i in np.vstack([offsets[:-1],
+                                                    offsets[1:]]).T]
+        prop_modes = (vecs[:, :nmodes], vecs[:, nmodes:2*nmodes],
+                      vecslmbdainv[:, :nmodes],
+                      vecslmbdainv[:, nmodes:2*nmodes])
+        check_identical_modes(prop_modes, block_rows, block_cols)
+        ### Evanescent modes ###
+        # First figure out the number of evanescent modes per block.  The
+        # number of relevant evanescent modes (outward decaying) in a block is
+        # N - nmodes, where N is the dimension of the block and nmodes the
+        # number of incident or outgoing propagating modes.
+        block_cols = [N - nmodes for nmodes, N in zip(block_nmodes, 4*[n])]
+        offsets = np.cumsum([0]+block_cols)
+        block_cols = [slice(*i) for i in np.vstack([offsets[:-1],
+                                                    offsets[1:]]).T]
+        ev_modes = (vecs[:, 2*nmodes:], vecslmbdainv[:, 2*nmodes:])
+        check_identical_modes(ev_modes, block_rows, block_cols)
+
+        # Check that the second two blocks are related by PHS.
+
+        # Here we only look at propagating modes. Compare the stabilized modes
+        # of incident and outgoing modes for the two blocks that are related by
+        # particle-hole symmetry, i.e. blocks 2 and 3.  Column indices for the
+        # blocks.
+        offsets = np.cumsum([0]+block_nmodes)
+        block_cols = [slice(*i) for i in np.vstack([offsets[:-1],
+                                                    offsets[1:]]).T]
+        # Need both incident and outgoing stabilized modes to make the
+        # comparison between blocks
+        prop_modes = [(vecs[:, :nmodes], vecs[:, nmodes:2*nmodes]),
+                      (vecslmbdainv[:, :nmodes],
+                       vecslmbdainv[:, nmodes:2*nmodes])]
+        for (in_modes, out_modes) in prop_modes:
+            # Coordinates of blocks 2 and 3
+            rows2, cols2 = block_rows[2], block_cols[2]
+            cols3 = block_cols[3]
+            bnmodes = block_nmodes[2] # Number of modes in block 2
+            # Mode rearrangement by particle-hole symmetry
+            perm = ((-1-np.arange(2*bnmodes)) % bnmodes +
+                    bnmodes * (np.arange(2*bnmodes) // bnmodes))
+            # Make sure the blocks are not empty
+            if in_modes[rows2, cols2].size:
+                # Check that the real space representations of the stabilized
+                # modes of blocks 2 and 3 are related by particle-hole
+                # symmetry.
+                sqrt_hop = stab.sqrt_hop
+                modes2 = sqrt_hop.dot(np.hstack([in_modes[:, cols2],
+                                                 out_modes[:, cols2]]))
+                modes3 = sqrt_hop.dot(np.hstack([in_modes[:, cols3],
+                                                 out_modes[:, cols3]]))
+                # In the algorithm, the blocks are compared in the same order
+                # they are specified.  Block 2 is computed before block 3, so
+                # block 3 is obtained by particle-hole transforming the modes
+                # of block 2. Check that it is so.
+                assert_almost_equal(P_mat.dot(modes2.conj())[:, perm], modes3)
+
+def check_symm_ham(h_cell, h_hop, sym_op, trans_sign, sym):
+    """Check that the symmetry operator and Hamiltonian are properly defined"""
+    if sym in ['AI', 'AII', 'C', 'D']:
+        # Antiunitary
+        assert_almost_equal(sym_op.dot(h_cell.conj()) -
+                           trans_sign*h_cell.dot(sym_op), 0)
+        assert_almost_equal(sym_op.dot(h_hop.conj()) -
+                           trans_sign*h_hop.dot(sym_op), 0)
+        assert np.allclose(sym_op.dot(sym_op.conj()),
+                           np.eye(sym_op.shape[0])) or \
+               np.allclose(sym_op.dot(sym_op.conj()), -np.eye(sym_op.shape[0]))
+    elif sym in ['AIII']:
+        # Unitary
+        assert_almost_equal(sym_op.dot(h_cell) - trans_sign*h_cell.dot(sym_op),
+                            0)
+        assert_almost_equal(sym_op.dot(h_hop) - trans_sign*h_hop.dot(sym_op),
+                            0)
+        assert_almost_equal(sym_op.dot(sym_op), np.eye(sym_op.shape[0])) or \
+               np.allclose(sym_op.dot(sym_op), -np.eye(sym_op.shape[0]))
+
+def test_blocks_symm_complex_projectors():
+    # Two blocks of equal size, related by any one of the discrete
+    # symmetries. Each block by itself has no symmetry. The system is
+    # transformed with a random unitary, such that the projectors onto the
+    # blocks are complex.
+    n = 40
+    rng = ensure_rng(27)
+    # Symmetry class, sign of H under symmetry transformation.
+    sym_info = [('AI', 1), ('AII', 1), ('D', -1),
+                ('C', -1), ('AIII', -1)]
+    for (sym, trans_sign) in sym_info:
+        # Conservation law values
+        cs = n*[-1] + n*[1]
+        # Random onsite and hopping blocks
+        h_cell, h_hop = random_onsite_hop(n, rng)
+        # Symmetry operator
+        if sym in ['AI', 'AII']:
+            sym_op = np.array(kwant.rmt.h_t_matrix[sym])
+            sym_op = np.kron(np.identity(n // len(sym_op)), sym_op)
+        elif sym in ['D', 'C']:
+            sym_op = np.array(kwant.rmt.h_p_matrix[sym])
+            sym_op = np.kron(np.identity(n // len(sym_op)), sym_op)
+        elif sym in ['AIII']:
+            sym_op = np.kron(np.identity(n // 2), np.diag([1, -1]))
+        else:
+            raise ValueError('Symmetry class not covered.')
+        # Full onsite and hoppings
+        if sym in ['AI', 'AII', 'C', 'D']:
+            # Antiunitary symmetries
+            H_cell = la.block_diag(h_cell, trans_sign*sym_op.dot(
+                                   h_cell.conj()).dot(sym_op.T.conj()))
+            H_hop = la.block_diag(h_hop, trans_sign*sym_op.dot(
+                                  h_hop.conj()).dot(sym_op.T.conj()))
+        elif sym in ['AIII']:
+            # Unitary symmetries
+            H_cell = la.block_diag(h_cell, trans_sign*sym_op.dot(
+                                   h_cell).dot(sym_op.T.conj()))
+            H_hop = la.block_diag(h_hop, trans_sign*sym_op.dot(
+                                  h_hop).dot(sym_op.T.conj()))
+        sx = np.array([[0,1],[1,0]])
+        # Full symmetry operator relating the blocks
+        S = np.kron(sx, sym_op)
+        check_symm_ham(H_cell, H_hop, S, trans_sign, sym=sym)
+        # Mix with a random unitary
+        U = kwant.rmt.circular(2*n, 'A', rng=3)
+        H_cell_t = U.T.conj().dot(H_cell).dot(U)
+        H_hop_t = U.T.conj().dot(H_hop).dot(U)
+        if sym in ['AI', 'AII', 'C', 'D']:
+            S_t = U.T.conj().dot(S).dot(U.conj())
+        elif sym in ['AIII']:
+            S_t = U.T.conj().dot(S).dot(U)
+        # Conservation law matrix in the new basis
+        cs_t = U.T.conj().dot(np.diag(cs)).dot(U)
+        check_symm_ham(H_cell_t, H_hop_t, S_t, trans_sign, sym=sym)
+
+        # Get the projectors.
+        evals, evecs = np.linalg.eigh(cs_t)
+        # Make sure the ordering is correct.
+        assert_almost_equal(evals-np.array(cs), 0)
+        projectors = [np.reshape(evecs[:, :n], (2*n, n)),
+                      np.reshape(evecs[:, n:2*n], (2*n, n))]
+        # Ensure that the projectors sum to a unitary.
+        assert_almost_equal(sum(projector.dot(projector.conj().T) for projector
+                                in projectors), np.eye(2*n))
+        projectors = [sparse.csr_matrix(p) for p in projectors]
+
+        if sym in ['AI', 'AII']:
+            prop, stab = kwant.physics.leads.modes(H_cell_t, H_hop_t,
+                                                   time_reversal=S_t,
+                                                   projectors=projectors)
+        elif sym in ['C', 'D']:
+            prop, stab = kwant.physics.leads.modes(H_cell_t, H_hop_t,
+                                                   particle_hole=S_t,
+                                                   projectors=projectors)
+        elif sym in ['AIII']:
+            prop, stab = kwant.physics.leads.modes(H_cell_t, H_hop_t,
+                                                   chiral=S_t,
+                                                   projectors=projectors)
+
+        nmodes = stab.nmodes
+        block_nmodes = prop.block_nmodes
+        vecs, vecslmbdainv = stab.vecs, stab.vecslmbdainv
+        # Row indices for the blocks. Both are of size n.
+        block_rows = [slice(0, n), slice(n, 2*n)]
+        ######## Check that the two blocks are related by symmetry.
+
+        # Compare the stabilized propagating modes of incident and outgoing
+        # modes for the two blocks that are related by symmetry.  Column
+        # indices for the blocks.
+        offsets = np.cumsum([0]+block_nmodes)
+        block_cols = [slice(*i) for i in np.vstack([offsets[:-1],
+                                                    offsets[1:]]).T]
+        # Mode rearrangement for each symmetry
+        bnmodes = block_nmodes[0] # Number of modes in the first block
+        if sym in ['AI', 'AII']:
+            perm = np.arange(2*bnmodes)[::-1]
+        elif sym in ['C', 'D']:
+            perm = ((-1-np.arange(2*bnmodes)) % bnmodes +
+                    bnmodes * (np.arange(2*bnmodes) // bnmodes))
+        elif sym in ['AIII']:
+            perm = (np.arange(2*bnmodes) % bnmodes +
+                    bnmodes * (np.arange(2*bnmodes) < bnmodes))
+
+        # Need both incident and outgoing stabilized modes to make the
+        # comparison between blocks
+        prop_modes = [(vecs[:, :nmodes], vecs[:, nmodes:2*nmodes]),
+                      (vecslmbdainv[:, :nmodes],
+                       vecslmbdainv[:, nmodes:2*nmodes])]
+        for (in_modes, out_modes) in prop_modes:
+            rows0, cols0 = block_rows[0], block_cols[0]
+            rows1, cols1 = block_rows[1], block_cols[1]
+            # Make sure the blocks are not empty
+            if in_modes[rows0, cols0].size:
+                # Check the real space representations of the stabilized modes
+                sqrt_hop = stab.sqrt_hop
+                modes0 = sqrt_hop.dot(np.hstack([in_modes[:, cols0],
+                                                 out_modes[:, cols0]]))
+                modes1 = sqrt_hop.dot(np.hstack([in_modes[:, cols1],
+                                                 out_modes[:, cols1]]))
+                # In the algorithm, the blocks are compared in the same order
+                # they are specified.  Block 0 is computed before block 1, so
+                # block 1 is obtained by symmetry transforming the modes of
+                # block 0. Check that it is so.
+                if sym in ['AI', 'AII', 'C', 'D']:
+                    assert_almost_equal(S_t.dot(modes0.conj())[:, perm], modes1)
+                elif sym in ['AIII']:
+                    assert_almost_equal(S_t.dot(modes0)[:, perm], modes1)
+            # If first block is empty, so is the second one.
+            else:
+                assert not in_modes[rows1, cols1].size
