@@ -11,6 +11,7 @@ __all__ = ['SparseSolver', 'SMatrix', 'GreensFunction']
 from collections import namedtuple
 from itertools import product
 import abc
+from  numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 from .._common import ensure_isinstance
@@ -710,6 +711,14 @@ class SMatrix(BlockResult):
     of data corresponding to particular leads are conveniently obtained by
     `~SMatrix.submatrix`.
 
+    `SMatrix` also respects the conservation laws present in the lead, such as
+    spin conservation, if they are declared during system construction. If
+    queried with length-2 sequence the first number is the number of the lead,
+    and the second number is the index of the corresponding conserved
+    quantity. For example ``smatrix.transmission((1, 3), (0, 2))`` is
+    transmission from block 2 of the conserved quantity in lead 0 to the block
+    3 of the conserved quantity in lead 1.
+
     Attributes
     ----------
     data : NumPy array
@@ -728,13 +737,90 @@ class SMatrix(BlockResult):
         sizes = [len(i.momenta) // 2 for i in lead_info]
         super().__init__(data, lead_info, out_leads, in_leads,
                                       sizes, current_conserving)
+        # in_offsets marks beginnings and ends of blocks in the scattering
+        # matrix corresponding to the in leads. The end of the block
+        # corresponding to lead i is taken as the beginning of the block of
+        # i+1.  Same for out leads. For each lead block of the scattering
+        # matrix, we want to pick out the computed blocks of the conservation
+        # law.  The offsets of these symmetry blocks are stored in
+        # block_offsets, for all leads.  List of lists containing the sizes of
+        # symmetry blocks in all leads. leads_block_sizes[i][j] is the number
+        # of left or right moving modes in symmetry block j of lead
+        # i. len(leads_block_sizes[i]) is the number of blocks in lead i.
+        leads_block_sizes = []
+        for info in self.lead_info:
+            # If a lead does not have block structure, append None.
+            leads_block_sizes.append(getattr(info, 'block_nmodes', None))
+        self.leads_block_sizes = leads_block_sizes
+        block_offsets = []
+        for lead_block_sizes in self.leads_block_sizes: # Cover all leads
+            if lead_block_sizes is None:
+                block_offsets.append(lead_block_sizes)
+            else:
+                block_offset = np.zeros(len(lead_block_sizes) + 1, int)
+                block_offset[1:] = np.cumsum(lead_block_sizes)
+                block_offsets.append(block_offset)
+        # Symmetry block offsets for all leads - or None if lead does not have
+        # blocks.
+        self.block_offsets = block_offsets
+        # Pick out symmetry block offsets for in and out leads
+        self.in_block_offsets = \
+                np.array(self.block_offsets)[list(self.in_leads)]
+        self.out_block_offsets = \
+                np.array(self.block_offsets)[list(self.out_leads)]
+        # Block j of in lead i starts at in_block_offsets[i][j]
+
+    def out_block_coords(self, lead_out):
+        """Return a slice with the rows in the block corresponding to lead_out.
+        """
+        if isinstance(lead_out, Integral):
+            lead_out = self.out_leads.index(lead_out)
+            return slice(self.out_offsets[lead_out],
+                         self.out_offsets[lead_out + 1])
+        else:
+            lead_ind, block_ind = lead_out
+            lead_ind = self.out_leads.index(lead_ind)
+            return slice(self.out_offsets[lead_ind] +
+                         self.out_block_offsets[lead_ind][block_ind],
+                         self.out_offsets[lead_ind] +
+                         self.out_block_offsets[lead_ind][block_ind + 1])
+
+    def in_block_coords(self, lead_in):
+        """
+        Return a slice with the columns in the block corresponding to lead_in.
+        """
+        if isinstance(lead_in, Integral):
+            lead_in = self.in_leads.index(lead_in)
+            return slice(self.in_offsets[lead_in],
+                     self.in_offsets[lead_in + 1])
+        else:
+            lead_ind, block_ind = lead_in
+            lead_ind = self.in_leads.index(lead_ind)
+            return slice(self.in_offsets[lead_ind] +
+                         self.in_block_offsets[lead_ind][block_ind],
+                         self.in_offsets[lead_ind] +
+                         self.in_block_offsets[lead_ind][block_ind + 1])
+
+    def _transmission(self, lead_out, lead_in):
+        return np.linalg.norm(self.submatrix(lead_out, lead_in)) ** 2
+
+    def transmission(self, lead_out, lead_in):
+        """Return transmission from lead_in to lead_out.
+
+        If `lead_in` or `lead_out` are a length-2 sequence, the first number is
+        the number of the lead, and the second number indexes the eigenvalue of
+        the conserved quantity in that lead (e.g. spin) if it was specified.
+        """
+        # If transmission is between leads and not subblocks, we can use
+        # unitarity (like BlockResult does).
+        if isinstance(lead_in, Integral) and isinstance(lead_out, Integral):
+            return super().transmission(lead_out, lead_in)
+        else:
+            return self._transmission(lead_out, lead_in)
 
     def num_propagating(self, lead):
         """Return the number of propagating modes in the lead."""
         return self.sizes[lead]
-
-    def _transmission(self, lead_out, lead_in):
-        return np.linalg.norm(self.submatrix(lead_out, lead_in)) ** 2
 
     def __repr__(self):
         return ("SMatrix(data=%r, lead_info=%r, out_leads=%r, in_leads=%r)" %
