@@ -11,18 +11,19 @@ import numpy as np
 import tinyarray as ta
 from pytest import raises
 from kwant import lattice, builder
+from kwant._common import ensure_rng
 
 
 def test_closest():
-    np.random.seed(4)
+    rng = ensure_rng(4)
     lat = lattice.general(((1, 0), (0.5, sqrt(3)/2)))
     for i in range(50):
-        point = 20 * np.random.rand(2)
+        point = 20 * rng.random_sample(2)
         closest = lat(*lat.closest(point)).pos
         assert np.linalg.norm(point - closest) <= 1 / sqrt(3)
-    lat = lattice.general(np.random.randn(3, 3))
+    lat = lattice.general(rng.randn(3, 3))
     for i in range(50):
-        tag = np.random.randint(10, size=(3,))
+        tag = rng.randint(10, size=(3,))
         assert lat.closest(lat(*tag).pos) == tag
 
 
@@ -82,11 +83,11 @@ def test_shape():
 
 
 def test_wire():
-    np.random.seed(5)
-    vecs = np.random.randn(3, 3)
+    rng = ensure_rng(5)
+    vecs = rng.randn(3, 3)
     vecs[0] = [1, 0, 0]
-    center = np.random.randn(3)
-    lat = lattice.general(vecs, np.random.randn(4, 3))
+    center = rng.randn(3)
+    lat = lattice.general(vecs, rng.randn(4, 3))
     syst = builder.Builder(lattice.TranslationalSymmetry((2, 0, 0)))
     def wire_shape(pos):
         pos = np.array(pos)
@@ -156,13 +157,13 @@ def test_translational_symmetry():
     # Test add_site_family on random lattices and symmetries by ensuring that
     # it's possible to add site groups that are compatible with a randomly
     # generated symmetry with proper vectors.
-    np.random.seed(30)
-    vec = np.random.randn(3, 5)
+    rng = ensure_rng(30)
+    vec = rng.randn(3, 5)
     lat = lattice.general(vec)
     total = 0
     for k in range(1, 4):
         for i in range(10):
-            sym_vec = np.random.randint(-10, 10, size=(k, 3))
+            sym_vec = rng.randint(-10, 10, size=(k, 3))
             if np.linalg.matrix_rank(sym_vec) < k:
                 continue
             total += 1
@@ -173,12 +174,12 @@ def test_translational_symmetry():
 
 
 def test_translational_symmetry_reversed():
-    np.random.seed(30)
+    rng = ensure_rng(30)
     lat = lattice.general(np.identity(3))
     sites = [lat(i, j, k) for i in range(-2, 6) for j in range(-2, 6)
                           for k in range(-2, 6)]
     for i in range(4):
-            periods = np.random.randint(-5, 5, (3, 3))
+            periods = rng.randint(-5, 5, (3, 3))
             try:
                 sym = lattice.TranslationalSymmetry(*periods)
                 rsym = sym.reversed()

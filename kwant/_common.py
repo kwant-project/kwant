@@ -8,6 +8,8 @@
 
 import subprocess
 import os
+import numpy as np
+import numbers
 
 __all__ = ['version', 'KwantDeprecationWarning', 'UserCodeError']
 
@@ -110,3 +112,21 @@ def ensure_isinstance(obj, typ, msg=None):
     if msg is None:
         msg = "Expecting an instance of {}.".format(typ.__name__)
     raise TypeError(msg)
+
+def ensure_rng(rng=None):
+    """Turn rng into a random number generator instance
+
+    If rng is None, return the RandomState instance used by np.random.
+    If rng is an integer, return a new RandomState instance seeded with rng.
+    If rng is already a RandomState instance, return it.
+    Otherwise raise ValueError.
+    """
+    if rng is None:
+        return np.random.mtrand._rand
+    if isinstance(rng, numbers.Integral):
+        return np.random.RandomState(rng)
+    if all(hasattr(rng, attr) for attr in ('random_sample', 'randn',
+                                           'randint', 'choice')):
+        return rng
+    raise ValueError("Expecting a seed or an object that offers the "
+                     "numpy.random.RandomState interface.")

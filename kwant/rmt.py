@@ -9,9 +9,10 @@
 __all__ = ['gaussian', 'circular']
 
 import numpy as np
+from ._common import ensure_rng
 
 qr = np.linalg.qr
-randn = np.random.randn
+
 sym_list = 'A', 'AI', 'AII', 'AIII', 'BDI', 'CII', 'D', 'DIII', 'C', 'CI'
 
 
@@ -58,7 +59,7 @@ h_p_matrix = {'C': [[0, 1j], [-1j, 0]], 'CI': [[0, 1j], [-1j, 0]],
               'D': [[1]], 'DIII': [[0, 1], [1, 0]], 'BDI': [[1]]}
 
 
-def gaussian(n, sym='A', v=1.):
+def gaussian(n, sym='A', v=1., rng=None):
     """Make a n * n random Gaussian Hamiltonian.
 
     Parameters
@@ -71,6 +72,9 @@ def gaussian(n, sym='A', v=1.):
     v : float
         Variance every degree of freedom of the Hamiltonian. The probaility
         distribution of the Hamiltonian is `P(H) = exp(-Tr(H^2) / 2 v^2)`.
+    rng: int or rng (optional)
+        Seed or random number generator. If no 'rng' is provided the random
+        number generator from numpy will be used.
 
     Returns
     -------
@@ -117,6 +121,10 @@ def gaussian(n, sym='A', v=1.):
                          'symmetry class CII.')
     factor = v / np.sqrt(2)
 
+    # define random number generator
+    rng = ensure_rng(rng)
+    randn = rng.randn
+
     # Generate a Gaussian matrix of appropriate dtype.
     if sym == 'AI':
         h = randn(n, n)
@@ -152,7 +160,7 @@ def gaussian(n, sym='A', v=1.):
     return h
 
 
-def circular(n, sym='A', charge=None):
+def circular(n, sym='A', charge=None, rng=None):
     """Make a n * n matrix belonging to a symmetric circular ensemble.
 
     Parameters
@@ -167,6 +175,9 @@ def circular(n, sym='A', charge=None):
         classes D and DIII, should be from 0 to n in classes AIII and BDI,
         and should be from 0 to n / 2 in class CII. If charge is None,
         it is drawn from a binomial distribution with p = 1 / 2.
+    rng: int or rng (optional)
+        Seed or random number generator. If no 'rng' is passed, the random
+        number generator provided by numpy will be used.
 
     Returns
     -------
@@ -198,6 +209,8 @@ def circular(n, sym='A', charge=None):
     as detailed in arXiv:math-ph/0609050. For a reason as yet unknown, scipy
     implementation of QR decomposition also works for symplectic matrices.
     """
+    rng = ensure_rng(rng)
+    randn = rng.randn
 
     if sym not in sym_list:
         raise ValueError('Unknown symmetry type.')
@@ -257,14 +270,14 @@ def circular(n, sym='A', charge=None):
     elif sym in ('AIII', 'BDI', 'CII'):
         if sym != 'CII':
             if charge is None:
-                diag = 2 * np.random.randint(2, size=(n,)) - 1
+                diag = 2 * rng.randint(2, size=(n,)) - 1
             elif (0 <= charge <= n) and int(charge) == charge:
                 diag = np.array(charge * [-1] + (n - charge) * [1])
             else:
                 raise ValueError('Impossible value of topological invariant.')
         else:
             if charge is None:
-                diag = 2 * np.random.randint(2, size=(n // 2,)) - 1
+                diag = 2 * rng.randint(2, size=(n // 2,)) - 1
                 diag = np.resize(diag, (2, n // 2)).T.flatten()
             elif (0 <= charge <= n // 2) and int(charge) == charge:
                 charge *= 2

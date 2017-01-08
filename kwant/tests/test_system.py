@@ -12,6 +12,7 @@ from pytest import raises
 import numpy as np
 from scipy import sparse
 import kwant
+from kwant._common import ensure_rng
 
 def test_hamiltonian_submatrix():
     syst = kwant.Builder()
@@ -59,10 +60,10 @@ def test_hamiltonian_submatrix():
     np.testing.assert_array_equal(mat_sp, mat_dense)
 
     # Test precalculation of modes.
-    np.random.seed(5)
+    rng = ensure_rng(5)
     lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     lead[chain(0)] = np.zeros((2, 2))
-    lead[chain(0), chain(1)] = np.random.randn(2, 2)
+    lead[chain(0), chain(1)] = rng.randn(2, 2)
     syst.attach_lead(lead)
     syst2 = syst.finalized()
     smatrix = kwant.smatrix(syst2, .1).data

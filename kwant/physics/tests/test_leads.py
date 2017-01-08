@@ -11,6 +11,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 import scipy.linalg as la
 from kwant.physics import leads
+from kwant._common import ensure_rng
 import kwant
 
 modes_se = leads.selfenergy
@@ -294,14 +295,14 @@ def check_equivalence(h, t, n, sym='', particle_hole=None, chiral=None, time_rev
 def test_symm_algorithm_equivalence():
     """Test different stabilization methods in the computation of modes,
     in the presence and/or absence of the discrete symmetries."""
-    np.random.seed(400)
+    rng = ensure_rng(400)
     for n in (12, 20, 40):
         for sym in kwant.rmt.sym_list:
             # Random onsite and hopping matrices in symmetry class
-            h_cell = kwant.rmt.gaussian(n, sym)
+            h_cell = kwant.rmt.gaussian(n, sym, rng=rng)
             # Hopping is an offdiagonal block of a Hamiltonian. We rescale it
             # to ensure that there are modes at the Fermi level.
-            h_hop = 10 * kwant.rmt.gaussian(2*n, sym)[:n, n:]
+            h_hop = 10 * kwant.rmt.gaussian(2*n, sym, rng=rng)[:n, n:]
 
             if kwant.rmt.p(sym):
                 p_mat = np.array(kwant.rmt.h_p_matrix[sym])
@@ -430,10 +431,10 @@ def test_PHS_TRIM_degenerate_ordering():
     sy = np.array([[0,-1j],[1j,0]])
     sz = np.array([[1,0],[0,-1]])
     ### P squares to 1 ###
-    np.random.seed(42)
+    rng = ensure_rng(42)
     dims = (4, 10, 20)
     ts = (1.0, 1.7, 13.8)
-    rand_hop = 1j*(0.1+np.random.rand())
+    rand_hop = 1j*(0.1+rng.random_sample())
     hop = la.block_diag(*[t*rand_hop*np.eye(dim) for t, dim in zip(ts, dims)])
 
     # Particle-hole operator
@@ -447,11 +448,11 @@ def test_PHS_TRIM_degenerate_ordering():
     ###########
 
     ### P squares to -1 ###
-    np.random.seed(1337)
+    ensure_rng(1337)
     dims = (1, 4, 16)
     ts = (1.0, 17.2, 13.4)
 
-    hop_mat = np.kron(sz, 1j*(0.1+np.random.rand())*np.eye(2))
+    hop_mat = np.kron(sz, 1j*(0.1+rng.random_sample())*np.eye(2))
     blocks = []
     for t, dim in zip(ts, dims):
         blocks += dim*[t*hop_mat]
@@ -486,14 +487,14 @@ def test_PHS_TRIM_degenerate_ordering():
 
 
 def test_modes_symmetries():
-    np.random.seed(10)
+    rng = ensure_rng(10)
     for n in (4, 8, 40, 60):
         for sym in kwant.rmt.sym_list:
             # Random onsite and hopping matrices in symmetry class
-            h_cell = kwant.rmt.gaussian(n, sym)
+            h_cell = kwant.rmt.gaussian(n, sym, rng=rng)
             # Hopping is an offdiagonal block of a Hamiltonian. We rescale it
             # to ensure that there are modes at the Fermi level.
-            h_hop = 10 * kwant.rmt.gaussian(2*n, sym)[:n, n:]
+            h_hop = 10 * kwant.rmt.gaussian(2*n, sym, rng=rng)[:n, n:]
 
             if kwant.rmt.p(sym):
                 p_mat = np.array(kwant.rmt.h_p_matrix[sym])
@@ -557,7 +558,7 @@ def test_modes_symmetries():
 
 def test_PHS_TRIM():
     """Test the function that makes particle-hole symmetric modes at a TRIM. """
-    np.random.seed(10)
+    rng = ensure_rng(10)
     for n in (4, 8, 16, 40, 60):
         for sym in kwant.rmt.sym_list:
             if kwant.rmt.p(sym):
@@ -569,13 +570,13 @@ def test_PHS_TRIM():
                     for nmodes in (1, 3, n//4, n//2, n):
                         # Random matrix of 'modes.' Take part of a unitary matrix to
                         # ensure that the modes form a basis.
-                        modes = np.random.rand(n, n) + 1j*np.random.rand(n, n)
+                        modes = rng.random_sample((n, n)) + 1j*rng.random_sample((n, n))
                         modes = la.expm(1j*(modes + modes.T.conj()))[:n, :nmodes]
                         # Ensure modes are particle-hole symmetric and normalized
                         modes = modes + p_mat.dot(modes.conj())
                         modes = np.array([col/np.linalg.norm(col) for col in modes.T]).T
                         # Mix the modes with a random unitary transformation
-                        U = np.random.rand(nmodes, nmodes) + 1j*np.random.rand(nmodes, nmodes)
+                        U = rng.random_sample((nmodes, nmodes)) + 1j*rng.random_sample((nmodes, nmodes))
                         U = la.expm(1j*(U + U.T.conj()))
                         modes = modes.dot(U)
                         # Make the modes PHS symmetric using the method for a TRIM.
@@ -589,13 +590,13 @@ def test_PHS_TRIM():
                     for nmodes in (2, 4, n//2, n):
                         # Random matrix of 'modes.' Take part of a unitary matrix to
                         # ensure that the modes form a basis.
-                        modes = np.random.rand(n, n) + 1j*np.random.rand(n, n)
+                        modes = rng.random_sample((n, n)) + 1j*rng.random_sample((n, n))
                         modes = la.expm(1j*(modes + modes.T.conj()))[:n, :nmodes]
                         # Ensure modes are particle-hole symmetric and orthonormal.
                         modes[:, nmodes//2:] = p_mat.dot(modes[:, :nmodes//2].conj())
                         modes = la.qr(modes, mode='economic')[0]
                         # Mix the modes with a random unitary transformation
-                        U = np.random.rand(nmodes, nmodes) + 1j*np.random.rand(nmodes, nmodes)
+                        U = rng.random_sample((nmodes, nmodes)) + 1j*rng.random_sample((nmodes, nmodes))
                         U = la.expm(1j*(U + U.T.conj()))
                         modes = modes.dot(U)
                         # Make the modes PHS symmetric using the method for a TRIM.

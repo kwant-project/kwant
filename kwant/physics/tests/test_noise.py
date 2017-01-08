@@ -11,18 +11,19 @@ from pytest import raises
 from numpy.testing import assert_almost_equal
 import kwant
 from kwant.physics import two_terminal_shotnoise
+from kwant._common import ensure_rng
 
 n = 5
 chain = kwant.lattice.chain()
 
 def twoterminal_system():
-    np.random.seed(11)
+    rng = ensure_rng(11)
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
-    h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+    h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
     h += h.conjugate().transpose()
     h *= 0.8
-    t = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
+    t = 4 * rng.random_sample((n, n)) + 4j * rng.random_sample((n, n))
     lead[chain(0)] = h
     system[chain(0)] = h * 1.2
     lead[chain(0), chain(1)] = t

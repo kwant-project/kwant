@@ -12,6 +12,7 @@ import numpy as np
 from pytest import raises
 from numpy.testing import assert_almost_equal
 import kwant
+from kwant._common import ensure_rng
 
 n = 5
 chain = kwant.lattice.chain()
@@ -39,19 +40,20 @@ def assert_modes_equal(modes1, modes2):
 # and that solving for a subblock of a scattering matrix is the same as taking
 # a subblock of the full scattering matrix.
 def test_output(smatrix):
-    np.random.seed(3)
+    rng = ensure_rng(3)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
     for b, site in [(system, chain(0)), (system, chain(1)),
                     (left_lead, chain(0)), (right_lead, chain(0))]:
-        h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
         h += h.conjugate().transpose()
         b[site] = h
     for b, hopp in [(system, (chain(0), chain(1))),
                     (left_lead, (chain(0), chain(1))),
                     (right_lead, (chain(0), chain(1)))]:
-        b[hopp] = 10 * np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        b[hopp] = (10 * rng.random_sample((n, n)) +
+                   1j * rng.random_sample((n, n)))
     system.attach_lead(left_lead)
     system.attach_lead(right_lead)
     fsyst = system.finalized()
@@ -81,18 +83,19 @@ def test_output(smatrix):
 
 # Test that a system with one lead has unitary scattering matrix.
 def test_one_lead(smatrix):
-    np.random.seed(3)
+    rng = ensure_rng(3)
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     for b, site in [(system, chain(0)), (system, chain(1)),
                     (system, chain(2)), (lead, chain(0))]:
-        h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
         h += h.conjugate().transpose()
         b[site] = h
     for b, hopp in [(system, (chain(0), chain(1))),
                     (system, (chain(1), chain(2))),
                     (lead, (chain(0), chain(1)))]:
-        b[hopp] = 10 * np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        b[hopp] = (10 * rng.random_sample((n, n)) +
+                   1j * rng.random_sample((n, n)))
     system.attach_lead(lead)
     fsyst = system.finalized()
 
@@ -161,13 +164,13 @@ def test_two_equal_leads(smatrix):
         t_el_should_be = n_modes * (n_modes - 1) * [0] + n_modes * [1]
         assert_almost_equal(t_elements, t_el_should_be)
         assert_almost_equal(sol.transmission(1,0), n_modes)
-    np.random.seed(11)
+    rng = ensure_rng(11)
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
-    h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+    h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
     h += h.conjugate().transpose()
     h *= 0.8
-    t = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
+    t = 4 * rng.random_sample((n, n)) + 4j * rng.random_sample((n, n))
     lead[chain(0)] = system[chain(0)] = h
     lead[chain(0), chain(1)] = t
     system.attach_lead(lead)
@@ -191,14 +194,14 @@ def test_two_equal_leads(smatrix):
 
 # Test a more complicated graph with non-singular hopping.
 def test_graph_system(smatrix):
-    np.random.seed(11)
+    rng = ensure_rng(11)
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
-    h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+    h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
     h += h.conjugate().transpose()
     h *= 0.8
-    t = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
-    t1 = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
+    t = 4 * rng.random_sample((n, n)) + 4j * rng.random_sample((n, n))
+    t1 = 4 * rng.random_sample((n, n)) + 4j * rng.random_sample((n, n))
     lead[sq(0, 0)] = system[[sq(0, 0), sq(1, 0)]] = h
     lead[sq(0, 1)] = system[[sq(0, 1), sq(1, 1)]] = 4 * h
     for builder in [system, lead]:
@@ -224,15 +227,15 @@ def test_graph_system(smatrix):
 
 # Test a system with singular hopping.
 def test_singular_graph_system(smatrix):
-    np.random.seed(11)
+    rng = ensure_rng(11)
 
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
-    h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+    h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
     h += h.conjugate().transpose()
     h *= 0.8
-    t = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
-    t1 = 4 * np.random.rand(n, n) + 4j * np.random.rand(n, n)
+    t = 4 * rng.random_sample((n, n)) + 4j * rng.random_sample((n, n))
+    t1 = 4 * rng.random_sample((n, n)) + 4j * rng.random_sample((n, n))
     lead[sq(0, 0)] = system[[sq(0, 0), sq(1, 0)]] = h
     lead[sq(0, 1)] = system[[sq(0, 1), sq(1, 1)]] = 4 * h
     for builder in [system, lead]:
@@ -345,19 +348,20 @@ def test_many_leads(*factories):
 # Test equivalence between self-energy and scattering matrix representations.
 # Also check that transmission works.
 def test_selfenergy(greens_function, smatrix):
-    np.random.seed(4)
+    rng = ensure_rng(4)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
     for b, site in [(system, chain(0)), (system, chain(1)),
                  (left_lead, chain(0)), (right_lead, chain(0))]:
-        h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
         h += h.conjugate().transpose()
         b[site] = h
     for b, hopp in [(system, (chain(0), chain(1))),
                     (left_lead, (chain(0), chain(1))),
                     (right_lead, (chain(0), chain(1)))]:
-        b[hopp] = 10 * np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        b[hopp] = (10 * rng.random_sample((n, n)) +
+                   1j * rng.random_sample((n, n)))
     system.attach_lead(left_lead)
     system.attach_lead(right_lead)
     fsyst = system.finalized()
@@ -390,17 +394,18 @@ def test_selfenergy(greens_function, smatrix):
 
 
 def test_selfenergy_reflection(greens_function, smatrix):
-    np.random.seed(4)
+    rng = ensure_rng(4)
     system = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     for b, site in [(system, chain(0)), (system, chain(1)),
                  (left_lead, chain(0))]:
-        h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
         h += h.conjugate().transpose()
         b[site] = h
     for b, hopp in [(system, (chain(0), chain(1))),
                     (left_lead, (chain(0), chain(1)))]:
-        b[hopp] = 10 * np.random.rand(n, n) + 1j * np.random.rand(n, n)
+        b[hopp] = (10 * rng.random_sample((n, n)) +
+                   1j * rng.random_sample((n, n)))
     system.attach_lead(left_lead)
     fsyst = system.finalized()
 
@@ -457,7 +462,7 @@ def test_wavefunc_ldos_consistency(wave_function, ldos):
     L = 2
     W = 3
 
-    np.random.seed(31)
+    rng = ensure_rng(31)
     syst = kwant.Builder()
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
     top_lead = kwant.Builder(kwant.TranslationalSymmetry((1, 0)))
@@ -466,12 +471,13 @@ def test_wavefunc_ldos_consistency(wave_function, ldos):
                      (left_lead, [square(0, y) for y in range(W)]),
                      (top_lead, [square(x, 0) for x in range(L)])]:
         for site in sites:
-            h = np.random.rand(n, n) + 1j * np.random.rand(n, n)
+            h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
             h += h.conjugate().transpose()
             b[site] = h
         for hopping_kind in square.neighbors():
             for hop in hopping_kind(b):
-                b[hop] = 10 * np.random.rand(n, n) + 1j * np.random.rand(n, n)
+                b[hop] = (10 * rng.random_sample((n, n)) +
+                          1j * rng.random_sample((n, n)))
     syst.attach_lead(left_lead)
     syst.attach_lead(top_lead)
     syst = syst.finalized()

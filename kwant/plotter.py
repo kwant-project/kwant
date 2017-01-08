@@ -16,7 +16,6 @@ system in two or three dimensions.
 
 from collections import defaultdict
 import warnings
-import random
 import numpy as np
 import tinyarray as ta
 from scipy import spatial, interpolate
@@ -43,7 +42,7 @@ except ImportError:
                   "functions will work.", RuntimeWarning)
     mpl_enabled = False
 
-from . import system, builder, physics
+from . import system, builder, physics, _common
 
 __all__ = ['plot', 'map', 'bands', 'sys_leads_sites', 'sys_leads_hoppings',
            'sys_leads_pos', 'sys_leads_hopping_pos', 'mask_interpolate']
@@ -80,9 +79,10 @@ def nparray_if_array(var):
     return np.asarray(var) if isarray(var) else var
 
 
-def _sample_array(array, n_samples):
+def _sample_array(array, n_samples, rng=None):
+    rng = _common.ensure_rng(rng)
     la = len(array)
-    return array[random.sample(range(la), min(n_samples, la))]
+    return array[rng.choice(range(la), min(n_samples, la))]
 
 
 if mpl_enabled:
