@@ -142,7 +142,6 @@ def test_operator_construction():
 def _test(A, bra, ket=None, per_el_val=None, reduced_val=None, args=()):
     if per_el_val is not None:
         val = A(bra, ket, args=args)
-        print(A.sum)
         assert np.allclose(val, per_el_val)
         # with bound args
         val = A.bind(args)(bra, ket)
