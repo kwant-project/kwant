@@ -13,9 +13,10 @@ __all__ = ['make_undirected', 'remove_duplicates', 'induced_subgraph',
 
 import numpy as np
 cimport numpy as np
-from libc.stdlib cimport malloc, realloc, free
 from libc.string cimport memset
 cimport cython
+from cpython cimport array
+import array
 from .defs cimport gint
 from .defs import gint_dtype
 from .core cimport CGraph, CGraph_malloc
@@ -176,7 +177,8 @@ def remove_duplicates(CGraph gr, np.ndarray[gint, ndim=1] edge_weights=None):
     gr.num_edges = nnz
 
     # Release memory that is not needed any more.
-    gr.heads = <gint *>realloc(gr.heads, nnz * sizeof(gint))
+    array.resize(gr._heads, nnz)
+    gr.heads = <gint *>gr._heads.data.as_ints
     if not gr.heads:
         raise MemoryError
 
