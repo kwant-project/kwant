@@ -32,7 +32,7 @@ Sites in finalized builders have consistent ordering
 ----------------------------------------------------
 In Python 3 the internal ordering of dictionaries is not deterministic. This
 meant that running a Kwant script twice would produce systems with different
-ordering of sites, which lead to non-reproducible calculations. Now, sites
+ordering of sites, which leads to non-reproducible calculations. Now, sites
 in finalized builders are always ordered first by their site family, then by
 their tag.
 
