@@ -628,13 +628,17 @@ cdef class Density(_LocalOperator):
         cdef int unique_onsite = not callable(self.onsite)
         # prepare onsite matrices
         cdef complex[:, :] _tmp_mat
-        cdef complex *M_a
+        cdef complex *M_a = NULL
         cdef BlockSparseMatrix M_a_blocks
+
         if unique_onsite:
             _tmp_mat = self.onsite
             M_a = <complex*> &_tmp_mat[0, 0]
+        elif self._bound_onsite:
+            M_a_blocks = self._bound_onsite
         else:
-            M_a_blocks = self._bound_onsite or self._eval_onsites(args)
+            M_a_blocks = self._eval_onsites(args)
+
         # loop-local variables
         cdef gint a, a_s, a_norbs
         cdef gint i, j, w
@@ -727,15 +731,23 @@ cdef class Current(_LocalOperator):
         # prepare onsite matrices and hamiltonians
         cdef int unique_onsite = not callable(self.onsite)
         cdef complex[:, :] _tmp_mat
-        cdef complex *M_a,
-        cdef complex *H_ab
+        cdef complex *M_a = NULL
+        cdef complex *H_ab = NULL
         cdef BlockSparseMatrix M_a_blocks, H_ab_blocks
+
         if unique_onsite:
             _tmp_mat = self.onsite
             M_a = <complex*> &_tmp_mat[0, 0]
+        elif self._bound_onsite:
+            M_a_blocks = self._bound_onsite
         else:
-            M_a_blocks = self._bound_onsite or self._eval_onsites(args)
-        H_ab_blocks = self._bound_hamiltonian or self._eval_hamiltonian(args)
+            M_a_blocks = self._eval_onsites(args)
+
+        if self._bound_hamiltonian:
+            H_ab_blocks = self._bound_hamiltonian
+        else:
+            H_ab_blocks = self._eval_hamiltonian(args)
+
         # main loop
         cdef gint a, a_s, a_norbs, b, b_s, b_norbs
         cdef gint i, j, k, w
@@ -837,15 +849,23 @@ cdef class Source(_LocalOperator):
         # prepare onsite matrices and hamiltonians
         cdef int unique_onsite = not callable(self.onsite)
         cdef complex[:, :] _tmp_mat
-        cdef complex *M_a,
-        cdef complex *H_aa
+        cdef complex *M_a = NULL
+        cdef complex *H_aa = NULL
         cdef BlockSparseMatrix M_a_blocks, H_aa_blocks
+
         if unique_onsite:
             _tmp_mat = self.onsite
             M_a = <complex*> &_tmp_mat[0, 0]
+        elif self._bound_onsite:
+            M_a_blocks = self._bound_onsite
         else:
-            M_a_blocks = self._bound_onsite or self._eval_onsites(args)
-        H_aa_blocks = self._bound_hamiltonian or self._eval_hamiltonian(args)
+            M_a_blocks = self._eval_onsites(args)
+
+        if self._bound_hamiltonian:
+            H_aa_blocks = self._bound_hamiltonian
+        else:
+            H_aa_blocks = self._eval_hamiltonian(args)
+
         # main loop
         cdef gint a, a_s, a_norbs
         cdef gint i, j, k, w
