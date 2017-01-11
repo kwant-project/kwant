@@ -391,6 +391,8 @@ cdef class _LocalOperator:
     check_hermiticity : bool
         If True, checks that ``onsite``, as well as any relevant parts
         of the Hamiltonian are hermitian.
+    sum : bool, default: False
+        If True, then calling this operator will return a single scalar.
     """
 
     cdef public int check_hermiticity, sum
@@ -418,12 +420,25 @@ cdef class _LocalOperator:
 
     @cython.embedsignature
     def __call__(self, bra, ket=None, args=()):
-        """Return the matrix elements of the operator.
+        r"""Return matrix elements of the operator.
 
-        For an operator :math:`Q_{iαβ}`, ``bra`` :math:`φ_α`
-        and ``ket`` :math:`ψ_β` this computes
-        :math:`q_i = ∑_{αβ} φ^*_α Q_{iαβ} ψ_β`. if ``self.sum``
-        is False, otherwise computes :math:`q = ∑_{iαβ} φ^*_α Q_{iαβ} ψ_β`.
+        An operator ``A`` can be called like
+
+            >>> A(psi)
+
+        to compute the expectation value :math:`\bra{ψ} A \ket{ψ}`,
+        or like
+
+            >>> A(phi, psi)
+
+        to compute the matrix element :math:`\bra{φ} A \ket{ψ}`.  Note that
+        these quantities may be vectors (e.g. *local* charge or current
+        density).
+
+        For an operator :math:`Q_{iαβ}`, ``bra`` :math:`φ_α` and
+        ``ket`` :math:`ψ_β` this computes :math:`q_i = ∑_{αβ} φ^*_α Q_{iαβ}
+        ψ_β` if ``self.sum`` is False, otherwise computes :math:`q = ∑_{iαβ}
+        φ^*_α Q_{iαβ} ψ_β`.
 
         Parameters
         ----------
@@ -437,8 +452,9 @@ cdef class _LocalOperator:
 
         Returns
         -------
-        Array of `float` if ``check_hermiticity`` is True, and ``ket``
-        is ``None``. Otherwise an array of `complex`.
+        `float` if ``check_hermiticity`` is True, and ``ket`` is ``None``,
+        otherwise `complex`. If this operator was created with ``sum=True``,
+        then a single value is returned, otherwise an array is returned.
         """
         if (self._bound_onsite or self._bound_hamiltonian) and args:
             raise ValueError('Extra arguments are already bound to this '
@@ -581,11 +597,9 @@ cdef class _LocalOperator:
 cdef class Density(_LocalOperator):
     """An operator for calculating general densities.
 
-    In general, if there is a certain "density" (e.g. charge or spin) that is
-    represented by a square matrix :math:`M_i` associated with each site
-    :math:`i` then an instance of this class represents the tensor
-    :math:`Q_{iαβ}` which is equal to :math:`M_i` when α and β are orbitals on
-    site :math:`i`, and zero otherwise.
+    An instance of this class can be called like a function to evaluate the
+    expectation value with a wavefunction. See the documentation of the
+    ``__call__`` method for more details.
 
     Parameters
     ----------
@@ -605,9 +619,16 @@ cdef class Density(_LocalOperator):
         Check whether the provided ``onsite`` is Hermitian. If it is not
         Hermitian, then an error will be raised when the operator is
         evaluated.
+    sum : bool, default: False
+        If True, then calling this operator will return a single scalar.
 
-    .. rubric:: Special Methods
-    .. automethod:: __call__
+    Notes
+    -----
+    In general, if there is a certain "density" (e.g. charge or spin) that is
+    represented by a square matrix :math:`M_i` associated with each site
+    :math:`i` then an instance of this class represents the tensor
+    :math:`Q_{iαβ}` which is equal to :math:`M_i` when α and β are orbitals on
+    site :math:`i`, and zero otherwise.
     """
 
     @cython.embedsignature
@@ -666,6 +687,7 @@ cdef class Density(_LocalOperator):
     @cython.boundscheck(False)
     @cython.wraparound(False)
     @cython.cdivision(True)
+    @cython.embedsignature
     def tocoo(self, args=()):
         """Convert the operator to coordinate format sparse matrix."""
         cdef int blk, blk_size, n_blocks, n, k = 0
@@ -710,16 +732,9 @@ cdef class Density(_LocalOperator):
 cdef class Current(_LocalOperator):
     """An operator for calculating general currents.
 
-    In general, if there is a certain "density" (e.g. charge or spin) that is
-    represented by a square matrix :math:`M_i` associated with each site
-    :math:`i` and :math:`H_{ij}` is the hopping Hamiltonian from site :math:`j`
-    to site `i`, then an instance of this class represents the tensor
-    :math:`J_{ijαβ}` which is equal to :math:`(H_{ij})^† M_i - M_i H_{ij}` when
-    α and β are orbitals on sites :math:`i` and :math:`j` respectively, and
-    zero otherwise.
-
-    The tensor :math:`J_{ijαβ}` will also be referred to as :math:`Q_{nαβ}`,
-    where :math:`n` is the index of hopping :math:`(i, j)` in ``where``.
+    An instance of this class can be called like a function to evaluate the
+    expectation value with a wavefunction. See the documentation of the
+    ``__call__`` method for more details.
 
     Parameters
     ----------
@@ -741,9 +756,21 @@ cdef class Current(_LocalOperator):
         Check whether the provided ``onsite`` is Hermitian. If it
         is not Hermitian, then an error will be raised when the
         operator is evaluated.
+    sum : bool, default: False
+        If True, then calling this operator will return a single scalar.
 
-    .. rubric:: Special Methods
-    .. automethod:: __call__
+    Notes
+    -----
+    In general, if there is a certain "density" (e.g. charge or spin) that is
+    represented by a square matrix :math:`M_i` associated with each site
+    :math:`i` and :math:`H_{ij}` is the hopping Hamiltonian from site :math:`j`
+    to site `i`, then an instance of this class represents the tensor
+    :math:`J_{ijαβ}` which is equal to :math:`(H_{ij})^† M_i - M_i H_{ij}` when
+    α and β are orbitals on sites :math:`i` and :math:`j` respectively, and
+    zero otherwise.
+
+    The tensor :math:`J_{ijαβ}` will also be referred to as :math:`Q_{nαβ}`,
+    where :math:`n` is the index of hopping :math:`(i, j)` in ``where``.
     """
 
     @cython.embedsignature
@@ -832,13 +859,9 @@ cdef class Current(_LocalOperator):
 cdef class Source(_LocalOperator):
     """An operator for calculating general sources.
 
-    An example of a "source" is a spin torque. In general, if there is a
-    certain "density" (e.g. charge or spin) that is represented by  a square
-    matrix :math:`M_i` associated with each site :math:`i`, and :math:`H_{i}`
-    is the onsite Hamiltonian on site site `i`, then an instance of this class
-    represents the tensor :math:`Q_{iαβ}` which is equal to :math:`(H_{i})^†
-    M_i - M_i H_{i}` when α and β are orbitals on site :math:`i`, and zero
-    otherwise.
+    An instance of this class can be called like a function to evaluate the
+    expectation value with a wavefunction. See the documentation of the
+    ``__call__`` method for more details.
 
     Parameters
     ----------
@@ -859,9 +882,18 @@ cdef class Source(_LocalOperator):
         Check whether the provided ``onsite`` is Hermitian. If it is not
         Hermitian, then an error will be raised when the operator is
         evaluated.
+    sum : bool, default: False
+        If True, then calling this operator will return a single scalar.
 
-    .. rubric:: Special Methods
-    .. automethod:: __call__
+    Notes
+    -----
+    An example of a "source" is a spin torque. In general, if there is a
+    certain "density" (e.g. charge or spin) that is represented by  a square
+    matrix :math:`M_i` associated with each site :math:`i`, and :math:`H_{i}`
+    is the onsite Hamiltonian on site site `i`, then an instance of this class
+    represents the tensor :math:`Q_{iαβ}` which is equal to :math:`(H_{i})^†
+    M_i - M_i H_{i}` when α and β are orbitals on site :math:`i`, and zero
+    otherwise.
     """
 
     @cython.embedsignature

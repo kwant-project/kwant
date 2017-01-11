@@ -7,6 +7,7 @@ Observables
 -----------
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/functor.rst
 
    Density
    Current
