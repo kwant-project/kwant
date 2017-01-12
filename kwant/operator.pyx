@@ -440,8 +440,8 @@ cdef class _LocalOperator:
 
         Returns
         -------
-        Array of `float` if ``check_hermiticity`` is True,
-        otherwise an array of `complex`.
+        Array of `float` if ``check_hermiticity`` is True, and ``ket``
+        is ``None``. Otherwise an array of `complex`.
         """
         if (self._bound_onsite or self._bound_hamiltonian) and args:
             raise ValueError('Extra arguments are already bound to this '
@@ -467,9 +467,8 @@ cdef class _LocalOperator:
 
         result = np.zeros((self.where.shape[0],), dtype=complex)
         self._operate(out_data=result, bra=bra, ket=ket, args=args, op=MAT_ELS)
-        # if everything is Hermitian then result should be real
-        if self.check_hermiticity:
-            assert np.allclose(result.imag, 0)
+        # if everything is Hermitian then result is real if bra == ket
+        if self.check_hermiticity and bra is ket:
             result = result.real
         return np.sum(result) if self.sum else result
 

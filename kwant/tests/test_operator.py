@@ -75,9 +75,19 @@ def test_operator_construction():
             raises(ValueError, a.act, ket)
             raises(ValueError, a.act, ket, ket)
 
-    # Test `check_hermiticity=False`
+    # Test failure on non-hermitian
     for A in (ops.Density, ops.Current, ops.Source):
         raises(ValueError, A, fsyst, 1j)
+
+    # Test output dtype
+    ket = np.ones(len(fsyst.sites))
+    for A in (ops.Density, ops.Current, ops.Source):
+        a = A(fsyst)
+        a_nonherm = A(fsyst, check_hermiticity=False)
+        assert a(ket, ket).dtype == np.complex128
+        assert a(ket).dtype == np.float64
+        assert a_nonherm(ket, ket).dtype == np.complex128
+        assert a_nonherm(ket).dtype == np.complex128
 
     # test construction with different numbers of orbitals
     lat2 = kwant.lattice.chain(norbs=2)
@@ -177,6 +187,10 @@ def test_opservables_finite():
         _test(Q, wf, reduced_val=1)  # eigenvectors are normalized
         _test(J, wf, per_el_val=0)  # time-reversal symmetry: no current
         _test(K, wf, per_el_val=0)  # onsite commutes with hamiltonian
+
+    # check that we get correct (complex) output
+    for bra, ket in zip(wfs.T, wfs.T):
+        _test(Q, bra, ket, per_el_val=(bra * ket))
 
     # check with get_hermiticity=False
     Qi = ops.Density(fsyst, 1j, check_hermiticity=False)
