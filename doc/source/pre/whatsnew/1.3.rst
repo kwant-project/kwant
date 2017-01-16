@@ -83,3 +83,9 @@ attach_lead() can now handle leads with greater than nearest-neighbor hoppings
 When attaching a lead with greater than nearest-neighbor hoppings, the symmetry
 period of the finalized lead is suitably extended and the unit cell size is
 increased.
+
+Reference implementation of the Kernel Polynomial Method
+--------------------------------------------------------
+The kernel polynomial method is now implemented within Kwant to obtain the
+density of states or, more generally, the spectral density of a given operator
+acting on a system or Hamiltonian.

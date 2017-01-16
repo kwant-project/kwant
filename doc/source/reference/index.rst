@@ -37,3 +37,4 @@ The following modules provide functionality for special applications.
    kwant.operator
    kwant.digest
    kwant.rmt
+   kwant.kpm
