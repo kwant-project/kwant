@@ -519,6 +519,7 @@ cdef class _LocalOperator:
         q.syst = self.syst
         q.onsite = self.onsite
         q.where = self.where
+        q.sum = self.sum
         q._site_ranges = self._site_ranges
         q.check_hermiticity = self.check_hermiticity
         if callable(self.onsite):
@@ -617,7 +618,7 @@ cdef class Density(_LocalOperator):
                  check_hermiticity=True, sum=False):
         where = _normalize_site_where(syst, where)
         super().__init__(syst, onsite, where,
-                        check_hermiticity=check_hermiticity)
+                         check_hermiticity=check_hermiticity, sum=sum)
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -710,7 +711,7 @@ cdef class Current(_LocalOperator):
                  check_hermiticity=True, sum=False):
         where = _normalize_hopping_where(syst, where)
         super().__init__(syst, onsite, where,
-                         check_hermiticity=check_hermiticity)
+                         check_hermiticity=check_hermiticity, sum=sum)
 
     @cython.embedsignature
     def bind(self, args=()):
@@ -828,7 +829,7 @@ cdef class Source(_LocalOperator):
                  check_hermiticity=True, sum=False):
         where = _normalize_site_where(syst, where)
         super().__init__(syst, onsite, where,
-                         check_hermiticity=check_hermiticity)
+                         check_hermiticity=check_hermiticity, sum=sum)
 
     @cython.embedsignature
     def bind(self, args=()):
