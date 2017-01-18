@@ -20,6 +20,7 @@ import functools
 import warnings
 import cmath
 import numpy as np
+import scipy
 import tinyarray as ta
 from scipy import spatial, interpolate
 from math import cos, sin, pi, sqrt
@@ -32,7 +33,9 @@ try:
     import matplotlib
     from matplotlib.figure import Figure
     from matplotlib import collections
+    from matplotlib import colors
     from matplotlib.backends.backend_agg import FigureCanvasAgg
+    from . import _colormaps
     mpl_enabled = True
     try:
         from mpl_toolkits import mplot3d
@@ -1581,6 +1584,9 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     else:
         fig = None
 
+    if cmap is None:
+        cmap = _colormaps.kwant_red
+
     # Note that we tell imshow to show the array created by mask_interpolate
     # faithfully and not to interpolate by itself another time.
     image = ax.imshow(img.T, extent=(min[0], max[0], min[1], max[1]),
@@ -1789,6 +1795,233 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         for i in range(spectrum.shape[-1]):
             spec = spectrum[:, :, i].transpose()  # row-major to x-y ordering
             ax.plot_surface(*(grid + [spec]), cstride=1, rstride=1)
+
+    if fig is not None:
+        return output_fig(fig, file=file, show=show)
+
+
+def interpolate_current(syst, current, sigma=1, gauss_range=2, n=3, a=None):
+    """Interpolate currents in a system onto a regular grid.
+
+    The system graph together with current intensities defines a "discrete"
+    current density field where the current density is non-zero only on the
+    straight lines that connect sites that are coupled by a hopping term.
+
+    To make this vector field easier to visualize and interpret at different
+    length scales, it is smoothed by convoluting it with a kernel function
+    that has a (Gaussian) pulse-like shape.
+
+    This function samples the smoothed field on a regular (square or cubic)
+    grid.
+
+    Parameters
+    ----------
+    syst : A finalized system
+        The system on which we are going to calculate the field.
+    current : '1D array of float'
+        Must contain the intensity on each hoppings in the same order that they
+        appear in syst.graph.
+    sigma : 'float'
+        Parameter of the Gaussian used to generate the field :
+        exp(-x**2/(2*sigma**2)), the unit of sigma is a.
+    gauss_range : int
+        Number of sigma after which we consider the Gaussian equal to 0.
+    n : int
+        Number of point the grid must have per sigma.
+    a : float
+        By default, the length of the shortest hoppings.
+
+    Returns
+    -------
+    region : list of the coordonates of the grid for each dimension
+    field : value of the generated field on the grid points
+    """
+    if not isinstance(syst, builder.FiniteSystem):
+        raise TypeError("The system needs to be finalized.")
+
+    if len(current) != syst.graph.num_edges:
+        raise ValueError("Current and hoppings arrays do not have the same"
+                         " length.")
+
+    # hops: hoppings (pairs of points)
+    dim = len(syst.sites[0].pos)
+    hops = np.empty((syst.graph.num_edges, 2, dim))
+    for k, (i, j) in enumerate(syst.graph):
+        # +ve direction defined as *from* j *to* i
+        hops[k][0] = syst.sites[j].pos
+        hops[k][1] = syst.sites[i].pos
+
+    # lens: scaled lengths of hoppings
+    # dirs: normalized directions of hoppings
+    dirs = hops[:, 1] - hops[:, 0]
+    lens = np.sqrt(np.sum(dirs * dirs, -1))
+    dirs /= lens[:, None]
+    if a == None:
+        a = min(lens)
+    sigma *= a
+    r = sigma * gauss_range
+    factor = 0.5 * pow(sigma * sqrt(2*pi), 1 - dim)
+    scale = 1 / (sigma * sqrt(2))
+    lens *= scale
+
+    # Create field array.
+    field_shape = np.zeros(dim + 1, int)
+    field_shape[dim] = dim
+    min_hops = np.min(hops, 1)
+    max_hops = np.max(hops, 1)
+    bbox_min = np.min(min_hops, 0)
+    bbox_max = np.max(max_hops, 0)
+    for d in range(dim):
+        field_shape[d] = int((bbox_max[d] - bbox_min[d])*n / sigma + 2*gauss_range*n)
+        if field_shape[d] % 2:
+            field_shape[d] += 1
+    field = np.zeros(field_shape)
+
+    region = [np.linspace(bbox_min[d] - gauss_range*sigma, bbox_max[d] + gauss_range*sigma,
+                          field_shape[d])
+              for d in range(dim)]
+
+    grid_density = (field_shape[:dim] - 1) / (bbox_max + 2*r - bbox_min)
+    slices = np.empty((len(hops), dim, 2), int)
+    slices[:, :, 0] = np.floor((min_hops - bbox_min) * grid_density)
+    slices[:, :, 1] = np.ceil((max_hops + 2*r - bbox_min) * grid_density)
+
+    # Interpolate the field for each hopping.
+    erf = scipy.special.erf
+    for i in range(len(hops)):
+        if not np.diff(slices[i]).all():
+            # Zero volume: nothing to do.
+            continue
+
+        field_slice = [slice(*slices[i, d]) for d in range(dim)]
+
+        # Coordinates of the grid points that are within range of the current
+        # hopping.
+        coords = np.meshgrid(*[region[d][field_slice[d]] for d in range(dim)],
+                             sparse=True, indexing='ij')
+        coords -= hops[i, 0]
+
+        # Convert "coords" into scaled cylindrical coordinates with regard to
+        # the hopping.
+        z = np.dot(coords, dirs[i])
+        rho = np.sqrt(np.abs(np.sum(coords * coords) - z*z))
+        z *= scale
+        rho *= scale
+
+        magns = current[i] * factor * np.exp(-rho * rho)
+        magns *= erf(z) - erf(z - lens[i])
+
+        field[field_slice] += dirs[i] * magns[..., None]
+
+    # 'field' contains contributions from both hoppings (i, j) and (j, i)
+    return region, field / 2
+
+
+def current(syst, current, sigma=1, gauss_range=6, n=3, a=None,
+            colorbar=True, cmap=None, file=None, show=True, dpi=None,
+            fig_size=None, ax=None):
+    """Show interpolated map of a function defined for the hoppings of a system.
+
+    The system graph together with current intensities defines a "discrete"
+    current density field where the current density is non-zero only on the
+    straight lines that connect sites that are coupled by a hopping term.
+
+    To make this vector field easier to visualize and interpret at different
+    length scales, it is smoothed by convoluting it with a kernel function
+    that has a (Gaussian) pulse-like shape.
+
+    This function samples the smoothed field on a regular (square or cubic)
+    grid.
+
+    Parameters
+    ----------
+    syst : `kwant.system.FiniteSystem`
+        The system for which to plot the ``current``.
+    current : sequence of float
+        Sequence of values defining currents on each hopping of the system.
+        Ordered in the same way as ``syst.graph``. This typically will be
+        the result of evaluating a `~kwant.operator.Current` operator.
+    sigma : 'float'
+        Parameter of the Gaussian used to generate the field:
+        exp(-x**2/(2*sigma**2)), the unit of sigma is ``a``.
+    gauss_range : int
+        Number of sigma after which we consider the Gaussian equal to 0.
+    n : int
+        Number of points the grid must have per sigma.
+    a : float
+        By default, the length of the shortest hoppings.
+    colorbar : bool, optional
+        Whether to show a color bar if numerical data has to be plotted.
+        Defaults to `True`. If `ax` is provided, the colorbar is never plotted.
+    cmap : ``matplotlib`` color map or `None`
+        The color map used for sites and optionally hoppings, if `None`,
+        ``matplotlib`` default is used.
+    file : string or file object or `None`
+        The output file.  If `None`, output will be shown instead.
+    show : bool
+        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
+        to be shown immediately.  Defaults to `True`.
+    dpi : float or `None`
+        Number of pixels per inch.  If not set the ``matplotlib`` default is
+        used.
+    fig_size : tuple or `None`
+        Figure size `(width, height)` in inches.  If not set, the default
+        ``matplotlib`` value is used.
+    ax : ``matplotlib.axes.Axes`` instance or `None`
+        If `ax` is not `None`, no new figure is created, but the plot is done
+        within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
+        and `fig_size` are ignored.
+
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output if `ax` is not set, else None.
+    """
+
+    if not mpl_enabled:
+        raise RuntimeError("matplotlib was not found, but is required "
+                           "for current()")
+
+    region, field = interpolate_current(syst, current, sigma=sigma,
+                                        gauss_range=gauss_range, n=n, a=a)
+
+    if len(region) != 2:
+        raise ValueError("Only 2D field can be plotted.")
+
+    # The default colormap is extremely ugly with streamplot.
+    if cmap is None:
+        cmap = _colormaps.kwant_red
+
+    if ax is None:
+        fig = Figure()
+        if dpi is not None:
+            fig.set_dpi(dpi)
+        if fig_size is not None:
+            fig.set_figwidth(fig_size[0])
+            fig.set_figheight(fig_size[1])
+        ax = fig.add_subplot(1, 1, 1, aspect='equal')
+    else:
+        fig = None
+
+    Y, X = np.ogrid[region[0][0] : region[0][-1] : 1j * len(region[0]),
+                    region[1][0] : region[1][-1] : 1j * len(region[1])]
+
+    field = field.transpose(1, 0, 2)  # reverse X and Y axes
+    speed = np.linalg.norm(field, axis=-1)
+    image = ax.imshow(speed[::-1], cmap=cmap,
+                      interpolation='bicubic',
+                      extent=(region[0][0], region[0][-1],
+                              region[1][0], region[1][-1]))
+    linewidth = 2 * (speed / (np.max(speed) or 1))
+    ax.streamplot(Y.T, X.T, field[:,:,0], field[:,:,1],
+                  linewidth=linewidth, cmap=cmap, color=speed,
+                  norm=colors.Normalize(vmin=0, vmax=np.max(speed) * 1.5))
+
+    ax.set_xlim(region[0][0], region[0][-1])
+    ax.set_ylim(region[1][0], region[1][-1])
+
+    if colorbar and fig is not None:
+        fig.colorbar(image)
 
     if fig is not None:
         return output_fig(fig, file=file, show=show)

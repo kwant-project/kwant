@@ -1,0 +1,38 @@
+{
+    "license": "http://creativecommons.org/publicdomain/zero/1.0/",
+    "usage-hints": [
+        "red-green-colorblind-safe",
+        "greyscale-safe",
+        "sequential"
+    ],
+    "colors": "fcfbfdfcfafcfbf9fbfbf9f9faf8f8faf7f7f9f6f6f9f5f5f8f4f4f8f4f3f7f3f2f6f2f1f6f1eff5f0eef5efedf5efebf4eeeaf4ede9f4ece7f3ebe6f3eae4f3e9e3f2e9e2f2e8e0f2e7dff2e6ddf1e5dcf1e4daf1e3d9f0e2d8f0e2d6f0e1d5f0e0d3efdfd2efded0efddcfefdccdeedccceedbcaeedac9eed9c7edd8c6edd7c4edd7c3ecd6c1ecd5c0ecd4beecd3bdebd2bbebd2b9ebd1b8ead0b6eacfb5eaceb3eaceb2e9cdb0e9ccaee9cbade8caabe8caaae8c9a8e7c8a6e7c7a5e7c6a3e6c6a2e6c5a0e6c49ee5c39de5c39be5c299e4c198e4c096e4bf94e3bf93e3be91e3bd8fe2bc8ee2bc8ce1bb8ae1ba89e1ba87e0b985e0b884dfb782dfb780dfb67fdeb57ddeb47bddb47addb378ddb276dcb275dcb173dbb071dbaf6fdaaf6edaae6cdaad6ad9ad68d9ac67d8ab65d8ab63d7aa61d7a960d7a95ed6a85cd6a75ad5a659d5a657d5a555d4a453d4a351d4a34fd3a24dd3a14cd3a04ad3a048d29f46d29e44d29d42d29c40d29b3ed29b3cd29a3bd19939d19837d19735d19634d19532d19431d1932fd1922ed1912dd1902cd18f2bd18e2ad18d29d18c29d18b28d18a27d18927d18826d08726d08626d08525d08425d08425cf8325cf8225cf8124cf8024cf7f24ce7e24ce7d24ce7c24cd7b24cd7a24cd7a24cd7924cc7824cc7724cc7624cb7524cb7424cb7324cb7224ca7124ca7124ca7024c96f24c96e24c96d24c96c24c86b24c86a24c86924c76824c76824c76724c66624c66524c66424c56324c56224c56124c46024c45f24c45e24c45e23c35d23c35c23c35b23c25a23c25923c25823c15723c15623c15523c05423c05323c05223bf5123bf5023bf4f23be4e22be4d22be4c22bd4b22bd4a22bd4922bc4822bc4722bc4622bb4522bb4422ba4322ba4221ba4121b94021b93f21b93e21b83d21b83c21b83b21b73a21b73820b73720b63620b63520b53420b53320b53120b43020b42f20b42e1fb32c1fb32b1fb32a1fb2281fb2271fb1251fb1241fb1221fb0211eb01f1eb01d1eaf1c1eaf1a1eae181eae161eae131ead111dad0e1dac0b1dac081dac041d",
+    "colorspace": "sRGB",
+    "name": "kwant red",
+    "extensions": {
+        "https://matplotlib.org/viscm": {
+            "yp": [
+                -2.0153712378334347,
+                10.887492636952686,
+                28.27830916383833,
+                20.84513758379849,
+                15.655942329808425
+            ],
+            "max_Jp": 41,
+            "cmtype": "linear",
+            "uniform_colorspace": "CAM02-UCS",
+            "spline_method": "CatmulClark",
+            "fixed": -1,
+            "filter_k": 100,
+            "min_Jp": 99,
+            "xp": [
+                -1.2674960029171558,
+                5.464432975232114,
+                4.482693332585356,
+                21.45276429833666,
+                33.65438557123224
+            ]
+        }
+    },
+    "domain": "continuous",
+    "content-type": "application/vnd.matplotlib.colormap-v1+json"
+}
