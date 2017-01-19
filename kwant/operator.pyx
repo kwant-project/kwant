@@ -24,10 +24,7 @@ from .graph.core cimport EdgeIterator
 from .graph.defs cimport gint
 from .graph.defs import gint_dtype
 from .system import InfiniteSystem
-from . import builder
 from ._common import UserCodeError
-
-_finalized_builder = (builder.FiniteSystem, builder.InfiniteSystem)
 
 
 ################ Generic Utility functions
@@ -170,14 +167,14 @@ def _normalize_site_where(syst, where):
                 if isinstance(syst, InfiniteSystem) else syst.graph.num_nodes)
         _where = list(range(size))
     elif callable(where):
-        if isinstance(syst, _finalized_builder):
+        try:
             _where = [syst.id_by_site[a] for a in filter(where, syst.sites)]
-        else:
+        except AttributeError:
             _where = list(filter(where, range(syst.graph.num_nodes)))
     else:
-        if isinstance(syst, _finalized_builder):
+        try:
             _where = list(syst.id_by_site[s] for s in where)
-        else:
+        except AttributeError:
             _where = list(where)
             if any(w < 0 or w >= syst.graph.num_nodes for w in _where):
                 raise ValueError('`where` contains sites that are not in the '
@@ -207,7 +204,7 @@ def _normalize_hopping_where(syst, where):
                              'current in an InfiniteSystem.')
         _where = list(syst.graph)
     elif callable(where):
-        if isinstance(syst, _finalized_builder):
+        if hasattr(syst, "sites"):
             def idx_where(hop):
                 a, b = hop
                 return where(syst.sites[a], syst.sites[b])
@@ -215,10 +212,10 @@ def _normalize_hopping_where(syst, where):
         else:
             _where = list(filter(lambda h: where(*h), syst.graph))
     else:
-        if isinstance(syst, _finalized_builder):
+        try:
             _where = list((syst.id_by_site[a], syst.id_by_site[b])
                            for a, b in where)
-        else:
+        except AttributeError:
             _where = list(where)
             # NOTE: if we ever have operators that contain elements that are
             #       not in the system graph, then we should modify this check
@@ -241,14 +238,16 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
     is returned.
     """
     if callable(onsite):
-        if isinstance(syst, _finalized_builder):
+        try:
             _sites = syst.sites
             def _onsite(site_id, *args):
                 return onsite(_sites[site_id], *args)
-        else:
+        except AttributeError:
             _onsite = onsite
     elif isinstance(onsite, collections.Mapping):
-        if not isinstance(syst, _finalized_builder):
+        try:
+            _sites = syst.sites
+        except AttributeError:
             raise TypeError('Provide `onsite` as a value or a function for '
                             'systems that are not finalized Builders.')
 
@@ -257,7 +256,6 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
             _onsite = ta.matrix(_onsite, complex)
             _check_onsite(_onsite, fam.norbs, check_hermiticity)
 
-        _sites = syst.sites
         def _onsite(site_id, *args):
             return onsite[_sites[site_id].family]
     else:
