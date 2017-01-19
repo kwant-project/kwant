@@ -10,3 +10,4 @@ branch = True
 exclude_lines =
     skip coverage
     @abc.abstractmethod
+    @abc.abstractproperty
