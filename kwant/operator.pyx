@@ -10,11 +10,13 @@
 __all__ = ['Density', 'Current', 'Source']
 
 import cython
+from operator import itemgetter
 import functools as ft
 import collections
+
 import numpy as np
 import tinyarray as ta
-from operator import itemgetter
+from scipy.sparse import coo_matrix
 
 from libc cimport math
 
@@ -28,7 +30,6 @@ from ._common import UserCodeError
 _finalized_builder = (builder.FiniteSystem, builder.InfiniteSystem)
 
 
-
 ################ Generic Utility functions
 
 @cython.boundscheck(False)
@@ -74,7 +75,6 @@ cdef int _is_herm_conj(complex[:, :] a, complex[:, :] b,
     return True
 
 
-
 ################ Helper functions
 
 _shape_msg = ('{0} matrix dimensions do not match '
@@ -360,7 +360,6 @@ cdef class BlockSparseMatrix:
         return  <complex*> &self.data[0] + self.data_offsets[block_idx]
 
 
-
 ################ Local Observables
 
 # supported operations within the `_operate` method
@@ -665,6 +664,46 @@ cdef class Density(_LocalOperator):
                     for j in range(a_norbs):
                         tmp += M_a[i * a_norbs + j] * ket[a_s + j]
                     out_data[a_s + i] = out_data[a_s + i] + tmp
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    @cython.cdivision(True)
+    def tocoo(self, args=()):
+        """Convert the operator to coordinate format sparse matrix."""
+        cdef int blk, blk_size, n_blocks, n, k = 0
+        cdef int [:, :] offsets, shapes
+        cdef int [:] row, col
+        if self._bound_onsite and args:
+           raise ValueError("Extra arguments are already bound to this "
+                            "operator. You should call this operator "
+                            "without providing 'args'.")
+
+        if not callable(self.onsite):
+            offsets = _get_all_orbs(self.where, self._site_ranges)[0]
+            n_blocks = len(self.where)
+            shapes = np.asarray(np.resize([self.onsite.shape], (n_blocks, 2)),
+                                gint_dtype)
+            data = np.asarray(self.onsite).flatten()
+            data = np.resize(data, [len(data) * n_blocks])
+        else:
+            onsite_matrix = self._bound_onsite or self._eval_onsites(args)
+            data = onsite_matrix.data
+            offsets = np.asarray(onsite_matrix.block_offsets)
+            shapes = np.asarray(onsite_matrix.block_shapes)
+
+        row = np.empty(len(data), gint_dtype)
+        col = np.empty(len(data), gint_dtype)
+        for blk in range(len(offsets)):
+            blk_size = shapes[blk, 0] * shapes[blk, 1]
+            for n in range(blk_size):
+                row[k] = offsets[blk, 0] + n // shapes[blk, 1]
+                col[k] = offsets[blk, 1] + n % shapes[blk, 1]
+                k += 1
+
+        norbs = _get_tot_norbs(self.syst)
+        return coo_matrix((np.asarray(data),
+                           (np.asarray(row), np.asarray(col))),
+                          shape=(norbs, norbs))
 
 
 cdef class Current(_LocalOperator):

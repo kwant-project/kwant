@@ -11,6 +11,7 @@ from collections import deque
 import numpy as np
 import tinyarray as ta
 import numpy.linalg as la
+from scipy.sparse import coo_matrix
 from pytest import raises
 # needed to get round odd bug in test_mask_interpolate
 from contextlib import contextmanager
@@ -371,3 +372,35 @@ def test_opservables_gauged():
     spin_current_gauge = ops.Current(fsyst, M_a, where=minus_x_hoppings(syst))
     _test(spin_current_gauge, up, per_el_val=-1)
     _test(spin_current_gauge, down, per_el_val=1)
+
+
+def test_tocoo():
+    syst = kwant.Builder()
+    lat1 = kwant.lattice.chain(norbs=1)
+    syst[lat1(0)] = syst[lat1(1)] = 0
+    syst = syst.finalized()
+
+    op = ops.Density(syst)
+    assert isinstance(op.tocoo(), coo_matrix)
+
+    # Constant and non-constant values.
+    assert np.all(op.tocoo().todense() == np.eye(2))
+    op = ops.Density(syst, lambda site: 1)
+    assert np.all(op.tocoo().todense() == np.eye(2))
+
+    # Correct treatment of where
+    op = ops.Density(syst, where=[lat1(0)])
+    assert np.all(op.tocoo().todense() == [[1, 0], [0, 0]])
+
+    # No accidental transpose.
+    syst = kwant.Builder()
+    lat2 = kwant.lattice.chain(norbs=2)
+    syst[lat2(0)] = lambda site, paramerer: np.eye(2)
+    syst = syst.finalized()
+    op = ops.Density(syst, [[1, 1], [0, 1]], check_hermiticity=False)
+    assert np.all(op.tocoo().todense() == [[1, 1], [0, 1]])
+
+    op = ops.Density(syst, lambda site, p: [[1, 1], [0, 1]],
+                     check_hermiticity=False)
+    op = op.bind(args=(1,))
+    raises(ValueError, op.tocoo, [1])
