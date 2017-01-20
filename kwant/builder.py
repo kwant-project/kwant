@@ -1118,7 +1118,7 @@ class Builder:
         self.leads.extend(other.leads)
         return self
 
-    def fill(self, other, start, shape=None, *, overwrite=False, max_sites=1e7):
+    def fill(self, other, shape, start, *, overwrite=False, max_sites=1e7):
         """Populate a builder using another as a template.
 
 
@@ -1127,13 +1127,12 @@ class Builder:
         other : `Builder`
             A Builder used as a template. The symmetry of the target `Builder`
             must be a subgroup of the symmetry of the template.
+        shape : callable
+            A boolean function of site returning whether the site should be
+            added to the target builder or not.
         start : tuple of integers or `Site`
             The initial domain to be used to start the flood-fill or a `Site`
             belonging to that domain.
-        shape : callable
-            A boolean function of site returning whether the site should be
-            added to the target builder or not. If not provided, all sites are
-            added (beware that there may be infinitely many).
         overwrite : boolean
             If existing sites or hoppings in the target `Builder` should be
             overwritten.
@@ -1158,9 +1157,6 @@ class Builder:
         This function uses a flood-fill algorithm, so all sites in the template
         builder should be reachable from all other sites.
         """
-        if shape is None:
-            def shape(site): return True
-
         if not max_sites > 0:
             raise ValueError("max_sites must be positive.")
 
@@ -1280,7 +1276,8 @@ class Builder:
         if hop_range > 1:
             # Automatically increase the period, potentially warn the user.
             new_lead = Builder(sym.subgroup((hop_range,)))
-            new_lead.fill(lead_builder, next(iter(lead_builder.sites())),
+            new_lead.fill(lead_builder, lambda site: True,
+                          next(iter(lead_builder.sites())),
                           max_sites=float('inf'))
             lead_builder = new_lead
             sym = lead_builder.symmetry
@@ -1327,7 +1324,7 @@ class Builder:
                                  ' this lead cannot be attached.')
             return domain < max_dom + 1
 
-        all_added = self.fill(lead_builder, (max_dom,), shape=shape,
+        all_added = self.fill(lead_builder, shape, (max_dom,),
                               max_sites=float('inf'))
 
         # Calculate the interface.

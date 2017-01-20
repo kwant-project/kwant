@@ -654,20 +654,21 @@ def test_fill():
     target = builder.Builder()
     for max_sites in (-1, 0):
         with raises(ValueError):
-            target.fill(template_1d, g(0, 0), max_sites=max_sites)
+            target.fill(template_1d, lambda site: True, g(0, 0),
+                        max_sites=max_sites)
     target = builder.Builder()
     with raises(RuntimeError):
-        target.fill(template_1d, g(0, 0), shape=line_200, max_sites=10)
+        target.fill(template_1d, line_200, g(0, 0) , max_sites=10)
     ## test filling
     target = builder.Builder()
-    added_sites = target.fill(template_1d, g(0, 0), shape=line_200)
+    added_sites = target.fill(template_1d, line_200, g(0, 0))
     assert len(added_sites) == 200
     ## test overwrite=False
-    added_sites = target.fill(template_1d, g(0, 0), shape=line_200)
+    added_sites = target.fill(template_1d, line_200, g(0, 0))
     assert len(added_sites) == 0
     ## test overwrite=True
-    added_sites = target.fill(template_1d, g(0, 0),
-                              shape=line_200, overwrite=True)
+    added_sites = target.fill(template_1d, line_200, g(0, 0),
+                              overwrite=True)
     assert len(added_sites) == 200
 
 
@@ -675,7 +676,7 @@ def test_fill():
     n_cells = 10
     sym_nx = kwant.TranslationalSymmetry(*(sym_x.periods * n_cells))
     target = builder.Builder(sym_nx)
-    target.fill(template_1d, g(0, 0))
+    target.fill(template_1d, lambda site: True, g(0, 0))
 
     should_be_syst = builder.Builder(sym_nx)
     should_be_syst[(g(i, 0) for i in range(n_cells))] = f
@@ -694,7 +695,7 @@ def test_fill():
     nm_cells = (3, 5)
     sym_nmxy = kwant.TranslationalSymmetry(*(sym_xy.periods * nm_cells))
     target = builder.Builder(sym_nmxy)
-    target.fill(template_2d, g(0, 0))
+    target.fill(template_2d, lambda site: True, g(0, 0))
 
     should_be_syst = builder.Builder(sym_nmxy)
     should_be_syst[(g(i, j) for i in range(10) for j in range(10))] = f
@@ -711,7 +712,7 @@ def test_fill():
         return 0 <= x < 10 and 0 <= y < 10
 
     target = builder.Builder()
-    target.fill(template_2d, g(0, 0), square_shape)
+    target.fill(template_2d, square_shape, g(0, 0))
 
     should_be_syst = builder.Builder()
     should_be_syst[(g(i, j) for i in range(10) for j in range(10))] = f
