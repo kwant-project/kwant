@@ -25,7 +25,7 @@ dot = np.dot
 __all__ = ['selfenergy', 'modes', 'PropagatingModes', 'StabilizedModes']
 
 
-if np.__version__ >= '1.8':
+if np.__version__ >= '1.8':  # skip coverage
     complex_any = np.any
 else:
     def complex_any(array):
@@ -257,7 +257,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
     if stabilization is not None:
         stabilization = list(stabilization)
 
-    if not complex_any(h_hop):
+    if not complex_any(h_hop):  # skip coverage
         # Inter-cell hopping is zero.  The current algorithm is not suited to
         # treat this extremely singular case.
         raise ValueError("Inter-cell hopping is exactly zero.")
