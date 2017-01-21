@@ -14,6 +14,7 @@ from scipy import sparse
 import kwant
 from kwant._common import ensure_rng
 
+
 def test_hamiltonian_submatrix():
     syst = kwant.Builder()
     chain = kwant.lattice.chain()

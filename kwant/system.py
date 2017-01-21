@@ -46,7 +46,6 @@ class System(metaclass=abc.ABCMeta):
     Consecutive elements in ``site_ranges`` are not required to have different
     numbers of orbitals.
     """
-
     @abc.abstractmethod
     def hamiltonian(self, i, j, *args):
         """Return the hamiltonian matrix element for sites ``i`` and ``j``.
@@ -59,6 +58,13 @@ class System(metaclass=abc.ABCMeta):
         keyword arguments
         """
         pass
+
+    def discrete_symmetry(self, args):
+        """Return the discrete symmetry of the system."""
+        # Avoid the circular import.
+        from .physics import DiscreteSymmetry
+        return DiscreteSymmetry()
+
 
 # Add a C-implemented function as an unbound method to class System.
 System.hamiltonian_submatrix = _system.HamiltonianSubmatrix()
@@ -151,6 +157,7 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
         result.leads = new_leads
         return result
 
+
 class InfiniteSystem(System, metaclass=abc.ABCMeta):
     """Abstract infinite low-level system.
 
@@ -193,7 +200,6 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
     exchanged, as well as of site 3 and 4.
 
     """
-
     def cell_hamiltonian(self, args=(), sparse=False):
         """Hamiltonian of a single cell of the infinite system."""
         cell_sites = range(self.cell_size)
@@ -215,12 +221,24 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         """
         from . import physics   # Putting this here avoids a circular import.
         ham = self.cell_hamiltonian(args)
+        hop = self.inter_cell_hopping(args)
+        symmetries = self.discrete_symmetry(args)
+        broken = symmetries.validate(ham)
+        if broken is not None:
+            raise ValueError("Cell Hamiltonian breaks " + broken.lower())
+        broken = symmetries.validate(hop)
+        if broken is not None:
+            raise ValueError("Inter-cell hopping breaks " + broken.lower())
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
-        return physics.modes(ham, self.inter_cell_hopping(args))
+
+        # Particle-hole and chiral symmetries only apply at zero energy.
+        if energy:
+            symmetries.particle_hole = symmetries.chiral = None
+        return physics.modes(ham, hop, discrete_symmetry=symmetries)
 
     def selfenergy(self, energy=0, args=()):
         """Return self-energy of a lead.

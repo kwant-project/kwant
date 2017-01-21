@@ -12,11 +12,15 @@ __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
 import abc
 import warnings
 import operator
+import collections
 from functools import total_ordering
 from itertools import islice, chain
 import tinyarray as ta
 import numpy as np
+from scipy import sparse
 from . import system, graph, KwantDeprecationWarning, UserCodeError
+from .operator import Density
+from .physics import DiscreteSymmetry
 from ._common import ensure_isinstance
 
 
@@ -566,7 +570,10 @@ class BuilderLead(Lead):
 
         The order of interface sites is kept during finalization.
         """
-        return self.builder._finalized_infinite(self.interface)
+        syst = self.builder._finalized_infinite(self.interface)
+        _transfer_symmetry(syst, self.builder)
+
+        return syst
 
 
 class SelfEnergyLead(Lead):
@@ -683,10 +690,27 @@ class Builder:
     Parameters
     ----------
     symmetry : `Symmetry` or `None`
-        The symmetry of the system.
+        The spatial symmetry of the system.
+    conservation_law : 2D array, dictionary, function, or `None`
+        An onsite operator with integer eigenvalues that commutes with the
+        Hamiltonian.  The ascending order of eigenvalues corresponds to the
+        selected ordering of the Hamiltonian subblocks.  If a dict is
+        given, it maps from site families to such matrices. If a function is
+        given it must take the same arguments as the onsite Hamiltonian
+        functions of the system and return the onsite matrix.
+    time_reversal : scalar, 2D array, dictionary, function, or `None`
+        The unitary part of the onsite time-reversal symmetry operator.
+        Same format as that of `conservation_law`.
+    particle_hole : scalar, 2D array, dictionary, function, or `None`
+        The unitary part of the onsite particle-hole symmetry operator.
+        Same format as that of `conservation_law`.
+    chiral : 2D array, dictionary, function or `None`
+        The unitary part of the onsite chiral symmetry operator.
+        Same format as that of `conservation_law`.
 
     Notes
     -----
+
     Values can be also functions that receive the site or the hopping (passed
     to the function as two sites) and possibly additional arguments and are
     expected to return a valid value.  This allows to define systems quickly,
@@ -760,12 +784,17 @@ class Builder:
 
     """
 
-    def __init__(self, symmetry=None):
+    def __init__(self, symmetry=None, *, conservation_law=None, time_reversal=None,
+                 particle_hole=None, chiral=None):
         if symmetry is None:
             symmetry = NoSymmetry()
         else:
             ensure_isinstance(symmetry, Symmetry)
         self.symmetry = symmetry
+        self.conservation_law = conservation_law
+        self.time_reversal = time_reversal
+        self.particle_hole = particle_hole
+        self.chiral = chiral
         self.leads = []
         self.H = {}
 
@@ -850,6 +879,10 @@ class Builder:
         """
         result = object.__new__(Builder)
         result.symmetry = self.symmetry.reversed()
+        result.conservation_law = self.conservation_law
+        result.time_reversal = self.time_reversal
+        result.particle_hole = self.particle_hole
+        result.chiral = self.chiral
         if self.leads:
             raise ValueError('System to be reversed may not have leads.')
         result.leads = []
@@ -1364,12 +1397,16 @@ class Builder:
         `Symmetry` can be finalized.
         """
         if self.symmetry.num_directions == 0:
-            return self._finalized_finite()
+            syst = self._finalized_finite()
         elif self.symmetry.num_directions == 1:
-            return self._finalized_infinite()
+            syst = self._finalized_infinite()
         else:
             raise ValueError('Currently, only builders without or with a 1D '
                              'translational symmetry can be finalized.')
+
+        _transfer_symmetry(syst, self)
+
+        return syst
 
     def _finalized_finite(self):
         assert self.symmetry.num_directions == 0
@@ -1576,6 +1613,80 @@ def _raise_user_error(exc, func):
     raise UserCodeError(msg.format(func.__name__)) from exc
 
 
+def discrete_symmetry(self, args=()):
+    if self._cons_law is not None:
+        eigvals, eigvecs = self._cons_law
+        eigvals = eigvals.tocoo(args)
+        if not np.allclose(eigvals.data, np.round(eigvals.data)):
+            raise ValueError("Conservation law must have integer eigenvalues.")
+        eigvals = np.round(eigvals).tocsr()
+        # Avoid appearance of zero eigenvalues
+        eigvals = eigvals + 0.5 * sparse.identity(eigvals.shape[0])
+        eigvals.eliminate_zeros()
+        eigvecs = eigvecs.tocoo(args)
+        projectors = [(eigvals == val).dot(eigvecs)
+                      for val in sorted(np.unique(eigvals.data))]
+    else:
+        projectors = None
+
+    def evaluate(op):
+        return None if op is None else op.tocoo(args)
+
+    return DiscreteSymmetry(projectors, *(evaluate(symm) for symm in
+                                          self._symmetries))
+
+
+def _transfer_symmetry(syst, builder):
+    """Take a symmetry from builder and transfer it to finalized system."""
+    def operator(op):
+        if op is None:
+            return
+        return Density(syst, op, check_hermiticity=False)
+
+    # Conservation law requires preprocessing to split it into eigenvectors
+    # and eigenvalues.
+    cons_law = builder.conservation_law
+
+    if cons_law is None:
+        syst._cons_law = None
+
+    elif callable(cons_law):
+        def vals(site, *args):
+            if site.family.norbs == 1:
+                return cons_law(site, *args)
+            return np.diag(np.linalg.eigvalsh(cons_law(site, *args)))
+
+        def vecs(site, *args):
+            if site.family.norbs == 1:
+                return 1
+            return np.linalg.eigh(cons_law(site, *args))[1]
+
+        syst._cons_law = operator(vals), operator(vecs)
+
+    elif isinstance(cons_law, collections.Mapping):
+        vals = {family: (value if family.norbs == 1 else
+                         ta.array(np.diag(np.linalg.eigvalsh(value))))
+                for family, value in cons_law.items()}
+        vecs = {family: (1 if family.norbs == 1 else
+                         ta.array(np.linalg.eigh(value)[1]))
+                for family, value in cons_law.items()}
+        syst._cons_law = operator(vals), operator(vecs)
+
+    else:
+        try:
+            vals, vecs = np.linalg.eigh(cons_law)
+            vals = np.diag(vals)
+        except np.linalg.LinAlgError as e:
+            if '0-dimensional' not in e.args[0]:
+                raise e  # skip coverage
+            vals, vecs = cons_law, 1
+
+        syst._cons_law = operator(vals), operator(vecs)
+
+    syst._symmetries = [operator(symm) for symm in (builder.time_reversal,
+                                                    builder.particle_hole,
+                                                    builder.chiral)]
+
 class FiniteSystem(system.FiniteSystem):
     """Finalized `Builder` with leads.
 
@@ -1625,6 +1736,8 @@ class FiniteSystem(system.FiniteSystem):
 
     def pos(self, i):
         return self.sites[i].pos
+
+    discrete_symmetry = discrete_symmetry
 
 
 class InfiniteSystem(system.InfiniteSystem):
@@ -1685,3 +1798,5 @@ class InfiniteSystem(system.InfiniteSystem):
 
     def pos(self, i):
         return self.sites[i].pos
+
+    discrete_symmetry = discrete_symmetry

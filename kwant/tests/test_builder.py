@@ -918,3 +918,36 @@ def test_ModesLead_and_SelfEnergyLead():
 def test_site_pickle():
     site = kwant.lattice.square()(0, 0)
     assert pickle.loads(pickle.dumps(site)) == site
+
+
+def test_discrete_symmetries():
+    lat = builder.SimpleSiteFamily(name='ccc', norbs=2)
+    lat2 = builder.SimpleSiteFamily(name='bla', norbs=1)
+
+    cons_law = {lat: np.diag([1, 2]), lat2: 0}
+    syst = builder.Builder(conservation_law=cons_law,
+                           time_reversal=(lambda site, p: np.exp(1j*p) *
+                                          np.identity(site.family.norbs)))
+    syst[lat(1)] = np.identity(2)
+    syst[lat2(1)] = 1
+
+    sym = syst.finalized().discrete_symmetry(args=[0])
+    for proj, should_be in zip(sym.projectors, np.identity(3)):
+        assert np.allclose(proj.todense(), should_be.reshape((3, 1)))
+    assert np.allclose(sym.time_reversal.todense(), np.identity(3))
+    syst.conservation_law = lambda site, p: cons_law[site.family]
+    sym = syst.finalized().discrete_symmetry(args=[0])
+    for proj, should_be in zip(sym.projectors, np.identity(3)):
+        assert np.allclose(proj.todense(), should_be.reshape((-1, 1)))
+
+    syst = builder.Builder(conservation_law=np.diag([-1, 1]))
+    syst[lat(1)] = np.identity(2)
+    sym = syst.finalized().discrete_symmetry()
+    for proj, should_be in zip(sym.projectors, np.identity(2)):
+        assert np.allclose(proj.todense(), should_be.reshape((-1, 1)))
+
+    syst = builder.Builder(conservation_law=1)
+    syst[lat2(1)] = 0
+    sym = syst.finalized().discrete_symmetry()
+    [proj] = sym.projectors
+    assert np.allclose(proj.todense(), [[1]])
