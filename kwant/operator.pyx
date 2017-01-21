@@ -166,7 +166,7 @@ def _normalize_site_where(syst, where):
     otherwise it should contain integers.
     """
     if where is None:
-        size = (syst.graph.cell_size
+        size = (syst.cell_size
                 if isinstance(syst, InfiniteSystem) else syst.graph.num_nodes)
         _where = list(range(size))
     elif callable(where):
