@@ -994,8 +994,9 @@ def transform_modes(modes_data, unitary=None, time_reversal=None,
     return (wave_functions, momenta, velocities, vecs, vecslmbdainv, v)
 
 
-def modes(h_cell, h_hop, tol=1e6, stabilization=None, *, particle_hole=None,
-          time_reversal=None, chiral=None, projectors=None):
+def modes(h_cell, h_hop, tol=1e6, stabilization=None, *,
+          discrete_symmetry=None, projectors=None, time_reversal=None,
+          particle_hole=None, chiral=None):
     """Compute the eigendecomposition of a translation operator of a lead.
 
     Parameters
@@ -1056,6 +1057,8 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *, particle_hole=None,
     the mode decomposition that the Kwant authors are aware about. Its details
     are to be published.
     """
+    if discrete_symmetry is not None:
+        projectors, time_reversal, particle_hole, chiral = discrete_symmetry
     n, m = h_hop.shape
 
     if h_cell.shape != (n, n):
