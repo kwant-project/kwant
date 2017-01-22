@@ -388,15 +388,7 @@ def long_description():
     return '\n'.join(text)
 
 
-def search_mumps():
-    """Return the configuration for MUMPS if it is available in a known way.
-
-    This is known to work with the MUMPS provided by the Debian package
-    libmumps-scotch-dev."""
-
-    libs = ['zmumps_scotch', 'mumps_common_scotch', 'pord', 'mpiseq_scotch',
-            'gfortran']
-
+def search_libs(libs):
     cmd = ['gcc']
     cmd.extend(['-l' + lib for lib in libs])
     cmd.extend(['-o/dev/null', '-xc', '-'])
@@ -407,8 +399,46 @@ def search_mumps():
     else:
         p.communicate(input=b'int main() {}\n')
         if p.wait() == 0:
-            return {'libraries': libs}
-    return {}
+            return libs
+
+
+def search_mumps():
+    """Return the configuration for MUMPS if it is available in a known way.
+
+    This is known to work with the MUMPS provided by the Debian package
+    libmumps-scotch-dev and the MUMPS binaries in the conda-forge channel."""
+    lib_sets = [
+        # Debian
+        ['zmumps_scotch', 'mumps_common_scotch', 'mpiseq_scotch'],
+        # Conda (via conda-forge).
+        # TODO: remove dependency libs (scotch, metis...) when conda-forge
+        # packaged mumps/scotch are built as properly linked shared libs
+        ['zmumps', 'mumps_common', 'metis', 'esmumps', 'scotch',
+         'scotcherr', 'mpiseq'],
+    ]
+    common_libs = ['pord', 'gfortran']
+
+    for libs in lib_sets:
+        found_libs = search_libs(libs + common_libs)
+        if found_libs:
+            return found_libs
+    return []
+
+
+def search_lapack():
+    """Return the BLAS variant that is installed."""
+    lib_sets = [
+        # Debian
+        ['blas', 'lapack'],
+        # Conda (via conda-forge). Openblas contains lapack symbols
+        ['openblas', 'gfortran'],
+    ]
+
+    for libs in lib_sets:
+        found_libs = search_libs(libs)
+        if found_libs:
+            return found_libs
+    return []
 
 
 def configure_special_extensions(exts, build_summary):
@@ -417,7 +447,7 @@ def configure_special_extensions(exts, build_summary):
     if 'libraries' in lapack:
         build_summary.append('User-configured LAPACK and BLAS')
     else:
-        lapack['libraries'] = ['lapack', 'blas']
+        lapack['libraries'] = search_lapack()
         build_summary.append('Default LAPACK and BLAS')
 
     #### Special config for MUMPS.
@@ -425,10 +455,9 @@ def configure_special_extensions(exts, build_summary):
     if 'libraries' in mumps:
         build_summary.append('User-configured MUMPS')
     else:
-        kwargs = search_mumps()
-        if kwargs:
-            for key, value in kwargs.items():
-                mumps.setdefault(key, []).extend(value)
+        mumps_libs = search_mumps()
+        if mumps_libs:
+            mumps['libraries'] = mumps_libs
             build_summary.append('Auto-configured MUMPS')
         else:
             mumps = None
