@@ -658,6 +658,13 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
     # Calculate the full wave function in real space.
     full_psi = extract(psi, lmbdainv)
 
+    # Cast the types if any of the symmetry operators is complex
+    for symm in time_reversal, particle_hole, chiral:
+        if symm is None:
+            continue
+        full_psi = full_psi.astype(np.common_type(symm, full_psi))
+        psi = psi.astype(np.common_type(symm, psi))
+
     # Find clusters of nearby eigenvalues. Since the eigenvalues occupy the
     # unit circle, special care has to be taken to not introduce a cut at
     # lambda = -1.
