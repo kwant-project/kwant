@@ -14,3 +14,10 @@ Leads
    two_terminal_shotnoise
    PropagatingModes
    StabilizedModes
+
+Symmetry
+--------
+.. autosummary::
+   :toctree: generated/
+
+   DiscreteSymmetry

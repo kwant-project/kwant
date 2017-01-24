@@ -25,7 +25,7 @@ _names = ['Time reversal', 'Particle-hole', 'Chiral']
 _signs = [1, -1, -1]
 
 class DiscreteSymmetry:
-    """ A collection of discrete symmetries and conservation laws.
+    """A collection of discrete symmetries and conservation laws.
 
     Parameters
     ----------
@@ -48,13 +48,13 @@ class DiscreteSymmetry:
 
     More formally, consider a discrete symmetry S. The symmetry projection
     that maps from block i to block j of the Hamiltonian with projectors
-    P_i and P_j is S_ji = P_j^+ S P_i. If S_ji is nonzero, a symmetry
-    relation exists between blocks i and j. Canonical form means that for
-    each j, the block S_ji is nonzero at most for one i, while all other
-    blocks vanish.
+    :math:`P_i` and :math:`P_j` is :math:`S_{ji} = P_j^+ S P_i`.
+    If :math:`S_{ji}` is nonzero, a symmetry relation exists between
+    blocks i and j. Canonical form means that for each j, the block
+    :math:`S_{ji}` is nonzero at most for one i, while all other blocks vanish.
 
     If the operators are not in canonical form, they can be made so by
-    further splitting the Hamiltonian into smaller blocks, i. e. by adding
+    further splitting the Hamiltonian into smaller blocks, i.e. by adding
     more projectors.
     """
     def __init__(self, projectors=None, time_reversal=None, particle_hole=None,
@@ -96,7 +96,7 @@ class DiscreteSymmetry:
             if symm is None:
                 continue
             if not almost_identity(symm.T.conj().dot(symm)):
-                raise ValueError("{} symmetry should be"
+                raise ValueError("{} symmetry should be "
                                  "{}unitary.".format(name, "anti" * conj))
             symm_squared = symm.dot(cond_conj(symm, conj))
             if not (almost_identity(symm_squared) or
@@ -134,13 +134,13 @@ class DiscreteSymmetry:
     def validate(self, matrix):
         """Check if a matrix satisfies the discrete symmetries.
 
-        Parameters:
-        ===========
+        Parameters
+        ----------
         matrix : sparse or dense matrix
             If rectangular, it is padded by zeros to be square.
 
-        Returns:
-        ========
+        Returns
+        -------
         broken_symmetry : string or ``None``
             One of "Conservation law", "Time reversal", "Particle-hole",
             "Chiral": the symmetry broken by the matrix. If the matrix breaks
