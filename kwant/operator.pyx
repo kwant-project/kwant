@@ -24,7 +24,7 @@ from .graph.core cimport EdgeIterator
 from .graph.defs cimport gint
 from .graph.defs import gint_dtype
 from .system import InfiniteSystem
-from ._common import UserCodeError
+from ._common import UserCodeError, get_parameters
 
 
 ################ Generic Utility functions
@@ -92,7 +92,7 @@ cdef int _check_onsite(complex[:, :] M, gint norbs,
     return 0
 
 
-cdef int _check_ham(complex[:, :] H, ham, args,
+cdef int _check_ham(complex[:, :] H, ham, args, params,
                     gint a, gint a_norbs, gint b, gint b_norbs,
                     int check_hermiticity) except -1:
     "Check Hamiltonian matrix for correct shape and hermiticity."
@@ -100,7 +100,8 @@ cdef int _check_ham(complex[:, :] H, ham, args,
         raise UserCodeError(_shape_msg.format('Hamiltonian'))
     if check_hermiticity:
         # call the "partner" element if we are not on the diagonal
-        H_conj = H if a == b else ta.matrix(ham(b, a, *args), complex)
+        H_conj = H if a == b else ta.matrix(ham(b, a, *args, params=params),
+                                                complex)
         if not _is_herm_conj(H_conj, H):
             raise ValueError(_herm_msg.format('Hamiltonian'))
     return 0
@@ -237,11 +238,18 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
     If `onsite` is a function or a mapping (dictionary) then a function
     is returned.
     """
+    parameter_info =  ((), False)
+
     if callable(onsite):
+        # make 'onsite' compatible with hamiltonian value functions
+        parameters, takes_kwargs = get_parameters(onsite)
+        parameters = parameters[1:]  # skip 'site' parameter
+        parameter_info = (tuple(parameters), takes_kwargs)
         try:
             _sites = syst.sites
-            def _onsite(site_id, *args):
-                return onsite(_sites[site_id], *args)
+            @ft.wraps(onsite)
+            def _onsite(site_id, *args, **kwargs):
+                return onsite(_sites[site_id], *args, **kwargs)
         except AttributeError:
             _onsite = onsite
     elif isinstance(onsite, collections.Mapping):
@@ -280,7 +288,7 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
                    'different numbers of orbitals on different sites')
             raise ValueError(msg)
 
-    return _onsite
+    return _onsite, parameter_info
 
 
 cdef class BlockSparseMatrix:
@@ -396,7 +404,7 @@ cdef class _LocalOperator:
     """
 
     cdef public int check_hermiticity, sum
-    cdef public object syst, onsite
+    cdef public object syst, onsite, _onsite_params_info
     cdef public gint[:, :]  where, _site_ranges
     cdef public BlockSparseMatrix _bound_onsite, _bound_hamiltonian
 
@@ -410,7 +418,8 @@ cdef class _LocalOperator:
                              'the site families (lattices).')
 
         self.syst = syst
-        self.onsite = _normalize_onsite(syst, onsite, check_hermiticity)
+        self.onsite, self._onsite_params_info = \
+            _normalize_onsite(syst, onsite, check_hermiticity)
         self.check_hermiticity = check_hermiticity
         self.sum = sum
         self._site_ranges = np.asarray(syst.site_ranges, dtype=gint_dtype)
@@ -419,8 +428,8 @@ cdef class _LocalOperator:
         self._bound_hamiltonian = None
 
     @cython.embedsignature
-    def __call__(self, bra, ket=None, args=()):
-        r"""Return matrix elements of the operator.
+    def __call__(self, bra, ket=None, args=(), *, params=None):
+        r"""Return the matrix elements of the operator.
 
         An operator ``A`` can be called like
 
@@ -449,6 +458,10 @@ cdef class _LocalOperator:
         args : tuple, optional
             The arguments to pass to the system. Used to evaluate
             the ``onsite`` elements and, possibly, the system Hamiltonian.
+            Mutually exclusive with 'params'.
+        params : dict, optional
+            Dictionary of parameter names and their values. Mutually exclusive
+            with 'args'.
 
         Returns
         -------
@@ -456,10 +469,12 @@ cdef class _LocalOperator:
         otherwise `complex`. If this operator was created with ``sum=True``,
         then a single value is returned, otherwise an array is returned.
         """
-        if (self._bound_onsite or self._bound_hamiltonian) and args:
-            raise ValueError('Extra arguments are already bound to this '
-                             'operator. You should call this operator '
-                             'without providing `args`.')
+        if (self._bound_onsite or self._bound_hamiltonian) and (args or params):
+            raise ValueError("Extra arguments are already bound to this "
+                             "operator. You should call this operator "
+                             "providing neither 'args' nor 'params'.")
+        if args and params:
+            raise TypeError("'args' and 'params' are mutually exclusive.")
         if bra is None:
             raise TypeError('bra must be an array')
         bra = np.asarray(bra, dtype=complex)
@@ -479,14 +494,15 @@ cdef class _LocalOperator:
             where = where.reshape(-1)
 
         result = np.zeros((self.where.shape[0],), dtype=complex)
-        self._operate(out_data=result, bra=bra, ket=ket, args=args, op=MAT_ELS)
+        self._operate(out_data=result, bra=bra, ket=ket, args=args,
+                      params=params, op=MAT_ELS)
         # if everything is Hermitian then result is real if bra == ket
         if self.check_hermiticity and bra is ket:
             result = result.real
         return np.sum(result) if self.sum else result
 
     @cython.embedsignature
-    def act(self, ket, args=()):
+    def act(self, ket, args=(), *, params=None):
         """Act with the operator on a wavefunction.
 
         For an operator :math:`Q_{iαβ}` and ``ket`` :math:`ψ_β`
@@ -498,16 +514,21 @@ cdef class _LocalOperator:
             Wavefunctions defined over all the orbitals of the system.
         args : tuple
             The extra arguments to the Hamiltonian value functions and
-            the operator ``onsite`` function.
+            the operator ``onsite`` function. Mutually exclusive with 'params'.
+        params : dict, optional
+            Dictionary of parameter names and their values. Mutually exclusive
+            with 'args'.
 
         Returns
         -------
         Array of `complex`.
         """
-        if (self._bound_onsite or self._bound_hamiltonian) and args:
-            raise ValueError('Extra arguments are already bound to this '
-                             'operator. You should call this operator '
-                             'without providing `args`.')
+        if (self._bound_onsite or self._bound_hamiltonian) and (args or params):
+            raise ValueError("Extra arguments are already bound to this "
+                             "operator. You should call this operator "
+                             "providing neither 'args' nor 'params'.")
+        if args and params:
+            raise TypeError("'args' and 'params' are mutually exclusive.")
 
         if ket is None:
             raise TypeError('ket must be an array')
@@ -516,32 +537,36 @@ cdef class _LocalOperator:
         if ket.shape != (tot_norbs,):
             raise ValueError('ket vector is incorrect shape')
         result = np.zeros((tot_norbs,), dtype=np.complex)
-        self._operate(out_data=result, bra=None, ket=ket, args=args, op=ACT)
+        self._operate(out_data=result, bra=None, ket=ket, args=args,
+                      params=params, op=ACT)
         return result
 
     @cython.embedsignature
-    def bind(self, args=()):
+    def bind(self, args=(), *, params=None):
         """Bind the given arguments to this operator.
 
         Returns a copy of this operator that does not need to be passed extra
         arguments when subsequently called or when using the ``act`` method.
         """
+        if args and params:
+            raise TypeError("'args' and 'params' are mutually exclusive.")
         # generic creation of new instance
         cls = self.__class__
         q = cls.__new__(cls)
         q.syst = self.syst
         q.onsite = self.onsite
+        q._onsite_params_info = self._onsite_params_info
         q.where = self.where
         q.sum = self.sum
         q._site_ranges = self._site_ranges
         q.check_hermiticity = self.check_hermiticity
         if callable(self.onsite):
-            q._bound_onsite = self._eval_onsites(args)
+            q._bound_onsite = self._eval_onsites(args, params)
         # NOTE: subclasses should populate `bound_hamiltonian` if needed
         return q
 
     def _operate(self, complex[:] out_data, complex[:] bra, complex[:] ket,
-                 args, operation op):
+                 args, operation op, *, params=None):
         """Do an operation with the operator.
 
         Parameters
@@ -555,38 +580,47 @@ cdef class _LocalOperator:
             If `op` is `ACT` then `bra` is None.
         args : tuple
             The extra arguments to the Hamiltonian value functions and
-            the operator ``onsite`` function.
+            the operator ``onsite`` function. Mutually exclusive with 'params'.
         op : operation
             The operation to perform.
             `MAT_ELS`: calculate matrix elements between `bra` and `ket`
             `ACT`: act on `ket` with the operator
+        params : dict, optional
+            Dictionary of parameter names and their values. Mutually exclusive
+            with 'args'.
         """
         raise NotImplementedError()
 
-    cdef BlockSparseMatrix _eval_onsites(self, args):
+    cdef BlockSparseMatrix _eval_onsites(self, args, params):
         """Evaluate the onsite matrices on all elements of `where`"""
         assert callable(self.onsite)
+        assert not (args and params)
+        params = params or {}
         matrix = ta.matrix
         onsite = self.onsite
         check_hermiticity = self.check_hermiticity
 
+        param_names, takes_kwargs = self._onsite_params_info
+        if params and not takes_kwargs:
+            params = {pn: params[pn] for pn in param_names}
+
         def get_onsite(a, a_norbs, b, b_norbs):
-            mat = matrix(onsite(a, *args), complex)
+            mat = matrix(onsite(a, *args, **params), complex)
             _check_onsite(mat, a_norbs, check_hermiticity)
             return mat
 
         offsets, norbs = _get_all_orbs(self.where, self._site_ranges)
         return  BlockSparseMatrix(self.where, offsets, norbs, get_onsite)
 
-    cdef BlockSparseMatrix _eval_hamiltonian(self, args):
+    cdef BlockSparseMatrix _eval_hamiltonian(self, args, params):
         """Evaluate the Hamiltonian on all elements of `where`."""
         matrix = ta.matrix
         hamiltonian = self.syst.hamiltonian
         check_hermiticity = self.check_hermiticity
 
         def get_ham(a, a_norbs, b, b_norbs):
-            mat = matrix(hamiltonian(a, b, *args), complex)
-            _check_ham(mat, hamiltonian, args,
+            mat = matrix(hamiltonian(a, b, *args, params=params), complex)
+            _check_ham(mat, hamiltonian, args, params,
                        a, a_norbs, b, b_norbs, check_hermiticity)
             return mat
 
@@ -641,7 +675,7 @@ cdef class Density(_LocalOperator):
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def _operate(self, complex[:] out_data, complex[:] bra, complex[:] ket,
-                 args, operation op):
+                 args, operation op, *, params=None):
         matrix = ta.matrix
         cdef int unique_onsite = not callable(self.onsite)
         # prepare onsite matrices
@@ -655,7 +689,7 @@ cdef class Density(_LocalOperator):
         elif self._bound_onsite:
             M_a_blocks = self._bound_onsite
         else:
-            M_a_blocks = self._eval_onsites(args)
+            M_a_blocks = self._eval_onsites(args, params)
 
         # loop-local variables
         cdef gint a, a_s, a_norbs
@@ -688,15 +722,17 @@ cdef class Density(_LocalOperator):
     @cython.wraparound(False)
     @cython.cdivision(True)
     @cython.embedsignature
-    def tocoo(self, args=()):
+    def tocoo(self, args=(), *, params=None):
         """Convert the operator to coordinate format sparse matrix."""
         cdef int blk, blk_size, n_blocks, n, k = 0
         cdef int [:, :] offsets, shapes
         cdef int [:] row, col
-        if self._bound_onsite and args:
+        if self._bound_onsite and (args or params):
            raise ValueError("Extra arguments are already bound to this "
                             "operator. You should call this operator "
-                            "without providing 'args'.")
+                            "providing neither 'args' nor 'params'.")
+        if args and params:
+            raise TypeError("'args' and 'params' are mutually exclusive.")
 
         if not callable(self.onsite):
             offsets = _get_all_orbs(self.where, self._site_ranges)[0]
@@ -709,7 +745,7 @@ cdef class Density(_LocalOperator):
             if self._bound_onsite is not None:
                 onsite_matrix = self._bound_onsite
             else:
-                onsite_matrix = self._eval_onsites(args)
+                onsite_matrix = self._eval_onsites(args, params)
             data = onsite_matrix.data
             offsets = np.asarray(onsite_matrix.block_offsets)
             shapes = np.asarray(onsite_matrix.block_shapes)
@@ -781,20 +817,20 @@ cdef class Current(_LocalOperator):
                          check_hermiticity=check_hermiticity, sum=sum)
 
     @cython.embedsignature
-    def bind(self, args=()):
+    def bind(self, args=(), *, params=None):
         """Bind the given arguments to this operator.
 
         Returns a copy of this operator that does not need to be passed extra
         arguments when subsequently called or when using the ``act`` method.
         """
-        q = super().bind(args)
-        q._bound_hamiltonian = self._eval_hamiltonian(args)
+        q = super().bind(args, params=params)
+        q._bound_hamiltonian = self._eval_hamiltonian(args, params)
         return q
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def _operate(self, complex[:] out_data, complex[:] bra, complex[:] ket,
-                 args, operation op):
+                 args, operation op, *, params=None):
         # prepare onsite matrices and hamiltonians
         cdef int unique_onsite = not callable(self.onsite)
         cdef complex[:, :] _tmp_mat
@@ -808,12 +844,12 @@ cdef class Current(_LocalOperator):
         elif self._bound_onsite:
             M_a_blocks = self._bound_onsite
         else:
-            M_a_blocks = self._eval_onsites(args)
+            M_a_blocks = self._eval_onsites(args, params)
 
         if self._bound_hamiltonian:
             H_ab_blocks = self._bound_hamiltonian
         else:
-            H_ab_blocks = self._eval_hamiltonian(args)
+            H_ab_blocks = self._eval_hamiltonian(args, params)
 
         # main loop
         cdef gint a, a_s, a_norbs, b, b_s, b_norbs
@@ -904,20 +940,20 @@ cdef class Source(_LocalOperator):
                          check_hermiticity=check_hermiticity, sum=sum)
 
     @cython.embedsignature
-    def bind(self, args=()):
+    def bind(self, args=(), *, params=None):
         """Bind the given arguments to this operator.
 
         Returns a copy of this operator that does not need to be passed extra
         arguments when subsequently called or when using the ``act`` method.
         """
-        q = super().bind(args)
-        q._bound_hamiltonian = self._eval_hamiltonian(args)
+        q = super().bind(args, params=params)
+        q._bound_hamiltonian = self._eval_hamiltonian(args, params)
         return q
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def _operate(self, complex[:] out_data, complex[:] bra, complex[:] ket,
-                 args, operation op):
+                 args, operation op, *, params=None):
         # prepare onsite matrices and hamiltonians
         cdef int unique_onsite = not callable(self.onsite)
         cdef complex[:, :] _tmp_mat
@@ -931,12 +967,12 @@ cdef class Source(_LocalOperator):
         elif self._bound_onsite:
             M_a_blocks = self._bound_onsite
         else:
-            M_a_blocks = self._eval_onsites(args)
+            M_a_blocks = self._eval_onsites(args, params)
 
         if self._bound_hamiltonian:
             H_aa_blocks = self._bound_hamiltonian
         else:
-            H_aa_blocks = self._eval_hamiltonian(args)
+            H_aa_blocks = self._eval_hamiltonian(args, params)
 
         # main loop
         cdef gint a, a_s, a_norbs

@@ -21,7 +21,7 @@ msg = ('Hopping from site {0} to site {1} does not match the '
        'dimensions of onsite Hamiltonians of these sites.')
 
 @cython.boundscheck(False)
-def make_sparse(ham, args, CGraph gr, diag,
+def make_sparse(ham, args, params, CGraph gr, diag,
                 gint [:] from_sites, n_by_to_site,
                 gint [:] to_norb, gint [:] to_off,
                 gint [:] from_norb, gint [:] from_off):
@@ -73,7 +73,7 @@ def make_sparse(ham, args, CGraph gr, diag,
             if ts not in n_by_to_site:
                 continue
             n_ts = n_by_to_site[ts]
-            h = matrix(ham(ts, fs, *args), complex)
+            h = matrix(ham(ts, fs, *args, params=params), complex)
             if h.shape[0] != to_norb[n_ts] or h.shape[1] != from_norb[n_fs]:
                 raise ValueError(msg.format(fs, ts))
             for i in range(h.shape[0]):
@@ -98,7 +98,7 @@ def make_sparse(ham, args, CGraph gr, diag,
 
 
 @cython.boundscheck(False)
-def make_sparse_full(ham, args, CGraph gr, diag,
+def make_sparse_full(ham, args, params, CGraph gr, diag,
                      gint [:] to_norb, gint [:] to_off,
                      gint [:] from_norb, gint [:] from_off):
     """For internal use by hamiltonian_submatrix."""
@@ -143,7 +143,7 @@ def make_sparse_full(ham, args, CGraph gr, diag,
         for ts in nbors.data[:nbors.size]:
             if ts < fs:
                 continue
-            h = matrix(ham(ts, fs, *args), complex)
+            h = matrix(ham(ts, fs, *args, params=params), complex)
             if h.shape[0] != to_norb[ts] or h.shape[1] != from_norb[fs]:
                 raise ValueError(msg.format(fs, ts))
             for i in range(h.shape[0]):
@@ -168,7 +168,7 @@ def make_sparse_full(ham, args, CGraph gr, diag,
 
 
 @cython.boundscheck(False)
-def make_dense(ham, args, CGraph gr, diag,
+def make_dense(ham, args, params, CGraph gr, diag,
                gint [:] from_sites, n_by_to_site,
                gint [:] to_norb, gint [:] to_off,
                gint [:] from_norb, gint [:] from_off):
@@ -197,7 +197,7 @@ def make_dense(ham, args, CGraph gr, diag,
             if ts not in n_by_to_site:
                 continue
             n_ts = n_by_to_site[ts]
-            h = matrix(ham(ts, fs, *args), complex)
+            h = matrix(ham(ts, fs, *args, params=params), complex)
             if h.shape[0] != to_norb[n_ts] or h.shape[1] != from_norb[n_fs]:
                 raise ValueError(msg.format(fs, ts))
             h_sub_view[to_off[n_ts] : to_off[n_ts + 1],
@@ -206,7 +206,7 @@ def make_dense(ham, args, CGraph gr, diag,
 
 
 @cython.boundscheck(False)
-def make_dense_full(ham, args, CGraph gr, diag,
+def make_dense_full(ham, args, params, CGraph gr, diag,
                     gint [:] to_norb, gint [:] to_off,
                     gint [:] from_norb, gint [:] from_off):
     """For internal use by hamiltonian_submatrix."""
@@ -230,7 +230,7 @@ def make_dense_full(ham, args, CGraph gr, diag,
         for ts in nbors.data[:nbors.size]:
             if ts < fs:
                 continue
-            h = mat = matrix(ham(ts, fs, *args), complex)
+            h = mat = matrix(ham(ts, fs, *args, params=params), complex)
             h_herm = mat.transpose().conjugate()
             if h.shape[0] != to_norb[ts] or h.shape[1] != from_norb[fs]:
                 raise ValueError(msg.format(fs, ts))
@@ -243,19 +243,23 @@ def make_dense_full(ham, args, CGraph gr, diag,
 
 @cython.embedsignature(True)
 def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
-                          sparse=False, return_norb=False):
+                          sparse=False, return_norb=False, *, params=None):
     """Return a submatrix of the system Hamiltonian.
 
     Parameters
     ----------
     args : tuple, defaults to empty
-        Positional arguments to pass to the ``hamiltonian`` method.
+        Positional arguments to pass to the ``hamiltonian`` method. Mutually
+        exclusive with 'params'.
     to_sites : sequence of sites or None (default)
     from_sites : sequence of sites or None (default)
     sparse : bool
         Whether to return a sparse or a dense matrix. Defaults to ``False``.
     return_norb : bool
         Whether to return arrays of numbers of orbitals.  Defaults to ``False``.
+    params : dict, optional
+        Dictionary of parameter names and their values. Mutually exclusive
+        with 'args'.
 
     Returns
     -------
@@ -286,7 +290,8 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
         diag = n * [None]
         from_norb = np.empty(n, gint_dtype)
         for site in range(n):
-            diag[site] = h = matrix(ham(site, site, *args), complex)
+            diag[site] = h = matrix(ham(site, site, *args, params=params),
+                                    complex)
             from_norb[site] = h.shape[0]
     else:
         diag = len(from_sites) * [None]
@@ -294,7 +299,7 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
         for n_site, site in enumerate(from_sites):
             if site < 0 or site >= n:
                 raise IndexError('Site number out of range.')
-            diag[n_site] = h = matrix(ham(site, site, *args),
+            diag[n_site] = h = matrix(ham(site, site, *args, params=params),
                                       complex)
             from_norb[n_site] = h.shape[0]
     from_off = np.empty(from_norb.shape[0] + 1, gint_dtype)
@@ -308,14 +313,14 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
         if to_sites is None:
             to_norb = np.empty(n, gint_dtype)
             for site in range(n):
-                h = matrix(ham(site, site, *args), complex)
+                h = matrix(ham(site, site, *args, params=params), complex)
                 to_norb[site] = h.shape[0]
         else:
             to_norb = np.empty(len(to_sites), gint_dtype)
             for n_site, site in enumerate(to_sites):
                 if site < 0 or site >= n:
                     raise IndexError('Site number out of range.')
-                h = matrix(ham(site, site, *args), complex)
+                h = matrix(ham(site, site, *args, params=params), complex)
                 to_norb[n_site] = h.shape[0]
         to_off = np.empty(to_norb.shape[0] + 1, gint_dtype)
         to_off[0] = 0
@@ -324,7 +329,7 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
 
     if to_sites is from_sites is None:
         func = make_sparse_full if sparse else make_dense_full
-        mat = func(ham, args, self.graph, diag, to_norb, to_off,
+        mat = func(ham, args, params, self.graph, diag, to_norb, to_off,
                    from_norb, from_off)
     else:
         if to_sites is None:
@@ -340,7 +345,7 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
             from_sites = np.asarray(from_sites, gint_dtype)
 
         func = make_sparse if sparse else make_dense
-        mat = func(ham, args, self.graph, diag, from_sites,
+        mat = func(ham, args, params, self.graph, diag, from_sites,
                    n_by_to_site, to_norb, to_off, from_norb, from_off)
     return (mat, to_norb, from_norb) if return_norb else mat
 

@@ -404,3 +404,83 @@ def test_tocoo():
                      check_hermiticity=False)
     op = op.bind(args=(1,))
     raises(ValueError, op.tocoo, [1])
+
+
+def test_arg_passing():
+    lat1 = kwant.lattice.chain(norbs=1)
+
+    syst = kwant.Builder()
+    syst[lat1(0)] = syst[lat1(1)] = lambda s0, a, b: s0.pos + a + b
+    syst[lat1.neighbors()] = lambda s0, s1, a, b: a - b
+    fsyst = syst.finalized()
+
+    wf = np.ones(len(fsyst.sites))
+
+    for A in opservables:
+        op = A(fsyst)
+        canonical_args = (1, 2)
+        params = dict(a=1, b=2)
+        call_should_be = op(wf, args=canonical_args)
+        act_should_be = op.act(wf, args=canonical_args)
+        has_tocoo = hasattr(op, 'tocoo')
+        if has_tocoo:
+            tocoo_should_be = op.tocoo(args=canonical_args).todense()
+
+        with raises(TypeError) as exc:
+            op(wf, args=canonical_args, params=params)
+        assert 'mutually exclusive' in str(exc)
+        with raises(TypeError) as exc:
+            op.act(wf, args=canonical_args, params=params)
+        assert 'mutually exclusive' in str(exc)
+        with raises(TypeError) as exc:
+            op.bind(args=canonical_args, params=params)
+        assert 'mutually exclusive' in str(exc)
+        if has_tocoo:
+            with raises(TypeError) as exc:
+                op.tocoo(args=canonical_args, params=params)
+            assert 'mutually exclusive' in str(exc)
+
+        np.testing.assert_array_equal(
+            call_should_be, op(wf, params=params))
+        np.testing.assert_array_equal(
+            act_should_be, op.act(wf, params=params))
+        if has_tocoo:
+            np.testing.assert_array_equal(
+                tocoo_should_be, op.tocoo(params=params).todense())
+        # after binding
+        op2 = op.bind(params=params)
+        np.testing.assert_array_equal(
+            call_should_be, op2(wf))
+        np.testing.assert_array_equal(
+            act_should_be, op2.act(wf))
+        if has_tocoo:
+            np.testing.assert_array_equal(
+                tocoo_should_be, op2.tocoo().todense())
+
+        # system and onsite having different args
+        def onsite(site, flip):
+            return -1 if flip else 1
+
+        op = A(fsyst, onsite=onsite)
+        params['flip'] = True
+        call_should_be = -call_should_be
+        act_should_be = -act_should_be
+        if has_tocoo:
+            tocoo_should_be = -tocoo_should_be
+
+        np.testing.assert_array_equal(
+            call_should_be, op(wf, params=params))
+        np.testing.assert_array_equal(
+            act_should_be, op.act(wf, params=params))
+        if has_tocoo:
+            np.testing.assert_array_equal(
+                tocoo_should_be, op.tocoo(params=params).todense())
+        # after binding
+        op2 = op.bind(params=params)
+        np.testing.assert_array_equal(
+            call_should_be, op2(wf))
+        np.testing.assert_array_equal(
+            act_should_be, op2.act(wf))
+        if has_tocoo:
+            np.testing.assert_array_equal(
+                tocoo_should_be, op2.tocoo().todense())

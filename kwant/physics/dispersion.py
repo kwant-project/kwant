@@ -25,6 +25,10 @@ class Bands:
         calculated.
     args : tuple, defaults to empty
         Positional arguments to pass to the ``hamiltonian`` method.
+        Mutually exclusive with 'params'.
+    params : dict, optional
+        Dictionary of parameter names and their values. Mutually exclusive
+        with 'args'.
 
     Notes
     -----
@@ -42,13 +46,13 @@ class Bands:
     >>> pyplot.show()
     """
 
-    def __init__(self, sys, args=()):
+    def __init__(self, sys, args=(), *, params=None):
         syst = sys
         ensure_isinstance(syst, system.InfiniteSystem)
-        self.ham = syst.cell_hamiltonian(args)
+        self.ham = syst.cell_hamiltonian(args, params=params)
         if not np.allclose(self.ham, self.ham.T.conj()):
             raise ValueError('The cell Hamiltonian is not Hermitian.')
-        hop = syst.inter_cell_hopping(args)
+        hop = syst.inter_cell_hopping(args, params=params)
         self.hop = np.empty(self.ham.shape, dtype=complex)
         self.hop[:, : hop.shape[1]] = hop
         self.hop[:, hop.shape[1]:] = 0

@@ -47,7 +47,7 @@ class System(metaclass=abc.ABCMeta):
     numbers of orbitals.
     """
     @abc.abstractmethod
-    def hamiltonian(self, i, j, *args):
+    def hamiltonian(self, i, j, *args, params=None):
         """Return the hamiltonian matrix element for sites ``i`` and ``j``.
 
         If ``i == j``, return the on-site Hamiltonian of site ``i``.
@@ -59,7 +59,7 @@ class System(metaclass=abc.ABCMeta):
         """
         pass
 
-    def discrete_symmetry(self, args):
+    def discrete_symmetry(self, args, *, params=None):
         """Return the discrete symmetry of the system."""
         # Avoid the circular import.
         from .physics import DiscreteSymmetry
@@ -76,9 +76,11 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
     Attributes
     ----------
     leads : sequence of leads
-        Each lead has to provide a method
-        ``selfenergy(energy, args)``.
-        It may provide ``modes(energy, args)`` as well.
+        Each lead has to provide a method ``selfenergy`` that has
+        the same signature as `InfiniteSystem.selfenergy` (without the
+        ``self`` parameter). It may also provide ``modes`` that has the
+        same signature as `InfiniteSystem.modes` (without the ``self``
+        parameter).
     lead_interfaces : sequence of sequences of integers
         Each sub-sequence contains the indices of the system sites
         to which the lead is connected.
@@ -99,7 +101,7 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
     """
 
     def precalculate(self, energy=0, args=(), leads=None,
-                     what='modes'):
+                     what='modes', *, params=None):
         """
         Precalculate modes or self-energies in the leads.
 
@@ -113,13 +115,17 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
             Energy at which the modes or self-energies have to be
             evaluated.
         args : sequence
-            Additional parameters required for calculating the Hamiltionians
+            Additional parameters required for calculating the Hamiltionians.
+            Mutually exclusive with 'params'.
         leads : sequence of integers or None
             Numbers of the leads to be precalculated. If ``None``, all are
             precalculated.
         what : 'modes', 'selfenergy', 'all'
             The quantitity to precompute. 'all' will compute both
             modes and self-energies. Defaults to 'modes'.
+        params : dict, optional
+            Dictionary of parameter names and their values. Mutually exclusive
+            with 'args'.
 
         Returns
         -------
@@ -147,12 +153,12 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
                 continue
             modes, selfenergy = None, None
             if what in ('modes', 'all'):
-                modes = lead.modes(energy, args)
+                modes = lead.modes(energy, args, params=params)
             if what in ('selfenergy', 'all'):
                 if modes:
                     selfenergy = modes[1].selfenergy()
                 else:
-                    selfenergy = lead.selfenergy(energy, args)
+                    selfenergy = lead.selfenergy(energy, args, params=params)
             new_leads.append(PrecalculatedLead(modes, selfenergy))
         result.leads = new_leads
         return result
@@ -200,29 +206,29 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
     exchanged, as well as of site 3 and 4.
 
     """
-    def cell_hamiltonian(self, args=(), sparse=False):
+    def cell_hamiltonian(self, args=(), sparse=False, *, params=None):
         """Hamiltonian of a single cell of the infinite system."""
         cell_sites = range(self.cell_size)
         return self.hamiltonian_submatrix(args, cell_sites, cell_sites,
-                                          sparse=sparse)
+                                          sparse=sparse, params=params)
 
-    def inter_cell_hopping(self, args=(), sparse=False):
+    def inter_cell_hopping(self, args=(), sparse=False, *, params=None):
         """Hopping Hamiltonian between two cells of the infinite system."""
         cell_sites = range(self.cell_size)
         interface_sites = range(self.cell_size, self.graph.num_nodes)
         return self.hamiltonian_submatrix(args, cell_sites, interface_sites,
-                                          sparse=sparse)
+                                          sparse=sparse, params=params)
 
-    def modes(self, energy=0, args=()):
+    def modes(self, energy=0, args=(), *, params=None):
         """Return mode decomposition of the lead
 
         See documentation of `~kwant.physics.PropagatingModes` and
         `~kwant.physics.StabilizedModes` for the return format details.
         """
         from . import physics   # Putting this here avoids a circular import.
-        ham = self.cell_hamiltonian(args)
-        hop = self.inter_cell_hopping(args)
-        symmetries = self.discrete_symmetry(args)
+        ham = self.cell_hamiltonian(args, params=params)
+        hop = self.inter_cell_hopping(args, params=params)
+        symmetries = self.discrete_symmetry(args, params=params)
         broken = symmetries.validate(ham)
         if broken is not None:
             raise ValueError("Cell Hamiltonian breaks " + broken.lower())
@@ -240,7 +246,7 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
             symmetries.particle_hole = symmetries.chiral = None
         return physics.modes(ham, hop, discrete_symmetry=symmetries)
 
-    def selfenergy(self, energy=0, args=()):
+    def selfenergy(self, energy=0, args=(), *, params=None):
         """Return self-energy of a lead.
 
         The returned matrix has the shape (s, s), where s is
@@ -248,13 +254,14 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         self.cell_size))``.
         """
         from . import physics   # Putting this here avoids a circular import.
-        ham = self.cell_hamiltonian(args)
+        ham = self.cell_hamiltonian(args, params=params)
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
         # Subtract energy from the diagonal.
         ham.flat[::ham.shape[0] + 1] -= energy
-        return physics.selfenergy(ham, self.inter_cell_hopping(args))
+        return physics.selfenergy(ham,
+                                  self.inter_cell_hopping(args, params=params))
 
 
 class PrecalculatedLead:
@@ -277,7 +284,7 @@ class PrecalculatedLead:
         self._modes = modes
         self._selfenergy = selfenergy
 
-    def modes(self, energy=0, args=()):
+    def modes(self, energy=0, args=(), *, params=None):
         if self._modes is not None:
             return self._modes
         else:
@@ -285,7 +292,7 @@ class PrecalculatedLead:
                              "Consider using precalculate() with "
                              "what='modes' or what='all'")
 
-    def selfenergy(self, energy=0, args=()):
+    def selfenergy(self, energy=0, args=(), *, params=None):
         if self._selfenergy is not None:
             return self._selfenergy
         else:

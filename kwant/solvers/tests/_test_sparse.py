@@ -23,8 +23,9 @@ class LeadWithOnlySelfEnergy:
     def __init__(self, lead):
         self.lead = lead
 
-    def selfenergy(self, energy, args=()):
+    def selfenergy(self, energy, args=(), *, params=None):
         assert args == ()
+        assert params == None
         return self.lead.selfenergy(energy)
 
 
@@ -500,3 +501,41 @@ def test_wavefunc_ldos_consistency(wave_function, ldos):
     raises(ValueError, check, syst.precalculate(what='selfenergy'))
     syst.leads[0] = LeadWithOnlySelfEnergy(syst.leads[0])
     raises(NotImplementedError, check, syst)
+
+
+def test_arg_passing(wave_function, ldos, smatrix):
+
+    def onsite(site, a, b):
+        return site.pos[0] + site.pos[1] + a + b
+
+    def hopping(site1, site2, a, b):
+        return b - a
+
+    W = 3
+    L = 4
+
+    syst = kwant.Builder()
+    syst[(square(i, j) for i in range(L) for j in range(W))] = onsite
+    syst[square.neighbors()] = hopping
+
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+    lead[(square(0, j) for j in range(W))] = onsite
+    lead[square.neighbors()] = hopping
+
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+
+    fsyst = syst.finalized()
+
+    # compare results to those when we pass `args` only
+    args = (1, 3)
+    params = dict(a=1, b=3)
+    np.testing.assert_array_equal(
+        wave_function(fsyst, args=args)(0),
+        wave_function(fsyst, params=params)(0))
+    np.testing.assert_array_equal(
+        ldos(fsyst, args=args),
+        ldos(fsyst, params=params))
+    np.testing.assert_array_equal(
+        smatrix(fsyst, args=args).data,
+        smatrix(fsyst, params=params).data)

@@ -10,6 +10,7 @@ import subprocess
 import os
 import numpy as np
 import numbers
+import inspect
 
 __all__ = ['version', 'KwantDeprecationWarning', 'UserCodeError']
 
@@ -130,3 +131,26 @@ def ensure_rng(rng=None):
         return rng
     raise ValueError("Expecting a seed or an object that offers the "
                      "numpy.random.RandomState interface.")
+
+
+def get_parameters(func):
+    """Get the names of the parameters to 'func' and whether it takes kwargs.
+
+    Returns
+    -------
+    names : list
+        Positional, keyword and keyword only parameter names in the order
+        that they appear in the signature of 'func'.
+    takes_kwargs : bool
+        True if 'func' takes '**kwargs'.
+    """
+    sig = inspect.signature(func)
+    pars = sig.parameters
+
+    # Signature.parameters is an *ordered mapping*
+    names = [k for (k, v) in pars.items()
+             if v.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                           inspect.Parameter.KEYWORD_ONLY)]
+    takes_kwargs = any(i.kind is inspect.Parameter.VAR_KEYWORD
+                       for i in pars.values())
+    return names, takes_kwargs

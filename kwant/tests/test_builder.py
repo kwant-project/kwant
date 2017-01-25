@@ -964,3 +964,79 @@ def test_discrete_symmetries():
     p2 = np.zeros((4, 2))
     p2[1, 0] = p2[3, 1] = 1
     assert np.allclose(sym.projectors[1].todense(), p2)
+
+    # test parameter passing to conservation_law
+    syst = builder.Builder(conservation_law=lambda site, b: b)
+    syst[lat2(1)] = 0
+    sym = syst.finalized().discrete_symmetry(params=dict(a=None, b=1))
+    [proj] = sym.projectors
+    assert np.allclose(proj.todense(), [[1]])
+
+
+def test_argument_passing():
+
+    chain = kwant.lattice.chain()
+
+    # Test for passing parameters to hamiltonian matrix elements
+    def onsite(site, p1, p2=1):
+        return p1 + p2
+
+    def hopping(site1, site2, p1, p2=1):
+        return p1 - p2
+
+    def fill_syst(syst):
+        syst[(chain(i) for i in range(3))] = onsite
+        syst[chain.neighbors()] = hopping
+        return syst.finalized()
+
+    syst = fill_syst(kwant.Builder())
+    inf_syst = fill_syst(kwant.Builder(kwant.TranslationalSymmetry((-3,))))
+
+    args= (2, 1)
+    params = dict(p1=2, p2=1)
+
+    np.testing.assert_array_equal(
+        syst.hamiltonian_submatrix(args=args),
+        syst.hamiltonian_submatrix(params=params))
+    np.testing.assert_array_equal(
+        inf_syst.cell_hamiltonian(args=args),
+        inf_syst.cell_hamiltonian(params=params))
+    np.testing.assert_array_equal(
+        inf_syst.inter_cell_hopping(args=args),
+        inf_syst.inter_cell_hopping(params=params))
+    np.testing.assert_array_equal(
+        inf_syst.selfenergy(args=args),
+        inf_syst.selfenergy(params=params))
+    np.testing.assert_array_equal(
+        inf_syst.modes(args=args)[0].wave_functions,
+        inf_syst.modes(params=params)[0].wave_functions)
+
+    # test that mixing 'args' and 'params' raises TypeError
+    with raises(TypeError):
+        syst.hamiltonian(0, 0, *args, params=params)
+    with raises(TypeError):
+        inf_syst.hamiltonian(0, 0, *args, params=params)
+
+
+    # Some common, some different args for value functions
+    def onsite2(site, a, b):
+        return site.pos + a + b
+
+    def hopping2(site1, site2, a, c, b):
+        return a + b + c
+
+    syst = kwant.Builder()
+    syst[(chain(i) for i in range(3))] = onsite2
+    syst[((chain(i), chain(i + 1)) for i in range(2))] = hopping2
+    fsyst = syst.finalized()
+
+    def expected_hamiltonian(a, b, c):
+        return [[a + b, a + b + c, 0],
+                [a + b + c, 1 + a + b, a + b + c],
+                [0, a+ b + c, 2 + a + b]]
+
+    params = dict(a=1, b=2, c=3)
+    np.testing.assert_array_equal(
+        fsyst.hamiltonian_submatrix(params=params),
+        expected_hamiltonian(**params)
+    )

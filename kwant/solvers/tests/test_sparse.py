@@ -59,3 +59,6 @@ def test_ldos():
 
 def test_wavefunc_ldos_consistency():
     _test_sparse.test_wavefunc_ldos_consistency(wave_function, ldos)
+
+def test_arg_passing():
+    _test_sparse.test_arg_passing(wave_function, ldos, smatrix)

@@ -13,7 +13,7 @@ import abc
 import warnings
 import operator
 import collections
-from functools import total_ordering
+from functools import total_ordering, wraps
 from itertools import islice, chain
 import tinyarray as ta
 import numpy as np
@@ -21,7 +21,7 @@ from scipy import sparse
 from . import system, graph, KwantDeprecationWarning, UserCodeError
 from .operator import Density
 from .physics import DiscreteSymmetry
-from ._common import ensure_isinstance
+from ._common import ensure_isinstance, get_parameters
 
 
 
@@ -490,8 +490,8 @@ class HermConjOfFunc:
     def __init__(self, function):
         self.function = function
 
-    def __call__(self, i, j, *args):
-        return herm_conj(self.function(j, i, *args))
+    def __call__(self, i, j, *args, **kwargs):
+        return herm_conj(self.function(j, i, *args, **kwargs))
 
 
 ################ Leads
@@ -582,8 +582,8 @@ class SelfEnergyLead(Lead):
     Parameters
     ----------
     selfenergy_func : function
-        Function which returns the self energy matrix for the interface sites
-        given the energy and optionally a sequence of extra arguments.
+        Has the same signature as `selfenergy` (without the ``self``
+        parameter) and returns the self energy matrix for the interface sites.
     interface : sequence of `Site` instances
     """
     def __init__(self, selfenergy_func, interface):
@@ -594,8 +594,8 @@ class SelfEnergyLead(Lead):
         """Trivial finalization: the object is returned itself."""
         return self
 
-    def selfenergy(self, energy, args=()):
-        return self.selfenergy_func(energy, args)
+    def selfenergy(self, energy, args=(), *, params=None):
+        return self.selfenergy_func(energy, args, params=params)
 
 
 class ModesLead(Lead):
@@ -604,9 +604,9 @@ class ModesLead(Lead):
     Parameters
     ----------
     modes_func : function
-        Function which returns the modes of the lead as a tuple of
-        `~kwant.physics.PropagatingModes` and `~kwant.physics.StabilizedModes`
-        given the energy and optionally a sequence of extra arguments.
+        Has the same signature as `modes` (without the ``self`` parameter)
+        and returns the modes of the lead as a tuple of
+        `~kwant.physics.PropagatingModes` and `~kwant.physics.StabilizedModes`.
     interface :
         sequence of `Site` instances
 
@@ -619,11 +619,11 @@ class ModesLead(Lead):
         """Trivial finalization: the object is returned itself."""
         return self
 
-    def modes(self, energy, args=()):
-        return self.modes_func(energy, args)
+    def modes(self, energy, args=(), *, params=None):
+        return self.modes_func(energy, args, params=params)
 
-    def selfenergy(self, energy, args=()):
-        stabilized = self.modes(energy, args)[1]
+    def selfenergy(self, energy, args=(), *, params=None):
+        stabilized = self.modes(energy, args, params=params)[1]
         return stabilized.selfenergy()
 
 
@@ -1458,6 +1458,22 @@ class Builder:
 
             lead_interfaces.append(np.array(interface))
 
+        #### Find parameters taken by all value functions
+        hoppings = [self._get_edge(sites[tail], sites[head])
+                           for tail, head in g]
+        onsite_hamiltonians = [self.H[site][1] for site in sites]
+
+        _ham_param_map = {}
+        for hams, skip in [(onsite_hamiltonians, 1), (hoppings, 2)]:
+            for ham in hams:
+                if (not callable(ham) or ham is Other or
+                    ham in _ham_param_map):
+                    continue
+                # parameters come in the same order as in the function signature
+                params, takes_kwargs = get_parameters(ham)
+                params = params[skip:]  # remove site argument(s)
+                _ham_param_map[ham] = (params, takes_kwargs)
+
         #### Assemble and return result.
         result = FiniteSystem()
         result.graph = g
@@ -1465,9 +1481,9 @@ class Builder:
         result.site_ranges = _site_ranges(sites)
         result.id_by_site = id_by_site
         result.leads = finalized_leads
-        result.hoppings = [self._get_edge(sites[tail], sites[head])
-                           for tail, head in g]
-        result.onsite_hamiltonians = [self.H[site][1] for site in sites]
+        result.hoppings = hoppings
+        result.onsite_hamiltonians = onsite_hamiltonians
+        result._ham_param_map = _ham_param_map
         result.lead_interfaces = lead_interfaces
         result.symmetry = self.symmetry
         return result
@@ -1592,6 +1608,18 @@ class Builder:
                 tail, head = sym.to_fd(tail, head)
             hoppings.append(self._get_edge(tail, head))
 
+        #### Find parameters taken by all value functions
+        _ham_param_map = {}
+        for hams, skip in [(onsite_hamiltonians, 1), (hoppings, 2)]:
+            for ham in hams:
+                if (not callable(ham) or ham is Other or
+                    ham in _ham_param_map):
+                    continue
+                # parameters come in the same order as in the function signature
+                params, takes_kwargs = get_parameters(ham)
+                params = params[skip:]  # remove site argument(s)
+                _ham_param_map[ham] = (params, takes_kwargs)
+
         #### Assemble and return result.
         result = InfiniteSystem()
         result.cell_size = cell_size
@@ -1601,6 +1629,7 @@ class Builder:
         result.graph = g
         result.hoppings = hoppings
         result.onsite_hamiltonians = onsite_hamiltonians
+        result._ham_param_map = _ham_param_map
         result.symmetry = self.symmetry
         return result
 
@@ -1613,24 +1642,24 @@ def _raise_user_error(exc, func):
     raise UserCodeError(msg.format(func.__name__)) from exc
 
 
-def discrete_symmetry(self, args=()):
+def discrete_symmetry(self, args=(), *, params=None):
     if self._cons_law is not None:
         eigvals, eigvecs = self._cons_law
-        eigvals = eigvals.tocoo(args)
+        eigvals = eigvals.tocoo(args, params=params)
         if not np.allclose(eigvals.data, np.round(eigvals.data)):
             raise ValueError("Conservation law must have integer eigenvalues.")
         eigvals = np.round(eigvals).tocsr()
         # Avoid appearance of zero eigenvalues
         eigvals = eigvals + 0.5 * sparse.identity(eigvals.shape[0])
         eigvals.eliminate_zeros()
-        eigvecs = eigvecs.tocoo(args)
+        eigvecs = eigvecs.tocoo(args, params=params)
         projectors = [eigvecs.dot(eigvals == val)
                       for val in sorted(np.unique(eigvals.data))]
     else:
         projectors = None
 
     def evaluate(op):
-        return None if op is None else op.tocoo(args)
+        return None if op is None else op.tocoo(args, params=params)
 
     return DiscreteSymmetry(projectors, *(evaluate(symm) for symm in
                                           self._symmetries))
@@ -1651,15 +1680,17 @@ def _transfer_symmetry(syst, builder):
         syst._cons_law = None
 
     elif callable(cons_law):
-        def vals(site, *args):
+        @wraps(cons_law)
+        def vals(site, *args, **kwargs):
             if site.family.norbs == 1:
-                return cons_law(site, *args)
-            return np.diag(np.linalg.eigvalsh(cons_law(site, *args)))
+                return cons_law(site, *args, **kwargs)
+            return np.diag(np.linalg.eigvalsh(cons_law(site, *args, **kwargs)))
 
-        def vecs(site, *args):
+        @wraps(cons_law)
+        def vecs(site, *args, **kwargs):
             if site.family.norbs == 1:
                 return 1
-            return np.linalg.eigh(cons_law(site, *args))[1]
+            return np.linalg.eigh(cons_law(site, *args, **kwargs))[1]
 
         syst._cons_law = operator(vals), operator(vecs)
 
@@ -1687,6 +1718,7 @@ def _transfer_symmetry(syst, builder):
                                                     builder.particle_hole,
                                                     builder.chiral)]
 
+
 class FiniteSystem(system.FiniteSystem):
     """Finalized `Builder` with leads.
 
@@ -1702,14 +1734,25 @@ class FiniteSystem(system.FiniteSystem):
         The inverse of ``sites``; maps from ``i`` to ``sites[i]``.
     """
 
-    def hamiltonian(self, i, j, *args):
+    def hamiltonian(self, i, j, *args, params=None):
+        if args and params:
+            raise TypeError("'args' and 'params' are mutually exclusive.")
         if i == j:
             value = self.onsite_hamiltonians[i]
             if callable(value):
-                try:
-                    value = value(self.sites[i], *args)
-                except Exception as exc:
-                    _raise_user_error(exc, value)
+                if params:
+                    param_names, takes_kwargs = self._ham_param_map[value]
+                    if not takes_kwargs:
+                        params = {pn: params[pn] for pn in param_names}
+                    try:
+                            value = value(self.sites[i], **params)
+                    except Exception as exc:
+                        _raise_user_error(exc, value)
+                else:
+                    try:
+                        value = value(self.sites[i], *args)
+                    except Exception as exc:
+                        _raise_user_error(exc, value)
         else:
             edge_id = self.graph.first_edge_id(i, j)
             value = self.hoppings[edge_id]
@@ -1720,10 +1763,19 @@ class FiniteSystem(system.FiniteSystem):
                 value = self.hoppings[edge_id]
             if callable(value):
                 sites = self.sites
-                try:
-                    value = value(sites[i], sites[j], *args)
-                except Exception as exc:
-                    _raise_user_error(exc, value)
+                if params:
+                    param_names, takes_kwargs = self._ham_param_map[value]
+                    if not takes_kwargs:
+                        params = {pn: params[pn] for pn in param_names}
+                    try:
+                        value = value(sites[i], sites[j], **params)
+                    except Exception as exc:
+                        _raise_user_error(exc, value)
+                else:
+                    try:
+                        value = value(sites[i], sites[j], *args)
+                    except Exception as exc:
+                        _raise_user_error(exc, value)
             if conj:
                 value = herm_conj(value)
         return value
@@ -1759,16 +1811,28 @@ class InfiniteSystem(system.InfiniteSystem):
     hoppings. Each of these three subsequences is individually sorted.
     """
 
-    def hamiltonian(self, i, j, *args):
+    def hamiltonian(self, i, j, *args, params=None):
+        if args and params:
+            raise TypeError("'args' and 'params' are mutually exclusive.")
         if i == j:
             if i >= self.cell_size:
                 i -= self.cell_size
             value = self.onsite_hamiltonians[i]
             if callable(value):
-                try:
-                    value = value(self.symmetry.to_fd(self.sites[i]), *args)
-                except Exception as exc:
-                    _raise_user_error(exc, value)
+                site = self.symmetry.to_fd(self.sites[i])
+                if params:
+                    param_names, takes_kwargs = self._ham_param_map[value]
+                    if not takes_kwargs:
+                        params = {pn: params[pn] for pn in param_names}
+                    try:
+                        value = value(site, **params)
+                    except Exception as exc:
+                        _raise_user_error(exc, value)
+                else:
+                    try:
+                        value = value(site, *args)
+                    except Exception as exc:
+                        _raise_user_error(exc, value)
         else:
             edge_id = self.graph.first_edge_id(i, j)
             value = self.hoppings[edge_id]
@@ -1779,13 +1843,20 @@ class InfiniteSystem(system.InfiniteSystem):
                 value = self.hoppings[edge_id]
             if callable(value):
                 sites = self.sites
-                site_i = sites[i]
-                site_j = sites[j]
-                site_i, site_j = self.symmetry.to_fd(site_i, site_j)
-                try:
-                    value = value(site_i, site_j, *args)
-                except Exception as exc:
-                    _raise_user_error(exc, value)
+                site_i, site_j = self.symmetry.to_fd(sites[i], sites[j])
+                if params:
+                    param_names, takes_kwargs = self._ham_param_map[value]
+                    if not takes_kwargs:
+                        params = {pn: params[pn] for pn in param_names}
+                    try:
+                        value = value(site_i, site_j, **params)
+                    except Exception as exc:
+                        _raise_user_error(exc, value)
+                else:
+                    try:
+                        value = value(site_i, site_j, *args)
+                    except Exception as exc:
+                        _raise_user_error(exc, value)
             if conj:
                 value = herm_conj(value)
         return value
