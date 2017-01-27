@@ -1624,7 +1624,7 @@ def discrete_symmetry(self, args=()):
         eigvals = eigvals + 0.5 * sparse.identity(eigvals.shape[0])
         eigvals.eliminate_zeros()
         eigvecs = eigvecs.tocoo(args)
-        projectors = [(eigvals == val).dot(eigvecs)
+        projectors = [eigvecs.dot(eigvals == val)
                       for val in sorted(np.unique(eigvals.data))]
     else:
         projectors = None

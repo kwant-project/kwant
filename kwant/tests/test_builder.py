@@ -923,6 +923,7 @@ def test_site_pickle():
 def test_discrete_symmetries():
     lat = builder.SimpleSiteFamily(name='ccc', norbs=2)
     lat2 = builder.SimpleSiteFamily(name='bla', norbs=1)
+    lat3 = builder.SimpleSiteFamily(name='dd', norbs=4)
 
     cons_law = {lat: np.diag([1, 2]), lat2: 0}
     syst = builder.Builder(conservation_law=cons_law,
@@ -951,3 +952,15 @@ def test_discrete_symmetries():
     sym = syst.finalized().discrete_symmetry()
     [proj] = sym.projectors
     assert np.allclose(proj.todense(), [[1]])
+
+    syst = kwant.Builder(conservation_law=np.diag([-1, 1, -1, 1]))
+
+    syst[lat3(0)] = np.eye(4)
+
+    sym = syst.finalized().discrete_symmetry()
+    p1 = np.zeros((4, 2))
+    p1[0, 0] = p1[2, 1] = 1
+    assert np.allclose(sym.projectors[0].todense(), p1)
+    p2 = np.zeros((4, 2))
+    p2[1, 0] = p2[3, 1] = 1
+    assert np.allclose(sym.projectors[1].todense(), p2)
