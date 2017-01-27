@@ -5,6 +5,7 @@ stages:
   - test
   - deploy
 
+
 mirror repository:
     stage: build
     only:
@@ -24,6 +25,7 @@ mirror repository:
       - cd $(mktemp -d); git clone --bare $ORIGIN_URL .
       - for REPO in $REPOS; do git push --mirror $REPO; done
 
+
 build package:
   stage: build
   script:
@@ -39,11 +41,13 @@ check whitespace style:
   script: ./check_whitespace
   allow_failure: true
 
+
 check for dependencies installed:
   stage: test
   script:
     - if [ -d .eggs ]; then echo "$(ls -d .eggs/*/) downloaded by build, update build environment" >&2; fi
   allow_failure: true
+
 
 build documentation:
   stage: test
@@ -54,6 +58,7 @@ build documentation:
       - doc/build/html/
     expire_in: 1 month
 
+
 run tests:
   stage: test
   script:
@@ -62,11 +67,31 @@ run tests:
     paths:
       - htmlcov
 
+
 check for broken links in doc:
   stage: test
   script:
     - make -C doc linkcheck
   allow_failure: true
+
+
+create conda package:
+  stage: deploy
+  only:
+    - master
+  image: condaforge/linux-anvil
+  script:
+    - yum install -y devtoolset-2-gcc-gfortran
+    - git clone https://gitlab.kwant-project.org/kwant/conda-recipes.git
+    - conda config --add channels kwant
+    - conda build --python 3.4 conda-recipes/kwant-dev
+    - conda build --python 3.5 conda-recipes/kwant-dev
+    - conda build --python 3.6 conda-recipes/kwant-dev
+    - mv /opt/conda/conda-bld/linux-64/kwant-dev*.tar.bz2 .
+    - anaconda --token=$ANACONDA_TOKEN upload --force kwant-dev*tar.bz2
+  artifacts:
+    paths:
+      - kwant-dev*.tar.bz2
 
 
 upload coverage:
@@ -85,6 +110,7 @@ upload coverage:
     - rsync -rlv --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
   after_script:
     - rm -rf ~/.ssh
+
 
 remove_coverage:
   stage: deploy
@@ -153,6 +179,7 @@ upload dev version docs:
     - rsync -rlv --delete doc/build/html/* kwant@kwant-project.org:doc/dev
   after_script:
     - rm -rf ~/.ssh
+
 
 upload docs of tagged build:
   stage: deploy
