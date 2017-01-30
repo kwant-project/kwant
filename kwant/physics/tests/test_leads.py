@@ -974,10 +974,12 @@ def test_block_relations_cons_PHS():
                                                     offsets[1:]]).T]
         # Need both incident and outgoing stabilized modes to make the
         # comparison between blocks
-        prop_modes = [(vecs[:, :nmodes], vecs[:, nmodes:2*nmodes]),
+        prop_modes = [(vecs[:, :nmodes], vecs[:, nmodes:2*nmodes], 1),
                       (vecslmbdainv[:, :nmodes],
-                       vecslmbdainv[:, nmodes:2*nmodes])]
-        for (in_modes, out_modes) in prop_modes:
+                       vecslmbdainv[:, nmodes:2*nmodes], -1)]
+        # P is antiunitary, such that vecslmbdainv changes sign when
+        # used between blocks to construct modes.
+        for (in_modes, out_modes, vecs_sign) in prop_modes:
             # Coordinates of blocks 2 and 3
             rows2, cols2 = block_rows[2], block_cols[2]
             cols3 = block_cols[3]
@@ -999,7 +1001,8 @@ def test_block_relations_cons_PHS():
                 # they are specified.  Block 2 is computed before block 3, so
                 # block 3 is obtained by particle-hole transforming the modes
                 # of block 2. Check that it is so.
-                assert_almost_equal(P_mat.dot(modes2.conj())[:, perm], modes3)
+                assert_almost_equal(P_mat.dot(modes2.conj())[:, perm], vecs_sign*modes3)
+
 
 def check_symm_ham(h_cell, h_hop, sym_op, trans_sign, sym):
     """Check that the symmetry operator and Hamiltonian are properly defined"""
@@ -1128,10 +1131,12 @@ def test_blocks_symm_complex_projectors():
 
         # Need both incident and outgoing stabilized modes to make the
         # comparison between blocks
-        prop_modes = [(vecs[:, :nmodes], vecs[:, nmodes:2*nmodes]),
+        prop_modes = [(vecs[:, :nmodes], vecs[:, nmodes:2*nmodes], 1),
                       (vecslmbdainv[:, :nmodes],
-                       vecslmbdainv[:, nmodes:2*nmodes])]
-        for (in_modes, out_modes) in prop_modes:
+                       vecslmbdainv[:, nmodes:2*nmodes], trans_sign)]
+        # Symmetries that flip the sign of energy change the sign of
+        # vecslmbdainv when used to construct modes between blocks.
+        for (in_modes, out_modes, vecs_sign) in prop_modes:
             rows0, cols0 = block_rows[0], block_cols[0]
             rows1, cols1 = block_rows[1], block_cols[1]
             # Make sure the blocks are not empty
@@ -1147,9 +1152,9 @@ def test_blocks_symm_complex_projectors():
                 # block 1 is obtained by symmetry transforming the modes of
                 # block 0. Check that it is so.
                 if sym in ['AI', 'AII', 'C', 'D']:
-                    assert_almost_equal(S_t.dot(modes0.conj())[:, perm], modes1)
+                    assert_almost_equal(S_t.dot(modes0.conj())[:, perm], vecs_sign*modes1)
                 elif sym in ['AIII']:
-                    assert_almost_equal(S_t.dot(modes0)[:, perm], modes1)
+                    assert_almost_equal(S_t.dot(modes0)[:, perm], vecs_sign*modes1)
             # If first block is empty, so is the second one.
             else:
                 assert not in_modes[rows1, cols1].size

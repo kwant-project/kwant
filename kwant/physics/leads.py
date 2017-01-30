@@ -75,6 +75,13 @@ if bdiag_broken:  # skip coverage
         return b_mat
 
 
+def lstsq(a, b):
+    """Least squares version that works also with 0-shaped matrices."""
+    if a.shape[1] == 0:
+        return np.empty((0, 0), dtype=np.common_type(a, b))
+    return np.linalg.lstsq(a, b)[0]
+
+
 def nonzero_symm_projection(matrix):
     """Check whether a discrete symmetry relation between two blocks of the
     Hamiltonian vanishes or not.
@@ -755,9 +762,10 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
             if (np.abs(lmbdainv[indx].real - 1) < eps).all():
                 lmbdainv[indx] = 1
             else:
-            # Momenta are the negative arguments of the translation eigenvalues,
-            # as computed below using np.angle. np.angle of -1 is pi, so this
-            # assigns k = -pi to modes with translation eigenvalue -1.
+                # Momenta are the negative arguments of the translation
+                # eigenvalues, as computed below using np.angle. np.angle of -1
+                # is pi, so this assigns k = -pi to modes with translation
+                # eigenvalue -1.
                 lmbdainv[indx] = -1
 
             # Original wave functions
@@ -814,6 +822,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         if chiral is not None and time_reversal is None:
             out_orig = full_psi[:, indx[len(indx)//2:]]
             out = chiral.dot(full_psi[:, indx[:len(indx)//2]])
+            # No least squares below because the modes should be orthogonal.
             rot = out_orig.T.conj().dot(out)
             full_psi[:, indx[len(indx)//2:]] = out
             psi[:, indx[len(indx)//2:]] = psi[:, indx[len(indx)//2:]].dot(rot)
@@ -859,7 +868,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         # reverse the order of the product at the end.
         wf_neg_k = particle_hole.dot(
                 (full_psi[:, :N][:, positive_k]).conj())[:, ::-1]
-        rot = orig_neg_k.T.conj().dot(wf_neg_k)
+        rot = lstsq(orig_neg_k, wf_neg_k)
         full_psi[:, :N][:, positive_k[::-1]] = wf_neg_k
         psi[:, :N][:, positive_k[::-1]] = \
                 psi[:, :N][:, positive_k[::-1]].dot(rot)
@@ -874,7 +883,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         # Reverse order at the end to match momenta of opposite sign.
         wf_neg_k = particle_hole.dot(
                 full_psi[:, N:][:, positive_k].conj())[:, ::-1]
-        rot = orig_neg_k.T.conj().dot(wf_neg_k)
+        rot = lstsq(orig_neg_k, wf_neg_k)
         full_psi[:, N:][:, positive_k[::-1]] = wf_neg_k
         psi[:, N:][:, positive_k[::-1]] = \
                 psi[:, N:][:, positive_k[::-1]].dot(rot)
@@ -886,7 +895,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         # of propagating modes, not either left or right movers.
         out_orig = full_psi[:, nmodes//2:]
         out = time_reversal.dot(full_psi[:, :nmodes//2].conj())
-        rot = out_orig.T.conj().dot(out)
+        rot = lstsq(out_orig, out)
         full_psi[:, nmodes//2:] = out
         psi[:, nmodes//2:] = psi[:, nmodes//2:].dot(rot)
 
@@ -954,29 +963,38 @@ def transform_modes(modes_data, unitary=None, time_reversal=None,
 
     """
     wave_functions, momenta, velocities, vecs, vecslmbdainv, v = modes_data
+
+    # Copy to not overwrite modes from previous blocks
+    wave_functions = wave_functions.copy()
+    momenta = momenta.copy()
+    velocities = velocities.copy()
+    vecs = vecs.copy()
+    vecslmbdainv = vecslmbdainv.copy()
+    v = v.copy()
+
     nmodes = wave_functions.shape[1] // 2
 
     if unitary is not None:
         perm = np.arange(2*nmodes)
         conj = False
-        flip_velocity = False
+        flip_energy = False
     elif time_reversal is not None:
         unitary = time_reversal
         perm = np.arange(2*nmodes)[::-1]
         conj = True
-        flip_velocity = True
+        flip_energy = False
     elif particle_hole is not None:
         unitary = particle_hole
         perm = ((-1-np.arange(2*nmodes)) % nmodes +
                 nmodes * (np.arange(2*nmodes) // nmodes))
         conj = True
-        flip_velocity = False
+        flip_energy = True
     elif chiral is not None:
         unitary = chiral
         perm = (np.arange(2*nmodes) % nmodes +
                 nmodes * (np.arange(2*nmodes) < nmodes))
         conj = False
-        flip_velocity = True
+        flip_energy = True
     else:  # skip coverage
         raise ValueError("No relation between blocks was provided.")
 
@@ -987,17 +1005,18 @@ def transform_modes(modes_data, unitary=None, time_reversal=None,
         wave_functions = wave_functions.conj()
         v = v.conj()
 
+    if flip_energy:
+        vecslmbdainv *= -1
+
+    if flip_energy != conj:
+        velocities *= -1
+
     wave_functions = unitary.dot(wave_functions)[:, perm]
     v = unitary.dot(v)
-    # Copy to not overwrite modes from previous blocks
-    vecs = vecs.copy()
     vecs[:, :2*nmodes] = vecs[:, perm]
-    vecslmbdainv = vecslmbdainv.copy()
     vecslmbdainv[:, :2*nmodes] = vecslmbdainv[:, perm]
     velocities = velocities[perm]
     momenta = momenta[perm]
-    if flip_velocity:
-        velocities *= -1
     return (wave_functions, momenta, velocities, vecs, vecslmbdainv, v)
 
 
