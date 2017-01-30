@@ -10,9 +10,11 @@
 import numpy as np
 import scipy.linalg as la
 from scipy import sparse
+from scipy.sparse import csr_matrix as csr
 from pytest import raises
 from kwant.physics import DiscreteSymmetry
 import kwant
+from kwant._common import ensure_rng
 
 def test_projectors():
     """Test setting projectors"""
@@ -165,3 +167,40 @@ def test_validate():
     sym = DiscreteSymmetry(chiral=csr(np.diag((1, -1))))
     assert sym.validate(np.eye(2)) == 'Chiral'
     assert sym.validate(1 - np.eye(2)) is None
+
+
+def random_onsite_hop(n, rng=0):
+    rng = ensure_rng(rng)
+    onsite = rng.randn(n, n) + 1j * rng.randn(n, n)
+    onsite = onsite + onsite.T.conj()
+    hop = rng.rand(n, n) + 1j * rng.rand(n, n)
+    return onsite, hop
+
+
+def test_validate_commutator():
+    symm_class = ['AI', 'AII', 'D', 'C', 'AIII']
+    n = 10
+    rng = 10
+    for sym in symm_class:
+        # Random matrix in symmetry class
+        h = kwant.rmt.gaussian(n, sym, rng=rng)
+        if kwant.rmt.p(sym):
+            p_mat = np.array(kwant.rmt.h_p_matrix[sym])
+            p_mat = csr(np.kron(np.identity(n // len(p_mat)), p_mat))
+        else:
+            p_mat = None
+        if kwant.rmt.t(sym):
+            t_mat = np.array(kwant.rmt.h_t_matrix[sym])
+            t_mat = csr(np.kron(np.identity(n // len(t_mat)), t_mat))
+        else:
+            t_mat = None
+        if kwant.rmt.c(sym):
+            c_mat = csr(np.kron(np.identity(n // 2), np.diag([1, -1])))
+        else:
+            c_mat = None
+        disc_symm = DiscreteSymmetry(particle_hole=p_mat,
+                                     time_reversal=t_mat,
+                                     chiral=c_mat)
+        assert disc_symm.validate(h) == None
+        a = random_onsite_hop(n, rng=rng)[1]
+        assert disc_symm.validate(a) in ['Time reversal', 'Particle-hole', 'Chiral']
