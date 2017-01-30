@@ -18,6 +18,17 @@ import kwant
 modes_se = leads.selfenergy
 
 
+def current_conserving(stabilized, info=None):
+    vecs, vecsl = stabilized.vecs, stabilized.vecslmbdainv
+    n = stabilized.nmodes
+    current = 1j * vecs.T.conj().dot(vecsl)
+    current = current + current.T.conj()
+    should_be = np.zeros_like(current)
+    should_be[:2*n, :2*n] = np.diag(n * [1] + n * [-1])
+    if not np.allclose(current, should_be):
+        raise AssertionError(np.round(current, 4), n, info)
+
+
 def h_cell_s_func(t, w, e):
     h = (4 * t - e) * np.identity(w)
     h.flat[1 :: w + 1] = -t
@@ -62,17 +73,20 @@ def test_regular_fully_degenerate():
     projectors = [sparse.csr_matrix(i) for i in [conserved[:, :w],
                                                  conserved[:, w:]]]
     modes2 = leads.modes(h_cell, h_hop, projectors=projectors)
+    current_conserving(modes2[1])
     assert_almost_equal(g, modes2[1].selfenergy())
 
     trs = sparse.identity(2*w)
     modes3 = leads.modes(h_cell, h_hop, projectors=projectors,
                          time_reversal=trs)
+    current_conserving(modes3[1])
     assert_almost_equal(g, modes3[1].selfenergy())
 
     phs = np.eye(2*w, 2*w, w) + np.eye(2*w, 2*w, -w)
 
     modes4 = leads.modes(h_cell, h_hop, projectors=projectors,
                          time_reversal=trs, particle_hole=phs)
+    current_conserving(modes4[1])
     assert_almost_equal(g, modes4[1].selfenergy())
 
 def test_regular_degenerate_with_crossing():
@@ -241,6 +255,7 @@ def test_modes():
     k = np.arccos(-h / (2 * t))
     v = 2 * t * np.sin(k)
     prop, stab = leads.modes(np.array([[h]]), np.array([[t]]))
+    current_conserving(stab)
     assert stab.nmodes == 1
     assert stab.sqrt_hop[0] == np.sqrt(np.linalg.norm(t))
     np.testing.assert_almost_equal(prop.velocities, [-v, v])
@@ -275,7 +290,7 @@ def check_equivalence(h, t, n, sym='', particle_hole=None, chiral=None,
         result = leads.modes(h, t, stabilization=algo, chiral=chiral,
                              particle_hole=particle_hole,
                              time_reversal=time_reversal)[1]
-
+        current_conserving(result, (sym, algo, n))
         vecs, vecslmbdainv = result.vecs, result.vecslmbdainv
 
         # Bring the calculated vectors to real space
@@ -315,33 +330,33 @@ def test_symm_algorithm_equivalence():
     """Test different stabilization methods in the computation of modes,
     in the presence and/or absence of the discrete symmetries."""
     rng = ensure_rng(400)
-    for n in (12, 20, 40):
-        for sym in kwant.rmt.sym_list:
-            # Random onsite and hopping matrices in symmetry class
-            h_cell = kwant.rmt.gaussian(n, sym, rng=rng)
-            # Hopping is an offdiagonal block of a Hamiltonian. We rescale it
-            # to ensure that there are modes at the Fermi level.
-            h_hop = 10 * kwant.rmt.gaussian(2*n, sym, rng=rng)[:n, n:]
+    n = 8
+    for sym in kwant.rmt.sym_list:
+        # Random onsite and hopping matrices in symmetry class
+        h_cell = kwant.rmt.gaussian(n, sym, rng=rng)
+        # Hopping is an offdiagonal block of a Hamiltonian. We rescale it
+        # to ensure that there are modes at the Fermi level.
+        h_hop = 10 * kwant.rmt.gaussian(2*n, sym, rng=rng)[:n, n:]
 
-            if kwant.rmt.p(sym):
-                p_mat = np.array(kwant.rmt.h_p_matrix[sym])
-                p_mat = np.kron(np.identity(n // len(p_mat)), p_mat)
-            else:
-                p_mat = None
+        if kwant.rmt.p(sym):
+            p_mat = np.array(kwant.rmt.h_p_matrix[sym])
+            p_mat = np.kron(np.identity(n // len(p_mat)), p_mat)
+        else:
+            p_mat = None
 
-            if kwant.rmt.t(sym):
-                t_mat = np.array(kwant.rmt.h_t_matrix[sym])
-                t_mat = np.kron(np.identity(n // len(t_mat)), t_mat)
-            else:
-                t_mat = None
+        if kwant.rmt.t(sym):
+            t_mat = np.array(kwant.rmt.h_t_matrix[sym])
+            t_mat = np.kron(np.identity(n // len(t_mat)), t_mat)
+        else:
+            t_mat = None
 
-            if kwant.rmt.c(sym):
-                c_mat = np.kron(np.identity(n // 2), np.diag([1, -1]))
-            else:
-                c_mat = None
+        if kwant.rmt.c(sym):
+            c_mat = np.kron(np.identity(n // 2), np.diag([1, -1]))
+        else:
+            c_mat = None
 
-            check_equivalence(h_cell, h_hop, n, sym=sym, particle_hole=p_mat,
-                              chiral=c_mat, time_reversal=t_mat)
+        check_equivalence(h_cell, h_hop, n, sym=sym, particle_hole=p_mat,
+                          chiral=c_mat, time_reversal=t_mat)
 
 
 def test_for_all_evs_equal():
@@ -351,7 +366,7 @@ def test_for_all_evs_equal():
     hopping = np.array([[0.0], [-1.0]], dtype=complex)
 
     modes = leads.modes(onsite, hopping)[1]
-
+    current_conserving(modes)
     assert modes.vecs.shape == (1, 2)
     assert modes.vecslmbdainv.shape == (1, 2)
     assert modes.nmodes == 1
@@ -463,6 +478,7 @@ def test_PHS_TRIM_degenerate_ordering():
     pmat = np.eye(sum(dims))
     onsite = np.zeros(hop.shape, dtype=complex)
     prop, stab = leads.modes(onsite, hop, particle_hole=pmat)
+    current_conserving(stab)
     assert np.all([np.any(momentum - np.array([0, -np.pi])) for momentum in
                    prop.momenta])
     assert np.all([np.allclose(wf, pmat.dot(wf.conj())) for wf in
@@ -485,6 +501,7 @@ def test_PHS_TRIM_degenerate_ordering():
 
     onsite = np.zeros(hop.shape, dtype=complex)
     prop, stab = leads.modes(onsite, hop, particle_hole=pmat)
+    current_conserving(stab)
     # By design, all momenta are either 0 or -pi.
     assert np.all([np.any(momentum - np.array([0, -np.pi])) for momentum in
                    prop.momenta])
@@ -537,6 +554,7 @@ def test_modes_symmetries():
                                                  particle_hole=p_mat,
                                                  time_reversal=t_mat,
                                                  chiral=c_mat)
+            current_conserving(stab_modes)
             wave_functions = prop_modes.wave_functions
             momenta = prop_modes.momenta
             nmodes = stab_modes.nmodes
@@ -599,6 +617,7 @@ def test_chiral_symm():
         assert_almost_equal(H_hop.dot(C) + C.dot(H_hop), 0)
         prop_modes, stab_modes = kwant.physics.leads.modes(H_cell, H_hop,
                                                            chiral=C)
+        current_conserving(stab_modes)
         wave_functions = prop_modes.wave_functions
         nmodes = stab_modes.nmodes
         assert_almost_equal(wave_functions[:, nmodes:],
@@ -718,8 +737,11 @@ def test_cons_singular_hopping():
     projectors = [sparse.csr_matrix(p) for p in projectors]
     # Without projectors
     modes1 = kwant.physics.leads.modes(H_cell_t, H_hop_t)
+    current_conserving(modes1[1])
     # With projectors
-    modes2 = kwant.physics.leads.modes(H_cell_t, H_hop_t, projectors=projectors)
+    modes2 = kwant.physics.leads.modes(H_cell_t, H_hop_t,
+                                       projectors=projectors)
+    current_conserving(modes2[1])
     assert_almost_equal(modes1[1].selfenergy(), modes2[1].selfenergy())
 
 def test_cons_rectangular_hopping():
@@ -740,8 +762,10 @@ def test_cons_rectangular_hopping():
     projectors = [sparse.csr_matrix(p) for p in projectors]
     # Without projectors
     modes1 = kwant.physics.leads.modes(H_cell, H_hop)
+    current_conserving(modes1[1])
     # With projectors
     modes2 = kwant.physics.leads.modes(H_cell, H_hop, projectors=projectors)
+    current_conserving(modes2[1])
     assert_almost_equal(modes1[1].selfenergy(), modes2[1].selfenergy())
 
 def check_bdiag_modes(modes, block_rows, block_cols):
@@ -762,7 +786,7 @@ def check_bdiag_modes(modes, block_rows, block_cols):
 def test_cons_blocks_sizes():
     # Hamiltonian with a conservation law consisting of three blocks of
     # different size.
-    n = 4
+    n = 8
     # Three blocks of different sizes.
     cs = np.diag(n*[-1] + 2*n*[1] + 3*n*[2])
     # Onsite and hopping
@@ -804,8 +828,10 @@ def test_cons_blocks_sizes():
     projectors = [sparse.csr_matrix(p) for p in projectors]
     # Modes without projectors
     modes1 = leads.modes(hc_t, hh_t)
+    current_conserving(modes1[1])
     # With projectors
     modes2 = leads.modes(hc_t, hh_t, projectors=projectors)
+    current_conserving(modes2[1])
     assert_almost_equal(modes1[1].selfenergy(), modes2[1].selfenergy())
 
     ########
@@ -859,6 +885,7 @@ def check_identical_modes(modes, block_rows, block_cols):
             # If one is empty, so is the other one.
             assert not vs[rows1, cols1].size
 
+
 def test_block_relations_cons_PHS():
     # Four blocks. Two identical blocks, each with particle-hole symmetry. Then
     # two blocks, related by particle-hole symmetry, but neither possessing it
@@ -866,7 +893,7 @@ def test_block_relations_cons_PHS():
     # law relating the first two, and a discrete symmetry relating the latter
     # two.  Also check the case when the latter two blocks have singular
     # hopping.
-    n = 20
+    n = 8
     rng = ensure_rng(99)
     sym = 'C'  # Particle-hole squares to -1
     # Onsite and hopping blocks with particle-hole symm
@@ -900,11 +927,12 @@ def test_block_relations_cons_PHS():
     projectors = [sparse.csr_matrix(p) for p in projectors]
 
     # Cover both singular and nonsingular hopping
-    Ham = [(H_cell, H_hop), (H_cell, H_hop_s)]
-    for (H_cell, H_hop) in Ham:
+    ham = [(H_cell, H_hop), (H_cell, H_hop_s)]
+    for (H_cell, H_hop) in ham:
         prop, stab = kwant.physics.leads.modes(H_cell, H_hop,
                                                particle_hole=P_mat,
                                                projectors=projectors)
+        current_conserving(stab)
         nmodes = stab.nmodes
         block_nmodes = prop.block_nmodes
         vecs, vecslmbdainv = stab.vecs, stab.vecslmbdainv
@@ -993,12 +1021,13 @@ def check_symm_ham(h_cell, h_hop, sym_op, trans_sign, sym):
         assert_almost_equal(sym_op.dot(sym_op), np.eye(sym_op.shape[0])) or \
                np.allclose(sym_op.dot(sym_op), -np.eye(sym_op.shape[0]))
 
+
 def test_blocks_symm_complex_projectors():
     # Two blocks of equal size, related by any one of the discrete
     # symmetries. Each block by itself has no symmetry. The system is
     # transformed with a random unitary, such that the projectors onto the
     # blocks are complex.
-    n = 40
+    n = 8
     rng = ensure_rng(27)
     # Symmetry class, sign of H under symmetry transformation.
     sym_info = [('AI', 1), ('AII', 1), ('D', -1),
@@ -1071,6 +1100,7 @@ def test_blocks_symm_complex_projectors():
             prop, stab = kwant.physics.leads.modes(H_cell_t, H_hop_t,
                                                    chiral=S_t,
                                                    projectors=projectors)
+        current_conserving(stab)
 
         nmodes = stab.nmodes
         block_nmodes = prop.block_nmodes
