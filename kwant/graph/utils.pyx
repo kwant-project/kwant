@@ -216,7 +216,7 @@ def induced_subgraph(CGraph gr, select,
 
     cdef np.ndarray[gint, ndim=1] indextab
     cdef CGraph_malloc subgr
-    cdef np.ndarray[gint, ndim=1] sub_edge_weights
+    cdef np.ndarray[gint, ndim=1] sub_edge_weights = None
     cdef gint sub_num_nodes, sub_num_edges
     cdef gint i, iedge, edge_count
 

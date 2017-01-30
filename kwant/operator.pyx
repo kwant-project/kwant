@@ -684,7 +684,10 @@ cdef class Density(_LocalOperator):
             data = np.asarray(self.onsite).flatten()
             data = np.resize(data, [len(data) * n_blocks])
         else:
-            onsite_matrix = self._bound_onsite or self._eval_onsites(args)
+            if self._bound_onsite is not None:
+                onsite_matrix = self._bound_onsite
+            else:
+                onsite_matrix = self._eval_onsites(args)
             data = onsite_matrix.data
             offsets = np.asarray(onsite_matrix.block_offsets)
             shapes = np.asarray(onsite_matrix.block_shapes)

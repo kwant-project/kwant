@@ -116,7 +116,7 @@ void Partitioner::bisectFirst(std::vector<int> &_left, std::vector<int> &_right,
   if(slices<2) return;
 
   //Find the maximum number of edges (needed or Fiduccia-Mattheyses)
-  int max_edges=0;
+  size_t max_edges=0;
 
   for(size_t ivertex=0; ivertex < parts[0].size(); ivertex++) {
     if(graph.getEdges(parts[0][ivertex]).size() > max_edges) {
