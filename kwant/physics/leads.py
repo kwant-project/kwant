@@ -552,92 +552,64 @@ def phs_symmetrization(wfs, particle_hole):
         # If P^2 = 1, there is no need to sort the modes further.
         TRIM_sort = np.zeros((wfs.shape[1],), dtype=int)
     else:
-        # We start by trying to construct explicit particle-hole partners,
-        # and then using QR to make then orthonormal. If this does not yield
-        # correct particle-hole symmetric TRIM modes, we use a different
-        # algorithm.
-        ### Try the first algorithm ###
-        # Iterate over pairs of wave function vectors and make them
+        # P^2 = -1.
+        # Iterate over wave functions to construct
         # particle-hole partners.
-        new_wfs = np.empty(wfs.shape, dtype=complex)
-        new_wfs[:, ::2] = wfs[:, ::2] + Pdot(wfs[:, 1::2])
-        new_wfs[:, 1::2] = Pdot(wfs[:, ::2]) - wfs[:, 1::2]
-        assert np.allclose(Pdot(new_wfs[:, ::2]), new_wfs[:, 1::2])
-        # Orthonormalize the modes. This usually gives pairs of orthonormal
-        # modes that are particle-hole partners up to a sign.
-        wf_mat = la.qr(new_wfs, mode='economic', pivoting=True)[0]
-        # Pick the correct sign to have particle-hole partners.
-        new_wfs[:, 1::2] = np.array([odd_col if np.allclose(
-            odd_col, Pdot(even_col)) else -odd_col for even_col, odd_col
-            in zip(wf_mat[:, ::2].T, wf_mat[:, 1::2].T)]).T
-        new_wfs[:, ::2] = wf_mat[:, ::2]
-        # At this stage, the modes within this subspace are properly ordered by
-        # particle-hole symmetry. Store the ordering in an array of indices
-        # that is also returned.
-        TRIM_sort = np.array(range(new_wfs.shape[1]))
-        ###############################
-        # We now check if the modes obey particle-hole symmetry. If they do, the
-        # QR factorization was sufficient, and we're done.
-        if not np.allclose(new_wfs[:, 1::2], Pdot(new_wfs[:, ::2])):
-            # If the modes are not particle-hole symmetric, we use a more
-            # expensive algorithm that definitely works.
-            ### Use the second algorithm ###
-            new_wfs = []
-            # Iterate over wave functions to construct
-            # particle-hole partners.
-            # The number of modes. This is always an even number >=2.
-            N_modes = wfs.shape[1]
-            # If there are only two modes in this subspace, they are orthogonal
-            # so we replace the second one with the P applied to the first one.
-            if N_modes == 2:
+        new_wfs = []
+        # The number of modes. This is always an even number >=2.
+        N_modes = wfs.shape[1]
+        # If there are only two modes in this subspace, they are orthogonal
+        # so we replace the second one with the P applied to the first one.
+        if N_modes == 2:
+            wf = wfs[:,0]
+            # Store psi_n and P psi_n.
+            new_wfs.append(wf)
+            new_wfs.append(Pdot(wf))
+        # If there are more than two modes, iterate over wave functions
+        # and construct their particle-hole partners one by one.
+        else:
+            # We construct pairs of modes that are particle-hole partners.
+            # Need to iterate over all pairs except the final one.
+            iterations = range((N_modes-2)//2)
+            for i in iterations:
+                # Take a mode psi_n from the basis - the first column
+                # of the matrix of remaining modes.
                 wf = wfs[:,0]
                 # Store psi_n and P psi_n.
                 new_wfs.append(wf)
-                new_wfs.append(Pdot(wf))
-            # If there are more than two modes, iterate over wave functions
-            # and construct their particle-hole partners one by one.
-            else:
-                # We construct pairs of modes that are particle-hole partners.
-                # Need to iterate over all pairs except the final one.
-                iterations = range((N_modes-2)//2)
-                for i in iterations:
-                    # Take a mode psi_n from the basis - the first column
-                    # of the matrix of remaining modes.
+                P_wf = Pdot(wf)
+                new_wfs.append(P_wf)
+                # Remove psi_n and P psi_n from the basis matrix of modes.
+                # First remove psi_n.
+                wfs = wfs[:,1:]
+                # Now we project the remaining modes onto the orthogonal
+                # complement of P psi_n. Projector:
+                Projector = wfs.dot(wfs.T.conj()) - \
+                            np.outer(P_wf, P_wf.T.conj())
+                # After the projection, the mode matrix is rank deficient -
+                # the span of the column space has dimension one less than
+                # the number of columns.
+                wfs = Projector.dot(wfs)
+                wfs = la.qr(wfs, mode='economic', pivoting=True)[0]
+                # Remove the redundant column.
+                wfs = wfs[:, :-1]
+                # If this is the final iteration, we only have two modes
+                # left and can construct particle-hole partners without
+                # the projection.
+                if i == iterations[-1]:
+                    assert wfs.shape[1] == 2
                     wf = wfs[:,0]
                     # Store psi_n and P psi_n.
                     new_wfs.append(wf)
                     P_wf = Pdot(wf)
                     new_wfs.append(P_wf)
-                    # Remove psi_n and P psi_n from the basis matrix of modes.
-                    # First remove psi_n.
-                    wfs = wfs[:,1:]
-                    # Now we project the remaining modes onto the orthogonal
-                    # complement of P psi_n. Projector:
-                    Projector = wfs.dot(wfs.T.conj()) - \
-                                np.outer(P_wf, P_wf.T.conj())
-                    # After the projection, the mode matrix is rank deficient -
-                    # the span of the column space has dimension one less than
-                    # the number of columns.
-                    wfs = Projector.dot(wfs)
-                    wfs = la.qr(wfs, mode='economic', pivoting=True)[0]
-                    # Remove the redundant column.
-                    wfs = wfs[:, :-1]
-                    # If this is the final iteration, we only have two modes
-                    # left and can construct particle-hole partners without
-                    # the projection.
-                    if i == iterations[-1]:
-                        assert wfs.shape[1] == 2
-                        wf = wfs[:,0]
-                        # Store psi_n and P psi_n.
-                        new_wfs.append(wf)
-                        P_wf = Pdot(wf)
-                        new_wfs.append(P_wf)
-                    assert np.allclose(wfs.T.conj().dot(wfs),
-                                       np.eye(wfs.shape[1]))
-            new_wfs = np.hstack([col.reshape(len(col), 1)/npl.norm(col) for
-                                 col in new_wfs])
-            assert np.allclose(new_wfs[:, 1::2], Pdot(new_wfs[:, ::2]))
-            ############################
+                assert np.allclose(wfs.T.conj().dot(wfs),
+                                      np.eye(wfs.shape[1]))
+        new_wfs = np.hstack([col.reshape(len(col), 1)/npl.norm(col) for
+                             col in new_wfs])
+        assert np.allclose(new_wfs[:, 1::2], Pdot(new_wfs[:, ::2]))
+        # Store sort ordering in this subspace of modes
+        TRIM_sort = np.arange(new_wfs.shape[1])
     assert np.allclose(new_wfs.T.conj().dot(new_wfs), np.eye(new_wfs.shape[1]))
     return new_wfs, TRIM_sort
 

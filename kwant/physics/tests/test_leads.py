@@ -470,7 +470,7 @@ def test_PHS_TRIM_degenerate_ordering():
 
     # P squares to 1.
     rng = ensure_rng(42)
-    dims = (4, 10, 20)
+    dims = (4, 8, 12)
     ts = (1.0, 1.7, 13.8)
     rand_hop = 1j*(0.1+rng.random_sample())
     hop = la.block_diag(*[t*rand_hop*np.eye(dim) for t, dim in zip(ts, dims)])
@@ -485,7 +485,7 @@ def test_PHS_TRIM_degenerate_ordering():
                    prop.wave_functions.T])
 
     # P squares to -1
-    dims = (1, 4, 40)
+    dims = (1, 4, 10)
     ts = (1.0, 17.2, 13.4)
 
     hop_mat = np.kron(sz, 1j * (0.1 + rng.random_sample()) * np.eye(2))
