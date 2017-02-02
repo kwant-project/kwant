@@ -14,6 +14,7 @@ The principal developers of Kwant are
 
 Contributors to Kwant include
 
+* Jörg Behrmann (FU Berlin)
 * Mathieu Istas (INAC/CEA Grenoble)
 * Daniel Jaschke (INAC/CEA Grenoble)
 * Bas Nijholt (TU Delft)
