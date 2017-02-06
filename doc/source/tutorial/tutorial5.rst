@@ -1,5 +1,9 @@
-Superconductors: orbital vs. lattice degrees of freedom
--------------------------------------------------------
+Superconductors: orbital degrees of freedom, conservation laws and symmetries
+-----------------------------------------------------------------------------
+
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/superconductor.py <../../../tutorial/superconductor.py>`
 
 This example deals with superconductivity on the level of the
 Bogoliubov-de Gennes (BdG) equation. In this framework, the Hamiltonian
@@ -7,7 +11,10 @@ is given as
 
 .. math::
 
-    H = \begin{pmatrix} H_0 - \mu& \Delta\\ \Delta^\dagger&\mu-\mathcal{T}H\mathcal{T}^{-1}\end{pmatrix}
+    H = \begin{pmatrix}
+            H_0 - \mu      & \Delta \\
+            \Delta^\dagger & \mu - \mathcal{T} H_0 \mathcal{T}^{-1}
+        \end{pmatrix}
 
 where :math:`H_0` is the Hamiltonian of the system without
 superconductivity, :math:`\mu` the chemical potential, :math:`\Delta`
@@ -15,141 +22,133 @@ the superconducting order parameter, and :math:`\mathcal{T}`
 the time-reversal operator. The BdG Hamiltonian introduces
 electron and hole degrees of freedom (an artificial doubling -
 be aware of the fact that electron and hole excitations
-are related!), which we now implement in Kwant.
+are related!), which we will need to include in our model with Kwant.
 
 For this we restrict ourselves to a simple spinless system without
 magnetic field, so that :math:`\Delta` is just a number (which we
-choose real), and :math:`\mathcal{T}H\mathcal{T}^{-1}=H_0^*=H_0`.
+choose real), and :math:`\mathcal{T}H_0\mathcal{T}^{-1}=H_0^*=H_0`.
+Furthermore, note that the Hamiltonian has particle-hole symmetry
+:math:`\mathcal{P}`, i. e. :math:`\mathcal{P}H\mathcal{P}^{-1}=-H`.
 
-"Orbital description": using matrices
-.....................................
-
-.. seealso::
-    The complete source code of this example can be found in
-    :download:`tutorial/superconductor_band_structure.py <../../../tutorial/superconductor_band_structure.py>`
-
-We begin by computing the band structure of a superconducting wire.
-The most natural way to implement the BdG Hamiltonian is by using a
-2x2 matrix structure for all Hamiltonian matrix elements:
-
-.. literalinclude:: superconductor_band_structure.py
-    :start-after: #HIDDEN_BEGIN_nbvn
-    :end-before: #HIDDEN_END_nbvn
-
-As you see, the example is syntactically equivalent to our
-:ref:`spin example <tutorial_spinorbit>`, the only difference
-is now that the Pauli matrices act in electron-hole space.
-
-Computing the band structure then yields the result
-
-.. image:: ../images/superconductor_band_structure_result.*
-
-We clearly observe the superconducting gap in the spectrum. That was easy,
-wasn't it?
-
-
-"Lattice description": using different lattices
-...............................................
-
-.. seealso::
-    The complete source code of this example can be found in
-    :download:`tutorial/superconductor_transport.py <../../../tutorial/superconductor_transport.py>`
-
-While it seems most natural to implement the BdG Hamiltonian
-using a 2x2 matrix structure for the matrix elements of the Hamiltonian,
-we run into a problem when we want to compute electronic transport in
-a system consisting of a normal and a superconducting lead:
-Since electrons and holes carry charge with opposite sign, we need to
-separate electron and hole degrees of freedom in the scattering matrix.
+Care must be taken when transport calculations are done with
+the BdG equation. Electrons and holes carry charge with
+opposite sign, such that it is necessary to separate the electron
+and hole degrees of freedom in the scattering matrix.
 In particular, the conductance of a N-S-junction is given as
 
 .. math::
 
     G = \frac{e^2}{h} (N - R_\text{ee} + R_\text{he})\,,
 
-where :math:`N` is the number of channels in the normal lead, and
+where :math:`N` is the number of electron channels in the normal lead, and
 :math:`R_\text{ee}` the total probability of reflection from electrons
 to electrons in the normal lead, and :math:`R_\text{eh}` the total
 probability of reflection from electrons to holes in the normal
-lead. However, the current version of Kwant does not allow for an easy
-and elegant partitioning of the scattering matrix in these two degrees
-of freedom [#]_.
+lead. Fortunately, in Kwant it is straightforward
+to partition the scattering matrix in these two degrees
+of freedom.
 
-In the following, we will circumvent this problem by introducing
-separate "leads" for electrons and holes, making use of different
-lattices. The system we consider consists of a normal lead on the left,
+Let us consider a system that consists of a normal lead on the left,
 a superconductor on the right, and a tunnel barrier in between:
 
 .. image:: ../images/superconductor_transport_sketch.*
 
-As already mentioned above, we begin by introducing two different
-square lattices representing electron and hole degrees of freedom:
+We implement the BdG Hamiltonian in Kwant using a 2x2 matrix structure
+for all Hamiltonian matrix elements, as we did
+previously in the :ref:`spin example <tutorial_spinorbit>`. We declare
+the square lattice and construct the scattering region with the following:
 
-.. literalinclude:: superconductor_transport.py
-    :start-after: #HIDDEN_BEGIN_zuuw
-    :end-before: #HIDDEN_END_zuuw
+.. literalinclude:: superconductor.py
+    :start-after: #HIDDEN_BEGIN_nbvn
+    :end-before: #HIDDEN_END_nbvn
 
-Note that since these two lattices have identical spatial parameters, the
-argument ``name`` to `~kwant.lattice.square` has to be different.
-Any diagonal entry (kinetic energy, potentials, ...) in the BdG
-Hamiltonian corresponds to on-site energies or hoppings within
-the *same* lattice, whereas any off-diagonal entry (essentially, the
-superconducting order parameter :math:`\Delta`) corresponds
-to a hopping between *different* lattices:
-
-.. literalinclude:: superconductor_transport.py
-    :start-after: #HIDDEN_BEGIN_pqmp
-    :end-before: #HIDDEN_END_pqmp
-
+Note the new argument ``norbs`` to `~kwant.lattice.square`. This is
+the number of orbitals per site in the discretized BdG Hamiltonian - of course,
+``norbs = 2``, since each site has one electron orbital and one hole orbital.
+It is necessary to specify ``norbs`` here, such that we may later separate the
+scattering matrix into electrons and holes. Aside from this, creating the system
+is syntactically equivalent to :ref:`spin example <tutorial_spinorbit>`.
+The only difference is that the Pauli matrices now act in electron-hole space.
 Note that the tunnel barrier is added by overwriting previously set
 on-site matrix elements.
 
-Note further, that in the code above, the superconducting order
-parameter is nonzero only in a part of the scattering region.
-Consequently, we have added hoppings between electron and hole
-lattices only in this region, they remain uncoupled in the normal
-part. We use this fact to attach purely electron and hole leads
-(comprised of only electron *or* hole lattices) to the
-system:
+The superconducting order parameter is nonzero only in a part of the
+scattering region - the part to the right of the tunnel barrier. Thus,
+the scattering region is split into a superconducting part (the right
+side of it), and a normal part where the pairing is zero (the left side
+of it). The next step towards computing conductance is to attach leads.
+Let's attach two leads: a normal one to the left end, and a superconducting
+one to the right end. Starting with the left lead, we have:
 
-.. literalinclude:: superconductor_transport.py
+.. literalinclude:: superconductor.py
     :start-after: #HIDDEN_BEGIN_ttth
     :end-before: #HIDDEN_END_ttth
 
-This separation into two different leads allows us then later to compute the
-reflection probablities between electrons and holes explicitely.
+Note the two new new arguments in `~kwant.builder.Builder`, ``conservation_law``
+and ``particle_hole``. For the purpose of computing conductance, ``conservation_law``
+is the essential one, as it allows us to separate the electron and hole degrees of
+freedom. Note that it is not necessary to specify ``particle_hole``
+in `~kwant.builder.Builder` to correctly compute the conductance in this example.
+We will discuss the argument ``particle_hole`` later on. First, let us
+discuss ``conservation_law`` in more detail.
 
-On the superconducting side, we cannot do this separation, and can only define a
-single lead coupling electrons and holes (The `+=` operator adds all the sites
-and hoppings present in one builder to another):
+Observe that electrons and holes are uncoupled in the left (normal) lead, since
+the superconducting order parameter that couples them is zero.
+Consequently, we may view the electron and hole degrees of freedom as being
+conserved, and may therefore separate them in the Hamiltonian.
 
-.. literalinclude:: superconductor_transport.py
-    :start-after: #HIDDEN_BEGIN_mhiw
-    :end-before: #HIDDEN_END_mhiw
+In more technical terms, the conservation law implies that the Hamiltonian
+can be block diagonalized into uncoupled electron and hole blocks. Since
+the blocks are uncoupled, we can construct scattering states in each block
+independently. Of course, any scattering state from the electron (hole) block
+is entirely electron (hole) like. As a result, the scattering matrix separates
+into blocks that describe the scattering between different types of carriers,
+such as electron to electron, hole to electron, et cetera.
 
-We now have on the left side two leads that are sitting in the same
-spatial position, but in different lattice spaces. This ensures that
-we can still attach all leads as before:
+As we saw above, conservation laws in Kwant are specified with the
+``conservation_law`` argument in `~kwant.builder.Builder`.
+Specifically, ``conservation_law`` is a matrix that acts on a single *site*
+and it must in addition have integer eigenvalues.
+Of course, it must also commute with the onsite Hamiltonian and hoppings
+to adjacent sites. Internally, Kwant then uses the eigenvectors of the
+conservation law to block diagonalize the Hamiltonian. Here, we've specified
+the conservation law :math:`-\sigma_z`, such that the eigenvectors with
+eigenvalues :math:`-1` and :math:`1` pick out the electron and hole
+blocks, respectively. Internally in Kwant, the blocks are stored in the order
+of ascending eigenvalues of the conservation law.
 
-.. literalinclude:: superconductor_transport.py
-    :start-after: #HIDDEN_BEGIN_ozsr
-    :end-before: #HIDDEN_END_ozsr
+In order to move on with the conductance calculation, let's attach the second
+lead to the right side of the scattering region:
 
-When computing the conductance, we can now extract reflection from
-electrons to electrons as ``smatrix.transmission(0, 0)`` (Don't get
+.. literalinclude:: superconductor.py
+    :start-after: #HIDDEN_BEGIN_zuuw
+    :end-before: #HIDDEN_END_zuuw
+
+The second (right) lead is superconducting, such that the electron and hole
+blocks are coupled. Of course, this means that we can not separate them into
+uncoupled blocks as we did before, and therefore no conservation law is specified.
+
+Kwant is now aware of the block structure of the Hamiltonian in the left lead.
+This means that we can extract transmission and reflection amplitudes not only
+into the left lead, but also between different conservation law blocks in
+the left lead. Generally if leads :math:`i` and :math:`j` both have a conservation
+law specified, ``smatrix.transmission((i, a), (j, b))`` gives us
+the scattering probability of carriers from block :math:`b` of lead :math:`j`, to
+block :math:`a` of lead :math:`i`. In our example, reflection from electrons to
+electrons in the left lead is thus ``smatrix.transmission((0, 0), (0, 0))`` (Don't get
 confused by the fact that it says ``transmission`` -- transmission
 into the same lead is reflection), and reflection from electrons to holes
-as ``smatrix.transmission(1, 0)``, by virtue of our electron and hole leads:
+is ``smatrix.transmission((0, 1), (0, 0))``:
 
-.. literalinclude:: superconductor_transport.py
+.. literalinclude:: superconductor.py
     :start-after: #HIDDEN_BEGIN_jbjt
     :end-before: #HIDDEN_END_jbjt
 
-Note that ``smatrix.submatrix(0,0)`` returns the block concerning reflection
-within (electron) lead 0, and from its size we can extract the number of modes
+Note that ``smatrix.submatrix((0, 0), (0, 0))`` returns the block concerning
+reflection of electrons to electrons, and from its size we can extract the number of modes
 :math:`N`.
 
-Finally, for the default parameters, we obtain the following result:
+For the default parameters, we obtain the following conductance:
 
 .. image:: ../images/superconductor_transport_result.*
 
@@ -157,29 +156,43 @@ We a see a conductance that is proportional to the square of the tunneling
 probability within the gap, and proportional to the tunneling probability
 above the gap. At the gap edge, we observe a resonant Andreev reflection.
 
+Remember that when we defined `~kwant.builder.Builder` for the left lead above,
+we not only declared an electron-hole conservation law, but also that the Hamiltonian
+has the particle-hole symmetry :math:`\mathcal{P} = \sigma_y` which anticommutes
+with the Hamiltonian, using the argument ``particle_hole``.
+In Kwant, whenever one or more of the fundamental discrete symmetries
+(time-reversal, particle-hole and chiral) are present in a lead Hamiltonian,
+they can be declared in `~kwant.builder.Builder`. Kwant then automatically uses
+them to construct scattering states that obey the specified symmetries. In this
+example, we have a discrete symmetry declared in addition to a conservation law.
+For any two conservation law blocks that are transformed to each other by the
+discrete symmetry, Kwant then automatically computes the scattering states of one
+block by applying the symmetry operator to the scattering states of the other.
+
+Now, :math:`\mathcal{P}` relates electrons and holes
+at *opposite* energies. However, a scattering problem is always solved at a
+fixed energy, so generally :math:`\mathcal{P}` does not give a relation between
+the electron and hole blocks. The exception is of course at zero energy, in which
+case particle-hole symmetry transforms between the electron and hole blocks, resulting
+in a symmetric scattering matrix. We can check the symmetry explicitly with
+
+.. literalinclude:: superconductor.py
+    :start-after: #HIDDEN_BEGIN_pqmp
+    :end-before: #HIDDEN_END_pqmp
+
+which yields the output
+
+.. literalinclude:: ../images/check_PHS_out.txt
+
+Note that :math:`\mathcal{P}` flips the sign of momentum, and for the parameters
+we consider here, there are two electron and two hole modes active at zero energy.
+We thus reorder the matrix elements of the scattering matrix blocks above,
+to ensure that the same matrix elements in the electron and hole blocks relate
+scattering states and their particle hole partners.
+
 .. specialnote:: Technical details
 
     - If you are only interested in particle (thermal) currents you do not need
-      to define separate electron and hole leads. In this case, you do not
-      need to distinguish them. Still, separating the leads into electron
-      and hole degrees of freedom makes the lead calculation in the solving
+      to separate the electron and hole degrees of freedom. Still, separating them
+      using a conservation law makes the lead calculation in the solving
       phase more efficient.
-
-    - It is in fact possible to separate electron and hole degrees of
-      freedom in the scattering matrix, even if one uses matrices for
-      these degrees of freedom. In the solve step,
-      `~kwant.solvers.common.smatrix` returns an array containing
-      the transverse wave functions of the lead modes (in
-      `SMatrix.lead_info <kwant.solvers.common.SMatrix.lead_info>`.
-      By inspecting the wave functions, electron and hole wave
-      functions can be distinguished (they only have entries in either
-      the electron part *or* the hole part. If you encounter modes
-      with entries in both parts, you hit a very unlikely situation in
-      which the standard procedure to compute the modes gave you a
-      superposition of electron and hole modes. That is still OK for
-      computing particle current, but not for electrical current).
-
-.. rubric:: Footnotes
-
-.. [#] Well, there is a not so elegant way to do it still. See the technical
-       details
