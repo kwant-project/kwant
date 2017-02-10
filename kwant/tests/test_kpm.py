@@ -220,17 +220,18 @@ def test_bounds():
     with the same random vectors.
     """
     ham = kwant.rmt.gaussian(dim)
-    TOL_SP = 1e-6
+    epsilon = 0.05
+    tol = epsilon*0.5
     rng = ensure_rng(1)
-    sp1 = SpectralDensity(ham, rng=rng)
+    sp1 = SpectralDensity(ham, bounds=None, epsilon=epsilon, rng=rng)
     # re initialize to obtain the same vector v0
     rng = ensure_rng(1)
     v0 = np.exp(2j * np.pi * rng.random_sample(dim))
     lmax = float(sla.eigsh(
-        ham, k=1, which='LA', return_eigenvectors=False, tol=TOL_SP, v0=v0))
+        ham, k=1, which='LA', return_eigenvectors=False, tol=tol, v0=v0))
     lmin = float(sla.eigsh(
-        ham, k=1, which='SA', return_eigenvectors=False, tol=TOL_SP, v0=v0))
-    sp2 = SpectralDensity(ham, bounds=(lmin, lmax), rng=1)
+        ham, k=1, which='SA', return_eigenvectors=False, tol=tol, v0=v0))
+    sp2 = SpectralDensity(ham, bounds=(lmin, lmax), epsilon=epsilon, rng=1)
 
     # different algorithms are used so these arrays are equal up to TOL_SP
     assert_allclose_sp(sp1.densities, sp2.densities)
@@ -507,7 +508,7 @@ def test_rescale():
     ham = kwant.rmt.gaussian(dim)
     spectrum, filter_index = make_spectrum_and_peaks(ham, p)
 
-    ham_operator, a, b = _rescale(ham)
+    ham_operator, (a, b) = _rescale(ham, epsilon=0.05, v0=None, bounds=None)
     rescaled_eigvalues, rescaled_eigvectors = np.linalg.eigh((
         ham - b * np.identity(len(ham))) / a)
 

@@ -62,8 +62,8 @@ class SpectralDensity:
         dimension of the result of `operator(bra, ket)`. If it has a
         ``dot`` method, such as ``numpy.ndarray`` and ``scipy.sparse.
         matrices``, the densities will be scalars.
-        If no operator is provided, the density of states is calculated with a
-        faster algorithm.
+        If no operator is provided, the density of states is calculated
+        with a faster algorithm.
     num_rand_vecs : integer, default: 10
         Number of random vectors for the KPM method.
     num_moments : integer, default: 100
@@ -77,9 +77,12 @@ class SpectralDensity:
         If not provided, random phase vectors are used.
         The default random vectors are optimal for most cases, see the
         discussions in [1]_ and [2]_.
-    bounds : tuple of floats (lower, upper), optional
-        Lower and upper bounds for all the eigenvalues of the system.
-        If provided, they save computation time.
+    bounds : pair of floats, optional
+        Lower and upper bounds for the eigenvalue spectrum of the system.
+        If not provided, they are computed.
+    epsilon : float, default: 0.05
+        Parameter to ensure that the rescaled spectrum lies in the
+        interval [-1, 1]; required for stability.
     rng : seed, or random number generator, optional
         Random number generator used by ``vector_factory``.
         If not provided, numpy's rng will be used; if it is an Integer,
@@ -146,18 +149,18 @@ class SpectralDensity:
 
     def __init__(self, syst_or_ham, args=(), operator=None, num_rand_vecs=10,
                  num_moments=100, num_sampling_points=None,
-                 vector_factory=None, bounds=None, rng=None):
+                 vector_factory=None, bounds=None, epsilon=0.05, rng=None):
         rng = ensure_rng(rng)
         # self.epsilon ensures that the rescaled Hamiltonian has a
         # spectrum strictly in the interval (-1,1).
-        self.epsilon = None
+        self.epsilon = epsilon
         # Check if syst_or_ham is a finalized System or a Hamiltonian
         try:
-            self.ham = scipy.sparse.csr_matrix(syst_or_ham)
+            ham = scipy.sparse.csr_matrix(syst_or_ham)
         except:
             try:
                 ensure_isinstance(syst_or_ham, system.System)
-                self.ham = scipy.sparse.csr_matrix(
+                ham = scipy.sparse.csr_matrix(
                     syst_or_ham.hamiltonian_submatrix(args=args, sparse=True))
             except TypeError:
                 raise ValueError('Parameter `syst_or_ham` is not a '
@@ -191,12 +194,14 @@ class SpectralDensity:
         self._vector_factory = vector_factory or \
             (lambda n: np.exp(2j * np.pi * rng.random_sample(n)))
         # store this vector for reproducibility
-        self._v0 = self._vector_factory(self.ham.shape[0])
-        # spectrum bounds if provided
-        self._given_bounds = bounds
+        self._v0 = self._vector_factory(ham.shape[0])
         self._rand_vect_list = []
         self._last_two_alphas = []
         self._moments_list = [0.] * self.num_rand_vecs
+        # Hamiltonian rescaled as in Eq. (24)
+        self.ham, (self._a, self._b) = _rescale(ham, epsilon=self.epsilon,
+                                                v0=self._v0, bounds=bounds)
+        self.bounds = (self._b - self._a, self._b + self._a)
         self._update_moments_list(self.num_moments, self.num_rand_vecs)
         # sum moments of all random vectors
         moments = np.sum(np.asarray(self._moments_list), axis=0)
@@ -229,8 +234,8 @@ class SpectralDensity:
 
         Notes
         -----
-        If ``energy`` is not provided, then the densities are obtained by
-        Fast Fourier Transform of the Chebyshev moments.
+        If ``energy`` is not provided, then the densities are obtained
+        by Fast Fourier Transform of the Chebyshev moments.
         """
         if energy is None:
             return self.energies, self.densities
@@ -269,12 +274,13 @@ class SpectralDensity:
         """Returns the total spectral density.
 
         Returns the integral over the whole spectrum with an optional
-        distribution function. ``distribution_function`` should be able to
-        take arrays as input. Defined using Gauss-Chebyshev
+        distribution function. ``distribution_function`` should be able
+        to take arrays as input. Defined using Gauss-Chebyshev
         integration.
         """
         # This factor divides the sum to normalize the Gauss integral
-        # and rescales the integral back with ``self._a`` to normal scale.
+        # and rescales the integral back with ``self._a`` to normal
+        # scale.
         factor = self._a/self.num_sampling_points
         if distribution_function is None:
             rho = self._gammas
@@ -289,7 +295,8 @@ class SpectralDensity:
         """Set the minimum energy resolution to ``tol``.
 
         The energy resolution is increased by increasing the number of
-        sampling points. By default the number of moments is also increased.
+        sampling points. By default the number of moments is also
+        increased.
         """
         resolution = 2 * self._a / (self.num_sampling_points / 1.6)
         if tol > resolution:
@@ -366,13 +373,7 @@ class SpectralDensity:
         n_rand : integer
             Number of random vectors used for sampling.
         """
-        # Hamiltonian rescaled as in Eq. (24)
-        H_rescaled, self._a, self._b = _rescale(self.ham,
-                                                epsilon=self.epsilon,
-                                                v0=self._v0,
-                                                bounds=self._given_bounds)
-        self.bounds = (self._b - self._a, self._b + self._a)
-        dim = H_rescaled.shape[0]
+        dim = self.ham.shape[0]
 
         if len(self._rand_vect_list) == 0:
             for r in range(n_rand):
@@ -409,7 +410,7 @@ class SpectralDensity:
             one_moment = [0.] * n_moments
             if new_moments == 0:
                 alpha = alpha_zero
-                alpha_next = H_rescaled.matvec(alpha)
+                alpha_next = self.ham.matvec(alpha)
                 if self.operator is None:
                     one_moment[0] = np.vdot(alpha_zero, alpha_zero)
                     one_moment[1] = np.vdot(alpha_zero, alpha_next)
@@ -435,7 +436,7 @@ class SpectralDensity:
             if self.operator is None:
                 for n in range(start//2, stop//2):
                     alpha_save = alpha_next
-                    alpha_next = 2 * H_rescaled.matvec(alpha_next) - alpha
+                    alpha_next = 2 * self.ham.matvec(alpha_next) - alpha
                     alpha = alpha_save
                     # Following Eqs. (34) and (35)
                     one_moment[2*n] = 2 * np.vdot(alpha, alpha) -\
@@ -445,7 +446,7 @@ class SpectralDensity:
             else:
                 for n in range(start, stop):
                     alpha_save = alpha_next
-                    alpha_next = 2 * H_rescaled.matvec(alpha_next) - alpha
+                    alpha_next = 2 * self.ham.matvec(alpha_next) - alpha
                     alpha = alpha_save
                     one_moment[n] = self.operator(alpha_zero, alpha_next)
 
@@ -456,7 +457,7 @@ class SpectralDensity:
 # ### Auxiliary functions
 
 
-def _rescale(ham, epsilon=None, v0=None, bounds=None):
+def _rescale(ham, epsilon, v0, bounds):
     """Rescale a Hamiltonian and return a LinearOperator
 
     Parameters
@@ -465,30 +466,30 @@ def _rescale(ham, epsilon=None, v0=None, bounds=None):
         Hamiltonian of the system.
     epsilon : scalar
         Ensures that the bounds 'a' and 'b' are strict.
-    v0 : random vector
+    v0 : random vector, or None
         Used as the initial residual vector for the algorithm that
         finds the lowest and highest eigenvalues.
-    bounds : tuple or None
+    bounds : tuple, or None
         Boundaries of the spectrum. If not provided the maximum and
         minimum eigenvalues are calculated.
     """
-    # calculate upper and lower bounds of the spectrum
-    TOL = 1e-14  # numerical precision
-    TOL_SP = 1e-6
+    # Relative tolerance to which to calculate eigenvalues.  Because after
+    # rescaling we will add epsilon / 2 to the spectral bounds, we don't need
+    # to know the bounds more accurately than epsilon / 2.
+    tol = epsilon / 2
 
-    epsilon = epsilon or 0.05
     if bounds:
-        lmin = bounds[0]
-        lmax = bounds[1]
+        lmin, lmax = bounds
     else:
         lmax = float(sla.eigsh(ham, k=1, which='LA', return_eigenvectors=False,
-                               tol=TOL_SP, v0=v0))
+                               tol=tol, v0=v0))
         lmin = float(sla.eigsh(ham, k=1, which='SA', return_eigenvectors=False,
-                               tol=TOL_SP, v0=v0))
+                               tol=tol, v0=v0))
+
     a = np.abs(lmax-lmin) / (2. - epsilon)
     b = (lmax+lmin) / 2.
 
-    if a < TOL:
+    if lmax - lmin <= abs(lmax + lmin) * tol / 2:
         raise ValueError(
             'The Hamiltonian has a single eigenvalue, it is not possible to '
             'obtain a spectral density.')
@@ -496,7 +497,9 @@ def _rescale(ham, epsilon=None, v0=None, bounds=None):
     def rescaled(v):
         return (ham.dot(v) - b * v) / a
 
-    return sla.LinearOperator(shape=ham.shape, matvec=rescaled), a, b
+    rescaled_ham = sla.LinearOperator(shape=ham.shape, matvec=rescaled)
+
+    return rescaled_ham, (a, b)
 
 
 def _calc_fft_moments(moments, n_sampling):
