@@ -179,7 +179,6 @@ class SpectralDensity:
             else:
                 raise ValueError('Parameter `operator` has no `.dot` '
                                  'attribute and is not callable.')
-        self.num_rand_vecs = num_rand_vecs
         self.num_moments = num_moments
         # Default number of sampling points
         if num_sampling_points is None:
@@ -190,21 +189,28 @@ class SpectralDensity:
         else:
             self.num_sampling_points = num_sampling_points
 
-        # calculate raw moments
         self._vector_factory = vector_factory or \
             (lambda n: np.exp(2j * np.pi * rng.random_sample(n)))
         # store this vector for reproducibility
         self._v0 = self._vector_factory(ham.shape[0])
         self._rand_vect_list = []
-        self._last_two_alphas = []
-        self._moments_list = [0.] * self.num_rand_vecs
         # Hamiltonian rescaled as in Eq. (24)
         self.ham, (self._a, self._b) = _rescale(ham, epsilon=self.epsilon,
                                                 v0=self._v0, bounds=bounds)
         self.bounds = (self._b - self._a, self._b + self._a)
-        self._update_moments_list(self.num_moments, self.num_rand_vecs)
+
+        for r in range(num_rand_vecs):
+            self._rand_vect_list.append(self._vector_factory(self.ham.shape[0]))
+        self._last_two_alphas = [0.] * num_rand_vecs
+        self._moments_list = [0.] * num_rand_vecs
+
+        self.num_rand_vecs = 0 # new random vectors will be used
+        self._update_moments_list(self.num_moments, num_rand_vecs)
+        #update the number of random vectors
+        self.num_rand_vecs = num_rand_vecs
+
         # sum moments of all random vectors
-        moments = np.sum(np.asarray(self._moments_list), axis=0)
+        moments = np.sum(np.asarray(self._moments_list).real, axis=0)
         # divide by the number of random vectors
         moments = moments / self.num_rand_vecs
         # divide by the length of the vectors to normalize
@@ -242,12 +248,12 @@ class SpectralDensity:
         else:
             energy = np.asarray(energy, dtype=complex)
             rescaled_energy = (energy - self._b) / self._a
-            g_e = np.pi * np.sqrt(1 - rescaled_energy) *\
-                np.sqrt(1 + rescaled_energy)
+            g_e = (np.pi * np.sqrt(1 - rescaled_energy)
+                   * np.sqrt(1 + rescaled_energy))
 
             # calculate the coefficients for Chebyshev expansion
             # sum moments of all random vectors
-            moments = np.sum(np.asarray(self._moments_list), axis=0)
+            moments = np.sum(np.asarray(self._moments_list).real, axis=0)
             # divide by the number of random vectors
             moments = moments / self.num_rand_vecs
             # divide by the length of the vectors to normalize
@@ -328,12 +334,21 @@ class SpectralDensity:
         # 2nd. update moments with the updated random vectors,
         # 3rd. update sampling points and FFT densities.
         num_rand_vecs = num_rand_vecs or self.num_rand_vecs
+        new_rand_vect = num_rand_vecs - self.num_rand_vecs
+        for r in range(new_rand_vect):
+            self._rand_vect_list.append(self._vector_factory(self.ham.shape[0]))
+        self._moments_list.extend([0.] * new_rand_vect)
+        self._last_two_alphas.extend([0.] * new_rand_vect)
         self._update_moments_list(self.num_moments, num_rand_vecs)
         self.num_rand_vecs = num_rand_vecs
 
         num_moments = num_moments or self.num_moments
         self._update_moments_list(num_moments, self.num_rand_vecs)
         self.num_moments = num_moments
+
+        ## cut random vectors and moments when necessary
+        self._moments_list[:] = [m[:num_moments]
+                                 for m in self._moments_list[:num_rand_vecs]]
 
         num_sampling_points = num_sampling_points or self.num_sampling_points
         if num_sampling_points < self.num_moments:
@@ -343,7 +358,7 @@ class SpectralDensity:
         self.num_sampling_points = num_sampling_points
 
         # sum moments of all random vectors
-        moments = np.sum(np.asarray(self._moments_list), axis=0)
+        moments = np.sum(np.asarray(self._moments_list).real, axis=0)
         # divide by the number of random vectors
         moments = moments / self.num_rand_vecs
         # divide by the length of the vectors to normalize
@@ -373,42 +388,39 @@ class SpectralDensity:
         n_rand : integer
             Number of random vectors used for sampling.
         """
-        dim = self.ham.shape[0]
 
-        if len(self._rand_vect_list) == 0:
-            for r in range(n_rand):
-                self._rand_vect_list.append(self._vector_factory(dim))
+        if self.num_rand_vecs == n_rand:
             r_start = 0
-            r_stop = self.num_rand_vecs
+            new_rand_vect = 0
+        elif self.num_rand_vecs < n_rand:
+            r_start = self.num_rand_vecs
+            new_rand_vect = n_rand - self.num_rand_vecs
         else:
-            if self.num_rand_vecs == n_rand:
-                r_start = 0
-                r_stop = self.num_rand_vecs
-            elif self.num_rand_vecs < n_rand:
-                new_rand_vect = n_rand - self.num_rand_vecs
-                for r in range(new_rand_vect):
-                    self._rand_vect_list.append(self._vector_factory(dim))
-                self._moments_list.extend([0.] * new_rand_vect)
-                r_start = self.num_rand_vecs
-                r_stop = n_rand
-            else:
-                warnings.warn('Decreasing number of random vectors')
-                r_start = 0
-                r_stop = n_rand
+            warnings.warn('Decreasing number of random vectors')
+            return
 
         if n_moments == self.num_moments:
-            start = 2
+            m_start = 2
             new_moments = 0
+            if new_rand_vect == 0:
+                # nothing new to calculate
+                return
         else:
-            start = self.num_moments
             new_moments = n_moments - self.num_moments
-        stop = n_moments
+            m_start = self.num_moments
+            if new_moments < 0:
+                warnings.warn('Decreasing the number of moments.')
+                return
 
-        for r in range(r_start, r_stop):
+            assert new_rand_vect == 0,\
+                   ("Only 'num_moments' *or* 'num_rand_vecs' may be updated "
+                    "at a time.")
+
+        for r in range(r_start, n_rand):
             alpha_zero = self._rand_vect_list[r]
 
             one_moment = [0.] * n_moments
-            if new_moments == 0:
+            if new_rand_vect > 0:
                 alpha = alpha_zero
                 alpha_next = self.ham.matvec(alpha)
                 if self.operator is None:
@@ -418,11 +430,9 @@ class SpectralDensity:
                     one_moment[0] = self.operator(alpha_zero, alpha_zero)
                     one_moment[1] = self.operator(alpha_zero, alpha_next)
 
-            elif new_moments > 0:
+            if new_moments > 0:
                 (alpha, alpha_next) = self._last_two_alphas[r]
                 one_moment[0:self.num_moments] = self._moments_list[r]
-            else:
-                raise ValueError('Attempt to decrease the number of moments.')
             # Iteration over the moments
             # Two cases can occur, depicted in Eq. (28) and in Eq. (29),
             # respectively.
@@ -434,24 +444,28 @@ class SpectralDensity:
             # In the second case, the operator is not None and a matrix
             # multiplication should be used.
             if self.operator is None:
-                for n in range(start//2, stop//2):
+                for n in range(m_start//2, n_moments//2):
                     alpha_save = alpha_next
                     alpha_next = 2 * self.ham.matvec(alpha_next) - alpha
                     alpha = alpha_save
                     # Following Eqs. (34) and (35)
-                    one_moment[2*n] = 2 * np.vdot(alpha, alpha) -\
-                        one_moment[0]
-                    one_moment[2*n+1] = 2 * np.vdot(alpha_next, alpha) -\
-                        one_moment[1]
+                    one_moment[2*n] = (2 * np.vdot(alpha, alpha)
+                                       - one_moment[0])
+                    one_moment[2*n+1] = (2 * np.vdot(alpha_next, alpha)
+                                         - one_moment[1])
+                if n_moments % 2:
+                    # odd moment
+                    one_moment[n_moments - 1] = (2 * np.vdot(alpha_next, alpha_next)
+                                                 - one_moment[0])
             else:
-                for n in range(start, stop):
+                for n in range(m_start, n_moments):
                     alpha_save = alpha_next
                     alpha_next = 2 * self.ham.matvec(alpha_next) - alpha
                     alpha = alpha_save
                     one_moment[n] = self.operator(alpha_zero, alpha_next)
 
-            self._last_two_alphas.append((alpha, alpha_next))
-            self._moments_list[r] = np.asarray(one_moment).real
+            self._last_two_alphas[r] = (alpha, alpha_next)
+            self._moments_list[r] = one_moment[:]
 
 
 # ### Auxiliary functions

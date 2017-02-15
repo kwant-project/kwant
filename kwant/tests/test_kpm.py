@@ -163,7 +163,7 @@ def test_api_operator():
 def test_api_lower_num_moments():
     spectrum = SpectralDensity(kwant.rmt.gaussian(dim))
     num_moments = spectrum.num_moments - 1
-    with pytest.raises(ValueError):
+    with pytest.warns(UserWarning):
         spectrum.increase_accuracy(num_moments=num_moments)
 
 
@@ -319,10 +319,27 @@ def test_increase_num_moments():
     spectrum.increase_accuracy(num_moments=precise.num_moments)
 
     # Check bit for bit equality
-    assert np.all(spectrum_raise.densities == spectrum.densities)
+    assert np.all(np.array(spectrum_raise._moments_list) ==
+                  np.array(spectrum._moments_list))
+
+    # test case when there are an odd number of moments
+    # (this code path is treated differently internally)
+    odd = copy(p)
+    odd.num_moments = p.num_moments + 1
+    spectrum_odd = make_spectrum(ham, odd, rng=1)
+
+    assert not np.all(np.asarray(spectrum_odd._moments_list)[:, -1] == 0)
+
+    # test when increasing num_moments by 1 from an even to an odd number
+    spectrum_even = make_spectrum(ham, p, rng=1)
+    spectrum_even.increase_accuracy(num_moments=p.num_moments + 1)
+    assert np.all(np.array(spectrum_even._moments_list) ==
+                  np.array(spectrum_odd._moments_list))
+
+
+
 
 # ### increase num_moments with an operator (different algorithm)
-
 
 def test_increase_num_moments_op():
     ham = kwant.rmt.gaussian(dim)
