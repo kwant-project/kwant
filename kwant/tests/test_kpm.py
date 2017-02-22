@@ -285,6 +285,9 @@ def test_kwant_op():
     # same algorithms are used so these arrays are equal up to TOL
     assert_allclose(np.sum(spectrum_syst.densities, axis=1),
                     spectrum.densities)
+    # test that the densities are arrays when calling the instance
+    e = spectrum_syst.energies
+    assert_allclose_sp(spectrum_syst(e), spectrum_syst.densities)
 
 def test_kwant_op_average():
     """Check that the kwant.operator.Density gives the same result as the

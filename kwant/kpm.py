@@ -269,11 +269,11 @@ class SpectralDensity:
                       np.tan(np.pi/(self.num_moments + 1)))
             kernel = kernel / (self.num_moments + 1)
 
-            coef_cheb = np.zeros_like(moments)
-            coef_cheb[0] = moments[0]
-            coef_cheb[1:] = 2 * moments[1:] * kernel[1:]
+            # transposes handle the case where operators have vector outputs
+            coef_cheb = np.transpose(moments.transpose() * kernel)
+            coef_cheb[1:] = 2 * coef_cheb[1:]
 
-            return (np.polynomial.chebyshev.chebval(
+            return np.transpose(np.polynomial.chebyshev.chebval(
                     rescaled_energy, coef_cheb) / g_e).real
 
     def average(self, distribution_function=None):
