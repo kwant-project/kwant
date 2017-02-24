@@ -20,8 +20,10 @@ Contributors to Kwant include
 * Bas Nijholt (TU Delft)
 * Michał Nowak (TU Delft)
 * Viacheslav Ostroukh (Leiden University)
-* Tómas Örn Rosdahl (TU Delft)
 * Pablo Pérez Piskunow (TU Delft)
+* Tómas Örn Rosdahl (TU Delft)
+* Sebastian Rubbert (TU Delft)
+* Rafał Skolasiński (TU Delft)
 * Adrien Sorgniard (INAC/CEA Grenoble)
 
 We thank Christoph Gohlke for the creation of installers for Microsoft Windows.
