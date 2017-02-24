@@ -9,6 +9,7 @@
 __all__ = []
 
 import numpy                    # Needed by C. Gohlke's Windows package.
+import warnings
 
 try:
     from . import _system
@@ -62,3 +63,12 @@ def test(verbose=True):
                      "-s"] + (['-v'] if verbose else []))
 
 test.__test__ = False
+
+
+# Exposing discretizer
+try:
+    from .continuum import discretize
+    __all__.extend(['discretize'])
+except ImportError:
+    warnings.warn('Discretizer module not available. Is sympy installed?',
+                  RuntimeWarning)
