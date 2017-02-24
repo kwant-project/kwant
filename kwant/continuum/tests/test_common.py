@@ -1,6 +1,6 @@
 from kwant.continuum._common import position_operators, momentum_operators
 from kwant.continuum._common import make_commutative, sympify
-from kwant.continuum._common import expression_monomials, matrix_monomials
+from kwant.continuum._common import monomials
 from kwant.continuum._common import lambdify
 
 import tinyarray as ta
@@ -54,26 +54,27 @@ def test_make_commutative():
 
 expr2 = non_x*A*non_x + x**2 * A*2 * x + B*non_x/2 + non_x*B/2 + x + A + non_x + x/A
 
-def test_expression_monomials():
-    assert expression_monomials(expr2, x) == {x**3: 2*A, 1: A, x: 2 + A**(-1) + B, x**2: A}
-    assert expression_monomials(expr1, x) == {x**2: A + B, x**3: A}
-    assert expression_monomials(x, x) == {x: 1}
-    assert expression_monomials(x**2, x) == {x**2: 1}
-    assert expression_monomials(x**2 + x, x) == {x: 1, x**2: 1}
+def test_monomials():
+    assert monomials(expr2, x) == {x**3: 2*A, 1: A, x: 2 + A**(-1) + B, x**2: A}
+    assert monomials(expr1, x) == {x**2: A + B, x**3: A}
+    assert monomials(x, x) == {x: 1}
+    assert monomials(x**2, x) == {x**2: 1}
+    assert monomials(x**2 + x, x) == {x: 1, x**2: 1}
+    assert monomials(x**2 + x + A**2, x) == {x: 1, x**2: 1, 1: A**2}
 
     expr = 1 + x + A*x + 2*x + x**2 + A*x**2 + non_x*A*non_x
     out = {1: 1, x: 3 + A, x**2: 2 * A + 1}
-    assert expression_monomials(expr, x) == out
+    assert monomials(expr, x) == out
 
     expr = 1 + x * (3 + A) + x**2 * (1 + A)
     out = {1: 1, x: 3 + A, x**2: 1 * A + 1}
-    assert expression_monomials(expr, x) == out
+    assert monomials(expr, x) == out
 
 
-def legacy_expression_monomials(expr, *gens):
+def legacy_monomials(expr, *gens):
     """ This was my first implementation. Unfortunately it is very slow.
 
-    It is used to test correctness of new matrix_monomials function.
+    It is used to test correctness of new monomials function.
     """
     expr = make_commutative(expr, x)
     R = sympy.ring(gens, sympy.EX, sympy.lex)[0]
@@ -86,8 +87,8 @@ def legacy_expression_monomials(expr, *gens):
     return output
 
 
-def test_expression_monomials_with_reference_function():
-    assert legacy_expression_monomials(expr2, x) == expression_monomials(expr2, x)
+def test_monomials_with_reference_function():
+    assert legacy_monomials(expr2, x) == monomials(expr2, x)
 
 
 
@@ -96,7 +97,7 @@ def test_matrix_monomials():
             x**2: sympy.Matrix([[A + B,  A + B],[0, -A - B]]),
             x: sympy.Matrix([[0, A], [0, 0]]),
             x**3: sympy.Matrix([[A,  A], [0, -A]])}
-    mons = matrix_monomials(matr, x)
+    mons = monomials(matr, x)
     assert mons == out
 
 

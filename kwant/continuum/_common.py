@@ -136,13 +136,43 @@ def make_commutative(expr, *symbols):
     return expr
 
 
-def expression_monomials(expression, *gens):
+def monomials(expr, *gens):
+    """Parse ``expr`` into monomials in the symbols in ``gens``.
+
+    Parameters
+    ----------
+    expr: sympy.Expr or sympy.Matrix
+        Input expression that will be parsed into monomials.
+    gens: sequence of sympy.Symbol objects
+        Generators used to separate input ``expr`` into monomials.
+
+    Returns
+    -------
+    dictionary (generator: monomial)
+
+    Note
+    ----
+    All generators will be substituted with its commutative version using
+    `kwant.continuum.make_commutative`` function.
+    """
+    if not isinstance(expr, sympy.MatrixBase):
+        return _expression_monomials(expr, *gens)
+    else:
+        output = defaultdict(lambda: sympy.zeros(*expr.shape))
+        for (i, j), e in np.ndenumerate(expr):
+            mons = _expression_monomials(e, *gens)
+            for key, val in mons.items():
+                output[key][i, j] += val
+        return dict(output)
+
+
+def _expression_monomials(expression, *gens):
     """Parse ``expression`` into monomials in the symbols in ``gens``.
 
     Example
     -------
         >>> expr = A * (x**2 + y) + B * x + C
-        >>> expression_monomials(expr, x, y)
+        >>> _expression_monomials(expr, x, y)
         {1: C, x**2: A, y: A, x: B}
     """
     if expression.atoms(AppliedUndef):
@@ -182,16 +212,6 @@ def expression_monomials(expression, *gens):
 
     new_expression = sum(k * v for k, v in output.items())
     assert sympy.expand(expression) == sympy.expand(new_expression)
-
-    return dict(output)
-
-
-def matrix_monomials(matrix, *gens):
-    output = defaultdict(lambda: sympy.zeros(*matrix.shape))
-    for (i, j), expression in np.ndenumerate(matrix):
-        summands = expression_monomials(expression, *gens)
-        for key, val in summands.items():
-            output[key][i, j] += val
 
     return dict(output)
 

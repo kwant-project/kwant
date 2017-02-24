@@ -15,7 +15,7 @@ from ..lattice import Monatomic, TranslationalSymmetry
 
 from ._common import sympify, gcd
 from ._common import position_operators, momentum_operators
-from ._common import matrix_monomials
+from ._common import monomials
 
 
 ################ Globals variables and definitions
@@ -433,7 +433,7 @@ def _return_string(expr, discrete_coordinates):
     if isinstance(expr, sympy.matrices.MatrixBase):
         # express matrix return values in terms of sums of known matrices,
         # which will be assigned to '_cache_n' in the function body.
-        mons = matrix_monomials(expr, *expr.atoms(sympy.Symbol))
+        mons = monomials(expr, *expr.atoms(sympy.Symbol))
         mons = {k: cache(v) for k, v in mons.items()}
         mons = ["{} * {}".format(_print_sympy(k), _print_sympy(v))
                 for k, v in mons.items()]
