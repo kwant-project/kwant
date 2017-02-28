@@ -1,0 +1,108 @@
+--- original
++++ modified
+@@ -12,6 +12,7 @@
+ import scipy
+ 
+ import _defs
++from contextlib import redirect_stdout
+ 
+ # For plotting
+ from matplotlib import pyplot as plt
+@@ -38,13 +39,13 @@
+ 
+ 
+ # Plot several density of states curves on the same axes.
+-def plot_dos(labels_to_data):
++def plot_dos(labels_to_data, file_name=None):
+     for label, (x, y) in labels_to_data:
+         plt.plot(x, y, label=label, linewidth=2)
+     plt.legend(loc=2, framealpha=0.5)
+     plt.xlabel("energy [t]")
+     plt.ylabel("DoS [a.u.]")
+-    plt.show()
++    save_figure(file_name)
+     plt.clf()
+ 
+ 
+@@ -59,10 +60,18 @@
+         kwant.plot(fsyst, site_size=site_size, site_color=(0, 0, 1, 0.3), ax=ax)
+         ax.set_title(title)
+         ax.set(adjustable='box-forced', aspect='equal')
+-    plt.show()
++    save_figure(file_name)
+     plt.clf()
+ 
+ 
++def save_figure(file_name):
++    if not file_name:
++        return
++    for extension in ('pdf', 'png'):
++        plt.savefig('.'.join((file_name,extension)),
++                    dpi=_defs.dpi, bbox_inches='tight')
++
++
+ def simple_dos_example():
+     fsyst = make_syst().finalized()
+ 
+@@ -76,19 +85,25 @@
+     plot_dos([
+         ('densities', (energies, densities)),
+         ('density subset', (energy_subset, density_subset)),
+-    ])
++     ],
++     file_name='kpm_dos'
++    )
+ 
+ 
+ def dos_averaging_example(fsyst):
+     spectrum = kwant.kpm.SpectralDensity(fsyst)
+ 
+-    print('identity resolution:', spectrum.average())
++    with open('kpm_normalization.txt', 'w') as f:
++        with redirect_stdout(f):
++            print('identity resolution:', spectrum.average())
+ 
+     # Fermi energy 0.1 and temperature 0.2
+     fermi = lambda E: 1 / (np.exp((E - 0.1) / 0.2) + 1)
+     n_states = len(fsyst.sites)  # 1 degree of freedom per site
+ 
+-    print('number of filled states:', n_states * spectrum.average(fermi))
++    with open('kpm_total_states.txt', 'w') as f:
++        with redirect_stdout(f):
++            print('number of filled states:', n_states * spectrum.average(fermi))
+ 
+ 
+ def increasing_accuracy_example(fsyst):
+@@ -102,7 +117,9 @@
+     plot_dos([
+         ('density', original_dos),
+         ('higher energy resolution', increased_resolution_dos),
+-    ])
++     ],
++     file_name='kpm_dos_acc'
++    )
+ 
+     # we supply the *total* number of moments and sampling points
+     spectrum.increase_accuracy(num_moments=200, num_rand_vecs=5)
+@@ -112,7 +129,9 @@
+     plot_dos([
+         ('density', original_dos),
+         ('higher number of moments', increased_moments_dos),
+-    ])
++     ],
++     file_name='kpm_dos_r'
++    )
+ 
+ 
+ def operator_example(fsyst):
+@@ -142,7 +161,9 @@
+     plot_ldos(fsyst, axes,[
+         ('energy = 0', zero_energy_ldos),
+         ('energy = 1', finite_energy_ldos),
+-    ])
++     ],
++     file_name='kpm_ldos'
++    )
+ 
+ 
+ def vector_factory_example(fsyst):

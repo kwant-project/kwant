@@ -23,7 +23,7 @@ from ._common import ensure_isinstance, ensure_rng
 class SpectralDensity:
     """Calculate the spectral density of an operator.
 
-    The **SpectralDensity** class makes use of the kernel polynomial
+    This class makes use of the kernel polynomial
     method (KPM), presented in [1]_, to obtain the spectral density
     :math:`ρ_A(e)`, as a function of the energy :math:`e`, of some
     operator :math:`A` that acts on a kwant system or a Hamiltonian.
@@ -36,20 +36,6 @@ class SpectralDensity:
     the expectation value of :math:`A` for all the eigenstates with
     energy :math:`e`.
 
-    The **SpectralDensity** class can be called as
-
-    >>> rho = kwant.kpm.SpectralDensity(fsyst, operator=A),
-
-    with optional
-    arguments that specify the accuracy of the approximation. The
-    parameters ``num_moments``, ``num_rand_vecs``, and
-    ``num_sampling_points`` can be specified when creating an instance
-    or by calling
-
-    >>> rho.increase_accuracy(num_moments=200,
-    ...                       num_rand_vecs=10,
-    ...                       num_sampling_points=400)
-
     Parameters
     ----------
     syst_or_ham : `~kwant.system.FiniteSystem` or matrix Hamiltonian
@@ -60,8 +46,8 @@ class SpectralDensity:
         Operator for which the spectral density will be evaluated. If
         it is callable, the ``densities`` at each energy will have the
         dimension of the result of `operator(bra, ket)`. If it has a
-        ``dot`` method, such as ``numpy.ndarray`` and ``scipy.sparse.
-        matrices``, the densities will be scalars.
+        ``dot`` method, such as ``numpy.ndarray`` and
+        ``scipy.sparse.matrices``, the densities will be scalars.
         If no operator is provided, the density of states is calculated
         with a faster algorithm.
     num_rand_vecs : integer, default: 10
@@ -70,7 +56,7 @@ class SpectralDensity:
         Number of moments, order of the KPM expansion.
     num_sampling_points : integer, optional
         Number of points where the spectral density will be evaluated.
-        If not provided, ``2\*num_moments`` will be used.
+        If not provided, ``2*num_moments`` will be used.
     vector_factory : function, optional
         The user defined function ``f(n)`` generates random vectors of
         length ``n`` that will be used in the algorithm.
@@ -82,7 +68,7 @@ class SpectralDensity:
         If not provided, they are computed.
     epsilon : float, default: 0.05
         Parameter to ensure that the rescaled spectrum lies in the
-        interval [-1, 1]; required for stability.
+        interval ``(-1, 1)``; required for stability.
     rng : seed, or random number generator, optional
         Random number generator used by ``vector_factory``.
         If not provided, numpy's rng will be used; if it is an Integer,
@@ -124,12 +110,12 @@ class SpectralDensity:
     >>> syst[lat.neighbors()] = 1
 
     and after finalizing the system, create an instance of
-    **SpectralDensity**
+    `~kwant.kpm.pectralDensity`
 
     >>> fsyst = syst.finalized()
     >>> rho = kwant.kpm.SpectralDensity(fsyst)
 
-    The ``energies`` and ``densities`` can be accesed with
+    The ``energies`` and ``densities`` can be accessed with
 
     >>> energies, densities = rho()
 
@@ -144,7 +130,6 @@ class SpectralDensity:
         the range of the spectrum.
     densities : array of floats
         Spectral density of the ``operator`` evaluated at the energies.
-
     """
 
     def __init__(self, syst_or_ham, args=(), operator=None, num_rand_vecs=10,

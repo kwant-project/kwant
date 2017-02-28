@@ -54,6 +54,8 @@ where we observe the cosine-like dispersion of the square lattice. Close
 to ``k=0`` this agrees well with the quadratic dispersion this tight-binding
 Hamiltonian is approximating.
 
+.. _closed-systems:
+
 Closed systems
 ..............
 
