@@ -107,6 +107,30 @@ class UserCodeError(Exception):
     pass
 
 
+class ExtensionUnavailable:
+    """Class that replaces unavailable extension modules in the Kwant namespace.
+
+    Some extensions for Kwant (e.g. 'kwant.continuum') require additional
+    dependencies that are not required for core functionality. When the
+    additional dependencies are not installed an instance of this class will
+    be inserted into Kwant's root namespace to simulate the presence of the
+    extension and inform users that they need to install additional
+    dependencies.
+
+    See https://mail.python.org/pipermail/python-ideas/2012-May/014969.html
+    for more details.
+    """
+
+    def __init__(self, name, dependencies):
+        self.name = name
+        self.dependencies = ', '.join(dependencies)
+
+    def __getattr__(self, _):
+        msg = ("'{}' is not available because one or more of the following "
+               "dependencies are not installed: {}")
+        raise RuntimeError(msg.format(self.name, self.dependencies))
+
+
 def ensure_isinstance(obj, typ, msg=None):
     if isinstance(obj, typ):
         return

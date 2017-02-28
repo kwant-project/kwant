@@ -31,7 +31,7 @@ __all__.extend(['KwantDeprecationWarning', 'UserCodeError'])
 from ._common import version as __version__
 
 for module in ['system', 'builder', 'lattice', 'solvers', 'digest', 'rmt',
-               'operator', 'kpm', 'wraparound']:
+               'operator', 'kpm', 'wraparound', 'continuum']:
     exec('from . import {0}'.format(module))
     __all__.append(module)
 
@@ -63,12 +63,3 @@ def test(verbose=True):
                      "-s"] + (['-v'] if verbose else []))
 
 test.__test__ = False
-
-
-# Exposing discretizer
-try:
-    from .continuum import discretize
-    __all__.extend(['discretize'])
-except ImportError:
-    warnings.warn('Discretizer module not available. Is sympy installed?',
-                  RuntimeWarning)

@@ -6,10 +6,18 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from .discretizer import discretize, discretize_symbolic, build_discretized
-from ._common import momentum_operators, position_operators
-from ._common import sympify, lambdify, make_commutative
+import sys
 
+from .._common import ExtensionUnavailable
+
+try:
+    from .discretizer import discretize, discretize_symbolic, build_discretized
+    from ._common import momentum_operators, position_operators
+    from ._common import sympify, lambdify, make_commutative
+except ImportError:
+    sys.modules[__name__] = ExtensionUnavailable(__name__, ('sympy',))
+
+del sys, ExtensionUnavailable
 
 __all__ = ['discretize', 'discretize_symbolic', 'build_discretized',
            'momentum_operators', 'position_operators', 'sympify',

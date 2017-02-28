@@ -646,7 +646,11 @@ def main():
                     'test': test},
           ext_modules=exts,
           install_requires=['numpy > 1.6.1', 'scipy >= 0.11.0', 'tinyarray'],
-          extras_require={'plotting': 'matplotlib >= 1.2'},
+          extras_require={
+              'plotting': 'matplotlib >= 1.2',
+              # Ubuntu 16.04 is the oldest supported distro with python3-sympy
+              'continuum': 'sympy >= 0.7.6',
+          },
           classifiers=[c.strip() for c in classifiers.split('\n')])
 
 if __name__ == '__main__':
