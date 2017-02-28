@@ -1,15 +1,24 @@
-import sympy
+# Copyright 2011-2017 Kwant authors.
+#
+# This file is part of Kwant.  It is subject to the license terms in the file
+# LICENSE.rst found in the top-level directory of this distribution and at
+# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# the file AUTHORS.rst at the top-level directory of this distribution and at
+# http://kwant-project.org/authors.
+
+import inspect
+from functools import wraps
+
 import numpy as np
+import pytest
+
+import sympy
 
 from .._common import sympify
 from ..discretizer import discretize
 from ..discretizer import discretize_symbolic
 from ..discretizer import build_discretized
 from ..discretizer import  _wf
-
-import inspect
-from functools import wraps
-import pytest
 
 
 def swallows_extra_kwargs(f):
@@ -64,7 +73,7 @@ def test_reading_coordinates(commutative):
 
 def test_reading_coordinates_matrix():
     test = [
-        (sympy.Matrix([sympy.sympify('k_x**2')])        , ['x']),
+        (sympy.Matrix([sympy.sympify('k_x**2')])      , ['x']),
         (sympy.Matrix([kx**2])                        , ['x']),
         (sympy.Matrix([kx**2 + ky**2])                , ['x', 'y']),
         (sympy.Matrix([kx**2 + ky**2 + kz**2])        , ['x', 'y', 'z']),
@@ -133,8 +142,8 @@ def test_simple_derivations(commutative):
     ('k_x', 'k_x + k_y', {'k_x': 'k_x + k_y'}),
     ('k_x**2 + V', 'k_x**2 + V + V_0', {'V': 'V + V_0'}),
     ('k_x**2 + A + C', 'k_x**2 + B + 5', {'A': 'B + 5', 'C': 0}),
-    ('x + y + z', '1 + 3 + 5', {'x': 1, 'y': 3, 'z': 5})
-    ])
+    ('x + y + z', '1 + 3 + 5', {'x': 1, 'y': 3, 'z': 5}),
+])
 def test_simple_derivations_with_subs(e_to_subs, e, subs):
     # check with strings
     one = discretize_symbolic(e_to_subs, 'xyz', substitutions=subs)
@@ -192,9 +201,9 @@ def test_simple_derivations_matrix():
 
 def test_integer_float_input():
     test = {
-        0      : {(0,0,0): 0},
-        1      : {(0,0,0): 1},
-        5      : {(0,0,0): 5},
+        0: {(0,0,0): 0},
+        1: {(0,0,0): 1},
+        5: {(0,0,0): 5},
     }
 
     for inp, out in test.items():
@@ -289,7 +298,6 @@ def test_non_expended_input():
         (1,): -I*A(a + x)/(2*a) - 1/a**2
     }
     assert symbolic == desired
-
 
 
 def test_matrix_with_zeros():
@@ -431,56 +439,53 @@ def test_numeric_functions_advance():
 
 
 def test_numeric_functions_with_parameter():
-    hams = [
-        kx**2 + A(B, x)
-    ]
-    for hamiltonian in hams:
-        for a in [1, 2, 5]:
-            for fA in [lambda c, x: x+c, lambda c, x: x**2 + c]:
-                symbolic, coords = discretize_symbolic(hamiltonian, {'x'})
-                builder = build_discretized(symbolic, coords, lattice_constant=a)
-                lat = next(iter(builder.sites()))[0]
 
-                p = dict(A=fA, B=5)
+    hamiltonian = kx**2 + A(B, x)
 
-                # test onsite
-                v = symbolic.pop((0,)).subs({sympy.symbols('a'): a, B: p['B']})
+    for a in [1, 2, 5]:
+        for fA in [lambda c, x: x+c, lambda c, x: x**2 + c]:
+            symbolic, coords = discretize_symbolic(hamiltonian, {'x'})
+            builder = build_discretized(symbolic, coords, lattice_constant=a)
+            lat = next(iter(builder.sites()))[0]
+
+            p = dict(A=fA, B=5)
+
+            # test onsite
+            v = symbolic.pop((0,)).subs({sympy.symbols('a'): a, B: p['B']})
+            f_sym = sympy.lambdify(['A', 'x'], v)
+
+            f_num = builder[lat(0)]
+            if callable(f_num):
+                f_num = swallows_extra_kwargs(f_num)
+
+            for n in range(10):
+                s = lat(n)
+                xi = a * n
+                if callable(f_num):
+                    assert np.allclose(f_sym(fA, xi), f_num(s, **p))
+                else:
+                    assert np.allclose(f_sym(fA, xi), f_num)
+
+            # test hoppings
+            for k, v in symbolic.items():
+                v = v.subs({sympy.symbols('a'): a, B: p['B']})
                 f_sym = sympy.lambdify(['A', 'x'], v)
+                f_num = builder[lat(0), lat(k[0])]
 
-                f_num = builder[lat(0)]
                 if callable(f_num):
                     f_num = swallows_extra_kwargs(f_num)
-
 
                 for n in range(10):
                     s = lat(n)
                     xi = a * n
+
+                    lhs = f_sym(fA, xi)
                     if callable(f_num):
-                        assert np.allclose(f_sym(fA, xi), f_num(s, **p))
+                        rhs = f_num(lat(n), lat(n+k[0]), **p)
                     else:
-                        assert np.allclose(f_sym(fA, xi), f_num)
+                        rhs = f_num
 
-
-                # test hoppings
-                for k, v in symbolic.items():
-                    v = v.subs({sympy.symbols('a'): a, B: p['B']})
-                    f_sym = sympy.lambdify(['A', 'x'], v)
-                    f_num = builder[lat(0), lat(k[0])]
-
-                    if callable(f_num):
-                        f_num = swallows_extra_kwargs(f_num)
-
-                    for n in range(10):
-                        s = lat(n)
-                        xi = a * n
-
-                        lhs = f_sym(fA, xi)
-                        if callable(f_num):
-                            rhs = f_num(lat(n), lat(n+k[0]), **p)
-                        else:
-                            rhs = f_num
-
-                        assert np.allclose(lhs, rhs)
+                    assert np.allclose(lhs, rhs)
 
 
 def test_basic_verbose(capsys): # or use "capfd" for fd-level

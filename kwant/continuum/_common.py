@@ -1,16 +1,22 @@
+# Copyright 2011-2017 Kwant authors.
+#
+# This file is part of Kwant.  It is subject to the license terms in the file
+# LICENSE.rst found in the top-level directory of this distribution and at
+# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# the file AUTHORS.rst at the top-level directory of this distribution and at
+# http://kwant-project.org/authors.
+
+import functools
+import inspect
+from collections import defaultdict
+from operator import mul
+
 import numpy as np
 
 import sympy
 from sympy.core.function import AppliedUndef
 from sympy.core.sympify import converter
 from sympy.abc import _clash
-
-import functools
-import inspect
-
-from collections import defaultdict
-from operator import mul
-
 from sympy.physics.matrices import msigma as _msigma
 from sympy.physics.quantum import TensorProduct
 

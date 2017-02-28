@@ -1,13 +1,20 @@
+# Copyright 2011-2017 Kwant authors.
+#
+# This file is part of Kwant.  It is subject to the license terms in the file
+# LICENSE.rst found in the top-level directory of this distribution and at
+# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# the file AUTHORS.rst at the top-level directory of this distribution and at
+# http://kwant-project.org/authors.
+
 from collections import defaultdict
 
 import numpy as np
 import tinyarray as ta
-import sympy
 
+import sympy
 from sympy.utilities.lambdify import lambdastr
 from sympy.printing.lambdarepr import LambdaPrinter
 from sympy.printing.precedence import precedence
-
 from sympy.core.function import AppliedUndef
 
 from ..builder import Builder, HoppingKind
@@ -16,6 +23,9 @@ from ..lattice import Monatomic, TranslationalSymmetry
 from ._common import sympify, gcd
 from ._common import position_operators, momentum_operators
 from ._common import monomials
+
+
+__all__ = ['discretize']
 
 
 ################ Globals variables and definitions
