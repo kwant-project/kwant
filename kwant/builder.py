@@ -1379,10 +1379,17 @@ class Builder:
             if domain < min_dom:
                 raise ValueError('Builder does not interrupt the lead,'
                                  ' this lead cannot be attached.')
-            return domain < max_dom + 1
+            return domain <= max_dom + 1
 
-        all_added = self.fill(lead_builder, shape, (max_dom,),
+        # We start flood-fill from the first domain that doesn't belong to the
+        # system (this one is guaranteed to contain a complete unit cell of the
+        # lead). After flood-fill we remove that domain.
+        all_added = self.fill(lead_builder, shape, (max_dom + 1,),
                               max_sites=float('inf'))
+        to_delete = {site for site in all_added
+                     if sym.which(site)[0] == max_dom + 1}
+        all_added = [site for site in all_added if site not in to_delete]
+        del self[to_delete]
 
         # Calculate the interface.
         interface = set()

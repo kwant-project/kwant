@@ -772,6 +772,15 @@ def test_attach_lead():
     syst.finalized()
 
 
+def test_attach_lead_incomplete_unit_cell():
+    lat = kwant.lattice.chain()
+    syst = kwant.Builder()
+    lead = kwant.Builder(kwant.TranslationalSymmetry((2,)))
+    syst[lat(1)] = lead[lat(0)] = lead[lat(1)] = 0
+    lead[lat.neighbors()] = 0
+    assert(len(syst.attach_lead(lead)) == 0)
+
+
 def test_neighbors_not_in_single_domain():
     sr = builder.Builder()
     lead = builder.Builder(VerySimpleSymmetry(-1))
