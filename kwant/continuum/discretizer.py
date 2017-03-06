@@ -21,6 +21,7 @@ from ._common import matrix_monomials
 ################ Globals variables and definitions
 
 _wf = sympy.Function('_internal_unique_name', commutative=False)
+_momentum_operators = {s.name: s for s in momentum_operators}
 _position_operators = {s.name: s for s in position_operators}
 _displacements = {s: sympy.Symbol('_internal_a_{}'.format(s)) for s in 'xyz'}
 
@@ -103,15 +104,15 @@ def discretize_symbolic(hamiltonian, discrete_coordinates=None, substitutions=No
     if not isinstance(hamiltonian, (sympy.Expr, sympy.matrices.MatrixBase)):
         hamiltonian = sympify(hamiltonian, substitutions)
 
-    atoms = hamiltonian.atoms(sympy.Symbol)
-    if not all('a' != s.name for s in atoms):
+    atoms_names = [s.name for s in hamiltonian.atoms(sympy.Symbol)]
+    if any( s == 'a' for s in atoms_names):
         raise ValueError("'a' is a symbol used internally to represent "
                          "lattice spacing; please use a different symbol.")
 
     hamiltonian = sympy.expand(hamiltonian)
     if discrete_coordinates is None:
-        used_momenta = set(momentum_operators) & set(atoms)
-        discrete_coordinates = {k.name[-1] for k in used_momenta}
+        used_momenta = set(_momentum_operators) & set(atoms_names)
+        discrete_coordinates = {k[-1] for k in used_momenta}
     else:
         discrete_coordinates = set(discrete_coordinates)
         if not discrete_coordinates <= set('xyz'):
@@ -341,13 +342,11 @@ def _discretize_expression(expression, discrete_coordinates):
             output[tuple(offset[n].tolist())] += c.subs(subs)
         return dict(output)
 
-    # main function body starts here
-    if (isinstance(expression, (int, float, sympy.Integer, sympy.Float))
-            or not expression.atoms(sympy.Symbol) & set(momentum_operators)):
+    # if there are no momenta in the expression, then it is an onsite
+    atoms_names = [s.name for s in expression.atoms(sympy.Symbol)]
+    if not set(_momentum_operators) & set(atoms_names):
         n = len(discrete_coordinates)
         return {(0,) * n: expression}
-
-    assert isinstance(expression, sympy.Expr)
 
     # make sure we have list of summands
     summands = expression.as_ordered_terms()
