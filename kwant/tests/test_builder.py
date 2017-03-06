@@ -908,8 +908,24 @@ def test_ModesLead_and_SelfEnergyLead():
     ts2 = [kwant.smatrix(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)
 
+    # Re-attach right lead as ModesLead with old-style modes API
+    # that does not take a 'params' keyword parameter.
+    syst.leads[1] = builder.ModesLead(
+        lambda energy, args: lead.modes(energy, args), interface)
+    fsyst = syst.finalized()
+    ts2 = [kwant.smatrix(fsyst, e).transmission(1, 0) for e in energies]
+    assert_almost_equal(ts2, ts)
+
     # Re-attach right lead as SelfEnergyLead.
     syst.leads[1] = builder.SelfEnergyLead(lead.selfenergy, interface)
+    fsyst = syst.finalized()
+    ts2 = [kwant.greens_function(fsyst, e).transmission(1, 0) for e in energies]
+    assert_almost_equal(ts2, ts)
+
+    # Re-attach right lead as SelfEnergyLead with old-style selfenergy API
+    # that does not take a 'params' keyword parameter.
+    syst.leads[1] = builder.SelfEnergyLead(
+        lambda energy, args: lead.selfenergy(energy, args), interface)
     fsyst = syst.finalized()
     ts2 = [kwant.greens_function(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)

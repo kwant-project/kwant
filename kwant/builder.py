@@ -15,6 +15,7 @@ import operator
 import collections
 from functools import total_ordering, wraps
 from itertools import islice, chain
+import inspect
 import tinyarray as ta
 import numpy as np
 from scipy import sparse
@@ -576,6 +577,23 @@ class BuilderLead(Lead):
         return syst
 
 
+# Check that a modes/selfenergy function has a keyword-only parameter
+# 'params', or takes '**kwargs'. If not, we wrap it
+def _ensure_signature(func):
+        parameters = inspect.signature(func).parameters
+        has_params = bool(parameters.get('params'))
+        has_kwargs = any(p.kind == inspect.Parameter.VAR_KEYWORD
+                         for p in parameters.values())
+        if has_params or has_kwargs:
+            return func
+        else:  # function conforming to old API: needs wrapping
+
+            def wrapper(energy, args=(), *, params=None):
+                return func(energy, args)
+
+            return wrapper
+
+
 class SelfEnergyLead(Lead):
     """A general lead defined by its self energy.
 
@@ -587,8 +605,11 @@ class SelfEnergyLead(Lead):
     interface : sequence of `Site` instances
     """
     def __init__(self, selfenergy_func, interface):
-        self.selfenergy_func = selfenergy_func
         self.interface = tuple(interface)
+        # we changed the API of 'selfenergy_func' to have a keyword-only
+        # parameter 'params', but we still need to support the old API
+        # XXX: remove this when releasing Kwant 2.0
+        self.selfenergy_func = _ensure_signature(selfenergy_func)
 
     def finalized(self):
         """Trivial finalization: the object is returned itself."""
@@ -612,8 +633,11 @@ class ModesLead(Lead):
 
     """
     def __init__(self, modes_func, interface):
-        self.modes_func = modes_func
         self.interface = tuple(interface)
+        # we changed the API of 'selfenergy_func' to have a keyword-only
+        # parameter 'params', but we still need to support the old API
+        # XXX: remove this when releasing Kwant 2.0
+        self.modes_func = _ensure_signature(modes_func)
 
     def finalized(self):
         """Trivial finalization: the object is returned itself."""
