@@ -1,6 +1,7 @@
 import sympy
 import numpy as np
 
+from .._common import sympify
 from ..discretizer import discretize
 from ..discretizer import discretize_symbolic
 from ..discretizer import build_discretized
@@ -126,6 +127,24 @@ def test_simple_derivations(commutative):
     for inp, out in test.items():
         got, _ = discretize_symbolic(str(inp), substitutions=ns)
         assert got == out
+
+
+@pytest.mark.parametrize('e_to_subs, e, subs', [
+    ('k_x', 'k_x + k_y', {'k_x': 'k_x + k_y'}),
+    ('k_x**2 + V', 'k_x**2 + V + V_0', {'V': 'V + V_0'}),
+    ('k_x**2 + A + C', 'k_x**2 + B + 5', {'A': 'B + 5', 'C': 0}),
+    ('x + y + z', '1 + 3 + 5', {'x': 1, 'y': 3, 'z': 5})
+    ])
+def test_simple_derivations_with_subs(e_to_subs, e, subs):
+    # check with strings
+    one = discretize_symbolic(e_to_subs, 'xyz', substitutions=subs)
+    two = discretize_symbolic(e, 'xyz')
+    assert one == two
+
+    # check with sympy objects
+    one = discretize_symbolic(sympify(e_to_subs), 'xyz', substitutions=subs)
+    two = discretize_symbolic(sympify(e), 'xyz')
+    assert one == two
 
 
 def test_simple_derivations_matrix():

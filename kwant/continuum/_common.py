@@ -48,13 +48,23 @@ def lambdify(hamiltonian, *, substitutions=None):
         proper commutation properties. If a string is provided it will be
         converted to a sympy expression using `kwant.continuum.sympify`.
     substitutions : dict, defaults to empty
-        A namespace to be passed to ``kwant.continuum.sympify`` when
-        ``hamiltonian`` is a string. Could be used to simplify matrix input:
-        ``sympify('k_x**2 * s_z', substitutions={'s_z': [[1, 0], [0, -1]]})``.
+        A namespace of substitutions to be performed on the input
+        ``hamiltonian``. It can be used to simplify input of matrices or
+        alternate input before proceeding further. Please see examples below.
+
+    Example:
+    --------
+        >>> f = kwant.continuum.lambdify('a + b', substitutions={'b': 'b + c'})
+        >>> f(1, 3, 5)
+        9
+
+        >>> subs = {'s_z': [[1, 0], [0, -1]]}
+        >>> f = kwant.continuum.lambdify('k_z**2 * s_z', substitutions=subs)
+        >>> f(.25)
+        array([[ 0.0625,  0.    ],
+               [ 0.    , -0.0625]])
     """
-    expr = hamiltonian
-    if not isinstance(expr, (sympy.Expr, sympy.matrices.MatrixBase)):
-        expr = sympify(expr, substitutions)
+    expr = sympify(hamiltonian, substitutions)
 
     args = [s.name for s in expr.atoms(sympy.Symbol)]
     args += [str(f.func) for f in expr.atoms(AppliedUndef, sympy.Function)]
@@ -68,7 +78,7 @@ def lambdify(hamiltonian, *, substitutions=None):
     return f
 
 
-def sympify(string, substitutions=None, **kwargs):
+def sympify(e, substitutions=None):
     """Return sympified object with respect to kwant-specific rules.
 
     This is a modification of ``sympy.sympify`` to apply kwant-specific rules,
@@ -77,37 +87,63 @@ def sympify(string, substitutions=None, **kwargs):
 
     Parameters
     ----------
-    string : string
-        String representation of a Hamiltonian. Momenta must be defined as
-        ``k_i`` where ``i`` stands for ``x``, ``y``, or ``z``. All present
-        momenta and coordinates will be interpreted as non commutative.
+    e : arbitrary expression
+        An expression that will be converted to a sympy object.
+        Momenta must be defined as ``k_i`` where ``i`` stands for ``x``, ``y``,
+        or ``z``. All present momenta and coordinates will be interpreted
+        as non commutative.
     substitutions : dict, defaults to empty
-        A namespace to be passed internally to ``sympy.sympify``.
-        Could be used to simplify matrix input:
+        A namespace of substitutions to be performed on the input ``e``.
+        It works in a similar way to ``locals`` argument in ``sympy.sympify``
+        but extends its functionality to i.e. simplify matrix input:
         ``sympify('k_x**2 * s_z', substitutions={'s_z': [[1, 0], [0, -1]]})``.
-    **kwargs
-        Additional arguments that will be passed to ``sympy.sympify``.
+        Keys should be strings, unless ``e`` is already a sympy object.
+        Values can be strings or ``sympy`` objects.
 
     Example
     -------
         >>> from kwant.continuum import sympify
-        >>> hamiltonian = sympify('k_x * A(x) * k_x + V(x)')
+        >>> sympify('k_x * A(x) * k_x + V(x)')
+        k_x*A(x)*k_x + V(x)     # as valid sympy object
+
+        or
+
+        >>> from kwant.continuum import sympify
+        >>> sympify('k_x**2 + V', substitutions={'V': 'V_0 + V(x)'})
+        k_x**2 + V(x) + V_0
     """
     stored_value = None
-
+    sympified_types = (sympy.Expr, sympy.matrices.MatrixBase)
     if substitutions is None:
         substitutions = {}
 
-    substitutions.update(_clash)
+    # if ``e`` is already a ``sympy`` object we make use of ``substitutions``
+    # and terminate a code path.
+    if isinstance(e, sympified_types):
+        subs = {sympify(k): sympify(v) for k, v in substitutions.items()}
+        return e.subs(subs)
 
+    # if ``e`` is not a sympified type then we proceed with sympifying process,
+    # we expect all keys in ``substitutions`` to be strings at this moment.
+    if not all(isinstance(k, str) for k in substitutions):
+        raise ValueError("If 'e' is not already a sympy object ",
+                         "then keys of 'substitutions' must be strings.")
+
+    # sympify values of substitutions before updating it with _clash
+    substitutions = {k: (sympify(v) if not isinstance(v, sympified_types)
+                         else v)
+                     for k, v in substitutions.items()}
+
+    substitutions.update({s: v for s, v in _clash.items()
+                          if s not in substitutions})
     try:
         stored_value = converter.pop(list, None)
         converter[list] = lambda x: sympy.Matrix(x)
-        substitutions = {k: (sympy.sympify(v, locals=substitutions, **kwargs)
-                      if isinstance(v, (list, str)) else v)
-                  for k, v in substitutions.items()}
-        hamiltonian = sympy.sympify(string, locals=substitutions, **kwargs)
-        hamiltonian = sympy.sympify(hamiltonian, **kwargs)
+        hamiltonian = sympy.sympify(e, locals=substitutions)
+        # if input is for example ``[[k_x * A(x) * k_x]]`` after the first
+        # sympify we are getting list of sympy objects, so we call sympify
+        # second time to obtain ``sympy`` matrices.
+        hamiltonian = sympy.sympify(hamiltonian)
     finally:
         if stored_value is not None:
             converter[list] = stored_value

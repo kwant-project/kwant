@@ -49,9 +49,12 @@ def discretize(hamiltonian, discrete_coordinates=None, lattice_constant=1,
     lattice_constant : int or float, default: 1
         Lattice constant for the template Builder.
     substitutions : dict, defaults to empty
-        A namespace to be passed to `kwant.continuum.sympify` when
-        ``hamiltonian`` is a string. Could be used to simplify matrix input:
-        ``sympify('k_x**2 * s_z', substitutions={'s_z': [[1, 0], [0, -1]]})``.
+        A namespace of substitutions to be performed on the input
+        ``hamiltonian``. Values can be either strings or ``sympy`` objects.
+        It can be used to simplify input of matrices or alternate input before
+        proceeding further. For example:
+        ``substitutions={'k': 'k_x + I * k_y'}`` or
+        ``substitutions={'s_z': [[1, 0], [0, -1]]}``.
     verbose : bool, default: False
         If ``True`` additional information will be printed.
 
@@ -85,9 +88,12 @@ def discretize_symbolic(hamiltonian, discrete_coordinates=None, substitutions=No
         reading present coordinates and momentum operators. Order of discrete
         coordinates is always lexical, even if provided otherwise.
     substitutions : dict, defaults to empty
-        A namespace to be passed to `kwant.continuum.sympify` when
-        ``hamiltonian`` is a string. Could be used to simplify matrix input:
-        ``sympify('k_x**2 * s_z', substitutions={'s_z': [[1, 0], [0, -1]]})``.
+        A namespace of substitutions to be performed on the input
+        ``hamiltonian``. Values can be either strings or ``sympy`` objects.
+        It can be used to simplify input of matrices or alternate input before
+        proceeding further. For example:
+        ``substitutions={'k': 'k_x + I * k_y'}`` or
+        ``substitutions={'s_z': [[1, 0], [0, -1]]}``.
     verbose : bool, default: False
         If ``True`` additional information will be printed.
 
@@ -101,8 +107,7 @@ def discretize_symbolic(hamiltonian, discrete_coordinates=None, substitutions=No
         discrete_coordinates : sequence of strings
             The coordinates that have been discretized.
     """
-    if not isinstance(hamiltonian, (sympy.Expr, sympy.matrices.MatrixBase)):
-        hamiltonian = sympify(hamiltonian, substitutions)
+    hamiltonian = sympify(hamiltonian, substitutions)
 
     atoms_names = [s.name for s in hamiltonian.atoms(sympy.Symbol)]
     if any( s == 'a' for s in atoms_names):
@@ -176,9 +181,12 @@ def build_discretized(tb_hamiltonian, discrete_coordinates,
     lattice_constant : int or float, default: 1
         Lattice constant for the template Builder.
     substitutions : dict, defaults to empty
-        A namespace to be passed to `kwant.continuum.sympify` when
-        ``tb_hamiltonian`` is a string. Could be used to simplify matrix input:
-        ``sympify('k_x**2 * s_z', substitutions={'s_z': [[1, 0], [0, -1]]})``.
+        A namespace of substitutions to be performed on the values of input
+        ``tb_hamiltonian``. Values can be either strings or ``sympy`` objects.
+        It can be used to simplify input of matrices or alternate input before
+        proceeding further. For example:
+        ``substitutions={'k': 'k_x + I * k_y'}`` or
+        ``substitutions={'s_z': [[1, 0], [0, -1]]}``.
     verbose : bool, default: False
         If ``True`` additional information will be printed.
 
@@ -191,8 +199,7 @@ def build_discretized(tb_hamiltonian, discrete_coordinates,
         raise ValueError('Discrete coordinates cannot be empty.')
 
     for k, v in tb_hamiltonian.items():
-        if not isinstance(v, (sympy.Expr, sympy.matrices.MatrixBase)):
-            tb_hamiltonian[k] = sympify(v, substitutions)
+        tb_hamiltonian[k] = sympify(v, substitutions)
 
     discrete_coordinates = sorted(discrete_coordinates)
 

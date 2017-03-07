@@ -11,28 +11,59 @@ from operator import mul
 import pytest
 
 
-def test_sympify():
-    A, B, C = sympy.symbols('A B C')
-    x, y, z = position_operators
-    kx, ky, kz = momentum_operators
+com_A, com_B, com_C = sympy.symbols('A B C')
+x_op, y_op, z_op = position_operators
+kx, ky, kz = momentum_operators
 
-    # basics
-    assert sympify('k_x * A(x) * k_x') == kx * A(x) * kx
-    assert sympify('[[k_x * A(x) * k_x]]') == sympy.Matrix([kx * A(x) * kx])
 
-    # using substitutions
-    symbolic_pauli = {'sigma_x': msigma(1), 'sigma_y': msigma(2), 'sigma_z': msigma(3)}
-    got = sympify('k_x * sigma_y + k_y * sigma_x', substitutions=symbolic_pauli)
-    assert got == kx * symbolic_pauli['sigma_y'] + ky * symbolic_pauli['sigma_x']
 
-    got = sympify("sigma_y", substitutions={'sigma_y': "[[0, -1j], [1j, 0]]"})
-    assert got == symbolic_pauli['sigma_y']
 
-    got = sympify("sigma_y", substitutions={'sigma_y': [[0, -sympy.I], [sympy.I, 0]]})
-    assert got == symbolic_pauli['sigma_y']
+@pytest.mark.parametrize('input_expr, output_expr', [
+    ('k_x * A(x) * k_x', kx * com_A(x_op) * kx),
+    ('[[k_x * A(x) * k_x]]', sympy.Matrix([kx * com_A(x_op) * kx])),
+    ('k_x * sigma_y + k_y * sigma_x', kx * msigma(2) + ky * msigma(1)),
+    ('[[k_x*A(x)*k_x, B(x, y)*k_x], [k_x*B(x, y), C*k_y**2]]',
+            sympy.Matrix([[kx*com_A(x_op)*kx, com_B(x_op, y_op)*kx],
+                          [kx*com_B(x_op, y_op), com_C*ky**2]]))
+])
+def test_sympify(input_expr, output_expr):
+    assert sympify(input_expr) == output_expr
+    assert sympify(sympify(input_expr)) == output_expr
 
-    got = sympify('[[k_x*A(x)*k_x, B(x, y)*k_x], [k_x*B(x, y), C*k_y**2]]')
-    assert got == sympy.Matrix([[kx*A(x)*kx, B(x, y)*kx], [kx*B(x, y), C*ky**2]])
+
+
+
+@pytest.mark.parametrize('input_expr, output_expr, subs', [
+    ('k_x', kx + ky, {'k_x': 'k_x + k_y'}),
+    ('x', x_op + y_op, {'x': 'x + y'}),
+    ('A', com_A + com_B, {'A': 'A + B'}),
+    ('A', com_A + com_B(x_op), {'A': 'A + B(x)'}),
+    ('A', msigma(2), {'A': "[[0, -1j], [1j, 0]]"}),
+])
+def test_sympify_substitutions(input_expr, output_expr, subs):
+    assert sympify(input_expr, substitutions=subs) == output_expr
+    assert sympify(sympify(input_expr), substitutions=subs) == output_expr
+
+    subs = {k: sympify(v) for k, v in subs.items()}
+    assert sympify(input_expr, substitutions=subs) == output_expr
+    assert sympify(sympify(input_expr), substitutions=subs) == output_expr
+
+    subs = {sympify(k): sympify(v) for k, v in subs.items()}
+    assert sympify(sympify(input_expr), substitutions=subs) == output_expr
+
+
+
+
+@pytest.mark.parametrize('input_expr, output_expr, subs', [
+    ('A + k_x**2 * eye(2)',
+        kx**2 * sympy.eye(2) + msigma(2),
+        {'A': "[[0, -1j], [1j, 0]]"})
+])
+def test_sympify_mix_symbol_and_matrx(input_expr, output_expr, subs):
+    assert sympify(input_expr, substitutions=subs) == output_expr
+
+    subs = {k: sympify(v) for k, v in subs.items()}
+    assert sympify(input_expr, substitutions=subs) == output_expr
 
 
 
@@ -114,7 +145,16 @@ def test_lambdify(e, should_be, kwargs):
     assert e(**kwargs) == should_be(**kwargs)
 
 
+@pytest.mark.parametrize("e, kwargs", [
+    ("x + y", dict(x=1, y=3, z=5)),
+    (sympify("x+y"), dict(x=1, y=3, z=5))
+    ])
+def test_lambdify_substitutions(e, kwargs):
+    should_be = lambda x, y, z: x + y + z
+    subs = {'y': 'y + z'}
 
+    e = lambdify(e, substitutions=subs)
+    assert e(**kwargs) == should_be(**kwargs)
 
 
 # dispersion_string = ('A * k_x**2 * eye(2) + B * k_y**2 * eye(2)'
