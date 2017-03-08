@@ -79,7 +79,7 @@ check for broken links in doc:
 create conda package:
   stage: deploy
   only:
-    - master
+    - master@kwant/kwant
   image: condaforge/linux-anvil
   script:
     - yum install -y devtoolset-2-gcc-gfortran
