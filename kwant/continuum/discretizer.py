@@ -65,12 +65,13 @@ def discretize(hamiltonian, discrete_coordinates=None, lattice_constant=1,
     """
 
     args = hamiltonian, discrete_coordinates, substitutions, verbose
-    tb, coords = discretize_symbolic(*args)
-    return build_discretized(tb, coords, lattice_constant, substitutions, verbose)
+    tb_hamiltonian, discrete_coordinates = discretize_symbolic(*args)
+    return build_discretized(tb_hamiltonian, discrete_coordinates,
+                             lattice_constant, substitutions, verbose)
 
 
-def discretize_symbolic(hamiltonian, discrete_coordinates=None, substitutions=None,
-                        verbose=False):
+def discretize_symbolic(hamiltonian, discrete_coordinates=None,
+                        substitutions=None, verbose=False):
     """Discretize a continuous Hamiltonian into a tight-binding representation.
 
     Parameters
@@ -111,8 +112,8 @@ def discretize_symbolic(hamiltonian, discrete_coordinates=None, substitutions=No
 
     atoms_names = [s.name for s in hamiltonian.atoms(sympy.Symbol)]
     if any( s == 'a' for s in atoms_names):
-        raise ValueError("'a' is a symbol used internally to represent "
-                         "lattice spacing; please use a different symbol.")
+        raise TypeError("'a' is a symbol used internally to represent "
+                        "lattice spacing; please use a different symbol.")
 
     hamiltonian = sympy.expand(hamiltonian)
     if discrete_coordinates is None:
@@ -411,7 +412,7 @@ def _return_string(expr, discrete_coordinates):
     -------
     output : string
         A return string that can be used to assemble a Kwant value function.
-    map_function_calls : dict
+    map_func_calls : dict
         mapping of function calls to assigned constants.
     const_symbols : sequance of sympy.Symbol
         All constants that appear in the expression.
@@ -431,11 +432,11 @@ def _return_string(expr, discrete_coordinates):
     # functions will be evaluated within the function body and the
     # result assigned to a symbol '_const_<n>', so we replace all
     # function calls by these symbols in the return statement.
-    map_function_calls = expr.atoms(AppliedUndef, sympy.Function)
-    map_function_calls = {s: sympy.symbols('_const_{}'.format(n))
-                    for n, s in enumerate(map_function_calls)}
+    map_func_calls = expr.atoms(AppliedUndef, sympy.Function)
+    map_func_calls = {s: sympy.symbols('_const_{}'.format(n))
+                      for n, s in enumerate(map_func_calls)}
 
-    expr = expr.subs(map_function_calls)
+    expr = expr.subs(map_func_calls)
 
     if isinstance(expr, sympy.matrices.MatrixBase):
         # express matrix return values in terms of sums of known matrices,
@@ -448,16 +449,16 @@ def _return_string(expr, discrete_coordinates):
     else:
         output = _print_sympy(expr)
 
-    return 'return {}'.format(output), map_function_calls, const_symbols, _cache
+    return 'return {}'.format(output), map_func_calls, const_symbols, _cache
 
 
-def _assign_symbols(map_function_calls, lattice_constant,
+def _assign_symbols(map_func_calls, lattice_constant,
                     discrete_coordinates, onsite):
     """Generate a series of assignments.
 
     Parameters
     ----------
-    map_function_calls : dict
+    map_func_calls : dict
         mapping of function calls to assigned constants.
     lattice_constant : int or float
         Used to get site.pos from site.tag
@@ -478,7 +479,7 @@ def _assign_symbols(map_function_calls, lattice_constant,
         args = ', '.join(discrete_coordinates), str(lattice_constant), site
         lines.append('({}, ) = {} * {}.tag'.format(*args))
 
-    for k, v in map_function_calls.items():
+    for k, v in map_func_calls.items():
         lines.append("{} = {}".format(v, _print_sympy(k)))
 
     return lines
@@ -505,7 +506,7 @@ def _value_function(expr, discrete_coordinates, lattice_constant, onsite,
     """
 
     expr = expr.subs({sympy.Symbol('a'): lattice_constant})
-    return_string, map_function_calls, const_symbols, _cache = \
+    return_string, map_func_calls, const_symbols, _cache = \
         _return_string(expr, discrete_coordinates=discrete_coordinates)
 
     # first check if value function needs to read coordinates
@@ -516,7 +517,7 @@ def _value_function(expr, discrete_coordinates, lattice_constant, onsite,
     # constants and functions in the sympy input will be passed
     # as keyword-only arguments to the value function
     required_kwargs = set.union({s.name for s in const_symbols},
-                                {str(k.func) for k in map_function_calls})
+                                {str(k.func) for k in map_func_calls})
     required_kwargs = ', '.join(sorted(required_kwargs))
 
     if (not required_kwargs) and (discrete_coordinates is None):
@@ -531,7 +532,7 @@ def _value_function(expr, discrete_coordinates, lattice_constant, onsite,
 
         return output
 
-    lines = _assign_symbols(map_function_calls, onsite=onsite,
+    lines = _assign_symbols(map_func_calls, onsite=onsite,
                             lattice_constant=lattice_constant,
                             discrete_coordinates=discrete_coordinates)
 
