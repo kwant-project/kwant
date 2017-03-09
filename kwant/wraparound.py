@@ -228,6 +228,18 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
         sym = TranslationalSymmetry(*periods)
         momenta.pop(keep)
 
+    # Wrapped around system retains conservation law and chiral symmetry.
+    # We use 'bind_site' to add the momenta arguments if required.
+    cons = builder.conservation_law
+    ret.conservation_law = bind_site(cons) if callable(cons) else cons
+    chiral = builder.chiral
+    ret.chiral = bind_site(chiral) if callable(chiral) else chiral
+    # Set these to zero, as they can only hold @ k=0, and we currently
+    # have no mechanism for telling the system about the existence
+    # (or not) of a symmetry at different parameter values.
+    ret.particle_hole = None
+    ret.time_reversal = None
+
     sites = {}
     hops = collections.defaultdict(list)
 

@@ -166,3 +166,29 @@ def test_signatures():
         params, takes_kwargs = get_parameters(wrapped_syst[hopping])
         assert params[2:] == params_should_be
         assert takes_kwargs == should_take_kwargs
+
+
+def test_symmetry():
+    syst = _simple_syst(kwant.lattice.square())
+
+    matrices = [np.random.rand(2, 2) for i in range(4)]
+    laws = (matrices, [(lambda a: m) for m in matrices])
+    for cl, ch, ph, tr in laws:
+        syst.conservation_law = cl
+        syst.chiral = ch
+        syst.particle_hole = ph
+        syst.time_reversal = tr
+
+        wrapped = wraparound(syst)
+
+        assert wrapped.time_reversal is None
+        assert wrapped.particle_hole is None
+        for attr in ('conservation_law', 'chiral'):
+            new = getattr(wrapped, attr)
+            orig = getattr(syst, attr)
+            if callable(orig):
+                params, _ = get_parameters(new)
+                assert params[1:] == ['k_x', 'k_y']
+                assert np.all(orig(None) == new(None, None, None))
+            else:
+                assert np.all(orig == new)
