@@ -79,7 +79,7 @@ def lstsq(a, b):
     """Least squares version that works also with 0-shaped matrices."""
     if a.shape[1] == 0:
         return np.empty((0, 0), dtype=np.common_type(a, b))
-    return np.linalg.lstsq(a, b)[0]
+    return la.lstsq(a, b)[0]
 
 
 def nonzero_symm_projection(matrix):
