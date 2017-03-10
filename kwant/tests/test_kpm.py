@@ -43,7 +43,7 @@ def assert_allclose_sp(arr1, arr2):
     np.testing.assert_allclose(arr1, arr2, rtol=0., atol=TOL_SP)
 
 
-def make_spectrum(ham, p, operator=None, vector_factory=None, rng=None):
+def make_spectrum(ham, p, operator=None, vector_factory=None, rng=None, params=None):
     """Create an instance of SpectralDensity class."""
     return SpectralDensity(
         ham,
@@ -52,7 +52,8 @@ def make_spectrum(ham, p, operator=None, vector_factory=None, rng=None):
         num_moments=p.num_moments,
         num_rand_vecs=p.num_rand_vecs,
         num_sampling_points=p.num_sampling_points,
-        rng=rng
+        rng=rng,
+        params=params
         )
 
 
@@ -62,6 +63,17 @@ def make_chain(r=dim, t=-1):
     for i in range(r):
         syst[lat(i)] = 0
     syst[lat.neighbors()] = t
+    return syst.finalized()
+
+
+def make_chain_with_params(r=10, pot=0, t=-1):
+    syst = kwant.Builder()
+    lat = kwant.lattice.chain(norbs=1)
+    pot = lambda site, pot: pot
+    hop = lambda site1, site2, t: t
+    for i in range(r):
+        syst[lat(i)] = pot
+    syst[lat.neighbors()] = hop
     return syst.finalized()
 
 
@@ -288,6 +300,32 @@ def test_kwant_op():
     # test that the densities are arrays when calling the instance
     e = spectrum_syst.energies
     assert_allclose_sp(spectrum_syst(e), spectrum_syst.densities)
+
+
+def test_kwant_op_current():
+    """Check that the kwant.operator.Density gives the same result as the
+    identity operator when the system has ``params``.
+    """
+    params = {'r':dim, 'pot':1, 't':-2}
+
+    # build the system using parameters default values
+    # to be later rewritten
+    syst = make_chain_with_params()
+    current = kwant.operator.Current(syst)
+    # pass parameters to kpm to evaluate hamiltonian and operator
+    spectrum_syst = make_spectrum(syst, p, operator=current, rng=1,
+                                  params=params)
+
+    # compare with explicit hamiltonian and operator
+    ham = syst.hamiltonian_submatrix(params=params)
+    def my_current(bra, ket):
+        return current(bra, ket, params=params)
+    # do not pass parameters to kpm
+    spectrum = make_spectrum(ham, p, operator=my_current, rng=1)
+
+    # same algorithms are used so these arrays are equal up to TOL
+    assert_allclose(spectrum_syst.densities, spectrum.densities)
+
 
 def test_kwant_op_average():
     """Check that the kwant.operator.Density gives the same result as the

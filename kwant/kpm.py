@@ -18,7 +18,7 @@ import scipy.fftpack as fft
 
 from . import system
 from ._common import ensure_isinstance, ensure_rng
-
+from .operator import _LocalOperator
 
 class SpectralDensity:
     """Calculate the spectral density of an operator.
@@ -40,8 +40,8 @@ class SpectralDensity:
     ----------
     syst_or_ham : `~kwant.system.FiniteSystem` or matrix Hamiltonian
         If a system is passed, it should contain no leads.
-    args : tuple, optional
-        Positional arguments to pass to the system.
+    params : dict, optional
+        Additional parameters to pass to the Hamiltonian and operator.
     operator : operator, dense matrix, or sparse matrix, optional
         Operator for which the spectral density will be evaluated. If
         it is callable, the ``densities`` at each energy will have the
@@ -132,8 +132,8 @@ class SpectralDensity:
         Spectral density of the ``operator`` evaluated at the energies.
     """
 
-    def __init__(self, syst_or_ham, args=(), operator=None, num_rand_vecs=10,
-                 num_moments=100, num_sampling_points=None,
+    def __init__(self, syst_or_ham, params=None, operator=None,
+                 num_rand_vecs=10, num_moments=100, num_sampling_points=None,
                  vector_factory=None, bounds=None, epsilon=0.05, rng=None):
         rng = ensure_rng(rng)
         # self.epsilon ensures that the rescaled Hamiltonian has a
@@ -146,24 +146,27 @@ class SpectralDensity:
             try:
                 ensure_isinstance(syst_or_ham, system.System)
                 ham = scipy.sparse.csr_matrix(
-                    syst_or_ham.hamiltonian_submatrix(args=args, sparse=True))
+                    syst_or_ham.hamiltonian_submatrix(params=params,
+                                                      sparse=True))
             except TypeError:
                 raise ValueError('Parameter `syst_or_ham` is not a '
                                  'Hamiltonian neither a (finalized) '
                                  '`kwant.system`.')
-        # Check if operator is a sparse matrix or None.
+
+        # Normalize 'operator' to a common format.
         if operator is None:
             self.operator = None
+        elif isinstance(operator, _LocalOperator):
+            self.operator = operator.bind(params=params)
+        elif callable(operator):
+            self.operator = operator
+        elif hasattr(operator, 'dot'):
+            operator = scipy.sparse.csr_matrix(operator)
+            self.operator = lambda bra, ket: np.vdot(bra, operator.dot(ket))
         else:
-            if callable(operator):
-                self.operator = operator
-            elif hasattr(operator, 'dot') and not hasattr(operator, 'act'):
-                operator = scipy.sparse.csr_matrix(operator)
-                self.operator = (lambda bra, ket:
-                                 np.vdot(bra, operator.dot(ket)))
-            else:
-                raise ValueError('Parameter `operator` has no `.dot` '
-                                 'attribute and is not callable.')
+            raise ValueError('Parameter `operator` has no `.dot` '
+                             'attribute and is not callable.')
+
         self.num_moments = num_moments
         # Default number of sampling points
         if num_sampling_points is None:
