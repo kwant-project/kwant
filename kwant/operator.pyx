@@ -482,7 +482,7 @@ cdef class _LocalOperator:
         tot_norbs = _get_tot_norbs(self.syst)
         if bra.shape != (tot_norbs,):
             msg = 'vector is incorrect shape'
-            msg = 'bra ' + msg if ket else msg
+            msg = 'bra ' + msg if ket is None else msg
             raise ValueError(msg)
         elif ket.shape != (tot_norbs,):
             raise ValueError('ket vector is incorrect shape')
