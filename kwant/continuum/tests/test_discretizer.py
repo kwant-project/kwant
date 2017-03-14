@@ -331,6 +331,17 @@ def test_numeric_functions_basic_symbolic():
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
 
+@pytest.mark.parametrize('commutative', [ True, False])
+def test_numeric_function_coords_from_site(commutative):
+    tb = {(0,): sympy.symbols('x', commutative=commutative)}
+    builder = build_discretized(tb, 'x', verbose=True)
+
+    lat = next(iter(builder.sites()))[0]
+    onsite = builder[lat(0)]
+    assert (onsite(lat(0)) == 0 and onsite(lat(1)) == 1)
+
+
+
 def test_numeric_functions_not_discrete_coords():
     builder = discretize('k_y + y', 'x')
     lat = next(iter(builder.sites()))[0]

@@ -520,8 +520,8 @@ def _value_function(expr, discrete_coordinates, lattice_constant, onsite,
         _return_string(expr, discrete_coordinates=discrete_coordinates)
 
     # first check if value function needs to read coordinates
-    if not ({_position_operators[s] for s in discrete_coordinates} &
-            expr.atoms(sympy.Symbol)):
+    atoms_names = {s.name for s in expr.atoms(sympy.Symbol)}
+    if not set(discrete_coordinates) & atoms_names:
         discrete_coordinates = None
 
     # constants and functions in the sympy input will be passed
