@@ -13,6 +13,7 @@
 /doc/source/images/*.pdf
 /doc/source/images/.*_flag
 /doc/source/images/[a-zA-Z]*.py
+/doc/source/images/*.txt
 /build.conf
 /kwant.egg-info/
 /MANIFEST.in
