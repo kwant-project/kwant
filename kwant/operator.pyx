@@ -1,4 +1,4 @@
-# 2011-2016 Kwant authors.
+# Copyright 2011-2017 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -232,6 +232,25 @@ def _normalize_hopping_where(syst, where):
     return np.asarray(_where, dtype=gint_dtype)
 
 
+## These two classes are here to avoid using closures, as these will
+## break pickle support. These are only used inside '_normalize_onsite'.
+
+class _FunctionalOnsite:
+
+    def __init__(self, onsite, sites):
+        self.onsite = onsite
+        self.sites = sites
+
+    def __call__(self, site_id, *args, **kwargs):
+        return self.onsite(self.sites[site_id], *args, **kwargs)
+
+
+class _DictOnsite(_FunctionalOnsite):
+
+    def __call__(self, site_id, *args):
+        return self.onsite[self.sites[site_id].family]
+
+
 def _normalize_onsite(syst, onsite, check_hermiticity):
     """Normalize the format of `onsite`.
 
@@ -246,16 +265,11 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
         parameters = parameters[1:]  # skip 'site' parameter
         parameter_info = (tuple(parameters), takes_kwargs)
         try:
-            _sites = syst.sites
-            @ft.wraps(onsite)
-            def _onsite(site_id, *args, **kwargs):
-                return onsite(_sites[site_id], *args, **kwargs)
+            _onsite = _FunctionalOnsite(onsite, syst.sites)
         except AttributeError:
             _onsite = onsite
     elif isinstance(onsite, collections.Mapping):
-        try:
-            _sites = syst.sites
-        except AttributeError:
+        if not hasattr(syst, 'sites'):
             raise TypeError('Provide `onsite` as a value or a function for '
                             'systems that are not finalized Builders.')
 
@@ -264,8 +278,7 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
             _onsite = ta.matrix(_onsite, complex)
             _check_onsite(_onsite, fam.norbs, check_hermiticity)
 
-        def _onsite(site_id, *args):
-            return onsite[_sites[site_id].family]
+        _onsite = _DictOnsite(onsite, syst.sites)
     else:
         # single onsite; immediately check for correct shape and hermiticity
         _onsite = ta.matrix(onsite, complex)
@@ -364,6 +377,21 @@ cdef class BlockSparseMatrix:
 
     cdef complex* get(self, gint block_idx):
         return  <complex*> &self.data[0] + self.data_offsets[block_idx]
+
+    def __getstate__(self):
+        return tuple(map(np.asarray, (
+            self.block_offsets,
+            self.block_shapes,
+            self.data_offsets,
+            self.data
+        )))
+
+    def __setstate__(self, state):
+        (self.block_offsets,
+         self.block_shapes,
+         self.data_offsets,
+         self.data,
+        ) = state
 
 
 ################ Local Observables
@@ -626,6 +654,21 @@ cdef class _LocalOperator:
 
         offsets, norbs = _get_all_orbs(self.where, self._site_ranges)
         return  BlockSparseMatrix(self.where, offsets, norbs, get_ham)
+
+    def __getstate__(self):
+        return (
+            (self.check_hermiticity, self.sum),
+            (self.syst, self.onsite, self._onsite_params_info),
+            tuple(map(np.asarray, (self.where, self._site_ranges))),
+            (self._bound_onsite, self._bound_hamiltonian),
+        )
+
+    def __setstate__(self, state):
+        ((self.check_hermiticity, self.sum),
+         (self.syst, self.onsite, self._onsite_params_info),
+         (self.where, self._site_ranges),
+         (self._bound_onsite, self._bound_hamiltonian),
+        ) = state
 
 
 cdef class Density(_LocalOperator):
