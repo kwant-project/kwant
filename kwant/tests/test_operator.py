@@ -8,6 +8,7 @@
 
 import functools as ft
 from collections import deque
+import pickle
 import numpy as np
 import tinyarray as ta
 import numpy.linalg as la
@@ -21,6 +22,7 @@ import kwant
 from kwant import operator as ops
 
 
+sigma0 = np.array([[1, 0], [0, 1]])
 sigmax = np.array([[0, 1], [1, 0]])
 sigmay = np.array([[0, -1j], [1j, 0]])
 sigmaz = np.array([[1, 0], [0, -1]])
@@ -485,3 +487,46 @@ def test_arg_passing(A):
     if has_tocoo:
         np.testing.assert_array_equal(
             tocoo_should_be, op2.tocoo().todense())
+
+
+def random_onsite(i):
+    return (2 + kwant.digest.uniform(i.tag)) * sigmaz
+
+
+def random_hopping(i, j):
+    return (-1 + kwant.digest.uniform(i.tag + j.tag)) * sigmay
+
+
+def f_sigmay(i):
+    return sigma0
+
+
+@pytest.mark.parametrize("A", opservables)
+def test_pickling(A):
+
+    lat = kwant.lattice.square(norbs=2)
+    syst = kwant.Builder()
+    syst[(lat(i, j) for i in range(5) for j in range(5))] = random_onsite
+    syst[lat.neighbors()] = random_hopping
+    fsyst = syst.finalized()
+
+    wf = np.random.rand(2 * len(fsyst.sites))
+
+    def all_equal(it):
+        it = iter(it)
+        first = next(it)
+        return all(np.all(first == rest) for rest in it)
+
+    ops = [
+        A(fsyst),
+        A(fsyst, onsite=f_sigmay),
+        A(fsyst, onsite=sigmaz),
+        A(fsyst, sum=True),
+        A(fsyst, onsite=sigmaz, sum=True),
+        A(fsyst, onsite=f_sigmay, sum=True),
+    ]
+    ops += [op.bind() for op in ops]
+
+    for op in ops:
+        loaded_op = pickle.loads(pickle.dumps(op))
+        assert np.all(op(wf) == loaded_op(wf))
