@@ -1260,6 +1260,15 @@ class Builder:
         for site in to_domain(start, H):
             add_site(site)
 
+        if not new_sites:
+            if not any(shape(s) for s in to_domain(start, H)):
+                raise ValueError("No sites in symmetry domain {} are in the "
+                                 "desired shape".format(start))
+            else:
+                raise RuntimeError("No sites were added becuse the target "
+                                   "builder already contains sites in the "
+                                   "starting domain.")
+
         # Flood-fill
         while new_sites:
             site = new_sites.pop()

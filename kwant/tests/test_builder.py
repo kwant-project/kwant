@@ -650,6 +650,14 @@ def test_fill():
     def line_200(site):
         return -100 <= site.pos[0] < 100
 
+    ## test that ValueError is raised when "start" is out
+    target = builder.Builder()
+    for domain in [-101, 101]:
+        with raises(ValueError):
+            target.fill(template_1d, line_200, start=(domain,))
+        with raises(ValueError):
+            target.fill(template_1d, line_200, start=g(domain, 0))
+
     ## test max_sites
     target = builder.Builder()
     for max_sites in (-1, 0):
@@ -664,8 +672,8 @@ def test_fill():
     added_sites = target.fill(template_1d, line_200, g(0, 0))
     assert len(added_sites) == 200
     ## test overwrite=False
-    added_sites = target.fill(template_1d, line_200, g(0, 0))
-    assert len(added_sites) == 0
+    with raises(RuntimeError):
+        target.fill(template_1d, line_200, g(0, 0))
     ## test overwrite=True
     added_sites = target.fill(template_1d, line_200, g(0, 0),
                               overwrite=True)
