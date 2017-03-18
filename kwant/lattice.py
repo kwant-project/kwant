@@ -693,6 +693,9 @@ class TranslationalSymmetry(builder.Symmetry):
         return -result if self.is_reversed else result
 
     def act(self, element, a, b=None):
+        element = ta.array(element)
+        if element.dtype is not int:
+            raise ValueError("group element must be a tuple of integers")
         m_part = self._get_site_family_data(a.family)[0]
         try:
             delta = ta.dot(m_part, element)

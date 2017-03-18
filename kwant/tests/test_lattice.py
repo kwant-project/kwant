@@ -232,6 +232,25 @@ def test_norbs():
     assert lat1 != lat2
 
 
+def test_symmetry_act():
+    lat = lattice.square()
+    sym = lattice.TranslationalSymmetry((1, 0), (0, 1))
+    site = lat(0, 0)
+    hopping = (lat(0, 0), lat(1, 0))
+    el = (1, 0)
+
+    # Verify that the dtype of tags of sites returned by 'act' is 'int'
+    for el in [el, ta.array(el, int)]:
+        assert sym.act(el, site).tag.dtype is int
+        assert all(s.tag.dtype is int for s in sym.act(el, *hopping))
+
+    for el in [(1.0, 0), (1.5, 0)]:
+        with raises(ValueError):
+            sym.act(el, site)
+        with raises(ValueError):
+            sym.act(ta.array(el), site)
+
+
 def test_symmetry_subgroup():
     rng = np.random.RandomState(0)
     ## test whether actual subgroups are detected as such
