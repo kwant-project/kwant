@@ -77,7 +77,7 @@ def plot_data(syst, n):
         return ('p', 3, 180) if site.family == a else ('p', 3, 0)
 
     def family_color(i):
-        return 'black' if syst.site(i).family == a else 'white'
+        return 'black' if syst.sites[i].family == a else 'white'
 
     kwant.plot(syst, site_color=wf, site_symbol=family_shape,
                site_size=0.5, hop_lw=0, cmap='gist_heat_r')

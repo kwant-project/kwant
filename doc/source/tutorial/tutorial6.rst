@@ -112,7 +112,7 @@ this is interpreted as the radius of the inner circle).
 
 Finally, note that since we are dealing with a finalized system now, a site `i`
 is represented by an integer. In order to obtain the original
-`~kwant.builder.Site`, ``syst.site(i)`` can be used.
+`~kwant.builder.Site`, ``syst.sites[i]`` can be used.
 
 With this we arrive at
 
