@@ -1940,12 +1940,6 @@ class FiniteSystem(system.FiniteSystem):
                 value = herm_conj(value)
         return value
 
-    def site(self, i):
-        warnings.warn("The function ``site`` will disappear after Kwant 1.1.  "
-                      "Use ``sites`` instead.", KwantDeprecationWarning,
-                      stacklevel=2)
-        return self.sites[i]
-
     def pos(self, i):
         return self.sites[i].pos
 
@@ -2030,12 +2024,6 @@ class InfiniteSystem(system.InfiniteSystem):
             if conj:
                 value = herm_conj(value)
         return value
-
-    def site(self, i):
-        warnings.warn("The function ``site`` will disappear after Kwant 1.1.  "
-                      "Use ``sites`` instead.", KwantDeprecationWarning,
-                      stacklevel=2)
-        return self.sites[i]
 
     def pos(self, i):
         return self.sites[i].pos
