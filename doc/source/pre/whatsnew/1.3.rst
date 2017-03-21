@@ -133,3 +133,11 @@ Reference implementation of the Kernel Polynomial Method
 The kernel polynomial method is now implemented within Kwant to obtain the
 density of states or, more generally, the spectral density of a given operator
 acting on a system or Hamiltonian.
+
+Tools for coninuum Hamiltonians
+-------------------------------
+The `~kwant.continuum` sub-package is a collection of tools for working with
+continuum models and for discretizing them into tight-binding models. It aims
+at providing a handy interface to convert symbolic Hamiltonian into a builder
+with N-D translational symmetry that can be use to calculate TB band structures
+or construct systems with different/lower symmetry.

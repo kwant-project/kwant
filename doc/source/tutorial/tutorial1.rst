@@ -1,6 +1,8 @@
 First steps: setting up a simple system and computing conductance
 -----------------------------------------------------------------
 
+.. _tutorial_discretization_schrodinger:
+
 Discretization of a Schrödinger Hamiltonian
 ...........................................
 

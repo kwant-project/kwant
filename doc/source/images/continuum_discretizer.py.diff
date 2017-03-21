@@ -1,0 +1,93 @@
+--- original
++++ modified
+@@ -9,6 +9,8 @@
+ # --------------------------
+ #  - discretizer module from kwant.continuum
+ 
++import _defs
++from contextlib import redirect_stdout
+ 
+ import kwant
+ import scipy.sparse.linalg
+@@ -20,9 +22,19 @@
+ from matplotlib import pyplot as plt
+ 
+ 
++def save_figure(file_name):
++    if not file_name:
++        return
++    for extension in ('pdf', 'png'):
++        plt.savefig('.'.join((file_name,extension)),
++                    dpi=_defs.dpi, bbox_inches='tight')
++
++
+ def stadium_system(L=20, W=20):
+     hamiltonian = "k_x**2 + k_y**2 + V(x, y)"
+-    template = kwant.continuum.discretize(hamiltonian, verbose=True)
++    with open('discretizer_verbose.txt', 'w') as f:
++        with redirect_stdout(f):
++            template = kwant.continuum.discretize(hamiltonian, verbose=True)
+ 
+     def stadium(site):
+         (x, y) = site.pos
+@@ -43,7 +55,7 @@
+     ham = syst.hamiltonian_submatrix(params=dict(V=potential), sparse=True)
+     evecs = scipy.sparse.linalg.eigsh(ham, k=10, which='SM')[1]
+     kwant.plotter.map(syst, abs(evecs[:, n])**2, show=False)
+-    plt.show()
++    save_figure('discretizer_gs')
+ 
+ 
+ def qsh_system(a=20, L=2000, W=1000):
+@@ -90,7 +102,8 @@
+     plt.ylim(-0.05, 0.05)
+     plt.xlabel('momentum [1/A]')
+     plt.ylabel('energy [eV]')
+-    plt.show()
++    save_figure('discretizer_qsh_band')
++
+     # get scattering wave functions at E=0
+     wf = kwant.wave_function(syst, energy=0, params=params)
+ 
+@@ -118,7 +131,7 @@
+ 
+     ax1.set_title('Probability density')
+     ax2.set_title('Spin density')
+-    plt.show()
++    save_figure('discretizer_qsh_wf')
+ 
+ 
+ def lattice_spacing():
+@@ -155,7 +168,7 @@
+ 
+     plot(ax1, a=1)
+     plot(ax2, a=.25)
+-    plt.show()
++    save_figure('discretizer_lattice_spacing')
+ 
+ 
+ def substitutions():
+@@ -168,14 +181,20 @@
+         sympify('k_x**2 * sz + alpha * k_x * sx', substitutions=subs),
+     )
+ 
+-    print(e[0] == e[1] == e[2])
++    with open('discretizer_subs_1.txt', 'w') as f:
++        with redirect_stdout(f):
++            print(e[0] == e[1] == e[2])
+ 
+     subs = {'A': 'A(x) + B', 'V': 'V(x) + V_0', 'C': 5}
+-    print(sympify('k_x * A * k_x + V + C', substitutions=subs))
++    with open('discretizer_subs_2.txt', 'w') as f:
++        with redirect_stdout(f):
++            print(sympify('k_x * A * k_x + V + C', substitutions=subs))
+ 
+ 
+ def main():
+-    template = kwant.continuum.discretize('k_x * A(x) * k_x', verbose=True)
++    with open('discretizer_intro_verbose.txt', 'w') as f:
++        with redirect_stdout(f):
++            kwant.continuum.discretize('k_x * A(x) * k_x', verbose=True)
+ 
+     syst = stadium_system()
+     plot_eigenstate(syst)

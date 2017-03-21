@@ -30,7 +30,7 @@ pauli = (msigma(0), msigma(1), msigma(2), msigma(3))
 _clash = _clash.copy()
 _clash.update({s.name: s for s in momentum_operators})
 _clash.update({s.name: s for s in position_operators})
-_clash.update({'kron': TensorProduct, 'eye': sympy.eye})
+_clash.update({'kron': TensorProduct, 'eye': sympy.eye, 'identity': sympy.eye})
 _clash.update({'sigma_{}'.format(c): p for c, p in zip('0xyz', pauli)})
 
 
@@ -49,8 +49,8 @@ def lambdify(hamiltonian, substitutions=None):
     ----------
     hamiltonian : sympy.Expr or sympy.Matrix, or string
         Symbolic representation of a continous Hamiltonian. When providing
-        a sympy expression, it is recommended to use operators
-        defined in `~kwant.continuum.momentum_operators` in order to provide
+        a sympy expression, it is recommended to use ``momentum_operators``
+        defined in `~kwant.continuum` in order to provide
         proper commutation properties. If a string is provided it will be
         converted to a sympy expression using `kwant.continuum.sympify`.
     substitutions : dict, defaults to empty

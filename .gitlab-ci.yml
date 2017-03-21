@@ -57,6 +57,7 @@ check for dependencies installed:
 build documentation:
   stage: test
   script:
+    - pip3 install sympy
     - make -C doc realclean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W'
   artifacts:
     paths:
@@ -77,6 +78,7 @@ run tests:
 check for broken links in doc:
   stage: test
   script:
+    - pip3 install sympy
     - make -C doc linkcheck
   allow_failure: true
 

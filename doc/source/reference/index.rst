@@ -38,4 +38,5 @@ The following modules provide functionality for special applications.
    kwant.digest
    kwant.rmt
    kwant.kpm
+   kwant.continuum
    kwant.wraparound

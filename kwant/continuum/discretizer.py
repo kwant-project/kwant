@@ -46,8 +46,8 @@ def discretize(hamiltonian, discrete_coordinates=None, *, grid_spacing=1,
     ----------
     hamiltonian : sympy.Expr or sympy.Matrix, or string
         Symbolic representation of a continous Hamiltonian. When providing
-        a sympy expression, it is recommended to use operators
-        defined in `~kwant.continuum.momentum_operators` in order to provide
+        a sympy expression, it is recommended to use ``momentum_operators``
+        defined in `~kwant.continuum` in order to provide
         proper commutation properties. If a string is provided it will be
         converted to a sympy expression using `kwant.continuum.sympify`.
     discrete_coordinates : sequence of strings, or ``None`` (default)
@@ -89,8 +89,8 @@ def discretize_symbolic(hamiltonian, discrete_coordinates=None, *,
     ----------
     hamiltonian : sympy.Expr or sympy.Matrix, or string
         Symbolic representation of a continous Hamiltonian. When providing
-        a sympy expression, it is recommended to use operators
-        defined in `~kwant.continuum.momentum_operators` in order to provide
+        a sympy expression, it is recommended to use ``momentum_operators``
+        defined in `~kwant.continuum` in order to provide
         proper commutation properties. If a string is provided it will be
         converted to a sympy expression using `kwant.continuum.sympify`.
     discrete_coordinates : sequence of strings, or ``None`` (default)
@@ -522,8 +522,8 @@ def _value_function(expr, discrete_coordinates, grid_spacing, onsite,
     """
 
     expr = expr.subs({sympy.Symbol('a'): grid_spacing})
-    return_string, map_func_calls, const_symbols, _cache = \
-        _return_string(expr, discrete_coordinates=discrete_coordinates)
+    return_string, map_func_calls, const_symbols, _cache = _return_string(
+        expr, discrete_coordinates=discrete_coordinates)
 
     # first check if value function needs to read coordinates
     atoms_names = {s.name for s in expr.atoms(sympy.Symbol)}
@@ -554,7 +554,7 @@ def _value_function(expr, discrete_coordinates, grid_spacing, onsite,
 
     lines.append(return_string)
 
-    separator = '\n' + 4 * ' '
+    separator = '\n    '
     # 'site_string' is tightly coupled to the symbols used in '_assign_symbol'
     site_string = 'site' if onsite else 'site1, site2'
     if required_kwargs:
