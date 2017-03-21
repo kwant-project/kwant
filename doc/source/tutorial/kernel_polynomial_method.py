@@ -11,8 +11,6 @@
 
 import scipy
 
-import _defs
-
 # For plotting
 from matplotlib import pyplot as plt
 

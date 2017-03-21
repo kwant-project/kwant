@@ -1,14 +1,16 @@
 --- original
 +++ modified
-@@ -12,6 +12,7 @@
+@@ -11,6 +11,9 @@
+ 
  import scipy
  
- import _defs
++import _defs
 +from contextlib import redirect_stdout
- 
++
  # For plotting
  from matplotlib import pyplot as plt
-@@ -38,13 +39,13 @@
+ 
+@@ -36,13 +39,13 @@
  
  
  # Plot several density of states curves on the same axes.
@@ -24,7 +26,7 @@
      plt.clf()
  
  
-@@ -59,10 +60,18 @@
+@@ -57,10 +60,18 @@
          kwant.plot(fsyst, site_size=site_size, site_color=(0, 0, 1, 0.3), ax=ax)
          ax.set_title(title)
          ax.set(adjustable='box-forced', aspect='equal')
@@ -44,7 +46,7 @@
  def simple_dos_example():
      fsyst = make_syst().finalized()
  
-@@ -76,19 +85,25 @@
+@@ -74,19 +85,25 @@
      plot_dos([
          ('densities', (energies, densities)),
          ('density subset', (energy_subset, density_subset)),
@@ -73,7 +75,7 @@
  
  
  def increasing_accuracy_example(fsyst):
-@@ -102,7 +117,9 @@
+@@ -100,7 +117,9 @@
      plot_dos([
          ('density', original_dos),
          ('higher energy resolution', increased_resolution_dos),
@@ -84,7 +86,7 @@
  
      # we supply the *total* number of moments and sampling points
      spectrum.increase_accuracy(num_moments=200, num_rand_vecs=5)
-@@ -112,7 +129,9 @@
+@@ -110,7 +129,9 @@
      plot_dos([
          ('density', original_dos),
          ('higher number of moments', increased_moments_dos),
@@ -95,7 +97,7 @@
  
  
  def operator_example(fsyst):
-@@ -142,7 +161,9 @@
+@@ -140,7 +161,9 @@
      plot_ldos(fsyst, axes,[
          ('energy = 0', zero_energy_ldos),
          ('energy = 1', finite_energy_ldos),
