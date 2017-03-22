@@ -38,7 +38,7 @@ class SpectralDensity:
 
     Parameters
     ----------
-    syst_or_ham : `~kwant.system.FiniteSystem` or matrix Hamiltonian
+    ham : `~kwant.system.FiniteSystem` or matrix Hamiltonian
         If a system is passed, it should contain no leads.
     params : dict, optional
         Additional parameters to pass to the Hamiltonian and operator.
@@ -132,26 +132,21 @@ class SpectralDensity:
         Spectral density of the ``operator`` evaluated at the energies.
     """
 
-    def __init__(self, syst_or_ham, params=None, operator=None,
+    def __init__(self, ham, params=None, operator=None,
                  num_rand_vecs=10, num_moments=100, num_sampling_points=None,
                  vector_factory=None, bounds=None, epsilon=0.05, rng=None):
         rng = ensure_rng(rng)
         # self.epsilon ensures that the rescaled Hamiltonian has a
         # spectrum strictly in the interval (-1,1).
         self.epsilon = epsilon
-        # Check if syst_or_ham is a finalized System or a Hamiltonian
+
+        # Normalize the format of 'ham'
+        if isinstance(ham, system.System):
+            ham = ham.hamiltonian_submatrix(params=params, sparse=True)
         try:
-            ham = scipy.sparse.csr_matrix(syst_or_ham)
-        except:
-            try:
-                ensure_isinstance(syst_or_ham, system.System)
-                ham = scipy.sparse.csr_matrix(
-                    syst_or_ham.hamiltonian_submatrix(params=params,
-                                                      sparse=True))
-            except TypeError:
-                raise ValueError('Parameter `syst_or_ham` is not a '
-                                 'Hamiltonian neither a (finalized) '
-                                 '`kwant.system`.')
+            ham = scipy.sparse.csr_matrix(ham)
+        except Exception:
+            raise ValueError("'ham' is neither a matrix nor a Kwant system.")
 
         # Normalize 'operator' to a common format.
         if operator is None:
