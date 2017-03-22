@@ -17,7 +17,7 @@ import scipy.sparse.linalg as sla
 import scipy.fftpack as fft
 
 from . import system
-from ._common import ensure_isinstance, ensure_rng
+from ._common import ensure_rng
 from .operator import _LocalOperator
 
 class SpectralDensity:
