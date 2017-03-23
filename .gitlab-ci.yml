@@ -3,6 +3,7 @@ image: kwant/testing
 stages:
   - build
   - test
+  - package
   - deploy
 
 
@@ -77,9 +78,10 @@ check for broken links in doc:
 
 
 create conda package:
-  stage: deploy
+  stage: package
   only:
-    - master@kwant/kwant
+    - master
+    - /^.*-build$/
   image: condaforge/linux-anvil
   script:
     - yum install -y devtoolset-2-gcc-gfortran
@@ -89,10 +91,18 @@ create conda package:
     - conda build --python 3.5 conda-recipes/kwant-dev
     - conda build --python 3.6 conda-recipes/kwant-dev
     - mv /opt/conda/conda-bld/linux-64/kwant-dev*.tar.bz2 .
-    - anaconda --token=$ANACONDA_TOKEN upload --force kwant-dev*tar.bz2
   artifacts:
     paths:
       - kwant-dev*.tar.bz2
+    expire_in: 1 month
+
+upload conda package:
+  stage: deploy
+  only:
+    - master@kwant/kwant
+  image: condaforge/linux-anvil
+  script:
+    - anaconda --token=$ANACONDA_TOKEN upload --force kwant-dev*tar.bz2
 
 
 upload coverage:
