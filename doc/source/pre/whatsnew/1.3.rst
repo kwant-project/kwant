@@ -6,6 +6,49 @@ Please consult the `full list of changes in Kwant
 <https://gitlab.kwant-project.org/kwant/kwant/compare/v1.3.0...stable>`_ for
 all the changes up to the most recent bugfix release.
 
+Onsite/hopping functions can depend on different parameters
+-----------------------------------------------------------
+In Kwant < 1.3 whenever Hamiltonian values were provided as functions,
+they all had to take the same extra parameters (after the site(s))
+regardless of whether or not they actually used them at all. For example,
+if we had some onsite potential and a magnetic field that we
+model using the Peierls substitution, we would have to define our value
+functions like so::
+
+    # formally depends on 'B', but 'B' is never used
+    def onsite(site, V, B):
+        return V
+
+    # formally depends on 'V', but 'V' is never used
+    def hopping(site_a, site_b, V, B):
+        return (site_b.pos[1] - site_a.pos[1]) * B
+
+This was because previously extra arguments were provided to the system
+by passing them as a sequence via the ``args`` parameter to various Kwant
+functions (e.g. ``kwant.smatrix`` or ``hamiltonian_submatrix``).
+
+In Kwant 1.3 it is now possible for value functions to depend on different
+parameters, e.g.::
+
+    def onsite(site, V):
+        return V
+
+    def hopping(site_a, site_b, B):
+        return (site_b.pos[1] - site_a.pos[1]) * B
+
+If you make use of this feature then you must in addition pass your arguments
+via the ``params`` parameter. The value provided to ``params`` must
+be a ``dict`` that maps parameter names to values, e.g.::
+
+    kwant.smatrix(syst, params=dict(B=0.1, V=2))
+
+as opposed to the old way::
+
+    kwant.smatrix(syst, args=(2, 0.1))
+
+Passing a dictionary of parameters via ``params`` is now the recommended way
+to provide parameters to the system.
+
 Calculating charges and currents using the ``operator`` module
 --------------------------------------------------------------
 Often one may wish to calculate quantities that are defined over sites of
