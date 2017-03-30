@@ -56,18 +56,19 @@ the system (such as charge density, spin density along some axis etc),
 or over hoppings of the system (such as current or spin current). With
 the introduction of the ``operator`` module it has now become much easier
 to calculate such quantities. To calculate the regular density and current
-everywhere in a system due to a wavefunction ``wf``, one only needs to do
+everywhere in a system due to a wavefunction ``psi``, one only needs to do
 the following::
 
     syst = make_system().finalized()
-    wfs = kwant.wave_function(syst)
-    wf = wfs[0]
+    psi = kwant.wave_function(syst)(0)[0]
+
     # create the operators
     Q = kwant.physics.LocalOperator(syst)
     J = kwant.physics.Current(syst)
-    # evaluate the operator matrix elements
-    q = Q(wf)
-    j = J(wf)
+
+    # evaluate the expectation value with the wavefunction
+    q = Q(psi)
+    j = J(psi)
 
 See the Kwant tutorial for more details.
 
@@ -88,7 +89,7 @@ system by just saying::
     pyplot.plot(np.eigs(h)[1][0])
 
 Improved build configuration
-------------------------------------------
+----------------------------
 The name of the build configuration file, ``build.conf`` by default, is now
 configurable with the ``--configfile=PATH`` option to ``setup.py``.  (This
 makes build configuration usable with the ``pip`` tool.)  The build
