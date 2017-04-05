@@ -6,13 +6,20 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+import tempfile
 import itertools
 import numpy as np
 import tinyarray as ta
+import pytest
 
 import kwant
-from kwant.wraparound import wraparound
+from kwant import plotter
+from kwant.wraparound import wraparound, plot_2d_bands
 from kwant._common import get_parameters
+
+if plotter.mpl_enabled:
+    from mpl_toolkits import mplot3d  # pragma: no flakes
+    from matplotlib import pyplot  # pragma: no flakes
 
 
 def _simple_syst(lat, E=0, t=1+1j, sym=None):
@@ -192,3 +199,54 @@ def test_symmetry():
                 assert np.all(orig(None) == new(None, None, None))
             else:
                 assert np.all(orig == new)
+
+
+@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
+def test_plot_2d_bands():
+    chain = kwant.lattice.chain()
+    square = kwant.lattice.square()
+    cube = kwant.lattice.general([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+    hc = kwant.lattice.honeycomb()
+
+    syst_1d = kwant.Builder(kwant.TranslationalSymmetry(*chain._prim_vecs))
+    syst_1d[chain(0)] = 2
+    syst_1d[chain.neighbors()] = -1
+
+    syst_2d = _simple_syst(square, t=-1)
+    syst_graphene = _simple_syst(hc, t=-1)
+
+    syst_3d = kwant.Builder(kwant.TranslationalSymmetry(*cube._prim_vecs))
+    syst_3d[cube(0, 0, 0)] = 6
+    syst_3d[cube.neighbors()] = -1
+
+
+    with tempfile.TemporaryFile('w+b') as out:
+        # test 2D
+        plot_2d_bands(wraparound(syst_2d).finalized(), k_x=11, k_y=11, file=out)
+        plot_2d_bands(wraparound(syst_graphene).finalized(), k_x=11, k_y=11,
+                   file=out)
+
+    # test non-wrapped around system
+    with pytest.raises(TypeError):
+        plot_2d_bands(syst_1d.finalized())
+    # test incompletely wrapped around system
+    with pytest.raises(TypeError):
+        plot_2d_bands(wraparound(syst_2d, keep=0).finalized())
+    # test incorrect lattice dimention (1, 3)
+    with pytest.raises(ValueError):
+        plot_2d_bands(wraparound(syst_1d).finalized())
+    with pytest.raises(ValueError):
+        plot_2d_bands(wraparound(syst_3d).finalized())
+
+    # test k_x and k_y differ
+    with tempfile.TemporaryFile('w+b') as out:
+        syst = wraparound(syst_2d).finalized()
+        plot_2d_bands(syst, k_x=11, k_y=15, file=out)
+        plot_2d_bands(syst, k_x=np.linspace(-np.pi, np.pi, 11), file=out)
+        plot_2d_bands(syst, k_y=np.linspace(-np.pi, np.pi, 11), file=out)
+
+        syst = wraparound(syst_graphene).finalized()
+        # test extend_bbox2d
+        plot_2d_bands(syst, extend_bbox=1.2, k_x=11, k_y=11, file=out)
+        # test mask Brillouin zone
+        plot_2d_bands(syst, mask_brillouin_zone=True, k_x=11, k_y=11, file=out)
