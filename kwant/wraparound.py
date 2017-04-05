@@ -11,7 +11,8 @@ import inspect
 import cmath
 import tinyarray as ta
 
-from .builder import Builder, herm_conj, HermConjOfFunc
+from . import builder
+from .builder import herm_conj, HermConjOfFunc
 from .lattice import TranslationalSymmetry
 from ._common import get_parameters
 
@@ -64,6 +65,19 @@ def _modify_signature(func, parameter_names, takes_kwargs):
 
     func.__signature__ = inspect.Signature(params)
     return func
+
+
+## This wrapper is needed so that finalized systems that
+## have been wrapped can be queried for their symmetry, which
+## is needed for Brillouin zone calculations (plotting).
+
+class WrappedBuilder(builder.Builder):
+
+    def finalized(self):
+        ret = super().finalized()
+        ret._momentum_names = self._momentum_names
+        ret._wrapped_symmetry = self._wrapped_symmetry
+        return ret
 
 
 def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
@@ -220,13 +234,17 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
                zip(coordinate_names, builder.symmetry.periods)]
 
     if keep is None:
-        ret = Builder()
+        ret = WrappedBuilder()
         sym = builder.symmetry
     else:
         periods = list(builder.symmetry.periods)
-        ret = Builder(TranslationalSymmetry(periods.pop(keep)))
+        ret = WrappedBuilder(TranslationalSymmetry(periods.pop(keep)))
         sym = TranslationalSymmetry(*periods)
         momenta.pop(keep)
+    # Store the names of the momentum parameters and the symmetry of the
+    # old Builder (this will be needed for band structure plotting)
+    ret._momentum_names = momenta
+    ret._wrapped_symmetry = builder.symmetry
 
     # Wrapped around system retains conservation law and chiral symmetry.
     # We use 'bind_site' to add the momenta arguments if required.
