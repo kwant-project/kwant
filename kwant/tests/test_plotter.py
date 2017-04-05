@@ -171,3 +171,69 @@ def test_mask_interpolate():
                       coords, np.ones(len(coords)))
         pytest.raises(ValueError, plotter.mask_interpolate,
                       coords, np.ones(2 * len(coords)))
+
+
+@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
+def test_bands():
+
+    syst = syst_2d().finalized().leads[0]
+
+    with tempfile.TemporaryFile('w+b') as out:
+        plotter.bands(syst, file=out)
+        plotter.bands(syst, fig_size=(10, 10), file=out)
+        plotter.bands(syst, momenta=np.linspace(0, 2 * np.pi), file=out)
+
+        fig = pyplot.Figure()
+        ax = fig.add_subplot(1, 1, 1)
+        plotter.bands(syst, ax=ax, file=out)
+
+
+@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
+def test_spectrum():
+
+    def ham_1d(a, b, c):
+        return a**2 + b**2 + c**2
+
+    def ham_2d(a, b, c):
+        return np.eye(2) * (a**2 + b**2 + c**2)
+
+    lat = kwant.lattice.chain()
+    syst = kwant.Builder()
+    syst[(lat(i) for i in range(3))] = lambda site, a, b: a + b
+    syst[lat.neighbors()] = lambda site1, site2, c: c
+    fsyst = syst.finalized()
+
+    vals = np.linspace(0, 1, 3)
+
+    with tempfile.TemporaryFile('w+b') as out:
+
+        for ham in (ham_1d, ham_2d, fsyst):
+            plotter.spectrum(ham, ('a', vals), params=dict(b=1, c=1), file=out)
+            # test with explicit figsize
+            plotter.spectrum(ham, ('a', vals), params=dict(b=1, c=1),
+                             fig_size=(10, 10), file=out)
+
+        for ham in (ham_1d, ham_2d, fsyst):
+            plotter.spectrum(ham, ('a', vals), ('b', 2 * vals),
+                             params=dict(c=1), file=out)
+            # test with explicit figsize
+            plotter.spectrum(ham, ('a', vals), ('b', 2 * vals),
+                             params=dict(c=1), fig_size=(10, 10), file=out)
+
+        # test 2D plot and explicitly passing axis
+        fig = pyplot.Figure()
+        ax = fig.add_subplot(1, 1, 1, projection='3d')
+        plotter.spectrum(ham_1d, ('a', vals), ('b', 2 * vals),
+                         params=dict(c=1), ax=ax, file=out)
+        # explicitly pass axis without 3D support
+        ax = fig.add_subplot(1, 1, 1)
+        with pytest.raises(TypeError):
+            plotter.spectrum(ham_1d, ('a', vals), ('b', 2 * vals),
+                             params=dict(c=1), ax=ax, file=out)
+
+    def mask(a, b):
+        return a > 0.5
+
+    with tempfile.TemporaryFile('w+b') as out:
+        plotter.spectrum(ham, ('a', vals), ('b', 2 * vals), params=dict(c=1),
+                         mask=mask, file=out)
