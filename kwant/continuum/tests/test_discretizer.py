@@ -319,13 +319,13 @@ def test_numeric_functions_basic_symbolic():
         p = dict(t=i)
 
         tb = {(0,): sympy.sympify("2*t"), (1,): sympy.sympify('-t')}
-        builder = build_discretized(tb, {'x'}, lattice_constant=1)
+        builder = build_discretized(tb, {'x'}, grid_spacing=1)
         lat = next(iter(builder.sites()))[0]
         assert 2*p['t'] == builder[lat(0)](None, **p)
         assert -p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
         tb = {(0,): sympy.sympify("0"), (1,): sympy.sympify('-1j * t')}
-        builder = build_discretized(tb, {'x'}, lattice_constant=1)
+        builder = build_discretized(tb, {'x'}, grid_spacing=1)
         lat = next(iter(builder.sites()))[0]
         assert -1j * p['t'] == builder[lat(0), lat(1)](None, None, **p)
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
@@ -375,19 +375,19 @@ def test_numeric_functions_basic_string():
         p = dict(t=i)
 
         tb = {(0,): "2*t", (1,): "-t"}
-        builder = build_discretized(tb, {'x'}, lattice_constant=1)
+        builder = build_discretized(tb, {'x'}, grid_spacing=1)
         lat = next(iter(builder.sites()))[0]
         assert 2*p['t'] == builder[lat(0)](None, **p)
         assert -p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
         tb = {(0,): "0", (1,): "-1j * t"}
-        builder = build_discretized(tb, {'x'}, lattice_constant=1)
+        builder = build_discretized(tb, {'x'}, grid_spacing=1)
         lat = next(iter(builder.sites()))[0]
         assert -1j * p['t'] == builder[lat(0), lat(1)](None, None, **p)
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
         tb = {(0,): "0", (-1,): "+1j * t"}
-        builder = build_discretized(tb, {'x'}, lattice_constant=1)
+        builder = build_discretized(tb, {'x'}, grid_spacing=1)
         lat = next(iter(builder.sites()))[0]
         assert -1j * p['t'] == builder[lat(0), lat(1)](None, None, **p)
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
@@ -411,7 +411,7 @@ def test_numeric_functions_advance():
         for a in [1, 2, 5]:
             for fA in [lambda x: x, lambda x: x**2, lambda x: x**3]:
                 symbolic, coords = discretize_symbolic(hamiltonian, {'x'})
-                builder = build_discretized(symbolic, coords, lattice_constant=a)
+                builder = build_discretized(symbolic, coords, grid_spacing=a)
                 lat = next(iter(builder.sites()))[0]
 
                 p = dict(A=fA, B=5, sin=np.sin)
@@ -456,7 +456,7 @@ def test_numeric_functions_with_parameter():
     for a in [1, 2, 5]:
         for fA in [lambda c, x: x+c, lambda c, x: x**2 + c]:
             symbolic, coords = discretize_symbolic(hamiltonian, {'x'})
-            builder = build_discretized(symbolic, coords, lattice_constant=a)
+            builder = build_discretized(symbolic, coords, grid_spacing=a)
             lat = next(iter(builder.sites()))[0]
 
             p = dict(A=fA, B=5)

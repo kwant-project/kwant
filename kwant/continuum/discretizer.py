@@ -38,7 +38,7 @@ _displacements = {s: sympy.Symbol('_internal_a_{}'.format(s)) for s in 'xyz'}
 
 ################ Interface functions
 
-def discretize(hamiltonian, discrete_coordinates=None, lattice_constant=1,
+def discretize(hamiltonian, discrete_coordinates=None, *, grid_spacing=1,
                substitutions=None, verbose=False):
     """Construct a tight-binding model from a continuum Hamiltonian.
 
@@ -56,8 +56,8 @@ def discretize(hamiltonian, discrete_coordinates=None, lattice_constant=1,
         If not provided they will be obtained from the input hamiltonian by
         reading present coordinates and momentum operators. Order of discrete
         coordinates is always lexical, even if provided otherwise.
-    lattice_constant : int or float, default: 1
-        Lattice constant for the template Builder.
+    grid_spacing : int or float, default: 1
+        Grid spacing for the template Builder.
     substitutions : dict, defaults to empty
         A namespace of substitutions to be performed on the input
         ``hamiltonian``. Values can be either strings or ``sympy`` objects.
@@ -74,13 +74,14 @@ def discretize(hamiltonian, discrete_coordinates=None, lattice_constant=1,
     which can be used as a template.
     """
 
-    args = hamiltonian, discrete_coordinates, substitutions, verbose
-    tb_hamiltonian, discrete_coordinates = discretize_symbolic(*args)
-    return build_discretized(tb_hamiltonian, discrete_coordinates,
-                             lattice_constant, substitutions, verbose)
+    tb, coords = discretize_symbolic(hamiltonian, discrete_coordinates,
+                                substitutions=substitutions, verbose=verbose)
+
+    return build_discretized(tb, coords, grid_spacing=grid_spacing,
+                             substitutions=substitutions, verbose=verbose)
 
 
-def discretize_symbolic(hamiltonian, discrete_coordinates=None,
+def discretize_symbolic(hamiltonian, discrete_coordinates=None, *,
                         substitutions=None, verbose=False):
     """Discretize a continuous Hamiltonian into a tight-binding representation.
 
@@ -123,7 +124,7 @@ def discretize_symbolic(hamiltonian, discrete_coordinates=None,
     atoms_names = [s.name for s in hamiltonian.atoms(sympy.Symbol)]
     if any( s == 'a' for s in atoms_names):
         raise TypeError("'a' is a symbol used internally to represent "
-                        "lattice spacing; please use a different symbol.")
+                        "grid spacing; please use a different symbol.")
 
     hamiltonian = sympy.expand(hamiltonian)
     if discrete_coordinates is None:
@@ -175,8 +176,8 @@ def discretize_symbolic(hamiltonian, discrete_coordinates=None,
     return tb, discrete_coordinates
 
 
-def build_discretized(tb_hamiltonian, discrete_coordinates,
-                      lattice_constant=1, substitutions=None, verbose=False):
+def build_discretized(tb_hamiltonian, discrete_coordinates, *,
+                      grid_spacing=1, substitutions=None, verbose=False):
     """Create a template Builder from a symbolic tight-binding Hamiltonian.
 
     Parameters
@@ -189,8 +190,8 @@ def build_discretized(tb_hamiltonian, discrete_coordinates,
     discrete_coordinates : sequence of strings
         Set of coordinates for which momentum operators will be treated as
         differential operators. For example ``discrete_coordinates=('x', 'y')``.
-    lattice_constant : int or float, default: 1
-        Lattice constant for the template Builder.
+    grid_spacing : int or float, default: 1
+        Grid spacing for the template Builder.
     substitutions : dict, defaults to empty
         A namespace of substitutions to be performed on the values of input
         ``tb_hamiltonian``. Values can be either strings or ``sympy`` objects.
@@ -227,13 +228,13 @@ def build_discretized(tb_hamiltonian, discrete_coordinates,
             name = 'hopping_{}'.format(n)
 
         tb[offset] = _value_function(hopping, discrete_coordinates,
-                                     lattice_constant, onsite, name,
+                                     grid_spacing, onsite, name,
                                      verbose=verbose)
 
     dim = len(discrete_coordinates)
     onsite_zeros = (0,) * dim
 
-    prim_vecs = lattice_constant * np.eye(dim)
+    prim_vecs = grid_spacing * np.eye(dim)
     random_element = next(iter(tb_hamiltonian.values()))
     norbs = (1 if isinstance(random_element, sympy.Expr)
              else random_element.shape[0])
@@ -462,7 +463,7 @@ def _return_string(expr, discrete_coordinates):
     return 'return {}'.format(output), map_func_calls, const_symbols, _cache
 
 
-def _assign_symbols(map_func_calls, lattice_constant,
+def _assign_symbols(map_func_calls, grid_spacing,
                     discrete_coordinates, onsite):
     """Generate a series of assignments.
 
@@ -470,7 +471,7 @@ def _assign_symbols(map_func_calls, lattice_constant,
     ----------
     map_func_calls : dict
         mapping of function calls to assigned constants.
-    lattice_constant : int or float
+    grid_spacing : int or float
         Used to get site.pos from site.tag
     discrete_coordinates : sequence of strings
         If left as None coordinates will not be read from a site.
@@ -486,7 +487,7 @@ def _assign_symbols(map_func_calls, lattice_constant,
 
     if discrete_coordinates:
         site = 'site' if onsite else 'site1'
-        args = ', '.join(discrete_coordinates), str(lattice_constant), site
+        args = ', '.join(discrete_coordinates), str(grid_spacing), site
         lines.append('({}, ) = {} * {}.tag'.format(*args))
 
     for k, v in map_func_calls.items():
@@ -495,7 +496,7 @@ def _assign_symbols(map_func_calls, lattice_constant,
     return lines
 
 
-def _value_function(expr, discrete_coordinates, lattice_constant, onsite,
+def _value_function(expr, discrete_coordinates, grid_spacing, onsite,
                     name='_anonymous_func', verbose=False):
     """Generate a numeric function from a sympy expression.
 
@@ -505,7 +506,7 @@ def _value_function(expr, discrete_coordinates, lattice_constant, onsite,
         Expr that from which value function will be generated.
     discrete_coordinates : sequence of strings
         List of coodinates present in the system.
-    lattice_constant : int or float
+    grid_spacing : int or float
         Lattice spacing of the system
     verbose : bool, default: False
         If True, the function body is printed.
@@ -515,7 +516,7 @@ def _value_function(expr, discrete_coordinates, lattice_constant, onsite,
     numerical function that can be used with Kwant.
     """
 
-    expr = expr.subs({sympy.Symbol('a'): lattice_constant})
+    expr = expr.subs({sympy.Symbol('a'): grid_spacing})
     return_string, map_func_calls, const_symbols, _cache = \
         _return_string(expr, discrete_coordinates=discrete_coordinates)
 
@@ -543,7 +544,7 @@ def _value_function(expr, discrete_coordinates, lattice_constant, onsite,
         return output
 
     lines = _assign_symbols(map_func_calls, onsite=onsite,
-                            lattice_constant=lattice_constant,
+                            grid_spacing=grid_spacing,
                             discrete_coordinates=discrete_coordinates)
 
     lines.append(return_string)

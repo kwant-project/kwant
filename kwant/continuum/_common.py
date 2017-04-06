@@ -42,7 +42,7 @@ del _clash['pi']
 ################  Various helpers to handle sympy
 
 
-def lambdify(hamiltonian, *, substitutions=None):
+def lambdify(hamiltonian, substitutions=None):
     """Return a callable object for computing continuum Hamiltonian.
 
     Parameters
