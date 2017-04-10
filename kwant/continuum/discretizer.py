@@ -216,8 +216,13 @@ def build_discretized(tb_hamiltonian, discrete_coordinates, *,
     discrete_coordinates = sorted(discrete_coordinates)
 
     tb = {}
+    first = True
     for n, (offset, hopping) in enumerate(tb_hamiltonian.items()):
         if verbose:
+            if first:
+                first = False
+            else:
+                print('\n')
             print("Function generated for {}:".format(offset))
 
         onsite = all(i == 0 for i in offset)
@@ -539,7 +544,7 @@ def _value_function(expr, discrete_coordinates, grid_spacing, onsite,
             output = complex(expr)
 
         if verbose:
-            print("\n{}\n\n".format(output))
+            print("\n{}".format(output))
 
         return output
 
@@ -565,7 +570,7 @@ def _value_function(expr, discrete_coordinates, grid_spacing, onsite,
     if verbose:
         for k, v in _cache.items():
             print("\n{} = (\n{})".format(k, repr(np.array(v))))
-        print('\n' + func_code + '\n\n')
+        print('\n' + func_code)
 
     exec(func_code, namespace)
     f = namespace[name]
