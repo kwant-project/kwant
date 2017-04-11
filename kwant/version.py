@@ -18,8 +18,6 @@ __all__ = []
 
 package_root = os.path.dirname(os.path.realpath(__file__))
 distr_root = os.path.dirname(package_root)
-version_file = '_kwant_version.py'
-
 
 def ensure_python(required_version=(3, 4)):
     v = sys.version_info
@@ -85,13 +83,16 @@ def get_version_from_git():
     return "".join(version)
 
 
-# populate the version_info dictionary with values stored in the version file
-version_info = {}
-with open(os.path.join(package_root, version_file), 'r') as f:
-    exec(f.read(), {}, version_info)
-version = version_info['version']
-version_is_from_git = (version == "__use_git__")
-if version_is_from_git:
-    version = get_version_from_git()
-    if not version:
-        version = "unknown"
+def init(version_file='_kwant_version.py'):
+    global version, version_is_from_git
+    version_info = {}
+    with open(os.path.join(package_root, version_file), 'r') as f:
+        exec(f.read(), {}, version_info)
+    version = version_info['version']
+    version_is_from_git = (version == "__use_git__")
+    if version_is_from_git:
+        version = get_version_from_git()
+        if not version:
+            version = "unknown"
+
+init()
