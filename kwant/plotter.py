@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2011-2017 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
@@ -20,7 +21,6 @@ import functools
 import warnings
 import cmath
 import numpy as np
-import scipy
 import tinyarray as ta
 from scipy import spatial, interpolate
 from math import cos, sin, pi, sqrt
@@ -31,9 +31,10 @@ from math import cos, sin, pi, sqrt
 # if 3D does not.
 try:
     import matplotlib
+    import matplotlib.colors
+    import matplotlib.cm
     from matplotlib.figure import Figure
     from matplotlib import collections
-    from matplotlib import colors
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     from . import _colormaps
     mpl_enabled = True
@@ -50,9 +51,9 @@ except ImportError:
 
 from . import system, builder, _common
 
-__all__ = ['plot', 'map', 'bands', 'spectrum', 'sys_leads_sites',
-           'sys_leads_hoppings', 'sys_leads_pos', 'sys_leads_hopping_pos',
-           'mask_interpolate']
+__all__ = ['plot', 'map', 'bands', 'spectrum', 'current',
+           'interpolate_current', 'sys_leads_sites', 'sys_leads_hoppings',
+           'sys_leads_pos', 'sys_leads_hopping_pos', 'mask_interpolate']
 
 
 # TODO: Remove the following once we depend on matplotlib >= 1.4.1.
@@ -1800,7 +1801,7 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         return output_fig(fig, file=file, show=show)
 
 
-def interpolate_current(syst, current, sigma=1, gauss_range=2, n=3, a=None):
+def interpolate_current(syst, current, width=4, limit=None, n=9, a=None):
     """Interpolate currents in a system onto a regular grid.
 
     The system graph together with current intensities defines a "discrete"
@@ -1808,10 +1809,11 @@ def interpolate_current(syst, current, sigma=1, gauss_range=2, n=3, a=None):
     straight lines that connect sites that are coupled by a hopping term.
 
     To make this vector field easier to visualize and interpret at different
-    length scales, it is smoothed by convoluting it with a kernel function
-    that has a (Gaussian) pulse-like shape.
+    length scales, it is smoothed by convoluting it with the bell-shaped bump
+    function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
+    determined by the `max_res` and `width` parameters.
 
-    This function samples the smoothed field on a regular (square or cubic)
+    This routine samples the smoothed field on a regular (square or cubic)
     grid.
 
     Parameters
@@ -1821,20 +1823,23 @@ def interpolate_current(syst, current, sigma=1, gauss_range=2, n=3, a=None):
     current : '1D array of float'
         Must contain the intensity on each hoppings in the same order that they
         appear in syst.graph.
-    sigma : 'float'
-        Parameter of the Gaussian used to generate the field :
-        exp(-x**2/(2*sigma**2)), the unit of sigma is a.
-    gauss_range : int
-        Number of sigma after which we consider the Gaussian equal to 0.
+    width : float
+        (Minimum) width of the bumps used to generate the field, in units of
+        ``a``.  See also `limit`.
+    limit : float or `None`
+        Absolute resolution limit.  The effective value of `width` is limited
+        to the length of the longest side of the bounding box divided by this
+        number.
     n : int
-        Number of point the grid must have per sigma.
+        Number of points the grid must have over the width of the bump.
     a : float
-        By default, the length of the shortest hoppings.
+        By default, the length of the shortest hopping.
 
     Returns
     -------
-    region : list of the coordonates of the grid for each dimension
+    region : list of the coordinates of the grid for each dimension
     field : value of the generated field on the grid points
+
     """
     if not isinstance(syst, builder.FiniteSystem):
         raise TypeError("The system needs to be finalized.")
@@ -1845,11 +1850,27 @@ def interpolate_current(syst, current, sigma=1, gauss_range=2, n=3, a=None):
 
     # hops: hoppings (pairs of points)
     dim = len(syst.sites[0].pos)
-    hops = np.empty((syst.graph.num_edges, 2, dim))
+    hops = np.empty((syst.graph.num_edges // 2, 2, dim))
+    # Take the average of the current flowing each way along the hoppings
+    current_one_way = np.empty(syst.graph.num_edges // 2)
+    seen_hoppings = dict()
+    kprime = 0
     for k, (i, j) in enumerate(syst.graph):
-        # +ve direction defined as *from* j *to* i
-        hops[k][0] = syst.sites[j].pos
-        hops[k][1] = syst.sites[i].pos
+        if (j, i) in seen_hoppings:
+            current_one_way[seen_hoppings[j, i]] -= current[k]
+        else:
+            current_one_way[kprime] = current[k]
+            hops[kprime][0] = syst.sites[j].pos
+            hops[kprime][1] = syst.sites[i].pos
+            seen_hoppings[i, j] = kprime
+            kprime += 1
+    current = current_one_way / 2
+
+    min_hops = np.min(hops, 1)
+    max_hops = np.max(hops, 1)
+    bbox_min = np.min(min_hops, 0)
+    bbox_max = np.max(max_hops, 0)
+    bbox_size = bbox_max - bbox_min
 
     # lens: scaled lengths of hoppings
     # dirs: normalized directions of hoppings
@@ -1858,37 +1879,49 @@ def interpolate_current(syst, current, sigma=1, gauss_range=2, n=3, a=None):
     dirs /= lens[:, None]
     if a == None:
         a = min(lens)
-    sigma *= a
-    r = sigma * gauss_range
-    factor = 0.5 * pow(sigma * sqrt(2*pi), 1 - dim)
-    scale = 1 / (sigma * sqrt(2))
+    width *= a
+    if limit is not None:
+        width = max(np.max(bbox_size) / limit, width)
+
+    factor = (3 / np.pi) / (width / 2)
+    scale = 2 / width
     lens *= scale
 
     # Create field array.
     field_shape = np.zeros(dim + 1, int)
     field_shape[dim] = dim
-    min_hops = np.min(hops, 1)
-    max_hops = np.max(hops, 1)
-    bbox_min = np.min(min_hops, 0)
-    bbox_max = np.max(max_hops, 0)
     for d in range(dim):
-        field_shape[d] = int((bbox_max[d] - bbox_min[d])*n / sigma + 2*gauss_range*n)
+        field_shape[d] = int(bbox_size[d] * n / width + 1.5*n)
         if field_shape[d] % 2:
             field_shape[d] += 1
     field = np.zeros(field_shape)
 
-    region = [np.linspace(bbox_min[d] - gauss_range*sigma, bbox_max[d] + gauss_range*sigma,
+    region = [np.linspace(bbox_min[d] - 0.75*width,
+                          bbox_max[d] + 0.75*width,
                           field_shape[d])
               for d in range(dim)]
 
-    grid_density = (field_shape[:dim] - 1) / (bbox_max + 2*r - bbox_min)
+    grid_density = (field_shape[:dim] - 1) / (bbox_max + 1.5*width - bbox_min)
     slices = np.empty((len(hops), dim, 2), int)
     slices[:, :, 0] = np.floor((min_hops - bbox_min) * grid_density)
-    slices[:, :, 1] = np.ceil((max_hops + 2*r - bbox_min) * grid_density)
+    slices[:, :, 1] = np.ceil((max_hops + 1.5*width - bbox_min) * grid_density)
+
+    # F is the antiderivative of the smoothing function
+    # f(ρ, z) = (1 - ρ^2 - z^2)^2 Θ(1 - ρ^2 - z^2), with respect to
+    # z,with F(ρ, -∞) = 0 and where Θ is the heaviside function.
+    def F(rho, z):
+        r = 1 - rho * rho
+        r[r < 0] = 0
+        r = np.sqrt(r)
+        m = np.clip(z, -r, r)
+        rr = r * r
+        rrrr = rr * rr
+        mm = m * m
+        return m * (mm * (mm/5 - (2/3) * rr) + rrrr) + (8 / 15) * rrrr * r
 
     # Interpolate the field for each hopping.
-    erf = scipy.special.erf
-    for i in range(len(hops)):
+    for i in range(len(current)):
+
         if not np.diff(slices[i]).all():
             # Zero volume: nothing to do.
             continue
@@ -1908,30 +1941,124 @@ def interpolate_current(syst, current, sigma=1, gauss_range=2, n=3, a=None):
         z *= scale
         rho *= scale
 
-        magns = current[i] * factor * np.exp(-rho * rho)
-        magns *= erf(z) - erf(z - lens[i])
+        magns = F(rho, z) - F(rho, z - lens[i])
+        magns *= current[i] * factor
 
         field[field_slice] += dirs[i] * magns[..., None]
 
     # 'field' contains contributions from both hoppings (i, j) and (j, i)
-    return region, field / 2
+    return region, field
 
 
-def current(syst, current, sigma=1, gauss_range=6, n=3, a=None,
+def _gamma_compress(linear):
+    """Compress linear sRGB into sRGB."""
+    if linear <= 0.0031308:
+        return 12.92 * linear
+    else:
+        a = 0.055
+        return (1 + a) * linear ** (1 / 2.4) - a
+
+_gamma_compress = np.vectorize(_gamma_compress, otypes=[float])
+
+
+def _gamma_expand(corrected):
+    """Expand sRGB into linear sRGB."""
+    if corrected <= 0.04045:
+        return corrected / 12.92
+    else:
+        a = 0.055
+        return ((corrected + a) / (1 + a))**2.4
+
+_gamma_expand = np.vectorize(_gamma_expand, otypes=[float])
+
+
+def _streamplot(field, box, colorbar=True, cmap=None, file=None,
+                show=True, dpi=None, fig_size=None, ax=None,
+                linecolor='k', max_linewidth=3, min_linewidth=1, density=1):
+    if not mpl_enabled:
+        raise RuntimeError("matplotlib was not found, but is required "
+                           "for current()")
+
+    # Matplotlib plots images like matrices: image[y, x].  We use the opposite
+    # convention: image[x, y].  Hence, it is necessary to transpose.
+    field = field.transpose(1, 0, 2)
+
+    if field.shape[-1] != 2 or field.ndim != 3:
+        raise ValueError("Only 2D field can be plotted.")
+
+    # The default colormap is extremely ugly with streamplot.
+    if cmap is None:
+        cmap = _colormaps.kwant_red
+    cmap = matplotlib.cm.get_cmap(cmap)
+
+    if ax is None:
+        fig = Figure()
+        if dpi is not None:
+            fig.set_dpi(dpi)
+        if fig_size is not None:
+            fig.set_figwidth(fig_size[0])
+            fig.set_figheight(fig_size[1])
+        ax = fig.add_subplot(1, 1, 1, aspect='equal')
+    else:
+        fig = None
+
+    X = np.linspace(*box[0], num=field.shape[1])
+    Y = np.linspace(*box[1], num=field.shape[0])
+
+    speed = np.linalg.norm(field, axis=-1)
+
+    image = ax.imshow(speed, cmap=cmap,
+                      interpolation='bicubic',
+                      extent=[e for c in box for e in c],
+                      origin='lower')
+
+    linewidth = max_linewidth / (np.max(speed) or 1) * speed
+    color = linewidth / min_linewidth
+    linewidth[linewidth < min_linewidth] = min_linewidth
+    color[color > 1] = 1
+
+    # Make a colormap that linearly interpolates between the line color and
+    # the background color.
+    linecolor = matplotlib.colors.colorConverter.to_rgb(linecolor)
+    linecolor_linear = _gamma_expand(linecolor)
+    bgcolor_linear = _gamma_expand(cmap(0)[:3])
+    color_diff = linecolor_linear - bgcolor_linear
+    line_cmap = (np.linspace(0, 1, 256).reshape((-1, 1))
+                 * color_diff.reshape((1, -1)))
+    line_cmap += bgcolor_linear
+    line_cmap = _gamma_compress(line_cmap)
+    line_cmap = matplotlib.colors.ListedColormap(line_cmap)
+
+    ax.streamplot(X, Y, field[:,:,0], field[:,:,1],
+                  density=density, linewidth=linewidth,
+                  color=color, cmap=line_cmap, arrowstyle='->')
+
+    ax.set_xlim(*box[0])
+    ax.set_ylim(*box[1])
+
+    if colorbar and fig is not None:
+        fig.colorbar(image)
+
+    if fig is not None:
+        return output_fig(fig, file=file, show=show)
+
+
+def current(syst, current, width=4, limit=30, n=9, a=None, density=2,
             colorbar=True, cmap=None, file=None, show=True, dpi=None,
-            fig_size=None, ax=None):
-    """Show interpolated map of a function defined for the hoppings of a system.
+            fig_size=None, ax=None, linecolor='k', max_linewidth=3):
+    """Show an interpolated current defined for the hoppings of a system.
 
     The system graph together with current intensities defines a "discrete"
     current density field where the current density is non-zero only on the
     straight lines that connect sites that are coupled by a hopping term.
 
     To make this vector field easier to visualize and interpret at different
-    length scales, it is smoothed by convoluting it with a kernel function
-    that has a (Gaussian) pulse-like shape.
+    length scales, it is smoothed by convoluting it with the bell-shaped bump
+    function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
+    determined by the `limit` and `width` parameters.
 
-    This function samples the smoothed field on a regular (square or cubic)
-    grid.
+    This routine samples the smoothed field on a regular (square or cubic) grid
+    and displays it using an enhanced variant of matplotlib's streamplot.
 
     Parameters
     ----------
@@ -1941,15 +2068,19 @@ def current(syst, current, sigma=1, gauss_range=6, n=3, a=None,
         Sequence of values defining currents on each hopping of the system.
         Ordered in the same way as ``syst.graph``. This typically will be
         the result of evaluating a `~kwant.operator.Current` operator.
-    sigma : 'float'
-        Parameter of the Gaussian used to generate the field:
-        exp(-x**2/(2*sigma**2)), the unit of sigma is ``a``.
-    gauss_range : int
-        Number of sigma after which we consider the Gaussian equal to 0.
+    width : float
+        (Minimum) width of the bumps used to generate the field, in units of
+        ``a``.  See also `limit`.
+    limit : float or `None`
+        Absolute resolution limit.  The effective value of `width` is limited
+        to the length of the longest side of the bounding box divided by this
+        number.
     n : int
-        Number of points the grid must have per sigma.
+        Number of points the grid over the width of a bump.
     a : float
-        By default, the length of the shortest hoppings.
+        A reference length.  Be default, the length of the shortest hopping.
+    density : float
+        The number of streamlines per bump width.
     colorbar : bool, optional
         Whether to show a color bar if numerical data has to be plotted.
         Defaults to `True`. If `ax` is provided, the colorbar is never plotted.
@@ -1976,55 +2107,26 @@ def current(syst, current, sigma=1, gauss_range=6, n=3, a=None,
     -------
     fig : matplotlib figure
         A figure with the output if `ax` is not set, else None.
+
     """
 
     if not mpl_enabled:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for current()")
 
-    region, field = interpolate_current(syst, current, sigma=sigma,
-                                        gauss_range=gauss_range, n=n, a=a)
+    region, field = interpolate_current(syst, current, width=width, limit=limit,
+                                        n=n, a=a)
 
-    if len(region) != 2:
-        raise ValueError("Only 2D field can be plotted.")
+    line_resolution = density / n * ta.array(field.shape[:2], int)
 
-    # The default colormap is extremely ugly with streamplot.
-    if cmap is None:
-        cmap = _colormaps.kwant_red
-
-    if ax is None:
-        fig = Figure()
-        if dpi is not None:
-            fig.set_dpi(dpi)
-        if fig_size is not None:
-            fig.set_figwidth(fig_size[0])
-            fig.set_figheight(fig_size[1])
-        ax = fig.add_subplot(1, 1, 1, aspect='equal')
-    else:
-        fig = None
-
-    Y, X = np.ogrid[region[0][0] : region[0][-1] : 1j * len(region[0]),
-                    region[1][0] : region[1][-1] : 1j * len(region[1])]
-
-    field = field.transpose(1, 0, 2)  # reverse X and Y axes
-    speed = np.linalg.norm(field, axis=-1)
-    image = ax.imshow(speed[::-1], cmap=cmap,
-                      interpolation='bicubic',
-                      extent=(region[0][0], region[0][-1],
-                              region[1][0], region[1][-1]))
-    linewidth = 2 * (speed / (np.max(speed) or 1))
-    ax.streamplot(Y.T, X.T, field[:,:,0], field[:,:,1],
-                  linewidth=linewidth, cmap=cmap, color=speed,
-                  norm=colors.Normalize(vmin=0, vmax=np.max(speed) * 1.5))
-
-    ax.set_xlim(region[0][0], region[0][-1])
-    ax.set_ylim(region[1][0], region[1][-1])
-
-    if colorbar and fig is not None:
-        fig.colorbar(image)
-
-    if fig is not None:
-        return output_fig(fig, file=file, show=show)
+    # "density" is matplotlib's name for the number of streamlines divided by
+    # 30.
+    return _streamplot(field, ((region[0][0], region[0][-1]),
+                               (region[1][0], region[1][-1])),
+                       colorbar=colorbar, cmap=cmap, file=file,
+                       show=show, dpi=dpi, fig_size=fig_size, ax=ax,
+                       linecolor=linecolor, max_linewidth=max_linewidth,
+                       density=line_resolution / 30)
 
 
 # TODO (Anton): Fix plotting of parts of the system using color = np.nan.

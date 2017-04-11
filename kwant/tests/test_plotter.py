@@ -11,8 +11,9 @@ import warnings
 import itertools
 import numpy as np
 import tinyarray as ta
-from math import cos, sin, pi
+from math import cos, sin
 import scipy.integrate
+import scipy.stats
 import pytest
 
 import kwant
@@ -269,10 +270,11 @@ def syst_rect(lat, salt, W=3, L=50):
     return syst
 
 
-def div(F):
-    """Calculate the divergence of a vector field F."""
+def div(F, h):
+    """Calculate the divergence of a vector field F over a grid of spacing h."""
     assert len(F.shape[:-1]) == F.shape[-1]
-    return sum(np.gradient(F[..., i])[i] for i in range(F.shape[-1]))
+    assert len(h) == F.shape[-1]
+    return sum(np.gradient(F[..., i], h[i])[i] for i in range(F.shape[-1]))
 
 
 def rotational_currents(g):
@@ -330,12 +332,13 @@ def test_current_interpolation():
         y = ta.dot(R(theta), (0, a))
         return kwant.lattice.general([x, y], norbs=1)
 
-    angles = (0, pi/6, pi/4)
-    lat_constants = (1, 2)
-
     ## Check current through cross section is same for different lattice
     ## parameters and orientations of the system wrt. the discretization grid
-    for a, theta in itertools.product(lat_constants, angles):
+    for a, theta, width in [(1, 0, 1),
+                            (1, 0, 0.5),
+                            (2, 0, 1),
+                            (1, 0.2, 1),
+                            (2, 0.4, 1)]:
         lat = make_lattice(a, theta)
         syst = syst_rect(lat, salt='0').finalized()
         psi = kwant.wave_function(syst, energy=3)(0)
@@ -345,26 +348,18 @@ def test_current_interpolation():
 
         J = kwant.operator.Current(syst).bind()
         J_cut = kwant.operator.Current(syst, where=cut, sum=True).bind()
-        (x, y), j0 = plotter.interpolate_current(syst, J(psi[0]), gauss_range=5)
+        J_exact = J_cut(psi[0])
 
-        # slice field perpendicular to a cut along the y axis
-        y_axis = (np.argmin(np.abs(x)), slice(None), 0)
-        ## Integrate and compare with summed current.
-        assert np.isclose(J_cut(psi[0]),
-                          scipy.integrate.simps(j0[y_axis], y))
+        data = []
+        for n in [4, 6, 8, 11, 16]:
+            (x, y), j0 = plotter.interpolate_current(syst, J(psi[0]), n=n, width=width)
+            # slice field perpendicular to a cut along the y axis
+            y_axis = (np.argmin(np.abs(x)), slice(None), 0)
+            J_interp = scipy.integrate.simps(j0[y_axis], y)
+            data.append((n, abs(J_interp - J_exact)))
+        # 3rd value returned from 'linregress' is 'rvalue'
+        assert scipy.stats.linregress(np.log(data))[2] < -0.8
 
-    ## Check that taking a finer grid or changing the broadening does not
-    ## affect the total integrated current.
-    n_s = (3, 5)
-    sigma_s = (1, 0.5)
-
-    for n, sigma in zip(n_s, sigma_s):
-        (x, y), j0 = plotter.interpolate_current(syst, J(psi[0]), n=n,
-                                                 sigma=sigma, gauss_range=5)
-        # slice field perpendicular to a cut along the y axis
-        y_axis = (np.argmin(np.abs(x)), slice(None), 0)
-        assert np.isclose(J_cut(psi[0]),
-                          scipy.integrate.simps(j0[y_axis], y))
 
     ### Tests on a divergence-free current (closed system)
 
@@ -395,12 +390,17 @@ def test_current_interpolation():
     _, j_tot = plotter.interpolate_current(syst, J0 + 2 * J1)
     assert np.allclose(j_tot, j0 + 2 * j1)
 
-    ## Test that divergence of interpolated current is approximately zero.
-    # For currents not aligned with the interpolation grid this is only
-    # 1/a**2 accurate.
-    _, j = plotter.interpolate_current(syst, J0, n=20, gauss_range=4)
-    div_j = np.max(np.abs(div(j)))
-    assert np.isclose(div_j, 0, atol=1E-4)
+    ## Test that divergence of interpolated current approaches zero as we make
+    ## the interpolation finer.
+    data = []
+    for n in [4, 6, 8, 11, 16]:
+        grid, j = plotter.interpolate_current(syst, J0, n=n)
+        dx = [g[1] - g[0] for g in grid]
+        div_j = np.max(np.abs(div(j, dx)))
+        data.append((n, div_j))
+
+    # 3rd value returned from 'linregress' is 'rvalue'
+    assert scipy.stats.linregress(np.log(data))[2] < -0.8
 
 
 @pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
