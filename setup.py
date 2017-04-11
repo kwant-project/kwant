@@ -12,19 +12,6 @@ from __future__ import print_function
 
 import sys
 
-
-def ensure_python(required_version):
-    v = sys.version_info
-    if v[:3] < required_version:
-        error = "This version of Kwant requires Python {} or above.".format(
-            ".".join(str(p) for p in required_version))
-        if v[0] == 2:
-            error += "\nKwant 1.1 is the last version to support Python 2."
-        print(error, file=sys.stderr)
-        sys.exit(1)
-
-ensure_python((3, 4))
-
 import re
 import os
 import glob
@@ -131,18 +118,19 @@ def configure_extensions(exts, aliases=(), build_summary=None):
     return exts
 
 
-def get_version():
+def check_versions():
     global version, version_is_from_git
 
     # Let Kwant itself determine its own version.  We cannot simply import
     # kwant, as it is not built yet.
     _dont_write_bytecode_saved = sys.dont_write_bytecode
     sys.dont_write_bytecode = True
-    _common = imp.load_source('_common', 'kwant/_common.py')
+    version_module = imp.load_source('version', 'kwant/version.py')
     sys.dont_write_bytecode = _dont_write_bytecode_saved
 
-    version = _common.version
-    version_is_from_git = _common.version_is_from_git
+    version_module.ensure_python()
+    version = version_module.version
+    version_is_from_git = version_module.version_is_from_git
 
 
 def init_cython():
@@ -560,6 +548,8 @@ def maybe_cythonize(exts):
 
 
 def main():
+    check_versions()
+
     exts = collections.OrderedDict([
         ('kwant._system',
          dict(sources=['kwant/_system.pyx'],
@@ -606,7 +596,6 @@ def main():
     aliases = [('lapack', 'kwant.linalg.lapack'),
                ('mumps', 'kwant.linalg._mumps')]
 
-    get_version()
     init_cython()
 
     global build_summary

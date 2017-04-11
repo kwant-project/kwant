@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2017 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -7,6 +7,10 @@
 # http://kwant-project.org/authors.
 
 __all__ = []
+
+from . import version
+version.ensure_python()
+__version__ = version.version
 
 import numpy                    # Needed by C. Gohlke's Windows package.
 import warnings
@@ -27,8 +31,6 @@ except ImportError:
 from ._common import KwantDeprecationWarning, UserCodeError
 
 __all__.extend(['KwantDeprecationWarning', 'UserCodeError'])
-
-from ._common import version as __version__
 
 for module in ['system', 'builder', 'lattice', 'solvers', 'digest', 'rmt',
                'operator', 'kpm', 'wraparound', 'continuum']:
