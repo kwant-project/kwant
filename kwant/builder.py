@@ -282,6 +282,11 @@ class Symmetry(metaclass=abc.ABCMeta):
     is used together with sites whose site family is not compatible with it.  A
     typical example of this is when the vector defining a translational
     symmetry is not a lattice vector.
+
+    The type of the domain objects as handled by the methods of this class is
+    not specified.  The only requirement is that it must support the unary
+    minus operation.  The reference implementation of `to_fd()` is hence
+    `self.act(-self.which(a), a, b)`.
     """
 
     @abc.abstractproperty
@@ -306,12 +311,11 @@ class Symmetry(metaclass=abc.ABCMeta):
     def to_fd(self, a, b=None):
         """Map a site or hopping to the fundamental domain.
 
-        If ``b`` is None, return a site equivalent to ``a`` within the fundamental
-        domain.  Otherwise, return a hopping equivalent to ``(a, b)`` but where
-        the first element belongs to the fundamental domain.
+        If ``b`` is None, return a site equivalent to ``a`` within the
+        fundamental domain.  Otherwise, return a hopping equivalent to ``(a,
+        b)`` but where the first element belongs to the fundamental domain.
 
-        This default implementation works but may be not efficient.
-
+        Equivalent to `self.act(-self.which(a), a, b)`.
         """
         return self.act(-self.which(a), a, b)
 
