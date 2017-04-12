@@ -250,3 +250,65 @@ def test_plot_2d_bands():
         plot_2d_bands(syst, extend_bbox=1.2, k_x=11, k_y=11, file=out)
         # test mask Brillouin zone
         plot_2d_bands(syst, mask_brillouin_zone=True, k_x=11, k_y=11, file=out)
+
+
+def test_fd_mismatch():
+    # The fundamental domains of the two 1D symmetries that make up T are
+    # incompatible. This produced a bug where certain systems could be wrapped
+    # around in all directions, but could not be wrapped around when 'keep' is
+    # provided.
+    sqrt3 = np.sqrt(3)
+    lat = kwant.lattice.general([(sqrt3, 0), (-sqrt3/2, 1.5)])
+    T = kwant.TranslationalSymmetry((sqrt3, 0), (0, 3))
+
+    syst1 = kwant.Builder(T)
+    syst1[lat(1, 1)] = syst1[lat(0, 1)] = 1
+    syst1[lat(1, 1), lat(0, 1)] = 1
+
+    syst2 = kwant.Builder(T)
+    syst2[lat(0, 0)] = syst2[lat(0, -1)] = 1
+    syst2[lat(0, 0), lat(0, -1)] = 1
+
+    # combine the previous two
+    syst3 = kwant.Builder(T)
+    syst3 += syst1
+    syst3 += syst2
+
+    for syst in (syst1, syst2, syst3):
+        wraparound(syst)
+        wraparound(syst, keep=0)
+        wraparound(syst, keep=1)
+
+    ## Test that spectrum of non-trivial system (including above cases)
+    ## is the same, regardless of the way in which it is wrapped around
+    lat = kwant.lattice.general([(sqrt3, 0), (-sqrt3/2, 1.5)],
+                                [(sqrt3 / 2, 0.5), (0, 1)])
+    a, b = lat.sublattices
+    T = kwant.TranslationalSymmetry((3 * sqrt3, 0), (0, 3))
+    syst = kwant.Builder(T)
+    syst[(l(i, j) for i in range(-1, 2) for j in range(-1, 2)
+         for l in (a, b))] = 0
+    syst[kwant.HoppingKind((0, 0), b, a)] = -1j
+    syst[kwant.HoppingKind((1, 0), b, a)] = 2j
+    syst[kwant.HoppingKind((0, 1), a, b)] = -2j
+
+    def spectrum(syst, keep):
+        syst = wraparound(syst, keep=keep).finalized()
+        if keep is None:
+            def _(*args):
+                return np.linalg.eigvalsh(syst.hamiltonian_submatrix(args=args))
+        else:
+            def _(*args):
+                args = list(args)
+                assert len(args) == 2
+                kext = args.pop(keep)
+                kint = args[0]
+                B = kwant.physics.Bands(syst, args=(kint,))
+                return B(kext)
+        return _
+
+    spectra = [spectrum(syst, keep) for keep in (None, 0, 1)]
+    # Check that spectra are the same at k=0. Checking finite k
+    # is more tricky, as we would also need to transform the k vectors
+    E_k = np.array([spec(0, 0) for spec in spectra]).transpose()
+    assert all(np.allclose(E, E[0]) for E in E_k)

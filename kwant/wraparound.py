@@ -269,14 +269,22 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
     mnp = -len(sym.periods)      # Used by the bound functions above.
 
     # Store lists of values, so that multiple values can be assigned to the
-    # same site or hopping.
+    # same site or hopping. We map to the FD of 'sym', as the hopping-processing
+    # code assumes the sites are in the FD.
     for site, val in builder.site_value_pairs():
-        sites[site] = [bind_site(val) if callable(val) else val]
+        sites[sym.to_fd(site)] = [bind_site(val) if callable(val) else val]
 
     for hop, val in builder.hopping_value_pairs():
-        a, b = hop
+        # Map hopping to FD of 'sym', as the code afterwards assumes that 'a'
+        # is in this domain.
+        a, b = sym.to_fd(*hop)
         b_dom = sym.which(b)
         b_wa = sym.act(-b_dom, b)
+        # Now map 'b_wa' to another domain of 'sym', so that the hopping
+        # is compatible with 'ret.symmetry'. This is necessary when the
+        # fundamental domains of the symmetries do not coincide.
+        w = ret.symmetry.which(b_wa)
+        b_wa = ret.symmetry.act(w, sym.to_fd(ret.symmetry.act(-w, b_wa)))
 
         if a == b_wa:
             # The hopping gets wrapped-around into an onsite Hamiltonian.
