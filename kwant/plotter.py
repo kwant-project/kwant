@@ -1480,7 +1480,8 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
 
 def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         method='nearest', oversampling=3, num_lead_cells=0, file=None,
-        show=True, dpi=None, fig_size=None, ax=None, pos_transform=None):
+        show=True, dpi=None, fig_size=None, ax=None, pos_transform=None,
+        background='#e0e0e0'):
     """Show interpolated map of a function defined for the sites of a system.
 
     Create a pixmap representation of a function of the sites of a system by
@@ -1529,6 +1530,8 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         and `fig_size` are ignored.
     pos_transform : function or `None`
         Transformation to be applied to the site position.
+    background : matplotlib color spec
+        Areas without sites are filled with this color.
 
     Returns
     -------
@@ -1587,6 +1590,8 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         plot(syst, num_lead_cells, site_symbol='no symbol', hop_lw=0,
              lead_site_symbol='s', lead_site_size=0.501, lead_site_lw=0,
              lead_hop_lw=0, lead_color='black', colorbar=False, ax=ax)
+
+    ax.patch.set_facecolor(background)
 
     if colorbar and fig is not None:
         fig.colorbar(image)
