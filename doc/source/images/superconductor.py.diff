@@ -38,7 +38,7 @@
  
  def check_PHS(syst):
      # Scattering matrix
-@@ -99,14 +109,13 @@
+@@ -103,14 +113,13 @@
  def main():
      syst = make_system(W=10)
  
