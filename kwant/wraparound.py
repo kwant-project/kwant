@@ -384,7 +384,7 @@ def plot_2d_bands(syst, k_x=31, k_y=31, params=None,
 
     See Also
     --------
-    `kwant.plotter.spectrum`
+    kwant.plotter.spectrum
     """
     if not hasattr(syst, '_wrapped_symmetry'):
         raise TypeError("Expecting a system that was produced by "

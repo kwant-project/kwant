@@ -12,6 +12,7 @@ Plotting routine
    plot
    map
    bands
+   spectrum
 
 Data-generating functions
 -------------------------
