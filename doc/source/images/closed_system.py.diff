@@ -8,7 +8,7 @@
  from cmath import exp
  import numpy as np
  import kwant
-@@ -68,29 +69,39 @@
+@@ -68,40 +69,56 @@
  
          energies.append(ev)
  
@@ -45,6 +45,24 @@
 +        kwant.plotter.map(
 +            syst, np.abs(evecs[:, 9])**2, colorbar=False, oversampling=1,
 +            file="closed_system_eigenvector." + extension,
++            fig_size=size, dpi=_defs.dpi)
+ 
+ 
+ def plot_current(syst):
++    size = (_defs.figwidth_in, _defs.figwidth_in)
++
+     # Calculate the wave functions in the system.
+     ham_mat = syst.hamiltonian_submatrix(sparse=True)
+     evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
+ 
+     # Calculate and plot the local current of the 10th eigenmode.
+     J = kwant.operator.Current(syst)
+     current = J(evecs[:, 9])
+-    kwant.plotter.current(syst, current, colorbar=False)
++    for extension in ('pdf', 'png'):
++        kwant.plotter.current(
++            syst, current, colorbar=False,
++            file="closed_system_current." + extension,
 +            fig_size=size, dpi=_defs.dpi)
  
  

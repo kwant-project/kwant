@@ -29,7 +29,7 @@ def make_system(a=1, t=1.0, r=10):
     # `a` is the lattice constant (by default set to 1 for simplicity).
 
 #HIDDEN_BEGIN_qlyd
-    lat = kwant.lattice.square(a)
+    lat = kwant.lattice.square(a, norbs=1)
 
     syst = kwant.Builder()
 
@@ -93,6 +93,19 @@ def plot_wave_function(syst):
 #HIDDEN_END_wave
 
 
+#HIDDEN_BEGIN_current
+def plot_current(syst):
+    # Calculate the wave functions in the system.
+    ham_mat = syst.hamiltonian_submatrix(sparse=True)
+    evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
+
+    # Calculate and plot the local current of the 10th eigenmode.
+    J = kwant.operator.Current(syst)
+    current = J(evecs[:, 9])
+    kwant.plotter.current(syst, current, colorbar=False)
+#HIDDEN_END_current
+
+
 def main():
     syst = make_system()
 
@@ -112,6 +125,7 @@ def main():
         # better spatial resolution.
         syst = make_system(r=30).finalized()
         plot_wave_function(syst)
+        plot_current(syst)
     except ValueError as e:
         if e.message == "Input matrix is not real-valued.":
             print("The calculation of eigenvalues failed because of a bug in SciPy 0.9.")
