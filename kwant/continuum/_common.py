@@ -217,9 +217,12 @@ def _expression_monomials(expression, *gens):
         >>> _expression_monomials(expr, x, y)
         {1: C, x**2: A, y: A, x: B}
     """
-    if expression.atoms(AppliedUndef):
-        raise NotImplementedError('Getting monomials of expressions containing '
-                                  'functions is not implemented.')
+    f_args = [f.args for f in expression.atoms(AppliedUndef, sympy.Function)]
+    f_args = [i for s in f_args for i in s]
+
+    if set(gens) & set(f_args):
+        raise ValueError('Functions in "expression" cannot contain any of '
+                         '"gens" as their argument.')
 
     expression = make_commutative(expression, *gens)
     gens = [make_commutative(g, g) for g in gens]
@@ -246,7 +249,7 @@ def _expression_monomials(expression, *gens):
                         key.append(arg)
 
         key = functools.reduce(mul, key)
-        val = summand.xreplace({g: 1 for g in gens})
+        val = summand.xreplace({g: sympy.S.One for g in gens})
 
         ### to not create key
         if val != 0:
@@ -254,7 +257,6 @@ def _expression_monomials(expression, *gens):
 
     new_expression = sum(k * v for k, v in output.items())
     assert sympy.expand(expression) == sympy.expand(new_expression)
-
     return dict(output)
 
 
