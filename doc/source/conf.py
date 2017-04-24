@@ -267,3 +267,7 @@ nitpick_ignore = [('py:class', 'Warning'), ('py:class', 'Exception'),
                   ('py:class', 'kwant.operator._LocalOperator'),
                   ('py:class', 'numpy.ndarray'),
                   ('py:class', 'kwant.solvers.common.BlockResult')]
+
+
+# Use custom MathJax CDN, as cdn.mathjax.org will soon shut down
+mathjax_path = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
