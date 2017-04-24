@@ -264,6 +264,11 @@ the original continuous dispersion. It is also worth remembering that the
 Brillouin zone also scales with grid spacing: :math:`[-\frac{\pi}{a},
 \frac{\pi}{a}]`.
 
+.. specialnote:: Note
+
+  The use of `~kwant.wraparound.wraparound` makes it easy to extend this
+  example to multidimensional band structures. ``wraparound`` replaces
+  the translational symmetry in the ``x`` direction by a parameter ``k_x``.
 
 Advanced topics
 ...............

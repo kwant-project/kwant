@@ -149,11 +149,15 @@ def lattice_spacing():
 #HIDDEN_END_ls_hk_cont
 
 #HIDDEN_BEGIN_ls_hk_tb
-        lead = kwant.continuum.discretize(hamiltonian, grid_spacing=a)
-        band = kwant.physics.Bands(lead.finalized(), params=params)
+        template = kwant.continuum.discretize(hamiltonian, grid_spacing=a)
+        syst = kwant.wraparound.wraparound(template).finalized()
+
+        def h_k(k_x):
+            p = dict(k_x=k_x, **params)
+            return syst.hamiltonian_submatrix(params=p)
 
         k_tb = np.linspace(-np.pi/a, np.pi/a, 201)
-        e_tb = np.array([band(a*ki) for ki in k_tb])
+        e_tb = [scipy.linalg.eigvalsh(h_k(k_x=a*ki)) for ki in k_tb]
 #HIDDEN_END_ls_hk_tb
 
         ax.plot(k_cont, e_cont, 'r-')
