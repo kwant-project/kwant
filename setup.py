@@ -634,9 +634,9 @@ def main():
                     'build_tut': build_tut,
                     'test': test},
           ext_modules=exts,
-          install_requires=['numpy > 1.6.1', 'scipy >= 0.11.0', 'tinyarray'],
+          install_requires=['numpy >= 1.8.1', 'scipy >= 0.13.3', 'tinyarray'],
           extras_require={
-              'plotting': 'matplotlib >= 1.2',
+              'plotting': 'matplotlib >= 1.3.1',
               # Ubuntu 16.04 is the oldest supported distro with python3-sympy
               'continuum': 'sympy >= 0.7.6',
           },

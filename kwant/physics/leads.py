@@ -25,20 +25,6 @@ dot = np.dot
 __all__ = ['selfenergy', 'modes', 'PropagatingModes', 'StabilizedModes']
 
 
-if np.__version__ >= '1.8':  # skip coverage
-    complex_any = np.any
-else:
-    def complex_any(array):
-        """Check if a complex array has nonzero entries.
-
-        This function is needed due to a bug in numpy<1.8.
-        """
-        # TODO: Remove separate checking of real and imaginary parts once we
-        # depend on numpy>=1.8 (it is present due to a bug in earlier
-        # versions).
-        return np.any(array.real) or np.any(array.imag)
-
-
 # TODO: Once Kwant depends on numpy >= 1.11, remove the fix
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -264,7 +250,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
     if stabilization is not None:
         stabilization = list(stabilization)
 
-    if not complex_any(h_hop):  # skip coverage
+    if not np.any(h_hop):  # skip coverage
         # Inter-cell hopping is zero.  The current algorithm is not suited to
         # treat this extremely singular case.
         raise ValueError("Inter-cell hopping is exactly zero.")
@@ -1062,7 +1048,7 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *,
     if h_cell.shape != (n, n):
         raise ValueError("Incompatible matrix sizes for h_cell and h_hop.")
 
-    if not complex_any(h_hop):
+    if not np.any(h_hop):
         wf = np.zeros((n, 0))
         v = np.zeros((m, 0))
         m = np.zeros((0, 0))

@@ -19,9 +19,10 @@ Prerequisites
 =============
 
 Building Kwant requires
- * `Python <https://www.python.org>`_ 3.4 or above (Kwant 1.1 is the last
+ * `Python <https://www.python.org/>`_ 3.4 or above (Kwant 1.1 is the last
    version to support Python 2),
- * `SciPy <http://scipy.org>`_ 0.11 or newer,
+ * `NumPy <http://numpy.org/>`_ 1.8.1 or newer,
+ * `SciPy <http://scipy.org/>`_ 0.13.3 or newer,
  * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
    <http://www.openblas.net/>`_ or the nonfree `MKL
@@ -32,8 +33,8 @@ Building Kwant requires
    C++.
 
 The following software is highly recommended though not strictly required:
- * `matplotlib <http://matplotlib.org/>`_ 1.2 or newer, for Kwant's
-   plotting module and the tutorial,
+ * `matplotlib <http://matplotlib.org/>`_ 1.3.1 or newer, for the module `kwant.plotter` and the tutorial,
+ * `SymPy <http://sympy.org/>`_ 0.7.6 or newer, for the subpackage `kwant.continuum`.
  * `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
    that will in many cases speed up Kwant several times and reduce the memory
    footprint.  (Kwant uses only the sequential, single core version
