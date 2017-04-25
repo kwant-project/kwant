@@ -24,10 +24,11 @@ def test_lll():
 
 def test_cvp():
     rng = ensure_rng(0)
-    for i in range(10):
-        mat = rng.randn(4, 4)
-        mat = lll.lll(mat)[0]
-        for j in range(4):
-            point = 50 * rng.randn(4)
-            assert np.array_equal(lll.cvp(point, mat, 10)[:3],
-                                  lll.cvp(point, mat, 3))
+    for i in range(1, 5):
+        for j in range(i, 5):
+            mat = rng.randn(i, j)
+            mat = lll.lll(mat)[0]
+            for k in range(4):
+                point = 50 * rng.randn(j)
+                assert np.array_equal(lll.cvp(point, mat, 10)[:3],
+                                      lll.cvp(point, mat, 3))

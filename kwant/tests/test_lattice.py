@@ -46,7 +46,7 @@ def test_neighbors():
     lat = lattice.honeycomb(1e-10)
     num_nth_nearest = [len(lat.neighbors(n)) for n in range(5)]
     assert num_nth_nearest == [2, 3, 6, 3, 6]
-    lat = lattice.square(1e8)
+    lat = lattice.general([(0, 1e8, 0, 0), (0, 0, 1e8, 0)])
     num_nth_nearest = [len(lat.neighbors(n)) for n in range(5)]
     assert num_nth_nearest == [1, 2, 2, 2, 4]
     lat = lattice.chain(1e-10)

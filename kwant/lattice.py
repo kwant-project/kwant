@@ -298,7 +298,7 @@ class Polyatomic:
         Site = builder.Site
         sls = self.sublattices
         shortest_hopping = sls[0].n_closest(
-            Site(sls[0], ([0] * sls[0].dim)).pos, 2)[-1]
+            sls[0].pos(([0] * sls[0].lattice_dim)), 2)[-1]
         eps *= np.linalg.norm(self.vec(shortest_hopping))
         nvec = len(self._prim_vecs)
         sublat_pairs = [(i, j) for (i, j) in product(sls, sls)
