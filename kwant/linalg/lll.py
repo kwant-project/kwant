@@ -156,12 +156,12 @@ def cvp(vec, basis, n=1):
         point_coords -= vec.T
         distances = np.sqrt(np.sum(point_coords**2, 1))
         order = np.argsort(distances)
-        distances = distances[order]
-        if distances[n - 1] < nth_dist:
-            nth_dist = distances[n - 1]
+        new_nth_dist = distances[order[n - 1]]
+        if new_nth_dist < nth_dist:
+            nth_dist = new_nth_dist
             rad += 1
         else:
-            return np.array(points[order][:n], int)
+            return np.array(points[order[:n]], int)
 
 
 def voronoi(basis):
