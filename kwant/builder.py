@@ -1182,20 +1182,20 @@ class Builder:
     def fill(self, other, shape, start, *, overwrite=False, max_sites=1e7):
         """Populate a builder using another as a template.
 
-
         Parameters
         ----------
-        other : `Builder`
+        other : ``Builder``
             A Builder used as a template. The symmetry of the target `Builder`
             must be a subgroup of the symmetry of the template.
         shape : callable
             A boolean function of site returning whether the site should be
-            added to the target builder or not.
-        start : tuple of integers or `Site`
-            The initial domain to be used to start the flood-fill or a `Site`
+            added to the target builder or not. The shape must be compatible
+            with the symmetry of the target ``Builder``.
+        start : tuple of integers or ``Site``
+            The initial domain to be used to start the flood-fill or a ``Site``
             belonging to that domain.
         overwrite : boolean
-            If existing sites or hoppings in the target `Builder` should be
+            If existing sites or hoppings in the target ``Builder`` should be
             overwritten.
         max_sites : positive number
             The maximal number of sites that may be added, used to prevent
@@ -1203,7 +1203,7 @@ class Builder:
 
         Returns
         -------
-        added_sites : list of `Site` objects that were added to the system.
+        added_sites : list of ``Site`` objects that were added to the system.
 
         Raises
         ------
@@ -1211,7 +1211,7 @@ class Builder:
             If the symmetry of the target isn't a subgroup of the template
             symmetry.
         RuntimeError
-            If `max_sites` sites are added.
+            If ``max_sites`` sites are added.
 
         Notes
         -----
