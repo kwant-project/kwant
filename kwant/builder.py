@@ -333,11 +333,17 @@ class Symmetry(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def isstrictsupergroup(self, other):
-        """Test whether other symmetry is a strict supergroup."""
+        """Test whether `self` is a strict supergroup of `other`...
+
+        or, in other words, whether `other` is a subgroup of `self`.  The
+        reason why this is the abstract method (and not `issubgroup`) is that
+        in general it's not possible for a subgroup to know its supergroups.
+
+        """
         pass
 
     def issubgroup(self, other):
-        """Test whether other symmetry is a subgroup."""
+        """Test whether `self` is a subgroup of `other`."""
         return other.isstrictsupergroup(self)
 
     __le__ = issubgroup
