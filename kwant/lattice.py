@@ -568,11 +568,8 @@ class TranslationalSymmetry(builder.Symmetry):
         factors = np.dot(other.periods, inv)
         # Absolute tolerance is correct in the following since we want an error
         # relative to the closest integer.
-        if not (np.allclose(factors, np.round(factors), rtol=0, atol=1e-8) and
-                np.allclose(ta.dot(factors, self.periods), other.periods)):
-            return False
-        else:
-            return True
+        return (np.allclose(factors, np.round(factors), rtol=0, atol=1e-8) and
+                np.allclose(ta.dot(factors, self.periods), other.periods))
 
     def add_site_family(self, fam, other_vectors=None):
         """
