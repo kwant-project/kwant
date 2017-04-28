@@ -1252,7 +1252,7 @@ class Builder:
                 yield result
 
         def add_site(candidate):
-            may_add = overwrite or candidate not in self.H
+            may_add = overwrite or candidate not in self
             # Delay calling shape because it may raise an error.
             if not may_add or candidate in all_added:
                 return

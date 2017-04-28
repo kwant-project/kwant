@@ -730,6 +730,27 @@ def test_fill():
     assert sorted(target.sites()) == sorted(should_be_syst.sites())
     assert sorted(target.hoppings()) == sorted(should_be_syst.hoppings())
 
+    ## test that 'fill' respects the symmetry of the target builder
+    lat = kwant.lattice.chain(a=1)
+    template = builder.Builder(kwant.TranslationalSymmetry((-1,)))
+    template[lat(0)] = 2
+    template[lat.neighbors()] = -1
+
+    target = builder.Builder(kwant.TranslationalSymmetry((-2,)))
+    target[lat(0)] = None
+    to_target_fd = target.symmetry.to_fd
+    # refuses to fill the target because target already contains a site
+    # in template symmetry domain (0,) and 'overwrite == False'
+    with raises(RuntimeError):
+        target.fill(template, lambda x: True, (0,))
+
+    # should only add a single site (and hopping)
+    new_sites = target.fill(template, lambda x: True, (1,), overwrite=False)
+    assert target[lat(0)] is None  # should not be overwritten by template
+    assert target[lat(-1)] == template[lat(0)]
+    assert len(new_sites) == 1
+    assert to_target_fd(new_sites[0]) == to_target_fd(lat(-1))
+
 
 def test_attach_lead():
     fam = builder.SimpleSiteFamily()
