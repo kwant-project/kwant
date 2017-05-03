@@ -51,7 +51,7 @@ def configure_extensions(exts, aliases=(), build_summary=None):
             continue
         l, _, config_file = opt.partition('=')
         if l != config_file_option or not config_file:
-            print('error: Expecting {}=PATH'.format(config_file_option),
+            print('Error: Expecting {}=PATH'.format(config_file_option),
                   file=sys.stderr)
             sys.exit(1)
         sys.argv.pop(i)
@@ -426,7 +426,10 @@ def search_lapack():
         found_libs = search_libs(libs)
         if found_libs:
             return found_libs
-    return []
+
+    print('Error: BLAS/LAPACK are required but were not found.',
+          file=sys.stderr)
+    sys.exit(1)
 
 
 def configure_special_extensions(exts, build_summary):
