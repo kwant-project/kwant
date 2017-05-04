@@ -16,6 +16,7 @@ import tinyarray as ta
 import numpy as np
 import kwant
 from kwant import builder
+from kwant._common import ensure_rng
 
 
 def test_bad_keys():
@@ -822,6 +823,46 @@ def test_neighbors_not_in_single_domain():
     lead[((fam(0, y), fam(0, y + 1)) for y in range(2))] = 1
     sr.leads.append(builder.BuilderLead(lead, [fam(i, i) for i in range(3)]))
     raises(ValueError, sr.finalized)
+
+
+def inside_disc(center, rr):
+    def shape(site):
+        d = site.pos - center
+        dd = ta.dot(d, d)
+        return dd <= rr
+    return shape
+
+
+def test_closest():
+    rng = ensure_rng(10)
+    for sym_dim in range(1, 4):
+        for space_dim in range(sym_dim, 4):
+            lat = kwant.lattice.general(ta.identity(space_dim))
+
+            # Choose random periods.
+            while True:
+                periods = rng.randint(-10, 11, (sym_dim, space_dim))
+                if np.linalg.det(np.dot(periods, periods.T)) > 0.1:
+                    # Periods are reasonably linearly independent.
+                    break
+            syst = builder.Builder(kwant.TranslationalSymmetry(*periods))
+
+            for tag in rng.randint(-30, 31, (4, space_dim)):
+                # Add site.
+                syst[lat(*tag)] = None
+
+                # Test consistency with fill().
+                for point in 200 * rng.random_sample((10, space_dim)) - 100:
+                    closest = syst.closest(point)
+                    dist = closest.pos - point
+                    dist = ta.dot(dist, dist)
+                    syst2 = builder.Builder()
+                    syst2.fill(syst, inside_disc(point, 2 * dist), closest)
+                    assert syst2.closest(point) == closest
+                    for site in syst2.sites():
+                        dd = site.pos - point
+                        dd = ta.dot(dd, dd)
+                        assert dd >= 0.999999 * dist
 
 
 def test_iadd():

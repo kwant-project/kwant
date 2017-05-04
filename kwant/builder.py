@@ -20,6 +20,7 @@ import tinyarray as ta
 import numpy as np
 from scipy import sparse
 from . import system, graph, KwantDeprecationWarning, UserCodeError
+from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry
 from ._common import ensure_isinstance, get_parameters
@@ -1176,6 +1177,60 @@ class Builder:
                 type(site).__name__))
         a = self.symmetry.to_fd(site)
         return self._out_neighbors(a)
+
+    def closest(self, pos):
+        """Return the site that is closest to the given position.
+
+        This function takes into account the symmetry of the builder.  It is
+        assumed that the symmetry is a translational symmetry.
+
+        This function executes in a time proportional to the number of sites,
+        so it is not efficient for large builders.  It is especially slow for
+        builders with a symmetry, but such systems often contain only a limited
+        number of sites.
+
+        """
+        errmsg = ("Builder.closest() requires site families that provide "
+                  "pos().\nThe following one does not:\n")
+        sym = self.symmetry
+        n = sym.num_directions
+
+        if n:
+            # Determine basis in real space from first site.  (The result from
+            # any site would do.)
+            I = ta.identity(n, int)
+            site = next(iter(self.H))
+            space_basis = [sym.act(element, site).pos - site.pos
+                           for element in I]
+            space_basis, transf = lll.lll(space_basis)
+            transf = ta.array(transf.T, int)
+
+        tag_basis_cache = {}
+        dist = float('inf')
+        result = None
+        for site in self.H:
+            try:
+                site_pos = site.pos
+            except AttributeError:
+                raise AttributeError(errmsg + str(site.family))
+            if n:
+                fam = site.family
+                tag_basis = tag_basis_cache.get(fam)
+                if tag_basis is None:
+                    zero_site = Site(fam, ta.zeros(len(site.tag), int))
+                    tag_basis = [sym.act(element, zero_site).tag
+                                 for element in I]
+                    tag_basis = ta.dot(transf, tag_basis)
+                    tag_basis_cache[fam] = tag_basis
+                shift = lll.cvp(pos - site_pos, space_basis, 1)[0]
+                site = Site(fam, ta.dot(shift, tag_basis) + site.tag)
+                site_pos = site.pos
+            d = site_pos - pos
+            d = ta.dot(d, d)
+            if d < dist:
+                dist = d
+                result = site
+        return result
 
     def __iadd__(self, other):
         for site, value in other.site_value_pairs():
