@@ -56,14 +56,14 @@ def lll(basis, c=1.34):
         Coefficient matrix for tranforming from the reduced basis to the
         original one.
     """
-    vecs = np.copy(basis)
-    if vecs.ndim != 2:
-        raise ValueError('`vecs` must be a 2d array-like object.')
-    if vecs.shape[0] > vecs.shape[1]:
+    vecs_orig = np.asarray(basis, float)
+    if vecs_orig.ndim != 2:
+        raise ValueError('"basis" must be a 2d array-like object.')
+    if vecs_orig.shape[0] > vecs_orig.shape[1]:
         raise ValueError('The number of basis vectors exceeds the '
                          'space dimensionality.')
-    vecs_orig = np.copy(vecs)
-    vecsstar = np.copy(vecs)
+    vecs = vecs_orig.copy()
+    vecsstar = vecs_orig.copy()
     m = vecs.shape[0]
     u = np.identity(m)
     def ll_reduce(i):
