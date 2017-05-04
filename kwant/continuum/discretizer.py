@@ -78,7 +78,7 @@ def discretize(hamiltonian, discrete_coordinates=None, *, grid_spacing=1,
                                 substitutions=substitutions, verbose=verbose)
 
     return build_discretized(tb, coords, grid_spacing=grid_spacing,
-                             substitutions=substitutions, verbose=verbose)
+                             verbose=verbose)
 
 
 def discretize_symbolic(hamiltonian, discrete_coordinates=None, *,

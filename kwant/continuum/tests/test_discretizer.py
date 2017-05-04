@@ -139,6 +139,7 @@ def test_simple_derivations(commutative):
 
 
 @pytest.mark.parametrize('e_to_subs, e, subs', [
+    ('A * k_x', '(A + B) * k_x', {'A': 'A + B'}),
     ('k_x', 'k_x + k_y', {'k_x': 'k_x + k_y'}),
     ('k_x**2 + V', 'k_x**2 + V + V_0', {'V': 'V + V_0'}),
     ('k_x**2 + A + C', 'k_x**2 + B + 5', {'A': 'B + 5', 'C': 0}),
@@ -391,6 +392,19 @@ def test_numeric_functions_basic_string():
         lat = next(iter(builder.sites()))[0]
         assert -1j * p['t'] == builder[lat(0), lat(1)](None, None, **p)
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
+
+
+@pytest.mark.parametrize('e_to_subs, e, subs', [
+    ('A * k_x + V', '(A + B) * k_x + A + B', {'A': 'A + B', 'V': 'A + B'}),
+])
+def test_numeric_functions_with_subs(e_to_subs, e, subs):
+    p = {'A': 1, 'B': 2}
+    builder_direct = discretize(e)
+    builder_subs = discretize(e_to_subs, substitutions=subs)
+
+    lat = next(iter(builder_direct.sites()))[0]
+    assert builder_direct[lat(0)](None, **p) == builder_subs[lat(0)](None, **p)
+
 
 
 def test_numeric_functions_advance():
