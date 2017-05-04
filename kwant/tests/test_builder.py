@@ -10,7 +10,7 @@ import warnings
 import pickle
 from random import Random
 import itertools as it
-from pytest import raises
+from pytest import raises, warns
 from numpy.testing import assert_almost_equal
 import tinyarray as ta
 import numpy as np
@@ -651,13 +651,11 @@ def test_fill():
     def line_200(site):
         return -100 <= site.pos[0] < 100
 
-    ## test that ValueError is raised when "start" is out
+    ## Test for warning when "start" is out.
     target = builder.Builder()
-    for domain in [-101, 101]:
-        with raises(ValueError):
-            target.fill(template_1d, line_200, start=(domain,))
-        with raises(ValueError):
-            target.fill(template_1d, line_200, start=g(domain, 0))
+    for start in [(-101, 0), (101, 0)]:
+        with warns(RuntimeWarning):
+            target.fill(template_1d, line_200, start)
 
     ## Test filling of infinite builder.
     for n in [1, 2, 4]:
@@ -685,7 +683,7 @@ def test_fill():
     added_sites = target.fill(template_1d, line_200, g(0, 0))
     assert len(added_sites) == 200
     ## test overwrite=False
-    with raises(RuntimeError):
+    with warns(RuntimeWarning):
         target.fill(template_1d, line_200, g(0, 0))
     ## test overwrite=True
     added_sites = target.fill(template_1d, line_200, g(0, 0),
@@ -752,13 +750,13 @@ def test_fill():
     target = builder.Builder(kwant.TranslationalSymmetry((-2,)))
     target[lat(0)] = None
     to_target_fd = target.symmetry.to_fd
-    # refuses to fill the target because target already contains a site
-    # in template symmetry domain (0,) and 'overwrite == False'
-    with raises(RuntimeError):
-        target.fill(template, lambda x: True, (0,))
+    # refuses to fill the target because target already contains the starting
+    # site and 'overwrite == False'.
+    with warns(RuntimeWarning):
+        target.fill(template, lambda x: True, lat(0))
 
     # should only add a single site (and hopping)
-    new_sites = target.fill(template, lambda x: True, (1,), overwrite=False)
+    new_sites = target.fill(template, lambda x: True, lat(1), overwrite=False)
     assert target[lat(0)] is None  # should not be overwritten by template
     assert target[lat(-1)] == template[lat(0)]
     assert len(new_sites) == 1

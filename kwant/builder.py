@@ -1252,31 +1252,33 @@ class Builder:
         self.leads.extend(other.leads)
         return self
 
-    def fill(self, other, shape, start, *, overwrite=False, max_sites=1e7):
-        """Populate a builder using another as a template.
+    def fill(self, template, shape, start, *, overwrite=False, max_sites=10**7):
+        """Populate builder using another one as a template.
 
         Parameters
         ----------
-        other : ``Builder``
-            A Builder used as a template. The symmetry of the target `Builder`
+        template : `Builder` instance
+            The builder used as the template. The symmetry of the target builder
             must be a subgroup of the symmetry of the template.
         shape : callable
             A boolean function of site returning whether the site should be
             added to the target builder or not. The shape must be compatible
-            with the symmetry of the target ``Builder``.
-        start : tuple of integers or ``Site``
-            The initial domain to be used to start the flood-fill or a ``Site``
-            belonging to that domain.
+            with the symmetry of the target builder.
+        start : `Site` instance or iterable thereof or iterable of numbers
+            The site(s) at which the the flood-fill starts.  If start is an
+            iterable of numbers, the starting site will be
+            ``template.closest(start)``.
         overwrite : boolean
-            If existing sites or hoppings in the target ``Builder`` should be
-            overwritten.
+            Whether existing sites or hoppings in the target builder should be
+            overwritten.  When overwriting is disabled (the default), existing
+            sites act as boundaries for the flood-fill.
         max_sites : positive number
-            The maximal number of sites that may be added, used to prevent
-            memory overflow.
+            The maximal number of sites that may be added before
+            ``RuntimeError`` is raised.  Used to prevent using up all memory.
 
         Returns
         -------
-        added_sites : list of ``Site`` objects that were added to the system.
+        added_sites : list of `Site` objects that were added to the system.
 
         Raises
         ------
@@ -1284,81 +1286,83 @@ class Builder:
             If the symmetry of the target isn't a subgroup of the template
             symmetry.
         RuntimeError
-            If ``max_sites`` sites are added.
+            If more than `max_sites` sites are added.
 
         Notes
         -----
-        This function uses a flood-fill algorithm, so all sites in the template
-        builder should be reachable from all other sites.
+        This function uses a flood-fill algorithm.  If the template builder
+        consists of disconnected parts, the fill will stop at their boundaries.
+
         """
         if not max_sites > 0:
             raise ValueError("max_sites must be positive.")
 
-        sym = other.symmetry
-        H = other.H
-
-        # if start is a site, convert it to a domain.
-        if isinstance(start, Site):
-            start = sym.which(start)
+        self_to_fd = self.symmetry.to_fd
+        self_H = self.H
 
         # Check that symmetries are commensurate.
-        if not self.symmetry <= sym:
+        if not self.symmetry <= template.symmetry:
             raise ValueError("Builder symmetry is not a subgroup of the "
                              "template symmetry")
 
-        # map site to the given domain of other.symmetry,
-        # while ensuring that it is in the fundamental domain
-        # of self.symmetry
-        def to_domain(domain, sites_or_hops):
-            for site_or_hop in sites_or_hops:
-                if isinstance(site_or_hop, Site):
-                    site_or_hop = (sym.act(domain, site_or_hop),)
-                else:
-                    site_or_hop = sym.act(domain, *site_or_hop)
-                result = self.symmetry.to_fd(*site_or_hop)
-                yield result
+        if isinstance(start, Site):
+            start = [start]
+        else:
+            start = list(start)
+            if start and not isinstance(start[0], Site):
+                start = [template.closest(start)]
 
-        def add_site(candidate):
-            may_add = overwrite or candidate not in self
-            # Delay calling shape because it may raise an error.
-            if not may_add or candidate in all_added:
-                return
-            if shape(candidate):
-                if len(all_added) == max_sites:
-                    raise RuntimeError("Maximal number of sites (max_sites "
-                                       "parameter of fill()) added, stopping.")
-                new_sites.add(candidate)
-                all_added.add(candidate)
-                self[candidate] = other[candidate]
+        # Pending sites are sites (mapped to the target's FD) that have been
+        # verified to lie inside the shape, but have not yet been added to the
+        # target, but yet without their hoppings.
+        pending = []
+        congested = True
+        for s in start:
+            s = self_to_fd(s)
+            if overwrite or s not in self_H:
+                congested = False
+                if shape(s):
+                    pending.append(s)
+                    self._set_site(s, template[s])
 
-        # Initialize the flood-fill
-        new_sites = set()
-        all_added = set()
-        for site in to_domain(start, H):
-            add_site(site)
-
-        if not new_sites:
-            if not any(shape(s) for s in to_domain(start, H)):
-                raise ValueError("No sites in symmetry domain {} are in the "
-                                 "desired shape".format(start))
+        if not pending:
+            if congested:
+                warnings.warn("fill(): The target builder already contains all "
+                              "starting sites.", RuntimeWarning, stacklevel=2)
             else:
-                raise RuntimeError("No sites were added becuse the target "
-                                   "builder already contains sites in the "
-                                   "starting domain.")
+                warnings.warn("fill(): None of the starting sites is in the "
+                              "desired shape", RuntimeWarning, stacklevel=2)
+            return []
+
+        # "Done" sites are sites whose surrounding hoppings have been added to
+        # the system.
+        done = set()
 
         # Flood-fill
-        while new_sites:
-            site = new_sites.pop()
-            for neighbor in other.neighbors(site):
-                hopping_fd = self.symmetry.to_fd(site, neighbor)
-                site_fd, neighbor_fd = hopping_fd
-                add_site(self.symmetry.to_fd(neighbor_fd))
-                try:
-                    self[hopping_fd] = other[hopping_fd]
-                except KeyError:
-                    pass
+        while pending:
+            site = pending.pop()
+            if len(done) > max_sites:
+                raise RuntimeError("Maximal number of sites (max_sites "
+                                   "parameter of fill()) added.")
 
-        return list(all_added)
+            for neighbor in template.neighbors(site):
+                neighbor_fd = self_to_fd(neighbor)
+
+                if neighbor_fd in done or not shape(neighbor_fd):
+                    # Nothing to do for site neighbor_fd: Either it has been
+                    # already treated (including surrounding hoppings), or it
+                    # is outside the shape.
+                    continue
+
+                if overwrite or neighbor_fd not in self_H:
+                    pending.append(neighbor_fd)
+                    self._set_site(neighbor_fd, template[neighbor_fd])
+
+                self._set_hopping((site, neighbor),
+                                  template[site, neighbor])
+            done.add(site)
+
+        return list(done)
 
     def attach_lead(self, lead_builder, origin=None, add_cells=0):
         """Attach a lead to the builder, possibly adding missing sites.
@@ -1418,8 +1422,7 @@ class Builder:
             # Automatically increase the period, potentially warn the user.
             new_lead = Builder(sym.subgroup((hop_range,)))
             new_lead.fill(lead_builder, lambda site: True,
-                          next(iter(lead_builder.sites())),
-                          max_sites=float('inf'))
+                          lead_builder.sites(), max_sites=float('inf'))
             lead_builder = new_lead
             sym = lead_builder.symmetry
             H = lead_builder.H
@@ -1468,12 +1471,11 @@ class Builder:
         # We start flood-fill from the first domain that doesn't belong to the
         # system (this one is guaranteed to contain a complete unit cell of the
         # lead). After flood-fill we remove that domain.
-        all_added = self.fill(lead_builder, shape, (max_dom + 1,),
+        start = {sym.act((max_dom + 1,), site) for site in H}
+        all_added = self.fill(lead_builder, shape, start,
                               max_sites=float('inf'))
-        to_delete = {site for site in all_added
-                     if sym.which(site)[0] == max_dom + 1}
-        all_added = [site for site in all_added if site not in to_delete]
-        del self[to_delete]
+        all_added = [site for site in all_added if site not in start]
+        del self[start]
 
         # Calculate the interface.
         interface = set()
