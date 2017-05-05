@@ -68,7 +68,7 @@ def test_bad_keys():
                       [fam(123), fam(1)]])]),
 
         # Various things that are not sites present in the system.
-        ([syst.degree, syst.neighbors],
+        ([syst.degree, lambda site: list(syst.neighbors(site))],
          [(TypeError, [123,
                        [0, 1, 2],
                        (0, 1),

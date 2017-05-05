@@ -1171,12 +1171,24 @@ class Builder:
         return self._out_degree(site)
 
     def neighbors(self, site):
-        """Return an iterator over all neighbors of a site."""
+        """Return an iterator over all neighbors of a site.
+
+        Technical note: This method respects the symmetry of the builder,
+        i.e. the returned sites are really connected to the given site (and not
+        to its image in the fundamental domain).
+        """
         if not isinstance(site, Site):
             raise TypeError('Expecting a site, got {0} instead.'.format(
                 type(site).__name__))
-        a = self.symmetry.to_fd(site)
-        return self._out_neighbors(a)
+        sym = self.symmetry
+        if isinstance(sym, NoSymmetry):
+            # Optimization for common case.
+            yield from self._out_neighbors(site)
+            return
+        shift = sym.which(site)
+        site = sym.act(-shift, site)
+        for neighbor in self._out_neighbors(site):
+            yield sym.act(shift, neighbor)
 
     def closest(self, pos):
         """Return the site that is closest to the given position.
@@ -1337,14 +1349,12 @@ class Builder:
         # Flood-fill
         while new_sites:
             site = new_sites.pop()
-            domain = sym.which(site)
-            # other.neighbors(site) gives neighbors of the *image* of
-            # site in FD of other.symmetry, so we must map it correctly
-            hoppings = [(sym.to_fd(site), n) for n in other.neighbors(site)]
-            for hopping in to_domain(domain, hoppings):
-                add_site(self.symmetry.to_fd(hopping[1]))
+            for neighbor in other.neighbors(site):
+                hopping_fd = self.symmetry.to_fd(site, neighbor)
+                site_fd, neighbor_fd = hopping_fd
+                add_site(self.symmetry.to_fd(neighbor_fd))
                 try:
-                    self[hopping] = other[hopping]
+                    self[hopping_fd] = other[hopping_fd]
                 except KeyError:
                     pass
 

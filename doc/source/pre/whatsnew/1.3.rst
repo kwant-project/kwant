@@ -141,3 +141,13 @@ continuum models and for discretizing them into tight-binding models. It aims
 at providing a handy interface to convert symbolic Hamiltonian into a builder
 with N-D translational symmetry that can be use to calculate TB band structures
 or construct systems with different/lower symmetry.
+
+Builder.neighbors() respects symmetries
+---------------------------------------
+Given a site, the method `Builder.neighbors` returns an iterator over sites
+that are connected by a hopping to the provided site.  This is in contrast to
+previous versions of Kwant, where the neighbors were yielded not of the
+provided site, but of it's image in the fundamental domain.
+
+This change is documented here for completeness.  We expect that the vast
+majority of users of Kwant will not be affected by it.
