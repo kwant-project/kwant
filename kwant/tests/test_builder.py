@@ -848,8 +848,11 @@ def test_closest():
             syst = builder.Builder(kwant.TranslationalSymmetry(*periods))
 
             for tag in rng.randint(-30, 31, (4, space_dim)):
-                # Add site.
-                syst[lat(*tag)] = None
+                # Add site and connect it to the others.
+                old_sites = list(syst.sites())
+                new_site = lat(*tag)
+                syst[new_site] = None
+                syst[((new_site, os) for os in old_sites)] = None
 
                 # Test consistency with fill().
                 for point in 200 * rng.random_sample((10, space_dim)) - 100:
