@@ -395,7 +395,7 @@ def test_numeric_functions_basic_string():
 
 
 @pytest.mark.parametrize('e_to_subs, e, subs', [
-    ('A * k_x + V', '(A + B) * k_x + A + B', {'A': 'A + B', 'V': 'A + B'}),
+    ('A * k_x + A', '(A + B) * k_x + A + B', {'A': 'A + B'}),
 ])
 def test_numeric_functions_with_subs(e_to_subs, e, subs):
     p = {'A': 1, 'B': 2}
@@ -404,6 +404,10 @@ def test_numeric_functions_with_subs(e_to_subs, e, subs):
 
     lat = next(iter(builder_direct.sites()))[0]
     assert builder_direct[lat(0)](None, **p) == builder_subs[lat(0)](None, **p)
+
+    hop_direct = builder_direct[lat(0), lat(1)](None, None, **p)
+    hop_subs = builder_subs[lat(0), lat(1)](None, None, **p)
+    assert  hop_direct == hop_subs
 
 
 
