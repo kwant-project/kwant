@@ -659,6 +659,18 @@ def test_fill():
         with raises(ValueError):
             target.fill(template_1d, line_200, start=g(domain, 0))
 
+    ## Test filling of infinite builder.
+    for n in [1, 2, 4]:
+        sym_n = kwant.TranslationalSymmetry((n, 0))
+        for ow in [False, True]:
+            for start in [g(0, 0), g(20, 0)]:
+                target = builder.Builder(sym_n)
+                sites = target.fill(template_1d, lambda s: True, start,
+                                    overwrite=ow, max_sites=10)
+                assert len(sites) == n
+                assert len(list(target.hoppings())) == n
+                assert set(sym_n.to_fd(s) for s in sites) == set(target.sites())
+
     ## test max_sites
     target = builder.Builder()
     for max_sites in (-1, 0):
