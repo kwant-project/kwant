@@ -110,7 +110,7 @@ class SpectralDensity:
     >>> syst[lat.neighbors()] = 1
 
     and after finalizing the system, create an instance of
-    `~kwant.kpm.pectralDensity`
+    `~kwant.kpm.SpectralDensity`
 
     >>> fsyst = syst.finalized()
     >>> rho = kwant.kpm.SpectralDensity(fsyst)
