@@ -1342,7 +1342,7 @@ class Builder:
             # site in FD of other.symmetry, so we must map it correctly
             hoppings = [(sym.to_fd(site), n) for n in other.neighbors(site)]
             for hopping in to_domain(domain, hoppings):
-                add_site(hopping[1])
+                add_site(self.symmetry.to_fd(hopping[1]))
                 try:
                     self[hopping] = other[hopping]
                 except KeyError:
