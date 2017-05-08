@@ -1286,7 +1286,8 @@ class Builder:
             If the symmetry of the target isn't a subgroup of the template
             symmetry.
         RuntimeError
-            If more than `max_sites` sites are added.
+            If more than `max_sites` sites are to be added.  The target builder
+            will be left in an unusable state.
 
         Notes
         -----
@@ -1297,11 +1298,12 @@ class Builder:
         if not max_sites > 0:
             raise ValueError("max_sites must be positive.")
 
-        self_to_fd = self.symmetry.to_fd
-        self_H = self.H
+        to_fd = self.symmetry.to_fd
+        H = self.H
+        templ_sym = template.symmetry
 
         # Check that symmetries are commensurate.
-        if not self.symmetry <= template.symmetry:
+        if not self.symmetry <= templ_sym:
             raise ValueError("Builder symmetry is not a subgroup of the "
                              "template symmetry")
 
@@ -1312,20 +1314,20 @@ class Builder:
             if start and not isinstance(start[0], Site):
                 start = [template.closest(start)]
 
-        # Pending sites are sites (mapped to the target's FD) that have been
-        # verified to lie inside the shape, but have not yet been added to the
-        # target, but yet without their hoppings.
-        pending = []
+        # "Active" are sites (mapped to the target's FD) that have been
+        # verified to lie inside the shape, have been added to the target (with
+        # `None` as value), but yet without their hoppings.
+        active = set()
         congested = True
         for s in start:
-            s = self_to_fd(s)
-            if overwrite or s not in self_H:
+            s = to_fd(s)
+            if overwrite or s not in H:
                 congested = False
                 if shape(s):
-                    pending.append(s)
-                    self._set_site(s, template[s])
+                    active.add(s)
+                    H.setdefault(s, [s, None])
 
-        if not pending:
+        if not active:
             if congested:
                 warnings.warn("fill(): The target builder already contains all "
                               "starting sites.", RuntimeWarning, stacklevel=2)
@@ -1334,35 +1336,66 @@ class Builder:
                               "desired shape", RuntimeWarning, stacklevel=2)
             return []
 
-        # "Done" sites are sites whose surrounding hoppings have been added to
-        # the system.
-        done = set()
+        done = []
+        old_active = set()
+        new_active = set()
 
-        # Flood-fill
-        while pending:
-            site = pending.pop()
-            if len(done) > max_sites:
-                raise RuntimeError("Maximal number of sites (max_sites "
-                                   "parameter of fill()) added.")
+        # Flood-fill on the graph.  We work site by site, writing all the
+        # outgoing edges.
+        while active:
+            old_active.update(active)
 
-            for neighbor in template.neighbors(site):
-                neighbor_fd = self_to_fd(neighbor)
+            for tail in active:
+                done.append(tail)
+                if len(done) > max_sites:
+                    # The graph has unbalanced edges: delete it.
+                    del self.H
+                    raise RuntimeError("Maximal number of sites (max_sites "
+                                       "parameter of fill()) added.")
 
-                if neighbor_fd in done or not shape(neighbor_fd):
-                    # Nothing to do for site neighbor_fd: Either it has been
-                    # already treated (including surrounding hoppings), or it
-                    # is outside the shape.
-                    continue
+                # Make an iterator over head-value-pairs.
+                shift = templ_sym.which(tail)
+                templ_hvhv = template.H[templ_sym.act(-shift, tail)]
+                templ_hvhv = iter(templ_hvhv)
+                templ_hvhv = iter(zip(templ_hvhv, templ_hvhv))
 
-                if overwrite or neighbor_fd not in self_H:
-                    pending.append(neighbor_fd)
-                    self._set_site(neighbor_fd, template[neighbor_fd])
+                hvhv = H[tail]
+                hvhv[1] = next(templ_hvhv)[1]
+                old_heads = hvhv[2::2]
 
-                self._set_hopping((site, neighbor),
-                                  template[site, neighbor])
-            done.add(site)
+                # The remaining pairs are the heads and their associated values.
+                for head, value in templ_hvhv:
+                    head = templ_sym.act(shift, head)
+                    head_fd = to_fd(head)
 
-        return list(done)
+                    if head_fd not in old_active and head_fd not in new_active:
+                        # The 'head' site has not been filled yet.
+                        if not shape(head_fd):
+                            continue
+
+                        if overwrite or head_fd not in H:
+                            # Fill 'head' site.
+                            new_active.add(head_fd)
+                            H.setdefault(head_fd, [head_fd, None])
+                        else:
+                            # The 'head' site exists and won't be visited: fill
+                            # the incoming edge as well to balance the hopping.
+                            other_value = template._get_edge(
+                                *templ_sym.to_fd(head, tail))
+                            self._set_edge(*to_fd(head, tail) + (other_value,))
+
+                    # Fill the outgoing edge.
+                    if head in old_heads:
+                        i = 2 + 2 * old_heads.index(head)
+                        hvhv[i] = head
+                        hvhv[i + 1] = value
+                    else:
+                        hvhv.extend((head, value))
+
+            old_active, active, new_active = active, new_active, old_active
+            new_active.clear()
+
+        return done
 
     def attach_lead(self, lead_builder, origin=None, add_cells=0):
         """Attach a lead to the builder, possibly adding missing sites.
