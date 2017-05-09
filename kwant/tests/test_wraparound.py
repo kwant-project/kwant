@@ -159,7 +159,7 @@ def test_signatures():
     ]
 
     for site, params_should_be, should_take_kwargs in onsites:
-        params, takes_kwargs = get_parameters(wrapped_syst[site])
+        params, _, takes_kwargs = get_parameters(wrapped_syst[site])
         assert params[1:] == params_should_be
         assert takes_kwargs == should_take_kwargs
 
@@ -170,7 +170,7 @@ def test_signatures():
     ]
 
     for hopping, params_should_be, should_take_kwargs in hoppings:
-        params, takes_kwargs = get_parameters(wrapped_syst[hopping])
+        params, _, takes_kwargs = get_parameters(wrapped_syst[hopping])
         assert params[2:] == params_should_be
         assert takes_kwargs == should_take_kwargs
 
@@ -194,7 +194,7 @@ def test_symmetry():
             new = getattr(wrapped, attr)
             orig = getattr(syst, attr)
             if callable(orig):
-                params, _ = get_parameters(new)
+                params, _, _ = get_parameters(new)
                 assert params[1:] == ['k_x', 'k_y']
                 assert np.all(orig(None) == new(None, None, None))
             else:

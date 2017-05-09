@@ -129,7 +129,7 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
             else:
                 return val(a, *args[:mnp])
 
-        params, takes_kwargs = get_parameters(val)
+        params, defaults, takes_kwargs = get_parameters(val)
         extra_params = params[1:]
         return _modify_signature(f, params + momenta, takes_kwargs)
 
@@ -156,7 +156,7 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
 
         params, takes_kwargs = ['_site0'], False
         if callable(val):
-            p, takes_kwargs = get_parameters(val)
+            p, defaults, takes_kwargs = get_parameters(val)
             extra_params = p[2:]  # cut off both site parameters
             params += extra_params
 
@@ -184,7 +184,7 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
 
         params, takes_kwargs = ['_site0', '_site1'], False
         if callable(val):
-            p, takes_kwargs = get_parameters(val)
+            p, defaults, takes_kwargs = get_parameters(val)
             extra_params = p[2:]  # cut off site parameters
             params += extra_params
 
@@ -209,7 +209,7 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
                 name, inspect.Parameter.POSITIONAL_OR_KEYWORD)
         # now all the other parameters, except for the momenta
         for val in filter(callable, vals):
-            val_params, val_takes_kwargs = get_parameters(val)
+            val_params, defaults, val_takes_kwargs = get_parameters(val)
             val_params = val_params[num_sites:]   # remove site parameters
             takes_kwargs = takes_kwargs or val_takes_kwargs
             for p in val_params:
