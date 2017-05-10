@@ -352,7 +352,10 @@ def test_current_interpolation():
 
         data = []
         for n in [4, 6, 8, 11, 16]:
-            (x, y), j0 = plotter.interpolate_current(syst, J(psi[0]), n=n, width=width)
+            j0, box = plotter.interpolate_current(syst, J(psi[0]),
+                                                  n=n, abswidth=width)
+            x, y = (np.linspace(mn, mx, shape)
+                    for (mn, mx), shape in zip(box, j0.shape))
             # slice field perpendicular to a cut along the y axis
             y_axis = (np.argmin(np.abs(x)), slice(None), 0)
             J_interp = scipy.integrate.simps(j0[y_axis], y)
@@ -383,19 +386,19 @@ def test_current_interpolation():
         divergence[a] += current
     assert np.allclose(divergence, 0)
 
-    _, j0 = plotter.interpolate_current(syst, J0)
-    _, j1 = plotter.interpolate_current(syst, J1)
+    j0, _ = plotter.interpolate_current(syst, J0)
+    j1, _ = plotter.interpolate_current(syst, J1)
 
     ## Test linearity of interpolation.
-    _, j_tot = plotter.interpolate_current(syst, J0 + 2 * J1)
+    j_tot, _ = plotter.interpolate_current(syst, J0 + 2 * J1)
     assert np.allclose(j_tot, j0 + 2 * j1)
 
     ## Test that divergence of interpolated current approaches zero as we make
     ## the interpolation finer.
     data = []
     for n in [4, 6, 8, 11, 16]:
-        grid, j = plotter.interpolate_current(syst, J0, n=n)
-        dx = [g[1] - g[0] for g in grid]
+        j, box = plotter.interpolate_current(syst, J0, n=n)
+        dx = [(mx - mn) / (shape - 1) for (mn, mx), shape in zip(box, j.shape)]
         div_j = np.max(np.abs(div(j, dx)))
         data.append((n, div_j))
 
