@@ -106,7 +106,7 @@ def increasing_accuracy_example(fsyst):
     original_dos = spectrum()  # get unaltered DoS
 
 #HIDDEN_BEGIN_acc1
-    spectrum.increase_energy_resolution(tol=0.03)
+    spectrum.add_moments(energy_resolution=0.03)
 #HIDDEN_END_acc1
 
     increased_resolution_dos = spectrum()
@@ -117,8 +117,8 @@ def increasing_accuracy_example(fsyst):
     ])
 
 #HIDDEN_BEGIN_acc2
-    # we supply the *total* number of moments and sampling points
-    spectrum.increase_accuracy(num_moments=200, num_rand_vecs=5)
+    spectrum.add_moments(100)
+    spectrum.add_vectors(5)
 #HIDDEN_END_acc2
 
     increased_moments_dos = spectrum()

@@ -160,32 +160,26 @@ of the method, each of which offers different levels of control over what
 exactly is changed.
 
 The simplest way to obtain a more accurate solution is to use the
-``increase_energy_resolution`` method:
+``add_moments`` method:
 
 .. literalinclude:: kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_acc1
     :end-before: #HIDDEN_END_acc1
 
-This will update the number of calculated moments and also the default
+This will update the number of calculated moments and also the
 number of sampling points such that the maximum distance between successive
-energy points is ``tol`` (see notes on accuracy_).
+energy points is ``energy_resolution`` (see notes on accuracy_).
 
 .. image:: ../images/kpm_dos_acc.*
 
-Alternatively, you can directly increase (or decrease) the number of moments,
-random vectors and sampling points with the method
-`~kwant.kpm.SpectralDensity.increase_accuracy`.
+Alternatively, you can directly increase the number of moments
+with ``add_moments``, or the number of random vectors with ``add_vectors``.
 
 .. literalinclude:: kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_acc2
     :end-before: #HIDDEN_END_acc2
 
 .. image:: ../images/kpm_dos_r.*
-
-In the above example we only increased the number of moments and decreased the
-number of random vectors. The keyword argument ``num_sampling_points`` can
-be also specified by passing the keyword argument to
-`~kwant.kpm.SpectralDensity.increase_accuracy`.
 
 
 .. _operator_spectral_density:
