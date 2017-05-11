@@ -7,10 +7,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['SpectralDensity']
-
-import warnings
-
+import math
 import numpy as np
 import scipy
 import scipy.sparse.linalg as sla
@@ -19,6 +16,9 @@ import scipy.fftpack as fft
 from . import system
 from ._common import ensure_rng
 from .operator import _LocalOperator
+
+__all__ = ['SpectralDensity']
+
 
 class SpectralDensity:
     """Calculate the spectral density of an operator.
@@ -50,13 +50,14 @@ class SpectralDensity:
         ``scipy.sparse.matrices``, the densities will be scalars.
         If no operator is provided, the density of states is calculated
         with a faster algorithm.
-    num_vectors : integer, default: 10
+    num_vectors : positive int, default: 10
         Number of random vectors for the KPM method.
-    num_moments : integer, default: 100
-        Number of moments, order of the KPM expansion.
-    num_energies : integer, optional
-        Number of points where the spectral density will be evaluated.
-        If not provided, ``2*num_moments`` will be used.
+    num_moments : positive int, default: 100
+        Number of moments, order of the KPM expansion. Mutually exclusive
+        with 'energy_resolution'.
+    energy_resolution : positive float, optional
+        The resolution in energy of the KPM approximation to the spectral
+        density. Mutually exclusive with 'num_moments'.
     vector_factory : function, optional
         The user defined function ``f(n)`` generates random vectors of
         length ``n`` that will be used in the algorithm.
@@ -66,7 +67,7 @@ class SpectralDensity:
     bounds : pair of floats, optional
         Lower and upper bounds for the eigenvalue spectrum of the system.
         If not provided, they are computed.
-    eps : float, default: 0.05
+    eps : positive float, default: 0.05
         Parameter to ensure that the rescaled spectrum lies in the
         interval ``(-1, 1)``; required for stability.
     rng : seed, or random number generator, optional
@@ -126,15 +127,33 @@ class SpectralDensity:
     Attributes
     ----------
     energies : array of floats
-        Array of sampling points with length ``num_energies`` in
+        Array of sampling points with length ``2 * num_moments`` in
         the range of the spectrum.
     densities : array of floats
         Spectral density of the ``operator`` evaluated at the energies.
     """
 
     def __init__(self, hamiltonian, params=None, operator=None,
-                 num_vectors=10, num_moments=100, num_energies=None,
+                 num_vectors=10, num_moments=None, energy_resolution=None,
                  vector_factory=None, bounds=None, eps=0.05, rng=None):
+
+        if num_moments and energy_resolution:
+            raise TypeError("either 'num_moments' or 'energy_resolution' "
+                            "must be provided.")
+
+        if energy_resolution:
+            num_moments = math.ceil((1.6 * self._a) / energy_resolution)
+        elif num_moments is None:
+            num_moments = 100
+
+        must_be_positive_int = ['num_vectors', 'num_moments']
+        for var in must_be_positive_int:
+            val = locals()[var]
+            if val <= 0 or val != int(val):
+                raise ValueError('{} must be a positive integer'.format(var))
+        if eps <= 0:
+            raise ValueError('eps must be positive')
+
         rng = ensure_rng(rng)
         # self.eps ensures that the rescaled Hamiltonian has a
         # spectrum strictly in the interval (-1,1).
@@ -164,16 +183,6 @@ class SpectralDensity:
             raise ValueError('Parameter `operator` has no `.dot` '
                              'attribute and is not callable.')
 
-        self.num_moments = num_moments
-        # Default number of sampling points
-        if num_energies is None:
-            self.num_energies = 2 * self.num_moments
-        elif num_energies < self.num_moments:
-            raise ValueError('The number of sampling points should be larger '
-                             'than the number of moments.')
-        else:
-            self.num_energies = num_energies
-
         self._vector_factory = vector_factory or \
             (lambda n: np.exp(2j * np.pi * rng.random_sample(n)))
         # store this vector for reproducibility
@@ -192,25 +201,15 @@ class SpectralDensity:
         self._last_two_alphas = [0.] * num_vectors
         self._moments_list = [0.] * num_vectors
 
-        self.num_vectors = 0 # new random vectors will be used
+        self.num_moments = num_moments
+        self.num_vectors = 0  # new random vectors will be used
         self._update_moments_list(self.num_moments, num_vectors)
-        #update the number of random vectors
         self.num_vectors = num_vectors
 
-        # sum moments of all random vectors
-        moments = np.sum(np.asarray(self._moments_list).real, axis=0)
-        # divide by the number of random vectors
-        moments = moments / self.num_vectors
-        # divide by the length of the vectors to normalize
-        moments = moments / self.hamiltonian.shape[0]
-        # divide by scale factor to reflect the integral rescaling
-        moments = moments / self._a
-
-        # obtain energies, densities, and gammas of Eq. 83
+        moments = self._moments()
         xk_rescaled, rho, self._gammas = _calc_fft_moments(
-            moments, self.num_energies)
-        # energies to normal scale
-        self.energies = xk_rescaled*self._a + self._b
+            moments, 2 * self.num_moments)
+        self.energies = xk_rescaled * self._a + self._b
         self.densities = rho
 
     def __call__(self, energy=None):
@@ -239,15 +238,7 @@ class SpectralDensity:
             g_e = (np.pi * np.sqrt(1 - rescaled_energy)
                    * np.sqrt(1 + rescaled_energy))
 
-            # calculate the coefficients for Chebyshev expansion
-            # sum moments of all random vectors
-            moments = np.sum(np.asarray(self._moments_list).real, axis=0)
-            # divide by the number of random vectors
-            moments = moments / self.num_vectors
-            # divide by the length of the vectors to normalize
-            moments = moments / self.hamiltonian.shape[0]
-            # divide by scale factor to reflect the integral rescaling
-            moments = moments / self._a
+            moments = self._moments()
 
             m = np.arange(self.num_moments)
 
@@ -275,7 +266,7 @@ class SpectralDensity:
         # This factor divides the sum to normalize the Gauss integral
         # and rescales the integral back with ``self._a`` to normal
         # scale.
-        factor = self._a/self.num_energies
+        factor = self._a / (2 * self.num_moments)
         if distribution_function is None:
             rho = self._gammas
         else:
@@ -285,67 +276,79 @@ class SpectralDensity:
             rho = np.transpose(self._gammas.transpose() * distribution_array)
         return factor * np.sum(rho, axis=0)
 
-    def increase_energy_resolution(self, tol=0.05, increase_num_moments=True):
-        """Set the minimum energy resolution to ``tol``.
-
-        The energy resolution is increased by increasing the number of
-        sampling points. By default the number of moments is also
-        increased.
-        """
-        resolution = 2 * self._a / (self.num_energies / 1.6)
-        if tol > resolution:
-            warnings.warn('Energy resolution is already smaller than tol.')
-        else:
-            num_energies = np.ceil((1.6 * 2*self._a) / tol)
-            num_energies = num_energies.astype(int)
-            if increase_num_moments:
-                num_moments = num_energies // 2
-                self.increase_accuracy(num_moments=num_moments,
-                                       num_energies=num_energies)
-            else:
-                self.increase_accuracy(num_energies=num_energies)
-
-    def increase_accuracy(self, num_moments=None, num_vectors=None,
-                          num_energies=None):
-        """Increase the number of moments, random vectors, or sampling
-        points.
+    def add_moments(self, num_moments=None, *, energy_resolution=None):
+        """Increase the number of Chebyshev moments.
 
         Parameters
         ----------
-        num_moments, num_vectors, num_energies : integer
-            Number of Chebyshev moments, random vectors used for
-            sampling, and sampling points for the calculation of
-            densities.
+        num_moments: positive int
+            The number of Chebyshev moments to add. Mutually
+            exclusive with 'energy_resolution'.
+        energy_resolution: positive float, optional
+            Features wider than this resolution are visible
+            in the spectral density. Mutually exclusive with
+            'num_moments'.
         """
-        # Calls to update_moments_list should be in this order:
-        # 1st. update random vectors and recalculate current moments,
-        # 2nd. update moments with the updated random vectors,
-        # 3rd. update sampling points and FFT densities.
-        num_vectors = num_vectors or self.num_vectors
-        new_rand_vect = num_vectors - self.num_vectors
-        for r in range(new_rand_vect):
+        if not ((num_moments is None) ^ (energy_resolution is None)):
+            raise TypeError("either 'num_moments' or 'energy_resolution' "
+                            "must be provided.")
+
+        if energy_resolution:
+            if energy_resolution <= 0:
+                raise ValueError("'energy_resolution' must be positive"
+                                 .format(energy_resolution))
+            # factor of 1.6 comes from the fact that we use the
+            # Jackson kernel when calculating the FFT, which has
+            # maximal slope π/2. Rounding to 1.6 ensures that the
+            # energy resolution is sufficient.
+            present_resolution = self._a * 1.6 / self.num_moments
+            if present_resolution < energy_resolution:
+                raise ValueError('Energy resolution is already smaller '
+                                 'than the requested resolution')
+            num_moments = math.ceil((1.6 * self._a) / energy_resolution)
+
+        if (num_moments is None or num_moments <= 0
+            or num_moments != int(num_moments)):
+            raise ValueError("'num_moments' must be a positive integer")
+
+        self._update_moments_list(self.num_moments + num_moments,
+                                  self.num_vectors)
+        self.num_moments += num_moments
+
+        # recalculate quantities derived from the moments
+        moments = self._moments()
+        xk_rescaled, rho, self._gammas = _calc_fft_moments(
+            moments, 2 * self.num_moments)
+        self.energies = xk_rescaled * self._a + self._b
+        self.densities = rho
+
+    def add_vectors(self, num_vectors):
+        """Increase the number of random vectors.
+
+        Parameters
+        ----------
+        num_vectors: positive int
+            The number of random vectors to add.
+        """
+        if num_vectors <= 0 or num_vectors != int(num_vectors):
+            raise ValueError("'num_vectors' must be a positive integer")
+        for r in range(num_vectors):
             self._rand_vect_list.append(
                 self._vector_factory(self.hamiltonian.shape[0]))
-        self._moments_list.extend([0.] * new_rand_vect)
-        self._last_two_alphas.extend([0.] * new_rand_vect)
-        self._update_moments_list(self.num_moments, num_vectors)
-        self.num_vectors = num_vectors
+        self._moments_list.extend([0.] * num_vectors)
+        self._last_two_alphas.extend([0.] * num_vectors)
+        self._update_moments_list(self.num_moments,
+                                  self.num_vectors + num_vectors)
+        self.num_vectors += num_vectors
 
-        num_moments = num_moments or self.num_moments
-        self._update_moments_list(num_moments, self.num_vectors)
-        self.num_moments = num_moments
+        # recalculate quantities derived from the moments
+        moments = self._moments()
+        xk_rescaled, rho, self._gammas = _calc_fft_moments(
+            moments, 2 * self.num_moments)
+        self.energies = xk_rescaled * self._a + self._b
+        self.densities = rho
 
-        ## cut random vectors and moments when necessary
-        self._moments_list[:] = [m[:num_moments]
-                                 for m in self._moments_list[:num_vectors]]
-
-        num_energies = num_energies or self.num_energies
-        if num_energies < self.num_moments:
-            raise ValueError(
-                'The number of sampling points should be larger than the '
-                'number of moments.')
-        self.num_energies = num_energies
-
+    def _moments(self):
         # sum moments of all random vectors
         moments = np.sum(np.asarray(self._moments_list).real, axis=0)
         # divide by the number of random vectors
@@ -353,14 +356,7 @@ class SpectralDensity:
         # divide by the length of the vectors to normalize
         moments = moments / self.hamiltonian.shape[0]
         # divide by scale factor to reflect the integral rescaling
-        moments = moments / self._a
-
-        xk_rescaled, rho, self._gammas = _calc_fft_moments(
-            moments, self.num_energies)
-
-        # Sampling points to normal scale
-        self.energies = xk_rescaled * self._a + self._b
-        self.densities = rho
+        return moments / self._a
 
     def _update_moments_list(self, n_moments, n_rand):
         """Calculate the Chebyshev moments of an operator's spectral
@@ -385,8 +381,7 @@ class SpectralDensity:
             r_start = self.num_vectors
             new_rand_vect = n_rand - self.num_vectors
         else:
-            warnings.warn('Decreasing number of random vectors')
-            return
+            raise ValueError('Cannot decrease number of random vectors')
 
         if n_moments == self.num_moments:
             m_start = 2
@@ -398,12 +393,11 @@ class SpectralDensity:
             new_moments = n_moments - self.num_moments
             m_start = self.num_moments
             if new_moments < 0:
-                warnings.warn('Decreasing the number of moments.')
-                return
+                raise ValueError('Cannot decrease number of moments')
 
-            assert new_rand_vect == 0,\
-                   ("Only 'num_moments' *or* 'num_vectors' may be updated "
-                    "at a time.")
+            if new_rand_vect != 0:
+                raise ValueError("Only 'num_moments' *or* 'num_vectors' "
+                                 "may be updated at a time.")
 
         for r in range(r_start, n_rand):
             alpha_zero = self._rand_vect_list[r]

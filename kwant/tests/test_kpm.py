@@ -25,7 +25,6 @@ dim = 20
 p = SimpleNamespace(
     num_moments=200,
     num_vectors=5,
-    num_energies=400
     )
 ham = kwant.rmt.gaussian(dim)
 
@@ -51,7 +50,6 @@ def make_spectrum(ham, p, operator=None, vector_factory=None, rng=None, params=N
         vector_factory=vector_factory,
         num_moments=p.num_moments,
         num_vectors=p.num_vectors,
-        num_energies=p.num_energies,
         rng=rng,
         params=params
         )
@@ -172,42 +170,6 @@ def test_api_operator():
                         operator=not_an_operator)
 
 
-def test_api_lower_num_moments():
-    spectrum = SpectralDensity(kwant.rmt.gaussian(dim))
-    num_moments = spectrum.num_moments - 1
-    with pytest.warns(UserWarning):
-        spectrum.increase_accuracy(num_moments=num_moments)
-
-
-def test_api_lower_sampling_points():
-    spectrum = SpectralDensity(kwant.rmt.gaussian(dim))
-    num_samplint_points = spectrum.num_moments - 1
-    with pytest.raises(ValueError):
-        spectrum.increase_accuracy(num_energies=num_samplint_points)
-
-
-def test_api_warning_less_sampling_points():
-    precise = copy(p)
-    precise.num_energies = precise.num_moments - 1
-    ham = kwant.rmt.gaussian(dim)
-    with pytest.raises(ValueError):
-        make_spectrum(ham, precise)
-
-
-def test_api_lower_energy_resolution():
-    spectrum = make_spectrum(ham, p)
-    tol = np.max(np.abs(np.diff(spectrum.energies))) * 2.
-    with pytest.warns(UserWarning):
-        spectrum.increase_energy_resolution(tol=tol)
-
-
-def test_api_lower_num_vectors():
-    spectrum = SpectralDensity(kwant.rmt.gaussian(dim))
-    num_vectors = spectrum.num_vectors - 1
-    with pytest.warns(UserWarning):
-        spectrum.increase_accuracy(num_vectors=num_vectors)
-
-
 def test_api_single_eigenvalue_error():
     with pytest.raises(ValueError):
         SpectralDensity(np.identity(dim, dtype=complex))
@@ -247,6 +209,7 @@ def test_bounds():
 
     # different algorithms are used so these arrays are equal up to TOL_SP
     assert_allclose_sp(sp1.densities, sp2.densities)
+
 
 def test_operator_user():
     """Check operator=None gives the same results as operator=np.identity(),
@@ -357,7 +320,7 @@ def test_increase_num_moments():
     precise.num_moments = 2 * p.num_moments
 
     spectrum_raise = make_spectrum(ham, precise, rng=1)
-    spectrum.increase_accuracy(num_moments=precise.num_moments)
+    spectrum.add_moments(p.num_moments)
 
     # Check bit for bit equality
     assert np.all(np.array(spectrum_raise._moments_list) ==
@@ -373,11 +336,9 @@ def test_increase_num_moments():
 
     # test when increasing num_moments by 1 from an even to an odd number
     spectrum_even = make_spectrum(ham, p, rng=1)
-    spectrum_even.increase_accuracy(num_moments=p.num_moments + 1)
+    spectrum_even.add_moments(num_moments=1)
     assert np.all(np.array(spectrum_even._moments_list) ==
                   np.array(spectrum_odd._moments_list))
-
-
 
 
 # ### increase num_moments with an operator (different algorithm)
@@ -389,8 +350,8 @@ def test_increase_num_moments_op():
     sp1 = make_spectrum(ham, p, operator=None, rng=1)
     sp2 = make_spectrum(ham, p, operator=identity, rng=1)
 
-    sp1.increase_accuracy(num_moments=2*sp1.num_moments)
-    sp2.increase_accuracy(num_moments=2*sp2.num_moments)
+    sp1.add_moments(num_moments=sp1.num_moments)
+    sp2.add_moments(num_moments=sp2.num_moments)
 
     # different algorithms are used so these arrays are equal up to TOL_SP
     assert_allclose_sp(sp1.densities, sp2.densities)
@@ -404,24 +365,41 @@ def test_increase_num_vectors():
 
     spectrum_raise = make_spectrum(ham, precise, rng=1)
     spectrum = make_spectrum(ham, p, rng=1)
-    spectrum.increase_accuracy(num_vectors=precise.num_vectors)
+    spectrum.add_vectors(num_vectors=p.num_vectors)
     # Check bit for bit equality
 
     assert np.all(spectrum_raise.densities == spectrum.densities)
 
-# ### increase num_energies
 
+def test_invalid_input():
 
-def test_increase_num_energies():
-    precise = copy(p)
-    precise.sampling_points = 2 * p.num_energies
+    with pytest.raises(TypeError):
+        SpectralDensity(ham, num_moments=10, energy_resolution=0.1)
 
-    spectrum_raise = make_spectrum(ham, precise, rng=1)
-    spectrum = make_spectrum(ham, p, rng=1)
-    spectrum.increase_accuracy(num_moments=precise.num_moments)
+    s = SpectralDensity(ham)
+    with pytest.raises(TypeError):
+        s.add_moments(num_moments=20, energy_resolution=0.1)
 
-    # Check bit for bit equality
-    assert np.all(spectrum_raise.densities == spectrum.densities)
+    for v in (-20, 0, 10.5):
+        for p in ('num_vectors', 'num_moments'):
+            with pytest.raises(ValueError):
+                SpectralDensity(ham, **{p: v})
+        s = SpectralDensity(ham)
+        with pytest.raises(ValueError):
+            s.add_moments(num_moments=v)
+        with pytest.raises(ValueError):
+            s.add_vectors(num_vectors=v)
+
+    for v in (-1, -0.5, 0):
+        with pytest.raises(ValueError):
+            SpectralDensity(ham, eps=v)
+        s = SpectralDensity(ham)
+        with pytest.raises(ValueError):
+            s.add_moments(energy_resolution=v)
+
+    with pytest.raises(ValueError):
+        s.add_moments(energy_resolution=10)
+
 
 # ### Convergence for higher number of moments ###
 
@@ -434,7 +412,6 @@ def test_check_convergence_decreasing_values():
         precise = SimpleNamespace(
             num_moments=10*dim + 100*i*dim,
             num_vectors=dim//2,
-            num_energies=None
             )
         results = []
         np.random.seed(1)
@@ -480,7 +457,6 @@ def test_convergence_custom_vector_factory():
         precise = SimpleNamespace(
             num_moments=10*dim + 100*i*dim,
             num_vectors=dim//2,
-            num_energies=None
             )
         results = []
         iterations = 3
@@ -537,27 +513,15 @@ def test_average():
 def test_increase_energy_resolution():
     spectrum, filter_index = make_spectrum_and_peaks(ham, p)
 
-    old_sampling_points = spectrum.num_energies
+    old_sampling_points = 2 * spectrum.num_moments
     tol = np.max(np.abs(np.diff(spectrum.energies))) / 2
 
-    spectrum.increase_energy_resolution(tol=tol)
-    new_sampling_points = spectrum.num_energies
+    spectrum.add_moments(energy_resolution=tol)
+    new_sampling_points = 2 * spectrum.num_moments
 
     assert old_sampling_points < new_sampling_points
     assert np.max(np.abs(np.diff(spectrum.energies))) < tol
 
-
-def test_increase_energy_resolution_no_moments():
-    spectrum, filter_index = make_spectrum_and_peaks(ham, p)
-
-    old_sampling_points = spectrum.num_energies
-    tol = np.max(np.abs(np.diff(spectrum.energies))) / 2
-
-    spectrum.increase_energy_resolution(tol=tol, increase_num_moments=False)
-    new_sampling_points = spectrum.num_energies
-
-    assert old_sampling_points < new_sampling_points
-    assert np.max(np.abs(np.diff(spectrum.energies))) < tol
 
 # ### check _rescale
 
