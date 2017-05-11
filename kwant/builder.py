@@ -1620,9 +1620,9 @@ class Builder:
                     ham in _ham_param_map):
                     continue
                 # parameters come in the same order as in the function signature
-                params, takes_kwargs = get_parameters(ham)
+                params, defaults, takes_kwargs = get_parameters(ham)
                 params = params[skip:]  # remove site argument(s)
-                _ham_param_map[ham] = (params, takes_kwargs)
+                _ham_param_map[ham] = (params, defaults, takes_kwargs)
 
         #### Assemble and return result.
         result = FiniteSystem()
@@ -1766,9 +1766,9 @@ class Builder:
                     ham in _ham_param_map):
                     continue
                 # parameters come in the same order as in the function signature
-                params, takes_kwargs = get_parameters(ham)
+                params, defaults, takes_kwargs = get_parameters(ham)
                 params = params[skip:]  # remove site argument(s)
-                _ham_param_map[ham] = (params, takes_kwargs)
+                _ham_param_map[ham] = (params, defaults, takes_kwargs)
 
         #### Assemble and return result.
         result = InfiniteSystem()
@@ -1891,11 +1891,16 @@ class FiniteSystem(system.FiniteSystem):
             value = self.onsite_hamiltonians[i]
             if callable(value):
                 if params:
-                    param_names, takes_kwargs = self._ham_param_map[value]
-                    if not takes_kwargs:
-                        params = {pn: params[pn] for pn in param_names}
+                    required, defaults, takes_kw = self._ham_param_map[value]
+                    invalid_params = set(params).intersection(set(defaults))
+                    if invalid_params:
+                        raise ValueError("Parameters {} have default values "
+                                         "and may not be set with 'params'"
+                                         .format(', '.join(invalid_params)))
+                    if not takes_kw:
+                        params = {pn: params[pn] for pn in required}
                     try:
-                            value = value(self.sites[i], **params)
+                        value = value(self.sites[i], **params)
                     except Exception as exc:
                         _raise_user_error(exc, value)
                 else:
@@ -1914,9 +1919,14 @@ class FiniteSystem(system.FiniteSystem):
             if callable(value):
                 sites = self.sites
                 if params:
-                    param_names, takes_kwargs = self._ham_param_map[value]
-                    if not takes_kwargs:
-                        params = {pn: params[pn] for pn in param_names}
+                    required, defaults, takes_kw = self._ham_param_map[value]
+                    invalid_params = set(params).intersection(set(defaults))
+                    if invalid_params:
+                        raise ValueError("Parameters {} have default values "
+                                         "and may not be set with 'params'"
+                                         .format(', '.join(invalid_params)))
+                    if not takes_kw:
+                        params = {pn: params[pn] for pn in required}
                     try:
                         value = value(sites[i], sites[j], **params)
                     except Exception as exc:
@@ -1971,9 +1981,14 @@ class InfiniteSystem(system.InfiniteSystem):
             if callable(value):
                 site = self.symmetry.to_fd(self.sites[i])
                 if params:
-                    param_names, takes_kwargs = self._ham_param_map[value]
-                    if not takes_kwargs:
-                        params = {pn: params[pn] for pn in param_names}
+                    required, defaults, takes_kw = self._ham_param_map[value]
+                    invalid_params = set(params).intersection(set(defaults))
+                    if invalid_params:
+                        raise ValueError("Parameters {} have default values "
+                                         "and may not be set with 'params'"
+                                         .format(', '.join(invalid_params)))
+                    if not takes_kw:
+                        params = {pn: params[pn] for pn in required}
                     try:
                         value = value(site, **params)
                     except Exception as exc:
@@ -1995,9 +2010,14 @@ class InfiniteSystem(system.InfiniteSystem):
                 sites = self.sites
                 site_i, site_j = self.symmetry.to_fd(sites[i], sites[j])
                 if params:
-                    param_names, takes_kwargs = self._ham_param_map[value]
-                    if not takes_kwargs:
-                        params = {pn: params[pn] for pn in param_names}
+                    required, defaults, takes_kw = self._ham_param_map[value]
+                    invalid_params = set(params).intersection(set(defaults))
+                    if invalid_params:
+                        raise ValueError("Parameters {} have default values "
+                                         "and may not be set with 'params'"
+                                         .format(', '.join(invalid_params)))
+                    if not takes_kw:
+                        params = {pn: params[pn] for pn in required}
                     try:
                         value = value(site_i, site_j, **params)
                     except Exception as exc:

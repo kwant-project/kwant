@@ -257,13 +257,13 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
     If `onsite` is a function or a mapping (dictionary) then a function
     is returned.
     """
-    parameter_info =  ((), False)
+    parameter_info =  ((), (), False)
 
     if callable(onsite):
         # make 'onsite' compatible with hamiltonian value functions
-        parameters, takes_kwargs = get_parameters(onsite)
-        parameters = parameters[1:]  # skip 'site' parameter
-        parameter_info = (tuple(parameters), takes_kwargs)
+        required, defaults, takes_kwargs = get_parameters(onsite)
+        required = required[1:]  # skip 'site' parameter
+        parameter_info = (tuple(required), defaults, takes_kwargs)
         try:
             _onsite = _FunctionalOnsite(onsite, syst.sites)
         except AttributeError:
@@ -628,9 +628,15 @@ cdef class _LocalOperator:
         onsite = self.onsite
         check_hermiticity = self.check_hermiticity
 
-        param_names, takes_kwargs = self._onsite_params_info
-        if params and not takes_kwargs:
-            params = {pn: params[pn] for pn in param_names}
+        required, defaults, takes_kw = self._onsite_params_info
+        invalid_params = set(params).intersection(set(defaults))
+        if invalid_params:
+            raise ValueError("Parameters {} have default values "
+                             "and may not be set with 'params'"
+                             .format(', '.join(invalid_params)))
+
+        if params and not takes_kw:
+            params = {pn: params[pn] for pn in required}
 
         def get_onsite(a, a_norbs, b, b_norbs):
             mat = matrix(onsite(a, *args, **params), complex)

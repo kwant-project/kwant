@@ -92,9 +92,11 @@ def get_parameters(func):
 
     Returns
     -------
-    names : list
-        Positional, keyword and keyword only parameter names in the order
-        that they appear in the signature of 'func'.
+    required_params : list
+        Names of positional, and keyword only parameters that do not have a
+        default value and that appear in the signature of 'func'.
+    default_params : list
+        Names of parameters that have a default value.
     takes_kwargs : bool
         True if 'func' takes '**kwargs'.
     """
@@ -102,9 +104,12 @@ def get_parameters(func):
     pars = sig.parameters
 
     # Signature.parameters is an *ordered mapping*
-    names = [k for (k, v) in pars.items()
-             if v.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                           inspect.Parameter.KEYWORD_ONLY)]
+    required_params = [k for (k, v) in pars.items()
+                       if v.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                                     inspect.Parameter.KEYWORD_ONLY)
+                       and v.default is inspect._empty]
+    default_params = [k for (k, v) in pars.items()
+                      if v.default is not inspect._empty]
     takes_kwargs = any(i.kind is inspect.Parameter.VAR_KEYWORD
                        for i in pars.values())
-    return names, takes_kwargs
+    return required_params, default_params, takes_kwargs
