@@ -637,19 +637,44 @@ def test_builder_with_symmetry():
 
 
 def test_fill():
-    # Use function as a value since otherwise a hopping in the opposite
-    # direction may be stored after fill.
-    def f(*sites): pass
     g = kwant.lattice.square()
     sym_x = kwant.TranslationalSymmetry((-1, 0))
     sym_xy = kwant.TranslationalSymmetry((-1, 0), (0, 1))
 
     template_1d = builder.Builder(sym_x)
-    template_1d[g(0, 0)] = f
-    template_1d[g.neighbors()] = f
+    template_1d[g(0, 0)] = None
+    template_1d[g.neighbors()] = None
 
     def line_200(site):
         return -100 <= site.pos[0] < 100
+
+    ## Test that copying a builder by "fill" preserves everything.
+    cubic = kwant.lattice.general(ta.identity(3))
+    sym = kwant.TranslationalSymmetry((3, 0, 0), (0, 4, 0), (0, 0, 5))
+
+    # Make a weird system.
+    orig = kwant.Builder(sym)
+    sites = cubic.shape(lambda pos: True, (0, 0, 0))
+    for i, site in enumerate(orig.expand(sites)):
+        if i % 7 == 0:
+            continue
+        orig[site] = i
+    for i, hopp in enumerate(orig.expand(cubic.neighbors(1))):
+        if i % 11 == 0:
+            continue
+        orig[hopp] = i * 1.2345
+    for i, hopp in enumerate(orig.expand(cubic.neighbors(2))):
+        if i % 13 == 0:
+            continue
+        orig[hopp] = i * 1j
+
+    # Clone the original using fill.
+    clone = kwant.Builder(sym)
+    clone.fill(orig, lambda s: True, (0, 0, 0))
+
+    # Verify that both are identical.
+    assert set(clone.site_value_pairs()) == set(orig.site_value_pairs())
+    assert set(clone.hopping_value_pairs()) == set(orig.hopping_value_pairs())
 
     ## Test for warning when "start" is out.
     target = builder.Builder()
@@ -698,8 +723,8 @@ def test_fill():
     target.fill(template_1d, lambda site: True, g(0, 0))
 
     should_be_syst = builder.Builder(sym_nx)
-    should_be_syst[(g(i, 0) for i in range(n_cells))] = f
-    should_be_syst[g.neighbors()] = f
+    should_be_syst[(g(i, 0) for i in range(n_cells))] = None
+    should_be_syst[g.neighbors()] = None
 
     assert sorted(target.sites()) == sorted(should_be_syst.sites())
     assert sorted(target.hoppings()) == sorted(should_be_syst.hoppings())
@@ -707,9 +732,9 @@ def test_fill():
 
     ## test multiplying unit cell size in 2D
     template_2d = builder.Builder(sym_xy)
-    template_2d[g(0, 0)] = f
-    template_2d[g.neighbors()] = f
-    template_2d[builder.HoppingKind((2, 2), g)] = f
+    template_2d[g(0, 0)] = None
+    template_2d[g.neighbors()] = None
+    template_2d[builder.HoppingKind((2, 2), g)] = None
 
     nm_cells = (3, 5)
     sym_nmxy = kwant.TranslationalSymmetry(*(sym_xy.periods * nm_cells))
@@ -717,9 +742,9 @@ def test_fill():
     target.fill(template_2d, lambda site: True, g(0, 0))
 
     should_be_syst = builder.Builder(sym_nmxy)
-    should_be_syst[(g(i, j) for i in range(10) for j in range(10))] = f
-    should_be_syst[g.neighbors()] = f
-    should_be_syst[builder.HoppingKind((2, 2), g)] = f
+    should_be_syst[(g(i, j) for i in range(10) for j in range(10))] = None
+    should_be_syst[g.neighbors()] = None
+    should_be_syst[builder.HoppingKind((2, 2), g)] = None
 
     assert sorted(target.sites()) == sorted(should_be_syst.sites())
     assert sorted(target.hoppings()) == sorted(should_be_syst.hoppings())
@@ -734,9 +759,9 @@ def test_fill():
     target.fill(template_2d, square_shape, g(0, 0))
 
     should_be_syst = builder.Builder()
-    should_be_syst[(g(i, j) for i in range(10) for j in range(10))] = f
-    should_be_syst[g.neighbors()] = f
-    should_be_syst[builder.HoppingKind((2, 2), g)] = f
+    should_be_syst[(g(i, j) for i in range(10) for j in range(10))] = None
+    should_be_syst[g.neighbors()] = None
+    should_be_syst[builder.HoppingKind((2, 2), g)] = None
 
     assert sorted(target.sites()) == sorted(should_be_syst.sites())
     assert sorted(target.hoppings()) == sorted(should_be_syst.hoppings())
