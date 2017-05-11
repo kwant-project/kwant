@@ -38,7 +38,7 @@ class SpectralDensity:
 
     Parameters
     ----------
-    ham : `~kwant.system.FiniteSystem` or matrix Hamiltonian
+    hamiltonian : `~kwant.system.FiniteSystem` or matrix Hamiltonian
         If a system is passed, it should contain no leads.
     params : dict, optional
         Additional parameters to pass to the Hamiltonian and operator.
@@ -50,11 +50,11 @@ class SpectralDensity:
         ``scipy.sparse.matrices``, the densities will be scalars.
         If no operator is provided, the density of states is calculated
         with a faster algorithm.
-    num_rand_vecs : integer, default: 10
+    num_vectors : integer, default: 10
         Number of random vectors for the KPM method.
     num_moments : integer, default: 100
         Number of moments, order of the KPM expansion.
-    num_sampling_points : integer, optional
+    num_energies : integer, optional
         Number of points where the spectral density will be evaluated.
         If not provided, ``2*num_moments`` will be used.
     vector_factory : function, optional
@@ -66,7 +66,7 @@ class SpectralDensity:
     bounds : pair of floats, optional
         Lower and upper bounds for the eigenvalue spectrum of the system.
         If not provided, they are computed.
-    epsilon : float, default: 0.05
+    eps : float, default: 0.05
         Parameter to ensure that the rescaled spectrum lies in the
         interval ``(-1, 1)``; required for stability.
     rng : seed, or random number generator, optional
@@ -126,27 +126,29 @@ class SpectralDensity:
     Attributes
     ----------
     energies : array of floats
-        Array of sampling points with length ``num_sampling_points`` in
+        Array of sampling points with length ``num_energies`` in
         the range of the spectrum.
     densities : array of floats
         Spectral density of the ``operator`` evaluated at the energies.
     """
 
-    def __init__(self, ham, params=None, operator=None,
-                 num_rand_vecs=10, num_moments=100, num_sampling_points=None,
-                 vector_factory=None, bounds=None, epsilon=0.05, rng=None):
+    def __init__(self, hamiltonian, params=None, operator=None,
+                 num_vectors=10, num_moments=100, num_energies=None,
+                 vector_factory=None, bounds=None, eps=0.05, rng=None):
         rng = ensure_rng(rng)
-        # self.epsilon ensures that the rescaled Hamiltonian has a
+        # self.eps ensures that the rescaled Hamiltonian has a
         # spectrum strictly in the interval (-1,1).
-        self.epsilon = epsilon
+        self.eps = eps
 
         # Normalize the format of 'ham'
-        if isinstance(ham, system.System):
-            ham = ham.hamiltonian_submatrix(params=params, sparse=True)
+        if isinstance(hamiltonian, system.System):
+            hamiltonian = hamiltonian.hamiltonian_submatrix(params=params,
+                                                            sparse=True)
         try:
-            ham = scipy.sparse.csr_matrix(ham)
+            hamiltonian = scipy.sparse.csr_matrix(hamiltonian)
         except Exception:
-            raise ValueError("'ham' is neither a matrix nor a Kwant system.")
+            raise ValueError("'hamiltonian' is neither a matrix "
+                             "nor a Kwant system.")
 
         # Normalize 'operator' to a common format.
         if operator is None:
@@ -164,46 +166,49 @@ class SpectralDensity:
 
         self.num_moments = num_moments
         # Default number of sampling points
-        if num_sampling_points is None:
-            self.num_sampling_points = 2 * self.num_moments
-        elif num_sampling_points < self.num_moments:
+        if num_energies is None:
+            self.num_energies = 2 * self.num_moments
+        elif num_energies < self.num_moments:
             raise ValueError('The number of sampling points should be larger '
                              'than the number of moments.')
         else:
-            self.num_sampling_points = num_sampling_points
+            self.num_energies = num_energies
 
         self._vector_factory = vector_factory or \
             (lambda n: np.exp(2j * np.pi * rng.random_sample(n)))
         # store this vector for reproducibility
-        self._v0 = self._vector_factory(ham.shape[0])
+        self._v0 = self._vector_factory(hamiltonian.shape[0])
         self._rand_vect_list = []
         # Hamiltonian rescaled as in Eq. (24)
-        self.ham, (self._a, self._b) = _rescale(ham, epsilon=self.epsilon,
-                                                v0=self._v0, bounds=bounds)
+        self.hamiltonian, (self._a, self._b) = _rescale(hamiltonian,
+                                                        eps=self.eps,
+                                                        v0=self._v0,
+                                                        bounds=bounds)
         self.bounds = (self._b - self._a, self._b + self._a)
 
-        for r in range(num_rand_vecs):
-            self._rand_vect_list.append(self._vector_factory(self.ham.shape[0]))
-        self._last_two_alphas = [0.] * num_rand_vecs
-        self._moments_list = [0.] * num_rand_vecs
+        for r in range(num_vectors):
+            self._rand_vect_list.append(
+                self._vector_factory(self.hamiltonian.shape[0]))
+        self._last_two_alphas = [0.] * num_vectors
+        self._moments_list = [0.] * num_vectors
 
-        self.num_rand_vecs = 0 # new random vectors will be used
-        self._update_moments_list(self.num_moments, num_rand_vecs)
+        self.num_vectors = 0 # new random vectors will be used
+        self._update_moments_list(self.num_moments, num_vectors)
         #update the number of random vectors
-        self.num_rand_vecs = num_rand_vecs
+        self.num_vectors = num_vectors
 
         # sum moments of all random vectors
         moments = np.sum(np.asarray(self._moments_list).real, axis=0)
         # divide by the number of random vectors
-        moments = moments / self.num_rand_vecs
+        moments = moments / self.num_vectors
         # divide by the length of the vectors to normalize
-        moments = moments / self.ham.shape[0]
+        moments = moments / self.hamiltonian.shape[0]
         # divide by scale factor to reflect the integral rescaling
         moments = moments / self._a
 
         # obtain energies, densities, and gammas of Eq. 83
         xk_rescaled, rho, self._gammas = _calc_fft_moments(
-            moments, self.num_sampling_points)
+            moments, self.num_energies)
         # energies to normal scale
         self.energies = xk_rescaled*self._a + self._b
         self.densities = rho
@@ -238,9 +243,9 @@ class SpectralDensity:
             # sum moments of all random vectors
             moments = np.sum(np.asarray(self._moments_list).real, axis=0)
             # divide by the number of random vectors
-            moments = moments / self.num_rand_vecs
+            moments = moments / self.num_vectors
             # divide by the length of the vectors to normalize
-            moments = moments / self.ham.shape[0]
+            moments = moments / self.hamiltonian.shape[0]
             # divide by scale factor to reflect the integral rescaling
             moments = moments / self._a
 
@@ -270,7 +275,7 @@ class SpectralDensity:
         # This factor divides the sum to normalize the Gauss integral
         # and rescales the integral back with ``self._a`` to normal
         # scale.
-        factor = self._a/self.num_sampling_points
+        factor = self._a/self.num_energies
         if distribution_function is None:
             rho = self._gammas
         else:
@@ -287,27 +292,27 @@ class SpectralDensity:
         sampling points. By default the number of moments is also
         increased.
         """
-        resolution = 2 * self._a / (self.num_sampling_points / 1.6)
+        resolution = 2 * self._a / (self.num_energies / 1.6)
         if tol > resolution:
             warnings.warn('Energy resolution is already smaller than tol.')
         else:
-            num_sampling_points = np.ceil((1.6 * 2*self._a) / tol)
-            num_sampling_points = num_sampling_points.astype(int)
+            num_energies = np.ceil((1.6 * 2*self._a) / tol)
+            num_energies = num_energies.astype(int)
             if increase_num_moments:
-                num_moments = num_sampling_points // 2
+                num_moments = num_energies // 2
                 self.increase_accuracy(num_moments=num_moments,
-                                       num_sampling_points=num_sampling_points)
+                                       num_energies=num_energies)
             else:
-                self.increase_accuracy(num_sampling_points=num_sampling_points)
+                self.increase_accuracy(num_energies=num_energies)
 
-    def increase_accuracy(self, num_moments=None, num_rand_vecs=None,
-                          num_sampling_points=None):
+    def increase_accuracy(self, num_moments=None, num_vectors=None,
+                          num_energies=None):
         """Increase the number of moments, random vectors, or sampling
         points.
 
         Parameters
         ----------
-        num_moments, num_rand_vecs, num_sampling_points : integer
+        num_moments, num_vectors, num_energies : integer
             Number of Chebyshev moments, random vectors used for
             sampling, and sampling points for the calculation of
             densities.
@@ -316,41 +321,42 @@ class SpectralDensity:
         # 1st. update random vectors and recalculate current moments,
         # 2nd. update moments with the updated random vectors,
         # 3rd. update sampling points and FFT densities.
-        num_rand_vecs = num_rand_vecs or self.num_rand_vecs
-        new_rand_vect = num_rand_vecs - self.num_rand_vecs
+        num_vectors = num_vectors or self.num_vectors
+        new_rand_vect = num_vectors - self.num_vectors
         for r in range(new_rand_vect):
-            self._rand_vect_list.append(self._vector_factory(self.ham.shape[0]))
+            self._rand_vect_list.append(
+                self._vector_factory(self.hamiltonian.shape[0]))
         self._moments_list.extend([0.] * new_rand_vect)
         self._last_two_alphas.extend([0.] * new_rand_vect)
-        self._update_moments_list(self.num_moments, num_rand_vecs)
-        self.num_rand_vecs = num_rand_vecs
+        self._update_moments_list(self.num_moments, num_vectors)
+        self.num_vectors = num_vectors
 
         num_moments = num_moments or self.num_moments
-        self._update_moments_list(num_moments, self.num_rand_vecs)
+        self._update_moments_list(num_moments, self.num_vectors)
         self.num_moments = num_moments
 
         ## cut random vectors and moments when necessary
         self._moments_list[:] = [m[:num_moments]
-                                 for m in self._moments_list[:num_rand_vecs]]
+                                 for m in self._moments_list[:num_vectors]]
 
-        num_sampling_points = num_sampling_points or self.num_sampling_points
-        if num_sampling_points < self.num_moments:
+        num_energies = num_energies or self.num_energies
+        if num_energies < self.num_moments:
             raise ValueError(
                 'The number of sampling points should be larger than the '
                 'number of moments.')
-        self.num_sampling_points = num_sampling_points
+        self.num_energies = num_energies
 
         # sum moments of all random vectors
         moments = np.sum(np.asarray(self._moments_list).real, axis=0)
         # divide by the number of random vectors
-        moments = moments / self.num_rand_vecs
+        moments = moments / self.num_vectors
         # divide by the length of the vectors to normalize
-        moments = moments / self.ham.shape[0]
+        moments = moments / self.hamiltonian.shape[0]
         # divide by scale factor to reflect the integral rescaling
         moments = moments / self._a
 
         xk_rescaled, rho, self._gammas = _calc_fft_moments(
-            moments, self.num_sampling_points)
+            moments, self.num_energies)
 
         # Sampling points to normal scale
         self.energies = xk_rescaled * self._a + self._b
@@ -372,12 +378,12 @@ class SpectralDensity:
             Number of random vectors used for sampling.
         """
 
-        if self.num_rand_vecs == n_rand:
+        if self.num_vectors == n_rand:
             r_start = 0
             new_rand_vect = 0
-        elif self.num_rand_vecs < n_rand:
-            r_start = self.num_rand_vecs
-            new_rand_vect = n_rand - self.num_rand_vecs
+        elif self.num_vectors < n_rand:
+            r_start = self.num_vectors
+            new_rand_vect = n_rand - self.num_vectors
         else:
             warnings.warn('Decreasing number of random vectors')
             return
@@ -396,7 +402,7 @@ class SpectralDensity:
                 return
 
             assert new_rand_vect == 0,\
-                   ("Only 'num_moments' *or* 'num_rand_vecs' may be updated "
+                   ("Only 'num_moments' *or* 'num_vectors' may be updated "
                     "at a time.")
 
         for r in range(r_start, n_rand):
@@ -405,7 +411,7 @@ class SpectralDensity:
             one_moment = [0.] * n_moments
             if new_rand_vect > 0:
                 alpha = alpha_zero
-                alpha_next = self.ham.matvec(alpha)
+                alpha_next = self.hamiltonian.matvec(alpha)
                 if self.operator is None:
                     one_moment[0] = np.vdot(alpha_zero, alpha_zero)
                     one_moment[1] = np.vdot(alpha_zero, alpha_next)
@@ -429,7 +435,8 @@ class SpectralDensity:
             if self.operator is None:
                 for n in range(m_start//2, n_moments//2):
                     alpha_save = alpha_next
-                    alpha_next = 2 * self.ham.matvec(alpha_next) - alpha
+                    alpha_next = (2 * self.hamiltonian.matvec(alpha_next)
+                                  - alpha)
                     alpha = alpha_save
                     # Following Eqs. (34) and (35)
                     one_moment[2*n] = (2 * np.vdot(alpha, alpha)
@@ -438,12 +445,13 @@ class SpectralDensity:
                                          - one_moment[1])
                 if n_moments % 2:
                     # odd moment
-                    one_moment[n_moments - 1] = (2 * np.vdot(alpha_next, alpha_next)
-                                                 - one_moment[0])
+                    one_moment[n_moments - 1] = (
+                        2 * np.vdot(alpha_next, alpha_next) - one_moment[0])
             else:
                 for n in range(m_start, n_moments):
                     alpha_save = alpha_next
-                    alpha_next = 2 * self.ham.matvec(alpha_next) - alpha
+                    alpha_next = (2 * self.hamiltonian.matvec(alpha_next)
+                                  - alpha)
                     alpha = alpha_save
                     one_moment[n] = self.operator(alpha_zero, alpha_next)
 
@@ -454,14 +462,14 @@ class SpectralDensity:
 # ### Auxiliary functions
 
 
-def _rescale(ham, epsilon, v0, bounds):
+def _rescale(hamiltonian, eps, v0, bounds):
     """Rescale a Hamiltonian and return a LinearOperator
 
     Parameters
     ----------
-    ham : 2D array
+    hamiltonian : 2D array
         Hamiltonian of the system.
-    epsilon : scalar
+    eps : scalar
         Ensures that the bounds 'a' and 'b' are strict.
     v0 : random vector, or None
         Used as the initial residual vector for the algorithm that
@@ -471,19 +479,19 @@ def _rescale(ham, epsilon, v0, bounds):
         minimum eigenvalues are calculated.
     """
     # Relative tolerance to which to calculate eigenvalues.  Because after
-    # rescaling we will add epsilon / 2 to the spectral bounds, we don't need
-    # to know the bounds more accurately than epsilon / 2.
-    tol = epsilon / 2
+    # rescaling we will add eps / 2 to the spectral bounds, we don't need
+    # to know the bounds more accurately than eps / 2.
+    tol = eps / 2
 
     if bounds:
         lmin, lmax = bounds
     else:
-        lmax = float(sla.eigsh(ham, k=1, which='LA', return_eigenvectors=False,
-                               tol=tol, v0=v0))
-        lmin = float(sla.eigsh(ham, k=1, which='SA', return_eigenvectors=False,
-                               tol=tol, v0=v0))
+        lmax = float(sla.eigsh(hamiltonian, k=1, which='LA',
+                               return_eigenvectors=False, tol=tol, v0=v0))
+        lmin = float(sla.eigsh(hamiltonian, k=1, which='SA',
+                               return_eigenvectors=False, tol=tol, v0=v0))
 
-    a = np.abs(lmax-lmin) / (2. - epsilon)
+    a = np.abs(lmax-lmin) / (2. - eps)
     b = (lmax+lmin) / 2.
 
     if lmax - lmin <= abs(lmax + lmin) * tol / 2:
@@ -492,9 +500,9 @@ def _rescale(ham, epsilon, v0, bounds):
             'obtain a spectral density.')
 
     def rescaled(v):
-        return (ham.dot(v) - b * v) / a
+        return (hamiltonian.dot(v) - b * v) / a
 
-    rescaled_ham = sla.LinearOperator(shape=ham.shape, matvec=rescaled)
+    rescaled_ham = sla.LinearOperator(shape=hamiltonian.shape, matvec=rescaled)
 
     return rescaled_ham, (a, b)
 

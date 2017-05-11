@@ -24,8 +24,8 @@ SpectralDensity = kwant.kpm.SpectralDensity
 dim = 20
 p = SimpleNamespace(
     num_moments=200,
-    num_rand_vecs=5,
-    num_sampling_points=400
+    num_vectors=5,
+    num_energies=400
     )
 ham = kwant.rmt.gaussian(dim)
 
@@ -50,8 +50,8 @@ def make_spectrum(ham, p, operator=None, vector_factory=None, rng=None, params=N
         operator=operator,
         vector_factory=vector_factory,
         num_moments=p.num_moments,
-        num_rand_vecs=p.num_rand_vecs,
-        num_sampling_points=p.num_sampling_points,
+        num_vectors=p.num_vectors,
+        num_energies=p.num_energies,
         rng=rng,
         params=params
         )
@@ -91,7 +91,7 @@ def kpm_derivative(spectrum, e, order=1):
     kernel = kernel / (spectrum.num_moments + 1)
 
     moments = np.sum(spectrum._moments_list, axis=0) /\
-        (spectrum.num_rand_vecs * spectrum.ham.shape[0])
+        (spectrum.num_vectors * spectrum.hamiltonian.shape[0])
     coef_cheb = np.zeros_like(moments)
     coef_cheb[0] = moments[0]
     coef_cheb[1:] = 2 * moments[1:] * kernel[1:]
@@ -183,12 +183,12 @@ def test_api_lower_sampling_points():
     spectrum = SpectralDensity(kwant.rmt.gaussian(dim))
     num_samplint_points = spectrum.num_moments - 1
     with pytest.raises(ValueError):
-        spectrum.increase_accuracy(num_sampling_points=num_samplint_points)
+        spectrum.increase_accuracy(num_energies=num_samplint_points)
 
 
 def test_api_warning_less_sampling_points():
     precise = copy(p)
-    precise.num_sampling_points = precise.num_moments - 1
+    precise.num_energies = precise.num_moments - 1
     ham = kwant.rmt.gaussian(dim)
     with pytest.raises(ValueError):
         make_spectrum(ham, precise)
@@ -201,11 +201,11 @@ def test_api_lower_energy_resolution():
         spectrum.increase_energy_resolution(tol=tol)
 
 
-def test_api_lower_num_rand_vecs():
+def test_api_lower_num_vectors():
     spectrum = SpectralDensity(kwant.rmt.gaussian(dim))
-    num_rand_vecs = spectrum.num_rand_vecs - 1
+    num_vectors = spectrum.num_vectors - 1
     with pytest.warns(UserWarning):
-        spectrum.increase_accuracy(num_rand_vecs=num_rand_vecs)
+        spectrum.increase_accuracy(num_vectors=num_vectors)
 
 
 def test_api_single_eigenvalue_error():
@@ -235,7 +235,7 @@ def test_bounds():
     epsilon = 0.05
     tol = epsilon*0.5
     rng = ensure_rng(1)
-    sp1 = SpectralDensity(ham, bounds=None, epsilon=epsilon, rng=rng)
+    sp1 = SpectralDensity(ham, bounds=None, eps=epsilon, rng=rng)
     # re initialize to obtain the same vector v0
     rng = ensure_rng(1)
     v0 = np.exp(2j * np.pi * rng.random_sample(dim))
@@ -243,7 +243,7 @@ def test_bounds():
         ham, k=1, which='LA', return_eigenvectors=False, tol=tol, v0=v0))
     lmin = float(sla.eigsh(
         ham, k=1, which='SA', return_eigenvectors=False, tol=tol, v0=v0))
-    sp2 = SpectralDensity(ham, bounds=(lmin, lmax), epsilon=epsilon, rng=1)
+    sp2 = SpectralDensity(ham, bounds=(lmin, lmax), eps=epsilon, rng=1)
 
     # different algorithms are used so these arrays are equal up to TOL_SP
     assert_allclose_sp(sp1.densities, sp2.densities)
@@ -398,23 +398,23 @@ def test_increase_num_moments_op():
 # ### increase num_random_vecs
 
 
-def test_increase_num_rand_vecs():
+def test_increase_num_vectors():
     precise = copy(p)
-    precise.num_rand_vecs = 2 * p.num_rand_vecs
+    precise.num_vectors = 2 * p.num_vectors
 
     spectrum_raise = make_spectrum(ham, precise, rng=1)
     spectrum = make_spectrum(ham, p, rng=1)
-    spectrum.increase_accuracy(num_rand_vecs=precise.num_rand_vecs)
+    spectrum.increase_accuracy(num_vectors=precise.num_vectors)
     # Check bit for bit equality
 
     assert np.all(spectrum_raise.densities == spectrum.densities)
 
-# ### increase num_sampling_points
+# ### increase num_energies
 
 
-def test_increase_num_sampling_points():
+def test_increase_num_energies():
     precise = copy(p)
-    precise.sampling_points = 2 * p.num_sampling_points
+    precise.sampling_points = 2 * p.num_energies
 
     spectrum_raise = make_spectrum(ham, precise, rng=1)
     spectrum = make_spectrum(ham, p, rng=1)
@@ -433,8 +433,8 @@ def test_check_convergence_decreasing_values():
     for i in range(depth):
         precise = SimpleNamespace(
             num_moments=10*dim + 100*i*dim,
-            num_rand_vecs=dim//2,
-            num_sampling_points=None
+            num_vectors=dim//2,
+            num_energies=None
             )
         results = []
         np.random.seed(1)
@@ -479,8 +479,8 @@ def test_convergence_custom_vector_factory():
     for i in range(depth):
         precise = SimpleNamespace(
             num_moments=10*dim + 100*i*dim,
-            num_rand_vecs=dim//2,
-            num_sampling_points=None
+            num_vectors=dim//2,
+            num_energies=None
             )
         results = []
         iterations = 3
@@ -537,11 +537,11 @@ def test_average():
 def test_increase_energy_resolution():
     spectrum, filter_index = make_spectrum_and_peaks(ham, p)
 
-    old_sampling_points = spectrum.num_sampling_points
+    old_sampling_points = spectrum.num_energies
     tol = np.max(np.abs(np.diff(spectrum.energies))) / 2
 
     spectrum.increase_energy_resolution(tol=tol)
-    new_sampling_points = spectrum.num_sampling_points
+    new_sampling_points = spectrum.num_energies
 
     assert old_sampling_points < new_sampling_points
     assert np.max(np.abs(np.diff(spectrum.energies))) < tol
@@ -550,11 +550,11 @@ def test_increase_energy_resolution():
 def test_increase_energy_resolution_no_moments():
     spectrum, filter_index = make_spectrum_and_peaks(ham, p)
 
-    old_sampling_points = spectrum.num_sampling_points
+    old_sampling_points = spectrum.num_energies
     tol = np.max(np.abs(np.diff(spectrum.energies))) / 2
 
     spectrum.increase_energy_resolution(tol=tol, increase_num_moments=False)
-    new_sampling_points = spectrum.num_sampling_points
+    new_sampling_points = spectrum.num_energies
 
     assert old_sampling_points < new_sampling_points
     assert np.max(np.abs(np.diff(spectrum.energies))) < tol
@@ -566,7 +566,7 @@ def test_rescale():
     ham = kwant.rmt.gaussian(dim)
     spectrum, filter_index = make_spectrum_and_peaks(ham, p)
 
-    ham_operator, (a, b) = _rescale(ham, epsilon=0.05, v0=None, bounds=None)
+    ham_operator, (a, b) = _rescale(ham, eps=0.05, v0=None, bounds=None)
     rescaled_eigvalues, rescaled_eigvectors = np.linalg.eigh((
         ham - b * np.identity(len(ham))) / a)
 
