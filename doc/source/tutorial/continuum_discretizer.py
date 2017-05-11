@@ -143,7 +143,7 @@ def lattice_spacing():
 
     def plot(ax, a=1):
 #HIDDEN_BEGIN_ls_hk_cont
-        h_k = kwant.continuum.lambdify(hamiltonian, substitutions=params)
+        h_k = kwant.continuum.lambdify(hamiltonian, subs=params)
         k_cont = np.linspace(-4, 4, 201)
         e_cont = [scipy.linalg.eigvalsh(h_k(k_x=ki)) for ki in k_cont]
 #HIDDEN_END_ls_hk_cont
@@ -190,7 +190,7 @@ def substitutions():
     e = (
         sympify('[[k_x**2, alpha * k_x], [k_x * alpha, -k_x**2]]'),
         sympify('k_x**2 * sigma_z + alpha * k_x * sigma_x'),
-        sympify('k_x**2 * sz + alpha * k_x * sx', substitutions=subs),
+        sympify('k_x**2 * sz + alpha * k_x * sx', subs=subs),
     )
 
     print(e[0] == e[1] == e[2])
@@ -198,7 +198,7 @@ def substitutions():
 
 #HIDDEN_BEGIN_subs_2
     subs = {'A': 'A(x) + B', 'V': 'V(x) + V_0', 'C': 5}
-    print(sympify('k_x * A * k_x + V + C', substitutions=subs))
+    print(sympify('k_x * A * k_x + V + C', subs=subs))
 #HIDDEN_END_subs_2
 
 

@@ -58,7 +58,7 @@
  
  
  def lattice_spacing():
-@@ -158,7 +171,7 @@
+@@ -159,7 +172,7 @@
  
      plot(ax1, a=1)
      plot(ax2, a=.25)
@@ -67,8 +67,8 @@
  
  
  def substitutions():
-@@ -171,14 +184,20 @@
-         sympify('k_x**2 * sz + alpha * k_x * sx', substitutions=subs),
+@@ -172,14 +185,20 @@
+         sympify('k_x**2 * sz + alpha * k_x * sx', subs=subs),
      )
  
 -    print(e[0] == e[1] == e[2])
@@ -77,10 +77,10 @@
 +            print(e[0] == e[1] == e[2])
  
      subs = {'A': 'A(x) + B', 'V': 'V(x) + V_0', 'C': 5}
--    print(sympify('k_x * A * k_x + V + C', substitutions=subs))
+-    print(sympify('k_x * A * k_x + V + C', subs=subs))
 +    with open('discretizer_subs_2.txt', 'w') as f:
 +        with redirect_stdout(f):
-+            print(sympify('k_x * A * k_x + V + C', substitutions=subs))
++            print(sympify('k_x * A * k_x + V + C', subs=subs))
  
  
  def main():
