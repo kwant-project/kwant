@@ -120,6 +120,19 @@ The last two arguments to `~kwant.plotter.map` are optional.  The first prevents
 a colorbar from appearing.  The second, ``oversampling=1``, makes the image look
 better for the special case of a square lattice.
 
+
+As our model breaks time reversal symmetry (because of the applied magnetic
+field) we can also see an intereting property of the eigenstates, namely
+that they can have *non-zero* local current. We can calculate the local
+current due to a state by using `kwant.operator.Current` and plotting
+it using `kwant.plotter.current`:
+
+.. literalinclude:: closed_system.py
+    :start-after: #HIDDEN_BEGIN_current
+    :end-before: #HIDDEN_END_current
+
+.. image:: ../images/closed_system_current.*
+
 .. specialnote:: Technical details
 
   - `~kwant.system.System.hamiltonian_submatrix` can also return a sparse

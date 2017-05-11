@@ -11,6 +11,7 @@ Plotting routine
 
    plot
    map
+   current
    bands
    spectrum
 
@@ -19,6 +20,8 @@ Data-generating functions
 .. autosummary::
    :toctree: generated/
 
+   interpolate_current
+   streamplot
    sys_leads_sites
    sys_leads_hoppings
    sys_leads_pos
