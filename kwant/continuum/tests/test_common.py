@@ -32,13 +32,13 @@ kx, ky, kz = momentum_operators
     ('[[k_x * A(x) * k_x]]', sympy.Matrix([kx * com_A(x_op) * kx])),
     ('k_x * sigma_y + k_y * sigma_x', kx * msigma(2) + ky * msigma(1)),
     ('[[k_x*A(x)*k_x, B(x, y)*k_x], [k_x*B(x, y), C*k_y**2]]',
-            sympy.Matrix([[kx*com_A(x_op)*kx, com_B(x_op, y_op)*kx],
-                          [kx*com_B(x_op, y_op), com_C*ky**2]])),
+     sympy.Matrix([[kx*com_A(x_op)*kx, com_B(x_op, y_op)*kx],
+                   [kx*com_B(x_op, y_op), com_C*ky**2]])),
     ('kron(sigma_x, sigma_y)', TensorProduct(msigma(1), msigma(2))),
     ('identity(2)', sympy.eye(2)),
     ('eye(2)', sympy.eye(2)),
     ('1 * sigma_x + 2 * sigma_y + 3 * sigma_z',
-            msigma(1) + 2 * msigma(2) + 3 * msigma(3))
+     msigma(1) + 2 * msigma(2) + 3 * msigma(3))
 ])
 def test_sympify(input_expr, output_expr):
     assert sympify(input_expr) == output_expr
@@ -53,15 +53,15 @@ def test_sympify(input_expr, output_expr):
     ('A', msigma(2), {'A': "[[0, -1j], [1j, 0]]"}),
 ])
 def test_sympify_substitutions(input_expr, output_expr, subs):
-    assert sympify(input_expr, substitutions=subs) == output_expr
-    assert sympify(sympify(input_expr), substitutions=subs) == output_expr
+    assert sympify(input_expr, subs=subs) == output_expr
+    assert sympify(sympify(input_expr), subs=subs) == output_expr
 
     subs = {k: sympify(v) for k, v in subs.items()}
-    assert sympify(input_expr, substitutions=subs) == output_expr
-    assert sympify(sympify(input_expr), substitutions=subs) == output_expr
+    assert sympify(input_expr, subs=subs) == output_expr
+    assert sympify(sympify(input_expr), subs=subs) == output_expr
 
     subs = {sympify(k): sympify(v) for k, v in subs.items()}
-    assert sympify(sympify(input_expr), substitutions=subs) == output_expr
+    assert sympify(sympify(input_expr), subs=subs) == output_expr
 
 
 @pytest.mark.parametrize('input_expr, output_expr, subs', [
@@ -74,10 +74,10 @@ def test_sympify_substitutions(input_expr, output_expr, subs):
 
 ])
 def test_sympify_mix_symbol_and_matrx(input_expr, output_expr, subs):
-    assert sympify(input_expr, substitutions=subs) == output_expr
+    assert sympify(input_expr, subs=subs) == output_expr
 
     subs = {k: sympify(v) for k, v in subs.items()}
-    assert sympify(input_expr, substitutions=subs) == output_expr
+    assert sympify(input_expr, subs=subs) == output_expr
 
 
 A, B, non_x = sympy.symbols('A B x', commutative=False)
@@ -179,5 +179,5 @@ def test_lambdify_substitutions(e, kwargs):
     should_be = lambda x, y, z: x + y + z
     subs = {'y': 'y + z'}
 
-    e = lambdify(e, substitutions=subs)
+    e = lambdify(e, subs=subs)
     assert e(**kwargs) == should_be(**kwargs)
