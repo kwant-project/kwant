@@ -115,7 +115,8 @@ def discretize(hamiltonian, discrete_coords=None, *, grid_spacing=1,
     Returns
     -------
     template: `~kwant.builder.Builder`
-    with translational symmetry, which can be used as a template.
+        The translationally symmetric builder that corresponds to the provided
+        Hamiltonian.
     """
     tb, coords = discretize_symbolic(hamiltonian, discrete_coords,
                                      subs=subs)
@@ -242,9 +243,9 @@ def build_discretized(tb_hamiltonian, discrete_coords, *,
 
     Returns
     -------
-    template : `~kwant.builder.Builder`
-    with translational symmetry, which can be used as a template.
-
+    template: `~kwant.builder.Builder`
+        The translationally symmetric builder that corresponds to the provided
+        Hamiltonian.
     """
     if len(discrete_coords) == 0:
         raise ValueError('Discrete coordinates cannot be empty.')
