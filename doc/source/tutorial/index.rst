@@ -3,12 +3,12 @@ Tutorial: learning Kwant through examples
 
 .. toctree::
     introduction
-    tutorial1
-    tutorial2
-    tutorial3
-    tutorial4
-    tutorial5
-    tutorial6
-    tutorial7
-    tutorial8
-    tutorial9
+    first_steps
+    spin_potential_shape
+    spectrum
+    graphene
+    superconductors
+    operators
+    plotting
+    kpm
+    discretizer
