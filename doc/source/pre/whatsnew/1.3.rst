@@ -158,9 +158,3 @@ Quantities defined on system hoppings (e.g. currents calculated using
 `~kwant.operator.current`) can be directly plotted as a streamplot over the
 system using `kwant.plotter.current`. This is similar to how
 `kwant.plotter.map` can be used to plot quantities defined on sites.
-
-Remove site() method from finalized Builders
---------------------------------------------
-The `site` method of finalized builders has been deprecated since before
-Kwant 1.1. Instead of this method one can get a list of sites from the
-`sites` attribute of finalized builders.
