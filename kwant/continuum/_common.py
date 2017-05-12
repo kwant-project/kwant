@@ -136,9 +136,7 @@ def sympify(expr, subs=None):
                          "then keys of 'subs' must be strings.")
 
     # sympify values of subs before updating it with _clash
-    subs= {k: (sympify(v) if not isinstance(v, sympified_types) else v)
-           for k, v in subs.items()}
-
+    subs= {k: sympify(v) for k, v in subs.items()}
     subs.update({s: v for s, v in _clash.items()
                  if s not in subs})
     try:
