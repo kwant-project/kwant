@@ -563,12 +563,12 @@ def _builder_value(expr, discrete_coords, grid_spacing, onsite,
         discrete_coords = None
 
     # constants and functions in the sympy input will be passed
-    # as keyword-only arguments to the value function
-    required_kwargs = set.union({s.name for s in const_symbols},
+    # as arguments to the value function
+    arg_names = set.union({s.name for s in const_symbols},
                                 {str(k.func) for k in map_func_calls})
-    required_kwargs = ', '.join(sorted(required_kwargs))
+    arg_names = ', '.join(sorted(arg_names))
 
-    if (not required_kwargs) and (discrete_coords is None):
+    if (not arg_names) and (discrete_coords is None):
         # we can just use a constant value instead of a value function
         if isinstance(expr, sympy.MatrixBase):
             return ta.array(expr.tolist(), complex)
@@ -584,9 +584,9 @@ def _builder_value(expr, discrete_coords, grid_spacing, onsite,
     separator = '\n    '
     # 'site_string' is tightly coupled to the symbols used in '_assign_symbol'
     site_string = 'site' if onsite else 'site1, site2'
-    if required_kwargs:
-        header_str = 'def {}({}, *, {}):'
-        header = header_str.format(name, site_string, required_kwargs)
+    if arg_names:
+        header_str = 'def {}({}, {}):'
+        header = header_str.format(name, site_string, arg_names)
     else:
         header = 'def {}({}):'.format(name, site_string)
     func_code = separator.join([header] + list(lines))
