@@ -6,9 +6,6 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-__all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
-           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergyLead', 'ModesLead']
-
 import abc
 import warnings
 import operator
@@ -19,12 +16,15 @@ import inspect
 import tinyarray as ta
 import numpy as np
 from scipy import sparse
-from . import system, graph, KwantDeprecationWarning, UserCodeError
+from . import system, graph, UserCodeError
 from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry
 from ._common import ensure_isinstance, get_parameters
 
+
+__all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
+           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergyLead', 'ModesLead']
 
 
 ################ Sites and site families
