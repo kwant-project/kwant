@@ -39,6 +39,10 @@ def discretize(hamiltonian, discrete_coords=None, *, grid_spacing=1,
                subs=None, verbose=False):
     """Construct a tight-binding model from a continuum Hamiltonian.
 
+    This is a convenience function that is equivalent to first calling
+    `~kwant.continuum.discretize_symbolic` and feeding its result into
+    `~kwant.continuum.build_discretized`.
+
     Parameters
     ----------
     hamiltonian : sympy.Expr or sympy.Matrix, or string
@@ -67,10 +71,9 @@ def discretize(hamiltonian, discrete_coords=None, *, grid_spacing=1,
 
     Returns
     -------
-    `~kwant.builder.Builder` with translational symmetry,
-    which can be used as a template.
+    template: `~kwant.builder.Builder`
+    with translational symmetry, which can be used as a template.
     """
-
     tb, coords = discretize_symbolic(hamiltonian, discrete_coords,
                                      subs=subs, verbose=verbose)
 
@@ -82,10 +85,13 @@ def discretize_symbolic(hamiltonian, discrete_coords=None, *,
                         subs=None, verbose=False):
     """Discretize a continuous Hamiltonian into a tight-binding representation.
 
+    The two objects returned by this function may be used directly as the first
+    two arguments for `~kwant.continuum.build_discretized`.
+
     Parameters
     ----------
     hamiltonian : sympy.Expr or sympy.Matrix, or string
-        Symbolic representation of a continous Hamiltonian. When providing
+        Symbolic representation of a continuous Hamiltonian. When providing
         a sympy expression, it is recommended to use ``momentum_operators``
         defined in `~kwant.continuum` in order to provide
         proper commutation properties. If a string is provided it will be
@@ -108,13 +114,12 @@ def discretize_symbolic(hamiltonian, discrete_coords=None, *,
 
     Returns
     -------
-    (discrete_hamiltonian, discrete_coords)
-        discrete_hamiltonian: dict
-            Keys are tuples of integers; the offsets of the hoppings
-            ((0, 0, 0) for the onsite). Values are symbolic expressions
-            for the hoppings/onsite.
-        discrete_coords : sequence of strings
-            The coordinates that have been discretized.
+    tb_hamiltonian: dict
+        Keys are tuples of integers; the offsets of the hoppings ((0, 0, 0) for
+        the onsite). Values are symbolic expressions for the hoppings/onsite.
+    discrete_coords : list of strings
+        The coordinates that have been discretized.
+
     """
     hamiltonian = sympify(hamiltonian, subs)
 
@@ -177,6 +182,9 @@ def build_discretized(tb_hamiltonian, discrete_coords, *,
                       grid_spacing=1, subs=None, verbose=False):
     """Create a template Builder from a symbolic tight-binding Hamiltonian.
 
+    This return values of `~kwant.continuum.discretize_symbolic` may be used
+    directly for the first two arguments of this function.
+
     Parameters
     ----------
     tb_hamiltonian : dict
@@ -191,7 +199,7 @@ def build_discretized(tb_hamiltonian, discrete_coords, *,
         Grid spacing for the template Builder.
     subs: dict, defaults to empty
         A namespace of substitutions to be performed on the values of input
-        ``tb_hamiltonian``. Values can be either strings or ``sympy`` objects.
+        `tb_hamiltonian`. Values can be either strings or ``sympy`` objects.
         It can be used to simplify input of matrices or alternate input before
         proceeding further. For example:
         ``subs={'k': 'k_x + I * k_y'}`` or
@@ -201,8 +209,9 @@ def build_discretized(tb_hamiltonian, discrete_coords, *,
 
     Returns
     -------
-    `~kwant.builder.Builder` with translational symmetry,
-    which can be used as a template.
+    template : `~kwant.builder.Builder`
+    with translational symmetry, which can be used as a template.
+
     """
     if len(discrete_coords) == 0:
         raise ValueError('Discrete coordinates cannot be empty.')
