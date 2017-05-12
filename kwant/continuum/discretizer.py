@@ -17,12 +17,9 @@ from sympy.printing.lambdarepr import LambdaPrinter
 from sympy.printing.precedence import precedence
 from sympy.core.function import AppliedUndef
 
-from ..builder import Builder, HoppingKind
-from ..lattice import Monatomic, TranslationalSymmetry
-
-from ._common import sympify, gcd
-from ._common import position_operators, momentum_operators
-from ._common import monomials
+from .. import builder, lattice
+from ._common import (sympify, gcd, position_operators, momentum_operators,
+                      monomials)
 
 
 __all__ = ['discretize']
@@ -243,15 +240,15 @@ def build_discretized(tb_hamiltonian, discrete_coords, *,
     random_element = next(iter(tb_hamiltonian.values()))
     norbs = (1 if isinstance(random_element, sympy.Expr)
              else random_element.shape[0])
-    lattice = Monatomic(prim_vecs, norbs=norbs)
+    lat = lattice.Monatomic(prim_vecs, norbs=norbs)
 
     onsite = tb.pop(onsite_zeros)
     # 'delta' parameter to HoppingKind is the negative of the 'hopping offset'
-    hoppings = {HoppingKind(tuple(-i for i in d), lattice): val
+    hoppings = {builder.HoppingKind(tuple(-i for i in d), lat): val
                 for d, val in tb.items()}
 
-    syst = Builder(TranslationalSymmetry(*prim_vecs))
-    syst[lattice(*onsite_zeros)] = onsite
+    syst = builder.Builder(lattice.TranslationalSymmetry(*prim_vecs))
+    syst[lat(*onsite_zeros)] = onsite
     for hop, val in hoppings.items():
         syst[hop] = val
 
