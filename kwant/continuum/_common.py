@@ -85,25 +85,25 @@ def lambdify(hamiltonian, subs=None):
 
 
 def sympify(expr, subs=None):
-    """Return sympified object with respect to kwant-specific rules.
+    """Return sympified object using special rules for Hamiltonians.
 
-    This is a modification of ``sympy.sympify`` to apply kwant-specific rules,
-    which includes preservation of proper commutation relations between
-    position and momentum operators, and array to matrix casting.
+    This is a modification of ``sympy.sympify`` that makes sure that proper
+    commutation relations between position and momentum operators are set.
+    It is also performing ``list`` to ``sympy.Matrix`` casting and assures that
+    all single and multi-letter Greek variables will be interpreted as
+    ``sympy.Symbol``, instead of built-in ``sympy`` functions.
 
     Parameters
     ----------
     expr : str or sympy expression
         An expression that will be converted to a sympy object.
-        Momenta must be defined as ``k_i`` where ``i`` stands for ``x``, ``y``,
-        or ``z``. All present momenta and coordinates will be interpreted
-        as non commutative.
+        Momentum operators must be defined as ``k_x``, ``k_y``, or ``k_z`` and
+        position operators as ``x``, ``y`` or ``z``. All present momentum and
+        position operators will be interpreted as non commutative, unless they
+        are already sympy objects.
     subs: dict, defaults to empty
-        A namespace of substitutions to be performed on the input ``e``.
-        It works in a similar way to ``locals`` argument in ``sympy.sympify``
-        but extends its functionality to i.e. simplify matrix input:
-        ``sympify('k_x**2 * s_z', subs={'s_z': [[1, 0], [0, -1]]})``.
-        Keys should be strings, unless ``e`` is already a sympy object.
+        A namespace of substitutions to be performed on the input ``expr``.
+        Keys should be strings, unless ``expr`` is already a sympy object.
         Values can be strings or ``sympy`` objects.
 
     Example
@@ -117,28 +117,44 @@ def sympify(expr, subs=None):
         >>> from kwant.continuum import sympify
         >>> sympify('k_x**2 + V', subs={'V': 'V_0 + V(x)'})
         k_x**2 + V(x) + V_0
+
+        >>> from kwant.continuum import sympify
+        >>> sympify('k_x**2 * s_z', substitutions={'s_z': [[1, 0], [0, -1]]})
+        Matrix([
+        [k_x**2,       0],
+        [     0, -k_x**2]])
+
+    Note
+    ----
+    If input ``expr`` is already a sympy object, then all pairs of (key, val)
+    in ``subs`` dictionary will be sympified by this function and used to
+    to perform substitution using ``.subs`` method of ``sympy`` expressions.
+    Input ``expr`` itself won't be altered beyond performing substitutions.
+
+    If input ``expr`` is a string, then all keys in ``subs`` are expected to be
+    strings. All values in ``subs`` will be sympified with this function. After
+    that ``subs`` will be used as ``locals`` when calling ``sympy.sympify``
+    internally.
     """
     stored_value = None
     sympified_types = (sympy.Expr, sympy.matrices.MatrixBase)
     if subs is None:
         subs= {}
 
-    # if ``e`` is already a ``sympy`` object we make use of ``subs``
+    # if ``expr`` is already a ``sympy`` object we make use of ``subs``
     # and terminate a code path.
     if isinstance(expr, sympified_types):
         subs = {sympify(k): sympify(v) for k, v in subs.items()}
         return expr.subs(subs)
 
-    # if ``e`` is not a sympified type then we proceed with sympifying process,
+    # if ``expr`` is not a sympified type then we proceed with sympifying process,
     # we expect all keys in ``subs`` to be strings at this moment.
     if not all(isinstance(k, str) for k in subs):
         raise ValueError("If 'expr' is not already a sympy object ",
                          "then keys of 'subs' must be strings.")
 
     # sympify values of subs before updating it with _clash
-    subs= {k: (sympify(v) if not isinstance(v, sympified_types) else v)
-           for k, v in subs.items()}
-
+    subs= {k: sympify(v) for k, v in subs.items()}
     subs.update({s: v for s, v in _clash.items()
                  if s not in subs})
     try:
