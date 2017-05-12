@@ -84,8 +84,8 @@
 +     file_name='kpm_dos_acc'
 +    )
  
-     # we supply the *total* number of moments and sampling points
-     spectrum.increase_accuracy(num_moments=200, num_rand_vecs=5)
+     spectrum.add_moments(100)
+     spectrum.add_vectors(5)
 @@ -110,7 +129,9 @@
      plot_dos([
          ('density', original_dos),
