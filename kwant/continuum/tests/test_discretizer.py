@@ -335,7 +335,7 @@ def test_numeric_functions_basic_symbolic():
 @pytest.mark.parametrize('commutative', [ True, False])
 def test_numeric_function_coords_from_site(commutative):
     tb = {(0,): sympy.symbols('x', commutative=commutative)}
-    builder = build_discretized(tb, 'x', verbose=True)
+    builder = build_discretized(tb, 'x')
 
     lat = next(iter(builder.sites()))[0]
     onsite = builder[lat(0)]
@@ -515,30 +515,3 @@ def test_numeric_functions_with_parameter():
                         rhs = f_num
 
                     assert np.allclose(lhs, rhs)
-
-
-def test_basic_verbose(capsys): # or use "capfd" for fd-level
-    discretize('k_x * A(x) * k_x', verbose=True)
-    out, err = capsys.readouterr()
-    assert "Discrete coordinates set to" in out
-    assert "Function generated for (0,)" in out
-
-
-def test_that_verbose_covers_all_hoppings(capsys):
-    discretize('k_x**2 + k_y**2 + k_x*k_y', verbose=True)
-    out, err = capsys.readouterr()
-
-    for tag in [(0, 1), (0, 0), (1, -1), (1, 1)]:
-        assert "Function generated for {}".format(tag) in out
-
-
-def test_verbose_cache(capsys):
-    discretize('[[k_x * A(x) * k_x]]', verbose=True)
-    out, err = capsys.readouterr()
-    assert '_cache_0' in out
-
-
-def test_no_output_when_verbose_false(capsys):
-    discretize('[[k_x * A(x) * k_x]]', verbose=False)
-    out, err = capsys.readouterr()
-    assert out == ''
