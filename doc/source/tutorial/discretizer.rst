@@ -68,9 +68,7 @@ It is worth noting that ``discretize`` treats ``k_x`` and ``x`` as
 non-commuting operators, and so their order is preserved during the
 discretization process.
 
-Setting the ``verbose`` parameter to ``True`` prints extra information about the
-onsite and hopping functions assigned to the ``Builder`` produced
-by ``discretize``:
+The builder produced by ``discretize`` may be printed to show the source code of its onsite and hopping functions (this is a special feature of builders returned by ``discretize``):
 
 .. literalinclude:: ../images/discretizer_intro_verbose.txt
 

@@ -7,6 +7,7 @@
 # http://kwant-project.org/authors.
 
 from collections import defaultdict
+import itertools
 
 import numpy as np
 import tinyarray as ta
@@ -25,18 +26,62 @@ from ._common import (sympify, gcd, position_operators, momentum_operators,
 __all__ = ['discretize']
 
 
-################ Globals variables and definitions
-
 _wf = sympy.Function('_internal_unique_name', commutative=False)
 _momentum_operators = {s.name: s for s in momentum_operators}
 _position_operators = {s.name: s for s in position_operators}
 _displacements = {s: sympy.Symbol('_internal_a_{}'.format(s)) for s in 'xyz'}
 
 
+class _DiscretizedBuilder(builder.Builder):
+    """A builder that is made from a discretized model and knows how to
+    pretty-print itself."""
+
+    def __init__(self, symmetry=None, discrete_coords=[], **kwargs):
+        super().__init__(symmetry, **kwargs)
+        self._discrete_coords = discrete_coords
+
+    def __str__(self):
+        result = []
+
+        sv = list(s for s in self.site_value_pairs())
+        if len(sv) != 1:
+            raise ValueError("Cannot pretty-print _DiscretizedBuilder: "
+                             "must contain a single site.")
+        site, site_value = sv[0]
+        if any(e != 0 for e in site.tag):
+            raise ValueError("Cannot pretty-print _DiscretizedBuilder: "
+                             "site must be located at origin.")
+
+        result.extend(["# Discrete coordinates: ",
+                       " ".join(self._discrete_coords),
+                       "\n\n"])
+
+        for key, val in itertools.chain(self.site_value_pairs(),
+                                        self.hopping_value_pairs()):
+            if isinstance(key, builder.Site):
+                result.append("# Onsite element:\n")
+            else:
+                a, b = key
+                assert a is site
+                result.extend(["# Hopping in direction ",
+                               str(tuple(b.tag)),
+                               ":\n"])
+            result.append(val._source if callable(val) else repr(val))
+            result.append('\n\n')
+
+        result.pop()
+
+        return "".join(result)
+
+    # For the Jupyter notebook:
+    def __repr_html__(self):
+        return self.__str__()
+
+
 ################ Interface functions
 
 def discretize(hamiltonian, discrete_coords=None, *, grid_spacing=1,
-               subs=None, verbose=False):
+               subs=None):
     """Construct a tight-binding model from a continuum Hamiltonian.
 
     This is a convenience function that is equivalent to first calling
@@ -66,8 +111,6 @@ def discretize(hamiltonian, discrete_coords=None, *, grid_spacing=1,
         proceeding further. For example:
         ``subs={'k': 'k_x + I * k_y'}`` or
         ``subs={'s_z': [[1, 0], [0, -1]]}``.
-    verbose : bool, default: False
-        If ``True`` additional information will be printed.
 
     Returns
     -------
@@ -75,14 +118,12 @@ def discretize(hamiltonian, discrete_coords=None, *, grid_spacing=1,
     with translational symmetry, which can be used as a template.
     """
     tb, coords = discretize_symbolic(hamiltonian, discrete_coords,
-                                     subs=subs, verbose=verbose)
+                                     subs=subs)
 
-    return build_discretized(tb, coords, grid_spacing=grid_spacing,
-                             verbose=verbose)
+    return build_discretized(tb, coords, grid_spacing=grid_spacing)
 
 
-def discretize_symbolic(hamiltonian, discrete_coords=None, *,
-                        subs=None, verbose=False):
+def discretize_symbolic(hamiltonian, discrete_coords=None, *, subs=None):
     """Discretize a continuous Hamiltonian into a tight-binding representation.
 
     The two objects returned by this function may be used directly as the first
@@ -109,8 +150,6 @@ def discretize_symbolic(hamiltonian, discrete_coords=None, *,
         proceeding further. For example:
         ``subs={'k': 'k_x + I * k_y'}`` or
         ``subs={'s_z': [[1, 0], [0, -1]]}``.
-    verbose : bool, default: False
-        If ``True`` additional information will be printed.
 
     Returns
     -------
@@ -146,10 +185,6 @@ def discretize_symbolic(hamiltonian, discrete_coords=None, *,
                          "your input. You can use the 'discrete_coords'"
                          "parameter to provide them.")
 
-    if verbose:
-        print('Discrete coordinates set to: ',
-              discrete_coords, end='\n\n')
-
     onsite_zeros = (0,) * len(discrete_coords)
 
     if not isinstance(hamiltonian, sympy.matrices.MatrixBase):
@@ -179,7 +214,7 @@ def discretize_symbolic(hamiltonian, discrete_coords=None, *,
 
 
 def build_discretized(tb_hamiltonian, discrete_coords, *,
-                      grid_spacing=1, subs=None, verbose=False):
+                      grid_spacing=1, subs=None):
     """Create a template Builder from a symbolic tight-binding Hamiltonian.
 
     This return values of `~kwant.continuum.discretize_symbolic` may be used
@@ -204,8 +239,6 @@ def build_discretized(tb_hamiltonian, discrete_coords, *,
         proceeding further. For example:
         ``subs={'k': 'k_x + I * k_y'}`` or
         ``subs={'s_z': [[1, 0], [0, -1]]}``.
-    verbose : bool, default: False
-        If ``True`` additional information will be printed.
 
     Returns
     -------
@@ -222,15 +255,7 @@ def build_discretized(tb_hamiltonian, discrete_coords, *,
     discrete_coords = sorted(discrete_coords)
 
     tb = {}
-    first = True
     for n, (offset, hopping) in enumerate(tb_hamiltonian.items()):
-        if verbose:
-            if first:
-                first = False
-            else:
-                print('\n')
-            print("Function generated for {}:".format(offset))
-
         onsite = all(i == 0 for i in offset)
 
         if onsite:
@@ -238,9 +263,8 @@ def build_discretized(tb_hamiltonian, discrete_coords, *,
         else:
             name = 'hopping_{}'.format(n)
 
-        tb[offset] = _value_function(hopping, discrete_coords,
-                                     grid_spacing, onsite, name,
-                                     verbose=verbose)
+        tb[offset] = _builder_value(hopping, discrete_coords,
+                                    grid_spacing, onsite, name)
 
     dim = len(discrete_coords)
     onsite_zeros = (0,) * dim
@@ -256,7 +280,8 @@ def build_discretized(tb_hamiltonian, discrete_coords, *,
     hoppings = {builder.HoppingKind(tuple(-i for i in d), lat): val
                 for d, val in tb.items()}
 
-    syst = builder.Builder(lattice.TranslationalSymmetry(*prim_vecs))
+    syst = _DiscretizedBuilder(lattice.TranslationalSymmetry(*prim_vecs),
+                               discrete_coords)
     syst[lat(*onsite_zeros)] = onsite
     for hop, val in hoppings.items():
         syst[hop] = val
@@ -507,9 +532,9 @@ def _assign_symbols(map_func_calls, grid_spacing,
     return lines
 
 
-def _value_function(expr, discrete_coords, grid_spacing, onsite,
-                    name='_anonymous_func', verbose=False):
-    """Generate a numeric function from a sympy expression.
+def _builder_value(expr, discrete_coords, grid_spacing, onsite,
+                   name='_anonymous_func'):
+    """Generate a builder value from a sympy expression.
 
     Parameters
     ----------
@@ -519,14 +544,15 @@ def _value_function(expr, discrete_coords, grid_spacing, onsite,
         List of coodinates present in the system.
     grid_spacing : int or float
         Lattice spacing of the system
-    verbose : bool, default: False
-        If True, the function body is printed.
 
     Returns
     -------
-    numerical function that can be used with Kwant.
+    `expr` transformed into an object that can be used as a
+    `kwant.builder.Builder` value.  Either a numerical value
+    (``tinyarray.array`` instance or complex number) or a value function.  In
+    the case of a function, the source code is available in its `_source`
+    attribute.
     """
-
     expr = expr.subs({sympy.Symbol('a'): grid_spacing})
     return_string, map_func_calls, const_symbols, _cache = _return_string(
         expr, discrete_coords=discrete_coords)
@@ -545,14 +571,9 @@ def _value_function(expr, discrete_coords, grid_spacing, onsite,
     if (not required_kwargs) and (discrete_coords is None):
         # we can just use a constant value instead of a value function
         if isinstance(expr, sympy.MatrixBase):
-            output = ta.array(expr.tolist(), complex)
+            return ta.array(expr.tolist(), complex)
         else:
-            output = complex(expr)
-
-        if verbose:
-            print("\n{}".format(output))
-
-        return output
+            return complex(expr)
 
     lines = _assign_symbols(map_func_calls, onsite=onsite,
                             grid_spacing=grid_spacing,
@@ -573,12 +594,13 @@ def _value_function(expr, discrete_coords, grid_spacing, onsite,
     namespace = {'pi': np.pi}
     namespace.update(_cache)
 
-    if verbose:
-        for k, v in _cache.items():
-            print("\n{} = (\n{})".format(k, repr(np.array(v))))
-        print('\n' + func_code)
+    source = []
+    for k, v in _cache.items():
+        source.append("{} = (\n{})\n".format(k, repr(np.array(v))))
+    source.append(func_code)
 
     exec(func_code, namespace)
     f = namespace[name]
+    f._source = "".join(source)
 
     return f

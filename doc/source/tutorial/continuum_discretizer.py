@@ -23,7 +23,8 @@ from matplotlib import pyplot as plt
 def stadium_system(L=20, W=20):
 #HIDDEN_BEGIN_template
     hamiltonian = "k_x**2 + k_y**2 + V(x, y)"
-    template = kwant.continuum.discretize(hamiltonian, verbose=True)
+    template = kwant.continuum.discretize(hamiltonian)
+    print(template)
 #HIDDEN_END_template
 
 #HIDDEN_BEGIN_fill
@@ -204,7 +205,8 @@ def substitutions():
 
 def main():
 #HIDDEN_BEGIN_symbolic_discretization
-    template = kwant.continuum.discretize('k_x * A(x) * k_x', verbose=True)
+    template = kwant.continuum.discretize('k_x * A(x) * k_x')
+    print(template)
 #HIDDEN_END_symbolic_discretization
 
     syst = stadium_system()
