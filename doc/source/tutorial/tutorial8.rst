@@ -1,323 +1,289 @@
-Discretizing continuous Hamiltonians
-------------------------------------
+##############################################################
+Calculating spectral density with the kernel polynomial method
+##############################################################
 
-Introduction
-............
+We have already seen in the ":ref:`closed-systems`" tutorial that we can use
+Kwant simply to build Hamiltonians, which we can then directly diagonalize
+using routines from Scipy.
 
-In ":ref:`tutorial_discretization_schrodinger`" we have learnt that Kwant works
-with tight-binding Hamiltonians. Often, however, one will start with a
-continuum model and will subsequently need to discretize it to arrive at a
-tight-binding model.
-Although discretizing a Hamiltonian is usually a simple
-process, it is tedious and repetitive. The situation is further exacerbated
-when one introduces additional on-site degrees of freedom, and tracking all
-the necessary terms becomes a chore.
-The `~kwant.continuum` sub-package aims to be a solution to this problem.
-It is a collection of tools for working with
-continuum models and for discretizing them into tight-binding models.
+This already allows us to treat systems with a few thousand sites without too
+many problems.  For larger systems one is often not so interested in the exact
+eigenenergies and eigenstates, but more in the *density of states*.
+
+The kernel polynomial method (KPM), is an algorithm to obtain a polynomial
+expansion of the density of states. It can also be used to calculate the
+spectral density of arbitrary operators.  Kwant has an implementation of the
+KPM method that is based on the algorithms presented in Ref. [1]_.
+
+Roughly speaking, KPM approximates the density of states (or any other spectral
+density) by expanding the action of the Hamiltonian (and operator of interest)
+on a (small) set of *random vectors* as a sum of Chebyshev polynomials up to
+some order, and then averaging. The accuracy of the method can be tuned by
+modifying the order of the Chebyshev expansion and the number of random
+vectors.  See notes on accuracy_ below for details.
 
 .. seealso::
-    The complete source code of this tutorial can be found in
-    :download:`tutorial/continuum_discretizer.py <../../../tutorial/continuum_discretizer.py>`
+    The complete source code of this example can be found in
+    :download:`tutorial/kernel_polynomial_method.py <../../../tutorial/kernel_polynomial_method.py>`
+
+.. _accuracy:
+.. specialnote:: Performance and accuracy
+
+    The KPM method is especially well suited for large systems, and in the
+    case when one is not interested in individual eigenvalues, but rather
+    in obtaining an approximate spectral density.
+
+    The accuracy in the energy resolution is dominated by the number of
+    moments. The lowest accuracy is at the center of the spectrum, while
+    slightly higher accuracy is obtained at the edges of the spectrum.
+    If we use the KPM method (with the Jackson kernel, see Ref. [1]_) to
+    describe a delta peak at the center of the spectrum, we will obtain a
+    function similar to a Gaussian of width :math:`σ=πa/N`, where
+    :math:`N` is the number of moments, and :math:`a` is the width of the
+    spectrum.
+
+    On the other hand, the random vectors will *explore* the range of the
+    spectrum, and as the system gets bigger, the number of random vectors
+    that are necessary to sample the whole spectrum reduces. Thus, a small
+    number of random vectors is in general enough, and increasing this number
+    will not result in a visible improvement of the approximation.
 
 
-.. _tutorial_discretizer_introduction:
+Introduction
+************
 
-Discretizing by hand
-....................
-
-As an example, let us consider the following continuum Schrödinger equation
-for a semiconducting heterostructure (using the effective mass approximation):
-
-.. math::
-
-    \left( k_x \frac{\hbar^2}{2 m(x)} k_x \right) \psi(x) = E \, \psi(x).
-
-Replacing the momenta by their corresponding differential operators
-
-.. math::
-    k_\alpha = -i \partial_\alpha,
-
-for :math:`\alpha = x, y` or :math:`z`, and discretizing on a regular lattice of
-points with spacing :math:`a`, we obtain the tight-binding model
-
-.. math::
-
-    H = - \frac{1}{a^2} \sum_i A\left(x+\frac{a}{2}\right)
-            \big(\ket{i}\bra{i+1} + h.c.\big)
-        + \frac{1}{a^2} \sum_i
-            \left( A\left(x+\frac{a}{2}\right) + A\left(x-\frac{a}{2}\right)\right)
-            \ket{i} \bra{i},
-
-with :math:`A(x) = \frac{\hbar^2}{2 m(x)}`.
-
-Using `~kwant.continuum.discretize` to obtain a template
-........................................................
-
-The function `kwant.continuum.discretize` takes a symbolic Hamiltonian and
-turns it into a `~kwant.builder.Builder` instance with appropriate spatial
-symmetry that serves as a template.
-(We will see how to use the template to build systems with a particular
-shape later).
-
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_symbolic_discretization
-    :end-before: #HIDDEN_END_symbolic_discretization
-
-It is worth noting that ``discretize`` treats ``k_x`` and ``x`` as
-non-commuting operators, and so their order is preserved during the
-discretization process.
-
-Setting the ``verbose`` parameter to ``True`` prints extra information about the
-onsite and hopping functions assigned to the ``Builder`` produced
-by ``discretize``:
-
-.. literalinclude:: ../images/discretizer_intro_verbose.txt
-
-.. specialnote:: Technical details
-
-    - ``kwant.continuum`` uses ``sympy`` internally to handle symbolic
-      expressions. Strings are converted using `kwant.continuum.sympify`,
-      which essentially applies some Kwant-specific rules (such as treating
-      ``k_x`` and ``x`` as non-commutative) before calling ``sympy.sympify``
-
-    - The builder returned by ``discretize`` will have an N-D
-      translational symmetry, where ``N`` is the number of dimensions that were
-      discretized. This is the case, even if there are expressions in the input
-      (e.g. ``V(x, y)``) which in principle *may not* have this symmetry.  When
-      using the returned builder directly, or when using it as a template to
-      construct systems with different/lower symmetry, it is important to
-      ensure that any functional parameters passed to the system respect the
-      symmetry of the system. Kwant provides no consistency check for this.
-
-    - The discretization process consists of taking input
-      :math:`H(k_x, k_y, k_z)`, multiplying it from the right by
-      :math:`\psi(x, y, z)` and iteratively applying a second-order accurate
-      central derivative approximation for every
-      :math:`k_\alpha=-i\partial_\alpha`:
-
-      .. math::
-         \partial_\alpha \psi(\alpha) =
-            \frac{1}{a} \left( \psi\left(\alpha + \frac{a}{2}\right)
-                              -\psi\left(\alpha - \frac{a}{2}\right)\right).
-
-      This process is done separately for every summand in Hamiltonian.
-      Once all symbols denoting operators are applied internal algorithm is
-      calculating ``gcd`` for hoppings coming from each summand in order to
-      find best possible approximation. Please see source code for details.
-
-    - Instead of using ``discretize`` one can use
-      `~kwant.continuum.discretize_symbolic` to obtain symbolic output.
-      When working interactively in `Jupyter notebooks <https://jupyter.org/>`_
-      it can be useful to use this to see a symbolic representation of
-      the discretized Hamiltonian. This works best when combined with ``sympy``
-      `Pretty Printing <http://docs.sympy.org/latest/tutorial/printing.html#setting-up-pretty-printing>`_.
-
-    - The symbolic result of discretization obtained with
-      ``discretize_symbolic`` can be converted into a
-      builder using `~kwant.continuum.build_discretized`.
-      This can be useful if one wants to alter the tight-binding Hamiltonian
-      before building the system.
-
-
-Building a Kwant system from the template
-.........................................
-
-Let us now use the output of ``discretize`` as a template to
-build a system and plot some of its energy eigenstate. For this example the
-Hamiltonian will be
+Our aim is to use the kernel polynomial method to obtain the spectral density
+:math:`ρ_A(E)`, as a function of the energy :math:`E`, of some Hilbert space
+operator :math:`A`.  We define
 
 .. math::
 
-    H = k_x^2 + k_y^2 + V(x, y),
+    ρ_A(E) = ρ(E) A(E),
 
-where :math:`V(x, y)` is some arbitrary potential.
-
-First, use ``discretize`` to obtain a
-builder that we will use as a template:
-
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_template
-    :end-before: #HIDDEN_END_template
-
-We now use this system with the `~kwant.builder.Builder.fill`
-method of `~kwant.builder.Builder` to construct the system we
-want to investigate:
-
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_fill
-    :end-before: #HIDDEN_END_fill
-
-After finalizing this system, we can plot one of the system's
-energy eigenstates:
-
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_plot_eigenstate
-    :end-before: #HIDDEN_END_plot_eigenstate
-
-.. image:: ../images/discretizer_gs.*
-
-Note in the above that we provided the function ``V`` to
-``syst.hamiltonian_submatrix`` using ``params=dict(V=potential)``, rather than
-via ``args``.
-
-In addition, the function passed as ``V`` expects two input parameters ``x``
-and ``y``, the same as in the initial continuum Hamiltonian.
-
-
-Models with more structure: Bernevig-Hughes-Zhang
-.................................................
-
-When working with multi-band systems, like the Bernevig-Hughes-Zhang (BHZ)
-model [1]_ [2]_, one can provide matrix input to `~kwant.continuum.discretize`
-using ``identity`` and ``kron``. For example, the definition of the BHZ model can be
-written succinctly as:
-
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_define_qsh
-    :end-before: #HIDDEN_END_define_qsh
-
-We can then make a ribbon out of this template system:
-
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_define_qsh_build
-    :end-before: #HIDDEN_END_define_qsh_build
-
-and plot its dispersion using `kwant.plotter.bands`:
-
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_plot_qsh_band
-    :end-before: #HIDDEN_END_plot_qsh_band
-
-.. image:: ../images/discretizer_qsh_band.*
-
-In the above we see the edge states of the quantum spin Hall effect, which
-we can visualize using `kwant.plotter.map`:
-
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_plot_qsh_wf
-    :end-before: #HIDDEN_END_plot_qsh_wf
-
-.. image:: ../images/discretizer_qsh_wf.*
-
-
-Limitations of discretization
-.............................
-
-It is important to remember that the discretization of a continuum
-model is an *approximation* that is only valid in the low-energy
-limit. For example, the quadratic continuum Hamiltonian
+where :math:`A(E)` is the expectation value of :math:`A` for all the
+eigenstates of the Hamiltonian with energy :math:`E`,  and the density of
+states is
 
 .. math::
 
-    H_\textrm{continuous}(k_x) = \frac{\hbar^2}{2m}k_x^2
+  ρ(E) = \frac{1}{D} \sum_{k=0}^{D-1} δ(E-E_k),
+
+:math:`D` being the Hilbert space dimension, and :math:`E_k` the eigenvalues.
+
+In the special case when :math:`A` is the identity, then :math:`ρ_A(E)` is
+simply :math:`ρ(E)`, the density of states.
 
 
-and its discretized approximation
+Calculating the density of states
+*********************************
 
-.. math::
+In the following example, we will use the KPM implementation in Kwant
+to obtain the density of states of a graphene disk.
 
-    H_\textrm{tight-binding}(k_x) = 2t \big(1 - \cos(k_x a)\big),
+We start by importing kwant and defining our system.
+
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_sys1
+    :end-before: #HIDDEN_END_sys1
+
+After making a system we can then create a `~kwant.kpm.SpectralDensity`
+object that represents the density of states for this system.
+
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_kpm1
+    :end-before: #HIDDEN_END_kpm1
+
+The `~kwant.kpm.SpectralDensity` can then be called like a function to obtain a
+sequence of energies in the spectrum of the Hamiltonian, and the corresponding
+density of states at these energies.
+
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_kpm2
+    :end-before: #HIDDEN_END_kpm2
+
+When called with no arguments, an optimal set of energies is chosen (these are
+not evenly distributed over the spectrum, see Ref. [1]_ for details), however
+it is also possible to provide an explicit sequence of energies at which to
+evaluate the density of states.
+
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_kpm3
+    :end-before: #HIDDEN_END_kpm3
+
+.. image:: ../images/kpm_dos.*
+
+In addition to being called like functions, `~kwant.kpm.SpectralDensity`
+objects also have a method `~kwant.kpm.SpectralDensity.average` which can be
+used to integrate the density of states against some distribution function over
+the whole spectrum. If no distribution function is specified, then the uniform
+distribution is used:
+
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_av1
+    :end-before: #HIDDEN_END_av1
+
+.. literalinclude:: ../images/kpm_normalization.txt
+
+We see that the integral of the density of states is normalized to 1. If
+we wish to calculate, say, the average number of states populated in
+equilibrium, then we should integrate with respect to a Fermi-Dirac
+distribution and multiply by the total number of available states in
+the system:
+
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_av2
+    :end-before: #HIDDEN_END_av2
+
+.. literalinclude:: ../images/kpm_total_states.txt
+
+.. specialnote:: Stability and performance: spectral bounds
+
+    The KPM method internally rescales the spectrum of the Hamiltonian to the
+    interval ``(-1, 1)`` (see Ref [1]_ for details), which requires calculating
+    the boundaries of the spectrum (using ``scipy.sparse.linalg.eigsh``). This
+    can be very costly for large systems, so it is possible to pass this
+    explicitly as via the ``bounds`` parameter when instantiating the
+    `~kwant.kpm.SpectralDensity` (see the class documentation for details).
+
+    Additionally, `~kwant.kpm.SpectralDensity` accepts a parameter ``epsilon``,
+    which ensures that the rescaled Hamiltonian (used internally), always has a
+    spectrum strictly contained in the interval ``(-1, 1)``. If bounds are not
+    provided then the tolerance on the bounds calculated with
+    ``scipy.sparse.linalg.eigsh`` is set to ``epsilon/2``.
 
 
-where :math:`t=\frac{\hbar^2}{2ma^2}`, are only valid in the limit
-:math:`E \lt t`. The grid spacing :math:`a` must be chosen according
-to how high in energy you need your tight-binding model to be valid.
+Increasing the accuracy of the approximation
+********************************************
 
-It is possible to set :math:`a` through the ``grid_spacing`` parameter
-to `~kwant.continuum.discretize`, as we will illustrate in the following
-example. Let us start from the continuum Hamiltonian
+`~kwant.kpm.SpectralDensity` has two methods for increasing the accuracy
+of the method, each of which offers different levels of control over what
+exactly is changed.
 
-.. math::
+The simplest way to obtain a more accurate solution is to use the
+``add_moments`` method:
 
-  H(k) = k_x^2 \mathbb{1}_{2\times2} + α k_x \sigma_y.
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_acc1
+    :end-before: #HIDDEN_END_acc1
 
-We start by defining this model as a string and setting the value of the
-:math:`α` parameter:
+This will update the number of calculated moments and also the default
+number of sampling points such that the maximum distance between successive
+energy points is ``energy_resolution`` (see notes on accuracy_).
 
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_ls_def
-    :end-before: #HIDDEN_END_ls_def
+.. image:: ../images/kpm_dos_acc.*
 
-Now we can use `kwant.continuum.lambdify` to obtain a function that computes
-:math:`H(k)`:
+Alternatively, you can directly increase the number of moments
+with ``add_moments``, or the number of random vectors with ``add_vectors``.
 
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_ls_hk_cont
-    :end-before: #HIDDEN_END_ls_hk_cont
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_acc2
+    :end-before: #HIDDEN_END_acc2
 
-We can also construct a discretized approximation using
-`kwant.continuum.discretize`, in a similar manner to previous examples:
-
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_ls_hk_tb
-    :end-before: #HIDDEN_END_ls_hk_tb
-
-Below we can see the continuum and tight-binding dispersions for two
-different values of the discretization grid spacing :math:`a`:
-
-.. image:: ../images/discretizer_lattice_spacing.*
+.. image:: ../images/kpm_dos_r.*
 
 
-We clearly see that the smaller grid spacing is, the better we approximate
-the original continuous dispersion. It is also worth remembering that the
-Brillouin zone also scales with grid spacing: :math:`[-\frac{\pi}{a},
-\frac{\pi}{a}]`.
+.. _operator_spectral_density:
 
-.. specialnote:: Note
+Calculating the spectral density of an operator
+***********************************************
 
-  The use of `~kwant.wraparound.wraparound` makes it easy to extend this
-  example to multidimensional band structures. ``wraparound`` replaces
-  the translational symmetry in the ``x`` direction by a parameter ``k_x``.
+Above, we saw how to calculate the density of states by creating a
+`~kwant.kpm.SpectralDensity` and passing it a finalized Kwant system.
+When instantiating a `~kwant.kpm.SpectralDensity` we may optionally
+supply an operator in addition to the system. In this case it is
+the spectral density of the given operator that is calculated.
+
+`~kwant.kpm.SpectralDensity` accepts the operators in a few formats:
+
+* *explicit matrices* (numpy array of scipy sparse matrices will work)
+* *operators* from `kwant.operator`
+
+If an explicit matrix is provided then it must have the same
+shape as the system Hamiltonian.
+
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_op1
+    :end-before: #HIDDEN_END_op1
+
+
+Or, to do the same calculation using `kwant.operator.Density`:
+
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_op2
+    :end-before: #HIDDEN_END_op2
+
+Using operators from `kwant.operator` allows us to calculate quantities
+such as the *local* density of states by telling the operator not to
+sum over all the sites of the system:
+
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_op3
+    :end-before: #HIDDEN_END_op3
+
+`~kwant.kpm.SpectralDensity` will properly handle this vector output,
+which allows us to plot the local density of states at different
+point in the spectrum:
+
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_op4
+    :end-before: #HIDDEN_END_op4
+
+.. image:: ../images/kpm_ldos.*
+
+This nicely illustrates the edge states of the graphene dot at zero
+energy, and the bulk states at higher energy.
+
 
 Advanced topics
-...............
+***************
 
-The input to `kwant.continuum.discretize` and `kwant.continuum.lambdify` can be
-not only a ``string``, as we saw above, but also a ``sympy`` expression or
-a ``sympy`` matrix.
-This functionality will probably be mostly useful to people who
-are already experienced with ``sympy``.
+Custom distributions for random vectors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+By default `~kwant.kpm.SpectralDensity` will use random vectors
+whose components are unit complex numbers with phases drawn
+from a uniform distribution. There are several reasons why you may
+wish to make a different choice of distribution for your random vectors,
+for example to enforce certain symmetries or to only use real-valued vectors.
 
+To change how the random vectors are generated, you need only specify a
+function that takes the dimension of the Hilbert space as a single parameter,
+and which returns a vector in that Hilbert space:
 
-It is possible to use ``identity`` (for identity matrix), ``kron`` (for Kronecker product), as well as Pauli matrices ``sigma_0``,
-``sigma_x``, ``sigma_y``, ``sigma_z`` in the input to
-`~kwant.continuum.lambdify` and `~kwant.continuum.discretize`, in order to simplify
-expressions involving matrices. Matrices can also be provided explicitly using
-square ``[]`` brackets. For example, all following expressions are equivalent:
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_fact1
+    :end-before: #HIDDEN_END_fact1
 
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_subs_1
-    :end-before: #HIDDEN_END_subs_1
+Reproducible calculations
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Because KPM internally uses random vectors, running the same calculation
+twice will not give bit-for-bit the same result. However, similarly to
+the funcions in `~kwant.rmt`, the random number generator can be directly
+manipulated by passing a value to the ``rng`` parameter of
+`~kwant.kpm.SpectralDensity`. ``rng`` can itself be a random number generator,
+or it may simply be a seed to pass to the numpy random number generator
+(that is used internally by default).
 
-.. literalinclude:: ../images/discretizer_subs_1.txt
+Defining operators as sesquilinear maps
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+`Above`__, we showed how `~kwant.kpm.SpectralDensity` can calculate the
+spectral density of operators, and how we can define operators by using
+`kwant.operator`.  If you need even more flexibility,
+`~kwant.kpm.SpectralDensity` will also accept a *function* as its ``operator``
+parameter. This function must itself take two parameters, ``(bra, ket)`` and
+must return either a scalar or a one-dimensional array. In order to be
+meaningful the function must be a sesquilinear map, i.e. antilinear in its
+first argument, and linear in its second argument. Below, we compare two
+methods for computing the local density of states, one using
+`kwant.operator.Density`, and the other using a custom function.
 
-We can use the ``subs`` keyword parameter to substitute expressions
-and numerical values:
+.. literalinclude:: kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_blm
+    :end-before: #HIDDEN_END_blm
 
-.. literalinclude:: continuum_discretizer.py
-    :start-after: #HIDDEN_BEGIN_subs_2
-    :end-before: #HIDDEN_END_subs_2
-
-.. literalinclude:: ../images/discretizer_subs_2.txt
-
-Symbolic expressions obtained in this way can be directly passed to all
-``discretizer`` functions.
-
-.. specialnote:: Technical details
-
-  Because of the way that ``sympy`` handles commutation relations all symbols
-  representing position and momentum operators are set to be non commutative.
-  This means that the order of momentum and position operators in the input
-  expression is preserved.  Note that it is not possible to define individual
-  commutation relations within ``sympy``, even expressions such :math:`x k_y x`
-  will not be simplified, even though mathematically :math:`[x, k_y] = 0`.
+__ operator_spectral_density_
 
 
 .. rubric:: References
 
-.. [1] `Science, 314, 1757 (2006)
-    <https://arxiv.org/abs/cond-mat/0611399>`_.
-
-.. [2] `Phys. Rev. B 82, 045122 (2010)
-    <https://arxiv.org/abs/1005.1682>`_.
+.. [1] `Rev. Mod. Phys., Vol. 78, No. 1 (2006)
+    <https://arxiv.org/abs/cond-mat/0504627>`_.

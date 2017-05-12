@@ -1,286 +1,367 @@
-Plotting Kwant systems and data in various styles
--------------------------------------------------
+Computing local quantities: densities and currents
+==================================================
+In the previous tutorials we have mainly concentrated on calculating *global*
+properties such as conductance and band structures. Often, however, insight can
+be gained from calculating *locally-defined* quantities, that is, quantities
+defined over individual sites or hoppings in your system. In the
+:ref:`closed-systems` tutorial we saw how we could visualize the density
+associated with the eigenstates of a system using `kwant.plotter.map`.
 
-The plotting functionality of Kwant has been used extensively (through
-`~kwant.plotter.plot` and `~kwant.plotter.map`) in the previous tutorials. In
-addition to this basic use, `~kwant.plotter.plot` offers many options to change
-the plotting style extensively. It is the goal of this tutorial to show how
-these options can be used to achieve various very different objectives.
-
-2D example: graphene quantum dot
-................................
-
-.. seealso::
-    The complete source code of this example can be found in
-    :download:`tutorial/plot_graphene.py <../../../tutorial/plot_graphene.py>`
-
-We begin by first considering a circular graphene quantum dot (similar to what
-has been used in parts of the tutorial :ref:`tutorial-graphene`.)  In contrast
-to previous examples, we will also use hoppings beyond next-nearest neighbors:
-
-.. literalinclude:: plot_graphene.py
-    :start-after: #HIDDEN_BEGIN_makesyst
-    :end-before: #HIDDEN_END_makesyst
-
-Note that adding hoppings hoppings to the `n`-th nearest neighbors can be
-simply done by passing `n` as an argument to
-`~kwant.lattice.Polyatomic.neighbors`. Also note that we use the method
-`~kwant.builder.Builder.eradicate_dangling` to get rid of single atoms sticking
-out of the shape. It is necessary to do so *before* adding the
-next-nearest-neighbor hopping [#]_.
-
-Of course, the system can be plotted simply with default settings:
-
-.. literalinclude:: plot_graphene.py
-    :start-after: #HIDDEN_BEGIN_plotsyst1
-    :end-before: #HIDDEN_END_plotsyst1
-
-However, due to the richer structure of the lattice, this results in a rather
-busy plot:
-
-.. image:: ../images/plot_graphene_syst1.*
-
-A much clearer plot can be obtained by using different colors for both
-sublattices, and by having different line widths for different hoppings.  This
-can be achieved by passing a function to the arguments of
-`~kwant.plotter.plot`, instead of a constant. For properties of sites, this
-must be a function taking one site as argument, for hoppings a function taking
-the start end end site of hopping as arguments:
-
-.. literalinclude:: plot_graphene.py
-    :start-after: #HIDDEN_BEGIN_plotsyst2
-    :end-before: #HIDDEN_END_plotsyst2
-
-Note that since we are using an unfinalized Builder, a ``site`` is really an
-instance of `~kwant.builder.Site`. With these adjustments we arrive at a plot
-that carries the same information, but is much easier to interpret:
-
-.. image:: ../images/plot_graphene_syst2.*
-
-Apart from plotting the *system* itself, `~kwant.plotter.plot` can also be used
-to plot *data* living on the system.
-
-As an example, we now compute the eigenstates of the graphene quantum dot and
-intend to plot the wave function probability in the quantum dot. For aesthetic
-reasons (the wave functions look a bit nicer), we restrict ourselves to
-nearest-neighbor hopping.  Computing the wave functions is done in the usual
-way (note that for a large-scale system, one would probably want to use sparse
-linear algebra):
-
-.. literalinclude:: plot_graphene.py
-    :start-after: #HIDDEN_BEGIN_plotdata1
-    :end-before: #HIDDEN_END_plotdata1
-
-In most cases, to plot the wave function probability, one wouldn't use
-`~kwant.plotter.plot`, but rather `~kwant.plotter.map`. Here, we plot the
-`n`-th wave function using it:
-
-.. literalinclude:: plot_graphene.py
-    :start-after: #HIDDEN_BEGIN_plotdata2
-    :end-before: #HIDDEN_END_plotdata2
-
-This results in a standard pseudocolor plot, showing in this case (``n=225``) a
-graphene edge state, i.e. a wave function mostly localized at the zigzag edges
-of the quantum dot.
-
-.. image:: ../images/plot_graphene_data1.*
-
-However although in general preferable, `~kwant.plotter.map` has a few
-deficiencies for this small system: For example, there are a few distortions at
-the edge of the dot. (This cannot be avoided in the type of interpolation used
-in `~kwant.plotter.map`). However, we can also use `~kwant.plotter.plot` to
-achieve a similar, but smoother result.
-
-For this note that `~kwant.plotter.plot` can also take an array of floats (or
-function returning floats) as value for the ``site_color`` argument (the same
-holds for the hoppings). Via the colormap specified in ``cmap`` these are mapped
-to color, just as `~kwant.plotter.map` does! In addition, we can also change
-the symbol shape depending on the sublattice. With a triangle pointing up and
-down on the respective sublattice, the symbols used by plot fill the space
-completely:
-
-.. literalinclude:: plot_graphene.py
-    :start-after: #HIDDEN_BEGIN_plotdata3
-    :end-before: #HIDDEN_END_plotdata3
-
-Note that with ``hop_lw=0`` we deactivate plotting the hoppings (that would not
-serve any purpose here). Moreover, ``site_size=0.5`` guarantees that the two
-different types of triangles touch precisely: By default, `~kwant.plotter.plot`
-takes all sizes in units of the nearest-neighbor spacing. ``site_size=0.5``
-thus means half the distance between neighboring sites (and for the triangles
-this is interpreted as the radius of the inner circle).
-
-Finally, note that since we are dealing with a finalized system now, a site `i`
-is represented by an integer. In order to obtain the original
-`~kwant.builder.Site`, ``syst.sites[i]`` can be used.
-
-With this we arrive at
-
-.. image:: ../images/plot_graphene_data2.*
-
-with the same information as `~kwant.plotter.map`, but with a cleaner look.
-
-The way how data is presented of course influences what features of the data
-are best visible in a given plot. With `~kwant.plotter.plot` one can easily go
-beyond pseudocolor-like plots. For example, we can represent the wave function
-probability using the symbols itself:
-
-.. literalinclude:: plot_graphene.py
-    :start-after: #HIDDEN_BEGIN_plotdata4
-    :end-before: #HIDDEN_END_plotdata4
-
-Here, we choose the symbol size proportional to the wave function probability,
-while the site color is transparent to also allow for overlapping symbols to be
-visible. The hoppings are also plotted in order to show the underlying lattice.
-
-With this, we arrive at
-
-.. image:: ../images/plot_graphene_data3.*
-
-which shows the edge state nature of the wave function most clearly.
-
-.. rubric:: Footnotes
-
-.. [#] A dangling site is defined as having only one hopping connecting it to
-       the rest. With next-nearest-neighbor hopping also all sites that are
-       dangling with only nearest-neighbor hopping have more than one hopping.
-
-3D example: zincblende structure
-................................
+In this tutorial we will see how we can calculate more general quantities than
+simple densities by studying spin transport in a system with a magnetic
+texture.
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/plot_zincblende.py <../../../tutorial/plot_zincblende.py>`
-
-Zincblende is a very common crystal structure of semiconductors. It is a
-face-centered cubic crystal with two inequivalent atoms in the unit cell
-(i.e. two different types of atoms, unlike diamond which has the same crystal
-structure, but two equivalent atoms per unit cell).
-
-It is very easily generated in Kwant with `kwant.lattice.general`:
-
-.. literalinclude:: plot_zincblende.py
-    :start-after: #HIDDEN_BEGIN_zincblende1
-    :end-before: #HIDDEN_END_zincblende1
-
-Note how we keep references to the two different sublattices for later use.
-
-A three-dimensional structure is created as easily as in two dimensions, by
-using the `~kwant.lattice.PolyatomicLattice.shape`-functionality:
-
-.. literalinclude:: plot_zincblende.py
-    :start-after: #HIDDEN_BEGIN_zincblende2
-    :end-before: #HIDDEN_END_zincblende2
-
-We restrict ourselves here to a simple cuboid, and do not bother to add real
-values for onsite and hopping energies, but only the placeholder ``None`` (in a
-real calculation, several atomic orbitals would have to be considered).
-
-`~kwant.plotter.plot` can plot 3D systems just as easily as its two-dimensional
-counterparts:
-
-.. literalinclude:: plot_zincblende.py
-    :start-after: #HIDDEN_BEGIN_plot1
-    :end-before: #HIDDEN_END_plot1
-
-resulting in
-
-.. image:: ../images/plot_zincblende_syst1.*
-
-You might notice that the standard options for plotting are quite different in
-3D than in 2D. For example, by default hoppings are not printed, but sites are
-instead represented by little "balls" touching each other (which is achieved by
-a default ``site_size=0.5``). In fact, this style of plotting 3D shows quite
-decently the overall geometry of the system.
-
-When plotting into a window, the 3D plots can also be rotated and scaled
-arbitrarily, allowing for a good inspection of the geometry from all sides.
-
-.. note::
-
-    Interactive 3D plots usually do not have the proper aspect ratio, but are a
-    bit squashed. This is due to bugs in matplotlib's 3D plotting module that
-    does not properly honor the corresponding arguments. By resizing the plot
-    window however one can manually adjust the aspect ratio.
-
-Also for 3D it is possible to customize the plot. For example, we
-can explicitly plot the hoppings as lines, and color sites differently
-depending on the sublattice:
-
-.. literalinclude:: plot_zincblende.py
-    :start-after: #HIDDEN_BEGIN_plot2
-    :end-before: #HIDDEN_END_plot2
-
-which results in a 3D plot that allows to interactively (when plotted
-in a window) explore the crystal structure:
-
-.. image:: ../images/plot_zincblende_syst2.*
-
-Hence, a few lines of code using Kwant allow to explore all the different
-crystal lattices out there!
-
-.. note::
-
-    - The 3D plots are in fact only *fake* 3D. For example, sites will always
-      be plotted above hoppings (this is due to the limitations of matplotlib's
-      3d module)
-    - Plotting hoppings in 3D is inherently much slower than plotting sites.
-      Hence, this is not done by default.
+    :download:`tutorial/magnetic_texture.py <../../../tutorial/magnetic_texture.py>`
 
 
-Interpolated density and current: QPC with disorder
-...................................................
+Introduction
+------------
+Our starting point will be the following spinful tight-binding model on
+a square lattice:
 
-.. seealso::
-    The complete source code of this example can be found in
-    :download:`tutorial/plot_qpc.py <../../../tutorial/plot_qpc.py>`
+.. math::
+    H = - \sum_{⟨ij⟩}\sum_{α} |iα⟩⟨jα|
+        + J \sum_{i}\sum_{αβ} \mathbf{m}_i⋅ \mathbf{σ}_{αβ} |iα⟩⟨iβ|,
 
-In the above examples we saw some useful methods for plotting systems where
-single-site resolution is required. Sometimes, however, having single-site
-precision is a hinderance, rather than a help, and looking at *averaged*
-quantities is more useful. This is particularly important in systems with a
-large number of sites, and systems that are discretizations of continuum
-models.
+where latin indices run over sites, and greek indices run over spin.  We can
+identify the first term as a nearest-neighbor hopping between like-spins, and
+the second as a term that couples spins on the same site.  The second term acts
+like a magnetic field of strength :math:`J` that varies from site to site and
+that, on site :math:`i`, points in the direction of the unit vector
+:math:`\mathbf{m}_i`. :math:`\mathbf{σ}_{αβ}` is a vector of Pauli matrices.
+We shall take the following form for :math:`\mathbf{m}_i`:
 
-Here we will show how to plot interpolated quantities using `kwant.plotter.map`
-and `kwant.plotter.current` using the example of a quantum point contact (QPC)
-with a perpendicular magnetic field and disorder:
+.. math::
+    \mathbf{m}_i &=&\ \left(
+        \frac{x_i}{x_i^2 + y_i^2} \sin θ_i,\
+        \frac{y_i}{x_i^2 + y_i^2} \sin θ_i,\
+        \cos θ_i \right)^T,
+    \\
+    θ_i &=&\ \frac{π}{2} \tanh \frac{r_i - r_0}{δ},
 
-.. literalinclude:: plot_qpc.py
+where :math:`x_i` and :math:`y_i` are the :math:`x` and :math:`y` coordinates
+of site :math:`i`, and :math:`r_i = \sqrt{x_i^2 + y_i^2}`.
+
+To define this model in Kwant we start as usual by defining functions that
+depend on the model parameters:
+
+.. literalinclude:: magnetic_texture.py
+    :start-after: #HIDDEN_BEGIN_model
+    :end-before: #HIDDEN_END_model
+
+and define our system as a square shape on a square lattice with two orbitals
+per site, with leads attached on the left and right:
+
+.. literalinclude:: magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_syst
     :end-before: #HIDDEN_END_syst
 
-.. image:: ../images/plot_qpc_syst.*
+Below is a plot of a projection of :math:`\mathbf{m}_i` onto the x-y plane
+inside the scattering region. The z component is shown by the color scale:
 
-Now we will compute the density of particles and current due to states
-originating in the left lead with energy 0.15.
+.. image:: ../images/mag_field_direction.*
 
-.. literalinclude:: plot_qpc.py
-    :start-after: #HIDDEN_BEGIN_wf
-    :end-before: #HIDDEN_END_wf
+We will now be interested in analyzing the form of the scattering states
+that originate from the left lead:
 
-We can then plot the density using `~kwant.plotter.map`:
+.. literalinclude:: magnetic_texture.py
+    :start-after: #HIDDEN_BEGIN_wavefunction
+    :end-before: #HIDDEN_END_wavefunction
 
-.. literalinclude:: plot_qpc.py
-    :start-after: #HIDDEN_BEGIN_density
-    :end-before: #HIDDEN_END_density
+Local densities
+---------------
+If we were simulating a spinless system with only a single degree of freedom,
+then calculating the density on each site would be as simple as calculating the
+absolute square of the wavefunction like::
 
-.. image:: ../images/plot_qpc_density.*
+    density = np.abs(psi)**2
 
-We pass ``method='linear'`` to ``map``, which produces a smoother plot than the
-default style. We see that density is concentrated on the edges of the sample,
-as we expect due to Hall effect induced by the perpendicular magnetic field.
+When there are multiple degrees of freedom per site, however, one has to be
+more careful. In the present case with two (spin) degrees of freedom per site
+one could calculate the per-site density like:
 
-Plotting the current in the system will enable us to make even more sense
-of what is going on:
+.. literalinclude:: magnetic_texture.py
+    :start-after: #HIDDEN_BEGIN_ldos
+    :end-before: #HIDDEN_END_ldos
 
-.. literalinclude:: plot_qpc.py
+With more than one degree of freedom per site we have more freedom as to what
+local quantities we can meaningfully compute. For example, we may wish to
+calculate the local z-projected spin density. We could calculate
+this in the following way:
+
+.. literalinclude:: magnetic_texture.py
+    :start-after: #HIDDEN_BEGIN_lsdz
+    :end-before: #HIDDEN_END_lsdz
+
+If we wanted instead to calculate the local y-projected spin density, we would
+need to use an even more complicated expression:
+
+.. literalinclude:: magnetic_texture.py
+    :start-after: #HIDDEN_BEGIN_lsdy
+    :end-before: #HIDDEN_END_lsdy
+
+The `kwant.operator` module aims to alleviate somewhat this tedious
+book-keeping by providing a simple interface for defining operators that act on
+wavefunctions. To calculate the above quantities we would use the
+`~kwant.operator.Density` operator like so:
+
+.. literalinclude:: magnetic_texture.py
+    :start-after: #HIDDEN_BEGIN_lden
+    :end-before: #HIDDEN_END_lden
+
+`~kwant.operator.Density` takes a `~kwant.system.System` as its first parameter
+as well as (optionally) a square matrix that defines the quantity that you wish
+to calculate per site. When an instance of a `~kwant.operator.Density` is then
+evaluated with a wavefunction, the quantity
+
+.. math:: ρ_i = \mathbf{ψ}^†_i \mathbf{M} \mathbf{ψ}_i
+
+is calculated for each site :math:`i`, where :math:`\mathbf{ψ}_{i}` is a vector
+consisting of the wavefunction components on that site and :math:`\mathbf{M}`
+is the square matrix referred to previously.
+
+Below we can see colorplots of the above-calculated quantities. The array that
+is returned by evaluating a `~kwant.operator.Density` can be used directly with
+`kwant.plotter.map`:
+
+.. image:: ../images/spin_densities.*
+
+
+.. specialnote:: Technical Details
+
+    Although we refer loosely to "densities" and "operators" above, a
+    `~kwant.operator.Density` actually represents a *collection* of linear
+    operators. This can be made clear by rewriting the above definition
+    of :math:`ρ_i` in the following way:
+
+    .. math::
+        ρ_i = \sum_{αβ} ψ^*_{α} \mathcal{M}_{iαβ} ψ_{β}
+
+    where greek indices run over the degrees of freedom in the Hilbert space of
+    the scattering region and latin indices run over sites.  We can this
+    identify :math:`\mathcal{M}_{iαβ}` as the components of a rank-3 tensor and can
+    represent them as a "vector of matrices":
+
+    .. math::
+        \mathcal{M} = \left[
+        \left(\begin{matrix}
+            \mathbf{M} & 0 & … \\
+            0 & 0 & … \\
+            ⋮ & ⋮ & ⋱
+        \end{matrix}\right)
+        ,\
+        \left(\begin{matrix}
+            0 & 0 & … \\
+            0 & \mathbf{M} & … \\
+            ⋮ & ⋮ & ⋱
+        \end{matrix}\right)
+        , … \right]
+
+    where :math:`\mathbf{M}` is defined as in the main text, and the :math:`0`
+    are zero matrices of the same shape as :math:`\mathbf{M}`.
+
+
+Local currents
+--------------
+`kwant.operator` also has a class `~kwant.operator.Current` for calculating
+local currents, analogously to the local "densities" described above. If
+one has defined a density via a matrix :math:`\mathbf{M}` and the above
+equation, then one can define a local current flowing from site :math:`b`
+to site :math:`a`:
+
+.. math:: J_{ab} = i \left(
+    \mathbf{ψ}^†_b (\mathbf{H}_{ab})^† \mathbf{M} \mathbf{ψ}_a
+    - \mathbf{ψ}^†_a \mathbf{M} \mathbf{H}_{ab} \mathbf{ψ}_b
+    \right),
+
+where :math:`\mathbf{H}_{ab}` is the hopping matrix from site :math:`b` to site
+:math:`a`.  For example, to calculate the local current and
+spin current:
+
+.. literalinclude:: magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_current
     :end-before: #HIDDEN_END_current
 
-.. image:: ../images/plot_qpc_current.*
+Evaluating a `~kwant.operator.Current` operator on a wavefunction returns a
+1D array of values that can be directly used with `kwant.plotter.current`:
 
-We can now clearly see that current enters the system from the lower-left edge
-of the system (this matches our intuition, as we calculated the current for
-scattering states originating in the left-hand lead), and is backscattered by
-the restriction of the QPC in the centre.
+.. image:: ../images/spin_currents.*
+
+.. note::
+
+    Evaluating a `~kwant.operator.Current` operator on a wavefunction
+    returns a 1D array of the same length as the number of hoppings in the
+    system, ordered in the same way as the edges in the system's graph.
+
+.. specialnote:: Technical Details
+
+    Similarly to how we saw in the previous section that `~kwant.operator.Density`
+    can be thought of as a collection of operators, `~kwant.operator.Current`
+    can be defined in a similar way. Starting from the definition of a "density":
+
+    .. math:: ρ_a = \sum_{αβ} ψ^*_{α} \mathcal{M}_{aαβ} ψ_{β},
+
+    we can define *currents* :math:`J_{ab}` via the continuity equation:
+
+    .. math:: \frac{∂ρ_a}{∂t} - \sum_{b} J_{ab} = 0
+
+    where the sum runs over sites :math:`b` neigboring site :math:`a`.
+    Plugging in the definition for :math:`ρ_a`, along with the Schrödinger
+    equation and the assumption that :math:`\mathcal{M}` is time independent,
+    gives:
+
+    .. math:: J_{ab} = \sum_{αβ}
+        ψ^*_α \left(i \sum_{γ}
+            \mathcal{H}^*_{abγα} \mathcal{M}_{aγβ}
+            - \mathcal{M}_{aαγ} \mathcal{H}_{abγβ}
+        \right)  ψ_β,
+
+    where latin indices run over sites and greek indices run over the Hilbert
+    space degrees of freedom, and
+
+    .. math:: \mathcal{H}_{ab} = \left(\begin{matrix}
+            ⋱ & ⋮ & ⋮ & ⋮ & ⋰ \\
+            ⋯ & ⋱ & 0 & \mathbf{H}_{ab} & ⋯ \\
+            ⋯ & 0 & ⋱ & 0 & ⋯ \\
+            ⋯ & 0 & 0 & ⋱ & ⋯ \\
+            ⋰ & ⋮ & ⋮ & ⋮ & ⋱
+        \end{matrix}\right).
+
+    i.e. :math:`\mathcal{H}_{ab}` is a matrix that is zero everywhere
+    except on elements connecting *from* site :math:`b` *to* site :math:`a`,
+    where it is equal to the hopping matrix :math:`\mathbf{H}_{ab}` between
+    these two sites.
+
+    This allows us to identify the rank-4 quantity
+
+    .. math:: \mathcal{J}_{abαβ} = i \sum_{γ}
+            \mathcal{H}^*_{abγα} \mathcal{M}_{aγβ}
+            - \mathcal{M}_{aαγ} \mathcal{H}_{abγβ}
+
+    as the local current between connected sites.
+
+    The diagonal part of this quantity, :math:`\mathcal{J}_{aa}`,
+    represents the extent to which the density defined by :math:`\mathcal{M}_a`
+    is not conserved on site :math:`a`. It can be calculated using
+    `~kwant.operator.Source`, rather than `~kwant.operator.Current`, which
+    only computes the off-diagonal part.
+
+
+Spatially varying operators
+---------------------------
+The above examples are reasonably simple in the sense that the book-keeping
+required to manually calculate the various densities and currents is still
+manageable. Now we shall look at the case where we wish to calculate some
+projected spin currents, but where the spin projection axis varies from place
+to place. More specifically, we want to visualize the spin current along the
+direction of :math:`\mathbf{m}_i`, which changes continuously over the whole
+scattering region.
+
+Doing this is as simple as passing a *function* when instantiating
+the `~kwant.operator.Current`, instead of a constant matrix:
+
+.. literalinclude:: magnetic_texture.py
+    :start-after: #HIDDEN_BEGIN_following
+    :end-before: #HIDDEN_END_following
+
+The function must take a `~kwant.builder.Site` as its first parameter,
+and may optionally take other parameters (i.e. it must have the same
+signature as a Hamiltonian onsite function), and must return the square
+matrix that defines the operator we wish to calculate.
+
+.. note::
+
+    In the above example we had to pass the extra parameters needed by the
+    ``following_operator`` function via the ``param`` keyword argument.  In
+    general you must pass all the parameters needed by the Hamiltonian via
+    ``params`` (as you would when calling `~kwant.solvers.default.smatrix` or
+    `~kwant.solvers.default.wave_function`).  In the previous examples,
+    however, we used the fact that the system hoppings do not depend on any
+    parameters (these are the only Hamiltonian elements required to calculate
+    currents) to avoid passing the system parameters for the sake of brevity.
+
+Using this we can see that the spin current is essentially oriented along
+the direction of :math:`m_i` in the present regime where the onsite term
+in the Hamiltonian is dominant:
+
+.. image:: ../images/spin_current_comparison.*
+
+.. note:: Although this example used exclusively `~kwant.operator.Current`,
+          you can do the same with `~kwant.operator.Density`.
+
+
+Defining operators over parts of a system
+-----------------------------------------
+
+Another useful feature of `kwant.operator` is the ability to calculate
+operators over selected parts of a system. For example, we may wish to
+calculate the total density of states in a certain part
+of the system, or the current flowing through a cut in the system.
+We can do this selection when creating the operator by using the
+keyword parameter ``where``.
+
+Density of states in a circle
+*****************************
+
+To calculate the density of states inside a circle of radius
+20 we can simply do:
+
+.. literalinclude:: magnetic_texture.py
+    :start-after: #HIDDEN_BEGIN_density_cut
+    :end-before: #HIDDEN_END_density_cut
+
+.. literalinclude:: ../images/circle_dos.txt
+
+note that we also provide ``sum=True``, which means that evaluating the
+operator on a wavefunction will produce a single scalar. This is semantically
+equivalent to providing ``sum=False`` (the default) and running ``numpy.sum``
+on the output.
+
+Current flowing through a cut
+*****************************
+
+Below we calculate the probability current and z-projected spin current near
+the interfaces with the left and right leads.
+
+.. literalinclude:: magnetic_texture.py
+    :start-after: #HIDDEN_BEGIN_current_cut
+    :end-before: #HIDDEN_END_current_cut
+
+.. literalinclude:: ../images/current_cut.txt
+
+We see that the probability current is conserved across the scattering region,
+but the z-projected spin current is not due to the fact that the Hamiltonian
+does not commute with :math:`σ_z` everywhere in the scattering region.
+
+.. note:: ``where`` can also be provided as a sequence of `~kwant.builder.Site`
+          or a sequence of hoppings (i.e. pairs of `~kwant.builder.Site`),
+          rather than a function.
+
+
+Advanced Topics
+---------------
+
+Using ``bind`` for speed
+************************
+In most of the above examples we only used each operator *once* after creating
+it. Often one will want to evaluate an operator with many different
+wavefunctions, for example with all scattering wavefunctions at a certain
+energy, but with the *same set of parameters*. In such cases it is best to tell
+the operator to pre-compute the onsite matrices and any necessary Hamiltonian
+elements using the given set of parameters, so that this work is not duplicated
+every time the operator is evaluated.
+
+This can be achieved with `~kwant.operator.Current.bind`:
+
+.. warning:: Take care that you do not use an operator that was bound to a
+             particular set of parameters with wavefunctions calculated with a
+             *different* set of parameters. This will almost certainly give
+             incorrect results.
+
+.. literalinclude:: magnetic_texture.py
+    :start-after: #HIDDEN_BEGIN_bind
+    :end-before: #HIDDEN_END_bind
+
+.. image:: ../images/bound_current.*

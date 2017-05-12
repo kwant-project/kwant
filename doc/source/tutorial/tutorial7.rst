@@ -1,289 +1,286 @@
-##############################################################
-Calculating spectral density with the kernel polynomial method
-##############################################################
+Plotting Kwant systems and data in various styles
+-------------------------------------------------
 
-We have already seen in the ":ref:`closed-systems`" tutorial that we can use
-Kwant simply to build Hamiltonians, which we can then directly diagonalize
-using routines from Scipy.
+The plotting functionality of Kwant has been used extensively (through
+`~kwant.plotter.plot` and `~kwant.plotter.map`) in the previous tutorials. In
+addition to this basic use, `~kwant.plotter.plot` offers many options to change
+the plotting style extensively. It is the goal of this tutorial to show how
+these options can be used to achieve various very different objectives.
 
-This already allows us to treat systems with a few thousand sites without too
-many problems.  For larger systems one is often not so interested in the exact
-eigenenergies and eigenstates, but more in the *density of states*.
-
-The kernel polynomial method (KPM), is an algorithm to obtain a polynomial
-expansion of the density of states. It can also be used to calculate the
-spectral density of arbitrary operators.  Kwant has an implementation of the
-KPM method that is based on the algorithms presented in Ref. [1]_.
-
-Roughly speaking, KPM approximates the density of states (or any other spectral
-density) by expanding the action of the Hamiltonian (and operator of interest)
-on a (small) set of *random vectors* as a sum of Chebyshev polynomials up to
-some order, and then averaging. The accuracy of the method can be tuned by
-modifying the order of the Chebyshev expansion and the number of random
-vectors.  See notes on accuracy_ below for details.
+2D example: graphene quantum dot
+................................
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/kernel_polynomial_method.py <../../../tutorial/kernel_polynomial_method.py>`
+    :download:`tutorial/plot_graphene.py <../../../tutorial/plot_graphene.py>`
+
+We begin by first considering a circular graphene quantum dot (similar to what
+has been used in parts of the tutorial :ref:`tutorial-graphene`.)  In contrast
+to previous examples, we will also use hoppings beyond next-nearest neighbors:
+
+.. literalinclude:: plot_graphene.py
+    :start-after: #HIDDEN_BEGIN_makesyst
+    :end-before: #HIDDEN_END_makesyst
+
+Note that adding hoppings hoppings to the `n`-th nearest neighbors can be
+simply done by passing `n` as an argument to
+`~kwant.lattice.Polyatomic.neighbors`. Also note that we use the method
+`~kwant.builder.Builder.eradicate_dangling` to get rid of single atoms sticking
+out of the shape. It is necessary to do so *before* adding the
+next-nearest-neighbor hopping [#]_.
+
+Of course, the system can be plotted simply with default settings:
+
+.. literalinclude:: plot_graphene.py
+    :start-after: #HIDDEN_BEGIN_plotsyst1
+    :end-before: #HIDDEN_END_plotsyst1
+
+However, due to the richer structure of the lattice, this results in a rather
+busy plot:
 
-.. _accuracy:
-.. specialnote:: Performance and accuracy
+.. image:: ../images/plot_graphene_syst1.*
 
-    The KPM method is especially well suited for large systems, and in the
-    case when one is not interested in individual eigenvalues, but rather
-    in obtaining an approximate spectral density.
+A much clearer plot can be obtained by using different colors for both
+sublattices, and by having different line widths for different hoppings.  This
+can be achieved by passing a function to the arguments of
+`~kwant.plotter.plot`, instead of a constant. For properties of sites, this
+must be a function taking one site as argument, for hoppings a function taking
+the start end end site of hopping as arguments:
 
-    The accuracy in the energy resolution is dominated by the number of
-    moments. The lowest accuracy is at the center of the spectrum, while
-    slightly higher accuracy is obtained at the edges of the spectrum.
-    If we use the KPM method (with the Jackson kernel, see Ref. [1]_) to
-    describe a delta peak at the center of the spectrum, we will obtain a
-    function similar to a Gaussian of width :math:`σ=πa/N`, where
-    :math:`N` is the number of moments, and :math:`a` is the width of the
-    spectrum.
+.. literalinclude:: plot_graphene.py
+    :start-after: #HIDDEN_BEGIN_plotsyst2
+    :end-before: #HIDDEN_END_plotsyst2
 
-    On the other hand, the random vectors will *explore* the range of the
-    spectrum, and as the system gets bigger, the number of random vectors
-    that are necessary to sample the whole spectrum reduces. Thus, a small
-    number of random vectors is in general enough, and increasing this number
-    will not result in a visible improvement of the approximation.
+Note that since we are using an unfinalized Builder, a ``site`` is really an
+instance of `~kwant.builder.Site`. With these adjustments we arrive at a plot
+that carries the same information, but is much easier to interpret:
 
+.. image:: ../images/plot_graphene_syst2.*
 
-Introduction
-************
+Apart from plotting the *system* itself, `~kwant.plotter.plot` can also be used
+to plot *data* living on the system.
 
-Our aim is to use the kernel polynomial method to obtain the spectral density
-:math:`ρ_A(E)`, as a function of the energy :math:`E`, of some Hilbert space
-operator :math:`A`.  We define
+As an example, we now compute the eigenstates of the graphene quantum dot and
+intend to plot the wave function probability in the quantum dot. For aesthetic
+reasons (the wave functions look a bit nicer), we restrict ourselves to
+nearest-neighbor hopping.  Computing the wave functions is done in the usual
+way (note that for a large-scale system, one would probably want to use sparse
+linear algebra):
 
-.. math::
+.. literalinclude:: plot_graphene.py
+    :start-after: #HIDDEN_BEGIN_plotdata1
+    :end-before: #HIDDEN_END_plotdata1
 
-    ρ_A(E) = ρ(E) A(E),
+In most cases, to plot the wave function probability, one wouldn't use
+`~kwant.plotter.plot`, but rather `~kwant.plotter.map`. Here, we plot the
+`n`-th wave function using it:
 
-where :math:`A(E)` is the expectation value of :math:`A` for all the
-eigenstates of the Hamiltonian with energy :math:`E`,  and the density of
-states is
+.. literalinclude:: plot_graphene.py
+    :start-after: #HIDDEN_BEGIN_plotdata2
+    :end-before: #HIDDEN_END_plotdata2
 
-.. math::
+This results in a standard pseudocolor plot, showing in this case (``n=225``) a
+graphene edge state, i.e. a wave function mostly localized at the zigzag edges
+of the quantum dot.
 
-  ρ(E) = \frac{1}{D} \sum_{k=0}^{D-1} δ(E-E_k),
+.. image:: ../images/plot_graphene_data1.*
 
-:math:`D` being the Hilbert space dimension, and :math:`E_k` the eigenvalues.
+However although in general preferable, `~kwant.plotter.map` has a few
+deficiencies for this small system: For example, there are a few distortions at
+the edge of the dot. (This cannot be avoided in the type of interpolation used
+in `~kwant.plotter.map`). However, we can also use `~kwant.plotter.plot` to
+achieve a similar, but smoother result.
 
-In the special case when :math:`A` is the identity, then :math:`ρ_A(E)` is
-simply :math:`ρ(E)`, the density of states.
+For this note that `~kwant.plotter.plot` can also take an array of floats (or
+function returning floats) as value for the ``site_color`` argument (the same
+holds for the hoppings). Via the colormap specified in ``cmap`` these are mapped
+to color, just as `~kwant.plotter.map` does! In addition, we can also change
+the symbol shape depending on the sublattice. With a triangle pointing up and
+down on the respective sublattice, the symbols used by plot fill the space
+completely:
 
+.. literalinclude:: plot_graphene.py
+    :start-after: #HIDDEN_BEGIN_plotdata3
+    :end-before: #HIDDEN_END_plotdata3
 
-Calculating the density of states
-*********************************
+Note that with ``hop_lw=0`` we deactivate plotting the hoppings (that would not
+serve any purpose here). Moreover, ``site_size=0.5`` guarantees that the two
+different types of triangles touch precisely: By default, `~kwant.plotter.plot`
+takes all sizes in units of the nearest-neighbor spacing. ``site_size=0.5``
+thus means half the distance between neighboring sites (and for the triangles
+this is interpreted as the radius of the inner circle).
 
-In the following example, we will use the KPM implementation in Kwant
-to obtain the density of states of a graphene disk.
+Finally, note that since we are dealing with a finalized system now, a site `i`
+is represented by an integer. In order to obtain the original
+`~kwant.builder.Site`, ``syst.sites[i]`` can be used.
 
-We start by importing kwant and defining our system.
+With this we arrive at
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_sys1
-    :end-before: #HIDDEN_END_sys1
+.. image:: ../images/plot_graphene_data2.*
 
-After making a system we can then create a `~kwant.kpm.SpectralDensity`
-object that represents the density of states for this system.
+with the same information as `~kwant.plotter.map`, but with a cleaner look.
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_kpm1
-    :end-before: #HIDDEN_END_kpm1
+The way how data is presented of course influences what features of the data
+are best visible in a given plot. With `~kwant.plotter.plot` one can easily go
+beyond pseudocolor-like plots. For example, we can represent the wave function
+probability using the symbols itself:
 
-The `~kwant.kpm.SpectralDensity` can then be called like a function to obtain a
-sequence of energies in the spectrum of the Hamiltonian, and the corresponding
-density of states at these energies.
+.. literalinclude:: plot_graphene.py
+    :start-after: #HIDDEN_BEGIN_plotdata4
+    :end-before: #HIDDEN_END_plotdata4
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_kpm2
-    :end-before: #HIDDEN_END_kpm2
+Here, we choose the symbol size proportional to the wave function probability,
+while the site color is transparent to also allow for overlapping symbols to be
+visible. The hoppings are also plotted in order to show the underlying lattice.
 
-When called with no arguments, an optimal set of energies is chosen (these are
-not evenly distributed over the spectrum, see Ref. [1]_ for details), however
-it is also possible to provide an explicit sequence of energies at which to
-evaluate the density of states.
+With this, we arrive at
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_kpm3
-    :end-before: #HIDDEN_END_kpm3
+.. image:: ../images/plot_graphene_data3.*
 
-.. image:: ../images/kpm_dos.*
+which shows the edge state nature of the wave function most clearly.
 
-In addition to being called like functions, `~kwant.kpm.SpectralDensity`
-objects also have a method `~kwant.kpm.SpectralDensity.average` which can be
-used to integrate the density of states against some distribution function over
-the whole spectrum. If no distribution function is specified, then the uniform
-distribution is used:
+.. rubric:: Footnotes
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_av1
-    :end-before: #HIDDEN_END_av1
+.. [#] A dangling site is defined as having only one hopping connecting it to
+       the rest. With next-nearest-neighbor hopping also all sites that are
+       dangling with only nearest-neighbor hopping have more than one hopping.
 
-.. literalinclude:: ../images/kpm_normalization.txt
+3D example: zincblende structure
+................................
 
-We see that the integral of the density of states is normalized to 1. If
-we wish to calculate, say, the average number of states populated in
-equilibrium, then we should integrate with respect to a Fermi-Dirac
-distribution and multiply by the total number of available states in
-the system:
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/plot_zincblende.py <../../../tutorial/plot_zincblende.py>`
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_av2
-    :end-before: #HIDDEN_END_av2
+Zincblende is a very common crystal structure of semiconductors. It is a
+face-centered cubic crystal with two inequivalent atoms in the unit cell
+(i.e. two different types of atoms, unlike diamond which has the same crystal
+structure, but two equivalent atoms per unit cell).
 
-.. literalinclude:: ../images/kpm_total_states.txt
+It is very easily generated in Kwant with `kwant.lattice.general`:
 
-.. specialnote:: Stability and performance: spectral bounds
+.. literalinclude:: plot_zincblende.py
+    :start-after: #HIDDEN_BEGIN_zincblende1
+    :end-before: #HIDDEN_END_zincblende1
 
-    The KPM method internally rescales the spectrum of the Hamiltonian to the
-    interval ``(-1, 1)`` (see Ref [1]_ for details), which requires calculating
-    the boundaries of the spectrum (using ``scipy.sparse.linalg.eigsh``). This
-    can be very costly for large systems, so it is possible to pass this
-    explicitly as via the ``bounds`` parameter when instantiating the
-    `~kwant.kpm.SpectralDensity` (see the class documentation for details).
+Note how we keep references to the two different sublattices for later use.
 
-    Additionally, `~kwant.kpm.SpectralDensity` accepts a parameter ``epsilon``,
-    which ensures that the rescaled Hamiltonian (used internally), always has a
-    spectrum strictly contained in the interval ``(-1, 1)``. If bounds are not
-    provided then the tolerance on the bounds calculated with
-    ``scipy.sparse.linalg.eigsh`` is set to ``epsilon/2``.
+A three-dimensional structure is created as easily as in two dimensions, by
+using the `~kwant.lattice.PolyatomicLattice.shape`-functionality:
 
+.. literalinclude:: plot_zincblende.py
+    :start-after: #HIDDEN_BEGIN_zincblende2
+    :end-before: #HIDDEN_END_zincblende2
 
-Increasing the accuracy of the approximation
-********************************************
+We restrict ourselves here to a simple cuboid, and do not bother to add real
+values for onsite and hopping energies, but only the placeholder ``None`` (in a
+real calculation, several atomic orbitals would have to be considered).
 
-`~kwant.kpm.SpectralDensity` has two methods for increasing the accuracy
-of the method, each of which offers different levels of control over what
-exactly is changed.
+`~kwant.plotter.plot` can plot 3D systems just as easily as its two-dimensional
+counterparts:
 
-The simplest way to obtain a more accurate solution is to use the
-``add_moments`` method:
+.. literalinclude:: plot_zincblende.py
+    :start-after: #HIDDEN_BEGIN_plot1
+    :end-before: #HIDDEN_END_plot1
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_acc1
-    :end-before: #HIDDEN_END_acc1
+resulting in
 
-This will update the number of calculated moments and also the
-number of sampling points such that the maximum distance between successive
-energy points is ``energy_resolution`` (see notes on accuracy_).
+.. image:: ../images/plot_zincblende_syst1.*
 
-.. image:: ../images/kpm_dos_acc.*
+You might notice that the standard options for plotting are quite different in
+3D than in 2D. For example, by default hoppings are not printed, but sites are
+instead represented by little "balls" touching each other (which is achieved by
+a default ``site_size=0.5``). In fact, this style of plotting 3D shows quite
+decently the overall geometry of the system.
 
-Alternatively, you can directly increase the number of moments
-with ``add_moments``, or the number of random vectors with ``add_vectors``.
+When plotting into a window, the 3D plots can also be rotated and scaled
+arbitrarily, allowing for a good inspection of the geometry from all sides.
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_acc2
-    :end-before: #HIDDEN_END_acc2
+.. note::
 
-.. image:: ../images/kpm_dos_r.*
+    Interactive 3D plots usually do not have the proper aspect ratio, but are a
+    bit squashed. This is due to bugs in matplotlib's 3D plotting module that
+    does not properly honor the corresponding arguments. By resizing the plot
+    window however one can manually adjust the aspect ratio.
 
+Also for 3D it is possible to customize the plot. For example, we
+can explicitly plot the hoppings as lines, and color sites differently
+depending on the sublattice:
 
-.. _operator_spectral_density:
+.. literalinclude:: plot_zincblende.py
+    :start-after: #HIDDEN_BEGIN_plot2
+    :end-before: #HIDDEN_END_plot2
 
-Calculating the spectral density of an operator
-***********************************************
+which results in a 3D plot that allows to interactively (when plotted
+in a window) explore the crystal structure:
 
-Above, we saw how to calculate the density of states by creating a
-`~kwant.kpm.SpectralDensity` and passing it a finalized Kwant system.
-When instantiating a `~kwant.kpm.SpectralDensity` we may optionally
-supply an operator in addition to the system. In this case it is
-the spectral density of the given operator that is calculated.
+.. image:: ../images/plot_zincblende_syst2.*
 
-`~kwant.kpm.SpectralDensity` accepts the operators in a few formats:
+Hence, a few lines of code using Kwant allow to explore all the different
+crystal lattices out there!
 
-* *explicit matrices* (numpy array of scipy sparse matrices will work)
-* *operators* from `kwant.operator`
+.. note::
 
-If an explicit matrix is provided then it must have the same
-shape as the system Hamiltonian.
+    - The 3D plots are in fact only *fake* 3D. For example, sites will always
+      be plotted above hoppings (this is due to the limitations of matplotlib's
+      3d module)
+    - Plotting hoppings in 3D is inherently much slower than plotting sites.
+      Hence, this is not done by default.
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_op1
-    :end-before: #HIDDEN_END_op1
 
+Interpolated density and current: QPC with disorder
+...................................................
 
-Or, to do the same calculation using `kwant.operator.Density`:
+.. seealso::
+    The complete source code of this example can be found in
+    :download:`tutorial/plot_qpc.py <../../../tutorial/plot_qpc.py>`
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_op2
-    :end-before: #HIDDEN_END_op2
+In the above examples we saw some useful methods for plotting systems where
+single-site resolution is required. Sometimes, however, having single-site
+precision is a hinderance, rather than a help, and looking at *averaged*
+quantities is more useful. This is particularly important in systems with a
+large number of sites, and systems that are discretizations of continuum
+models.
 
-Using operators from `kwant.operator` allows us to calculate quantities
-such as the *local* density of states by telling the operator not to
-sum over all the sites of the system:
+Here we will show how to plot interpolated quantities using `kwant.plotter.map`
+and `kwant.plotter.current` using the example of a quantum point contact (QPC)
+with a perpendicular magnetic field and disorder:
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_op3
-    :end-before: #HIDDEN_END_op3
+.. literalinclude:: plot_qpc.py
+    :start-after: #HIDDEN_BEGIN_syst
+    :end-before: #HIDDEN_END_syst
 
-`~kwant.kpm.SpectralDensity` will properly handle this vector output,
-which allows us to plot the local density of states at different
-point in the spectrum:
+.. image:: ../images/plot_qpc_syst.*
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_op4
-    :end-before: #HIDDEN_END_op4
+Now we will compute the density of particles and current due to states
+originating in the left lead with energy 0.15.
 
-.. image:: ../images/kpm_ldos.*
+.. literalinclude:: plot_qpc.py
+    :start-after: #HIDDEN_BEGIN_wf
+    :end-before: #HIDDEN_END_wf
 
-This nicely illustrates the edge states of the graphene dot at zero
-energy, and the bulk states at higher energy.
+We can then plot the density using `~kwant.plotter.map`:
 
+.. literalinclude:: plot_qpc.py
+    :start-after: #HIDDEN_BEGIN_density
+    :end-before: #HIDDEN_END_density
 
-Advanced topics
-***************
+.. image:: ../images/plot_qpc_density.*
 
-Custom distributions for random vectors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-By default `~kwant.kpm.SpectralDensity` will use random vectors
-whose components are unit complex numbers with phases drawn
-from a uniform distribution. There are several reasons why you may
-wish to make a different choice of distribution for your random vectors,
-for example to enforce certain symmetries or to only use real-valued vectors.
+We pass ``method='linear'`` to ``map``, which produces a smoother plot than the
+default style. We see that density is concentrated on the edges of the sample,
+as we expect due to Hall effect induced by the perpendicular magnetic field.
 
-To change how the random vectors are generated, you need only specify a
-function that takes the dimension of the Hilbert space as a single parameter,
-and which returns a vector in that Hilbert space:
+Plotting the current in the system will enable us to make even more sense
+of what is going on:
 
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_fact1
-    :end-before: #HIDDEN_END_fact1
+.. literalinclude:: plot_qpc.py
+    :start-after: #HIDDEN_BEGIN_current
+    :end-before: #HIDDEN_END_current
 
-Reproducible calculations
-^^^^^^^^^^^^^^^^^^^^^^^^^
-Because KPM internally uses random vectors, running the same calculation
-twice will not give bit-for-bit the same result. However, similarly to
-the funcions in `~kwant.rmt`, the random number generator can be directly
-manipulated by passing a value to the ``rng`` parameter of
-`~kwant.kpm.SpectralDensity`. ``rng`` can itself be a random number generator,
-or it may simply be a seed to pass to the numpy random number generator
-(that is used internally by default).
+.. image:: ../images/plot_qpc_current.*
 
-Defining operators as sesquilinear maps
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-`Above`__, we showed how `~kwant.kpm.SpectralDensity` can calculate the
-spectral density of operators, and how we can define operators by using
-`kwant.operator`.  If you need even more flexibility,
-`~kwant.kpm.SpectralDensity` will also accept a *function* as its ``operator``
-parameter. This function must itself take two parameters, ``(bra, ket)`` and
-must return either a scalar or a one-dimensional array. In order to be
-meaningful the function must be a sesquilinear map, i.e. antilinear in its
-first argument, and linear in its second argument. Below, we compare two
-methods for computing the local density of states, one using
-`kwant.operator.Density`, and the other using a custom function.
-
-.. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_blm
-    :end-before: #HIDDEN_END_blm
-
-__ operator_spectral_density_
-
-
-.. rubric:: References
-
-.. [1] `Rev. Mod. Phys., Vol. 78, No. 1 (2006)
-    <https://arxiv.org/abs/cond-mat/0504627>`_.
+We can now clearly see that current enters the system from the lower-left edge
+of the system (this matches our intuition, as we calculated the current for
+scattering states originating in the left-hand lead), and is backscattered by
+the restriction of the QPC in the centre.

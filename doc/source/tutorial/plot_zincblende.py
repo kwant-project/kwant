@@ -1,4 +1,4 @@
-# Tutorial 2.7.2. 3D example: zincblende structure
+# Tutorial 2.8.2. 3D example: zincblende structure
 # ================================================
 #
 # Physical background

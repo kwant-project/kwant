@@ -815,7 +815,7 @@ cdef class Density(_LocalOperator):
 
 
 cdef class Current(_LocalOperator):
-    """An operator for calculating general currents.
+    r"""An operator for calculating general currents.
 
     An instance of this class can be called like a function to evaluate the
     expectation value with a wavefunction. See the documentation of the
@@ -850,9 +850,9 @@ cdef class Current(_LocalOperator):
     represented by a square matrix :math:`M_i` associated with each site
     :math:`i` and :math:`H_{ij}` is the hopping Hamiltonian from site :math:`j`
     to site `i`, then an instance of this class represents the tensor
-    :math:`J_{ijαβ}` which is equal to :math:`(H_{ij})^† M_i - M_i H_{ij}` when
-    α and β are orbitals on sites :math:`i` and :math:`j` respectively, and
-    zero otherwise.
+    :math:`J_{ijαβ}` which is equal to :math:`i\left[(H_{ij})^† M_i - M_i
+    H_{ij}\right]` when α and β are orbitals on sites :math:`i` and :math:`j`
+    respectively, and zero otherwise.
 
     The tensor :math:`J_{ijαβ}` will also be referred to as :math:`Q_{nαβ}`,
     where :math:`n` is the index of hopping :math:`(i, j)` in ``where``.

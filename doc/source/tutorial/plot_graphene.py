@@ -1,4 +1,4 @@
-# Tutorial 2.7.1. 2D example: graphene quantum dot
+# Tutorial 2.8.1. 2D example: graphene quantum dot
 # ================================================
 #
 # Physics background

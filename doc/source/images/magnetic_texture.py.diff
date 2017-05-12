@@ -1,0 +1,143 @@
+--- original
++++ modified
+@@ -11,6 +11,9 @@
+ #  - operators
+ #  - plotting vector fields
+ 
++import _defs
++from contextlib import redirect_stdout
++
+ from math import sin, cos, tanh, pi
+ import itertools
+ import numpy as np
+@@ -79,7 +82,13 @@
+     return syst
+ 
+ 
+-def plot_vector_field(syst, params):
++def save_plot(fname):
++    for extension in ('.pdf', '.png'):
++        plt.savefig(fname + extension,
++                    dpi=_defs.dpi, bbox_inches='tight')
++
++
++def plot_vector_field(syst, params, fname=None):
+     xmin, ymin = min(s.tag for s in syst.sites)
+     xmax, ymax = max(s.tag for s in syst.sites)
+     x, y = np.meshgrid(np.arange(xmin, xmax+1), np.arange(ymin, ymax+1))
+@@ -88,28 +97,38 @@
+     m_i = np.reshape(m_i, x.shape + (3,))
+     m_i = np.rollaxis(m_i, 2, 0)
+ 
+-    fig, ax = plt.subplots(1, 1)
++    fig, ax = plt.subplots(1, 1, figsize=(9, 7))
+     im = ax.quiver(x, y, *m_i, pivot='mid', scale=75)
+     fig.colorbar(im)
+-    plt.show()
++    if fname:
++        save_plot(fname)
++    else:
++        plt.show()
+ 
+ 
+-def plot_densities(syst, densities):
+-    fig, axes = plt.subplots(1, len(densities))
++def plot_densities(syst, densities, fname=None):
++    fig, axes = plt.subplots(1, len(densities), figsize=(7*len(densities), 7))
+     for ax, (title, rho) in zip(axes, densities):
+         kwant.plotter.map(syst, rho, ax=ax, a=4)
+         ax.set_title(title)
+-    plt.show()
++    if fname:
++        save_plot(fname)
++    else:
++        plt.show()
++
+ 
+ 
+-def plot_currents(syst, currents):
+-    fig, axes = plt.subplots(1, len(currents))
++def plot_currents(syst, currents, fname=None):
++    fig, axes = plt.subplots(1, len(currents), figsize=(7*len(currents), 7))
+     if not hasattr(axes, '__len__'):
+         axes = (axes,)
+     for ax, (title, current) in zip(axes, currents):
+         kwant.plotter.current(syst, current, ax=ax, colorbar=False)
+         ax.set_title(title)
+-    plt.show()
++    if fname:
++        save_plot(fname)
++    else:
++        plt.show()
+ 
+ 
+ def main():
+@@ -119,7 +138,7 @@
+     wf = kwant.wave_function(syst, energy=-1, params=params)
+     psi = wf(0)[0]
+ 
+-    plot_vector_field(syst, dict(r0=20, delta=10))
++    plot_vector_field(syst, dict(r0=20, delta=10), fname='mag_field_direction')
+ 
+     # even (odd) indices correspond to spin up (down)
+     up, down = psi[::2], psi[1::2]
+@@ -144,7 +163,7 @@
+         ('$σ_0$', density),
+         ('$σ_z$', spin_z),
+         ('$σ_y$', spin_y),
+-    ])
++    ], fname='spin_densities')
+ 
+     J_0 = kwant.operator.Current(syst)
+     J_z = kwant.operator.Current(syst, sigma_z)
+@@ -159,7 +178,7 @@
+         ('$J_{σ_0}$', current),
+         ('$J_{σ_z}$', spin_z_current),
+         ('$J_{σ_y}$', spin_y_current),
+-    ])
++    ], fname='spin_currents')
+ 
+     def following_m_i(site, r0, delta):
+         m_i = field_direction(site.pos, r0, delta)
+@@ -173,7 +192,7 @@
+     plot_currents(syst, [
+         (r'$J_{\mathbf{m}_i}$', m_current),
+         ('$J_{σ_z}$', spin_z_current),
+-    ])
++    ], fname='spin_current_comparison')
+ 
+ 
+     def circle(site):
+@@ -183,7 +202,9 @@
+ 
+     all_states = np.vstack((wf(0), wf(1)))
+     dos_in_circle = sum(rho_circle(p) for p in all_states) / (2 * pi)
+-    print('density of states in circle:', dos_in_circle)
++    with open('circle_dos.txt', 'w') as f:
++        with redirect_stdout(f):
++            print('density of states in circle:', dos_in_circle)
+ 
+     def left_cut(site_to, site_from):
+         return site_from.pos[0] <= -39 and site_to.pos[0] > -39
+@@ -197,8 +218,10 @@
+     Jz_left = kwant.operator.Current(syst, sigma_z, where=left_cut, sum=True)
+     Jz_right = kwant.operator.Current(syst, sigma_z, where=right_cut, sum=True)
+ 
+-    print('J_left:', J_left(psi), ' J_right:', J_right(psi))
+-    print('Jz_left:', Jz_left(psi), ' Jz_right:', Jz_right(psi))
++    with open('current_cut.txt', 'w') as f:
++        with redirect_stdout(f):
++            print('J_left:', J_left(psi), ' J_right:', J_right(psi))
++            print('Jz_left:', Jz_left(psi), ' Jz_right:', Jz_right(psi))
+ 
+     J_m = kwant.operator.Current(syst, following_m_i)
+     J_z = kwant.operator.Current(syst, sigma_z)
+@@ -214,7 +237,7 @@
+     plot_currents(syst, [
+         (r'$J_{\mathbf{m}_i}$ (from left)', J_m_left),
+         (r'$J_{σ_z}$ (from left)', J_z_left),
+-    ])
++    ], fname='bound_current')
+ 
+ 
+ if __name__ == '__main__':
