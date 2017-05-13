@@ -2064,7 +2064,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
         return output_fig(fig, file=file, show=show)
 
 
-def current(syst, current, relwidth=0.03, **kwargs):
+def current(syst, current, relwidth=0.05, **kwargs):
     """Show an interpolated current defined for the hoppings of a system.
 
     The system graph together with current intensities defines a "discrete"
