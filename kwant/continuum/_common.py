@@ -14,29 +14,29 @@ from operator import mul
 import numpy as np
 
 import sympy
+import sympy.abc
+import sympy.physics.quantum
 from sympy.core.function import AppliedUndef
 from sympy.core.sympify import converter
-from sympy.abc import _clash
 from sympy.physics.matrices import msigma as _msigma
-from sympy.physics.quantum import TensorProduct
 
 
 momentum_operators = sympy.symbols('k_x k_y k_z', commutative=False)
 position_operators = sympy.symbols('x y z', commutative=False)
 
-msigma = lambda i: sympy.eye(2) if i == 0 else _msigma(i)
-pauli = (msigma(0), msigma(1), msigma(2), msigma(3))
+pauli = [sympy.eye(2), _msigma(1), _msigma(2), _msigma(3)]
 
-_clash = _clash.copy()
-_clash.update({s.name: s for s in momentum_operators})
-_clash.update({s.name: s for s in position_operators})
-_clash.update({'kron': TensorProduct, 'eye': sympy.eye, 'identity': sympy.eye})
-_clash.update({'sigma_{}'.format(c): p for c, p in zip('0xyz', pauli)})
+default_subs = sympy.abc._clash.copy()
+default_subs.update({s.name: s for s in momentum_operators})
+default_subs.update({s.name: s for s in position_operators})
+default_subs.update({'kron': sympy.physics.quantum.TensorProduct,
+                     'eye': sympy.eye, 'identity': sympy.eye})
+default_subs.update({'sigma_{}'.format(c): p for c, p in zip('0xyz', pauli)})
 
 
 # workaroud for https://github.com/sympy/sympy/issues/12060
-del _clash['I']
-del _clash['pi']
+del default_subs['I']
+del default_subs['pi']
 
 
 ################  Various helpers to handle sympy
@@ -147,7 +147,7 @@ def sympify(expr, subs=None):
     stored_value = None
     sympified_types = (sympy.Expr, sympy.matrices.MatrixBase)
     if subs is None:
-        subs= {}
+        subs = {}
 
     # if ``expr`` is already a ``sympy`` object we make use of ``subs``
     # and terminate a code path.
@@ -155,16 +155,16 @@ def sympify(expr, subs=None):
         subs = {sympify(k): sympify(v) for k, v in subs.items()}
         return expr.subs(subs)
 
-    # if ``expr`` is not a sympified type then we proceed with sympifying process,
-    # we expect all keys in ``subs`` to be strings at this moment.
+    # if ``expr`` is not a sympified type then we proceed with sympifying
+    # process, we expect all keys in ``subs`` to be strings at this moment.
     if not all(isinstance(k, str) for k in subs):
         raise ValueError("If 'expr' is not already a sympy object ",
                          "then keys of 'subs' must be strings.")
 
-    # sympify values of subs before updating it with _clash
-    subs= {k: sympify(v) for k, v in subs.items()}
-    subs.update({s: v for s, v in _clash.items()
-                 if s not in subs})
+    # sympify values of subs before updating it with default_subs
+    subs = {k: sympify(v) for k, v in subs.items()}
+    for k, v in default_subs.items():
+        subs.setdefault(k, v)
     try:
         stored_value = converter.pop(list, None)
         converter[list] = lambda x: sympy.Matrix(x)
