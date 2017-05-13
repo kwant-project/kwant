@@ -208,10 +208,10 @@ def test_integer_float_input():
     }
 
     for inp, out in test.items():
-        got, _ = discretize_symbolic(int(inp), {'x', 'y', 'z'})
+        got, _ = discretize_symbolic(int(inp), 'xyz')
         assert got == out
 
-        got, _ = discretize_symbolic(float(inp), {'x', 'y', 'z'})
+        got, _ = discretize_symbolic(float(inp), 'xyz')
         assert got == out
 
     # let's test in matrix version too
@@ -223,54 +223,54 @@ def test_integer_float_input():
         new_test.append((inp, new_out))
 
     for inp, out in new_test:
-        got, _ = discretize_symbolic(sympy.Matrix([int(inp)]), {'x', 'y', 'z'})
+        got, _ = discretize_symbolic(sympy.Matrix([int(inp)]), 'xyz')
         assert got == out
 
-        got, _ = discretize_symbolic(sympy.Matrix([float(inp)]), {'x', 'y', 'z'})
+        got, _ = discretize_symbolic(sympy.Matrix([float(inp)]), 'xyz')
         assert got == out
 
 
 def test_different_discrete_coordinates():
     test = [
         (
-            {'x', 'y', 'z'}, {
+            'xyz', {
                 (1, 0, 0): -1/a**2, (0, 0, 1): -1/a**2,
                 (0, 0, 0): 6/a**2, (0, 1, 0): -1/a**2
             }
         ),
         (
-            {'x', 'y'}, {
+            'xy', {
                 (0, 1): -1/a**2,
                 (1, 0): -1/a**2,
                 (0, 0): kz**2 + 4/a**2
             }
         ),
         (
-            {'x', 'z'}, {
+            'xz', {
                 (0, 1): -1/a**2,
                 (1, 0): -1/a**2,
                 (0, 0): ky**2 + 4/a**2
             }
         ),
         (
-            {'y', 'z'}, {
+            'yz', {
                 (0, 1): -1/a**2,
                 (1, 0): -1/a**2,
                 (0, 0): kx**2 + 4/a**2
             }
         ),
         (
-            {'x'}, {
+            'x', {
                 (0,): ky**2 + kz**2 + 2/a**2, (1,): -1/a**2
             }
         ),
         (
-            {'y'}, {
+            'y', {
                 (0,): kx**2 + kz**2 + 2/a**2, (1,): -1/a**2
             }
         ),
         (
-            {'z'}, {
+            'z', {
                 (0,): ky**2 + kx**2 + 2/a**2, (1,): -1/a**2
             }
         ) ,
@@ -313,20 +313,20 @@ def test_matrix_with_zeros():
 
 def test_numeric_functions_basic_symbolic():
     for i in [0, 1, 3, 5]:
-        builder = discretize(i, {'x'})
+        builder = discretize(i, 'x')
         lat = next(iter(builder.sites()))[0]
         assert builder[lat(0)] == i
 
         p = dict(t=i)
 
         tb = {(0,): sympy.sympify("2*t"), (1,): sympy.sympify('-t')}
-        builder = build_discretized(tb, {'x'}, grid_spacing=1)
+        builder = build_discretized(tb, 'x', grid_spacing=1)
         lat = next(iter(builder.sites()))[0]
         assert 2*p['t'] == builder[lat(0)](None, **p)
         assert -p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
         tb = {(0,): sympy.sympify("0"), (1,): sympy.sympify('-1j * t')}
-        builder = build_discretized(tb, {'x'}, grid_spacing=1)
+        builder = build_discretized(tb, 'x', grid_spacing=1)
         lat = next(iter(builder.sites()))[0]
         assert -1j * p['t'] == builder[lat(0), lat(1)](None, None, **p)
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
@@ -369,26 +369,26 @@ def test_numeric_functions_with_pi():
 
 def test_numeric_functions_basic_string():
     for i in [0, 1, 3, 5]:
-        builder = discretize(i, {'x'})
+        builder = discretize(i, 'x')
         lat = next(iter(builder.sites()))[0]
         assert builder[lat(0)] == i
 
         p = dict(t=i)
 
         tb = {(0,): "2*t", (1,): "-t"}
-        builder = build_discretized(tb, {'x'}, grid_spacing=1)
+        builder = build_discretized(tb, 'x', grid_spacing=1)
         lat = next(iter(builder.sites()))[0]
         assert 2*p['t'] == builder[lat(0)](None, **p)
         assert -p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
         tb = {(0,): "0", (1,): "-1j * t"}
-        builder = build_discretized(tb, {'x'}, grid_spacing=1)
+        builder = build_discretized(tb, 'x', grid_spacing=1)
         lat = next(iter(builder.sites()))[0]
         assert -1j * p['t'] == builder[lat(0), lat(1)](None, None, **p)
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
         tb = {(0,): "0", (-1,): "+1j * t"}
-        builder = build_discretized(tb, {'x'}, grid_spacing=1)
+        builder = build_discretized(tb, 'x', grid_spacing=1)
         lat = next(iter(builder.sites()))[0]
         assert -1j * p['t'] == builder[lat(0), lat(1)](None, None, **p)
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
@@ -428,7 +428,7 @@ def test_numeric_functions_advance():
     for hamiltonian in hams:
         for a in [1, 2, 5]:
             for fA in [lambda x: x, lambda x: x**2, lambda x: x**3]:
-                symbolic, coords = discretize_symbolic(hamiltonian, {'x'})
+                symbolic, coords = discretize_symbolic(hamiltonian, 'x')
                 builder = build_discretized(symbolic, coords, grid_spacing=a)
                 lat = next(iter(builder.sites()))[0]
 
@@ -473,7 +473,7 @@ def test_numeric_functions_with_parameter():
 
     for a in [1, 2, 5]:
         for fA in [lambda c, x: x+c, lambda c, x: x**2 + c]:
-            symbolic, coords = discretize_symbolic(hamiltonian, {'x'})
+            symbolic, coords = discretize_symbolic(hamiltonian, 'x')
             builder = build_discretized(symbolic, coords, grid_spacing=a)
             lat = next(iter(builder.sites()))[0]
 

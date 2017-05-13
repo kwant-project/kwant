@@ -97,11 +97,10 @@ def discretize(hamiltonian, coords=None, *, grid_spacing=1,
         proper commutation properties. If a string is provided it will be
         converted to a sympy expression using `kwant.continuum.sympify`.
     coords : sequence of strings, or ``None`` (default)
-        Set of coordinates for which momentum operators will be treated as
-        differential operators. For example ``coords=('x', 'y')``.
-        If not provided they will be obtained from the input hamiltonian by
-        reading present coordinates and momentum operators. Order of discrete
-        coordinates is always lexical, even if provided otherwise.
+        The coordinates for which momentum operators will be treated as
+        differential operators. May contain only "x", "y" and "z" and must be
+        sorted.  If not provided, `coords` will be obtained from the input
+        Hamiltonian by reading the present coordinates and momentum operators.
     grid_spacing : int or float, default: 1
         Grid spacing for the template Builder.
     subs : dict, defaults to empty
@@ -138,11 +137,10 @@ def discretize_symbolic(hamiltonian, coords=None, *, subs=None):
         proper commutation properties. If a string is provided it will be
         converted to a sympy expression using `kwant.continuum.sympify`.
     coords : sequence of strings, or ``None`` (default)
-        Set of coordinates for which momentum operators will be treated as
-        differential operators. For example ``coords=('x', 'y')``.
-        If not provided they will be obtained from the input hamiltonian by
-        reading present coordinates and momentum operators. Order of discrete
-        coordinates is always lexical, even if provided otherwise.
+        The coordinates for which momentum operators will be treated as
+        differential operators. May contain only "x", "y" and "z" and must be
+        sorted.  If not provided, `coords` will be obtained from the input
+        Hamiltonian by reading the present coordinates and momentum operators.
     subs: dict, defaults to empty
         A namespace of substitutions to be performed on the input
         ``hamiltonian``. Values can be either strings or ``sympy`` objects.
@@ -172,10 +170,12 @@ def discretize_symbolic(hamiltonian, coords=None, *, subs=None):
         used_momenta = set(_momentum_operators) & set(atoms_names)
         coords = {k[-1] for k in used_momenta}
     else:
-        coords = set(coords)
-        if not coords <= set('xyz'):
-            msg = "Discrete coordinates must only contain 'x', 'y', or 'z'."
-            raise ValueError(msg)
+        coords = list(coords)
+        if coords != sorted(coords):
+            raise ValueError("The argument 'coords' must be sorted.")
+        if any(c not in 'xyz' for c in coords):
+            raise ValueError("The argument 'coords' may only contain "
+                             "'x', 'y', or 'z'.")
 
     coords = sorted(coords)
 
@@ -228,8 +228,9 @@ def build_discretized(tb_hamiltonian, coords, *,
         for the hoppings/onsite or expressions that can by sympified using
         `kwant.continuum.sympify`.
     coords : sequence of strings
-        Set of coordinates for which momentum operators will be treated as
-        differential operators. For example ``coords=('x', 'y')``.
+        The coordinates for which momentum operators will be treated as
+        differential operators. May contain only "x", "y" and "z" and must be
+        sorted.
     grid_spacing : int or float, default: 1
         Grid spacing for the template Builder.
     subs: dict, defaults to empty
@@ -252,7 +253,9 @@ def build_discretized(tb_hamiltonian, coords, *,
     for k, v in tb_hamiltonian.items():
         tb_hamiltonian[k] = sympify(v, subs)
 
-    coords = sorted(coords)
+    coords = list(coords)
+    if coords != sorted(coords):
+        raise ValueError("The argument 'coords' must be sorted.")
 
     tb = {}
     for n, (offset, hopping) in enumerate(tb_hamiltonian.items()):
