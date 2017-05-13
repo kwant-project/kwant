@@ -39,38 +39,35 @@ del default_subs['I']
 del default_subs['pi']
 
 
-################  Various helpers to handle sympy
+################  Helpers to handle sympy
 
+def lambdify(expr, subs=None):
+    """Return a callable object for computing a continuum Hamiltonian.
 
-def lambdify(hamiltonian, subs=None):
-    """Return a callable object for computing continuum Hamiltonian.
+    .. warning::
+        This function uses ``eval`` (because it calls ``sympy.sympify``), and
+        thus should not be used on unsanitized input.
 
     Parameters
     ----------
-    hamiltonian : sympy.Expr or sympy.Matrix, or string
-        Symbolic representation of a continous Hamiltonian. When providing
-        a sympy expression, it is recommended to use ``momentum_operators``
-        defined in `~kwant.continuum` in order to provide
-        proper commutation properties. If a string is provided it will be
-        converted to a sympy expression using `kwant.continuum.sympify`.
-    subs: dict, defaults to empty
-        A namespace of substitutions to be performed on the input
-        ``hamiltonian``. It can be used to simplify input of matrices or
-        alternate input before proceeding further. Please see examples below.
+    expr : str or SymPy expression
+        Expression to be converted into a callable object
+    subs : dict or ``None`` (default)
+        Namespace of substitutions to be performed on `expr`.
 
     Example:
     --------
-        >>> f = kwant.continuum.lambdify('a + b', subs={'b': 'b + c'})
+        >>> f = lambdify('a + b', subs={'b': 'b + c'})
         >>> f(1, 3, 5)
         9
 
-        >>> subs = {'s_z': [[1, 0], [0, -1]]}
-        >>> f = kwant.continuum.lambdify('k_z**2 * s_z', subs=subs)
-        >>> f(.25)
-        array([[ 0.0625,  0.    ],
-               [ 0.    , -0.0625]])
+        >>> subs = {'sigma_plus': [[0, 2], [0, 0]]}
+        >>> f = lambdify('k_x**2 * sigma_plus', subs)
+        >>> f(0.25)
+        array([[ 0.   ,  0.125],
+               [ 0.   ,  0.   ]])
     """
-    expr = sympify(hamiltonian, subs)
+    expr = sympify(expr, subs)
 
     args = [s.name for s in expr.atoms(sympy.Symbol)]
     args += [str(f.func) for f in expr.atoms(AppliedUndef, sympy.Function)]
@@ -97,20 +94,27 @@ def sympify(expr, subs=None):
     In addition, Python list literals are interpreted as SymPy matrices.
 
     .. warning::
-        Note that this function uses ``eval`` (because it calls
-        ``sympy.sympify``), and thus shouldn't be used on unsanitized input.
+        This function uses ``eval`` (because it calls ``sympy.sympify``), and
+        thus should not be used on unsanitized input.
 
-    If `expr` is a SymPy expression or a SymPy matrix, both the keys and values
-    of `subs` are sympified (without the above special rules) and used to to
-    perform substitution using the ``.subs`` method of `expr`.  The input
-    expression is not altered otherwise.
+    If `expr` is already a SymPy expression or a SymPy matrix, both the keys
+    and the values of `subs` are sympified (with the above special rules in
+    force) and used to to perform substitution using the ``.subs`` method of
+    `expr`.
+
+    .. note::
+        Any (part of) argument to this function that gets sympified (for
+        example the values of `subs`) may be already a SymPy object.  In this
+        case it is left unchanged.  In particular, the commutativity of its
+        terms is not altered.  This possibly confusing effect is demonstrated
+        in the last example below.
 
     Parameters
     ----------
     expr : str or SymPy expression
-        The expression to be converted to a SymPy object.
+        Expression to be converted to a SymPy object.
     subs : dict or ``None`` (default)
-        The namespace of substitutions to be performed on the input `expr`.
+        Namespace of substitutions to be performed on the input `expr`.
         If `expr` is a string, the keys must be strings as well.  Otherwise
         they may be any sympifyable object. The values must be sympifyable
         objects.
@@ -121,22 +125,23 @@ def sympify(expr, subs=None):
 
     Examples
     --------
-        >>> from kwant.continuum import sympify
         >>> sympify('k_x * A(x) * k_x + V(x)')
         k_x*A(x)*k_x + V(x)     # as valid sympy object
 
-        or
-
-        >>> from kwant.continuum import sympify
         >>> sympify('k_x**2 + V', subs={'V': 'V_0 + V(x)'})
         k_x**2 + V(x) + V_0
 
-        >>> from kwant.continuum import sympify
-        >>> sympify('k_x**2 * sigma_plus',
-        ...         subs={'sigma_plus': [[0, 2], [0, 0]]})
+        >>> subs = {'sigma_plus': [[0, 2], [0, 0]]}
+        >>> sympify('k_x**2 * sigma_plus', subs)
         Matrix([
         [0, 2*k_x**2],
         [0,        0]])
+
+        >>> sympify('k_x * A(c) * k_x', subs={'c': 'x'})
+        k_x*A(x)*k_x
+        >>> sympify('k_x * A(c) * k_x', subs={'c': sympy.Symbol('x')})
+        A(x)*k_x**2
+
     """
     stored_value = None
     sympified_types = (sympy.Expr, sympy.matrices.MatrixBase)
