@@ -85,29 +85,48 @@ def lambdify(hamiltonian, subs=None):
 
 
 def sympify(expr, subs=None):
-    """Return sympified object using special rules for Hamiltonians.
+    """Sympify object using special rules for Hamiltonians.
 
-    This is a modification of ``sympy.sympify`` that makes sure that proper
-    commutation relations between position and momentum operators are set.
-    It is also performing ``list`` to ``sympy.Matrix`` casting and assures that
-    all single and multi-letter Greek variables will be interpreted as
-    ``sympy.Symbol``, instead of built-in ``sympy`` functions.
+    If `expr` is a string, all keys in `subs` must be strings as well. In a
+    first step, all values of `subs` are sympified.  Then, `subs` is used as
+    the ``locals`` argument in an internal call to ``sympy.sympify``.  The
+    ``locals`` namespace is pre-populated such that
+
+    * the position operators "x", "y" or "z" and momentum operators "k_x",
+      "k_y", and "k_z" do not commute,
+    * all single-letter identifiers and names of greek letters (e.g. "pi" or
+      "gamma") are treated as symbols,
+    * "kron" corresponds to ``sympy.physics.quantum.TensorProduct``, and
+      "identity" to `sympy.eye`,
+    * "sigma_0", "sigma_x", "sigma_y", "sigma_z" are the Pauli matrices.
+
+    In addition, Python list literals are interpreted as SymPy matrices.
+
+    .. warning::
+        Note that this function uses ``eval`` (because it calls
+        ``sympy.sympify``), and thus shouldn't be used on unsanitized input.
+
+    If `expr` is a SymPy expression or a SymPy matrix, both the keys and values
+    of `subs` are sympified (without the above special rules) and used to to
+    perform substitution using the ``.subs`` method of `expr`.  The input
+    expression is not altered otherwise.
 
     Parameters
     ----------
-    expr : str or sympy expression
-        An expression that will be converted to a sympy object.
-        Momentum operators must be defined as ``k_x``, ``k_y``, or ``k_z`` and
-        position operators as ``x``, ``y`` or ``z``. All present momentum and
-        position operators will be interpreted as non commutative, unless they
-        are already sympy objects.
-    subs: dict, defaults to empty
-        A namespace of substitutions to be performed on the input ``expr``.
-        Keys should be strings, unless ``expr`` is already a sympy object.
-        Values can be strings or ``sympy`` objects.
+    expr : str or SymPy expression
+        The expression to be converted to a SymPy object.
+    subs : dict or ``None`` (default)
+        The namespace of substitutions to be performed on the input `expr`.
+        If `expr` is a string, the keys must be strings as well.  Otherwise
+        they may be any sympifyable object. The values must be sympifyable
+        objects.
 
-    Example
+    Returns
     -------
+    result : SymPy object
+
+    Examples
+    --------
         >>> from kwant.continuum import sympify
         >>> sympify('k_x * A(x) * k_x + V(x)')
         k_x*A(x)*k_x + V(x)     # as valid sympy object
@@ -119,22 +138,11 @@ def sympify(expr, subs=None):
         k_x**2 + V(x) + V_0
 
         >>> from kwant.continuum import sympify
-        >>> sympify('k_x**2 * s_z', substitutions={'s_z': [[1, 0], [0, -1]]})
+        >>> sympify('k_x**2 * sigma_plus',
+        ...         subs={'sigma_plus': [[0, 2], [0, 0]]})
         Matrix([
-        [k_x**2,       0],
-        [     0, -k_x**2]])
-
-    Note
-    ----
-    If input ``expr`` is already a sympy object, then all pairs of (key, val)
-    in ``subs`` dictionary will be sympified by this function and used to
-    to perform substitution using ``.subs`` method of ``sympy`` expressions.
-    Input ``expr`` itself won't be altered beyond performing substitutions.
-
-    If input ``expr`` is a string, then all keys in ``subs`` are expected to be
-    strings. All values in ``subs`` will be sympified with this function. After
-    that ``subs`` will be used as ``locals`` when calling ``sympy.sympify``
-    internally.
+        [0, 2*k_x**2],
+        [0,        0]])
     """
     stored_value = None
     sympified_types = (sympy.Expr, sympy.matrices.MatrixBase)
