@@ -87,8 +87,8 @@ def lambdify(hamiltonian, subs=None):
 def sympify(expr, subs=None):
     """Sympify object using special rules for Hamiltonians.
 
-    If `expr` is a string, all keys in `subs` must be strings as well. In a
-    first step, all values of `subs` are sympified.  Then, `subs` is used as
+    If ``expr`` is a string, all keys in ``subs`` must be strings as well. In a
+    first step, all values of ``subs`` are sympified.  Then, `subs` is used as
     the ``locals`` argument in an internal call to ``sympy.sympify``.  The
     ``locals`` namespace is pre-populated such that
 
@@ -97,7 +97,7 @@ def sympify(expr, subs=None):
     * all single-letter identifiers and names of greek letters (e.g. "pi" or
       "gamma") are treated as symbols,
     * "kron" corresponds to ``sympy.physics.quantum.TensorProduct``, and
-      "identity" to `sympy.eye`,
+      "identity" to ``sympy.eye``,
     * "sigma_0", "sigma_x", "sigma_y", "sigma_z" are the Pauli matrices.
 
     In addition, Python list literals are interpreted as SymPy matrices.
