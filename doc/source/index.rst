@@ -4,7 +4,7 @@ Kwant |release| documentation
 
 .. toctree::
    :maxdepth: 2
-   :numbered: 3
+   :numbered: 2
 
    pre/index
    tutorial/index
