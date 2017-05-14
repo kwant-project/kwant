@@ -75,13 +75,7 @@ def lambdify(hamiltonian, subs=None):
     args = [s.name for s in expr.atoms(sympy.Symbol)]
     args += [str(f.func) for f in expr.atoms(AppliedUndef, sympy.Function)]
 
-    f = sympy.lambdify(sorted(args), expr)
-
-    sig = inspect.signature(f)
-    pars = list(sig.parameters.values())
-    pars = [p.replace(kind=inspect.Parameter.KEYWORD_ONLY) for p in pars]
-    f.__signature__ = inspect.Signature(pars)
-    return f
+    return sympy.lambdify(sorted(args), expr)
 
 
 def sympify(expr, subs=None):
