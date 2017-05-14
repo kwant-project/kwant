@@ -1,13 +1,13 @@
-# Tutorial 2.9. Processing continuum Hamiltonians with discretizer
-# ================================================================
+# Tutorial 2.9. Processing continuum Hamiltonians with discretize
+# ===============================================================
 #
 # Physics background
 # ------------------
-#  - tight-binding approximation of continous Hamiltonians
+#  - tight-binding approximation of continuous Hamiltonians
 #
 # Kwant features highlighted
 # --------------------------
-#  - discretizer module from kwant.continuum
+#  - kwant.continuum.discretize
 
 
 import kwant

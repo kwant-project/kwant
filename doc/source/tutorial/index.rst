@@ -11,4 +11,4 @@ Tutorial: learning Kwant through examples
     operators
     plotting
     kpm
-    discretizer
+    discretize

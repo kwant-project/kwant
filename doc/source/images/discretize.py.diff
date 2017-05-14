@@ -2,7 +2,7 @@
 +++ modified
 @@ -9,6 +9,7 @@
  # --------------------------
- #  - discretizer module from kwant.continuum
+ #  - kwant.continuum.discretize
  
 +import _defs
  

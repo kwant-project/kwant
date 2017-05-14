@@ -18,7 +18,7 @@ continuum models and for discretizing them into tight-binding models.
 
 .. seealso::
     The complete source code of this tutorial can be found in
-    :download:`tutorial/continuum_discretizer.py <../../../tutorial/continuum_discretizer.py>`
+    :download:`tutorial/discretize.py <../../../tutorial/discretize.py>`
 
 
 .. _tutorial_discretizer_introduction:
@@ -60,7 +60,7 @@ symmetry that serves as a template.
 (We will see how to use the template to build systems with a particular
 shape later).
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_symbolic_discretization
     :end-before: #HIDDEN_END_symbolic_discretization
 
@@ -134,7 +134,7 @@ where :math:`V(x, y)` is some arbitrary potential.
 First, use ``discretize`` to obtain a
 builder that we will use as a template:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_template
     :end-before: #HIDDEN_END_template
 
@@ -142,14 +142,14 @@ We now use this system with the `~kwant.builder.Builder.fill`
 method of `~kwant.builder.Builder` to construct the system we
 want to investigate:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_fill
     :end-before: #HIDDEN_END_fill
 
 After finalizing this system, we can plot one of the system's
 energy eigenstates:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_plot_eigenstate
     :end-before: #HIDDEN_END_plot_eigenstate
 
@@ -171,19 +171,19 @@ model [1]_ [2]_, one can provide matrix input to `~kwant.continuum.discretize`
 using ``identity`` and ``kron``. For example, the definition of the BHZ model can be
 written succinctly as:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_define_qsh
     :end-before: #HIDDEN_END_define_qsh
 
 We can then make a ribbon out of this template system:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_define_qsh_build
     :end-before: #HIDDEN_END_define_qsh_build
 
 and plot its dispersion using `kwant.plotter.bands`:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_plot_qsh_band
     :end-before: #HIDDEN_END_plot_qsh_band
 
@@ -192,7 +192,7 @@ and plot its dispersion using `kwant.plotter.bands`:
 In the above we see the edge states of the quantum spin Hall effect, which
 we can visualize using `kwant.plotter.map`:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_plot_qsh_wf
     :end-before: #HIDDEN_END_plot_qsh_wf
 
@@ -233,21 +233,21 @@ example. Let us start from the continuum Hamiltonian
 We start by defining this model as a string and setting the value of the
 :math:`α` parameter:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_ls_def
     :end-before: #HIDDEN_END_ls_def
 
 Now we can use `kwant.continuum.lambdify` to obtain a function that computes
 :math:`H(k)`:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_ls_hk_cont
     :end-before: #HIDDEN_END_ls_hk_cont
 
 We can also construct a discretized approximation using
 `kwant.continuum.discretize`, in a similar manner to previous examples:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_ls_hk_tb
     :end-before: #HIDDEN_END_ls_hk_tb
 
@@ -279,7 +279,7 @@ It is possible to use ``identity`` (for identity matrix), ``kron`` (for Kronecke
 expressions involving matrices. Matrices can also be provided explicitly using
 square ``[]`` brackets. For example, all following expressions are equivalent:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_subs_1
     :end-before: #HIDDEN_END_subs_1
 
@@ -288,7 +288,7 @@ square ``[]`` brackets. For example, all following expressions are equivalent:
 We can use the ``substitutions`` keyword parameter to substitute expressions
 and numerical values:
 
-.. literalinclude:: continuum_discretizer.py
+.. literalinclude:: discretize.py
     :start-after: #HIDDEN_BEGIN_subs_2
     :end-before: #HIDDEN_END_subs_2
 
