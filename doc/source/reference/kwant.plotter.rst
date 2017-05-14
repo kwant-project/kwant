@@ -4,8 +4,8 @@
 .. module:: kwant.plotter
 
 
-Plotting routine
-----------------
+Plotting routines
+-----------------
 .. autosummary::
    :toctree: generated/
 
@@ -14,14 +14,14 @@ Plotting routine
    current
    bands
    spectrum
+   streamplot
 
-Data-generating functions
--------------------------
+Helper functions
+----------------
 .. autosummary::
    :toctree: generated/
 
    interpolate_current
-   streamplot
    sys_leads_sites
    sys_leads_hoppings
    sys_leads_pos

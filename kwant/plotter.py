@@ -1837,8 +1837,10 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
 
     Returns
     -------
-    field : value of the generated field on the grid points
-    box : the start/end points of the bounding box: ((x0, x1), (y0, y1))
+    field : n-d arraylike of float
+        n-d array of n-d vectors.
+    box : sequence of 2-sequences of float
+        the extents of `field`: ((x0, x1), (y0, y1), ...)
 
     """
     if not isinstance(syst, builder.FiniteSystem):
@@ -2002,6 +2004,63 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
                max_linewidth=3, min_linewidth=1, density=2/9,
                colorbar=True, file=None,
                show=True, dpi=None, fig_size=None, ax=None):
+    """Draw streamlines of a flow field in Kwant style
+
+    Solid colored streamlines are drawn, superimposed on a color plot of the
+    flow speed that may be disabled by setting `bgcolor`.  The width of the
+    streamlines is proportional to the flow speed.  Lines that would be thinner
+    than `min_linewidth` are blended into the background color in order to
+    create the illusion of arbitrarily thin lines.  (This is done because some
+    plot backends like PDF do not support lines of arbitrary width.)
+
+    Internally, this routine uses ``matplotlib.pyplot.streamplot``.
+
+    Parameters
+    ----------
+    field : 3d arraylike of float
+        2d array of 2d vectors.
+    box : 2-sequence of 2-sequences of float
+        the extents of `field`: ((x0, x1), (y0, y1))
+    cmap : colormap, optional
+        Colormap for the background color plot.  When not set the colormap
+        "kwant_red" is used by default, unless `bgcolor` is set.
+    bgcolor : color definition, optional
+        The solid color of the background.  Mutually exclusive with `cmap`.
+    linecolor : color definition
+        Color of the flow lines.
+    max_linewidth : float
+        Width of lines at maximum flow speed.
+    min_linewidth : float
+        Minimum width of lines before blending into the background color begins.
+    density : float
+        Number of flow lines per point of the field.  The default value is
+        chosen to show two lines per default width of the interpolation bump of
+        `~kwant.plotter.interpolate_current`.
+    colorbar : bool
+        Whether to show a colorbar if a colormap is used. Ignored if `ax` is
+        provided.
+    file : string or file object or `None`
+        The output file.  If `None`, output will be shown instead.
+    show : bool
+        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
+        to be shown immediately.  Defaults to `True`.
+    dpi : float or `None`
+        Number of pixels per inch.  If not set the ``matplotlib`` default is
+        used.
+    fig_size : tuple or `None`
+        Figure size `(width, height)` in inches.  If not set, the default
+        ``matplotlib`` value is used.
+    ax : ``matplotlib.axes.Axes`` instance or `None`
+        If `ax` is not `None`, no new figure is created, but the plot is done
+        within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
+        and `fig_size` are ignored.
+
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output if `ax` is not set, else None.
+
+    """
     if not mpl_enabled:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for current()")
@@ -2078,6 +2137,11 @@ def current(syst, current, relwidth=0.05, **kwargs):
 
     This routine samples the smoothed field on a regular (square or cubic) grid
     and displays it using an enhanced variant of matplotlib's streamplot.
+
+    This is a convenience function that is equivalent to
+    ``streamplot(*interpolate_current(syst, current, relwidth), **kwargs)``.
+    The longer form makes it possible to tweak additional options of
+    `~kwant.plotter.interpolate_current`.
 
     Parameters
     ----------
