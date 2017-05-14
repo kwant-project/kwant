@@ -11,7 +11,22 @@ The following modules of Kwant are used directly most frequently.
    kwant.lattice
    kwant.plotter
    kwant.solvers
+   kwant.operator
    kwant.physics
+
+Other modules
+=============
+
+The following modules provide functionality for special applications.
+
+.. toctree::
+   :maxdepth: 1
+
+   kwant.digest
+   kwant.rmt
+   kwant.kpm
+   kwant.continuum
+   kwant.wraparound
 
 Modules mainly for internal use
 ===============================
@@ -25,18 +40,3 @@ internally by Kwant itself or by advanced users.
    kwant.system
    kwant.graph
    kwant.linalg
-
-Miscellaneous modules
-=====================
-
-The following modules provide functionality for special applications.
-
-.. toctree::
-   :maxdepth: 1
-
-   kwant.operator
-   kwant.digest
-   kwant.rmt
-   kwant.kpm
-   kwant.continuum
-   kwant.wraparound
