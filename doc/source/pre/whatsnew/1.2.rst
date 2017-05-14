@@ -1,10 +1,10 @@
 What's new in Kwant 1.2
 =======================
 
-This article explains the user-visible changes in Kwant 1.2, released on 9
-December 2015.  Please consult the `full list of changes in Kwant
-<https://gitlab.kwant-project.org/kwant/kwant/compare/v1.2.2...stable>`_ for
-all the changes up to the most recent bugfix release.
+This article explains the user-visible changes in Kwant 1.2.2, released on 9
+December 2015.  See also the `full list of changes up to the most recent bugfix
+release of the 1.2 series
+<https://gitlab.kwant-project.org/kwant/kwant/compare/v1.2.2...latest-1.2>`_.
 
 Kwant 1.2 is identical to Kwant 1.1 except that it has been updated to run on
 Python 3.4 and above.  Bugfix releases for the 1.1 and 1.2 series will mirror
