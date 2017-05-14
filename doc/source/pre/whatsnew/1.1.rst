@@ -1,8 +1,10 @@
 What's new in Kwant 1.1
 =======================
 
-This article explains the user-visible changes in Kwant 1.1, released on 21 October 2015.
-Please consult the `full list of changes in Kwant <http://git.kwant-project.org/kwant/log/?h=stable>`_ for all the changes up to the most recent bugfix release.
+This article explains the user-visible changes in Kwant 1.1.0, released on 21
+October 2015.  See also the `full list of changes up to the most recent bugfix
+release of the 1.1 series
+<https://gitlab.kwant-project.org/kwant/kwant/compare/v1.1.0...latest-1.1>`_.
 
 Harmonize `~kwant.physics.Bands` with `~kwant.physics.modes`
 ------------------------------------------------------------
