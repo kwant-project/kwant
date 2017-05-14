@@ -99,7 +99,7 @@ def discretize(hamiltonian, coords=None, *, grid_spacing=1,
 
     Parameters
     ----------
-    hamiltonian : str, or sympy.Expr, or sympy.Matrix
+    hamiltonian : str or SymPy expression
         Symbolic representation of a continuous Hamiltonian.  It is
         converted to a SymPy expression using `kwant.continuum.sympify`.
     coords : sequence of strings, or ``None`` (default)
@@ -118,7 +118,7 @@ def discretize(hamiltonian, coords=None, *, grid_spacing=1,
 
     Returns
     -------
-    model: `~kwant.builder.Builder`
+    model : `~kwant.builder.Builder`
         The translationally symmetric builder that corresponds to the provided
         Hamiltonian.
 
@@ -143,7 +143,7 @@ def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
 
     Parameters
     ----------
-    hamiltonian : str, or sympy.Expr, or sympy.Matrix
+    hamiltonian : str or SymPy expression
         Symbolic representation of a continuous Hamiltonian.  It is
         converted to a SymPy expression using `kwant.continuum.sympify`.
     coords : sequence of strings, or ``None`` (default)

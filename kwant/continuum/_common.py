@@ -18,8 +18,10 @@ import sympy.abc
 import sympy.physics.quantum
 from sympy.core.function import AppliedUndef
 from sympy.core.sympify import converter
+from sympy.core.core import all_classes as sympy_classes
 from sympy.physics.matrices import msigma as _msigma
 
+import warnings
 
 momentum_operators = sympy.symbols('k_x k_y k_z', commutative=False)
 position_operators = sympy.symbols('x y z', commutative=False)
@@ -82,7 +84,9 @@ def lambdify(expr, locals=None):
 def sympify(expr, locals=None):
     """Sympify object using special rules for Hamiltonians.
 
-    If ``expr`` is a SymPy object, it is returned unmodified.
+    If `'expr`` is already a type that SymPy understands, it will do nothing
+    but return that value. Note that ``locals`` will not be used in this
+    situation.
 
     Otherwise, it is sympified by ``sympy.sympify`` with a modified namespace
     such that
@@ -143,12 +147,17 @@ def sympify(expr, locals=None):
 
     """
     stored_value = None
-    sympified_types = (sympy.Expr, sympy.matrices.MatrixBase)
+
+    # if ``expr`` is already a ``sympy`` object we may terminate a code path
+    if isinstance(expr, tuple(sympy_classes)):
+        if locals:
+            warnings.warn('Input expression is already SymPy object: ' +
+                          '"locals" will not be used.', RuntimeWarning)
+        return expr
+
+    # if ``expr`` is not a "sympy" then we proceed with sympifying process
     if locals is None:
         locals = {}
-
-    if isinstance(expr, sympified_types):
-        return expr
 
     for k in locals:
         if (not isinstance(k, str)
