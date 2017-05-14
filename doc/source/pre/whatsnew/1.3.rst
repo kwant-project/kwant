@@ -2,12 +2,83 @@ What's new in Kwant 1.3
 =======================
 
 This article explains the user-visible changes in Kwant 1.3.
-Please consult the `full list of changes in Kwant
-<https://gitlab.kwant-project.org/kwant/kwant/compare/v1.3.0...stable>`_ for
-all the changes up to the most recent bugfix release.
+See also the `full list of changes up to the most recent bugfix
+release of the 1.3 series
+<https://gitlab.kwant-project.org/kwant/kwant/compare/v1.3.0...latest-1.3>`_.
 
-Onsite/hopping functions can depend on different parameters
------------------------------------------------------------
+Using high-symmetry builders as models
+--------------------------------------
+Builders now have a `~kwant.builder.Builder.fill` method that fills a builder
+instance with copies of a template builder. This can be used to "cut out"
+shapes from high-symmetry models, or to increase the symmetry period of a lead.
+
+Thus Kwant gains the new concept of a "model".  Models may be created manually,
+or with the new function `kwant.continuum.discretize` (see next paragraph).
+There is also support for finalizing models and e.g. calculating their band
+structure (see `Finalizing builders with multiple translational symmetries`_).
+
+Tools for continuum Hamiltonians
+--------------------------------
+The new sub-package `~kwant.continuum` is a collection of tools for working
+with continuum models and for discretizing them into tight-binding models. It
+aims at providing a handy interface to convert symbolic Hamiltonians into a
+builder with N-D translational symmetry that can be use to calculate
+tight-binding band structures or construct systems with different/lower
+symmetry.
+
+See :doc:`../../tutorial/discretize`
+
+Calculating charges and currents using the operator module
+----------------------------------------------------------
+Often one may wish to calculate quantities that are defined over sites of
+the system (such as charge density, spin density along some axis etc),
+or over hoppings of the system (such as current or spin current). With
+the introduction of the ``operator`` module it has now become much easier
+to calculate such quantities. To obtain the regular density and current
+everywhere in a system due to a wavefunction ``psi``, one only needs to do
+the following::
+
+    syst = make_system().finalized()
+    psi = kwant.wave_function(syst)(0)[0]
+
+    # create the operators
+    Q = kwant.physics.LocalOperator(syst)
+    J = kwant.physics.Current(syst)
+
+    # evaluate the expectation value with the wavefunction
+    q = Q(psi)
+    j = J(psi)
+
+See :doc:`../../tutorial/operators`
+
+Plotting of currents
+--------------------
+Quantities defined on system hoppings (e.g. currents calculated using
+`~kwant.operator.current`) can be directly plotted as a streamplot over the
+system using `kwant.plotter.current`. This is similar to how
+`kwant.plotter.map` can be used to plot quantities defined on sites.
+
+See :doc:`../../tutorial/plotting`
+
+.. image:: ../../images/plot_qpc_current.*
+
+Scattering states with discrete symmetries and conservation laws
+----------------------------------------------------------------
+Given a lead Hamiltonian that has a conservation law, it is now possible to
+construct lead modes that have definite values of the conservation law. This
+is done by declaring projectors that block diagonalize the Hamiltonian before
+the modes are computed. For a Hamiltonian that has one or more of the three
+fundamental discrete symmetries (time-reversal symmetry, particle-hole symmetry
+and chiral symmetry), it is now possible to declare the symmetries in Kwant.
+The symmetries are then used to construct scattering states that are properly
+related by symmetry. The discrete symmetries may be combined with conservation
+laws, such that if different blocks of the Hamiltonian are related by a discrete
+symmetry, the lead modes are computed to reflect this.
+
+See the updated :doc:`../../tutorial/superconductors`
+
+Named parameters for value functions
+------------------------------------
 In Kwant < 1.3 whenever Hamiltonian values were provided as functions,
 they all had to take the same extra parameters (after the site(s))
 regardless of whether or not they actually used them at all. For example,
@@ -49,31 +120,41 @@ as opposed to the old way::
 Passing a dictionary of parameters via ``params`` is now the recommended way
 to provide parameters to the system.
 
-Calculating charges and currents using the ``operator`` module
---------------------------------------------------------------
-Often one may wish to calculate quantities that are defined over sites of
-the system (such as charge density, spin density along some axis etc),
-or over hoppings of the system (such as current or spin current). With
-the introduction of the ``operator`` module it has now become much easier
-to calculate such quantities. To calculate the regular density and current
-everywhere in a system due to a wavefunction ``psi``, one only needs to do
-the following::
+Reference implementation of the kernel polynomial method
+--------------------------------------------------------
+The kernel polynomial method is now implemented within Kwant to obtain the
+density of states or, more generally, the spectral density of a given operator
+acting on a system or Hamiltonian.
 
-    syst = make_system().finalized()
-    psi = kwant.wave_function(syst)(0)[0]
+See :doc:`../../reference/kwant.kpm`
 
-    # create the operators
-    Q = kwant.physics.LocalOperator(syst)
-    J = kwant.physics.Current(syst)
+Finalizing builders with multiple translational symmetries
+----------------------------------------------------------
+While it remains impossible to finalize a builder with more than a single
+direction of translational symmetry, the ``wraparound`` module has been added
+as a temporary work-around until the above limitation gets lifted.
 
-    # evaluate the expectation value with the wavefunction
-    q = Q(psi)
-    j = J(psi)
+The function `~kwant.wraparound.wraparound` transforms all (or all but one)
+translational symmetries of a given builder into named momentum parameters
+`k_x`, `k_y`, etc.  This makes it easy to compute transport through systems
+with periodic boundary conditions or across infinite planes.
 
-See the Kwant tutorial for more details.
+Plotting the 2-d band structure of graphene is now as straightforward as::
 
-Sites in finalized builders have consistent ordering
-----------------------------------------------------
+    from matplotlib import pyplot
+    import kwant
+
+    lat = kwant.lattice.honeycomb()
+    sym = kwant.TranslationalSymmetry(lat.vec((1, 0)), lat.vec((0, 1)))
+
+    bulk = kwant.Builder(sym)
+    bulk[ [lat.a(0, 0), lat.b(0, 0)] ] = 0
+    bulk[lat.neighbors()] = 1
+    wrapped = kwant.wraparound.wraparound(bulk).finalized()
+    kwant.wraparound.plot_2d_bands(wrapped)
+
+Consistent ordering of sites in finalized builders
+--------------------------------------------------
 In Python 3 the internal ordering of dictionaries is not deterministic. This
 meant that running a Kwant script twice would produce systems with different
 ordering of sites, which leads to non-reproducible calculations. Now, sites
@@ -88,6 +169,16 @@ system by just saying::
     h = syst.hamiltonian_submatrix()
     pyplot.plot(np.eigs(h)[1][0])
 
+attach_lead() can now handle leads with greater than nearest-neighbor hoppings
+------------------------------------------------------------------------------
+When attaching a lead with greater than nearest-neighbor hoppings, the symmetry
+period of the finalized lead is suitably extended and the unit cell size is
+increased.
+
+Pickling support
+----------------
+It is now possible to pickle and unpickle Kwant ``Builder`` and ``System``.
+
 Improved build configuration
 ----------------------------
 The name of the build configuration file, ``build.conf`` by default, is now
@@ -98,63 +189,13 @@ modify any build parameter for any of the compiled extensions contained in
 Kwant.  See the :ref:`Installation instructions <build-configuration>` for
 details.
 
-Scattering states with discrete symmetries and conservation laws
-----------------------------------------------------------------
-Given a lead Hamiltonian that has a conservation law, it is now possible to
-construct lead modes that have definite values of the conservation law. This
-is done by declaring projectors that block diagonalize the Hamiltonian before
-the modes are computed. For a Hamiltonian that has one or more of the three
-fundamental discrete symmetries (time-reversal symmetry, particle-hole symmetry
-and chiral symmetry), it is now possible to declare the symmetries in Kwant.
-The symmetries are then used to construct scattering states that are properly
-related by symmetry. The discrete symmetries may be combined with conservation
-laws, such that if different blocks of the Hamiltonian are related by a discrete
-symmetry, the lead modes are computed to reflect this.
-
-Pickling support
-----------------
-It is now possible to pickle and unpickle Kwant ``Builder`` and ``System``.
-
-Using Builders as templates with Builder.fill()
------------------------------------------------
-Builders now have a fill() method that fills the Builder with copies of
-a template Builder (passed as a parameter). This can be used to "cut out"
-shapes from high-symmetry models, or to increase the symmetry period of
-a lead.
-
-attach_lead() can now handle leads with greater than nearest-neighbor hoppings
-------------------------------------------------------------------------------
-When attaching a lead with greater than nearest-neighbor hoppings, the symmetry
-period of the finalized lead is suitably extended and the unit cell size is
-increased.
-
-Reference implementation of the Kernel Polynomial Method
---------------------------------------------------------
-The kernel polynomial method is now implemented within Kwant to obtain the
-density of states or, more generally, the spectral density of a given operator
-acting on a system or Hamiltonian.
-
-Tools for coninuum Hamiltonians
--------------------------------
-The `~kwant.continuum` sub-package is a collection of tools for working with
-continuum models and for discretizing them into tight-binding models. It aims
-at providing a handy interface to convert symbolic Hamiltonian into a builder
-with N-D translational symmetry that can be use to calculate TB band structures
-or construct systems with different/lower symmetry.
-
 Builder.neighbors() respects symmetries
 ---------------------------------------
-Given a site, the method `Builder.neighbors` returns an iterator over sites
-that are connected by a hopping to the provided site.  This is in contrast to
-previous versions of Kwant, where the neighbors were yielded not of the
-provided site, but of it's image in the fundamental domain.
+Given a site, the method `~kwant.builder.Builder.neighbors` of
+`~kwang.builder.Builder` returns an iterator over sites that are connected by a
+hopping to the provided site.  This is in contrast to previous versions of
+Kwant, where the neighbors were yielded not of the provided site, but of it's
+image in the fundamental domain.
 
 This change is documented here for completeness.  We expect that the vast
 majority of users of Kwant will not be affected by it.
-
-Plotting currents with plotter.current
---------------------------------------
-Quantities defined on system hoppings (e.g. currents calculated using
-`~kwant.operator.current`) can be directly plotted as a streamplot over the
-system using `kwant.plotter.current`. This is similar to how
-`kwant.plotter.map` can be used to plot quantities defined on sites.
