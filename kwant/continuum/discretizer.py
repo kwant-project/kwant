@@ -36,8 +36,9 @@ class _DiscretizedBuilder(builder.Builder):
     """A builder that is made from a discretized model and knows how to
     pretty-print itself."""
 
-    def __init__(self, symmetry=None, coords=[], **kwargs):
+    def __init__(self, coords, lattice, symmetry=None, **kwargs):
         super().__init__(symmetry, **kwargs)
+        self.lattice = lattice
         self._coords = coords
 
     def __str__(self):
@@ -120,8 +121,11 @@ def discretize(hamiltonian, coords=None, *, grid_spacing=1,
     -------
     model : `~kwant.builder.Builder`
         The translationally symmetric builder that corresponds to the provided
-        Hamiltonian.
-
+        Hamiltonian.  This builder instance belongs to a subclass of the
+        standard builder that may be printed to obtain the source code of the
+        value functions.  It also holds the discretization lattice (a
+        `~kwant.lattice.Monatomic` instance with lattice constant
+        `grid_spacing`) in the ``lattice`` attribute.
     """
     tb, coords = discretize_symbolic(hamiltonian, coords, locals=locals)
 
@@ -262,7 +266,11 @@ def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, locals=None):
     -------
     model : `~kwant.builder.Builder`
         The translationally symmetric builder that corresponds to the provided
-        Hamiltonian.
+        Hamiltonian.  This builder instance belongs to a subclass of the
+        standard builder that may be printed to obtain the source code of the
+        value functions.  It also holds the discretization lattice (a
+        `~kwant.lattice.Monatomic` instance with lattice constant
+        `grid_spacing`) in the ``lattice`` attribute.
 
     """
     if len(coords) == 0:
@@ -301,8 +309,8 @@ def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, locals=None):
     hoppings = {builder.HoppingKind(tuple(-i for i in d), lat): val
                 for d, val in tb.items()}
 
-    syst = _DiscretizedBuilder(lattice.TranslationalSymmetry(*prim_vecs),
-                               coords)
+    syst = _DiscretizedBuilder(coords, lat,
+                               lattice.TranslationalSymmetry(*prim_vecs))
     syst[lat(*onsite_zeros)] = onsite
     for hop, val in hoppings.items():
         syst[hop] = val

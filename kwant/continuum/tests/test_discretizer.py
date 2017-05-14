@@ -308,6 +308,7 @@ def test_numeric_functions_basic_symbolic():
     for i in [0, 1, 3, 5]:
         builder = discretize(i, 'x')
         lat = next(iter(builder.sites()))[0]
+        assert builder.lattice is lat
         assert builder[lat(0)] == i
 
         p = dict(t=i)
