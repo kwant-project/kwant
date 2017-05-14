@@ -192,7 +192,7 @@ details.
 Builder.neighbors() respects symmetries
 ---------------------------------------
 Given a site, the method `~kwant.builder.Builder.neighbors` of
-`~kwang.builder.Builder` returns an iterator over sites that are connected by a
+`~kwant.builder.Builder` returns an iterator over sites that are connected by a
 hopping to the provided site.  This is in contrast to previous versions of
 Kwant, where the neighbors were yielded not of the provided site, but of it's
 image in the fundamental domain.
