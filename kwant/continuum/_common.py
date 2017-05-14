@@ -111,10 +111,10 @@ def sympify(expr, locals=None):
         Expression to be converted to a SymPy object.
     locals : dict or ``None`` (default)
         Additional entries for the namespace under which `expr` is sympified.
-        The keys must be valid Python identifiers and may not be Python
-        keywords.  The values may be strings, since they are all are sent
-        through `continuum.sympify` themselves before use.  (Note that this is
-        a difference to how ``sympy.sympify`` behaves.)
+        The keys must be valid Python variable names.  The values may be
+        strings, since they are all are sent through `continuum.sympify`
+        themselves before use.  (Note that this is a difference to how
+        ``sympy.sympify`` behaves.)
 
         .. note::
             When a value of `locals` is already a SymPy object, it is used
