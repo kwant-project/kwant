@@ -15,6 +15,16 @@ information is mostly of interest to contributors and packagers.
 Generic instructions
 ********************
 
+Obtaining the source code
+=========================
+
+Source distributions of Kwant (and Tinyarray) are available at the `downloads
+section of the Kwant website <https://downloads.kwant-project.org/kwant/>`_ as well
+as `PyPI <https://pypi.python.org/pypi/kwant>`_.  The sources may be also
+cloned directly from the `official Kwant git repository
+<https://gitlab.kwant-project.org/kwant/kwant>`_.
+
+
 Prerequisites
 =============
 
