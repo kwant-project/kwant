@@ -14,7 +14,6 @@ import pytest
 
 import sympy
 
-from .._common import sympify
 from ..discretizer import discretize
 from ..discretizer import discretize_symbolic
 from ..discretizer import build_discretized
@@ -134,7 +133,7 @@ def test_simple_derivations(commutative):
         assert got == out
 
     for inp, out in test.items():
-        got, _ = discretize_symbolic(str(inp), subs=ns)
+        got, _ = discretize_symbolic(str(inp), locals=ns)
         assert got == out
 
 
@@ -146,14 +145,8 @@ def test_simple_derivations(commutative):
     ('x + y + z', '1 + 3 + 5', {'x': 1, 'y': 3, 'z': 5}),
 ])
 def test_simple_derivations_with_subs(e_to_subs, e, subs):
-    # check with strings
-    one = discretize_symbolic(e_to_subs, 'xyz', subs=subs)
+    one = discretize_symbolic(e_to_subs, 'xyz', locals=subs)
     two = discretize_symbolic(e, 'xyz')
-    assert one == two
-
-    # check with sympy objects
-    one = discretize_symbolic(sympify(e_to_subs), 'xyz', subs=subs)
-    two = discretize_symbolic(sympify(e), 'xyz')
     assert one == two
 
 
@@ -191,11 +184,11 @@ def test_simple_derivations_matrix():
         assert got == out
 
     for inp, out in new_test:
-        got, _ = discretize_symbolic(str(inp), subs=ns)
+        got, _ = discretize_symbolic(str(inp), locals=ns)
         assert got == out
 
     for inp, out in new_test:
-        got, _ = discretize_symbolic(str(inp).replace('Matrix', ''), subs=ns)
+        got, _ = discretize_symbolic(str(inp).replace('Matrix', ''), locals=ns)
         assert got == out
 
 
@@ -400,7 +393,7 @@ def test_numeric_functions_basic_string():
 def test_numeric_functions_with_subs(e_to_subs, e, subs):
     p = {'A': 1, 'B': 2}
     builder_direct = discretize(e)
-    builder_subs = discretize(e_to_subs, subs=subs)
+    builder_subs = discretize(e_to_subs, locals=subs)
 
     lat = next(iter(builder_direct.sites()))[0]
     assert builder_direct[lat(0)](None, **p) == builder_subs[lat(0)](None, **p)

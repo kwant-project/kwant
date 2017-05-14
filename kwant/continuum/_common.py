@@ -7,7 +7,7 @@
 # http://kwant-project.org/authors.
 
 import functools
-import inspect
+import keyword
 from collections import defaultdict
 from operator import mul
 
@@ -26,48 +26,52 @@ position_operators = sympy.symbols('x y z', commutative=False)
 
 pauli = [sympy.eye(2), _msigma(1), _msigma(2), _msigma(3)]
 
-default_subs = sympy.abc._clash.copy()
-default_subs.update({s.name: s for s in momentum_operators})
-default_subs.update({s.name: s for s in position_operators})
-default_subs.update({'kron': sympy.physics.quantum.TensorProduct,
-                     'eye': sympy.eye, 'identity': sympy.eye})
-default_subs.update({'sigma_{}'.format(c): p for c, p in zip('0xyz', pauli)})
+extra_ns = sympy.abc._clash.copy()
+extra_ns.update({s.name: s for s in momentum_operators})
+extra_ns.update({s.name: s for s in position_operators})
+extra_ns.update({'kron': sympy.physics.quantum.TensorProduct,
+                 'eye': sympy.eye, 'identity': sympy.eye})
+extra_ns.update({'sigma_{}'.format(c): p for c, p in zip('0xyz', pauli)})
 
 
 # workaroud for https://github.com/sympy/sympy/issues/12060
-del default_subs['I']
-del default_subs['pi']
+del extra_ns['I']
+del extra_ns['pi']
 
 
 ################  Helpers to handle sympy
 
-def lambdify(expr, subs=None):
+def lambdify(expr, locals=None):
     """Return a callable object for computing a continuum Hamiltonian.
 
     .. warning::
         This function uses ``eval`` (because it calls ``sympy.sympify``), and
         thus should not be used on unsanitized input.
 
+    If necessary, the given expression is sympified using
+    `kwant.continuum.sympify`.  It is then converted into a callable object.
+
     Parameters
     ----------
     expr : str or SymPy expression
         Expression to be converted into a callable object
-    subs : dict or ``None`` (default)
-        Namespace of substitutions to be performed on `expr`.
+    locals : dict or ``None`` (default)
+        Additional definitions for `~kwant.continuum.sympify`.
 
     Example:
     --------
-        >>> f = lambdify('a + b', subs={'b': 'b + c'})
+        >>> f = lambdify('a + b', locals={'b': 'b + c'})
         >>> f(1, 3, 5)
         9
 
-        >>> subs = {'sigma_plus': [[0, 2], [0, 0]]}
-        >>> f = lambdify('k_x**2 * sigma_plus', subs)
+        >>> ns = {'sigma_plus': [[0, 2], [0, 0]]}
+        >>> f = lambdify('k_x**2 * sigma_plus', ns)
         >>> f(0.25)
         array([[ 0.   ,  0.125],
                [ 0.   ,  0.   ]])
+
     """
-    expr = sympify(expr, subs)
+    expr = sympify(expr, locals)
 
     args = [s.name for s in expr.atoms(sympy.Symbol)]
     args += [str(f.func) for f in expr.atoms(AppliedUndef, sympy.Function)]
@@ -75,17 +79,17 @@ def lambdify(expr, subs=None):
     return sympy.lambdify(sorted(args), expr)
 
 
-def sympify(expr, subs=None):
+def sympify(expr, locals=None):
     """Sympify object using special rules for Hamiltonians.
 
-    If ``expr`` is a string, all keys in ``subs`` must be strings as well. In a
-    first step, all values of ``subs`` are sympified.  Then, `subs` is used as
-    the ``locals`` argument in an internal call to ``sympy.sympify``.  The
-    ``locals`` namespace is pre-populated such that
+    If ``expr`` is a SymPy object, it is returned unmodified.
+
+    Otherwise, it is sympified by ``sympy.sympify`` with a modified namespace
+    such that
 
     * the position operators "x", "y" or "z" and momentum operators "k_x",
       "k_y", and "k_z" do not commute,
-    * all single-letter identifiers and names of greek letters (e.g. "pi" or
+    * all single-letter identifiers and names of Greek letters (e.g. "pi" or
       "gamma") are treated as symbols,
     * "kron" corresponds to ``sympy.physics.quantum.TensorProduct``, and
       "identity" to ``sympy.eye``,
@@ -97,27 +101,22 @@ def sympify(expr, subs=None):
         This function uses ``eval`` (because it calls ``sympy.sympify``), and
         thus should not be used on unsanitized input.
 
-    If `expr` is already a SymPy expression or a SymPy matrix, both the keys
-    and the values of `subs` are sympified (with the above special rules in
-    force) and used to to perform substitution using the ``.subs`` method of
-    `expr`.
-
-    .. note::
-        Any (part of) argument to this function that gets sympified (for
-        example the values of `subs`) may be already a SymPy object.  In this
-        case it is left unchanged.  In particular, the commutativity of its
-        terms is not altered.  This possibly confusing effect is demonstrated
-        in the last example below.
-
     Parameters
     ----------
     expr : str or SymPy expression
         Expression to be converted to a SymPy object.
-    subs : dict or ``None`` (default)
-        Namespace of substitutions to be performed on the input `expr`.
-        If `expr` is a string, the keys must be strings as well.  Otherwise
-        they may be any sympifyable object. The values must be sympifyable
-        objects.
+    locals : dict or ``None`` (default)
+        Additional entries for the namespace under which `expr` is sympified.
+        The keys must be valid Python identifiers and may not be Python
+        keywords.  The values may be strings, since they are all are sent
+        through `continuum.sympify` themselves before use.  (Note that this is
+        a difference to how ``sympy.sympify`` behaves.)
+
+        .. note::
+            When a value of `locals` is already a SymPy object, it is used
+            as-is, and the caller is responsible to set the commutativity of
+            its symbols appropriately.  This possible source of errors is
+            demonstrated in the last example below.
 
     Returns
     -------
@@ -128,46 +127,44 @@ def sympify(expr, subs=None):
         >>> sympify('k_x * A(x) * k_x + V(x)')
         k_x*A(x)*k_x + V(x)     # as valid sympy object
 
-        >>> sympify('k_x**2 + V', subs={'V': 'V_0 + V(x)'})
+        >>> sympify('k_x**2 + V', locals={'V': 'V_0 + V(x)'})
         k_x**2 + V(x) + V_0
 
-        >>> subs = {'sigma_plus': [[0, 2], [0, 0]]}
-        >>> sympify('k_x**2 * sigma_plus', subs)
+        >>> ns = {'sigma_plus': [[0, 2], [0, 0]]}
+        >>> sympify('k_x**2 * sigma_plus', ns)
         Matrix([
         [0, 2*k_x**2],
         [0,        0]])
 
-        >>> sympify('k_x * A(c) * k_x', subs={'c': 'x'})
+        >>> sympify('k_x * A(c) * k_x', locals={'c': 'x'})
         k_x*A(x)*k_x
-        >>> sympify('k_x * A(c) * k_x', subs={'c': sympy.Symbol('x')})
+        >>> sympify('k_x * A(c) * k_x', locals={'c': sympy.Symbol('x')})
         A(x)*k_x**2
 
     """
     stored_value = None
     sympified_types = (sympy.Expr, sympy.matrices.MatrixBase)
-    if subs is None:
-        subs = {}
+    if locals is None:
+        locals = {}
 
-    # if ``expr`` is already a ``sympy`` object we make use of ``subs``
-    # and terminate a code path.
     if isinstance(expr, sympified_types):
-        subs = {sympify(k): sympify(v) for k, v in subs.items()}
-        return expr.subs(subs)
+        return expr
 
-    # if ``expr`` is not a sympified type then we proceed with sympifying
-    # process, we expect all keys in ``subs`` to be strings at this moment.
-    if not all(isinstance(k, str) for k in subs):
-        raise ValueError("If 'expr' is not already a sympy object ",
-                         "then keys of 'subs' must be strings.")
+    for k in locals:
+        if (not isinstance(k, str)
+            or not k.isidentifier() or keyword.iskeyword(k)):
+            raise ValueError(
+                "Invalid key in 'locals': {}\nKeys must be "
+                "identifiers and may not be keywords".format(repr(k)))
 
-    # sympify values of subs before updating it with default_subs
-    subs = {k: sympify(v) for k, v in subs.items()}
-    for k, v in default_subs.items():
-        subs.setdefault(k, v)
+    # sympify values of locals before updating it with extra_ns
+    locals = {k: sympify(v) for k, v in locals.items()}
+    for k, v in extra_ns.items():
+        locals.setdefault(k, v)
     try:
         stored_value = converter.pop(list, None)
         converter[list] = lambda x: sympy.Matrix(x)
-        hamiltonian = sympy.sympify(expr, locals=subs)
+        hamiltonian = sympy.sympify(expr, locals=locals)
         # if input is for example ``[[k_x * A(x) * k_x]]`` after the first
         # sympify we are getting list of sympy objects, so we call sympify
         # second time to obtain ``sympy`` matrices.
@@ -195,8 +192,7 @@ def make_commutative(expr, *symbols):
     input expression with all specified symbols changed to commutative.
     """
     symbols = [sympy.Symbol(s.name, commutative=False) for s in symbols]
-    subs = {s: sympy.Symbol(s.name) for s in symbols}
-    expr = expr.subs(subs)
+    expr = expr.subs({s: sympy.Symbol(s.name) for s in symbols})
     return expr
 
 

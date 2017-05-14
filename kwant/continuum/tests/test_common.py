@@ -53,15 +53,21 @@ def test_sympify(input_expr, output_expr):
     ('A', msigma(2), {'A': "[[0, -1j], [1j, 0]]"}),
 ])
 def test_sympify_substitutions(input_expr, output_expr, subs):
-    assert sympify(input_expr, subs=subs) == output_expr
-    assert sympify(sympify(input_expr), subs=subs) == output_expr
+    assert sympify(input_expr, locals=subs) == output_expr
 
     subs = {k: sympify(v) for k, v in subs.items()}
-    assert sympify(input_expr, subs=subs) == output_expr
-    assert sympify(sympify(input_expr), subs=subs) == output_expr
+    assert sympify(input_expr, locals=subs) == output_expr
 
-    subs = {sympify(k): sympify(v) for k, v in subs.items()}
-    assert sympify(sympify(input_expr), subs=subs) == output_expr
+
+@pytest.mark.parametrize('subs', [
+    {1: 2},
+    {'1': 2},
+    {'for': 33},
+    {'x': 1, '1j': 7}
+])
+def test_sympify_invalid_substitutions(subs):
+    with pytest.raises(ValueError):
+        sympify('x + y', locals=subs)
 
 
 @pytest.mark.parametrize('input_expr, output_expr, subs', [
@@ -74,10 +80,10 @@ def test_sympify_substitutions(input_expr, output_expr, subs):
 
 ])
 def test_sympify_mix_symbol_and_matrx(input_expr, output_expr, subs):
-    assert sympify(input_expr, subs=subs) == output_expr
+    assert sympify(input_expr, locals=subs) == output_expr
 
     subs = {k: sympify(v) for k, v in subs.items()}
-    assert sympify(input_expr, subs=subs) == output_expr
+    assert sympify(input_expr, locals=subs) == output_expr
 
 
 A, B, non_x = sympy.symbols('A B x', commutative=False)
@@ -173,11 +179,11 @@ def test_lambdify(e, should_be, kwargs):
 
 @pytest.mark.parametrize("e, kwargs", [
     ("x + y", dict(x=1, y=3, z=5)),
-    (sympify("x+y"), dict(x=1, y=3, z=5)),
+    (sympify("x+y+z"), dict(x=1, y=3, z=5)),
 ])
 def test_lambdify_substitutions(e, kwargs):
     should_be = lambda x, y, z: x + y + z
     subs = {'y': 'y + z'}
 
-    e = lambdify(e, subs=subs)
+    e = lambdify(e, locals=subs)
     assert e(**kwargs) == should_be(**kwargs)

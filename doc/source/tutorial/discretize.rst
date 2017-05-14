@@ -285,7 +285,7 @@ square ``[]`` brackets. For example, all following expressions are equivalent:
 
 .. literalinclude:: ../images/discretizer_subs_1.txt
 
-We can use the ``substitutions`` keyword parameter to substitute expressions
+We can use the ``locals`` keyword parameter to substitute expressions
 and numerical values:
 
 .. literalinclude:: discretize.py

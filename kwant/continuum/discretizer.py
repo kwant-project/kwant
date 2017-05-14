@@ -81,8 +81,13 @@ class _DiscretizedBuilder(builder.Builder):
 ################ Interface functions
 
 def discretize(hamiltonian, coords=None, *, grid_spacing=1,
-               subs=None):
+               locals=None):
     """Construct a tight-binding model from a continuum Hamiltonian.
+
+    If necessary, the given Hamiltonian is sympified using
+    `kwant.continuum.sympify`.  It is then discretized symbolically and turned
+    into a `~kwant.builder.Builder` instance that may be used with
+    `~kwant.builder.Builder.fill`.
 
     This is a convenience function that is equivalent to first calling
     `~kwant.continuum.discretize_symbolic` and feeding its result into
@@ -94,8 +99,8 @@ def discretize(hamiltonian, coords=None, *, grid_spacing=1,
 
     Parameters
     ----------
-    hamiltonian : string, or sympy.Expr, or sympy.Matrix
-        Symbolic representation of a continous Hamiltonian.  It is
+    hamiltonian : str, or sympy.Expr, or sympy.Matrix
+        Symbolic representation of a continuous Hamiltonian.  It is
         converted to a SymPy expression using `kwant.continuum.sympify`.
     coords : sequence of strings, or ``None`` (default)
         The coordinates for which momentum operators will be treated as
@@ -104,31 +109,33 @@ def discretize(hamiltonian, coords=None, *, grid_spacing=1,
         Hamiltonian by reading the present coordinates and momentum operators.
     grid_spacing : int or float, default: 1
         Spacing of the (quadratic or cubic) discretization grid.
-    subs : dict or ``None`` (default)
-        A namespace of substitutions to be performed on `hamiltonian`. See
-        `kwant.continuum.sympify` for details. May be used to simplify input of
-        matrices or alternate input before proceeding further. For example:
-        ``subs={'k': 'k_x + I * k_y'}`` or
-        ``subs={'sigma_plus': [[0, 2], [0, 0]]}``.
+    locals : dict or ``None`` (default)
+        Additional namespace entries for `~kwant.continuum.sympify`.  May be
+        used to simplify input of matrices or modify input before proceeding
+        further. For example:
+        ``locals={'k': 'k_x + I * k_y'}`` or
+        ``locals={'sigma_plus': [[0, 2], [0, 0]]}``.
 
     Returns
     -------
     model: `~kwant.builder.Builder`
         The translationally symmetric builder that corresponds to the provided
-        Hamiltonian.  It may be passed directly into the method
-        `~kwant.builder.Builder.fill` of a builder to construct a system of a
-        desired shape.
+        Hamiltonian.
+
     """
-    tb, coords = discretize_symbolic(hamiltonian, coords, subs=subs)
+    tb, coords = discretize_symbolic(hamiltonian, coords, locals=locals)
 
     return build_discretized(tb, coords, grid_spacing=grid_spacing)
 
 
-def discretize_symbolic(hamiltonian, coords=None, *, subs=None):
+def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
     """Discretize a continuous Hamiltonian into a tight-binding representation.
 
-    The two objects returned by this function may be used directly as the first
-    two arguments for `~kwant.continuum.build_discretized`.
+    If necessary, the given Hamiltonian is sympified using
+    `kwant.continuum.sympify`.  It is then discretized symbolically.
+
+    The two return values may be used directly as the first two arguments for
+    `~kwant.continuum.build_discretized`.
 
     .. warning::
         This function uses ``eval`` (because it calls ``sympy.sympify``), and
@@ -136,20 +143,20 @@ def discretize_symbolic(hamiltonian, coords=None, *, subs=None):
 
     Parameters
     ----------
-    hamiltonian : string, or sympy.Expr, or sympy.Matrix
-        Symbolic representation of a continous Hamiltonian.  It is
-        converted to a sympy expression using `kwant.continuum.sympify`.
+    hamiltonian : str, or sympy.Expr, or sympy.Matrix
+        Symbolic representation of a continuous Hamiltonian.  It is
+        converted to a SymPy expression using `kwant.continuum.sympify`.
     coords : sequence of strings, or ``None`` (default)
         The coordinates for which momentum operators will be treated as
         differential operators. May contain only "x", "y" and "z" and must be
         sorted.  If not provided, `coords` will be obtained from the input
         Hamiltonian by reading the present coordinates and momentum operators.
-    subs : dict, defaults to empty
-        A namespace of substitutions to be performed on `hamiltonian`. See
-        `kwant.continuum.sympify` for details. May be used to simplify input of
-        matrices or alternate input before proceeding further. For example:
-        ``subs={'k': 'k_x + I * k_y'}`` or
-        ``subs={'sigma_plus': [[0, 2], [0, 0]]}``.
+    locals : dict or ``None`` (default)
+        Additional namespace entries for `~kwant.continuum.sympify`.  May be
+        used to simplify input of matrices or modify input before proceeding
+        further. For example:
+        ``locals={'k': 'k_x + I * k_y'}`` or
+        ``locals={'sigma_plus': [[0, 2], [0, 0]]}``.
 
     Returns
     -------
@@ -160,7 +167,7 @@ def discretize_symbolic(hamiltonian, coords=None, *, subs=None):
         The coordinates that have been discretized.
 
     """
-    hamiltonian = sympify(hamiltonian, subs)
+    hamiltonian = sympify(hamiltonian, locals)
 
     atoms_names = [s.name for s in hamiltonian.atoms(sympy.Symbol)]
     if any( s == 'a' for s in atoms_names):
@@ -215,8 +222,13 @@ def discretize_symbolic(hamiltonian, coords=None, *, subs=None):
     return tb, coords
 
 
-def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, subs=None):
+def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, locals=None):
     """Create a template builder from a symbolic tight-binding Hamiltonian.
+
+    The provided symbolic tight-binding Hamiltonian is put on a (hyper) square
+    lattice and turned into Python functions.  These functions are used to
+    create a `~kwant.builder.Builder` instance that may be used with
+    `~kwant.builder.Builder.fill` to construct a system of a desired shape.
 
     The return values of `~kwant.continuum.discretize_symbolic` may be used
     directly for the first two arguments of this function.
@@ -238,27 +250,26 @@ def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, subs=None):
         sorted.
     grid_spacing : int or float, default: 1
         Spacing of the (quadratic or cubic) discretization grid.
-    subs : dict, defaults to empty
-        A namespace of substitutions to be performed on the values of
-        `tb_hamiltonian`. See `kwant.continuum.sympify` for details. May be
-        used to simplify input of matrices or alternate input before proceeding
-        further. For example: ``subs={'k': 'k_x + I * k_y'}`` or
-        ``subs={'sigma_plus': [[0, 2], [0, 0]]}``.
+    locals : dict, defaults to empty
+        Additional namespace entries for the calls of
+        `~kwant.continuum.sympify` on the values of `tb_hamiltonian`.  May be
+        used to simplify input of matrices or modify input before proceeding
+        further. For example:
+        ``locals={'k': 'k_x + I * k_y'}`` or
+        ``locals={'sigma_plus': [[0, 2], [0, 0]]}``.
 
     Returns
     -------
     model : `~kwant.builder.Builder`
         The translationally symmetric builder that corresponds to the provided
-        Hamiltonian.  It may be passed directly into the method
-        `~kwant.builder.Builder.fill` of a builder to construct a system of a
-        desired shape.
+        Hamiltonian.
 
     """
     if len(coords) == 0:
         raise ValueError('Discrete coordinates cannot be empty.')
 
     for k, v in tb_hamiltonian.items():
-        tb_hamiltonian[k] = sympify(v, subs)
+        tb_hamiltonian[k] = sympify(v, locals)
 
     coords = list(coords)
     if coords != sorted(coords):

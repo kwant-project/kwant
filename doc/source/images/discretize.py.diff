@@ -67,7 +67,7 @@
  
  def substitutions():
 @@ -173,15 +184,18 @@
-         sympify('k_x**2 * sz + alpha * k_x * sx', subs=subs),
+         sympify('k_x**2 * sz + alpha * k_x * sx', locals=subs),
      )
  
 -    print(e[0] == e[1] == e[2])
@@ -75,9 +75,9 @@
 +        print(e[0] == e[1] == e[2], file=f)
  
      subs = {'A': 'A(x) + B', 'V': 'V(x) + V_0', 'C': 5}
--    print(sympify('k_x * A * k_x + V + C', subs=subs))
+-    print(sympify('k_x * A * k_x + V + C', locals=subs))
 +    with open('discretizer_subs_2.txt', 'w') as f:
-+        print(sympify('k_x * A * k_x + V + C', subs=subs), file=f)
++        print(sympify('k_x * A * k_x + V + C', locals=subs), file=f)
  
  
  def main():
