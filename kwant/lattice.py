@@ -7,7 +7,7 @@
 # http://kwant-project.org/authors.
 
 __all__ = ['TranslationalSymmetry', 'general', 'Polyatomic', 'Monatomic',
-           'chain', 'square', 'triangular', 'honeycomb', 'kagome']
+           'chain', 'square', 'cubic', 'triangular', 'honeycomb', 'kagome']
 
 from math import sqrt
 from itertools import product
@@ -743,6 +743,12 @@ def chain(a=1, name='', norbs=None):
 def square(a=1, name='', norbs=None):
     """Make a square lattice."""
     return Monatomic(((a, 0), (0, a)), name=name, norbs=norbs)
+
+
+def cubic(a=1, name='', norbs=None):
+    """Make a cubic lattice."""
+    return Monatomic(((a, 0, 0), (0, a, 0), (0, 0, a)),
+                     name=name, norbs=norbs)
 
 
 tri = ta.array(((1, 0), (0.5, 0.5 * sqrt(3))))

@@ -20,6 +20,7 @@ Library of lattices
 
    chain
    square
+   cubic
    triangular
    honeycomb
    kagome
