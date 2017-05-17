@@ -1349,9 +1349,11 @@ class Builder:
                 done.append(tail)
                 if len(done) > max_sites:
                     # The graph has unbalanced edges: delete it.
-                    del self.H
+                    self.H = {}
+                    self.leads = []
                     raise RuntimeError("Maximal number of sites (max_sites "
-                                       "parameter of fill()) added.")
+                                       "parameter of fill()) added.\n"
+                                       "All sites have been deleted.")
 
                 # Make an iterator over head-value-pairs.
                 shift = templ_sym.which(tail)
@@ -1497,8 +1499,10 @@ class Builder:
         def shape(site):
             domain, = sym.which(site)
             if domain < min_dom:
+                self.H = {}
                 raise ValueError('Builder does not interrupt the lead,'
-                                 ' this lead cannot be attached.')
+                                 ' this lead cannot be attached.\n'
+                                 'All sites have been deleted.')
             return domain <= max_dom + 1
 
         # We start flood-fill from the first domain that doesn't belong to the
