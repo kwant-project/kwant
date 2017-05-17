@@ -703,6 +703,7 @@ def test_fill():
         with raises(ValueError):
             target.fill(template_1d, lambda site: True, g(0, 0),
                         max_sites=max_sites)
+        assert len(list(target.sites())) == 0
     target = builder.Builder()
     with raises(RuntimeError):
         target.fill(template_1d, line_200, g(0, 0) , max_sites=10)

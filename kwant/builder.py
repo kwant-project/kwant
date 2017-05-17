@@ -1314,88 +1314,99 @@ class Builder:
             if start and not isinstance(start[0], Site):
                 start = [template.closest(start)]
 
-        # "Active" are sites (mapped to the target's FD) that have been
-        # verified to lie inside the shape, have been added to the target (with
-        # `None` as value), but yet without their hoppings.
-        active = set()
-        congested = True
-        for s in start:
-            s = to_fd(s)
-            if overwrite or s not in H:
-                congested = False
-                if shape(s):
-                    active.add(s)
-                    H.setdefault(s, [s, None])
+        try:
+            # "Active" are sites (mapped to the target's FD) that have been
+            # verified to lie inside the shape, have been added to the target
+            # (with `None` as value), but yet without their hoppings.
+            active = set()
+            congested = True
+            for s in start:
+                s = to_fd(s)
+                if overwrite or s not in H:
+                    congested = False
+                    if shape(s):
+                        active.add(s)
+                        H.setdefault(s, [s, None])
 
-        if not active:
-            if congested:
-                warnings.warn("fill(): The target builder already contains all "
-                              "starting sites.", RuntimeWarning, stacklevel=2)
-            else:
-                warnings.warn("fill(): None of the starting sites is in the "
-                              "desired shape", RuntimeWarning, stacklevel=2)
-            return []
+            if not active:
+                if congested:
+                    warnings.warn("fill(): The target builder already contains "
+                                  "all starting sites.", RuntimeWarning,
+                                  stacklevel=2)
+                else:
+                    warnings.warn("fill(): None of the starting sites is in "
+                                  "the desired shape",
+                                  RuntimeWarning, stacklevel=2)
+                return []
 
-        done = []
-        old_active = set()
-        new_active = set()
+            done = []
+            old_active = set()
+            new_active = set()
 
-        # Flood-fill on the graph.  We work site by site, writing all the
-        # outgoing edges.
-        while active:
-            old_active.update(active)
+            # Flood-fill on the graph.  We work site by site, writing all the
+            # outgoing edges.
+            while active:
+                old_active.update(active)
 
-            for tail in active:
-                done.append(tail)
-                if len(done) > max_sites:
-                    # The graph has unbalanced edges: delete it.
-                    self.H = {}
-                    self.leads = []
-                    raise RuntimeError("Maximal number of sites (max_sites "
-                                       "parameter of fill()) added.\n"
-                                       "All sites have been deleted.")
+                for tail in active:
+                    done.append(tail)
+                    if len(done) > max_sites:
+                        raise RuntimeError("Maximal number of sites (max_sites "
+                                           "parameter of fill()) added.")
 
-                # Make an iterator over head-value-pairs.
-                shift = templ_sym.which(tail)
-                templ_hvhv = template.H[templ_sym.act(-shift, tail)]
-                templ_hvhv = iter(templ_hvhv)
-                templ_hvhv = iter(zip(templ_hvhv, templ_hvhv))
+                    # Make an iterator over head-value-pairs.
+                    shift = templ_sym.which(tail)
+                    templ_hvhv = template.H[templ_sym.act(-shift, tail)]
+                    templ_hvhv = iter(templ_hvhv)
+                    templ_hvhv = iter(zip(templ_hvhv, templ_hvhv))
 
-                hvhv = H[tail]
-                hvhv[1] = next(templ_hvhv)[1]
-                old_heads = hvhv[2::2]
+                    hvhv = H[tail]
+                    hvhv[1] = next(templ_hvhv)[1]
+                    old_heads = hvhv[2::2]
 
-                # The remaining pairs are the heads and their associated values.
-                for head, value in templ_hvhv:
-                    head = templ_sym.act(shift, head)
-                    head_fd = to_fd(head)
+                    # The remaining pairs are the heads and their associated
+                    # values.
+                    for head, value in templ_hvhv:
+                        head = templ_sym.act(shift, head)
+                        head_fd = to_fd(head)
 
-                    if head_fd not in old_active and head_fd not in new_active:
-                        # The 'head' site has not been filled yet.
-                        if not shape(head_fd):
-                            continue
+                        if (head_fd not in old_active
+                            and head_fd not in new_active):
+                            # The 'head' site has not been filled yet.
+                            if not shape(head_fd):
+                                continue
 
-                        if overwrite or head_fd not in H:
-                            # Fill 'head' site.
-                            new_active.add(head_fd)
-                            H.setdefault(head_fd, [head_fd, None])
+                            if overwrite or head_fd not in H:
+                                # Fill 'head' site.
+                                new_active.add(head_fd)
+                                H.setdefault(head_fd, [head_fd, None])
+                            else:
+                                # The 'head' site exists and won't be visited:
+                                # fill the incoming edge as well to balance the
+                                # hopping.
+                                other_value = template._get_edge(
+                                    *templ_sym.to_fd(head, tail))
+                                self._set_edge(*to_fd(head, tail)
+                                               + (other_value,))
+
+                        # Fill the outgoing edge.
+                        if head in old_heads:
+                            i = 2 + 2 * old_heads.index(head)
+                            hvhv[i] = head
+                            hvhv[i + 1] = value
                         else:
-                            # The 'head' site exists and won't be visited: fill
-                            # the incoming edge as well to balance the hopping.
-                            other_value = template._get_edge(
-                                *templ_sym.to_fd(head, tail))
-                            self._set_edge(*to_fd(head, tail) + (other_value,))
+                            hvhv.extend((head, value))
 
-                    # Fill the outgoing edge.
-                    if head in old_heads:
-                        i = 2 + 2 * old_heads.index(head)
-                        hvhv[i] = head
-                        hvhv[i + 1] = value
-                    else:
-                        hvhv.extend((head, value))
-
-            old_active, active, new_active = active, new_active, old_active
-            new_active.clear()
+                old_active, active, new_active = active, new_active, old_active
+                new_active.clear()
+        except Exception as e:
+            # The graph has unbalanced edges: delete it.
+            self.H = {}
+            # Re-raise the exception with an additional message.
+            msg = ("All sites of this builder have been deleted because an "
+                   "exception\noccurred during the execution of fill():")
+            e.args = ('\n'.join((msg,) + e.args),)
+            raise
 
         return done
 
@@ -1499,10 +1510,8 @@ class Builder:
         def shape(site):
             domain, = sym.which(site)
             if domain < min_dom:
-                self.H = {}
                 raise ValueError('Builder does not interrupt the lead,'
-                                 ' this lead cannot be attached.\n'
-                                 'All sites have been deleted.')
+                                 ' this lead cannot be attached.')
             return domain <= max_dom + 1
 
         # We start flood-fill from the first domain that doesn't belong to the
