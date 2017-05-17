@@ -6,17 +6,17 @@ The Kwant authors can be reached at authors@kwant-project.org.
 
 The principal developers of Kwant are
 
-* `Christoph W. Groth <mailto://christoph.groth@cea.fr>`_ (INAC/CEA Grenoble)
+* `Christoph W. Groth <mailto://christoph.groth@cea.fr>`_ (CEA Grenoble)
 * `Michael Wimmer <https://michaelwimmer.org>`_ (TU Delft)
 * `Anton R. Akhmerov <http://antonakhmerov.org>`_ (TU Delft)
-* `Xavier Waintal <http://inac.cea.fr/Pisp/xavier.waintal>`_ (INAC/CEA Grenoble)
-* `Joseph Weston <http://josephweston.org>`_ (INAC/CEA Grenoble)
+* `Xavier Waintal <http://inac.cea.fr/Pisp/xavier.waintal>`_ (CEA Grenoble)
+* `Joseph Weston <http://josephweston.org>`_ (TU Delft)
 
 Contributors to Kwant include
 
 * Jörg Behrmann (FU Berlin)
-* Mathieu Istas (INAC/CEA Grenoble)
-* Daniel Jaschke (INAC/CEA Grenoble)
+* Mathieu Istas (CEA Grenoble)
+* Daniel Jaschke (CEA Grenoble)
 * Bas Nijholt (TU Delft)
 * Michał Nowak (TU Delft)
 * Viacheslav Ostroukh (Leiden University)
@@ -24,7 +24,7 @@ Contributors to Kwant include
 * Tómas Örn Rosdahl (TU Delft)
 * Sebastian Rubbert (TU Delft)
 * Rafał Skolasiński (TU Delft)
-* Adrien Sorgniard (INAC/CEA Grenoble)
+* Adrien Sorgniard (CEA Grenoble)
 
 We thank Christoph Gohlke for the creation of installers for Microsoft Windows.
 
@@ -39,9 +39,11 @@ To find out who wrote a certain part of Kwant, please use the "blame" feature of
 Funding
 -------
 
-During the development of Kwant 1.0, A. R. Akhmerov and M. Wimmer were supported
-by the Dutch Science Foundation NWO/FOM and by the ERC Advanced Investigator
-Grant of C. W. J. Beenakker who enthousiastically supported this project.
-A. R. Akhmerov was partially supported by a Lawrence Golub fellowship.
-C. W. Groth and X. Waintal were supported by the ERC Consolidator Grant MesoQMC.
-X. Waintal also acknowledges support from the STREP ConceptGraphene.
+Research related to Kwant was funded by
+
+* the US Office of Naval Research,
+* the European Research Council,
+* the Netherlands Organisation for Scientific Research NWO (formerly NWO/FOM).
+* the French National Agency for Research (ANR)
+* the Future and Emerging Technologies (FET) & Information and Communication Technologies (ICT) actions
+* Lawrence Golub fellowship
