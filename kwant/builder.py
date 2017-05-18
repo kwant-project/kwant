@@ -16,7 +16,7 @@ import inspect
 import tinyarray as ta
 import numpy as np
 from scipy import sparse
-from . import system, graph, UserCodeError
+from . import system, graph, KwantDeprecationWarning, UserCodeError
 from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry
@@ -772,11 +772,6 @@ class Builder:
     Attaching a lead manually (without the use of `~Builder.attach_lead`)
     amounts to creating a `Lead` object and appending it to this list.
 
-    ``builder0 += builder1`` adds all the sites, hoppings, and leads of
-    ``builder1`` to ``builder0``.  Sites and hoppings present in both systems
-    are overwritten by those in ``builder1``.  The leads of ``builder1`` are
-    appended to the leads of the system being extended.
-
     .. warning::
 
         If functions are used to set values in a builder with a symmetry, then
@@ -1238,12 +1233,31 @@ class Builder:
                 result = site
         return result
 
-    def __iadd__(self, other):
+    def update(self, other):
+        """Update builder from `other`.
+
+        All sites and hoppings of `other`, together with their values, are
+        written to `self`, overwriting already existing sites and hoppings.
+        The leads of `other` are appended to the leads of the system being
+        updated.
+
+        This method requires that both builders share the same symmetry.
+        """
+        if (not self.symmetry.has_subgroup(other.symmetry)
+            or not other.symmetry.has_subgroup(self.symmetry)):
+            raise ValueError("Both builders involved in update() must have "
+                             "equal symmetries.")
         for site, value in other.site_value_pairs():
             self[site] = value
         for hop, value in other.hopping_value_pairs():
             self[hop] = value
         self.leads.extend(other.leads)
+
+    def __iadd__(self, other):
+        warnings.warn("The += operator of builders is deprecated. Use "
+                      "'Builder.update()' instead.", KwantDeprecationWarning,
+                      stacklevel=2)
+        self.update(other)
         return self
 
     def fill(self, template, shape, start, *, overwrite=False, max_sites=10**7):

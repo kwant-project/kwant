@@ -556,7 +556,8 @@ def test_hamiltonian_evaluation():
 
     # test with infinite system
     inf_syst = kwant.Builder(VerySimpleSymmetry(2))
-    inf_syst += syst
+    for k, v in it.chain(syst.site_value_pairs(), syst.hopping_value_pairs()):
+        inf_syst[k] = v
     inf_fsyst = inf_syst.finalized()
     hop = tuple(map(inf_fsyst.sites.index, new_hop))
     test_raising(inf_fsyst, hop)
@@ -911,7 +912,7 @@ def test_closest():
                         assert dd >= 0.999999 * dist
 
 
-def test_iadd():
+def test_update():
     lat = builder.SimpleSiteFamily()
 
     syst = builder.Builder()
@@ -934,7 +935,7 @@ def test_iadd():
     lead1 = builder.BuilderLead(lead1, [lat(2,)])
     other_syst.leads.append(lead1)
 
-    syst += other_syst
+    syst.update(other_syst)
     assert syst.leads == [lead0, lead1]
     expected = sorted([((0,), 1), ((1,), 2), ((2,), 2)])
     assert sorted(((s.tag, v) for s, v in syst.site_value_pairs())) == expected
