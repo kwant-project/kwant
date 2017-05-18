@@ -1260,8 +1260,11 @@ class Builder:
         self.update(other)
         return self
 
-    def fill(self, template, shape, start, *, overwrite=False, max_sites=10**7):
+    def fill(self, template, shape, start, *, max_sites=10**7):
         """Populate builder using another one as a template.
+
+        Sites and hoppings that already exist in the target builder are never
+        overwritten.
 
         Parameters
         ----------
@@ -1276,10 +1279,6 @@ class Builder:
             The site(s) at which the the flood-fill starts.  If start is an
             iterable of numbers, the starting site will be
             ``template.closest(start)``.
-        overwrite : boolean
-            Whether existing sites or hoppings in the target builder should be
-            overwritten.  When overwriting is disabled (the default), existing
-            sites act as boundaries for the flood-fill.
         max_sites : positive number
             The maximal number of sites that may be added before
             ``RuntimeError`` is raised.  Used to prevent using up all memory.
@@ -1330,7 +1329,7 @@ class Builder:
             congested = True
             for s in start:
                 s = to_fd(s)
-                if overwrite or s not in H:
+                if s not in H:
                     congested = False
                     if shape(s):
                         active.add(s)
@@ -1384,7 +1383,7 @@ class Builder:
                             if not shape(head_fd):
                                 continue
 
-                            if overwrite or head_fd not in H:
+                            if head_fd not in H:
                                 # Fill 'head' site.
                                 new_active.add(head_fd)
                                 H.setdefault(head_fd, [head_fd, None])

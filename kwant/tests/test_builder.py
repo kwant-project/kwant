@@ -693,14 +693,13 @@ def test_fill():
     ## Test filling of infinite builder.
     for n in [1, 2, 4]:
         sym_n = kwant.TranslationalSymmetry((n, 0))
-        for ow in [False, True]:
-            for start in [g(0, 0), g(20, 0)]:
-                target = builder.Builder(sym_n)
-                sites = target.fill(template_1d, lambda s: True, start,
-                                    overwrite=ow, max_sites=10)
-                assert len(sites) == n
-                assert len(list(target.hoppings())) == n
-                assert set(sym_n.to_fd(s) for s in sites) == set(target.sites())
+        for start in [g(0, 0), g(20, 0)]:
+            target = builder.Builder(sym_n)
+            sites = target.fill(template_1d, lambda s: True, start,
+                                max_sites=10)
+            assert len(sites) == n
+            assert len(list(target.hoppings())) == n
+            assert set(sym_n.to_fd(s) for s in sites) == set(target.sites())
 
     ## test max_sites
     target = builder.Builder()
@@ -716,14 +715,8 @@ def test_fill():
     target = builder.Builder()
     added_sites = target.fill(template_1d, line_200, g(0, 0))
     assert len(added_sites) == 200
-    ## test overwrite=False
     with warns(RuntimeWarning):
         target.fill(template_1d, line_200, g(0, 0))
-    ## test overwrite=True
-    added_sites = target.fill(template_1d, line_200, g(0, 0),
-                              overwrite=True)
-    assert len(added_sites) == 200
-
 
     ## test multiplying unit cell size in 1D
     n_cells = 10
@@ -784,13 +777,13 @@ def test_fill():
     target = builder.Builder(kwant.TranslationalSymmetry((-2,)))
     target[lat(0)] = None
     to_target_fd = target.symmetry.to_fd
-    # refuses to fill the target because target already contains the starting
-    # site and 'overwrite == False'.
+    # Refuses to fill the target because target already contains the starting
+    # site.
     with warns(RuntimeWarning):
         target.fill(template, lambda x: True, lat(0))
 
     # should only add a single site (and hopping)
-    new_sites = target.fill(template, lambda x: True, lat(1), overwrite=False)
+    new_sites = target.fill(template, lambda x: True, lat(1))
     assert target[lat(0)] is None  # should not be overwritten by template
     assert target[lat(-1)] == template[lat(0)]
     assert len(new_sites) == 1
