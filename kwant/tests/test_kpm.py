@@ -290,7 +290,7 @@ def test_kwant_op_current():
     assert_allclose(spectrum_syst.densities, spectrum.densities)
 
 
-def test_kwant_op_average():
+def test_kwant_op_integrate():
     """Check that the kwant.operator.Density gives the same result as the
     identity operator.
     """
@@ -305,8 +305,8 @@ def test_kwant_op_average():
 
     assert spectrum_syst.densities.shape[1] == ham.shape[0]
     # same algorithms are used so these arrays are equal up to TOL
-    assert_allclose(np.sum(spectrum_syst.average(distribution_function=ones)),
-                    spectrum.average())
+    assert_allclose(np.sum(spectrum_syst.integrate(distribution_function=ones)),
+                    spectrum.integrate())
 
 
 # ## test for methods to work as expected
@@ -495,16 +495,16 @@ def test_call():
     # different algorithms are used so these arrays are equal up to TOL_SP
     assert_allclose_sp(densities_array, spectrum.densities)
 
-# ### check average
+# ### check integrate
 
 
-def test_average():
+def test_integrate():
     ham = kwant.rmt.gaussian(dim)
     spectrum = make_spectrum(ham, p)
     ones = lambda x: np.ones_like(x)
-    assert np.abs(spectrum.average() - simps(spectrum.densities,
+    assert np.abs(spectrum.integrate() - simps(spectrum.densities,
                                              x=spectrum.energies)) < TOL_SP
-    assert np.abs(spectrum.average() - spectrum.average(
+    assert np.abs(spectrum.integrate() - spectrum.integrate(
         distribution_function=ones)) < TOL
 
 # ### check increase_energy_resolution

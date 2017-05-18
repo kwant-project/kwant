@@ -56,22 +56,22 @@
 +    )
  
  
- def dos_averaging_example(fsyst):
+ def dos_integrating_example(fsyst):
      spectrum = kwant.kpm.SpectralDensity(fsyst)
  
--    print('identity resolution:', spectrum.average())
+-    print('identity resolution:', spectrum.integrate())
 +    with open('kpm_normalization.txt', 'w') as f:
 +        with redirect_stdout(f):
-+            print('identity resolution:', spectrum.average())
++            print('identity resolution:', spectrum.integrate())
  
      # Fermi energy 0.1 and temperature 0.2
      fermi = lambda E: 1 / (np.exp((E - 0.1) / 0.2) + 1)
      n_states = len(fsyst.sites)  # 1 degree of freedom per site
  
--    print('number of filled states:', n_states * spectrum.average(fermi))
+-    print('number of filled states:', n_states * spectrum.integrate(fermi))
 +    with open('kpm_total_states.txt', 'w') as f:
 +        with redirect_stdout(f):
-+            print('number of filled states:', n_states * spectrum.average(fermi))
++            print('number of filled states:', n_states * spectrum.integrate(fermi))
  
  
  def increasing_accuracy_example(fsyst):

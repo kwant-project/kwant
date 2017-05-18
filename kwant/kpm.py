@@ -255,7 +255,7 @@ class SpectralDensity:
             return np.transpose(np.polynomial.chebyshev.chebval(
                     rescaled_energy, coef_cheb) / g_e).real
 
-    def average(self, distribution_function=None):
+    def integrate(self, distribution_function=None):
         """Returns the total spectral density.
 
         Returns the integral over the whole spectrum with an optional

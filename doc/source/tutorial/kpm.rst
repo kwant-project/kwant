@@ -113,26 +113,26 @@ evaluate the density of states.
 .. image:: ../images/kpm_dos.*
 
 In addition to being called like functions, `~kwant.kpm.SpectralDensity`
-objects also have a method `~kwant.kpm.SpectralDensity.average` which can be
+objects also have a method `~kwant.kpm.SpectralDensity.integrate` which can be
 used to integrate the density of states against some distribution function over
 the whole spectrum. If no distribution function is specified, then the uniform
 distribution is used:
 
 .. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_av1
-    :end-before: #HIDDEN_END_av1
+    :start-after: #HIDDEN_BEGIN_int1
+    :end-before: #HIDDEN_END_int1
 
 .. literalinclude:: ../images/kpm_normalization.txt
 
 We see that the integral of the density of states is normalized to 1. If
-we wish to calculate, say, the average number of states populated in
+we wish to calculate, say, the number of states populated in
 equilibrium, then we should integrate with respect to a Fermi-Dirac
 distribution and multiply by the total number of available states in
 the system:
 
 .. literalinclude:: kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_av2
-    :end-before: #HIDDEN_END_av2
+    :start-after: #HIDDEN_BEGIN_int2
+    :end-before: #HIDDEN_END_int2
 
 .. literalinclude:: ../images/kpm_total_states.txt
 
