@@ -333,21 +333,15 @@ class Symmetry(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def isstrictsupergroup(self, other):
-        """Test whether `self` is a strict supergroup of `other`...
+    def has_subgroup(self, other):
+        """Test whether `self` has the subgroup `other`...
 
         or, in other words, whether `other` is a subgroup of `self`.  The
-        reason why this is the abstract method (and not `issubgroup`) is that
+        reason why this is the abstract method (and not `is_subgroup`) is that
         in general it's not possible for a subgroup to know its supergroups.
 
         """
         pass
-
-    def issubgroup(self, other):
-        """Test whether `self` is a subgroup of `other`."""
-        return other.isstrictsupergroup(self)
-
-    __le__ = issubgroup
 
 
 class NoSymmetry(Symmetry):
@@ -389,8 +383,8 @@ class NoSymmetry(Symmetry):
             raise ValueError('Generators must be empty for NoSymmetry.')
         return NoSymmetry(generators)
 
-    def isstrictsupergroup(self, other):
-        return False
+    def has_subgroup(self, other):
+        return isinstance(other, NoSymmetry)
 
 
 
@@ -1303,7 +1297,7 @@ class Builder:
         templ_sym = template.symmetry
 
         # Check that symmetries are commensurate.
-        if not self.symmetry <= templ_sym:
+        if not templ_sym.has_subgroup(self.symmetry):
             raise ValueError("Builder symmetry is not a subgroup of the "
                              "template symmetry")
 

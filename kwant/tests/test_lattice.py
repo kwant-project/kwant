@@ -251,21 +251,23 @@ def test_symmetry_act():
             sym.act(ta.array(el), site)
 
 
-def test_symmetry_subgroup():
+def test_symmetry_has_subgroup():
     rng = np.random.RandomState(0)
     ## test whether actual subgroups are detected as such
     vecs = rng.randn(3, 3)
     sym1 = lattice.TranslationalSymmetry(*vecs)
-    assert sym1 >= sym1
-    assert sym1 >= builder.NoSymmetry()
-    assert sym1 >= lattice.TranslationalSymmetry(2 * vecs[0],
-                                                 3 * vecs[1] + 4 * vecs[2])
-    assert not sym1 <= lattice.TranslationalSymmetry(*(0.8 * vecs))
+    ns = builder.NoSymmetry()
+    assert ns.has_subgroup(ns)
+    assert sym1.has_subgroup(sym1)
+    assert sym1.has_subgroup(ns)
+    assert sym1.has_subgroup(lattice.TranslationalSymmetry(
+        2 * vecs[0], 3 * vecs[1] + 4 * vecs[2]))
+    assert not lattice.TranslationalSymmetry(*(0.8 * vecs)).has_subgroup(sym1)
 
     ## test subgroup creation
     for dim in range(1, 4):
         generators = rng.randint(10, size=(dim, 3))
-        assert sym1.subgroup(*generators) <= sym1
+        assert sym1.has_subgroup(sym1.subgroup(*generators))
 
     # generators are not linearly independent
     with raises(ValueError):

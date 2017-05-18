@@ -129,7 +129,7 @@ class VerySimpleSymmetry(builder.Symmetry):
     def num_directions(self):
         return 1
 
-    def isstrictsupergroup(self, other):
+    def has_subgroup(self, other):
         if isinstance(other, builder.NoSymmetry):
             return True
         elif isinstance(other, VerySimpleSymmetry):
@@ -652,32 +652,36 @@ def test_fill():
         return -100 <= site.pos[0] < 100
 
     ## Test that copying a builder by "fill" preserves everything.
-    cubic = kwant.lattice.general(ta.identity(3))
-    sym = kwant.TranslationalSymmetry((3, 0, 0), (0, 4, 0), (0, 0, 5))
+    for sym, func in [(kwant.TranslationalSymmetry(*np.diag([3, 4, 5])),
+                       lambda pos: True),
+                      (builder.NoSymmetry(),
+                       lambda pos: ta.dot(pos, pos) < 17)]:
+        cubic = kwant.lattice.general(ta.identity(3))
 
-    # Make a weird system.
-    orig = kwant.Builder(sym)
-    sites = cubic.shape(lambda pos: True, (0, 0, 0))
-    for i, site in enumerate(orig.expand(sites)):
-        if i % 7 == 0:
-            continue
-        orig[site] = i
-    for i, hopp in enumerate(orig.expand(cubic.neighbors(1))):
-        if i % 11 == 0:
-            continue
-        orig[hopp] = i * 1.2345
-    for i, hopp in enumerate(orig.expand(cubic.neighbors(2))):
-        if i % 13 == 0:
-            continue
-        orig[hopp] = i * 1j
+        # Make a weird system.
+        orig = kwant.Builder(sym)
+        sites = cubic.shape(func, (0, 0, 0))
+        for i, site in enumerate(orig.expand(sites)):
+            if i % 7 == 0:
+                continue
+            orig[site] = i
+        for i, hopp in enumerate(orig.expand(cubic.neighbors(1))):
+            if i % 11 == 0:
+                continue
+            orig[hopp] = i * 1.2345
+        for i, hopp in enumerate(orig.expand(cubic.neighbors(2))):
+            if i % 13 == 0:
+                continue
+            orig[hopp] = i * 1j
 
-    # Clone the original using fill.
-    clone = kwant.Builder(sym)
-    clone.fill(orig, lambda s: True, (0, 0, 0))
+        # Clone the original using fill.
+        clone = kwant.Builder(sym)
+        clone.fill(orig, lambda s: True, (0, 0, 0))
 
-    # Verify that both are identical.
-    assert set(clone.site_value_pairs()) == set(orig.site_value_pairs())
-    assert set(clone.hopping_value_pairs()) == set(orig.hopping_value_pairs())
+        # Verify that both are identical.
+        assert set(clone.site_value_pairs()) == set(orig.site_value_pairs())
+        assert (set(clone.hopping_value_pairs())
+                == set(orig.hopping_value_pairs()))
 
     ## Test for warning when "start" is out.
     target = builder.Builder()
