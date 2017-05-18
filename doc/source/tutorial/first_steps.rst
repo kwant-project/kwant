@@ -325,7 +325,7 @@ subbands that increases with energy.
 
 .. rubric:: Footnotes
 
-.. [#] http://xkcd.com/353/
+.. [#] https://xkcd.com/353/
 .. [#] Leads are numbered in the python convention, starting from 0.
 
 Building the same system with less code

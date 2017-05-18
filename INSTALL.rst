@@ -32,7 +32,7 @@ Building Kwant requires
  * `Python <https://www.python.org/>`_ 3.4 or above (Kwant 1.1 is the last
    version to support Python 2),
  * `NumPy <http://numpy.org/>`_ 1.8.1 or newer,
- * `SciPy <http://scipy.org/>`_ 0.13.3 or newer,
+ * `SciPy <https://scipy.org/>`_ 0.13.3 or newer,
  * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
    <http://www.openblas.net/>`_ or the nonfree `MKL
@@ -156,7 +156,7 @@ Building the documentation
 To build the documentation, the `Sphinx documentation generator
 <http://www.sphinx-doc.org/en/stable/>`_ is required with ``numpydoc`` extension
 (version 0.5 or newer).  If PDF documentation is to be built, the tools
-from the `libRSVG <http://live.gnome.org/LibRsvg>`_ (Debian/Ubuntu package
+from the `libRSVG <https://wiki.gnome.org/action/show/Projects/LibRsvg>`_ (Debian/Ubuntu package
 ``librsvg2-bin``) are needed to convert SVG drawings into the PDF format.
 
 As a prerequisite for building the documentation, Kwant must have been built
@@ -216,11 +216,7 @@ systems. Here we only consider the case of `MacPorts
 below.
 
 1. Install a recent version of MacPorts, as explained in the `installation
-   instructions of MacPorts <https://www.macports.org/install.php>`_.  `The
-   MacPorts section of the Kwant website
-   <https://kwant-project.org/install#mac-os-x-macports>`_ may be also of
-   interest.  (Note that it describes how to install Kwant using a ports file,
-   while the aim here is to install from source manually.)
+   instructions of MacPorts <https://www.macports.org/install.php>`_.
 
 2. Install the required dependencies::
 

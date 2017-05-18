@@ -71,7 +71,7 @@ In this example, we compute the wave functions of a closed circular quantum dot
 and its spectrum as a function of magnetic field (Fock-Darwin spectrum).
 
 To compute the eigenenergies and eigenstates, we will make use of the sparse
-linear algebra functionality of `SciPy <http://www.scipy.org>`_, which
+linear algebra functionality of `SciPy <https://www.scipy.org>`_, which
 interfaces the ARPACK package:
 
 .. literalinclude:: closed_system.py
@@ -139,7 +139,7 @@ it using `kwant.plotter.current`:
     matrix, if the optional argument ``sparse=True``. The sparse matrix is in
     SciPy's ``scipy.sparse.coo_matrix`` format, which can be easily be converted
     to various other sparse matrix formats (see `SciPy's documentation
-    <http://docs.scipy.org/doc/scipy/reference/>`_).
+    <https://docs.scipy.org/doc/scipy/reference/>`_).
 
 .. rubric:: Footnotes
 

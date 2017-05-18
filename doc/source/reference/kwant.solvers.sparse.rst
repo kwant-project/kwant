@@ -4,7 +4,7 @@
 .. module:: kwant.solvers.sparse
 
 This solver uses SciPy's `scipy.sparse.linalg
-<http://docs.scipy.org/doc/scipy/reference/sparse.linalg.html>`_.  The
+<https://docs.scipy.org/doc/scipy/reference/sparse.linalg.html>`_.  The
 interface is identical to that of the :mod:`default solver
 <kwant.solvers.default>`.
 
