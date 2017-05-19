@@ -32,9 +32,9 @@ class SpectralDensity:
     .. math::
        ρ_A(e) = ρ(e) A(e),
 
-    where :math:`ρ(e)` is the density of states, and :math:`A(e)` is
-    the expectation value of :math:`A` for all the eigenstates with
-    energy :math:`e`.
+    where :math:`ρ(e) = \sum_{k=0}^{D-1} δ(E-E_k)` is the density of
+    states, and :math:`A(e)` is the expectation value of :math:`A` for
+    all the eigenstates with energy :math:`e`.
 
     Parameters
     ----------
@@ -352,9 +352,7 @@ class SpectralDensity:
         # sum moments of all random vectors
         moments = np.sum(np.asarray(self._moments_list).real, axis=0)
         # divide by the number of random vectors
-        moments = moments / self.num_vectors
-        # divide by the length of the vectors to normalize
-        moments = moments / self.hamiltonian.shape[0]
+        moments /= self.num_vectors
         # divide by scale factor to reflect the integral rescaling
         return moments / self._a
 

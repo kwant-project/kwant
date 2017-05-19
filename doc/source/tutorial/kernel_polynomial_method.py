@@ -95,9 +95,8 @@ def dos_integrating_example(fsyst):
 #HIDDEN_BEGIN_int2
     # Fermi energy 0.1 and temperature 0.2
     fermi = lambda E: 1 / (np.exp((E - 0.1) / 0.2) + 1)
-    n_states = len(fsyst.sites)  # 1 degree of freedom per site
 
-    print('number of filled states:', n_states * spectrum.integrate(fermi))
+    print('number of filled states:', spectrum.integrate(fermi))
 #HIDDEN_END_int2
 
 

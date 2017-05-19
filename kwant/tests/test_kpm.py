@@ -502,8 +502,9 @@ def test_integrate():
     ham = kwant.rmt.gaussian(dim)
     spectrum = make_spectrum(ham, p)
     ones = lambda x: np.ones_like(x)
-    assert np.abs(spectrum.integrate() - simps(spectrum.densities,
-                                             x=spectrum.energies)) < TOL_SP
+    assert np.abs(
+        (spectrum.integrate() - simps(spectrum.densities, x=spectrum.energies))
+        / spectrum.integrate()) < TOL_SP
     assert np.abs(spectrum.integrate() - spectrum.integrate(
         distribution_function=ones)) < TOL
 

@@ -66,7 +66,7 @@ states is
 
 .. math::
 
-  ρ(E) = \frac{1}{D} \sum_{k=0}^{D-1} δ(E-E_k),
+  ρ(E) = \sum_{k=0}^{D-1} δ(E-E_k),
 
 :math:`D` being the Hilbert space dimension, and :math:`E_k` the eigenvalues.
 
@@ -124,11 +124,10 @@ distribution is used:
 
 .. literalinclude:: ../images/kpm_normalization.txt
 
-We see that the integral of the density of states is normalized to 1. If
-we wish to calculate, say, the number of states populated in
-equilibrium, then we should integrate with respect to a Fermi-Dirac
-distribution and multiply by the total number of available states in
-the system:
+We see that the integral of the density of states is normalized to the total
+number of available states in the system. If we wish to calculate, say, the
+number of states populated in equilibrium, then we should integrate with
+respect to a Fermi-Dirac distribution:
 
 .. literalinclude:: kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_int2

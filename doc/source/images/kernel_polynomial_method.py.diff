@@ -46,7 +46,7 @@
  def simple_dos_example():
      fsyst = make_syst().finalized()
  
-@@ -74,19 +85,25 @@
+@@ -74,18 +85,24 @@
      plot_dos([
          ('densities', (energies, densities)),
          ('density subset', (energy_subset, density_subset)),
@@ -66,16 +66,15 @@
  
      # Fermi energy 0.1 and temperature 0.2
      fermi = lambda E: 1 / (np.exp((E - 0.1) / 0.2) + 1)
-     n_states = len(fsyst.sites)  # 1 degree of freedom per site
  
--    print('number of filled states:', n_states * spectrum.integrate(fermi))
+-    print('number of filled states:', spectrum.integrate(fermi))
 +    with open('kpm_total_states.txt', 'w') as f:
 +        with redirect_stdout(f):
-+            print('number of filled states:', n_states * spectrum.integrate(fermi))
++            print('number of filled states:', spectrum.integrate(fermi))
  
  
  def increasing_accuracy_example(fsyst):
-@@ -100,7 +117,9 @@
+@@ -99,7 +116,9 @@
      plot_dos([
          ('density', original_dos),
          ('higher energy resolution', increased_resolution_dos),
@@ -86,7 +85,7 @@
  
      spectrum.add_moments(100)
      spectrum.add_vectors(5)
-@@ -110,7 +129,9 @@
+@@ -109,7 +128,9 @@
      plot_dos([
          ('density', original_dos),
          ('higher number of moments', increased_moments_dos),
@@ -97,7 +96,7 @@
  
  
  def operator_example(fsyst):
-@@ -140,7 +161,9 @@
+@@ -139,7 +160,9 @@
      plot_ldos(fsyst, axes,[
          ('energy = 0', zero_energy_ldos),
          ('energy = 1', finite_energy_ldos),
