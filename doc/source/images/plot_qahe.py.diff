@@ -1,0 +1,22 @@
+--- original
++++ modified
+@@ -11,6 +11,7 @@
+ # + Use of `kwant.operator` to compute local current
+ # + Use of `kwant.plotter.current` to plot local current
+ 
++import _defs
+ import math
+ import matplotlib.pyplot
+ import kwant
+@@ -60,7 +61,10 @@
+     psi = kwant.wave_function(syst, energy=params['m'], params=params)(0)
+     J = kwant.operator.Current(syst).bind(params=params)
+     current = sum(J(p) for p in psi)
+-    kwant.plotter.current(syst, current)
++    for extension in ('pdf', 'png'):
++        kwant.plotter.current(syst, current,
++                              file="plot_qahe_current." + extension,
++                              dpi=_defs.dpi)
+ 
+ 
+ if __name__ == '__main__':

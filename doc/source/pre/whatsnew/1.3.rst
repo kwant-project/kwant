@@ -24,9 +24,18 @@ with continuum models and for discretizing them into tight-binding models. It
 aims at providing a handy interface to convert symbolic Hamiltonians into a
 builder with N-D translational symmetry that can be use to calculate
 tight-binding band structures or construct systems with different/lower
-symmetry.
+symmetry. For example in just a few lines we can construct a two-band model that exhibits
+a quantum anomalous spin Hall phase:
 
-See :doc:`../../tutorial/discretize`
+.. literalinclude:: ../../tutorial/plot_qahe.py
+    :start-after: HIDDEN_BEGIN_model
+    :end-before: HIDDEN_END_model
+
+From: :download:`QAHE example script <../../tutorial/plot_qahe.py>`
+
+See the tutorial: :doc:`../../tutorial/discretize`
+
+See the reference documentation: :doc:`../../reference/kwant.continuum`
 
 Calculating charges and currents using the operator module
 ----------------------------------------------------------
@@ -49,18 +58,25 @@ the following::
     q = Q(psi)
     j = J(psi)
 
-See :doc:`../../tutorial/operators`
+See the tutorial: :doc:`../../tutorial/operators`
 
 Plotting of currents
 --------------------
 Quantities defined on system hoppings (e.g. currents calculated using
-`~kwant.operator.current`) can be directly plotted as a streamplot over the
+`~kwant.operator.Current`) can be directly plotted as a streamplot over the
 system using `kwant.plotter.current`. This is similar to how
 `kwant.plotter.map` can be used to plot quantities defined on sites.
+The example below shows edge states of a quantum anomalous Hall phase
+of the two-band model shown in the `above section
+<#tools-for-continuum-hamiltonians>`_:
 
-See :doc:`../../tutorial/plotting`
+.. literalinclude:: ../../tutorial/plot_qahe.py
+    :start-after: HIDDEN_BEGIN_current
+    :end-before: HIDDEN_END_current
 
-.. image:: ../../images/plot_qpc_current.*
+.. image:: ../../images/plot_qahe_current.*
+
+From: :download:`QAHE example script <../../tutorial/plot_qahe.py>`
 
 Scattering states with discrete symmetries and conservation laws
 ----------------------------------------------------------------
@@ -75,7 +91,7 @@ related by symmetry. The discrete symmetries may be combined with conservation
 laws, such that if different blocks of the Hamiltonian are related by a discrete
 symmetry, the lead modes are computed to reflect this.
 
-See the updated :doc:`../../tutorial/superconductors`
+See the updated tutorial: :doc:`../../tutorial/superconductors`
 
 Named parameters for value functions
 ------------------------------------
@@ -126,7 +142,9 @@ The kernel polynomial method is now implemented within Kwant to obtain the
 density of states or, more generally, the spectral density of a given operator
 acting on a system or Hamiltonian.
 
-See :doc:`../../reference/kwant.kpm`
+See the tutorial: :doc:`../../tutorial/kpm`
+
+See the reference documentation: :doc:`../../reference/kwant.kpm`
 
 Finalizing builders with multiple translational symmetries
 ----------------------------------------------------------
@@ -177,7 +195,8 @@ increased.
 
 Pickling support
 ----------------
-It is now possible to pickle and unpickle Kwant ``Builder`` and ``System``.
+It is now possible to pickle and unpickle `~kwant.builder.Builder` and
+`~kwant.system.System` instances.
 
 Improved build configuration
 ----------------------------
