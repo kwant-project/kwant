@@ -1,0 +1,7 @@
+What's new in Kwant 1.4
+=======================
+
+This article explains the user-visible changes in Kwant 1.4.0.
+See also the `full list of changes up to the most recent bugfix
+release of the 1.4 series
+<https://gitlab.kwant-project.org/kwant/kwant/compare/v1.4.0...latest-1.4>`_.
