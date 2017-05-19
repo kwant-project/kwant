@@ -16,7 +16,7 @@ import inspect
 import tinyarray as ta
 import numpy as np
 from scipy import sparse
-from . import system, graph, UserCodeError
+from . import system, graph, KwantDeprecationWarning, UserCodeError
 from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry
@@ -333,21 +333,15 @@ class Symmetry(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def isstrictsupergroup(self, other):
-        """Test whether `self` is a strict supergroup of `other`...
+    def has_subgroup(self, other):
+        """Test whether `self` has the subgroup `other`...
 
         or, in other words, whether `other` is a subgroup of `self`.  The
-        reason why this is the abstract method (and not `issubgroup`) is that
+        reason why this is the abstract method (and not `is_subgroup`) is that
         in general it's not possible for a subgroup to know its supergroups.
 
         """
         pass
-
-    def issubgroup(self, other):
-        """Test whether `self` is a subgroup of `other`."""
-        return other.isstrictsupergroup(self)
-
-    __le__ = issubgroup
 
 
 class NoSymmetry(Symmetry):
@@ -389,8 +383,8 @@ class NoSymmetry(Symmetry):
             raise ValueError('Generators must be empty for NoSymmetry.')
         return NoSymmetry(generators)
 
-    def isstrictsupergroup(self, other):
-        return False
+    def has_subgroup(self, other):
+        return isinstance(other, NoSymmetry)
 
 
 
@@ -777,11 +771,6 @@ class Builder:
 
     Attaching a lead manually (without the use of `~Builder.attach_lead`)
     amounts to creating a `Lead` object and appending it to this list.
-
-    ``builder0 += builder1`` adds all the sites, hoppings, and leads of
-    ``builder1`` to ``builder0``.  Sites and hoppings present in both systems
-    are overwritten by those in ``builder1``.  The leads of ``builder1`` are
-    appended to the leads of the system being extended.
 
     .. warning::
 
@@ -1244,16 +1233,47 @@ class Builder:
                 result = site
         return result
 
-    def __iadd__(self, other):
+    def update(self, other):
+        """Update builder from `other`.
+
+        All sites and hoppings of `other`, together with their values, are
+        written to `self`, overwriting already existing sites and hoppings.
+        The leads of `other` are appended to the leads of the system being
+        updated.
+
+        This method requires that both builders share the same symmetry.
+        """
+        if (not self.symmetry.has_subgroup(other.symmetry)
+            or not other.symmetry.has_subgroup(self.symmetry)):
+            raise ValueError("Both builders involved in update() must have "
+                             "equal symmetries.")
         for site, value in other.site_value_pairs():
             self[site] = value
         for hop, value in other.hopping_value_pairs():
             self[hop] = value
         self.leads.extend(other.leads)
+
+    def __iadd__(self, other):
+        warnings.warn("The += operator of builders is deprecated. Use "
+                      "'Builder.update()' instead.", KwantDeprecationWarning,
+                      stacklevel=2)
+        self.update(other)
         return self
 
-    def fill(self, template, shape, start, *, overwrite=False, max_sites=10**7):
+    def fill(self, template, shape, start, *, max_sites=10**7):
         """Populate builder using another one as a template.
+
+        Starting from one or multiple sites, traverse the graph of the template
+        builder and copy sites and hoppings to the target builder.  The
+        traversal stops at sites that are already present in the target and on
+        sites that are not inside the provided shape.
+
+        This function takes into account translational symmetry.  As such,
+        typically the template will have a higher symmetry than the target.
+
+        Newly added sites are connected by hoppings to sites that were already
+        present.  This facilitates construction of a system by a series of
+        calls to 'fill'.
 
         Parameters
         ----------
@@ -1268,10 +1288,6 @@ class Builder:
             The site(s) at which the the flood-fill starts.  If start is an
             iterable of numbers, the starting site will be
             ``template.closest(start)``.
-        overwrite : boolean
-            Whether existing sites or hoppings in the target builder should be
-            overwritten.  When overwriting is disabled (the default), existing
-            sites act as boundaries for the flood-fill.
         max_sites : positive number
             The maximal number of sites that may be added before
             ``RuntimeError`` is raised.  Used to prevent using up all memory.
@@ -1303,7 +1319,7 @@ class Builder:
         templ_sym = template.symmetry
 
         # Check that symmetries are commensurate.
-        if not self.symmetry <= templ_sym:
+        if not templ_sym.has_subgroup(self.symmetry):
             raise ValueError("Builder symmetry is not a subgroup of the "
                              "template symmetry")
 
@@ -1322,7 +1338,7 @@ class Builder:
             congested = True
             for s in start:
                 s = to_fd(s)
-                if overwrite or s not in H:
+                if s not in H:
                     congested = False
                     if shape(s):
                         active.add(s)
@@ -1373,21 +1389,21 @@ class Builder:
                         if (head_fd not in old_active
                             and head_fd not in new_active):
                             # The 'head' site has not been filled yet.
-                            if not shape(head_fd):
-                                continue
-
-                            if overwrite or head_fd not in H:
-                                # Fill 'head' site.
-                                new_active.add(head_fd)
-                                H.setdefault(head_fd, [head_fd, None])
-                            else:
-                                # The 'head' site exists and won't be visited:
-                                # fill the incoming edge as well to balance the
-                                # hopping.
+                            if head_fd in H:
+                                # The 'head' site exists.  (It doesn't matter
+                                # whether it's in the shape or not.)  Fill the
+                                # incoming edge as well to balance the hopping.
                                 other_value = template._get_edge(
                                     *templ_sym.to_fd(head, tail))
                                 self._set_edge(*to_fd(head, tail)
                                                + (other_value,))
+                            else:
+                                if not shape(head_fd):
+                                    # There is no site at 'head' and it's
+                                    # outside the shape.
+                                    continue
+                                new_active.add(head_fd)
+                                H.setdefault(head_fd, [head_fd, None])
 
                         # Fill the outgoing edge.
                         if head in old_heads:

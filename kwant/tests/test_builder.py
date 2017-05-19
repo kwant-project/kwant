@@ -129,7 +129,7 @@ class VerySimpleSymmetry(builder.Symmetry):
     def num_directions(self):
         return 1
 
-    def isstrictsupergroup(self, other):
+    def has_subgroup(self, other):
         if isinstance(other, builder.NoSymmetry):
             return True
         elif isinstance(other, VerySimpleSymmetry):
@@ -556,7 +556,8 @@ def test_hamiltonian_evaluation():
 
     # test with infinite system
     inf_syst = kwant.Builder(VerySimpleSymmetry(2))
-    inf_syst += syst
+    for k, v in it.chain(syst.site_value_pairs(), syst.hopping_value_pairs()):
+        inf_syst[k] = v
     inf_fsyst = inf_syst.finalized()
     hop = tuple(map(inf_fsyst.sites.index, new_hop))
     test_raising(inf_fsyst, hop)
@@ -652,32 +653,36 @@ def test_fill():
         return -100 <= site.pos[0] < 100
 
     ## Test that copying a builder by "fill" preserves everything.
-    cubic = kwant.lattice.general(ta.identity(3))
-    sym = kwant.TranslationalSymmetry((3, 0, 0), (0, 4, 0), (0, 0, 5))
+    for sym, func in [(kwant.TranslationalSymmetry(*np.diag([3, 4, 5])),
+                       lambda pos: True),
+                      (builder.NoSymmetry(),
+                       lambda pos: ta.dot(pos, pos) < 17)]:
+        cubic = kwant.lattice.general(ta.identity(3))
 
-    # Make a weird system.
-    orig = kwant.Builder(sym)
-    sites = cubic.shape(lambda pos: True, (0, 0, 0))
-    for i, site in enumerate(orig.expand(sites)):
-        if i % 7 == 0:
-            continue
-        orig[site] = i
-    for i, hopp in enumerate(orig.expand(cubic.neighbors(1))):
-        if i % 11 == 0:
-            continue
-        orig[hopp] = i * 1.2345
-    for i, hopp in enumerate(orig.expand(cubic.neighbors(2))):
-        if i % 13 == 0:
-            continue
-        orig[hopp] = i * 1j
+        # Make a weird system.
+        orig = kwant.Builder(sym)
+        sites = cubic.shape(func, (0, 0, 0))
+        for i, site in enumerate(orig.expand(sites)):
+            if i % 7 == 0:
+                continue
+            orig[site] = i
+        for i, hopp in enumerate(orig.expand(cubic.neighbors(1))):
+            if i % 11 == 0:
+                continue
+            orig[hopp] = i * 1.2345
+        for i, hopp in enumerate(orig.expand(cubic.neighbors(2))):
+            if i % 13 == 0:
+                continue
+            orig[hopp] = i * 1j
 
-    # Clone the original using fill.
-    clone = kwant.Builder(sym)
-    clone.fill(orig, lambda s: True, (0, 0, 0))
+        # Clone the original using fill.
+        clone = kwant.Builder(sym)
+        clone.fill(orig, lambda s: True, (0, 0, 0))
 
-    # Verify that both are identical.
-    assert set(clone.site_value_pairs()) == set(orig.site_value_pairs())
-    assert set(clone.hopping_value_pairs()) == set(orig.hopping_value_pairs())
+        # Verify that both are identical.
+        assert set(clone.site_value_pairs()) == set(orig.site_value_pairs())
+        assert (set(clone.hopping_value_pairs())
+                == set(orig.hopping_value_pairs()))
 
     ## Test for warning when "start" is out.
     target = builder.Builder()
@@ -688,14 +693,13 @@ def test_fill():
     ## Test filling of infinite builder.
     for n in [1, 2, 4]:
         sym_n = kwant.TranslationalSymmetry((n, 0))
-        for ow in [False, True]:
-            for start in [g(0, 0), g(20, 0)]:
-                target = builder.Builder(sym_n)
-                sites = target.fill(template_1d, lambda s: True, start,
-                                    overwrite=ow, max_sites=10)
-                assert len(sites) == n
-                assert len(list(target.hoppings())) == n
-                assert set(sym_n.to_fd(s) for s in sites) == set(target.sites())
+        for start in [g(0, 0), g(20, 0)]:
+            target = builder.Builder(sym_n)
+            sites = target.fill(template_1d, lambda s: True, start,
+                                max_sites=10)
+            assert len(sites) == n
+            assert len(list(target.hoppings())) == n
+            assert set(sym_n.to_fd(s) for s in sites) == set(target.sites())
 
     ## test max_sites
     target = builder.Builder()
@@ -711,14 +715,8 @@ def test_fill():
     target = builder.Builder()
     added_sites = target.fill(template_1d, line_200, g(0, 0))
     assert len(added_sites) == 200
-    ## test overwrite=False
     with warns(RuntimeWarning):
         target.fill(template_1d, line_200, g(0, 0))
-    ## test overwrite=True
-    added_sites = target.fill(template_1d, line_200, g(0, 0),
-                              overwrite=True)
-    assert len(added_sites) == 200
-
 
     ## test multiplying unit cell size in 1D
     n_cells = 10
@@ -779,17 +777,53 @@ def test_fill():
     target = builder.Builder(kwant.TranslationalSymmetry((-2,)))
     target[lat(0)] = None
     to_target_fd = target.symmetry.to_fd
-    # refuses to fill the target because target already contains the starting
-    # site and 'overwrite == False'.
+    # Refuses to fill the target because target already contains the starting
+    # site.
     with warns(RuntimeWarning):
         target.fill(template, lambda x: True, lat(0))
 
     # should only add a single site (and hopping)
-    new_sites = target.fill(template, lambda x: True, lat(1), overwrite=False)
+    new_sites = target.fill(template, lambda x: True, lat(1))
     assert target[lat(0)] is None  # should not be overwritten by template
     assert target[lat(-1)] == template[lat(0)]
     assert len(new_sites) == 1
     assert to_target_fd(new_sites[0]) == to_target_fd(lat(-1))
+
+
+def test_fill_sticky():
+    """Test that adjacent regions are properly interconnected when filled
+    separately.
+    """
+    # Generate model template.
+    lat = kwant.lattice.kagome()
+    template = kwant.Builder(kwant.TranslationalSymmetry(
+        lat.vec((1, 0)), lat.vec((0, 1))))
+    for i, sl in enumerate(lat.sublattices):
+        template[sl(0, 0)] = i
+    for i in range(1, 3):
+        for j, hop in enumerate(template.expand(lat.neighbors(i))):
+            template[hop] = j * 1j
+
+    def disk(site):
+        pos = site.pos
+        return ta.dot(pos, pos) < 13
+
+    def halfplane(site):
+        return ta.dot(site.pos - (-1, 1), (-0.9, 0.63)) > 0
+
+    # Fill in one go.
+    syst0 = kwant.Builder()
+    syst0.fill(template, disk, (0, 0))
+
+    # Fill in two stages.
+    syst1 = kwant.Builder()
+    syst1.fill(template, lambda s: disk(s) and halfplane(s), (-2, 1))
+    syst1.fill(template, lambda s: disk(s) and not halfplane(s), (0, 0))
+
+    # Verify that both results are identical.
+    assert set(syst0.site_value_pairs()) == set(syst1.site_value_pairs())
+    assert (set(syst0.hopping_value_pairs())
+            == set(syst1.hopping_value_pairs()))
 
 
 def test_attach_lead():
@@ -907,7 +941,7 @@ def test_closest():
                         assert dd >= 0.999999 * dist
 
 
-def test_iadd():
+def test_update():
     lat = builder.SimpleSiteFamily()
 
     syst = builder.Builder()
@@ -930,7 +964,7 @@ def test_iadd():
     lead1 = builder.BuilderLead(lead1, [lat(2,)])
     other_syst.leads.append(lead1)
 
-    syst += other_syst
+    syst.update(other_syst)
     assert syst.leads == [lead0, lead1]
     expected = sorted([((0,), 1), ((1,), 2), ((2,), 2)])
     assert sorted(((s.tag, v) for s, v in syst.site_value_pairs())) == expected

@@ -555,7 +555,7 @@ class TranslationalSymmetry(builder.Symmetry):
             raise ValueError('Generators must be sequences of integers.')
         return TranslationalSymmetry(*ta.dot(generators, self.periods))
 
-    def isstrictsupergroup(self, other):
+    def has_subgroup(self, other):
         if isinstance(other, builder.NoSymmetry):
             return True
         elif not isinstance(other, TranslationalSymmetry):
