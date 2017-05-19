@@ -74,8 +74,8 @@ class _DiscretizedBuilder(builder.Builder):
 
         return "".join(result)
 
-    # For the Jupyter notebook:
-    def __repr_html__(self):
+    # Enable human-readable rendering in Jupyter notebooks:
+    def _repr_html_(self):
         return self.__str__()
 
 
