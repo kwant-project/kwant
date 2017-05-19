@@ -790,6 +790,42 @@ def test_fill():
     assert to_target_fd(new_sites[0]) == to_target_fd(lat(-1))
 
 
+def test_fill_sticky():
+    """Test that adjacent regions are properly interconnected when filled
+    separately.
+    """
+    # Generate model template.
+    lat = kwant.lattice.kagome()
+    template = kwant.Builder(kwant.TranslationalSymmetry(
+        lat.vec((1, 0)), lat.vec((0, 1))))
+    for i, sl in enumerate(lat.sublattices):
+        template[sl(0, 0)] = i
+    for i in range(1, 3):
+        for j, hop in enumerate(template.expand(lat.neighbors(i))):
+            template[hop] = j * 1j
+
+    def disk(site):
+        pos = site.pos
+        return ta.dot(pos, pos) < 13
+
+    def halfplane(site):
+        return ta.dot(site.pos - (-1, 1), (-0.9, 0.63)) > 0
+
+    # Fill in one go.
+    syst0 = kwant.Builder()
+    syst0.fill(template, disk, (0, 0))
+
+    # Fill in two stages.
+    syst1 = kwant.Builder()
+    syst1.fill(template, lambda s: disk(s) and halfplane(s), (-2, 1))
+    syst1.fill(template, lambda s: disk(s) and not halfplane(s), (0, 0))
+
+    # Verify that both results are identical.
+    assert set(syst0.site_value_pairs()) == set(syst1.site_value_pairs())
+    assert (set(syst0.hopping_value_pairs())
+            == set(syst1.hopping_value_pairs()))
+
+
 def test_attach_lead():
     fam = builder.SimpleSiteFamily()
     fam_noncommensurate = builder.SimpleSiteFamily(name='other')

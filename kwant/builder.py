@@ -1263,8 +1263,17 @@ class Builder:
     def fill(self, template, shape, start, *, max_sites=10**7):
         """Populate builder using another one as a template.
 
-        Sites and hoppings that already exist in the target builder are never
-        overwritten.
+        Starting from one or multiple sites, traverse the graph of the template
+        builder and copy sites and hoppings to the target builder.  The
+        traversal stops at sites that are already present in the target and on
+        sites that are not inside the provided shape.
+
+        This function takes into account translational symmetry.  As such,
+        typically the template will have a higher symmetry than the target.
+
+        Newly added sites are connected by hoppings to sites that were already
+        present.  This facilitates construction of a system by a series of
+        calls to 'fill'.
 
         Parameters
         ----------
@@ -1380,21 +1389,21 @@ class Builder:
                         if (head_fd not in old_active
                             and head_fd not in new_active):
                             # The 'head' site has not been filled yet.
-                            if not shape(head_fd):
-                                continue
-
-                            if head_fd not in H:
-                                # Fill 'head' site.
-                                new_active.add(head_fd)
-                                H.setdefault(head_fd, [head_fd, None])
-                            else:
-                                # The 'head' site exists and won't be visited:
-                                # fill the incoming edge as well to balance the
-                                # hopping.
+                            if head_fd in H:
+                                # The 'head' site exists.  (It doesn't matter
+                                # whether it's in the shape or not.)  Fill the
+                                # incoming edge as well to balance the hopping.
                                 other_value = template._get_edge(
                                     *templ_sym.to_fd(head, tail))
                                 self._set_edge(*to_fd(head, tail)
                                                + (other_value,))
+                            else:
+                                if not shape(head_fd):
+                                    # There is no site at 'head' and it's
+                                    # outside the shape.
+                                    continue
+                                new_active.add(head_fd)
+                                H.setdefault(head_fd, [head_fd, None])
 
                         # Fill the outgoing edge.
                         if head in old_heads:
