@@ -24,9 +24,18 @@ with continuum models and for discretizing them into tight-binding models. It
 aims at providing a handy interface to convert symbolic Hamiltonians into a
 builder with N-D translational symmetry that can be use to calculate
 tight-binding band structures or construct systems with different/lower
-symmetry.
+symmetry. For example in just a few lines we can construct a two-band model that exhibits
+a quantum anomalous spin Hall phase:
 
-See :doc:`../../tutorial/discretize`
+.. literalinclude:: ../../tutorial/plot_qahe.py
+    :start-after: HIDDEN_BEGIN_model
+    :end-before: HIDDEN_END_model
+
+From: :download:`QAHE example script <../../tutorial/plot_qahe.py>`
+
+See the tutorial: :doc:`../../tutorial/discretize`
+
+See the reference documentation: :doc:`../../reference/kwant.continuum`
 
 Calculating charges and currents using the operator module
 ----------------------------------------------------------
@@ -57,10 +66,17 @@ Quantities defined on system hoppings (e.g. currents calculated using
 `~kwant.operator.current`) can be directly plotted as a streamplot over the
 system using `kwant.plotter.current`. This is similar to how
 `kwant.plotter.map` can be used to plot quantities defined on sites.
+The example below shows edge states of a quantum anomalous Hall phase
+of the two-band model shown in the `above section
+<#tools-for-continuum-hamiltonians>`_:
 
-See :doc:`../../tutorial/plotting`
+.. literalinclude:: ../../tutorial/plot_qahe.py
+    :start-after: HIDDEN_BEGIN_current
+    :end-before: HIDDEN_END_current
 
-.. image:: ../../images/plot_qpc_current.*
+.. image:: ../../images/plot_qahe_current.*
+
+From: :download:`QAHE example script <../../tutorial/plot_qahe.py>`
 
 Scattering states with discrete symmetries and conservation laws
 ----------------------------------------------------------------
