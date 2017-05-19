@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2011-2016 Kwant authors.
+# Copyright 2011-2017 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -637,9 +637,10 @@ def main():
                     'build_tut': build_tut,
                     'test': test},
           ext_modules=exts,
-          install_requires=['numpy >= 1.8.1', 'scipy >= 0.13.3', 'tinyarray >= 1.2.0'],
+          install_requires=['numpy >= 1.8.1', 'scipy >= 0.14.0',
+                            'tinyarray >= 1.2.0'],
           extras_require={
-              'plotting': 'matplotlib >= 1.3.1',
+              'plotting': 'matplotlib >= 1.4.2',
               # Ubuntu 16.04 is the oldest supported distro with python3-sympy
               'continuum': 'sympy >= 0.7.6',
           },
