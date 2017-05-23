@@ -31,10 +31,10 @@ def test_importable_without_matplotlib():
         suffix = 'py'
     assert suffix == 'py'
     fname = sep.join((prefix, suffix))
-    with open(fname) as f:
+    with open(fname, 'rb') as f:
         code = f.read()
-    code = code.replace('from . import', 'from kwant import')
-    code = code.replace('matplotlib', 'totalblimp')
+    code = code.replace(b'from . import', b'from kwant import')
+    code = code.replace(b'matplotlib', b'totalblimp')
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
