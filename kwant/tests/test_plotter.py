@@ -253,7 +253,7 @@ def syst_rect(lat, salt, W=3, L=50):
     ww = W//2
 
     def onsite(site):
-        return 4 + 0.1 * kwant.digest.gauss(site.tag, salt=salt)
+        return 4 + 0.1 * kwant.digest.gauss(repr(site.tag), salt=salt)
 
     syst[(lat(i, j) for i in range(-ll, ll+1)
          for j in range(-ww, ww+1))] = onsite
