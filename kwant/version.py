@@ -86,7 +86,7 @@ def get_version_from_git():
 def init(version_file='_kwant_version.py'):
     global version, version_is_from_git
     version_info = {}
-    with open(os.path.join(package_root, version_file), 'r') as f:
+    with open(os.path.join(package_root, version_file), 'rb') as f:
         exec(f.read(), {}, version_info)
     version = version_info['version']
     version_is_from_git = (version == "__use_git__")

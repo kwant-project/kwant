@@ -364,7 +364,7 @@ def write_version(fname):
 def long_description():
     text = []
     try:
-        with open('README.rst') as f:
+        with open('README.rst', encoding='utf8') as f:
             for line in f:
                 if line.startswith('See also in this directory:'):
                     break
