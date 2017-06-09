@@ -31,10 +31,10 @@ def test_importable_without_matplotlib():
         suffix = 'py'
     assert suffix == 'py'
     fname = sep.join((prefix, suffix))
-    with open(fname) as f:
+    with open(fname, 'rb') as f:
         code = f.read()
-    code = code.replace('from . import', 'from kwant import')
-    code = code.replace('matplotlib', 'totalblimp')
+    code = code.replace(b'from . import', b'from kwant import')
+    code = code.replace(b'matplotlib', b'totalblimp')
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
@@ -253,7 +253,7 @@ def syst_rect(lat, salt, W=3, L=50):
     ww = W//2
 
     def onsite(site):
-        return 4 + 0.1 * kwant.digest.gauss(site.tag, salt=salt)
+        return 4 + 0.1 * kwant.digest.gauss(repr(site.tag), salt=salt)
 
     syst[(lat(i, j) for i in range(-ll, ll+1)
          for j in range(-ww, ww+1))] = onsite

@@ -243,10 +243,10 @@ class build_tut(Command):
             os.mkdir(tut_dir)
         for in_fname in glob.glob('doc/source/tutorial/*.py'):
             out_fname = os.path.join(tut_dir, os.path.basename(in_fname))
-            with open(in_fname) as in_file:
-                with open(out_fname, 'w') as out_file:
+            with open(in_fname, 'rb') as in_file:
+                with open(out_fname, 'wb') as out_file:
                     for line in in_file:
-                        if not line.startswith('#HIDDEN'):
+                        if not line.startswith(b'#HIDDEN'):
                             out_file.write(line)
 
 
@@ -364,7 +364,7 @@ def write_version(fname):
 def long_description():
     text = []
     try:
-        with open('README.rst') as f:
+        with open('README.rst', encoding='utf8') as f:
             for line in f:
                 if line.startswith('See also in this directory:'):
                     break
