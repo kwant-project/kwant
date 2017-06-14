@@ -59,13 +59,10 @@ def syst_2d(W=3, r1=3, r2=8):
     syst[lat.neighbors()] = -t
     sym_lead0 = kwant.TranslationalSymmetry(lat.vec((-1, 0)))
     lead0 = kwant.Builder(sym_lead0)
-    lead2 = kwant.Builder(sym_lead0)
 
     lead_shape = lambda pos: (-W / 2 < pos[1] < W / 2)
 
     lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
-    lead2[lat.shape(lead_shape, (0, 0))] = 4 * t
-    syst.attach_lead(lead2)
     lead0[lat.neighbors()] = - t
     lead1 = lead0.reversed()
     syst.attach_lead(lead0)
@@ -111,8 +108,7 @@ def test_plot():
                 if (color != 'k' and
                     isinstance(color(next(iter(syst2d.sites()))), float)):
                     assert fig.axes[0].collections[0].get_array() is not None
-                assert len(fig.axes[0].collections) == (8 if syst is syst2d else
-                                                        6)
+                assert len(fig.axes[0].collections) == 6
         color_opts = ['k', (lambda site, site2: site.tag[0]),
                       lambda site, site2: (abs(site.tag[0] / 100),
                                            abs(site.tag[1] / 100), 0)]
