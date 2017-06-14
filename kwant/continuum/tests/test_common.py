@@ -185,5 +185,12 @@ def test_lambdify_substitutions(e, kwargs):
     should_be = lambda x, y, z: x + y + z
     subs = {'y': 'y + z'}
 
-    e = lambdify(e, locals=subs)
+    if not isinstance(e, str):
+        # warns that 'locals' are not used if 'e' is
+        # a sympy expression already
+        with pytest.warns(RuntimeWarning):
+            e = lambdify(e, locals=subs)
+    else:
+        e = lambdify(e, locals=subs)
+
     assert e(**kwargs) == should_be(**kwargs)
