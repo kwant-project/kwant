@@ -45,10 +45,12 @@ def configure_extensions(exts, aliases=(), build_summary=None):
 
     #### Determine the name of the configuration file.
     config_file_option = '--configfile'
+    config_file_option_present = False
     # Handle command line option
     for i, opt in enumerate(sys.argv):
         if not opt.startswith(config_file_option):
             continue
+        config_file_option_present = True
         l, _, config_file = opt.partition('=')
         if l != config_file_option or not config_file:
             print('Error: Expecting {}=PATH'.format(config_file_option),
@@ -66,6 +68,10 @@ def configure_extensions(exts, aliases=(), build_summary=None):
             configs.read_file(f)
     except IOError:
         config_file_present = False
+        if config_file_option_present:
+            print("Error: '{}' option was provided, but '{}' does not exist"
+                  .format(config_file_option, config_file))
+            sys.exit(1)
     else:
         config_file_present = True
 
