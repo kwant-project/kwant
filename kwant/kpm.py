@@ -141,19 +141,6 @@ class SpectralDensity:
             raise TypeError("either 'num_moments' or 'energy_resolution' "
                             "must be provided.")
 
-        if energy_resolution:
-            num_moments = math.ceil((1.6 * self._a) / energy_resolution)
-        elif num_moments is None:
-            num_moments = 100
-
-        must_be_positive_int = ['num_vectors', 'num_moments']
-        for var in must_be_positive_int:
-            val = locals()[var]
-            if val <= 0 or val != int(val):
-                raise ValueError('{} must be a positive integer'.format(var))
-        if eps <= 0:
-            raise ValueError('eps must be positive')
-
         rng = ensure_rng(rng)
         # self.eps ensures that the rescaled Hamiltonian has a
         # spectrum strictly in the interval (-1,1).
@@ -194,6 +181,19 @@ class SpectralDensity:
                                                         v0=self._v0,
                                                         bounds=bounds)
         self.bounds = (self._b - self._a, self._b + self._a)
+
+        if energy_resolution:
+            num_moments = math.ceil((1.6 * self._a) / energy_resolution)
+        elif num_moments is None:
+            num_moments = 100
+
+        must_be_positive_int = ['num_vectors', 'num_moments']
+        for var in must_be_positive_int:
+            val = locals()[var]
+            if val <= 0 or val != int(val):
+                raise ValueError('{} must be a positive integer'.format(var))
+        if eps <= 0:
+            raise ValueError('eps must be positive')
 
         for r in range(num_vectors):
             self._rand_vect_list.append(

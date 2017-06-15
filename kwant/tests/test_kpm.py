@@ -175,6 +175,24 @@ def test_api_single_eigenvalue_error():
         SpectralDensity(np.identity(dim, dtype=complex))
 
 
+def test_energy_resolution():
+    """Check that energy resolution works and gives the same output as
+    setting the equivalent number of moments.
+    """
+    ham = kwant.rmt.gaussian(dim)
+    rng = 1
+    energy_resolution = 0.05
+
+    sp1 = SpectralDensity(ham, rng=rng, energy_resolution=energy_resolution)
+    # number of moments for this energy resolution
+    num_moments = sp1.num_moments
+    # use the same number of moments but not passing energy resolution
+    sp2 = SpectralDensity(ham, rng=rng, num_moments=num_moments)
+
+    # Check bit for bit equality
+    assert np.all(sp1.densities == sp2.densities)
+
+
 def test_operator_none():
     """Check operator=None gives the same results as operator=np.identity(),
     with the same random vectors.
