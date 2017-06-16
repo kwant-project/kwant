@@ -50,7 +50,7 @@ The following software is highly recommended though not strictly required:
    footprint.  (Kwant uses only the sequential, single core version
    of MUMPS.  The advantages due to MUMPS as used by Kwant are thus independent
    of the number of CPU cores of the machine on which Kwant runs.)
- * The `py.test testing framework <http://pytest.org/>`_ for running the
+ * The `py.test testing framework <http://pytest.org/>`_ 2.8 or newer for running the
    tests included with Kwant.
 
 In addition, to build a copy of Kwant that has been checked-out directly from
