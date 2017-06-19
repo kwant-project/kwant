@@ -643,11 +643,11 @@ def main():
                     'build_tut': build_tut,
                     'test': test},
           ext_modules=exts,
-          install_requires=['numpy >= 1.8.1', 'scipy >= 0.14',
+          install_requires=['numpy >= 1.11.0', 'scipy >= 0.17.0',
                             'tinyarray >= 1.2'],
           extras_require={
-              'plotting': 'matplotlib >= 1.4.2',
-              # Ubuntu 16.04 is the oldest supported distro with python3-sympy
+              # The oldest versions between: Debian stable, Ubuntu LTS
+              'plotting': 'matplotlib >= 1.5.1',
               'continuum': 'sympy >= 0.7.6',
           },
           classifiers=[c.strip() for c in classifiers.split('\n')])

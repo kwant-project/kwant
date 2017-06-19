@@ -158,6 +158,7 @@ def make_sparse_full(ham, args, params, CGraph gr, diag,
 
     # hack around a bug in Scipy + Python 3 + memoryviews
     # see https://github.com/scipy/scipy/issues/5123 for details
+    # TODO: remove this once we depend on scipy >= 0.18.
     np_data = np.asarray(data)
     np_rows_cols = np.asarray(rows_cols)
     np_to_off = np.asarray(to_off)
