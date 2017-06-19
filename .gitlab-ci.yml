@@ -69,7 +69,7 @@ run tests:
   stage: test
   script:
     - pip3 install sympy
-    - py.test --cov=kwant --cov-report term --cov-report html --flakes kwant
+    - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant
   artifacts:
     paths:
       - htmlcov

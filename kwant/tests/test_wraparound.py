@@ -271,8 +271,8 @@ def test_fd_mismatch():
 
     # combine the previous two
     syst3 = kwant.Builder(T)
-    syst3 += syst1
-    syst3 += syst2
+    syst3.update(syst1)
+    syst3.update(syst2)
 
     for syst in (syst1, syst2, syst3):
         wraparound(syst)
