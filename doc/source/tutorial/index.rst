@@ -12,3 +12,4 @@ Tutorial: learning Kwant through examples
     plotting
     kpm
     discretize
+    FAQ
