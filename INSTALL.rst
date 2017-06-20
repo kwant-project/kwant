@@ -29,7 +29,7 @@ Prerequisites
 =============
 
 Building Kwant requires
- * `Python <https://www.python.org/>`_ 3.4 or above (Kwant 1.1 is the last
+ * `Python <https://www.python.org/>`_ 3.5 or above (Kwant 1.1 is the last
    version to support Python 2),
  * `NumPy <http://numpy.org/>`_ 1.11.0 or newer,
  * `SciPy <https://scipy.org/>`_ 0.17.0 or newer,

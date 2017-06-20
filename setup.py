@@ -124,6 +124,16 @@ def configure_extensions(exts, aliases=(), build_summary=None):
     return exts
 
 
+def check_python_version(min_version):
+    installed_version = sys.version_info[:3]
+    if installed_version < min_version:
+        print('Error: Python {} required, but {} is installed'.format(
+              '.'.join(map(str, min_version)),
+              '.'.join(map(str, installed_version)))
+        )
+        sys.exit(1)
+
+
 def check_versions():
     global version, version_is_from_git
 
@@ -557,6 +567,7 @@ def maybe_cythonize(exts):
 
 
 def main():
+    check_python_version((3, 5))
     check_versions()
 
     exts = collections.OrderedDict([
