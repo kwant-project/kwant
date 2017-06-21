@@ -10,7 +10,6 @@
 from math import sin, cos, sqrt, pi, copysign
 from collections import namedtuple
 
-import warnings
 from itertools import combinations_with_replacement
 import numpy as np
 import numpy.linalg as npl
@@ -23,20 +22,6 @@ from scipy.sparse import (identity as sp_identity, hstack as sp_hstack,
 dot = np.dot
 
 __all__ = ['selfenergy', 'modes', 'PropagatingModes', 'StabilizedModes']
-
-
-# TODO: Once Kwant depends on numpy >= 1.11, remove the fix
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    split_fixed = np.split(np.zeros((0, 2)), 2)[0].shape == (0, 2)
-if split_fixed:  # skip coverage
-    split = np.split
-else:  # skip coverage
-    def split(array, n, axis=0):
-        if array.shape[axis] != 0:
-            return np.split(array, n, axis)
-        else:
-            return n * [array]
 
 
 # TODO: Use scipy block_diag once we depend on scipy>=0.19
@@ -97,7 +82,7 @@ def group_halves(arr_list):
     of each array appear first:
     `[a b], [c d], [e f] -> [a c e b d f]`
     """
-    list_ = [split(arr, 2) for arr in arr_list]
+    list_ = [np.split(arr, 2) for arr in arr_list]
     lefts, rights = zip(*list_)
     return np.r_[tuple(lefts + rights)]
 
@@ -798,9 +783,6 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
     order = np.lexsort([TRIM_PHS_sort, velocities,
                         -np.sign(velocities) * momenta, np.sign(velocities)])
 
-    # TODO: Remove the check once we depend on numpy>=1.8.
-    if not len(order):
-        order = slice(None)
     velocities = velocities[order]
     momenta = momenta[order]
     full_psi = full_psi[:, order]

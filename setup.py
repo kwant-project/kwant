@@ -124,6 +124,16 @@ def configure_extensions(exts, aliases=(), build_summary=None):
     return exts
 
 
+def check_python_version(min_version):
+    installed_version = sys.version_info[:3]
+    if installed_version < min_version:
+        print('Error: Python {} required, but {} is installed'.format(
+              '.'.join(map(str, min_version)),
+              '.'.join(map(str, installed_version)))
+        )
+        sys.exit(1)
+
+
 def check_versions():
     global version, version_is_from_git
 
@@ -557,6 +567,7 @@ def maybe_cythonize(exts):
 
 
 def main():
+    check_python_version((3, 5))
     check_versions()
 
     exts = collections.OrderedDict([
@@ -643,11 +654,11 @@ def main():
                     'build_tut': build_tut,
                     'test': test},
           ext_modules=exts,
-          install_requires=['numpy >= 1.8.1', 'scipy >= 0.14',
+          install_requires=['numpy >= 1.11.0', 'scipy >= 0.17.0',
                             'tinyarray >= 1.2'],
           extras_require={
-              'plotting': 'matplotlib >= 1.4.2',
-              # Ubuntu 16.04 is the oldest supported distro with python3-sympy
+              # The oldest versions between: Debian stable, Ubuntu LTS
+              'plotting': 'matplotlib >= 1.5.1',
               'continuum': 'sympy >= 0.7.6',
           },
           classifiers=[c.strip() for c in classifiers.split('\n')])
