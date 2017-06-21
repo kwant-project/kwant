@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2017 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -23,14 +23,13 @@ __all__ = ['sgetrf', 'dgetrf', 'cgetrf', 'zgetrf',
 import numpy as np
 cimport numpy as np
 
-# Strangely absolute imports from kwant.linalg.f_lapack don't work here.  So
-# continue using traditional implicit relative imports.
-from . import f_lapack
-from . cimport f_lapack
-from .f_lapack cimport l_int, l_logical
+cimport scipy.linalg.cython_lapack as lapack
 
-int_dtype = f_lapack.l_int_dtype
-logical_dtype = f_lapack.l_logical_dtype
+ctypedef int l_int
+ctypedef bint l_logical
+
+int_dtype = np.int32
+logical_dtype = np.int32
 
 # exceptions
 
@@ -60,9 +59,9 @@ def sgetrf(np.ndarray[np.float32_t, ndim=2] A):
 
     M = A.shape[0]
     N = A.shape[1]
-    ipiv = np.empty(min(M,N), dtype = f_lapack.l_int_dtype)
+    ipiv = np.empty(min(M,N), dtype = int_dtype)
 
-    f_lapack.sgetrf_(&M, &N, <float *>A.data, &M,
+    lapack.sgetrf(&M, &N, <float *>A.data, &M,
                      <l_int *>ipiv.data, &info)
 
     assert info >= 0, "Argument error in sgetrf"
@@ -77,9 +76,9 @@ def dgetrf(np.ndarray[np.float64_t, ndim=2] A):
 
     M = A.shape[0]
     N = A.shape[1]
-    ipiv = np.empty(min(M,N), dtype = f_lapack.l_int_dtype)
+    ipiv = np.empty(min(M,N), dtype = int_dtype)
 
-    f_lapack.dgetrf_(&M, &N, <double *>A.data, &M,
+    lapack.dgetrf(&M, &N, <double *>A.data, &M,
                      <l_int *>ipiv.data, &info)
 
     assert info >= 0, "Argument error in dgetrf"
@@ -94,9 +93,9 @@ def cgetrf(np.ndarray[np.complex64_t, ndim=2] A):
 
     M = A.shape[0]
     N = A.shape[1]
-    ipiv = np.empty(min(M,N), dtype = f_lapack.l_int_dtype)
+    ipiv = np.empty(min(M,N), dtype = int_dtype)
 
-    f_lapack.cgetrf_(&M, &N, <float complex *>A.data, &M,
+    lapack.cgetrf(&M, &N, <float complex *>A.data, &M,
                      <l_int *>ipiv.data, &info)
 
     assert info >= 0, "Argument error in cgetrf"
@@ -111,9 +110,9 @@ def zgetrf(np.ndarray[np.complex128_t, ndim=2] A):
 
     M = A.shape[0]
     N = A.shape[1]
-    ipiv = np.empty(min(M,N), dtype = f_lapack.l_int_dtype)
+    ipiv = np.empty(min(M,N), dtype = int_dtype)
 
-    f_lapack.zgetrf_(&M, &N, <double complex *>A.data, &M,
+    lapack.zgetrf(&M, &N, <double complex *>A.data, &M,
                      <l_int *>ipiv.data, &info)
 
     assert info >= 0, "Argument error in zgetrf"
@@ -144,7 +143,7 @@ def sgetrs(np.ndarray[np.float32_t, ndim=2] LU,
     else:
         raise ValueError("In sgetrs: B must be a vector or matrix")
 
-    f_lapack.sgetrs_("N", &N, &NRHS, <float *>LU.data, &N,
+    lapack.sgetrs("N", &N, &NRHS, <float *>LU.data, &N,
                      <l_int *>IPIV.data, <float *>b.data, &N,
                      &info)
 
@@ -174,7 +173,7 @@ def dgetrs(np.ndarray[np.float64_t, ndim=2] LU,
     else:
         raise ValueError("In dgetrs: B must be a vector or matrix")
 
-    f_lapack.dgetrs_("N", &N, &NRHS, <double *>LU.data, &N,
+    lapack.dgetrs("N", &N, &NRHS, <double *>LU.data, &N,
                      <l_int *>IPIV.data, <double *>b.data, &N,
                      &info)
 
@@ -204,7 +203,7 @@ def cgetrs(np.ndarray[np.complex64_t, ndim=2] LU,
     else:
         raise ValueError("In cgetrs: B must be a vector or matrix")
 
-    f_lapack.cgetrs_("N", &N, &NRHS, <float complex *>LU.data, &N,
+    lapack.cgetrs("N", &N, &NRHS, <float complex *>LU.data, &N,
                      <l_int *>IPIV.data, <float complex *>b.data, &N,
                      &info)
 
@@ -234,7 +233,7 @@ def zgetrs(np.ndarray[np.complex128_t, ndim=2] LU,
     else:
         raise ValueError("In zgetrs: B must be a vector or matrix")
 
-    f_lapack.zgetrs_("N", &N, &NRHS, <double complex *>LU.data, &N,
+    lapack.zgetrs("N", &N, &NRHS, <double complex *>LU.data, &N,
                      <l_int *>IPIV.data, <double complex *>b.data, &N,
                      &info)
 
@@ -255,9 +254,9 @@ def sgecon(np.ndarray[np.float32_t, ndim=2] LU,
 
     N = LU.shape[0]
     work = np.empty(4*N, dtype = np.float32)
-    iwork = np.empty(N, dtype = f_lapack.l_int_dtype)
+    iwork = np.empty(N, dtype = int_dtype)
 
-    f_lapack.sgecon_(norm, &N, <float *>LU.data, &N, &normA,
+    lapack.sgecon(norm, &N, <float *>LU.data, &N, &normA,
                      &rcond, <float *>work.data,
                      <l_int *>iwork.data, &info)
 
@@ -276,9 +275,9 @@ def dgecon(np.ndarray[np.float64_t, ndim=2] LU,
 
     N = LU.shape[0]
     work = np.empty(4*N, dtype = np.float64)
-    iwork = np.empty(N, dtype = f_lapack.l_int_dtype)
+    iwork = np.empty(N, dtype = int_dtype)
 
-    f_lapack.dgecon_(norm, &N, <double *>LU.data, &N, &normA,
+    lapack.dgecon(norm, &N, <double *>LU.data, &N, &normA,
                      &rcond, <double *>work.data,
                      <l_int *>iwork.data, &info)
 
@@ -299,7 +298,7 @@ def cgecon(np.ndarray[np.complex64_t, ndim=2] LU,
     work = np.empty(2*N, dtype = np.complex64)
     rwork = np.empty(2*N, dtype = np.float32)
 
-    f_lapack.cgecon_(norm, &N, <float complex *>LU.data, &N, &normA,
+    lapack.cgecon(norm, &N, <float complex *>LU.data, &N, &normA,
                      &rcond, <float complex *>work.data,
                      <float *>rwork.data, &info)
 
@@ -320,7 +319,7 @@ def zgecon(np.ndarray[np.complex128_t, ndim=2] LU,
     work = np.empty(2*N, dtype = np.complex128)
     rwork = np.empty(2*N, dtype = np.float64)
 
-    f_lapack.zgecon_(norm, &N, <double complex *>LU.data, &N, &normA,
+    lapack.zgecon(norm, &N, <double complex *>LU.data, &N, &normA,
                      &rcond, <double complex *>work.data,
                      <double *>rwork.data, &info)
 
@@ -403,7 +402,7 @@ def sggev(np.ndarray[np.float32_t, ndim=2] A,
     # workspace query
     lwork = -1
 
-    f_lapack.sggev_(jobvl, jobvr, &N, <float *>A.data, &N,
+    lapack.sggev(jobvl, jobvr, &N, <float *>A.data, &N,
                     <float *>B.data, &N,
                     <float *>alphar.data, <float *> alphai.data,
                     <float *>beta.data,
@@ -416,7 +415,7 @@ def sggev(np.ndarray[np.float32_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.float32)
 
     # Now the real calculation
-    f_lapack.sggev_(jobvl, jobvr, &N, <float *>A.data, &N,
+    lapack.sggev(jobvl, jobvr, &N, <float *>A.data, &N,
                     <float *>B.data, &N,
                     <float *>alphar.data, <float *> alphai.data,
                     <float *>beta.data,
@@ -473,7 +472,7 @@ def dggev(np.ndarray[np.float64_t, ndim=2] A,
     # workspace query
     lwork = -1
 
-    f_lapack.dggev_(jobvl, jobvr, &N, <double *>A.data, &N,
+    lapack.dggev(jobvl, jobvr, &N, <double *>A.data, &N,
                     <double *>B.data, &N,
                     <double *>alphar.data, <double *> alphai.data,
                     <double *>beta.data,
@@ -486,7 +485,7 @@ def dggev(np.ndarray[np.float64_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.float64)
 
     # Now the real calculation
-    f_lapack.dggev_(jobvl, jobvr, &N, <double *>A.data, &N,
+    lapack.dggev(jobvl, jobvr, &N, <double *>A.data, &N,
                     <double *>B.data, &N,
                     <double *>alphar.data, <double *> alphai.data,
                     <double *>beta.data,
@@ -544,7 +543,7 @@ def cggev(np.ndarray[np.complex64_t, ndim=2] A,
     lwork = -1
     work = np.empty(1, dtype = np.complex64)
 
-    f_lapack.cggev_(jobvl, jobvr, &N, <float complex *>A.data, &N,
+    lapack.cggev(jobvl, jobvr, &N, <float complex *>A.data, &N,
                     <float complex *>B.data, &N,
                     <float complex *>alpha.data, <float complex *>beta.data,
                     vl_ptr, &N, vr_ptr, &N,
@@ -558,7 +557,7 @@ def cggev(np.ndarray[np.complex64_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.complex64)
 
     # Now the real calculation
-    f_lapack.cggev_(jobvl, jobvr, &N, <float complex *>A.data, &N,
+    lapack.cggev(jobvl, jobvr, &N, <float complex *>A.data, &N,
                     <float complex *>B.data, &N,
                     <float complex *>alpha.data, <float complex *>beta.data,
                     vl_ptr, &N, vr_ptr, &N,
@@ -614,7 +613,7 @@ def zggev(np.ndarray[np.complex128_t, ndim=2] A,
     lwork = -1
     work = np.empty(1, dtype = np.complex128)
 
-    f_lapack.zggev_(jobvl, jobvr, &N, <double complex *>A.data, &N,
+    lapack.zggev(jobvl, jobvr, &N, <double complex *>A.data, &N,
                     <double complex *>B.data, &N,
                     <double complex *>alpha.data, <double complex *>beta.data,
                     vl_ptr, &N, vr_ptr, &N,
@@ -627,7 +626,7 @@ def zggev(np.ndarray[np.complex128_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.complex128)
 
     # Now the real calculation
-    f_lapack.zggev_(jobvl, jobvr, &N, <double complex *>A.data, &N,
+    lapack.zggev(jobvl, jobvr, &N, <double complex *>A.data, &N,
                     <double complex *>B.data, &N,
                     <double complex *>alpha.data, <double complex *>beta.data,
                     vl_ptr, &N, vr_ptr, &N,
@@ -668,7 +667,7 @@ def sgees(np.ndarray[np.float32_t, ndim=2] A,
 
     # workspace query
     lwork = -1
-    f_lapack.sgees_(jobvs, "N", NULL, &N, <float *>A.data, &N,
+    lapack.sgees(jobvs, "N", NULL, &N, <float *>A.data, &N,
                     &sdim, <float *>wr.data, <float *>wi.data, vs_ptr, &N,
                     &qwork, &lwork, NULL, &info)
 
@@ -678,7 +677,7 @@ def sgees(np.ndarray[np.float32_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.float32)
 
     # Now the real calculation
-    f_lapack.sgees_(jobvs, "N", NULL, &N, <float *>A.data, &N,
+    lapack.sgees(jobvs, "N", NULL, &N, <float *>A.data, &N,
                     &sdim, <float *>wr.data, <float *>wi.data, vs_ptr, &N,
                     <float *>work.data, &lwork, NULL, &info)
 
@@ -720,7 +719,7 @@ def dgees(np.ndarray[np.float64_t, ndim=2] A,
 
     # workspace query
     lwork = -1
-    f_lapack.dgees_(jobvs, "N", NULL, &N, <double *>A.data, &N,
+    lapack.dgees(jobvs, "N", NULL, &N, <double *>A.data, &N,
                     &sdim, <double *>wr.data, <double *>wi.data, vs_ptr, &N,
                     &qwork, &lwork, NULL, &info)
 
@@ -730,7 +729,7 @@ def dgees(np.ndarray[np.float64_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.float64)
 
     # Now the real calculation
-    f_lapack.dgees_(jobvs, "N", NULL, &N, <double *>A.data, &N,
+    lapack.dgees(jobvs, "N", NULL, &N, <double *>A.data, &N,
                     &sdim, <double *>wr.data, <double *>wi.data, vs_ptr, &N,
                     <double *>work.data, &lwork, NULL, &info)
 
@@ -773,7 +772,7 @@ def cgees(np.ndarray[np.complex64_t, ndim=2] A,
 
     # workspace query
     lwork = -1
-    f_lapack.cgees_(jobvs, "N", NULL, &N, <float complex *>A.data, &N,
+    lapack.cgees(jobvs, "N", NULL, &N, <float complex *>A.data, &N,
                     &sdim, <float complex *>w.data, vs_ptr, &N,
                     &qwork, &lwork, <float *>rwork.data, NULL, &info)
 
@@ -783,7 +782,7 @@ def cgees(np.ndarray[np.complex64_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.complex64)
 
     # Now the real calculation
-    f_lapack.cgees_(jobvs, "N", NULL, &N, <float complex *>A.data, &N,
+    lapack.cgees(jobvs, "N", NULL, &N, <float complex *>A.data, &N,
                     &sdim, <float complex *>w.data, vs_ptr, &N,
                     <float complex *>work.data, &lwork,
                     <float *>rwork.data, NULL, &info)
@@ -822,7 +821,7 @@ def zgees(np.ndarray[np.complex128_t, ndim=2] A,
 
     # workspace query
     lwork = -1
-    f_lapack.zgees_(jobvs, "N", NULL, &N, <double complex *>A.data, &N,
+    lapack.zgees(jobvs, "N", NULL, &N, <double complex *>A.data, &N,
                     &sdim, <double complex *>w.data, vs_ptr, &N,
                     &qwork, &lwork, <double *>rwork.data, NULL, &info)
 
@@ -832,7 +831,7 @@ def zgees(np.ndarray[np.complex128_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.complex128)
 
     # Now the real calculation
-    f_lapack.zgees_(jobvs, "N", NULL, &N, <double complex *>A.data, &N,
+    lapack.zgees(jobvs, "N", NULL, &N, <double complex *>A.data, &N,
                     &sdim, <double complex *>w.data, vs_ptr, &N,
                     <double complex *>work.data, &lwork,
                     <double *>rwork.data, NULL, &info)
@@ -871,7 +870,7 @@ def strsen(np.ndarray[l_logical] select,
 
     # workspace query
     lwork = liwork = -1
-    f_lapack.strsen_("N", compq, <l_logical *>select.data,
+    lapack.strsen("N", compq, <l_logical *>select.data,
                      &N, <float *>T.data, &N, q_ptr, &N,
                      <float *>wr.data, <float *>wi.data, &M, NULL, NULL,
                      &qwork, &lwork, &qiwork, &liwork, &info)
@@ -881,10 +880,10 @@ def strsen(np.ndarray[l_logical] select,
     lwork = <int>qwork
     work = np.empty(lwork, dtype = np.float32)
     liwork = qiwork
-    iwork = np.empty(liwork, dtype = f_lapack.l_int_dtype)
+    iwork = np.empty(liwork, dtype = int_dtype)
 
     # Now the real calculation
-    f_lapack.strsen_("N", compq, <l_logical *>select.data,
+    lapack.strsen("N", compq, <l_logical *>select.data,
                      &N, <float *>T.data, &N, q_ptr, &N,
                      <float *>wr.data, <float *>wi.data, &M, NULL, NULL,
                      <float *>work.data, &lwork,
@@ -929,7 +928,7 @@ def dtrsen(np.ndarray[l_logical] select,
 
     # workspace query
     lwork = liwork = -1
-    f_lapack.dtrsen_("N", compq, <l_logical *>select.data,
+    lapack.dtrsen("N", compq, <l_logical *>select.data,
                      &N, <double *>T.data, &N, q_ptr, &N,
                      <double *>wr.data, <double *>wi.data, &M, NULL, NULL,
                      &qwork, &lwork, &qiwork, &liwork, &info)
@@ -939,10 +938,10 @@ def dtrsen(np.ndarray[l_logical] select,
     lwork = <int>qwork
     work = np.empty(lwork, dtype = np.float64)
     liwork = qiwork
-    iwork = np.empty(liwork, dtype = f_lapack.l_int_dtype)
+    iwork = np.empty(liwork, dtype = int_dtype)
 
     # Now the real calculation
-    f_lapack.dtrsen_("N", compq, <l_logical *>select.data,
+    lapack.dtrsen("N", compq, <l_logical *>select.data,
                      &N, <double *>T.data, &N, q_ptr, &N,
                      <double *>wr.data, <double *>wi.data, &M, NULL, NULL,
                      <double *>work.data, &lwork,
@@ -985,7 +984,7 @@ def ctrsen(np.ndarray[l_logical] select,
 
     # workspace query
     lwork = -1
-    f_lapack.ctrsen_("N", compq, <l_logical *>select.data,
+    lapack.ctrsen("N", compq, <l_logical *>select.data,
                      &N, <float complex *>T.data, &N, q_ptr, &N,
                      <float complex *>w.data, &M, NULL, NULL,
                      &qwork, &lwork, &info)
@@ -996,7 +995,7 @@ def ctrsen(np.ndarray[l_logical] select,
     work = np.empty(lwork, dtype = np.complex64)
 
     # Now the real calculation
-    f_lapack.ctrsen_("N", compq, <l_logical *>select.data,
+    lapack.ctrsen("N", compq, <l_logical *>select.data,
                      &N, <float complex *>T.data, &N, q_ptr, &N,
                      <float complex *>w.data, &M, NULL, NULL,
                      <float complex *>work.data, &lwork, &info)
@@ -1033,7 +1032,7 @@ def ztrsen(np.ndarray[l_logical] select,
 
     # workspace query
     lwork = -1
-    f_lapack.ztrsen_("N", compq, <l_logical *>select.data,
+    lapack.ztrsen("N", compq, <l_logical *>select.data,
                      &N, <double complex *>T.data, &N, q_ptr, &N,
                      <double complex *>w.data, &M, NULL, NULL,
                      &qwork, &lwork, &info)
@@ -1044,7 +1043,7 @@ def ztrsen(np.ndarray[l_logical] select,
     work = np.empty(lwork, dtype = np.complex128)
 
     # Now the real calculation
-    f_lapack.ztrsen_("N", compq, <l_logical *>select.data,
+    lapack.ztrsen("N", compq, <l_logical *>select.data,
                      &N, <double complex *>T.data, &N, q_ptr, &N,
                      <double complex *>w.data, &M, NULL, NULL,
                      <double complex *>work.data, &lwork, &info)
@@ -1063,7 +1062,7 @@ def txevc_postprocess(dtype, T, vreal, np.ndarray[l_logical] select):
 
     N = T.shape[0]
     if select is None:
-        select = np.ones(N, dtype = f_lapack.l_logical_dtype)
+        select = np.ones(N, dtype = logical_dtype)
     selindx = select.nonzero()[0]
     M = selindx.size
 
@@ -1137,7 +1136,7 @@ def strevc(np.ndarray[np.float32_t, ndim=2] T,
                 MM += 1
 
         # Select is overwritten in strevc.
-        select_cpy = np.array(select, dtype = f_lapack.l_logical_dtype,
+        select_cpy = np.array(select, dtype = logical_dtype,
                               order = 'F')
         select_ptr = <l_logical *>select_cpy.data
     else:
@@ -1166,7 +1165,7 @@ def strevc(np.ndarray[np.float32_t, ndim=2] T,
     else:
         vr_r_ptr = NULL
 
-    f_lapack.strevc_(side, howmny, select_ptr,
+    lapack.strevc(side, howmny, select_ptr,
                      &N, <float *>T.data, &N,
                      vl_r_ptr, &N, vr_r_ptr, &N, &MM, &M,
                      <float *>work.data, &info)
@@ -1241,7 +1240,7 @@ def dtrevc(np.ndarray[np.float64_t, ndim=2] T,
                 MM += 1
 
         # Select is overwritten in dtrevc.
-        select_cpy = np.array(select, dtype = f_lapack.l_logical_dtype,
+        select_cpy = np.array(select, dtype = logical_dtype,
                               order = 'F')
         select_ptr = <l_logical *>select_cpy.data
     else:
@@ -1270,7 +1269,7 @@ def dtrevc(np.ndarray[np.float64_t, ndim=2] T,
     else:
         vr_r_ptr = NULL
 
-    f_lapack.dtrevc_(side, howmny, select_ptr,
+    lapack.dtrevc(side, howmny, select_ptr,
                      &N, <double *>T.data, &N,
                      vl_r_ptr, &N, vr_r_ptr, &N, &MM, &M,
                      <double *>work.data, &info)
@@ -1363,7 +1362,7 @@ def ctrevc(np.ndarray[np.complex64_t, ndim=2] T,
     else:
         vr_ptr = NULL
 
-    f_lapack.ctrevc_(side, howmny, select_ptr,
+    lapack.ctrevc(side, howmny, select_ptr,
                      &N, <float complex *>T.data, &N,
                      vl_ptr, &N, vr_ptr, &N, &MM, &M,
                      <float complex *>work.data, <float *>rwork.data, &info)
@@ -1444,7 +1443,7 @@ def ztrevc(np.ndarray[np.complex128_t, ndim=2] T,
     else:
         vr_ptr = NULL
 
-    f_lapack.ztrevc_(side, howmny, select_ptr,
+    lapack.ztrevc(side, howmny, select_ptr,
                      &N, <double complex *>T.data, &N,
                      vl_ptr, &N, vr_ptr, &N, &MM, &M,
                      <double complex *>work.data, <double *>rwork.data, &info)
@@ -1506,7 +1505,7 @@ def sgges(np.ndarray[np.float32_t, ndim=2] A,
 
     # workspace query
     lwork = -1
-    f_lapack.sgges_(jobvsl, jobvsr, "N", NULL,
+    lapack.sgges(jobvsl, jobvsr, "N", NULL,
                     &N, <float *>A.data, &N,
                     <float *>B.data, &N, &sdim,
                     <float *>alphar.data, <float *>alphai.data,
@@ -1520,7 +1519,7 @@ def sgges(np.ndarray[np.float32_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.float32)
 
     # Now the real calculation
-    f_lapack.sgges_(jobvsl, jobvsr, "N", NULL,
+    lapack.sgges(jobvsl, jobvsr, "N", NULL,
                     &N, <float *>A.data, &N,
                     <float *>B.data, &N, &sdim,
                     <float *>alphar.data, <float *>alphai.data,
@@ -1581,7 +1580,7 @@ def dgges(np.ndarray[np.float64_t, ndim=2] A,
 
     # workspace query
     lwork = -1
-    f_lapack.dgges_(jobvsl, jobvsr, "N", NULL,
+    lapack.dgges(jobvsl, jobvsr, "N", NULL,
                     &N, <double *>A.data, &N,
                     <double *>B.data, &N, &sdim,
                     <double *>alphar.data, <double *>alphai.data,
@@ -1595,7 +1594,7 @@ def dgges(np.ndarray[np.float64_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.float64)
 
     # Now the real calculation
-    f_lapack.dgges_(jobvsl, jobvsr, "N", NULL,
+    lapack.dgges(jobvsl, jobvsr, "N", NULL,
                     &N, <double *>A.data, &N,
                     <double *>B.data, &N, &sdim,
                     <double *>alphar.data, <double *>alphai.data,
@@ -1657,7 +1656,7 @@ def cgges(np.ndarray[np.complex64_t, ndim=2] A,
 
     # workspace query
     lwork = -1
-    f_lapack.cgges_(jobvsl, jobvsr, "N", NULL,
+    lapack.cgges(jobvsl, jobvsr, "N", NULL,
                     &N, <float complex *>A.data, &N,
                     <float complex *>B.data, &N, &sdim,
                     <float complex *>alpha.data, <float complex *>beta.data,
@@ -1670,7 +1669,7 @@ def cgges(np.ndarray[np.complex64_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.complex64)
 
     # Now the real calculation
-    f_lapack.cgges_(jobvsl, jobvsr, "N", NULL,
+    lapack.cgges(jobvsl, jobvsr, "N", NULL,
                     &N, <float complex *>A.data, &N,
                     <float complex *>B.data, &N, &sdim,
                     <float complex *>alpha.data, <float complex *>beta.data,
@@ -1727,7 +1726,7 @@ def zgges(np.ndarray[np.complex128_t, ndim=2] A,
 
     # workspace query
     lwork = -1
-    f_lapack.zgges_(jobvsl, jobvsr, "N", NULL,
+    lapack.zgges(jobvsl, jobvsr, "N", NULL,
                     &N, <double complex *>A.data, &N,
                     <double complex *>B.data, &N, &sdim,
                     <double complex *>alpha.data, <double complex *>beta.data,
@@ -1740,7 +1739,7 @@ def zgges(np.ndarray[np.complex128_t, ndim=2] A,
     work = np.empty(lwork, dtype = np.complex128)
 
     # Now the real calculation
-    f_lapack.zgges_(jobvsl, jobvsr, "N", NULL,
+    lapack.zgges(jobvsl, jobvsr, "N", NULL,
                     &N, <double complex *>A.data, &N,
                     <double complex *>B.data, &N, &sdim,
                     <double complex *>alpha.data, <double complex *>beta.data,
@@ -1797,7 +1796,7 @@ def stgsen(np.ndarray[l_logical] select,
     # workspace query
     lwork = -1
     liwork = -1
-    f_lapack.stgsen_(&ijob, &wantq, &wantz, <l_logical *>select.data,
+    lapack.stgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
                      &N, <float *>S.data, &N,
                      <float *>T.data, &N,
                      <float *>alphar.data, <float *>alphai.data,
@@ -1813,7 +1812,7 @@ def stgsen(np.ndarray[l_logical] select,
     iwork = np.empty(liwork, dtype = int_dtype)
 
     # Now the real calculation
-    f_lapack.stgsen_(&ijob, &wantq, &wantz, <l_logical *>select.data,
+    lapack.stgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
                      &N, <float *>S.data, &N,
                      <float *>T.data, &N,
                      <float *>alphar.data, <float *>alphai.data,
@@ -1876,7 +1875,7 @@ def dtgsen(np.ndarray[l_logical] select,
     # workspace query
     lwork = -1
     liwork = -1
-    f_lapack.dtgsen_(&ijob, &wantq, &wantz, <l_logical *>select.data,
+    lapack.dtgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
                      &N, <double *>S.data, &N,
                      <double *>T.data, &N,
                      <double *>alphar.data, <double *>alphai.data,
@@ -1892,7 +1891,7 @@ def dtgsen(np.ndarray[l_logical] select,
     iwork = np.empty(liwork, dtype = int_dtype)
 
     # Now the real calculation
-    f_lapack.dtgsen_(&ijob, &wantq, &wantz, <l_logical *>select.data,
+    lapack.dtgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
                      &N, <double *>S.data, &N,
                      <double *>T.data, &N,
                      <double *>alphar.data, <double *>alphai.data,
@@ -1954,7 +1953,7 @@ def ctgsen(np.ndarray[l_logical] select,
     # workspace query
     lwork = -1
     liwork = -1
-    f_lapack.ctgsen_(&ijob, &wantq, &wantz, <l_logical *>select.data,
+    lapack.ctgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
                      &N, <float complex *>S.data, &N,
                      <float complex *>T.data, &N,
                      <float complex *>alpha.data, <float complex *>beta.data,
@@ -1969,7 +1968,7 @@ def ctgsen(np.ndarray[l_logical] select,
     iwork = np.empty(liwork, dtype = int_dtype)
 
     # Now the real calculation
-    f_lapack.ctgsen_(&ijob, &wantq, &wantz, <l_logical *>select.data,
+    lapack.ctgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
                      &N, <float complex *>S.data, &N,
                      <float complex *>T.data, &N,
                      <float complex *>alpha.data, <float complex *>beta.data,
@@ -2025,7 +2024,7 @@ def ztgsen(np.ndarray[l_logical] select,
     # workspace query
     lwork = -1
     liwork = -1
-    f_lapack.ztgsen_(&ijob, &wantq, &wantz, <l_logical *>select.data,
+    lapack.ztgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
                      &N, <double complex *>S.data, &N,
                      <double complex *>T.data, &N,
                      <double complex *>alpha.data, <double complex *>beta.data,
@@ -2040,7 +2039,7 @@ def ztgsen(np.ndarray[l_logical] select,
     iwork = np.empty(liwork, dtype = int_dtype)
 
     # Now the real calculation
-    f_lapack.ztgsen_(&ijob, &wantq, &wantz, <l_logical *>select.data,
+    lapack.ztgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
                      &N, <double complex *>S.data, &N,
                      <double complex *>T.data, &N,
                      <double complex *>alpha.data, <double complex *>beta.data,
@@ -2103,7 +2102,7 @@ def stgevc(np.ndarray[np.float32_t, ndim=2] S,
                 MM += 1
 
         # select is overwritten in stgevc
-        select_cpy = np.array(select, dtype = f_lapack.l_logical_dtype,
+        select_cpy = np.array(select, dtype = logical_dtype,
                               order = 'F')
         select_ptr = <l_logical *>select_cpy.data
     else:
@@ -2135,7 +2134,7 @@ def stgevc(np.ndarray[np.float32_t, ndim=2] S,
     else:
         vr_r_ptr = NULL
 
-    f_lapack.stgevc_(side, howmny, select_ptr,
+    lapack.stgevc(side, howmny, select_ptr,
                      &N, <float *>S.data, &N,
                      <float *>T.data, &N,
                      vl_r_ptr, &N, vr_r_ptr, &N, &MM, &M,
@@ -2214,7 +2213,7 @@ def dtgevc(np.ndarray[np.float64_t, ndim=2] S,
                 MM += 1
 
         # select is overwritten in dtgevc
-        select_cpy = np.array(select, dtype = f_lapack.l_logical_dtype,
+        select_cpy = np.array(select, dtype = logical_dtype,
                               order = 'F')
         select_ptr = <l_logical *>select_cpy.data
     else:
@@ -2246,7 +2245,7 @@ def dtgevc(np.ndarray[np.float64_t, ndim=2] S,
     else:
         vr_r_ptr = NULL
 
-    f_lapack.dtgevc_(side, howmny, select_ptr,
+    lapack.dtgevc(side, howmny, select_ptr,
                      &N, <double *>S.data, &N,
                      <double *>T.data, &N,
                      vl_r_ptr, &N, vr_r_ptr, &N, &MM, &M,
@@ -2348,7 +2347,7 @@ def ctgevc(np.ndarray[np.complex64_t, ndim=2] S,
     else:
         vr_ptr = NULL
 
-    f_lapack.ctgevc_(side, howmny, select_ptr,
+    lapack.ctgevc(side, howmny, select_ptr,
                      &N, <float complex *>S.data, &N,
                      <float complex *>T.data, &N,
                      vl_ptr, &N, vr_ptr, &N, &MM, &M,
@@ -2437,7 +2436,7 @@ def ztgevc(np.ndarray[np.complex128_t, ndim=2] S,
     else:
         vr_ptr = NULL
 
-    f_lapack.ztgevc_(side, howmny, select_ptr,
+    lapack.ztgevc(side, howmny, select_ptr,
                      &N, <double complex *>S.data, &N,
                      <double complex *>T.data, &N,
                      vl_ptr, &N, vr_ptr, &N, &MM, &M,
