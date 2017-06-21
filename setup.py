@@ -388,8 +388,9 @@ def search_mumps():
         # Conda (via conda-forge).
         # TODO: remove dependency libs (scotch, metis...) when conda-forge
         # packaged mumps/scotch are built as properly linked shared libs
+        # 'openblas' provides Lapack and BLAS symbols
         ['zmumps', 'mumps_common', 'metis', 'esmumps', 'scotch',
-         'scotcherr', 'mpiseq'],
+         'scotcherr', 'mpiseq', 'openblas'],
     ]
     common_libs = ['pord', 'gfortran']
 
@@ -400,34 +401,7 @@ def search_mumps():
     return []
 
 
-def search_lapack():
-    """Return the BLAS variant that is installed."""
-    lib_sets = [
-        # Debian
-        ['blas', 'lapack'],
-        # Conda (via conda-forge). Openblas contains lapack symbols
-        ['openblas', 'gfortran'],
-    ]
-
-    for libs in lib_sets:
-        found_libs = search_libs(libs)
-        if found_libs:
-            return found_libs
-
-    print('Error: BLAS/LAPACK are required but were not found.',
-          file=sys.stderr)
-    sys.exit(1)
-
-
 def configure_special_extensions(exts, build_summary):
-    #### Special config for LAPACK.
-    lapack = exts['kwant.linalg.lapack']
-    if 'libraries' in lapack:
-        build_summary.append('User-configured LAPACK and BLAS')
-    else:
-        lapack['libraries'] = search_lapack()
-        build_summary.append('Default LAPACK and BLAS')
-
     #### Special config for MUMPS.
     mumps = exts['kwant.linalg._mumps']
     if 'libraries' in mumps:
@@ -441,12 +415,6 @@ def configure_special_extensions(exts, build_summary):
             mumps = None
             del exts['kwant.linalg._mumps']
             build_summary.append('No MUMPS support')
-
-    if mumps:
-        # Copy config from LAPACK.
-        for key, value in lapack.items():
-            if key not in ['sources', 'depends']:
-                mumps.setdefault(key, []).extend(value)
 
     return exts
 
@@ -567,8 +535,7 @@ def main():
                        'kwant/graph/c_slicer/partitioner.h',
                        'kwant/graph/c_slicer/slicer.h'])),
         ('kwant.linalg.lapack',
-         dict(sources=['kwant/linalg/lapack.pyx'],
-              depends=['kwant/linalg/f_lapack.pxd'])),
+         dict(sources=['kwant/linalg/lapack.pyx'])),
         ('kwant.linalg._mumps',
          dict(sources=['kwant/linalg/_mumps.pyx'],
               depends=['kwant/linalg/cmumps.pxd']))])
@@ -584,8 +551,7 @@ def main():
         for ext in exts.values():
             ext.setdefault('include_dirs', []).append(numpy_include)
 
-    aliases = [('lapack', 'kwant.linalg.lapack'),
-               ('mumps', 'kwant.linalg._mumps')]
+    aliases = [('mumps', 'kwant.linalg._mumps')]
 
     init_cython()
 
