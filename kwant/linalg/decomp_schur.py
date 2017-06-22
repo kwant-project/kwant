@@ -346,21 +346,8 @@ def gen_schur(a, b, calc_q=True, calc_z=True, calc_ev=True,
     LinAlError
         If the underlying QZ iteration fails to converge.
     """
-
     ltype, a, b = lapack.prepare_for_lapack(overwrite_ab, a, b)
-
-    if a.ndim != 2 or b.ndim != 2:
-        raise ValueError("Expect matrices as input")
-
-    if a.shape[0] != a.shape[1]:
-        raise ValueError("Expect square matrix a")
-
-    if a.shape[0] != b.shape[0] or a.shape[0] != b.shape[1]:
-        raise ValueError("Shape of b is incompatible to matrix a")
-
-    gges = getattr(lapack, ltype + "gges")
-
-    return gges(a, b, calc_q, calc_z, calc_ev)
+    return lapack.gges(a, b, calc_q, calc_z, calc_ev)
 
 
 def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
