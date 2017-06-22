@@ -8,7 +8,7 @@
 
 """Low-level access to LAPACK functions. """
 
-__all__ = ['sgetrf', 'dgetrf', 'cgetrf', 'zgetrf',
+__all__ = ['getrf',
            'sgetrs', 'dgetrs', 'cgetrs', 'zgetrs',
            'sgecon', 'dgecon', 'cgecon', 'zgecon',
            'sggev', 'dggev', 'cggev', 'zggev',
@@ -75,10 +75,9 @@ def assert_fortran_mat(*mats):
             raise ValueError("Input matrix must be Fortran contiguous")
 
 
-# Wrappers for xGETRF
-def sgetrf(np.ndarray[np.float32_t, ndim=2] A):
+def getrf(np.ndarray[scalar, ndim=2] A):
     cdef l_int M, N, info
-    cdef np.ndarray[l_int, ndim=1] ipiv
+    cdef np.ndarray[l_int] ipiv
 
     assert_fortran_mat(A)
 
@@ -86,61 +85,20 @@ def sgetrf(np.ndarray[np.float32_t, ndim=2] A):
     N = A.shape[1]
     ipiv = np.empty(min(M,N), dtype = int_dtype)
 
-    lapack.sgetrf(&M, &N, <float *>A.data, &M,
-                     <l_int *>ipiv.data, &info)
+    if scalar is float:
+        lapack.sgetrf(&M, &N, <float *>A.data, &M,
+                      <l_int *>ipiv.data, &info)
+    elif scalar is double:
+        lapack.dgetrf(&M, &N, <double *>A.data, &M,
+                      <l_int *>ipiv.data, &info)
+    elif scalar is float_complex:
+        lapack.cgetrf(&M, &N, <float complex *>A.data, &M,
+                      <l_int *>ipiv.data, &info)
+    elif scalar is double_complex:
+        lapack.zgetrf(&M, &N, <double complex *>A.data, &M,
+                      <l_int *>ipiv.data, &info)
 
-    assert info >= 0, "Argument error in sgetrf"
-
-    return (A, ipiv, info > 0 or M != N)
-
-def dgetrf(np.ndarray[np.float64_t, ndim=2] A):
-    cdef l_int M, N, info
-    cdef np.ndarray[l_int, ndim=1] ipiv
-
-    assert_fortran_mat(A)
-
-    M = A.shape[0]
-    N = A.shape[1]
-    ipiv = np.empty(min(M,N), dtype = int_dtype)
-
-    lapack.dgetrf(&M, &N, <double *>A.data, &M,
-                     <l_int *>ipiv.data, &info)
-
-    assert info >= 0, "Argument error in dgetrf"
-
-    return (A, ipiv, info > 0 or M != N)
-
-def cgetrf(np.ndarray[np.complex64_t, ndim=2] A):
-    cdef l_int M, N, info
-    cdef np.ndarray[l_int, ndim=1] ipiv
-
-    assert_fortran_mat(A)
-
-    M = A.shape[0]
-    N = A.shape[1]
-    ipiv = np.empty(min(M,N), dtype = int_dtype)
-
-    lapack.cgetrf(&M, &N, <float complex *>A.data, &M,
-                     <l_int *>ipiv.data, &info)
-
-    assert info >= 0, "Argument error in cgetrf"
-
-    return (A, ipiv, info > 0 or M != N)
-
-def zgetrf(np.ndarray[np.complex128_t, ndim=2] A):
-    cdef l_int M, N, info
-    cdef np.ndarray[l_int, ndim=1] ipiv
-
-    assert_fortran_mat(A)
-
-    M = A.shape[0]
-    N = A.shape[1]
-    ipiv = np.empty(min(M,N), dtype = int_dtype)
-
-    lapack.zgetrf(&M, &N, <double complex *>A.data, &M,
-                     <l_int *>ipiv.data, &info)
-
-    assert info >= 0, "Argument error in zgetrf"
+    assert info >= 0, "Argument error in getrf"
 
     return (A, ipiv, info > 0 or M != N)
 

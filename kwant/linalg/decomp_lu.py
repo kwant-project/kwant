@@ -45,20 +45,8 @@ def lu_factor(a, overwrite_a=False):
     singular : boolean
         Whether the matrix a is singular (up to machine precision)
     """
-
     ltype, a = lapack.prepare_for_lapack(overwrite_a, a)
-
-    if a.ndim != 2:
-        raise ValueError("lu_factor expects a matrix")
-
-    if ltype == 'd':
-        return lapack.dgetrf(a)
-    elif ltype == 'z':
-        return lapack.zgetrf(a)
-    elif ltype == 's':
-        return lapack.sgetrf(a)
-    else:
-        return lapack.cgetrf(a)
+    return lapack.getrf(a)
 
 
 def lu_solve(matrix_factorization, b):
