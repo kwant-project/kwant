@@ -101,17 +101,6 @@ def rcond_from_lu(matrix_factorization, norm_a, norm="1"):
         norm specified in norm
     """
     (lu, ipiv, singular) = matrix_factorization
-    if not norm in ("1", "I"):
-        raise ValueError("norm in rcond_from_lu must be either '1' or 'I'")
     norm = norm.encode('utf8')  # lapack expects bytes
-
     ltype, lu = lapack.prepare_for_lapack(False, lu)
-
-    if ltype == 'd':
-        return lapack.dgecon(lu, norm_a, norm)
-    elif ltype == 'z':
-        return lapack.zgecon(lu, norm_a, norm)
-    elif ltype == 's':
-        return lapack.sgecon(lu, norm_a, norm)
-    else:
-        return lapack.cgecon(lu, norm_a, norm)
+    return lapack.gecon(lu, norm_a, norm)
