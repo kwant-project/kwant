@@ -73,21 +73,7 @@ def lu_solve(matrix_factorization, b):
 
     ltype, lu, b = lapack.prepare_for_lapack(False, lu, b)
     ipiv = np.ascontiguousarray(np.asanyarray(ipiv), dtype=lapack.int_dtype)
-
-    if b.ndim > 2:
-        raise ValueError("lu_solve: b must be a vector or matrix")
-
-    if lu.shape[0] != b.shape[0]:
-        raise ValueError("lu_solve: incompatible dimensions of b")
-
-    if ltype == 'd':
-        return lapack.dgetrs(lu, ipiv, b)
-    elif ltype == 'z':
-        return lapack.zgetrs(lu, ipiv, b)
-    elif ltype == 's':
-        return lapack.sgetrs(lu, ipiv, b)
-    else:
-        return lapack.cgetrs(lu, ipiv, b)
+    return lapack.getrs(lu, ipiv, b)
 
 
 def rcond_from_lu(matrix_factorization, norm_a, norm="1"):
