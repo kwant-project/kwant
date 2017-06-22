@@ -257,12 +257,6 @@ def evecs_from_schur(t, q, select=None, left=False, right=True,
 
     ltype, t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
 
-    if (t.shape[0] != t.shape[1] or q.shape[0] != q.shape[1]
-        or t.shape[0] != q.shape[0]):
-        raise ValueError("Invalid Schur decomposition as input")
-
-    trevc = getattr(lapack, ltype + "trevc")
-
     # check if select is a function or an array
     if select is not None:
         isfun = isarray = True
@@ -288,7 +282,7 @@ def evecs_from_schur(t, q, select=None, left=False, right=True,
     else:
         selectarr = None
 
-    return trevc(t, q, selectarr, left, right)
+    return lapack.trevc(t, q, selectarr, left, right)
 
 
 def gen_schur(a, b, calc_q=True, calc_z=True, calc_ev=True,
