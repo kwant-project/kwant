@@ -10,7 +10,7 @@
 
 __all__ = ['getrf',
            'getrs',
-           'sgecon', 'dgecon', 'cgecon', 'zgecon',
+           'gecon',
            'sggev', 'dggev', 'cggev', 'zggev',
            'sgees', 'dgees', 'cgees', 'zgees',
            'strsen', 'dtrsen', 'ctrsen', 'ztrsen',
@@ -153,91 +153,65 @@ def getrs(np.ndarray[scalar, ndim=2] LU, np.ndarray[l_int] IPIV,
 
     return B
 
-# Wrappers for xGECON
 
-def sgecon(np.ndarray[np.float32_t, ndim=2] LU,
-            float normA, char *norm = b"1"):
+def gecon(np.ndarray[scalar, ndim=2] LU, double normA, char *norm = b"1"):
     cdef l_int N, info
-    cdef float rcond
-    cdef np.ndarray[np.float32_t, ndim=1] work
-    cdef np.ndarray[l_int, ndim=1] iwork
+    cdef float srcond, snormA
+    cdef double drcond
+
+    # Parameter checks
 
     assert_fortran_mat(LU)
+    if norm[0] != b"1" and norm[0] != b"I":
+        raise ValueError("'norm' must be either '1' or 'I'")
+    if scalar in single_precision:
+        snormA = normA
+
+    # Allocate workspaces
 
     N = LU.shape[0]
-    work = np.empty(4*N, dtype = np.float32)
-    iwork = np.empty(N, dtype = int_dtype)
 
-    lapack.sgecon(norm, &N, <float *>LU.data, &N, &normA,
-                     &rcond, <float *>work.data,
-                     <l_int *>iwork.data, &info)
+    cdef np.ndarray[l_int] iwork
+    if scalar in floating:
+        iwork = np.empty(N, dtype=int_dtype)
 
-    assert info == 0, "Argument error in sgecon"
+    cdef np.ndarray[scalar] work
+    if scalar in floating:
+        work = np.empty(4 * N, dtype=LU.dtype)
+    else:
+        work = np.empty(2 * N, dtype=LU.dtype)
 
-    return rcond
+    cdef np.ndarray rwork
+    if scalar is float_complex:
+        rwork = np.empty(2 * N, dtype=np.float32)
+    elif scalar is double_complex:
+        rwork = np.empty(2 * N, dtype=np.float64)
 
-def dgecon(np.ndarray[np.float64_t, ndim=2] LU,
-            double normA, char *norm = b"1"):
-    cdef l_int N, info
-    cdef double rcond
-    cdef np.ndarray[np.float64_t, ndim=1] work
-    cdef np.ndarray[l_int, ndim=1] iwork
+    # The actual calculation
 
-    assert_fortran_mat(LU)
+    if scalar is float:
+        lapack.sgecon(norm, &N, <float *>LU.data, &N, &snormA,
+                      &srcond, <float *>work.data,
+                      <l_int *>iwork.data, &info)
+    elif scalar is double:
+        lapack.dgecon(norm, &N, <double *>LU.data, &N, &normA,
+                      &drcond, <double *>work.data,
+                      <l_int *>iwork.data, &info)
+    elif scalar is float_complex:
+        lapack.cgecon(norm, &N, <float complex *>LU.data, &N, &snormA,
+                      &srcond, <float complex *>work.data,
+                      <float *>rwork.data, &info)
+    elif scalar is double_complex:
+        lapack.zgecon(norm, &N, <double complex *>LU.data, &N, &normA,
+                      &drcond, <double complex *>work.data,
+                      <double *>rwork.data, &info)
 
-    N = LU.shape[0]
-    work = np.empty(4*N, dtype = np.float64)
-    iwork = np.empty(N, dtype = int_dtype)
+    assert info == 0, "Argument error in gecon"
 
-    lapack.dgecon(norm, &N, <double *>LU.data, &N, &normA,
-                     &rcond, <double *>work.data,
-                     <l_int *>iwork.data, &info)
-
-    assert info == 0, "Argument error in dgecon"
-
-    return rcond
-
-def cgecon(np.ndarray[np.complex64_t, ndim=2] LU,
-            float normA, char *norm = b"1"):
-    cdef l_int N, info
-    cdef float rcond
-    cdef np.ndarray[np.complex64_t, ndim=1] work
-    cdef np.ndarray[np.float32_t, ndim=1] rwork
-
-    assert_fortran_mat(LU)
-
-    N = LU.shape[0]
-    work = np.empty(2*N, dtype = np.complex64)
-    rwork = np.empty(2*N, dtype = np.float32)
-
-    lapack.cgecon(norm, &N, <float complex *>LU.data, &N, &normA,
-                     &rcond, <float complex *>work.data,
-                     <float *>rwork.data, &info)
-
-    assert info == 0, "Argument error in cgecon"
-
-    return rcond
-
-def zgecon(np.ndarray[np.complex128_t, ndim=2] LU,
-           double normA, char *norm = b"1"):
-    cdef l_int N, info
-    cdef double rcond
-    cdef np.ndarray[np.complex128_t, ndim=1] work
-    cdef np.ndarray[np.float64_t, ndim=1] rwork
-
-    assert_fortran_mat(LU)
-
-    N = LU.shape[0]
-    work = np.empty(2*N, dtype = np.complex128)
-    rwork = np.empty(2*N, dtype = np.float64)
-
-    lapack.zgecon(norm, &N, <double complex *>LU.data, &N, &normA,
-                     &rcond, <double complex *>work.data,
-                     <double *>rwork.data, &info)
-
-    assert info == 0, "Argument error in zgecon"
-
-    return rcond
+    if scalar in single_precision:
+        return srcond
+    else:
+        return drcond
 
 # Wrappers for xGGEV
 
