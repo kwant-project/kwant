@@ -62,18 +62,8 @@ def schur(a, calc_q=True, calc_ev=True, overwrite_a=False):
     LinAlgError
         If the underlying QR iteration fails to converge.
     """
-
     ltype, a = lapack.prepare_for_lapack(overwrite_a, a)
-
-    if a.ndim != 2:
-        raise ValueError("Expect matrix as input")
-
-    if a.shape[0] != a.shape[1]:
-        raise ValueError("Expect square matrix")
-
-    gees = getattr(lapack, ltype + "gees")
-
-    return gees(a, calc_q, calc_ev)
+    return lapack.gees(a, calc_q, calc_ev)
 
 
 def convert_r2c_schur(t, q):
