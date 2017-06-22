@@ -184,8 +184,6 @@ def order_schur(select, t, q, calc_ev=True, overwrite_tq=False):
 
     ltype, t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
 
-    trsen = getattr(lapack, ltype + "trsen")
-
     # Figure out if select is a function or array.
     isfun = isarray = True
     try:
@@ -213,7 +211,7 @@ def order_schur(select, t, q, calc_ev=True, overwrite_tq=False):
             t, q = convert_r2c_schur(t, q)
             return order_schur(select, t, q, calc_ev, True)
 
-    return trsen(select, t, q, calc_ev)
+    return lapack.trsen(select, t, q, calc_ev)
 
 
 def evecs_from_schur(t, q, select=None, left=False, right=True,
