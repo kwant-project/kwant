@@ -31,6 +31,31 @@ ctypedef bint l_logical
 int_dtype = np.int32
 logical_dtype = np.int32
 
+ctypedef float complex float_complex
+ctypedef double complex double_complex
+
+ctypedef fused scalar:
+    float
+    double
+    float complex
+    double complex
+
+ctypedef fused single_precision:
+    float
+    float complex
+
+ctypedef fused double_precision:
+    double
+    double complex
+
+ctypedef fused cmplx:
+    float complex
+    double complex
+
+ctypedef fused floating:
+    float
+    double
+
 # exceptions
 
 class LinAlgError(RuntimeError):
