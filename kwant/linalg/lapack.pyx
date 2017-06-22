@@ -13,7 +13,7 @@ __all__ = ['getrf',
            'gecon',
            'ggev',
            'gees',
-           'strsen', 'dtrsen', 'ctrsen', 'ztrsen',
+           'trsen',
            'strevc', 'dtrevc', 'ctrevc', 'ztrevc',
            'sgges', 'dgges', 'cgges', 'zgges',
            'stgsen', 'dtgsen', 'ctgsen', 'ztgsen',
@@ -506,216 +506,108 @@ def gees(np.ndarray[scalar, ndim=2] A, calc_q=True, calc_ev=True):
     return filter_args((True, calc_q, calc_ev), (A, vs, w))
 
 
-
-# Wrapper for xTRSEN
-def strsen(np.ndarray[l_logical] select,
-           np.ndarray[np.float32_t, ndim=2] T,
-           np.ndarray[np.float32_t, ndim=2] Q=None,
-           calc_ev=True):
+def trsen(np.ndarray[l_logical] select,
+          np.ndarray[scalar, ndim=2] T,
+          np.ndarray[scalar, ndim=2] Q,
+          calc_ev=True):
     cdef l_int N, M, lwork, liwork, qiwork, info
-    cdef char *compq
-    cdef float qwork
-    cdef float *q_ptr
-    cdef np.ndarray[np.float32_t] wr, wi, work
-    cdef np.ndarray[l_int] iwork
 
     assert_fortran_mat(T, Q)
 
-    N = T.shape[0]
-    wr = np.empty(N, dtype = np.float32)
-    wi = np.empty(N, dtype = np.float32)
+    # Allocate workspaces
 
+    N = T.shape[0]
+
+    cdef np.ndarray[scalar] wr, wi
+    if scalar in cmplx:
+        wr = np.empty(N, dtype=T.dtype)
+        wi = None
+    else:
+        wr = np.empty(N, dtype=T.dtype)
+        wi = np.empty(N, dtype=T.dtype)
+
+    cdef char *compq
+    cdef scalar *q_ptr
     if Q is not None:
         compq = "V"
-        q_ptr = <float *>Q.data
+        q_ptr = <scalar *>Q.data
     else:
         compq = "N"
         q_ptr = NULL
 
-    # workspace query
+    # Workspace query
+    # Xtrsen expects &qwork as a <scalar *> (even though it's an integer)
+    cdef scalar qwork
     lwork = liwork = -1
-    lapack.strsen("N", compq, <l_logical *>select.data,
-                     &N, <float *>T.data, &N, q_ptr, &N,
-                     <float *>wr.data, <float *>wi.data, &M, NULL, NULL,
-                     &qwork, &lwork, &qiwork, &liwork, &info)
 
-    assert info == 0, "Argument error in strsen"
+    if scalar is float:
+        lapack.strsen("N", compq, <l_logical *>select.data,
+                      &N, <float *>T.data, &N, q_ptr, &N,
+                      <float *>wr.data, <float *>wi.data, &M, NULL, NULL,
+                      &qwork, &lwork, &qiwork, &liwork, &info)
+    elif scalar is double:
+        lapack.dtrsen("N", compq, <l_logical *>select.data,
+                      &N, <double *>T.data, &N, q_ptr, &N,
+                      <double *>wr.data, <double *>wi.data, &M, NULL, NULL,
+                      &qwork, &lwork, &qiwork, &liwork, &info)
+    elif scalar is float_complex:
+        lapack.ctrsen("N", compq, <l_logical *>select.data,
+                      &N, <float complex *>T.data, &N, q_ptr, &N,
+                      <float complex *>wr.data, &M, NULL, NULL,
+                      &qwork, &lwork, &info)
+    elif scalar is double_complex:
+        lapack.ztrsen("N", compq, <l_logical *>select.data,
+                      &N, <double complex *>T.data, &N, q_ptr, &N,
+                      <double complex *>wr.data, &M, NULL, NULL,
+                      &qwork, &lwork, &info)
 
-    lwork = <int>qwork
-    work = np.empty(lwork, dtype = np.float32)
-    liwork = qiwork
-    iwork = np.empty(liwork, dtype = int_dtype)
+    assert info == 0, "Argument error in trsen"
 
-    # Now the real calculation
-    lapack.strsen("N", compq, <l_logical *>select.data,
-                     &N, <float *>T.data, &N, q_ptr, &N,
-                     <float *>wr.data, <float *>wi.data, &M, NULL, NULL,
-                     <float *>work.data, &lwork,
-                     <int *>iwork.data, &liwork, &info)
+    cdef np.ndarray[l_int] iwork = None
+    if scalar in floating:
+        lwork = <l_int>qwork
+        liwork = qiwork
+        iwork = np.empty(liwork, dtype=int_dtype)
+    else:
+        lwork = <l_int>qwork.real
+    cdef np.ndarray[scalar, ndim=1] work = np.empty(lwork, dtype=T.dtype)
+
+    # Tha actual calculation
+
+    if scalar is float:
+        lapack.strsen("N", compq, <l_logical *>select.data,
+                      &N, <float *>T.data, &N, q_ptr, &N,
+                      <float *>wr.data, <float *>wi.data, &M, NULL, NULL,
+                      <float *>work.data, &lwork,
+                      <l_int *>iwork.data, &liwork, &info)
+    elif scalar is double:
+        lapack.dtrsen("N", compq, <l_logical *>select.data,
+                      &N, <double *>T.data, &N, q_ptr, &N,
+                      <double *>wr.data, <double *>wi.data, &M, NULL, NULL,
+                      <double *>work.data, &lwork,
+                      <l_int *>iwork.data, &liwork, &info)
+    elif scalar is float_complex:
+        lapack.ctrsen("N", compq, <l_logical *>select.data,
+                      &N, <float complex *>T.data, &N, q_ptr, &N,
+                      <float complex *>wr.data, &M, NULL, NULL,
+                      <float complex *>work.data, &lwork, &info)
+    elif scalar is double_complex:
+        lapack.ztrsen("N", compq, <l_logical *>select.data,
+                      &N, <double complex *>T.data, &N, q_ptr, &N,
+                      <double complex *>wr.data, &M, NULL, NULL,
+                      <double complex *>work.data, &lwork, &info)
 
     if info > 0:
         raise LinAlgError("Reordering failed; problem is very ill-conditioned")
 
-    assert info == 0, "Argument error in strsen"
+    assert info == 0, "Argument error in trsen"
 
-    if wi.nonzero()[0].size:
-        w = wr + 1j * wi
-    else:
-        w = wr
-
-    return filter_args((True, Q is not None, calc_ev), (T, Q, w))
-
-
-def dtrsen(np.ndarray[l_logical] select,
-           np.ndarray[np.float64_t, ndim=2] T,
-           np.ndarray[np.float64_t, ndim=2] Q=None,
-           calc_ev=True):
-    cdef l_int N, M, lwork, liwork, qiwork, info
-    cdef char *compq
-    cdef double qwork
-    cdef double *q_ptr
-    cdef np.ndarray[np.float64_t] wr, wi, work
-    cdef np.ndarray[l_int] iwork
-
-    assert_fortran_mat(T, Q)
-
-    N = T.shape[0]
-    wr = np.empty(N, dtype = np.float64)
-    wi = np.empty(N, dtype = np.float64)
-
-    if Q is not None:
-        compq = "V"
-        q_ptr = <double *>Q.data
-    else:
-        compq = "N"
-        q_ptr = NULL
-
-    # workspace query
-    lwork = liwork = -1
-    lapack.dtrsen("N", compq, <l_logical *>select.data,
-                     &N, <double *>T.data, &N, q_ptr, &N,
-                     <double *>wr.data, <double *>wi.data, &M, NULL, NULL,
-                     &qwork, &lwork, &qiwork, &liwork, &info)
-
-    assert info == 0, "Argument error in dtrsen"
-
-    lwork = <int>qwork
-    work = np.empty(lwork, dtype = np.float64)
-    liwork = qiwork
-    iwork = np.empty(liwork, dtype = int_dtype)
-
-    # Now the real calculation
-    lapack.dtrsen("N", compq, <l_logical *>select.data,
-                     &N, <double *>T.data, &N, q_ptr, &N,
-                     <double *>wr.data, <double *>wi.data, &M, NULL, NULL,
-                     <double *>work.data, &lwork,
-                     <int *>iwork.data, &liwork, &info)
-
-    if info > 0:
-        raise LinAlgError("Reordering failed; problem is very ill-conditioned")
-
-    assert info == 0, "Argument error in dtrsen"
-
-    if wi.nonzero()[0].size:
-        w = wr + 1j * wi
-    else:
-        w = wr
-
-    return filter_args((True, Q is not None, calc_ev), (T, Q, w))
-
-
-def ctrsen(np.ndarray[l_logical] select,
-           np.ndarray[np.complex64_t, ndim=2] T,
-           np.ndarray[np.complex64_t, ndim=2] Q=None,
-           calc_ev=True):
-    cdef l_int N, M, lwork, info
-    cdef char *compq
-    cdef float complex qwork
-    cdef float complex *q_ptr
-    cdef np.ndarray[np.complex64_t] w, work
-
-    assert_fortran_mat(T, Q)
-
-    N = T.shape[0]
-    w = np.empty(N, dtype = np.complex64)
-
-    if Q is not None:
-        compq = "V"
-        q_ptr = <float complex *>Q.data
-    else:
-        compq = "N"
-        q_ptr = NULL
-
-    # workspace query
-    lwork = -1
-    lapack.ctrsen("N", compq, <l_logical *>select.data,
-                     &N, <float complex *>T.data, &N, q_ptr, &N,
-                     <float complex *>w.data, &M, NULL, NULL,
-                     &qwork, &lwork, &info)
-
-    assert info == 0, "Argument error in ctrsen"
-
-    lwork = <int>qwork.real
-    work = np.empty(lwork, dtype = np.complex64)
-
-    # Now the real calculation
-    lapack.ctrsen("N", compq, <l_logical *>select.data,
-                     &N, <float complex *>T.data, &N, q_ptr, &N,
-                     <float complex *>w.data, &M, NULL, NULL,
-                     <float complex *>work.data, &lwork, &info)
-
-    if info > 0:
-        raise LinAlgError("Reordering failed; problem is very ill-conditioned")
-
-    assert info == 0, "Argument error in ctrsen"
-
-    return filter_args((True, Q is not None, calc_ev), (T, Q, w))
-
-
-def ztrsen(np.ndarray[l_logical] select,
-           np.ndarray[np.complex128_t, ndim=2] T,
-           np.ndarray[np.complex128_t, ndim=2] Q=None,
-           calc_ev=True):
-    cdef l_int N, MM, M, lwork, info
-    cdef char *compq
-    cdef double complex qwork
-    cdef double complex *q_ptr
-    cdef np.ndarray[np.complex128_t] w, work
-
-    assert_fortran_mat(T, Q)
-
-    N = T.shape[0]
-    w = np.empty(N, dtype = np.complex128)
-
-    if Q is not None:
-        compq = "V"
-        q_ptr = <double complex *>Q.data
-    else:
-        compq = "N"
-        q_ptr = NULL
-
-    # workspace query
-    lwork = -1
-    lapack.ztrsen("N", compq, <l_logical *>select.data,
-                     &N, <double complex *>T.data, &N, q_ptr, &N,
-                     <double complex *>w.data, &M, NULL, NULL,
-                     &qwork, &lwork, &info)
-
-    assert info == 0, "Argument error in ztrsen"
-
-    lwork = <int>qwork.real
-    work = np.empty(lwork, dtype = np.complex128)
-
-    # Now the real calculation
-    lapack.ztrsen("N", compq, <l_logical *>select.data,
-                     &N, <double complex *>T.data, &N, q_ptr, &N,
-                     <double complex *>w.data, &M, NULL, NULL,
-                     <double complex *>work.data, &lwork, &info)
-
-    if info > 0:
-        raise LinAlgError("Reordering failed; problem is very ill-conditioned")
-
-    assert info == 0, "Argument error in ztrsen"
+    # Real inputs possibly produce complex output
+    cdef np.ndarray w
+    w = wr
+    if scalar in floating:
+        if wi.nonzero()[0].size:
+            w = wr + 1j * wi
 
     return filter_args((True, Q is not None, calc_ev), (T, Q, w))
 
