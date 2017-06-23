@@ -410,20 +410,6 @@ def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
     """
     ltype, s, t, q, z = lapack.prepare_for_lapack(overwrite_stqz, s, t, q, z)
 
-    if (s.ndim != 2 or t.ndim != 2 or
-        (q is not None and q.ndim != 2) or
-        (z is not None and z.ndim != 2)):
-        raise ValueError("Expect matrices as input")
-
-    if ((s.shape[0] != s.shape[1] or t.shape[0] != t.shape[1] or
-         s.shape[0] != t.shape[0]) or
-        (q is not None and (q.shape[0] != q.shape[1] or
-                            s.shape[0] != q.shape[0])) or
-        (z is not None and (z.shape[0] != z.shape[1] or
-                            s.shape[0] != z.shape[0]))):
-        raise ValueError("Invalid Schur decomposition as input")
-
-    tgsen = getattr(lapack, ltype + "tgsen")
 
     # Figure out if select is a function or array.
     isfun = isarray = True
@@ -461,7 +447,7 @@ def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
 
             return order_gen_schur(select, s, t, q, z, calc_ev, True)
 
-    return tgsen(select, s, t, q, z, calc_ev)
+    return lapack.tgsen(select, s, t, q, z, calc_ev)
 
 
 def convert_r2c_gen_schur(s, t, q=None, z=None):
