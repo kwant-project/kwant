@@ -16,7 +16,7 @@ __all__ = ['getrf',
            'trsen',
            'trevc',
            'gges',
-           'stgsen', 'dtgsen', 'ctgsen', 'ztgsen',
+           'tgsen',
            'stgevc', 'dtgevc', 'ctgevc', 'ztgevc',
            'prepare_for_lapack']
 
@@ -936,317 +936,172 @@ def gges(np.ndarray[scalar, ndim=2] A,
                      <double *>rwork.data, NULL, &info)
 
     if info > 0:
-        raise LinAlgError("QZ iteration failed to converge in sgges")
+        raise LinAlgError("QZ iteration failed to converge in gges")
 
     assert info == 0, "Argument error in gges"
 
+    # Real inputs possibly produce complex output
     cdef np.ndarray alpha
     alpha = alphar
     if scalar in floating:
         if alphai.nonzero()[0].size:
             alpha = alphar + 1j * alphai
-        else:
-            alpha = alphar
 
     return filter_args((True, True, calc_q, calc_z, calc_ev, calc_ev),
                        (A, B, vsl, vsr, alpha, beta))
 
 
-# wrappers for xTGSEN
-def stgsen(np.ndarray[l_logical] select,
-           np.ndarray[np.float32_t, ndim=2] S,
-           np.ndarray[np.float32_t, ndim=2] T,
-           np.ndarray[np.float32_t, ndim=2] Q=None,
-           np.ndarray[np.float32_t, ndim=2] Z=None,
+def tgsen(np.ndarray[l_logical] select,
+           np.ndarray[scalar, ndim=2] S,
+           np.ndarray[scalar, ndim=2] T,
+           np.ndarray[scalar, ndim=2] Q,
+           np.ndarray[scalar, ndim=2] Z,
            calc_ev=True):
-    cdef l_int N, M, lwork, liwork, qiwork, info, ijob
-    cdef l_logical wantq, wantz
-    cdef float qwork
-    cdef float *q_ptr
-    cdef float *z_ptr
-    cdef np.ndarray[np.float32_t] alphar, alphai, beta, work
-    cdef np.ndarray[l_int] iwork
+    cdef l_int ijob = 0
+    cdef l_int N, M, lwork, liwork, info
+
+    # Check parameters
+
+    if ((S.shape[0] != S.shape[1] or T.shape[0] != T.shape[1] or
+         S.shape[0] != T.shape[0]) or
+        (Q is not None and (Q.shape[0] != Q.shape[1] or
+                            S.shape[0] != Q.shape[0])) or
+        (Z is not None and (Z.shape[0] != Z.shape[1] or
+                            S.shape[0] != Z.shape[0]))):
+        raise ValueError("Invalid Schur decomposition as input")
 
     assert_fortran_mat(S, T, Q, Z)
 
-    N = S.shape[0]
-    alphar = np.empty(N, dtype = np.float32)
-    alphai = np.empty(N, dtype = np.float32)
-    beta = np.empty(N, dtype = np.float32)
-    ijob = 0
+    # Allocate workspaces
 
+    N = S.shape[0]
+
+    cdef np.ndarray[scalar] alphar, alphai
+    if scalar in cmplx:
+        alphar = np.empty(N, dtype=S.dtype)
+        alphai = None
+    else:
+        alphar = np.empty(N, dtype=S.dtype)
+        alphai = np.empty(N, dtype=S.dtype)
+
+    cdef np.ndarray[scalar] beta
+    beta = np.empty(N, dtype=S.dtype)
+
+    cdef l_logical wantq
+    cdef scalar *q_ptr
     if Q is not None:
         wantq = 1
-        q_ptr = <float *>Q.data
+        q_ptr = <scalar *>Q.data
     else:
         wantq = 0
         q_ptr = NULL
 
+    cdef l_logical wantz
+    cdef scalar *z_ptr
     if Z is not None:
         wantz = 1
-        z_ptr = <float *>Z.data
+        z_ptr = <scalar *>Z.data
     else:
         wantz = 0
         z_ptr = NULL
 
-    # workspace query
+    # Workspace query
+    # Xtgsen expects &qwork as a <scalar *> (even though it's an integer)
     lwork = -1
     liwork = -1
-    lapack.stgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
-                     &N, <float *>S.data, &N,
-                     <float *>T.data, &N,
-                     <float *>alphar.data, <float *>alphai.data,
-                     <float *>beta.data,
-                     q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
-                     &qwork, &lwork, &qiwork, &liwork, &info)
+    cdef scalar qwork
+    cdef l_int qiwork
 
-    assert info == 0, "Argument error in stgsen"
+    if scalar is float:
+        lapack.stgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
+                      &N, <float *>S.data, &N,
+                      <float *>T.data, &N,
+                      <float *>alphar.data, <float *>alphai.data,
+                      <float *>beta.data,
+                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
+                      &qwork, &lwork, &qiwork, &liwork, &info)
+    elif scalar is double:
+        lapack.dtgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
+                      &N, <double *>S.data, &N,
+                      <double *>T.data, &N,
+                      <double *>alphar.data, <double *>alphai.data,
+                      <double *>beta.data,
+                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
+                      &qwork, &lwork, &qiwork, &liwork, &info)
+    elif scalar is float_complex:
+        lapack.ctgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
+                      &N, <float complex *>S.data, &N,
+                      <float complex *>T.data, &N,
+                      <float complex *>alphar.data, <float complex *>beta.data,
+                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
+                      &qwork, &lwork, &qiwork, &liwork, &info)
+    elif scalar is double_complex:
+        lapack.ztgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
+                      &N, <double complex *>S.data, &N,
+                      <double complex *>T.data, &N,
+                      <double complex *>alphar.data, <double complex *>beta.data,
+                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
+                      &qwork, &lwork, &qiwork, &liwork, &info)
 
-    lwork = <int>qwork
-    work = np.empty(lwork, dtype = np.float32)
+    assert info == 0, "Argument error in tgsen"
+
+    if scalar in floating:
+        lwork = <l_int>qwork
+    else:
+        lwork = <l_int>qwork.real
+    cdef np.ndarray[scalar] work = np.empty(lwork, dtype=S.dtype)
+
     liwork = qiwork
-    iwork = np.empty(liwork, dtype = int_dtype)
+    cdef np.ndarray[l_int] iwork = np.empty(liwork, dtype=int_dtype)
 
-    # Now the real calculation
-    lapack.stgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
-                     &N, <float *>S.data, &N,
-                     <float *>T.data, &N,
-                     <float *>alphar.data, <float *>alphai.data,
-                     <float *>beta.data,
-                     q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
-                     <float *>work.data, &lwork,
-                     <l_int *>iwork.data, &liwork, &info)
+    # The actual calculation
+
+    if scalar is float:
+        lapack.stgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
+                      &N, <float *>S.data, &N,
+                      <float *>T.data, &N,
+                      <float *>alphar.data, <float *>alphai.data,
+                      <float *>beta.data,
+                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
+                      <float *>work.data, &lwork,
+                      <l_int *>iwork.data, &liwork, &info)
+    elif scalar is double:
+        lapack.dtgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
+                      &N, <double *>S.data, &N,
+                      <double *>T.data, &N,
+                      <double *>alphar.data, <double *>alphai.data,
+                      <double *>beta.data,
+                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
+                      <double *>work.data, &lwork,
+                      <l_int *>iwork.data, &liwork, &info)
+    elif scalar is float_complex:
+        lapack.ctgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
+                      &N, <float complex *>S.data, &N,
+                      <float complex *>T.data, &N,
+                      <float complex *>alphar.data, <float complex *>beta.data,
+                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
+                      <float complex *>work.data, &lwork,
+                      <l_int *>iwork.data, &liwork, &info)
+    elif scalar is double_complex:
+        lapack.ztgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
+                      &N, <double complex *>S.data, &N,
+                      <double complex *>T.data, &N,
+                      <double complex *>alphar.data, <double complex *>beta.data,
+                      q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
+                      <double complex *>work.data, &lwork,
+                      <l_int *>iwork.data, &liwork, &info)
 
     if info > 0:
         raise LinAlgError("Reordering failed; problem is very ill-conditioned")
 
-    assert info == 0, "Argument error in stgsen"
+    assert info == 0, "Argument error in tgsen"
 
-    if alphai.nonzero()[0].size:
-        alpha = alphar + 1j * alphai
-    else:
-        alpha = alphar
-
-    return filter_args((True, True, Q is not None, Z is not None,
-                        calc_ev, calc_ev),
-                       (S, T, Q, Z, alpha, beta))
-
-
-def dtgsen(np.ndarray[l_logical] select,
-           np.ndarray[np.float64_t, ndim=2] S,
-           np.ndarray[np.float64_t, ndim=2] T,
-           np.ndarray[np.float64_t, ndim=2] Q=None,
-           np.ndarray[np.float64_t, ndim=2] Z=None,
-           calc_ev=True):
-    cdef l_int N, M, lwork, liwork, qiwork, info, ijob
-    cdef l_logical wantq, wantz
-    cdef double qwork
-    cdef double *q_ptr
-    cdef double *z_ptr
-    cdef np.ndarray[np.float64_t] alphar, alphai, beta, work
-    cdef np.ndarray[l_int] iwork
-
-    assert_fortran_mat(S, T, Q, Z)
-
-    N = S.shape[0]
-    alphar = np.empty(N, dtype = np.float64)
-    alphai = np.empty(N, dtype = np.float64)
-    beta = np.empty(N, dtype = np.float64)
-    ijob = 0
-
-    if Q is not None:
-        wantq = 1
-        q_ptr = <double *>Q.data
-    else:
-        wantq = 0
-        q_ptr = NULL
-
-    if Z is not None:
-        wantz = 1
-        z_ptr = <double *>Z.data
-    else:
-        wantz = 0
-        z_ptr = NULL
-
-    # workspace query
-    lwork = -1
-    liwork = -1
-    lapack.dtgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
-                     &N, <double *>S.data, &N,
-                     <double *>T.data, &N,
-                     <double *>alphar.data, <double *>alphai.data,
-                     <double *>beta.data,
-                     q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
-                     &qwork, &lwork, &qiwork, &liwork, &info)
-
-    assert info == 0, "Argument error in dtgsen"
-
-    lwork = <int>qwork
-    work = np.empty(lwork, dtype = np.float64)
-    liwork = qiwork
-    iwork = np.empty(liwork, dtype = int_dtype)
-
-    # Now the real calculation
-    lapack.dtgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
-                     &N, <double *>S.data, &N,
-                     <double *>T.data, &N,
-                     <double *>alphar.data, <double *>alphai.data,
-                     <double *>beta.data,
-                     q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
-                     <double *>work.data, &lwork,
-                     <l_int *>iwork.data, &liwork, &info)
-
-    if info > 0:
-        raise LinAlgError("Reordering failed; problem is very ill-conditioned")
-
-    assert info == 0, "Argument error in dtgsen"
-
-    if alphai.nonzero()[0].size:
-        alpha = alphar + 1j * alphai
-    else:
-        alpha = alphar
-
-    return filter_args((True, True, Q is not None, Z is not None,
-                        calc_ev, calc_ev),
-                       (S, T, Q, Z, alpha, beta))
-
-
-def ctgsen(np.ndarray[l_logical] select,
-           np.ndarray[np.complex64_t, ndim=2] S,
-           np.ndarray[np.complex64_t, ndim=2] T,
-           np.ndarray[np.complex64_t, ndim=2] Q=None,
-           np.ndarray[np.complex64_t, ndim=2] Z=None,
-           calc_ev=True):
-    cdef l_int N, M, lwork, liwork, qiwork, info, ijob
-    cdef l_logical wantq, wantz
-    cdef float complex qwork
-    cdef float complex *q_ptr
-    cdef float complex *z_ptr
-    cdef np.ndarray[np.complex64_t] alpha, beta, work
-    cdef np.ndarray[l_int] iwork
-
-    assert_fortran_mat(S, T, Q, Z)
-
-    N = S.shape[0]
-    alpha = np.empty(N, dtype = np.complex64)
-    beta = np.empty(N, dtype = np.complex64)
-    ijob = 0
-
-    if Q is not None:
-        wantq = 1
-        q_ptr = <float complex *>Q.data
-    else:
-        wantq = 0
-        q_ptr = NULL
-
-    if Z is not None:
-        wantz = 1
-        z_ptr = <float complex *>Z.data
-    else:
-        wantz = 0
-        z_ptr = NULL
-
-    # workspace query
-    lwork = -1
-    liwork = -1
-    lapack.ctgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
-                     &N, <float complex *>S.data, &N,
-                     <float complex *>T.data, &N,
-                     <float complex *>alpha.data, <float complex *>beta.data,
-                     q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
-                     &qwork, &lwork, &qiwork, &liwork, &info)
-
-    assert info == 0, "Argument error in ctgsen"
-
-    lwork = <int>qwork.real
-    work = np.empty(lwork, dtype = np.complex64)
-    liwork = qiwork
-    iwork = np.empty(liwork, dtype = int_dtype)
-
-    # Now the real calculation
-    lapack.ctgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
-                     &N, <float complex *>S.data, &N,
-                     <float complex *>T.data, &N,
-                     <float complex *>alpha.data, <float complex *>beta.data,
-                     q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
-                     <float complex *>work.data, &lwork,
-                     <l_int *>iwork.data, &liwork, &info)
-
-    if info > 0:
-        raise LinAlgError("Reordering failed; problem is very ill-conditioned")
-
-    assert info == 0, "Argument error in ctgsen"
-
-    return filter_args((True, True, Q is not None, Z is not None,
-                        calc_ev, calc_ev),
-                       (S, T, Q, Z, alpha, beta))
-
-
-def ztgsen(np.ndarray[l_logical] select,
-           np.ndarray[np.complex128_t, ndim=2] S,
-           np.ndarray[np.complex128_t, ndim=2] T,
-           np.ndarray[np.complex128_t, ndim=2] Q=None,
-           np.ndarray[np.complex128_t, ndim=2] Z=None,
-           calc_ev=True):
-    cdef l_int N, M, lwork, liwork, qiwork, info, ijob
-    cdef l_logical wantq, wantz
-    cdef double complex qwork
-    cdef double complex *q_ptr
-    cdef double complex *z_ptr
-    cdef np.ndarray[np.complex128_t] alpha, beta, work
-    cdef np.ndarray[l_int] iwork
-
-    assert_fortran_mat(S, T, Q, Z)
-
-    N = S.shape[0]
-    alpha = np.empty(N, dtype = np.complex128)
-    beta = np.empty(N, dtype = np.complex128)
-    ijob = 0
-
-    if Q is not None:
-        wantq = 1
-        q_ptr = <double complex *>Q.data
-    else:
-        wantq = 0
-        q_ptr = NULL
-
-    if Z is not None:
-        wantz = 1
-        z_ptr = <double complex *>Z.data
-    else:
-        wantz = 0
-        z_ptr = NULL
-
-    # workspace query
-    lwork = -1
-    liwork = -1
-    lapack.ztgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
-                     &N, <double complex *>S.data, &N,
-                     <double complex *>T.data, &N,
-                     <double complex *>alpha.data, <double complex *>beta.data,
-                     q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
-                     &qwork, &lwork, &qiwork, &liwork, &info)
-
-    assert info == 0, "Argument error in ztgsen"
-
-    lwork = <int>qwork.real
-    work = np.empty(lwork, dtype = np.complex128)
-    liwork = qiwork
-    iwork = np.empty(liwork, dtype = int_dtype)
-
-    # Now the real calculation
-    lapack.ztgsen(&ijob, &wantq, &wantz, <l_logical *>select.data,
-                     &N, <double complex *>S.data, &N,
-                     <double complex *>T.data, &N,
-                     <double complex *>alpha.data, <double complex *>beta.data,
-                     q_ptr, &N, z_ptr, &N, &M, NULL, NULL, NULL,
-                     <double complex *>work.data, &lwork,
-                     <l_int *>iwork.data, &liwork, &info)
-
-    if info > 0:
-        raise LinAlgError("Reordering failed; problem is very ill-conditioned")
-
-    assert info == 0, "Argument error in ztgsen"
+    # Real inputs possibly produce complex output
+    cdef np.ndarray alpha
+    alpha = alphar
+    if scalar in floating:
+        if alphai.nonzero()[0].size:
+            alpha = alphar + 1j * alphai
 
     return filter_args((True, True, Q is not None, Z is not None,
                         calc_ev, calc_ev),
