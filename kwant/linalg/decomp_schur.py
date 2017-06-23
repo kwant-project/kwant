@@ -613,26 +613,11 @@ def evecs_from_gen_schur(s, t, q=None, z=None, select=None,
 
     ltype, s, t, q, z = lapack.prepare_for_lapack(overwrite_qz, s, t, q, z)
 
-    if (s.ndim != 2 or t.ndim != 2 or
-        (q is not None and q.ndim != 2) or
-        (z is not None and z.ndim != 2)):
-        raise ValueError("Expect matrices as input")
-
-    if ((s.shape[0] != s.shape[1] or t.shape[0] != t.shape[1] or
-         s.shape[0] != t.shape[0]) or
-        (q is not None and (q.shape[0] != q.shape[1] or
-                            s.shape[0] != q.shape[0])) or
-        (z is not None and (z.shape[0] != z.shape[1] or
-                            s.shape[0] != z.shape[0]))):
-        raise ValueError("Invalid Schur decomposition as input")
-
     if left and q is None:
         raise ValueError("Matrix q must be provided for left eigenvectors")
 
     if right and z is None:
         raise ValueError("Matrix z must be provided for right eigenvectors")
-
-    tgevc = getattr(lapack, ltype + "tgevc")
 
     # Check if select is a function or an array.
     if select is not None:
@@ -659,4 +644,4 @@ def evecs_from_gen_schur(s, t, q=None, z=None, select=None,
     else:
         selectarr = None
 
-    return tgevc(s, t, q, z, selectarr, left, right)
+    return lapack.tgevc(s, t, q, z, selectarr, left, right)
