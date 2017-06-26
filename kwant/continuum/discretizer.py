@@ -370,7 +370,7 @@ def _discretize_summand(summand, coords):
         else:
             result = factor * result
 
-    return sympy.expand(result)
+    return result
 
 
 def _discretize_expression(expression, coords):

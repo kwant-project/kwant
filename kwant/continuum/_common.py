@@ -183,7 +183,7 @@ def sympify(expr, locals=None):
             converter[list] = stored_value
         else:
             del converter[list]
-    return sympy.expand(hamiltonian)
+    return hamiltonian
 
 
 def make_commutative(expr, *symbols):
