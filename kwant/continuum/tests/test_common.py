@@ -6,9 +6,6 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from functools import reduce
-from operator import mul
-
 import pytest
 import tinyarray as ta
 
@@ -86,65 +83,56 @@ def test_sympify_mix_symbol_and_matrx(input_expr, output_expr, subs):
     assert sympify(input_expr, locals=subs) == output_expr
 
 
-A, B, non_x = sympy.symbols('A B x', commutative=False)
-x, y = sympy.symbols('x y')
+A, B, x = sympy.symbols('A B x', commutative=False)
+com_x, com_y = sympy.symbols('x y')
 
-expr1 = non_x*A*non_x + x**2 * A * x + B*non_x**2
+expr1 = x*A*x + x**2 * A * x + B*x**2
 
-matr = sympy.Matrix([[expr1, expr1+A*non_x], [0, -expr1]])
-res_mat = sympy.Matrix([[x**3*A + x**2*A + x**2*B, x**3*A + x**2*A + x**2*B + x*A],
-                        [0, -x**3*A - x**2*A - x**2*B]])
+matr_com = sympy.Matrix([[expr1, expr1+A*x], [0, -expr1]])
+res_mat = sympy.Matrix([[com_x**3*A + com_x**2*A + com_x**2*B, com_x**3*A + com_x**2*A + com_x**2*B + com_x*A],
+                        [0, -com_x**3*A - com_x**2*A - com_x**2*B]])
 
 
 def test_make_commutative():
-    assert make_commutative(expr1, x) == make_commutative(expr1, non_x)
-    assert make_commutative(expr1, x) == x**3*A + x**2*A + x**2*B
-    assert make_commutative(matr, x) == res_mat
+    assert make_commutative(expr1, com_x) == make_commutative(expr1, x)
+    assert make_commutative(expr1, com_x) == com_x**3*A + com_x**2*A + com_x**2*B
+    assert make_commutative(matr_com, com_x) == res_mat
 
 
-expr2 = non_x*A*non_x + x**2 * A*2 * x + B*non_x/2 + non_x*B/2 + x + A + non_x + x/A
+matr_monomials = sympify("[[x+y, a*x**2 + b*y], [y, x]]")
+x, y, z = position_operators
+a, b = sympy.symbols('a, b')
 
+@pytest.mark.parametrize('expr, gens, output', [
+    (x * a(x) * x + x**2 * a, None, {x**2: a(x), a*x**2: 1}),
+    (x * a(x) * x + x**2 * a, [x], {x**2: a(x) + a}),
+    (x**2, [x], {x**2: 1}),
+    (2 * x + 3 * x**2, [x], {x: 2, x**2: 3}),
+    (2 * x + 3 * x**2, 'x', {x: 2, x**2: 3}),
+    (a * x**2 + 2 * b * x**2, 'x', {x**2: a + 2 * b}),
+    (x**2 * (a + 2 * b) , 'x', {x**2: a + 2 * b}),
+    (2 * x * y  + 3 * y * x, 'xy', {x*y: 2, y*x: 3}),
+    (2 * x * a + 3 * b, 'ab', {a: 2*x, b: 3}),
+    (matr_monomials, None, {
+        x: sympy.Matrix([[1, 0], [0, 1]]),
+        b*y: sympy.Matrix([[0, 1], [0, 0]]),
+        a*x**2: sympy.Matrix([[0, 1], [0, 0]]),
+        y: sympy.Matrix([[1, 0], [1, 0]])
+    }),
+    (matr_monomials, [x], {
+        x: sympy.Matrix([[1, 0], [0, 1]]),
+        1: sympy.Matrix([[y, b*y], [y, 0]]),
+        x**2: sympy.Matrix([[0, a], [0, 0]])
+    }),
+    (matr_monomials, [x, y], {
+        x: sympy.Matrix([[1, 0], [0, 1]]),
+        x**2: sympy.Matrix([[0, a], [0, 0]]),
+        y: sympy.Matrix([[1, b], [1, 0]])
+    }),
+])
+def test_monomials(expr, gens, output):
+    assert monomials(expr, gens) == output
 
-def test_monomials():
-    f, g, a, b = sympy.symbols('f g a b')
-
-    assert monomials(expr2, gens='x') == {x**3: 2*A, 1: A, x: 2 + A**(-1) + B, x**2: A}
-    assert monomials(expr1, gens='x') == {x**2: A + B, x**3: A}
-    assert monomials(x, gens='x') == {x: 1}
-    assert monomials(x**2, gens='x') == {x**2: 1}
-    assert monomials(x**2 + x, gens='x') == {x: 1, x**2: 1}
-    assert monomials(x**2 + x + A**2, gens='x') == {x: 1, x**2: 1, 1: A**2}
-    assert monomials(x * f(a, b), gens='x') == {x: f(a, b)}
-
-    expr = x * f(a) + y * g(b)
-    out = {y: g(b), x: f(a)}
-    assert monomials(expr, gens=('x', 'y')) == out
-
-    expr = 1 + x + A*x + 2*x + x**2 + A*x**2 + non_x*A*non_x
-    out = {1: 1, x: 3 + A, x**2: 2 * A + 1}
-    assert monomials(expr, gens='x') == out
-
-    expr = 1 + x * (3 + A) + x**2 * (1 + A)
-    out = {1: 1, x: 3 + A, x**2: 1 * A + 1}
-    assert monomials(expr, gens='x') == out
-
-    with pytest.raises(ValueError):
-        monomials(f(x), gens=[x])
-
-    with pytest.raises(ValueError):
-        monomials(f(a), gens='a')
-
-
-
-
-def test_matrix_monomials():
-    out = {
-        x**2: sympy.Matrix([[A + B,  A + B],[0, -A - B]]),
-        x: sympy.Matrix([[0, A], [0, 0]]),
-        x**3: sympy.Matrix([[A,  A], [0, -A]]),
-    }
-    mons = monomials(matr, gens=[x])
-    assert mons == out
 
 
 @pytest.mark.parametrize("e, should_be, kwargs", [

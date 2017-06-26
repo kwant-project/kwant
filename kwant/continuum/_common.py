@@ -6,10 +6,8 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-import functools
 import keyword
 from collections import defaultdict
-from operator import mul
 
 import numpy as np
 
@@ -242,8 +240,8 @@ def monomials(expr, gens=None):
         return dict(output)
 
 
-def _expression_monomials(expression, gens):
-    """Parse ``expression`` into monomials in the symbols in ``gens``.
+def _expression_monomials(expr, gens):
+    """Parse ``expr`` into monomials in the symbols in ``gens``.
 
     Parameters
     ----------
@@ -256,46 +254,19 @@ def _expression_monomials(expression, gens):
     -------
     dictionary (generator: monomial)
     """
-    f_args = [f.args for f in expression.atoms(AppliedUndef, sympy.Function)]
-    f_args = [i for s in f_args for i in s]
+    expr = sympy.expand(expr)
+    output = defaultdict(lambda: sympy.Integer(0))
+    for summand in expr.as_ordered_terms():
+        key = []
+        val = []
+        for factor in summand.as_ordered_factors():
+            symbol, exponent = factor.as_base_exp()
+            if symbol in gens:
+                key.append(factor)
+            else:
+                val.append(factor)
+        output[sympy.Mul(*key)] += sympy.Mul(*val)
 
-    if set(gens) & set(f_args):
-        raise ValueError('Functions in "expression" cannot contain any of '
-                         '"gens" as their argument.')
-
-    expression = make_commutative(expression, *gens)
-    gens = [make_commutative(g, g) for g in gens]
-
-    expression = sympy.expand(expression)
-    summands = expression.as_ordered_terms()
-
-    output = defaultdict(int)
-    for summand in summands:
-        key = [sympy.Integer(1)]
-        if summand in gens:
-            key.append(summand)
-
-        elif isinstance(summand, sympy.Pow):
-            if summand.args[0] in gens:
-                key.append(summand)
-
-        else:
-            for arg in summand.args:
-                if arg in gens:
-                    key.append(arg)
-                if isinstance(arg, sympy.Pow):
-                    if arg.args[0] in gens:
-                        key.append(arg)
-
-        key = functools.reduce(mul, key)
-        val = summand.xreplace({g: sympy.S.One for g in gens})
-
-        ### to not create key
-        if val != 0:
-            output[key] += val
-
-    new_expression = sum(k * v for k, v in output.items())
-    assert sympy.expand(expression) == sympy.expand(new_expression)
     return dict(output)
 
 
