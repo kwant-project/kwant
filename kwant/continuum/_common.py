@@ -205,44 +205,56 @@ def make_commutative(expr, *symbols):
     return expr
 
 
-def monomials(expr, *gens):
+def monomials(expr, gens=None):
     """Parse ``expr`` into monomials in the symbols in ``gens``.
 
     Parameters
     ----------
     expr: sympy.Expr or sympy.Matrix
-        Input expression that will be parsed into monomials.
-    gens: sequence of sympy.Symbol objects
-        Generators used to separate input ``expr`` into monomials.
+        Sympy expression to be parsed into monomials.
+    gens: sequence of sympy.Symbol objects or strings (optional)
+        Generators of monomials. If unset it will default to all
+        symbols used in ``expr``.
 
     Returns
     -------
     dictionary (generator: monomial)
 
-    Note
-    ----
-    All generators will be substituted with its commutative version using
-    `kwant.continuum.make_commutative`` function.
+    Example
+    -------
+        >>> expr = kwant.continuum.sympify("A * (x**2 + y) + B * x + C")
+        >>> monomials(expr, gens=('x', 'y'))
+        {1: C, x: B, x**2: A, y: A}
     """
+    if gens is None:
+        gens = expr.atoms(sympy.Symbol)
+    else:
+        gens = [sympify(g) for g in gens]
+
     if not isinstance(expr, sympy.MatrixBase):
-        return _expression_monomials(expr, *gens)
+        return _expression_monomials(expr, gens)
     else:
         output = defaultdict(lambda: sympy.zeros(*expr.shape))
         for (i, j), e in np.ndenumerate(expr):
-            mons = _expression_monomials(e, *gens)
+            mons = _expression_monomials(e, gens)
             for key, val in mons.items():
                 output[key][i, j] += val
         return dict(output)
 
 
-def _expression_monomials(expression, *gens):
+def _expression_monomials(expression, gens):
     """Parse ``expression`` into monomials in the symbols in ``gens``.
 
-    Example
+    Parameters
+    ----------
+    expr: sympy.Expr
+        Sympy expr to be parsed.
+    gens: sequence of sympy.Symbol
+        Generators of monomials.
+
+    Returns
     -------
-        >>> expr = A * (x**2 + y) + B * x + C
-        >>> _expression_monomials(expr, x, y)
-        {1: C, x**2: A, y: A, x: B}
+    dictionary (generator: monomial)
     """
     f_args = [f.args for f in expression.atoms(AppliedUndef, sympy.Function)]
     f_args = [i for s in f_args for i in s]

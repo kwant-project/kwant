@@ -108,31 +108,31 @@ expr2 = non_x*A*non_x + x**2 * A*2 * x + B*non_x/2 + non_x*B/2 + x + A + non_x +
 def test_monomials():
     f, g, a, b = sympy.symbols('f g a b')
 
-    assert monomials(expr2, x) == {x**3: 2*A, 1: A, x: 2 + A**(-1) + B, x**2: A}
-    assert monomials(expr1, x) == {x**2: A + B, x**3: A}
-    assert monomials(x, x) == {x: 1}
-    assert monomials(x**2, x) == {x**2: 1}
-    assert monomials(x**2 + x, x) == {x: 1, x**2: 1}
-    assert monomials(x**2 + x + A**2, x) == {x: 1, x**2: 1, 1: A**2}
-    assert monomials(x * f(a, b), x) == {x: f(a, b)}
+    assert monomials(expr2, gens='x') == {x**3: 2*A, 1: A, x: 2 + A**(-1) + B, x**2: A}
+    assert monomials(expr1, gens='x') == {x**2: A + B, x**3: A}
+    assert monomials(x, gens='x') == {x: 1}
+    assert monomials(x**2, gens='x') == {x**2: 1}
+    assert monomials(x**2 + x, gens='x') == {x: 1, x**2: 1}
+    assert monomials(x**2 + x + A**2, gens='x') == {x: 1, x**2: 1, 1: A**2}
+    assert monomials(x * f(a, b), gens='x') == {x: f(a, b)}
 
     expr = x * f(a) + y * g(b)
     out = {y: g(b), x: f(a)}
-    assert monomials(expr, x, y) == out
+    assert monomials(expr, gens=('x', 'y')) == out
 
     expr = 1 + x + A*x + 2*x + x**2 + A*x**2 + non_x*A*non_x
     out = {1: 1, x: 3 + A, x**2: 2 * A + 1}
-    assert monomials(expr, x) == out
+    assert monomials(expr, gens='x') == out
 
     expr = 1 + x * (3 + A) + x**2 * (1 + A)
     out = {1: 1, x: 3 + A, x**2: 1 * A + 1}
-    assert monomials(expr, x) == out
+    assert monomials(expr, gens='x') == out
 
     with pytest.raises(ValueError):
-        monomials(f(x), x)
+        monomials(f(x), gens=[x])
 
     with pytest.raises(ValueError):
-        monomials(f(a), a)
+        monomials(f(a), gens='a')
 
 
 def legacy_monomials(expr, *gens):
@@ -152,7 +152,7 @@ def legacy_monomials(expr, *gens):
 
 
 def test_monomials_with_reference_function():
-    assert legacy_monomials(expr2, x) == monomials(expr2, x)
+    assert legacy_monomials(expr2, x) == monomials(expr2, gens=[x])
 
 
 def test_matrix_monomials():
@@ -161,7 +161,7 @@ def test_matrix_monomials():
         x: sympy.Matrix([[0, A], [0, 0]]),
         x**3: sympy.Matrix([[A,  A], [0, -A]]),
     }
-    mons = monomials(matr, x)
+    mons = monomials(matr, gens=[x])
     assert mons == out
 
 
