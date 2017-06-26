@@ -1,12 +1,12 @@
+# Frequently Asked Questions
+# ==========================
 
-from cmath import exp
-import numpy as np
 import kwant
-import matplotlib.pyplot
-import matplotlib as mpl
-from matplotlib import pyplot as plt
-matplotlib.rcParams['figure.figsize'] = (3.5,3.5)
+import numpy as np
 import tinyarray
+import matplotlib
+from matplotlib import pyplot as plt
+matplotlib.rcParams['figure.figsize'] = (3.5, 3.5)
 
 
 ######## What is a Site? ##############
@@ -16,8 +16,8 @@ a = 1
 lat = kwant.lattice.square(a)
 syst = kwant.Builder()
 
-syst[lat(1,0)] = 4
-syst[lat(1,1)] = 4
+syst[lat(1, 0)] = 4
+syst[lat(1, 1)] = 4
 
 kwant.plot(syst)
 #HIDDEN_END_FAQ122
@@ -27,24 +27,23 @@ kwant.plot(syst)
 ################# What is a family? a tag? a lattice? ##################
 
 #HIDDEN_BEGIN_FAQ123
-a = 1
-## 2 Monatomic lattices
-lat1 = kwant.lattice.Monatomic( [(1,0) , (0,1)], offset = (0,0)) ## equivalent to kwant.lattice.square()
-lat2 = kwant.lattice.Monatomic( [(1,0) , (0,1)], offset = (0.5,0.5))
+# 2 Monatomic lattices
+primitive_vectors = [(1, 0), (0, 1)]
+lat1 = kwant.lattice.Monatomic(primitive_vectors, offset=(0, 0))  # equivalent to kwant.lattice.square()
+lat2 = kwant.lattice.Monatomic(primitive_vectors, offset=(0.5, 0.5))
 
-## 1 Polyatomic lattice containing two sublattices
-lat3 = kwant.lattice.Polyatomic([(1,0) , (0,1)], [(0,0) , (0.5,0.5)])
+# 1 Polyatomic lattice containing two sublattices
+lat3 = kwant.lattice.Polyatomic([(1, 0) , (0, 1)], [(0, 0) , (0.5, 0.5)])
 subA, subB = lat3.sublattices
 
 
 syst = kwant.Builder()
 
-syst[lat1(0,0)] = 4 ## syst[subA(0,0)] = 4
-syst[lat2(0,0)] = 4 ## syst[subB(0,0)] = 4
+syst[lat1(0, 0)] = 4  # syst[subA(0, 0)] = 4
+syst[lat2(0, 0)] = 4  # syst[subB(0, 0)] = 4
 
 kwant.plot(syst)
 #HIDDEN_END_FAQ123
-
 
 
 ########## What is a hopping? #######################
@@ -53,21 +52,18 @@ a = 1
 lat = kwant.lattice.square(a)
 syst = kwant.Builder()
 
-syst[lat(1,0)] = 4
-syst[lat(1,1)] = 4
+syst[lat(1, 0)] = 4
+syst[lat(1, 1)] = 4
 #HIDDEN_BEGIN_FAQ124
-syst[(lat(1,0) , lat(1,1))] = -1
+syst[(lat(1, 0), lat(1, 1))] = -1
 #HIDDEN_END_FAQ124
 
 kwant.plot(syst)
 
-
-
 ########### How to make a hole in a system? ###################"
 
 #HIDDEN_BEGIN_FAQ2
-
-## Definition of the lattice and the system:
+# Define the lattice and the (empty) system
 a = 2
 lat = kwant.lattice.cubic(a)
 syst = kwant.Builder()
@@ -76,47 +72,43 @@ L = 10
 W = 10
 H = 2
 
-## Adding sites to the system:
+# Add sites to the system in a cuboid
 
-syst[ (lat(i,j,k) for i in range(L) for j in range(W) for k in range(H)) ] = 4
+syst[(lat(i, j, k) for i in range(L) for j in range(W) for k in range(H))] = 4
 kwant.plot(syst)
 
+# Delete sites to create a hole
 
-## Deleting sites to create a hole
+def in_hole(site):
+    x, y, z = site.pos / a - (L/2, W/2, H/2)  # position relative to centre
+    return abs(x) < L / 4 and abs(y) < W / 4
 
-for i in range(L):
-    for j in range(W):
-        for k in range(H):
-            x, y, z = lat(i,j,k).pos
-            if ((L-2)*a/4 <= x <= 3*L*a/4) and (W*a/4 <= y <= 3*(W-2)*a/4) and (0 <= z <= (H-1)*a):
-                del syst[lat(i,j,k)]
+for site in filter(in_hole, list(syst.sites())):
+    del syst[site]
+
 kwant.plot(syst)
 #HIDDEN_END_FAQ2
-
 
 
 ################ How can we get access to the sites of our system? ####################
 
 builder = kwant.Builder()
 lat = kwant.lattice.square()
-builder[(lat(i,j) for i in range(3) for j in range(3))] = 4
+builder[(lat(i, j) for i in range(3) for j in range(3))] = 4
 #HIDDEN_BEGIN_FAQ3
-## Before finalizing the system
+# Before finalizing the system
 
-sites = []
-for site in builder.sites():
-    sites.append(site) ## here we choose to add the sites to a list
+sites = list(builder.sites())  # sites() doe *not* return a list
 
 #HIDDEN_END_FAQ3
 #HIDDEN_BEGIN_FAQ7
-## After finalizing the system
-
+# After finalizing the system
 syst = builder.finalized()
-i = syst.id_by_site[lat(0,2)] ## we want the id of the site lat(0,2)
- # syst.sites[i].tag  Returns the tag of lat(0,2)
- # syst.sites[i].pos  Returns the pos of lat(0,2)
+sites = syst.sites  # syst.sites is an actual list
 #HIDDEN_END_FAQ7
-
+#HIDDEN_BEGIN_FAQ72
+i = syst.id_by_site[lat(0, 2)]  # we want the id of the site lat(0, 2)
+#HIDDEN_END_FAQ72
 
 
 ################ How to plot a polyatomic lattice with different colors? ##############"
@@ -125,11 +117,11 @@ i = syst.id_by_site[lat(0,2)] ## we want the id of the site lat(0,2)
 lat = kwant.lattice.kagome()
 syst = kwant.Builder()
 
-a , b, c = lat.sublattices ## The kagome lattice has 3 sublattices
+a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
 #HIDDEN_END_FAQ8
 
 #HIDDEN_BEGIN_FAQ9
-## Plot sites from different families in different colors
+# Plot sites from different families in different colors
 
 def plot_system(syst):
 
@@ -147,14 +139,12 @@ def plot_system(syst):
     kwant.plot(syst, site_lw=0.1, site_color=family_color, hop_lw=hopping_lw)
 
 
-
-
 ## Adding sites and hoppings
 for i in range(4):
     for j in range (4):
-        syst[a(i,j)] = 4 ## red
-        syst[b(i,j)] = 4 ## green
-        syst[c(i,j)] = 4 ## blue
+        syst[a(i, j)] = 4  # red
+        syst[b(i, j)] = 4  # green
+        syst[c(i, j)] = 4  # blue
 
 syst[lat.neighbors()] = -1
 
@@ -164,29 +154,29 @@ plot_system(syst)
 #HIDDEN_END_FAQ9
 
 
-
 ############### How to create every hoppings in a given direction using Hoppingkind? ################
 
-## Monatomic lattice
+# Monatomic lattice
 
 #HIDDEN_BEGIN_FAQ4
 
-## Creation of hopping between neighbors with HoppingKind
+# Create hopping between neighbors with HoppingKind
 a = 1
 syst = kwant.Builder()
 lat = kwant.lattice.square(a)
-syst[ (lat(i,j) for i in range(5) for j in range(5)) ] = 4
+syst[ (lat(i, j) for i in range(5) for j in range(5)) ] = 4
 
-syst[kwant.builder.HoppingKind((1,0), lat)] = -1
+syst[kwant.builder.HoppingKind((1, 0), lat)] = -1
 kwant.plot(syst)
 #HIDDEN_END_FAQ4
 
-## Polyatomic lattice
+# Polyatomic lattice
 
 lat = kwant.lattice.kagome()
 syst = kwant.Builder()
 
-a , b, c = lat.sublattices ## The kagome lattice has 3 sublattices
+a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
+
 
 def plot_system(syst):
 
@@ -198,77 +188,77 @@ def plot_system(syst):
         else:
             return 'green'
 
+    kwant.plot(syst, site_size=0.15, site_lw=0.05, site_color=family_color)
 
-    kwant.plot(syst, site_size= 0.15 , site_lw=0.05, site_color=family_color)
 
 for i in range(4):
     for j in range (4):
-        syst[a(i,j)] = 4 ## red
-        syst[b(i,j)] = 4 ## green
-        syst[c(i,j)] = 4 ## blue
-
+        syst[a(i, j)] = 4  # red
+        syst[b(i, j)] = 4  # green
+        syst[c(i, j)] = 4  # blue
 
 
 #HIDDEN_BEGIN_FAQ13
-syst[kwant.builder.HoppingKind((0,1), b, b)] = -1 # equivalent to syst[kwant.builder.HoppingKind((0,1), b)] = -1
+# equivalent to syst[kwant.builder.HoppingKind((0, 1), b)] = -1
+syst[kwant.builder.HoppingKind((0, 1), b, b)] = -1
 #HIDDEN_END_FAQ13
 plot_system(syst)
-del syst[kwant.builder.HoppingKind((0,1), b, b)] ## delete the hoppings previously created
+# Delete the hoppings previously created
+del syst[kwant.builder.HoppingKind((0, 1), b, b)]
 #HIDDEN_BEGIN_FAQ14
-syst[kwant.builder.HoppingKind((0,0), a, b)] = -1
-syst[kwant.builder.HoppingKind((0,0), a, c)] = -1
-syst[kwant.builder.HoppingKind((0,0), c, b)] = -1
+syst[kwant.builder.HoppingKind((0, 0), a, b)] = -1
+syst[kwant.builder.HoppingKind((0, 0), a, c)] = -1
+syst[kwant.builder.HoppingKind((0, 0), c, b)] = -1
 #HIDDEN_END_FAQ14
 plot_system(syst)
 
 
-
 ########## How to create the hoppings between adjacent sites? ################
 
-## Monatomic lattice
+# Monatomic lattice
 
 #HIDDEN_BEGIN_FAQ5
 
-## Creation of hoppings with lat.neighbors()
+# Create hoppings with lat.neighbors()
 syst = kwant.Builder()
 lat = kwant.lattice.square()
-syst[ (lat(i,j) for i in range(3) for j in range(3)) ] = 4
+syst[(lat(i, j) for i in range(3) for j in range(3))] = 4
 
-syst[lat.neighbors()] = -1 ## equivalent to lat.neighbors(1)
+syst[lat.neighbors()] = -1  # Equivalent to lat.neighbors(1)
 kwant.plot(syst)
 
-del syst[lat.neighbors()] ## deletes every hoppings previously created to add new one
+del syst[lat.neighbors()]  # Delete all nearest-neighbor hoppings
 syst[lat.neighbors(2)] = -1
 
 kwant.plot(syst)
 #HIDDEN_END_FAQ5
 
-## Polyatomic lattice
+# Polyatomic lattice
 
 #HIDDEN_BEGIN_FAQ6
 
-## Hoppings using .neighbors()
+# Hoppings using .neighbors()
 #HIDDEN_BEGIN_FAQ10
-## Creation of the system
+# Create the system
 lat = kwant.lattice.kagome()
 syst = kwant.Builder()
-a , b, c = lat.sublattices ## The kagome lattice has 3 sublattices
+a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
+
 for i in range(4):
     for j in range (4):
-        syst[a(i,j)] = 4 ## red
-        syst[b(i,j)] = 4 ## green
-        syst[c(i,j)] = 4 ## blue
+        syst[a(i, j)] = 4  # red
+        syst[b(i, j)] = 4  # green
+        syst[c(i, j)] = 4  # blue
 
-## .neighbors()
 syst[lat.neighbors()] = -1
 #HIDDEN_END_FAQ10
 plot_system(syst)
-del syst[lat.neighbors()] ## delete the hoppings previously created
+del syst[lat.neighbors()]  # Delete the hoppings previously created
 #HIDDEN_BEGIN_FAQ11
 syst[a.neighbors()] = -1
 #HIDDEN_END_FAQ11
 plot_system(syst)
-del syst[a.neighbors()] ## deletes every hoppings previously created to add new one
+del syst[a.neighbors()]  # Delete the hoppings previously created
 
 
 #HIDDEN_BEGIN_FAQ12A
@@ -278,12 +268,9 @@ plot_system(syst)
 del syst[lat.neighbors(2)]
 
 
-
 ##### How to create a lead with a lattice different from the scattering region? ##########
 
-
-#HIDDEN_BEGIN_FAQAA
-## Plot sites from different families in different colors
+# Plot sites from different families in different colors
 
 def plot_system(syst):
 
@@ -295,94 +282,54 @@ def plot_system(syst):
         else:
             return 'green'
 
-
     kwant.plot(syst, site_lw=0.1, site_color=family_color)
 
-#HIDDEN_END_FAQAA
-#HIDDEN_BEGIN_FAQAB
-## Defining the scattering Region
-a = 2
-lat = kwant.lattice.honeycomb(a)
-syst = kwant.Builder()
 
+#HIDDEN_BEGIN_FAQAA
+# Define the scattering Region
 L = 5
 W = 5
 
+lat = kwant.lattice.honeycomb()
 subA, subB = lat.sublattices
 
-## Adding sites to the system:
-
-syst[ (subA(i,j) for i in range(L) for j in range(W)) ] = 4
-syst[ (subB(i,j) for i in range(L) for j in range(W)) ] = 4
+syst = kwant.Builder()
+syst[(subA(i, j) for i in range(L) for j in range(W))] = 4
+syst[(subB(i, j) for i in range(L) for j in range(W))] = 4
 syst[lat.neighbors()] = -1
+#HIDDEN_END_FAQAA
 plot_system(syst)
-#HIDDEN_END_FAQAB
-#HIDDEN_BEGIN_FAQAC
-## We manually add sites of the same lead lattice
 
+#HIDDEN_BEGIN_FAQAB
+# Create a lead
+lat_lead = kwant.lattice.square()
+sym_lead1 = kwant.TranslationalSymmetry((0, 1))
 
-lat2 = kwant.lattice.square(a)
-
-def shapetop(pos):
-    x, y = pos
-    return ( 4 <= x <= 12 ) and ( 8 < y <= 10 )
-
-def shapebot(pos):
-    x, y = pos
-    return ( 0 <= x <= 8 ) and ( -2 <= y < 0 )
-
-
-syst[lat2.shape(shapetop, (4,10))] = 4
-syst[lat2.shape(shapebot, (0,-2))] = 4
-
-syst[lat2.neighbors()] = -1
-syst[((lat2(i,-1), subA(i,0)) for i in range(5))] = -1
-syst[((lat2(i+2,5), subB(i,4)) for i in range(5))] = -1
-plot_system(syst)
-#HIDDEN_END_FAQAC
-#HIDDEN_BEGIN_FAQAD
-## Creation of the top lead
-
-lat_lead = kwant.lattice.square(a)
-sym_lead1 = kwant.TranslationalSymmetry((0,a))
 lead1 = kwant.Builder(sym_lead1)
-
-
-def lead_shape_top(pos): ## Shape of the lead
-    (x, y) = pos
-    return (4 <= x <= 12)
-
-
-lead1[lat_lead.shape(lead_shape_top, (4,12))] = 4
+lead1[(lat_lead(i, 0) for i in range(2, 7))] = 4
 lead1[lat_lead.neighbors()] = -1
+#HIDDEN_END_FAQAB
+plot_system(lead1)
 
+#HIDDEN_BEGIN_FAQAC
+syst[(lat_lead(i, 5) for i in range(2, 7))] = 4
+syst[lat_lead.neighbors()] = -1
+
+# Manually attach sites from graphene to square lattice
+syst[((lat_lead(i+2, 5), subB(i, 4)) for i in range(5))] = -1
+#HIDDEN_END_FAQAC
+plot_system(syst)
+
+#HIDDEN_BEGIN_FAQAD
 syst.attach_lead(lead1)
-plot_system(syst)
 #HIDDEN_END_FAQAD
-#HIDDEN_BEGIN_FAQAE
-## Creation of the bottom lead
-
-sym_lead2 = kwant.TranslationalSymmetry((0,-a))
-lead2 = kwant.Builder(sym_lead2)
-
-def lead_shape_bot(pos): ## Shape of the lead
-    (x, y) = pos
-    return (0 <= x <= 8)
-
-lead2[lat_lead.shape(lead_shape_bot, (0,-4))] = 4
-lead2[lat_lead.neighbors()] = -1
-
-syst.attach_lead(lead2)
-
 plot_system(syst)
-#HIDDEN_END_FAQAE
-
 
 
 ############# How to cut a finite system out of a system with translationnal symmetries? ###########
 
 #HIDDEN_BEGIN_FAQccc
-# Create  3d model.
+# Create 3d model.
 cubic = kwant.lattice.cubic()
 sym_3d = kwant.TranslationalSymmetry([1, 0, 0], [0, 1, 0], [0, 0, 1])
 model = kwant.Builder(sym_3d)
@@ -398,9 +345,8 @@ def cuboid_shape(site):
 
 cuboid = kwant.Builder()
 cuboid.fill(model, cuboid_shape, (0, 0, 0));
-
-kwant.plot(cuboid);
 #HIDDEN_END_FAQddd
+kwant.plot(cuboid);
 
 #HIDDEN_BEGIN_FAQeee
 # Build electrode (black).
@@ -409,164 +355,110 @@ def electrode_shape(site):
     return y**2 + z**2 < 2.3**2
 
 electrode = kwant.Builder(kwant.TranslationalSymmetry([1, 0, 0]))
-electrode.fill(model, electrode_shape, (0, 5, 2)); ## lead
+electrode.fill(model, electrode_shape, (0, 5, 2))  # lead
 
-cuboid.fill(electrode, lambda s: abs(s.pos[0]) < 7, (0, 5, 4)); ## scattering region
+# Scattering region
+cuboid.fill(electrode, lambda s: abs(s.pos[0]) < 7, (0, 5, 4))
 
 cuboid.attach_lead(electrode)
-kwant.plot(cuboid);
 #HIDDEN_END_FAQeee
+kwant.plot(cuboid);
 
 
-###### How to extract the wavefunction informations on a specific site? ###############
+###### How does Kwant order the propagating modes of a lead? ######
 
-#HIDDEN_BEGIN_FAQAF
-## Creation of the system
-a = 2
-lat = kwant.lattice.square(a)
-syst = kwant.Builder()
+#HIDDEN_BEGIN_PM
+lat = kwant.lattice.square()
 
-syst[((lat(i,j) for i in range(5) for j in range(3)))] = 4
-syst[lat.neighbors()] = -1
-kwant.plot(syst)
-
-sym_lead = kwant.TranslationalSymmetry((-a,0))
-lead = kwant.Builder(sym_lead)
-lead[(lat(0,i) for i in range(3))] = 4
+lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+lead[(lat(0, i) for i in range(3))] = 4
 lead[lat.neighbors()] = -1
-syst.attach_lead(lead)
-syst.attach_lead(lead.reversed())
-kwant.plot(syst)
 
-fsyst = syst.finalized()
+flead = lead.finalized()
 
-## Plot the different modes
-Ef = 3.0
-lead = lead.finalized()
-kwant.plotter.bands(lead, show=False)
-kwant.plotter.bands
-plt.plot([-3,3],[Ef,Ef], 'r--')
-plt.xlabel("momentum [(lattice constant)^-1]")
-plt.ylabel("energy [t]")
-plt.show()
-#HIDDEN_END_FAQAF
+E = 2.5
+prop_modes, _ = flead.modes(energy=E)
+#HIDDEN_END_PM
+
+def plot_and_label_modes(lead, E):
+    # Plot the different modes
+    pmodes, _ = lead.modes(energy=E)
+    kwant.plotter.bands(lead, show=False)
+    for i, k in enumerate(pmodes.momenta):
+        plt.plot(k, E, 'ko')
+        plt.annotate(str(i), xy=(k, E), xytext=(-5, 8),
+                     textcoords='offset points',
+                     bbox=dict(boxstyle='round,pad=0.1',fc='white', alpha=0.7))
+    plt.plot([-3, 3], [E, E], 'r--')
+    plt.ylim(E-1, E+1)
+    plt.xlim(-2, 2)
+    plt.xlabel("momentum")
+    plt.ylabel("energy")
+    plt.show()
+
+plot_and_label_modes(flead, E)
 plt.clf()
 
-#HIDDEN_BEGIN_FAQAG
-wf = kwant.wave_function(fsyst, Ef)
-wf_left_lead = wf(0) ## Wave function for the first lead (left)
-#HIDDEN_END_FAQAG
+# More involved example
+
+s0 = np.eye(2)
+sz = np.array([[1, 0], [0, -1]])
+
+lead2 = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+
+lead2[(lat(0, i) for i in range(2))] = np.diag([1.8, -1])
+lead2[lat.neighbors()] = -1 * sz
+
+flead2 = lead2.finalized()
+
+plot_and_label_modes(flead2, 1)
+plt.clf()
 
 
-#HIDDEN_BEGIN_FAQAH
+###### How does Kwant order components of an individual wavefunction? ######
 
-wf_left_0 = wf_left_lead[0] ## We choose the the mode with the highest k (mode in blue)
-
-
-tag = lat.closest((6,2)) ## returns the tag  of the site from lat based on the position
-
-i = fsyst.id_by_site[lat(*tag)] ## Returns the index in the low_level system based on the tag
-
-wf_site = wf_left_0[i] ## Returns the wave function on the site
-
-#HIDDEN_END_FAQAH
+def circle(R):
+    return lambda r: np.linalg.norm(r) < R
 
 
-#HIDDEN_BEGIN_FAQAO
-tau_x = tinyarray.array([[0, 1], [1, 0]])
-tau_y = tinyarray.array([[0, -1j], [1j, 0]])
-tau_z = tinyarray.array([[1, 0], [0, -1]])
-
-lat = kwant.lattice.square(norbs=2)
-
-
-	### Creation of the Builder ###
-
-def make_system(a=1, W=10, L=10, barrier=1.5, barrierpos=(3, 4),
-                mu=0.4, Delta=0.1, Deltapos=4, t=1.0, phs=True):
-    # Start with an empty tight-binding system. On each site, there
-    # are now electron and hole orbitals, so we must specify the
-    # number of orbitals per site. The orbital structure is the same
-    # as in the Hamiltonian.
+def make_system(lat):
+    norbs = lat.norbs
     syst = kwant.Builder()
+    syst[lat.shape(circle(3), (0, 0))] = 4 * np.eye(norbs)
+    syst[lat.neighbors()] = -1 * np.eye(norbs)
 
-    #### Define the scattering region. ####
-    # The superconducting order parameter couples electron and hole orbitals
-    # on each site, and hence enters as an onsite potential.
-    # The pairing is only included beyond the point 'Deltapos' in the scattering region.
-    syst[(lat(x, y) for x in range(Deltapos) for y in range(W))] = (4 * t - mu) * tau_z
-    syst[(lat(x, y) for x in range(Deltapos, L) for y in range(W))] = (4 * t - mu) * tau_z + Delta * tau_x
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+    lead[(lat(0, i) for i in range(-1, 2))] = 4 * np.eye(norbs)
+    lead[lat.neighbors()] = -1 * np.eye(norbs)
 
-    # The tunnel barrier
-    syst[(lat(x, y) for x in range(barrierpos[0], barrierpos[1])
-         for y in range(W))] = (4 * t + barrier - mu) * tau_z
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
 
-    # Hoppings
-    syst[lat.neighbors()] = -t * tau_z
-    #### Define the leads. ####
-    # Left lead - normal, so the order parameter is zero.
-    sym_left = kwant.TranslationalSymmetry((-a, 0))
-    # Specify the conservation law used to treat electrons and holes separately.
-    # We only do this in the left lead, where the pairing is zero.
-    lead0 = kwant.Builder(sym_left, conservation_law=-tau_z, particle_hole=tau_y)
-    lead0[(lat(0, j) for j in range(W))] = (4 * t - mu) * tau_z
-    lead0[lat.neighbors()] = -t * tau_z
-    # Right lead - superconducting, so the order parameter is included.
-    sym_right = kwant.TranslationalSymmetry((a, 0))
-    lead1 = kwant.Builder(sym_right)
-    lead1[(lat(0, j) for j in range(W))] = (4 * t - mu) * tau_z + Delta * tau_x
-    lead1[lat.neighbors()] = -t * tau_z
-
-    #### Attach the leads and return the system. ####
-    syst.attach_lead(lead0)
-    syst.attach_lead(lead1)
-
-    return syst
+    return syst.finalized()
 
 
-syst = make_system(W=10)
+#HIDDEN_BEGIN_ORD1
+lat = kwant.lattice.square(norbs=1)
+syst = make_system(lat)
+scattering_states = kwant.wave_function(syst, energy=1)
+wf = scattering_states(0)[0]  # scattering state from lead 0 incoming in mode 0
 
-    # Check that the system looks as intended.
-kwant.plot(syst)
+idx = syst.id_by_site[lat(0, 0)]  # look up index of site
 
-    # Finalize the system.
-syst = syst.finalized()
+print('wavefunction on lat(0, 0): ', wf[idx])
+#HIDDEN_END_ORD1
 
-	#Plot the mods of the lead
-lead = syst.leads[0]
+#HIDDEN_BEGIN_ORD2
+lat = kwant.lattice.square(norbs=2)
+syst = make_system(lat)
+scattering_states = kwant.wave_function(syst, energy=1)
+wf = scattering_states(0)[0]  # scattering state from lead 0 incoming in mode 0
 
-Ef=0.5
-kwant.plotter.bands(lead, show=False)
-kwant.plotter.bands
-plt.plot([-3,3],[Ef,Ef], 'r--')
-plt.xlabel("momentum [(lattice constant)^-1]")
-plt.ylabel("energy [t]")
-plt.show()
+idx = syst.id_by_site[lat(0, 0)]  # look up index of site
 
-plt.clf()
+# Group consecutive degrees of freedom from 'wf' together; these correspond
+# to degrees of freedom on the same site.
+wf = wf.reshape(-1, 2)
 
-wf = kwant.wave_function(syst, Ef)
-wf_left_lead = wf(0) # Wave function for the first lead (left)
-
-
-
-#HIDDEN_END_FAQAO
-
-
-#HIDDEN_BEGIN_FAQAP
-nb_degrees = 2 ## 2 degrees of freedom
-
-wf_left_0 = wf_left_lead[0] ## We choose the the mode with the highest k (mode in blue)
-
-
-tag = lat.closest((6,2)) ## returns the tag  of the site from lat based on the position
-
-i = syst.id_by_site[lat(*tag)] ## Returns the index in the low_level system based on the tag
-
-tab_wf = []
-
-for k in range(nb_degrees) : ## loop over the number of degrees of freedom
-	tab_wf.append(wf_left_0[nb_degrees * i +k]) # different states of the given site
-
-
-#HIDDEN_END_FAQAP
+print('wavefunction on lat(0, 0): ', wf[idx])
+#HIDDEN_END_ORD2

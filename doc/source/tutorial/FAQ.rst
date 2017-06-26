@@ -1,17 +1,37 @@
----------------------------------------------------------------
-Frequently Asked Questions :
----------------------------------------------------------------
+--------------------------
+Frequently Asked Questions
+--------------------------
+It is important to read the tutorials before looking at the questions. This FAQ
+is aimed to add complementary explainations that are not in the tutorials. The `Kwant paper <https://downloads.kwant-project.org/doc/kwant-paper.pdf>`_ also digs deeper into Kwant's structure.
 
-It is important to read the tutorials before looking at the questions. This FAQ is made to add complementary explanations that are not in the tutorials.
+
+What is a system, and what is a builder?
+========================================
+A Kwant system represents a tight-binding model. It contains a graph of edges
+and vertices that are assigned values, and which is used to construct
+the Hamiltonian for the model being simulated.
+
+In Kwant the specification of the tight-binding model is separated from the use
+of the model in numerical calculations. The `~kwant.builder.Builder` is used
+when specifying/constructing the model, then the
+`~kwant.builder.Builder.finalize` method is called, which produces a so-called
+low-level `~kwant.system.System` that can be used by Kwant's solvers.
+
+In the documentation and in mailing list discussions, the term general term
+"system" can be used to refer either to a ``Builder`` or to a low-level
+``System``, and the context will determine which specific class is being
+referred to. The terms "builder" and "low-level system" (or "finalized system")
+refer respectively to ``Builder`` and ``System``.
 
 
 What is a site?
-=================
+===============
+Kwant is a tool for working with tight-binding models, which can be viewed as a
+graph composed of edges and vertices.  Site objects are Kwant’s abstraction for
+the vertices.  Sites have two attributes: a **family** and a **tag** .  The
+combination of family and tag uniquely define a site.
 
-Kwant is based on the tight-binding model which is composed of edges and vertices.
-Site objects are Kwant’s abstraction for the vertices. The sites have two attributes: the **family** and the **tag** .
-
-For example :
+For example let us create an empty tight binding system and add two sites:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQ122
@@ -19,18 +39,45 @@ For example :
 
 .. image:: ../images/FAQ122.*
 
-As we can see in the figure, we added 2 sites to the system. Each site has a different tag ( ``(1,0)`` and ``(1,1)`` ) but they have the same family ``lat``
+In the above snippet we added 2 sites: ``lat(1 ,0)`` and ``lat(0 , 1)``. Both
+of these sites belong to the same family, ``lat``, but have different tags:
+``(1, 0)`` and ``(0, 1)`` respectively.
+
+
+What is a site family, and what is a tag?
+=========================================
+a site family "groups" related sites together, and a tag serves as a unique
+identifier for a site within a given family.
+
+In the previous example we saw a family that was suggestively called ``lat``,
+which had sites whose tags were pairs of integers. In this specific example
+the site family also happens to be a regular Bravais lattice, and the tags take
+on the meaning of lattice coordinates for a site on this lattice.
+
+The concept of families and tags is, however, more general. For example, one
+could implement a mesh that can be locally refined in certain areas, by having
+a family where sites belong to a `quadtree
+<https://en.wikipedia.org/wiki/Quadtree>`_, or an amorphous blob where sites
+are tagged by letters of the alphabet.
+
 
 What is a lattice?
-====================================
+==================
+Kwant allows users to define and use Bravais lattices for dealing with
+collections of regularly placed sites. They know about things like which sites
+on the lattice are neighbors, and how to fill a region of realspace with sites.
+``Monatomic`` lattices have a single site in their basis, while ``Polyatomic``
+have more than one site in their basis.
 
-The lattice contains the spatial repartition of the sites in the system. There are two kind of lattices in Kwant :
-	- The monatomic lattices
-	- The polyatomic lattices
+``Monatomic`` lattices in Kwant *are also site families*, with sites that are
+tagged with tuples of integers: the site's coordinates in the basis of
+primitive vectors of the lattice. ``Polyatomic`` lattices, however, are *not*
+site families, as lattice coordinates are not enough information to uniquely
+identify a site if there is more than one site in the basis. ``Polyatomic``
+lattices do, however, have an attribute ``sublattices`` that is a list of
+``Monatomic`` lattices that together make up the whole ``Polyatomic`` lattice.
 
-
-The monatomic class represents a bravais lattice with a single site in the basis, it contains an origin and multiple vectors which define a frame of reference. The polyatomic lattice has N sites per basis which correspond to N monatomic sublattices.
-
+For example:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQ123
@@ -38,71 +85,26 @@ The monatomic class represents a bravais lattice with a single site in the basis
 
 .. image:: ../images/FAQ123.*
 
-As we can see above, we created 2 monatomic lattices,  ``(1,0)`` and ``(0,1)`` are the primitive vectors and ``(0,0)`` and ``(0.5,0.5)`` are the origins of the two lattices. We can create a polyatomic lattice with the same primitive vectors and 2 sites in the basis. It leads to the same result. The two sublattices are equivalent to the two monatomic lattices.
+Above, we created 2 ``Monatomic`` lattices (``lat1`` and ``lat2``).  ``(1, 0)``
+and ``(0, 1)`` are the primitive vectors and ``(0, 0)`` and ``(0.5, 0.5)`` are
+the origins of the two lattices. Next we create a ``Polyatomic`` lattice with the
+same primitive vectors and 2 sites in the basis.
 
-What is a family ? a tag?
-============================
+The two sublattices are equivalent to the two monatomic lattices that we
+created previously. Because a ``Polyatomic`` lattice knows about its
+sublattices, we can do things like calculate neighboring sites, even between
+sublattices, which would not be possible with the two separate ``Monatomic``
+lattices.
 
-The concept of lattices and families are very interrelated. The family represents a sublattice and defines the tag.
-In the monatomic case, the family has the same name as the the lattice.
-
-In the polyatomic case, there are multiple families which represent the different monatomic sublattices.
-
-If we take the example from above, there are 4 families: ``subA , subB , lat1, lat2``. However, ``lat3`` doesn't have a family because it is polyatomic.
-
-The tag represents the coordinates of a site in his family. In the common case where the site family is a regular lattice, the site tag is simply given by its integer lattice coordinates.
-
-There are multiple :doc:`predefined lattices <../reference/kwant.lattice>` implemented in Kwant that we can use, it is simple to see how much sublattices there are by using ``lat.sublattices`` and look at what it returns.
-
-
-What is a hopping?
-====================
-
-If we take the example of `What is a site?`_ we can simply add a hopping with :
-
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ124
-    :end-before: #HIDDEN_END_FAQ124
-
-.. image:: ../images/FAQ124.*
-
-As we can see, a hopping is a tupple of site, it represents an edge of the tight-binding system.
-
-How to make a hole in a system?
-=================================
-To make a hole in the system, we use ``del syst[key]`` , we can either use the real-space coordinates with ``.pos`` or use the lattice coordinates ``tag`` . Here, we use the real-space position to delete sites in the middle.
-
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ2
-    :end-before: #HIDDEN_END_FAQ2
-
-.. image:: ../images/FAQ1.*
-.. image:: ../images/FAQ2.*
+the `kwant.lattice` module also defines several functions, such as
+`~kwant.lattice.square` and `~kwant.lattice.honeycomb`, which serve as a
+convenience for creating lattices of common types, without having to
+explicitly specify all of the lattice vectors and basis vectors.
 
 
-Note that we can make the hole after creating the hoppings, then the hoppings to the sites that are deleted are removed as well.
-
-How can we get access to the sites of our system?
-===================================================
-
-In kwant, the tight-binding model is split in two steps. First, we have a Builder where it is easy to add, remove or modify sites and hoppings. Then, we have a System which is optimized for computation. The separation is made with the finalization. The way we can have access to the list of sites is different before and after the finalization.
-
-
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ3
-    :end-before: #HIDDEN_END_FAQ3
-
-Before finalizing, we get access to the sites with : ``syst.sites()`` .
-
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ7
-    :end-before: #HIDDEN_END_FAQ7
-
-After finalizing the system, the order of the sites changes, so we need ``id_by_site`` to find the site's id in the finalized system. We can also use ``lat.closest(pos)`` to get the tag of a site at a given position.
-
-How to plot a polyatomic lattice with different colors?
-===============================================================================
-We take a kagome lattice as example here, it has 3 sublattices.
+How do I plot a polyatomic lattice with different colors?
+=========================================================
+In the following example we shall use a kagome lattice, which has 3 sublattices.
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQ8
@@ -116,13 +118,37 @@ As we can see below, we create a new plotting function that assigns a color for 
 
 .. image:: ../images/FAQ6B.*
 
-How to create every hoppings in a given direction using ``Hoppingkind``?
-==========================================================================
+
+What is a hopping?
+==================
+A hopping is simply a pair of sites, which defines an edge of the graph
+that makes up our tight-binding model.
+
+Starting from the example code from `What is a site?`_, we can add a hopping
+to our system in the following way:
+
+.. literalinclude:: FAQ.py
+    :start-after: #HIDDEN_BEGIN_FAQ124
+    :end-before: #HIDDEN_END_FAQ124
+
+.. image:: ../images/FAQ124.*
+
+Visually, we represent a hopping as a line that joins two sites.
+
+Whenever we add a hopping ``(site_a, site_b)`` to a system and assign it a
+value ``v``, implicitly the hopping ``(site_b, site_a)`` is also added, with
+value the Hermitian conjugate of ``v``.
 
 
-If the lattice is monatomic:
+How do I create all hoppings in a given direction?
+==================================================
+This can be obtained using a `~kwant.builder.HoppingKind`. A ``HoppingKind`` is
+a way of specifying all hoppings of a particular "kind", between two site
+families. For example ``HoppingKind((1, 0), lat_a, lat_b)`` represents all
+hoppings of the form ``(lat_a(x + (1, 0)), lat_b(x))``, where ``x`` is a tag
+(here, a pair of integers).
 
-``HoppingKind`` can be used to easily create a hopping in a specific direction.
+The following example shows how this can be used:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQ4
@@ -130,11 +156,9 @@ If the lattice is monatomic:
 
 .. image:: ../images/FAQ3.*
 
-We create hoppings between the sites of the lattice ``lat`` . ``(1,0)`` represents the direction of the hoppings we want to assign.
-
-If the lattice is polyatomic:
-
-``Hoppingkind`` can only be used in the monatomic sublattices. As we can see below, it can create hoppings between different sublattices with a given direction.
+Note that ``HoppingKind`` only works with site families so you cannot use
+them directly with ``Polyatomic`` lattices; you have to explicitly specify
+the sublattices when creating a ``HoppingKind``:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQ13
@@ -153,15 +177,11 @@ Here, we create hoppings between the sites of the same lattice coordinates but f
 .. image:: ../images/FAQ11.*
 
 
-
-How to create the hoppings between adjacent sites?
+How do I create the hoppings between adjacent sites?
 ====================================================
-
-``lat.neighbors(n)`` returns ``HoppingKind`` in the directions of the n-nearest neighbors.
-
-In the monatomic case:
-
-``lat.neighbors(n)`` creates the hoppings between the n-nearest neighbors.
+``Polyatomic`` and ``Monatomic`` lattices have a method `~kwant.lattice.Polyatomic.neighbors`
+that returns a (or several) ``HoppingKind`` that connects sites with their
+(n-nearest) neighors:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQ5
@@ -172,47 +192,96 @@ In the monatomic case:
 
 As we can see in the figure above, ``lat.neighbors()`` (on the left) returns the hoppings between the first nearest neighbors and ``lat.neighbors(2)`` (on the right) returns the hoppings between the second nearest neighbors.
 
-In the polyatomic case:
-
-It is possible to use ``.neighbors()`` with the lattice or the sublattices as explained below.
+When using a ``Polyatomic`` lattice ``neighbors()`` knows about the different
+sublattices:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQ10
     :end-before: #HIDDEN_END_FAQ10
 
-It creates hoppings between the first nearest neighbors of every sites of the system.
 
 .. image:: ../images/FAQ7.*
+
+However, if we use the ``neighbors()`` method of a single sublattice, we will
+only get the neighbors *on that sublattice*:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQ11
     :end-before: #HIDDEN_END_FAQ11
 
-It creates hoppings between the first nearest neighbors of the sites of the sublattice a (in red).
-
 .. image:: ../images/FAQ8.*
 
+Note in the above that there are *only* hoppings between the blue sites. This
+is an artifact of the visualisation: the red and green sites just happen to lie
+in the path of the hoppings, but are not connected by them.
+
+
+How do I make a hole in a system?
+=================================
+To make a hole in the system, we use ``del syst[site]``. In the following
+example we remove all sites inside some "hole" region:
+
 .. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ12A
-    :end-before: #HIDDEN_END_FAQ12A
+    :start-after: #HIDDEN_BEGIN_FAQ2
+    :end-before: #HIDDEN_END_FAQ2
 
-It creates hoppings between the second nearest neighbors of every sites of the system.
+.. image:: ../images/FAQ1.*
+.. image:: ../images/FAQ2.*
 
-.. image:: ../images/FAQ9.*
+``del syst[site]`` also works after hoppings have been added to the system.
+If a site is deleted, then all the hoppings to/from that site are also deleted.
 
 
+How can I get access to a system's sites?
+=========================================
+The ways of accessing system sites is slightly different depending on whether
+we are talking about a ``Builder`` or ``System`` (see `What is a system, and
+what is a builder?`_ if you do not know the difference).
 
-How to create a lead with a lattice different from the scattering region?
+We can access the sites of a ``Builder`` by using its `~kwant.builder.Builder.sites` method:
+
+.. literalinclude:: FAQ.py
+    :start-after: #HIDDEN_BEGIN_FAQ3
+    :end-before: #HIDDEN_END_FAQ3
+
+The ``sites()`` method returns an *iterator* over the system sites, and in the
+above example we create a list from the contents of this iterator, which
+contains all the sites. At this stage the ordering of sites is not fixed, so if
+you add more sites to the ``Builder`` and call ``sites()`` again, the sites may
+well be returned in a different order.
+
+After finalization, when we are dealing with a ``System``, the sites themselves
+are stored in a list, which can be accessed via the ``sites`` attribute:
+
+.. literalinclude:: FAQ.py
+    :start-after: #HIDDEN_BEGIN_FAQ7
+    :end-before: #HIDDEN_END_FAQ7
+
+The order of sites in a ``System`` is fixed, and also defines the ordering of
+the system Hamiltonian, system wavefunctions etc. (see `How does Kwant order components of an individual wavefunction?`_ for details).
+
+``System`` also contains the inverse mapping, ``id_by_site`` which gives us
+the index of a given site within the system:
+
+.. literalinclude:: FAQ.py
+    :start-after: #HIDDEN_BEGIN_FAQ72
+    :end-before: #HIDDEN_END_FAQ72
+
+
+How do I create a lead with a lattice different from the scattering region?
 ===========================================================================
+Let us take the example of a system containing sites from a honeycomb lattice,
+which we want to connect to leads that contain sites from a square lattice.
 
-First of all, we need to plot the sites in different colors depending on the sites families.
+First we construct the central system:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQAA
     :end-before: #HIDDEN_END_FAQAA
 
+.. image:: ../images/FAQAA.*
 
-Then, we create the scattering region, here we take the example of the honeycomb lattice.
+and the lead:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQAB
@@ -220,7 +289,12 @@ Then, we create the scattering region, here we take the example of the honeycomb
 
 .. image:: ../images/FAQAB.*
 
-We now have the scattering region, however, we can't just make the lead and attach it if it doesn't have the same lattice. We want our lead lattice to be square, so we need to manually attach some sites from the same lead lattice to the scattering region.
+We cannot simply use `~kwant.builder.Builder.attach_lead` to attach this lead to the
+system with the honeycomb lattice because Kwant does not know how sites from
+these two lattices should be connected.
+
+We must first add a layer of sites from the square lattice to the system and manually
+add the hoppings from these sites to the sites from the honeycomb lattice:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQAC
@@ -228,7 +302,7 @@ We now have the scattering region, however, we can't just make the lead and atta
 
 .. image:: ../images/FAQAC.*
 
-Now that we have those sites, we can create the leads and attach it. We first begin with the top lead, considering the dimensions of the scattering region on the figure above, we create a shape for the lead and attach it.
+``attach_lead()`` will now be able to attach the lead:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQAD
@@ -236,33 +310,25 @@ Now that we have those sites, we can create the leads and attach it. We first be
 
 .. image:: ../images/FAQAD.*
 
-We now do the same for the bottom lead.
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAE
-    :end-before: #HIDDEN_END_FAQAE
+How do I cut a finite system out of a system with translational symmetries?
+===========================================================================
+This can be achieved using the `~kwant.builder.Builder.fill` method to fill a
+``Builder`` with a ``Builder`` with higher symmetry.
 
-.. image:: ../images/FAQAE.*
+When using the ``fill()`` method, we need two systems: the template and the
+target. The template is a ``Builder`` with some translational symmetry that
+will be repeated in the desired shape to create the final system.
 
-
-
-How to cut a finite system out of a system with translationnal symmetries?
-============================================================================
-
-This can be achieved using the :doc:`fill()  <../reference/generated/kwant.builder.Builder>` method to fill a Builder with a Builder with higher symmetry.
-
-An example of fill is given :doc:`here  <../tutorial/discretize>` for an undisctretised hamiltonian, but we want to see how it works with a discretised system.
-
-When using the fill method, we need two systems, the template and the target (final sytem). The template is a part of the system which is periodically repeated in the desired shape to create the final system, so it needs to have translationnal symmetries.
-
-
-We first create the system template with its symmetries.
+For example, say we want to create a simple model on a cubic lattice:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQccc
     :end-before: #HIDDEN_END_FAQccc
 
-We now define the shape of the scattering region and use the fill method to create the first part of the scattering region
+We have now created our "template" ``Builder`` which has 3 translational
+symmetries. Next we will fill a system with no translational symmetries with
+sites and hoppings from the template inside a cuboid:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQddd
@@ -270,7 +336,9 @@ We now define the shape of the scattering region and use the fill method to crea
 
 .. image:: ../images/FAQaaa.*
 
-Finally, we create the template that will used to create the second part of the scattering region and the lead.
+We can then use the original template to create a lead, which has 1 translational
+symmetry. We can then use this lead as a template to fill another section of
+the system with a cylinder of sites and hoppings:
 
 .. literalinclude:: FAQ.py
     :start-after: #HIDDEN_BEGIN_FAQeee
@@ -278,58 +346,84 @@ Finally, we create the template that will used to create the second part of the 
 
 .. image:: ../images/FAQbbb.*
 
-How are the physical quantities ordered within the output of the functions?
-===========================================================================
 
-We take the example of the ``wave_function()`` here. We have only one degree of freedom here, see `How are degrees of freedom ordered ?`_  for further explanations in case of multiple one.
-
-So first, we define a system with a square lattice and 2 leads. We also plot the Fermi energy and the modes to see how much modes we can get with a given energy.
-
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAF
-    :end-before: #HIDDEN_END_FAQAF
-
-.. image:: ../images/FAQBA.*
-.. image:: ../images/FAQBB.*
-
-Here we take this Fermi energy so we can have 2 modes. Note that the velocity is negative for the incoming modes.
-We take the modes coming from the left lead (lead 0 in this case).
+How does Kwant order the propagating modes of a lead?
+=====================================================
+A very useful feature of kwant is to calculate the transverse wavefunctions of
+propagating modes in a system with 1 translational symmetry.  This can be
+achieved with the `~kwant.system.InfiniteSystem.modes` method, which returns a
+pair of objects, the first of which contains the propagating modes of the
+system in a `~kwant.physics.PropagatingModes` object:
 
 .. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAG
-    :end-before: #HIDDEN_END_FAQAG
+    :start-after: #HIDDEN_BEGIN_PM
+    :end-before: #HIDDEN_END_PM
 
-Then, we need to distinguish the different modes, it is indexed according to the decreasing k . For example here, we take the first mode and we want to know the wave function on the site at the position (6,2). To do that, we need to find the tag of this site using ``closest`` and then use ``id_by_site`` to find the index in the low-level system.
+``PropagatingModes`` contains the wavefunctions, velocities and momenta of the
+modes at the requested energy (2.5 in this example).  In order to understand
+the order in which these quantities are returned it is often useful to look at
+the a section of the band structure for the system in question:
+
+.. image:: ../images/FAQPM.*
+
+On the above band structure we have labelled the 4 modes in the order
+that they appear in the output of ``modes()`` at energy 2.5. Note that
+the modes are sorted in the following way:
+
+    + First all the modes with negative velocity, then all the modes with
+      positive velocity
+    + Negative velocity modes are ordered by *increasing* momentum
+    + Positive velocity modes are ordered by *decreasing* momentum
+
+For more complicated systems and band structures this can lead to some
+possibly unintuitive orderings:
+
+.. image:: ../images/FAQPMC.*
+
+
+How does Kwant order scattering states?
+=======================================
+Scattering states calculated using `~kwant.solvers.default.wave_function` are returned in the
+same order as the "incoming" modes of `~kwant.system.InfiniteSystem.modes`.
+Kwant considers that the translational symmetry of a lead points "towards
+infinity" (*not* towards the system) which means that the incoming modes are
+those that have *negative* velocities:
+
+
+How does Kwant order components of an individual wavefunction?
+==============================================================
+In `How can I get access to a system's sites?`_ we saw that the sites of a finalized system
+are available as a list through the ``sites`` attribute, and that one can look up the index
+of a site with the ``id_by_site`` attribute.
+
+When all the site families present in a system have only 1 degree of freedom
+per site (i.e.  the all the onsites are scalars) then the index into a
+wavefunction defined over the system is exactly the site index:
 
 .. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAH
-    :end-before: #HIDDEN_END_FAQAH
+    :start-after: #HIDDEN_BEGIN_ORD1
+    :end-before: #HIDDEN_END_ORD1
+.. literalinclude:: ../images/FAQORD1.txt
 
+We see that the wavefunction on a single site is a single complex number, as
+expected.
 
-How are degrees of freedom ordered ?
-======================================
-
-We take the example from :doc:`here <../tutorial/superconductors>` which has 2 degrees of freedom. We will focus on the general ordering of the  degrees of freedom with the example of the ``wave_function()``
-
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAO
-    :end-before: #HIDDEN_END_FAQAO
-
-.. image:: ../images/FAQTT.*
-
-.. image:: ../images/FAQSS.*
-
-
-With one degree of freedom, we had just to take the output of ``id_by_site`` to print the wave_function on a specific site.
+If a site family have more than 1 degree of freedom per site (e.g. spin or
+particle-hole) then Kwant places degrees of freedom on the same site adjacent
+to one another.  In the case where all site families in the system have the
+*same* number of degrees of freedom, we can then simply *reshape* the
+wavefunction into a matrix, where the row number indexes the site, and the
+column number indexes the degree of freedom on that site:
 
 .. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAH
-    :end-before: #HIDDEN_END_FAQAH
+    :start-after: #HIDDEN_BEGIN_ORD2
+    :end-before: #HIDDEN_END_ORD2
+.. literalinclude:: ../images/FAQORD2.txt
 
-In the case of 2 degrees of freedom, it changes the way we have access to a given site at a given orbital.
+We see that the wavefunction on a single site is a *vector* of 2 complex numbers,
+as we expect.
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAP
-    :end-before: #HIDDEN_END_FAQAP
-
-The order of the orbitals and sites are completly modified. The N first orbitals of the first site are between the index 0 and N-1, for the second site, it is between N and 2N-1, etc...
+If there are different site families present in the system that have *different*
+numbers of orbitals per site, then the situation becomes much more involved,
+because we cannot simply "reshape" the wavefunction like we did in the
+preceding example.
