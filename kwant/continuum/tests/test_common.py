@@ -135,24 +135,6 @@ def test_monomials():
         monomials(f(a), gens='a')
 
 
-def legacy_monomials(expr, *gens):
-    """This was my first implementation. Unfortunately it is very slow.
-
-    It is used to test correctness of new monomials function.
-    """
-    expr = make_commutative(expr, x)
-    R = sympy.ring(gens, sympy.EX, sympy.lex)[0]
-    expr = R(expr)
-
-    output = {}
-    for power, coeff in zip(expr.monoms(), expr.coeffs()):
-        key = reduce(mul, [sympy.Symbol(k.name)**n for k, n in zip(gens, power)])
-        output[key] = sympy.expand(coeff.as_expr())
-    return output
-
-
-def test_monomials_with_reference_function():
-    assert legacy_monomials(expr2, x) == monomials(expr2, gens=[x])
 
 
 def test_matrix_monomials():
