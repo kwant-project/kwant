@@ -75,6 +75,13 @@ def assert_fortran_mat(*mats):
             raise ValueError("Input matrix must be Fortran contiguous")
 
 
+cdef l_int lwork_from_qwork(scalar qwork):
+    if scalar in floating:
+        return <l_int>qwork
+    else:
+        return <l_int>qwork.real
+
+
 def getrf(np.ndarray[scalar, ndim=2] A):
     cdef l_int M, N, info
     cdef np.ndarray[l_int] ipiv
@@ -344,10 +351,7 @@ def ggev(np.ndarray[scalar, ndim=2] A, np.ndarray[scalar, ndim=2] B,
 
     assert info == 0, "Argument error in ggev"
 
-    if scalar in floating:
-        lwork = <l_int>qwork
-    else:
-        lwork = <l_int>qwork.real
+    lwork = lwork_from_qwork(qwork)
     cdef np.ndarray[scalar] work = np.empty(lwork, dtype=A.dtype)
 
     # The actual calculation
@@ -464,10 +468,7 @@ def gees(np.ndarray[scalar, ndim=2] A, calc_q=True, calc_ev=True):
 
     assert info == 0, "Argument error in sgees"
 
-    if scalar in floating:
-        lwork = <l_int>qwork
-    else:
-        lwork = <l_int>qwork.real
+    lwork = lwork_from_qwork(qwork)
     cdef np.ndarray[scalar] work = np.empty(lwork, dtype=A.dtype)
 
     # The actual calculation
@@ -563,14 +564,13 @@ def trsen(np.ndarray[l_logical] select,
 
     assert info == 0, "Argument error in trsen"
 
+    lwork = lwork_from_qwork(qwork)
+    cdef np.ndarray[scalar] work = np.empty(lwork, dtype=T.dtype)
+
     cdef np.ndarray[l_int] iwork = None
     if scalar in floating:
-        lwork = <l_int>qwork
         liwork = qiwork
         iwork = np.empty(liwork, dtype=int_dtype)
-    else:
-        lwork = <l_int>qwork.real
-    cdef np.ndarray[scalar, ndim=1] work = np.empty(lwork, dtype=T.dtype)
 
     # Tha actual calculation
 
@@ -894,10 +894,7 @@ def gges(np.ndarray[scalar, ndim=2] A,
 
     assert info == 0, "Argument error in gges"
 
-    if scalar in floating:
-        lwork = <l_int>qwork
-    else:
-        lwork = <l_int>qwork.real
+    lwork = lwork_from_qwork(qwork)
     cdef np.ndarray[scalar] work = np.empty(lwork, dtype=A.dtype)
 
     # The actual calculation
@@ -1045,10 +1042,7 @@ def tgsen(np.ndarray[l_logical] select,
 
     assert info == 0, "Argument error in tgsen"
 
-    if scalar in floating:
-        lwork = <l_int>qwork
-    else:
-        lwork = <l_int>qwork.real
+    lwork = lwork_from_qwork(qwork)
     cdef np.ndarray[scalar] work = np.empty(lwork, dtype=S.dtype)
 
     liwork = qiwork
