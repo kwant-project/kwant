@@ -6,10 +6,8 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-import functools
 import keyword
 from collections import defaultdict
-from operator import mul
 
 import numpy as np
 
@@ -205,85 +203,70 @@ def make_commutative(expr, *symbols):
     return expr
 
 
-def monomials(expr, *gens):
+def monomials(expr, gens=None):
     """Parse ``expr`` into monomials in the symbols in ``gens``.
 
     Parameters
     ----------
     expr: sympy.Expr or sympy.Matrix
-        Input expression that will be parsed into monomials.
-    gens: sequence of sympy.Symbol objects
-        Generators used to separate input ``expr`` into monomials.
+        Sympy expression to be parsed into monomials.
+    gens: sequence of sympy.Symbol objects or strings (optional)
+        Generators of monomials. If unset it will default to all
+        symbols used in ``expr``.
 
     Returns
     -------
     dictionary (generator: monomial)
 
-    Note
-    ----
-    All generators will be substituted with its commutative version using
-    `kwant.continuum.make_commutative`` function.
+    Example
+    -------
+        >>> expr = kwant.continuum.sympify("A * (x**2 + y) + B * x + C")
+        >>> monomials(expr, gens=('x', 'y'))
+        {1: C, x: B, x**2: A, y: A}
     """
+    if gens is None:
+        gens = expr.atoms(sympy.Symbol)
+    else:
+        gens = [sympify(g) for g in gens]
+
     if not isinstance(expr, sympy.MatrixBase):
-        return _expression_monomials(expr, *gens)
+        return _expression_monomials(expr, gens)
     else:
         output = defaultdict(lambda: sympy.zeros(*expr.shape))
         for (i, j), e in np.ndenumerate(expr):
-            mons = _expression_monomials(e, *gens)
+            mons = _expression_monomials(e, gens)
             for key, val in mons.items():
                 output[key][i, j] += val
         return dict(output)
 
 
-def _expression_monomials(expression, *gens):
-    """Parse ``expression`` into monomials in the symbols in ``gens``.
+def _expression_monomials(expr, gens):
+    """Parse ``expr`` into monomials in the symbols in ``gens``.
 
-    Example
+    Parameters
+    ----------
+    expr: sympy.Expr
+        Sympy expr to be parsed.
+    gens: sequence of sympy.Symbol
+        Generators of monomials.
+
+    Returns
     -------
-        >>> expr = A * (x**2 + y) + B * x + C
-        >>> _expression_monomials(expr, x, y)
-        {1: C, x**2: A, y: A, x: B}
+    dictionary (generator: monomial)
     """
-    f_args = [f.args for f in expression.atoms(AppliedUndef, sympy.Function)]
-    f_args = [i for s in f_args for i in s]
+    expr = sympy.expand(expr)
+    output = defaultdict(lambda: sympy.Integer(0))
+    for summand in expr.as_ordered_terms():
+        key = []
+        val = []
+        for factor in summand.as_ordered_factors():
+            symbol, exponent = factor.as_base_exp()
+            if symbol in gens:
+                key.append(factor)
+            else:
+                val.append(factor)
+        output[sympy.Mul(*key)] += sympy.Mul(*val)
 
-    if set(gens) & set(f_args):
-        raise ValueError('Functions in "expression" cannot contain any of '
-                         '"gens" as their argument.')
-
-    expression = make_commutative(expression, *gens)
-    gens = [make_commutative(g, g) for g in gens]
-
-    expression = sympy.expand(expression)
-    summands = expression.as_ordered_terms()
-
-    output = defaultdict(int)
-    for summand in summands:
-        key = [sympy.Integer(1)]
-        if summand in gens:
-            key.append(summand)
-
-        elif isinstance(summand, sympy.Pow):
-            if summand.args[0] in gens:
-                key.append(summand)
-
-        else:
-            for arg in summand.args:
-                if arg in gens:
-                    key.append(arg)
-                if isinstance(arg, sympy.Pow):
-                    if arg.args[0] in gens:
-                        key.append(arg)
-
-        key = functools.reduce(mul, key)
-        val = summand.xreplace({g: sympy.S.One for g in gens})
-
-        ### to not create key
-        if val != 0:
-            output[key] += val
-
-    new_expression = sum(k * v for k, v in output.items())
-    assert sympy.expand(expression) == sympy.expand(new_expression)
     return dict(output)
 
 
