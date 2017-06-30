@@ -1085,6 +1085,15 @@ def test_ModesLead_and_SelfEnergyLead():
     ts2 = [kwant.greens_function(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)
 
+    # Append a virtual (=zero self energy) lead.  This should have no effect.
+    # Also verifies that the selfenergy callback function can return exotic
+    # arraylikes.
+    syst.leads.append(builder.SelfEnergyLead(
+        lambda *args: list(ta.zeros((L, L))), interface))
+    fsyst = syst.finalized()
+    ts2 = [kwant.greens_function(fsyst, e).transmission(1, 0) for e in energies]
+    assert_almost_equal(ts2, ts)
+
 
 def test_site_pickle():
     site = kwant.lattice.square()(0, 0)
