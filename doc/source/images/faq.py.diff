@@ -25,7 +25,7 @@
  syst[lat(1, 1)] = 4
  
  kwant.plot(syst)
-+save_figure("FAQ122")
++save_figure("faq_site")
  
  
  
@@ -33,7 +33,7 @@
  syst[lat2(0, 0)] = 4  # syst[subB(0, 0)] = 4
  
  kwant.plot(syst)
-+save_figure("FAQ123")
++save_figure("faq_lattice")
  
  
  ########## What is a hopping? #######################
@@ -41,7 +41,7 @@
  syst[(lat(1, 0), lat(1, 1))] = -1
  
  kwant.plot(syst)
-+save_figure("FAQ124")
++save_figure("faq_hopping")
  
  ########### How to make a hole in a system? ###################"
  
@@ -49,7 +49,7 @@
  
  syst[(lat(i, j, k) for i in range(L) for j in range(W) for k in range(H))] = 4
  kwant.plot(syst)
-+save_figure("FAQ1")
++save_figure("faq_hole1")
  
  # Delete sites to create a hole
  
@@ -57,7 +57,7 @@
      del syst[site]
  
  kwant.plot(syst)
-+save_figure("FAQ2")
++save_figure("faq_hole2")
  
  
  ################ How can we get access to the sites of our system? ####################
@@ -66,15 +66,15 @@
  ## Plotting the system
  plot_system(syst)
 -
-+save_figure("FAQ6B")
++save_figure("faq_colors")
  
  
- ############### How to create every hoppings in a given direction using Hoppingkind? ################
+ ############### How to create all hoppings in a given direction using Hoppingkind? ################
 @@ -149,6 +161,7 @@
  
  syst[kwant.builder.HoppingKind((1, 0), lat)] = -1
  kwant.plot(syst)
-+save_figure("FAQ3")
++save_figure("faq_direction1")
  
  # Polyatomic lattice
  
@@ -82,14 +82,14 @@
  # equivalent to syst[kwant.builder.HoppingKind((0, 1), b)] = -1
  syst[kwant.builder.HoppingKind((0, 1), b, b)] = -1
  plot_system(syst)
-+save_figure("FAQ10")
++save_figure("faq_direction2")
  # Delete the hoppings previously created
  del syst[kwant.builder.HoppingKind((0, 1), b, b)]
  syst[kwant.builder.HoppingKind((0, 0), a, b)] = -1
  syst[kwant.builder.HoppingKind((0, 0), a, c)] = -1
  syst[kwant.builder.HoppingKind((0, 0), c, b)] = -1
  plot_system(syst)
-+save_figure("FAQ11")
++save_figure("faq_direction3")
  
  
  ########## How to create the hoppings between adjacent sites? ################
@@ -97,108 +97,102 @@
  
  syst[lat.neighbors()] = -1  # Equivalent to lat.neighbors(1)
  kwant.plot(syst)
-+save_figure("FAQ4")
++save_figure("faq_adjacent1")
  
  del syst[lat.neighbors()]  # Delete all nearest-neighbor hoppings
  syst[lat.neighbors(2)] = -1
  
  kwant.plot(syst)
-+save_figure("FAQ5")
++save_figure("faq_adjacent2")
  
  # Polyatomic lattice
  
-@@ -224,14 +241,17 @@
+@@ -224,9 +241,11 @@
  
  syst[lat.neighbors()] = -1
  plot_system(syst)
-+save_figure("FAQ7")
++save_figure("faq_adjacent3")
  del syst[lat.neighbors()]  # Delete the hoppings previously created
  syst[a.neighbors()] = -1
  plot_system(syst)
-+save_figure("FAQ8")
++save_figure("faq_adjacent4")
  del syst[a.neighbors()]  # Delete the hoppings previously created
  
  
- syst[lat.neighbors(2)] = -1
- plot_system(syst)
-+save_figure("FAQ9")
- del syst[lat.neighbors(2)]
- 
- 
-@@ -264,6 +284,7 @@
+@@ -264,6 +283,7 @@
  syst[(subB(i, j) for i in range(L) for j in range(W))] = 4
  syst[lat.neighbors()] = -1
  plot_system(syst)
-+save_figure("FAQAA")
++save_figure("faq_different_latticea1")
  
  # Create a lead
  lat_lead = kwant.lattice.square()
-@@ -273,6 +294,7 @@
+@@ -273,6 +293,7 @@
  lead1[(lat_lead(i, 0) for i in range(2, 7))] = 4
  lead1[lat_lead.neighbors()] = -1
  plot_system(lead1)
-+save_figure("FAQAB")
++save_figure("faq_different_latticea2")
  
  syst[(lat_lead(i, 5) for i in range(2, 7))] = 4
  syst[lat_lead.neighbors()] = -1
-@@ -280,9 +302,11 @@
+@@ -280,9 +301,11 @@
  # Manually attach sites from graphene to square lattice
  syst[((lat_lead(i+2, 5), subB(i, 4)) for i in range(5))] = -1
  plot_system(syst)
-+save_figure("FAQAC")
++save_figure("faq_different_latticea3")
  
  syst.attach_lead(lead1)
  plot_system(syst)
-+save_figure("FAQAD")
++save_figure("faq_different_latticea4")
  
  
  ############# How to cut a finite system out of a system with translationnal symmetries? ###########
-@@ -302,6 +326,7 @@
+@@ -302,6 +325,7 @@
  cuboid = kwant.Builder()
  cuboid.fill(model, cuboid_shape, (0, 0, 0));
  kwant.plot(cuboid);
-+save_figure("FAQaaa")
++save_figure("faq_fill2")
  
  # Build electrode (black).
  def electrode_shape(site):
-@@ -316,6 +341,7 @@
+@@ -316,6 +340,7 @@
  
  cuboid.attach_lead(electrode)
  kwant.plot(cuboid);
-+save_figure("FAQbbb")
++save_figure("faq_fill3")
  
  
  ###### How does Kwant order the propagating modes of a lead? ######
-@@ -348,6 +374,7 @@
+@@ -348,6 +373,7 @@
      plt.show()
  
  plot_and_label_modes(flead, E)
-+save_figure('FAQPM')
++save_figure('faq_pm1')
  plt.clf()
  
  # More involved example
-@@ -363,6 +390,7 @@
+@@ -363,6 +389,7 @@
  flead2 = lead2.finalized()
  
  plot_and_label_modes(flead2, 1)
-+save_figure('FAQPMC')
++save_figure('faq_pm2')
  plt.clf()
  
  
-@@ -395,7 +423,8 @@
+@@ -395,7 +422,8 @@
  
  idx = syst.id_by_site[lat(0, 0)]  # look up index of site
  
 -print('wavefunction on lat(0, 0): ', wf[idx])
-+with open('FAQORD1.txt', 'w') as f:
++with open('faq_ord1.txt', 'w') as f:
 +    print('wavefunction on lat(0, 0): ', wf[idx], file=f)
  
  lat = kwant.lattice.square(norbs=2)
  syst = make_system(lat)
-@@ -408,4 +437,5 @@
+@@ -408,4 +436,5 @@
  # to degrees of freedom on the same site.
  wf = wf.reshape(-1, 2)
  
 -print('wavefunction on lat(0, 0): ', wf[idx])
-+with open('FAQORD2.txt', 'w') as f:
++with open('faq_ord2.txt', 'w') as f:
 +    print('wavefunction on lat(0, 0): ', wf[idx], file=f)

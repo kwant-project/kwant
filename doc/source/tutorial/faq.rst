@@ -33,11 +33,11 @@ combination of family and tag uniquely define a site.
 
 For example let us create an empty tight binding system and add two sites:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ122
-    :end-before: #HIDDEN_END_FAQ122
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_site
+    :end-before: #HIDDEN_END_site
 
-.. image:: ../images/FAQ122.*
+.. image:: ../images/faq_site.*
 
 In the above snippet we added 2 sites: ``lat(1 ,0)`` and ``lat(0 , 1)``. Both
 of these sites belong to the same family, ``lat``, but have different tags:
@@ -79,11 +79,11 @@ lattices do, however, have an attribute ``sublattices`` that is a list of
 
 For example:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ123
-    :end-before: #HIDDEN_END_FAQ123
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_lattice
+    :end-before: #HIDDEN_END_lattice
 
-.. image:: ../images/FAQ123.*
+.. image:: ../images/faq_lattice.*
 
 Above, we created 2 ``Monatomic`` lattices (``lat1`` and ``lat2``).  ``(1, 0)``
 and ``(0, 1)`` are the primitive vectors and ``(0, 0)`` and ``(0.5, 0.5)`` are
@@ -106,17 +106,17 @@ How do I plot a polyatomic lattice with different colors?
 =========================================================
 In the following example we shall use a kagome lattice, which has 3 sublattices.
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ8
-    :end-before: #HIDDEN_END_FAQ8
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_colors1
+    :end-before: #HIDDEN_END_colors1
 
 As we can see below, we create a new plotting function that assigns a color for each family, and a different size for the hoppings depending on the family of the two sites. Finally we add sites and hoppings to our system and plot it with the new function.
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ9
-    :end-before: #HIDDEN_END_FAQ9
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_colors2
+    :end-before: #HIDDEN_END_colors2
 
-.. image:: ../images/FAQ6B.*
+.. image:: ../images/faq_colors.*
 
 
 What is a hopping?
@@ -127,11 +127,11 @@ that makes up our tight-binding model.
 Starting from the example code from `What is a site?`_, we can add a hopping
 to our system in the following way:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ124
-    :end-before: #HIDDEN_END_FAQ124
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_hopping
+    :end-before: #HIDDEN_END_hopping
 
-.. image:: ../images/FAQ124.*
+.. image:: ../images/faq_hopping.*
 
 Visually, we represent a hopping as a line that joins two sites.
 
@@ -150,31 +150,31 @@ hoppings of the form ``(lat_a(x + (1, 0)), lat_b(x))``, where ``x`` is a tag
 
 The following example shows how this can be used:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ4
-    :end-before: #HIDDEN_END_FAQ4
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_direction1
+    :end-before: #HIDDEN_END_direction1
 
-.. image:: ../images/FAQ3.*
+.. image:: ../images/faq_direction1.*
 
 Note that ``HoppingKind`` only works with site families so you cannot use
 them directly with ``Polyatomic`` lattices; you have to explicitly specify
 the sublattices when creating a ``HoppingKind``:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ13
-    :end-before: #HIDDEN_END_FAQ13
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_direction2
+    :end-before: #HIDDEN_END_direction2
 
 Here, we want the hoppings between the sites from sublattice b with a direction of (0,1) in the lattice coordinates.
 
-.. image:: ../images/FAQ10.*
+.. image:: ../images/faq_direction2.*
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ14
-    :end-before: #HIDDEN_END_FAQ14
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_direction3
+    :end-before: #HIDDEN_END_direction3
 
 Here, we create hoppings between the sites of the same lattice coordinates but from different families.
 
-.. image:: ../images/FAQ11.*
+.. image:: ../images/faq_direction3.*
 
 
 How do I create the hoppings between adjacent sites?
@@ -183,33 +183,33 @@ How do I create the hoppings between adjacent sites?
 that returns a (or several) ``HoppingKind`` that connects sites with their
 (n-nearest) neighors:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ5
-    :end-before: #HIDDEN_END_FAQ5
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_adjacent1
+    :end-before: #HIDDEN_END_adjacent1
 
-.. image:: ../images/FAQ4.*
-.. image:: ../images/FAQ5.*
+.. image:: ../images/faq_adjacent1.*
+.. image:: ../images/faq_adjacent2.*
 
 As we can see in the figure above, ``lat.neighbors()`` (on the left) returns the hoppings between the first nearest neighbors and ``lat.neighbors(2)`` (on the right) returns the hoppings between the second nearest neighbors.
 
 When using a ``Polyatomic`` lattice ``neighbors()`` knows about the different
 sublattices:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ10
-    :end-before: #HIDDEN_END_FAQ10
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_adjacent2
+    :end-before: #HIDDEN_END_adjacent2
 
 
-.. image:: ../images/FAQ7.*
+.. image:: ../images/faq_adjacent3.*
 
 However, if we use the ``neighbors()`` method of a single sublattice, we will
 only get the neighbors *on that sublattice*:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ11
-    :end-before: #HIDDEN_END_FAQ11
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_adjacent3
+    :end-before: #HIDDEN_END_adjacent3
 
-.. image:: ../images/FAQ8.*
+.. image:: ../images/faq_adjacent4.*
 
 Note in the above that there are *only* hoppings between the blue sites. This
 is an artifact of the visualisation: the red and green sites just happen to lie
@@ -221,12 +221,12 @@ How do I make a hole in a system?
 To make a hole in the system, we use ``del syst[site]``. In the following
 example we remove all sites inside some "hole" region:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ2
-    :end-before: #HIDDEN_END_FAQ2
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_hole
+    :end-before: #HIDDEN_END_hole
 
-.. image:: ../images/FAQ1.*
-.. image:: ../images/FAQ2.*
+.. image:: ../images/faq_hole1.*
+.. image:: ../images/faq_hole2.*
 
 ``del syst[site]`` also works after hoppings have been added to the system.
 If a site is deleted, then all the hoppings to/from that site are also deleted.
@@ -240,9 +240,9 @@ what is a builder?`_ if you do not know the difference).
 
 We can access the sites of a ``Builder`` by using its `~kwant.builder.Builder.sites` method:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ3
-    :end-before: #HIDDEN_END_FAQ3
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_sites1
+    :end-before: #HIDDEN_END_sites1
 
 The ``sites()`` method returns an *iterator* over the system sites, and in the
 above example we create a list from the contents of this iterator, which
@@ -253,9 +253,9 @@ well be returned in a different order.
 After finalization, when we are dealing with a ``System``, the sites themselves
 are stored in a list, which can be accessed via the ``sites`` attribute:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ7
-    :end-before: #HIDDEN_END_FAQ7
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_sites2
+    :end-before: #HIDDEN_END_sites2
 
 The order of sites in a ``System`` is fixed, and also defines the ordering of
 the system Hamiltonian, system wavefunctions etc. (see `How does Kwant order components of an individual wavefunction?`_ for details).
@@ -263,9 +263,9 @@ the system Hamiltonian, system wavefunctions etc. (see `How does Kwant order com
 ``System`` also contains the inverse mapping, ``id_by_site`` which gives us
 the index of a given site within the system:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQ72
-    :end-before: #HIDDEN_END_FAQ72
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_sites3
+    :end-before: #HIDDEN_END_sites3
 
 
 How do I create a lead with a lattice different from the scattering region?
@@ -275,19 +275,19 @@ which we want to connect to leads that contain sites from a square lattice.
 
 First we construct the central system:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAA
-    :end-before: #HIDDEN_END_FAQAA
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_different_lattice1
+    :end-before: #HIDDEN_END_different_lattice1
 
-.. image:: ../images/FAQAA.*
+.. image:: ../images/faq_different_latticea1.*
 
 and the lead:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAB
-    :end-before: #HIDDEN_END_FAQAB
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_different_lattice2
+    :end-before: #HIDDEN_END_different_lattice2
 
-.. image:: ../images/FAQAB.*
+.. image:: ../images/faq_different_latticea2.*
 
 We cannot simply use `~kwant.builder.Builder.attach_lead` to attach this lead to the
 system with the honeycomb lattice because Kwant does not know how sites from
@@ -296,19 +296,19 @@ these two lattices should be connected.
 We must first add a layer of sites from the square lattice to the system and manually
 add the hoppings from these sites to the sites from the honeycomb lattice:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAC
-    :end-before: #HIDDEN_END_FAQAC
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_different_lattice3
+    :end-before: #HIDDEN_END_different_lattice3
 
-.. image:: ../images/FAQAC.*
+.. image:: ../images/faq_different_latticea3.*
 
 ``attach_lead()`` will now be able to attach the lead:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQAD
-    :end-before: #HIDDEN_END_FAQAD
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_different_lattice4
+    :end-before: #HIDDEN_END_different_lattice4
 
-.. image:: ../images/FAQAD.*
+.. image:: ../images/faq_different_latticea4.*
 
 
 How do I cut a finite system out of a system with translational symmetries?
@@ -322,29 +322,29 @@ will be repeated in the desired shape to create the final system.
 
 For example, say we want to create a simple model on a cubic lattice:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQccc
-    :end-before: #HIDDEN_END_FAQccc
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_fill1
+    :end-before: #HIDDEN_END_fill1
 
 We have now created our "template" ``Builder`` which has 3 translational
 symmetries. Next we will fill a system with no translational symmetries with
 sites and hoppings from the template inside a cuboid:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQddd
-    :end-before: #HIDDEN_END_FAQddd
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_fill2
+    :end-before: #HIDDEN_END_fill2
 
-.. image:: ../images/FAQaaa.*
+.. image:: ../images/faq_fill2.*
 
 We can then use the original template to create a lead, which has 1 translational
 symmetry. We can then use this lead as a template to fill another section of
 the system with a cylinder of sites and hoppings:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_FAQeee
-    :end-before: #HIDDEN_END_FAQeee
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_fill3
+    :end-before: #HIDDEN_END_fill3
 
-.. image:: ../images/FAQbbb.*
+.. image:: ../images/faq_fill3.*
 
 
 How does Kwant order the propagating modes of a lead?
@@ -355,16 +355,16 @@ achieved with the `~kwant.system.InfiniteSystem.modes` method, which returns a
 pair of objects, the first of which contains the propagating modes of the
 system in a `~kwant.physics.PropagatingModes` object:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_PM
-    :end-before: #HIDDEN_END_PM
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_pm
+    :end-before: #HIDDEN_END_pm
 
 ``PropagatingModes`` contains the wavefunctions, velocities and momenta of the
 modes at the requested energy (2.5 in this example).  In order to understand
 the order in which these quantities are returned it is often useful to look at
 the a section of the band structure for the system in question:
 
-.. image:: ../images/FAQPM.*
+.. image:: ../images/faq_pm1.*
 
 On the above band structure we have labelled the 4 modes in the order
 that they appear in the output of ``modes()`` at energy 2.5. Note that
@@ -378,7 +378,7 @@ the modes are sorted in the following way:
 For more complicated systems and band structures this can lead to some
 possibly unintuitive orderings:
 
-.. image:: ../images/FAQPMC.*
+.. image:: ../images/faq_pm2.*
 
 
 How does Kwant order scattering states?
@@ -400,10 +400,10 @@ When all the site families present in a system have only 1 degree of freedom
 per site (i.e.  the all the onsites are scalars) then the index into a
 wavefunction defined over the system is exactly the site index:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_ORD1
-    :end-before: #HIDDEN_END_ORD1
-.. literalinclude:: ../images/FAQORD1.txt
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_ord1
+    :end-before: #HIDDEN_END_ord1
+.. literalinclude:: ../images/faq_ord1.txt
 
 We see that the wavefunction on a single site is a single complex number, as
 expected.
@@ -415,10 +415,10 @@ to one another.  In the case where all site families in the system have the
 wavefunction into a matrix, where the row number indexes the site, and the
 column number indexes the degree of freedom on that site:
 
-.. literalinclude:: FAQ.py
-    :start-after: #HIDDEN_BEGIN_ORD2
-    :end-before: #HIDDEN_END_ORD2
-.. literalinclude:: ../images/FAQORD2.txt
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_ord2
+    :end-before: #HIDDEN_END_ord2
+.. literalinclude:: ../images/faq_ord2.txt
 
 We see that the wavefunction on a single site is a *vector* of 2 complex numbers,
 as we expect.

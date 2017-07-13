@@ -242,7 +242,11 @@ class build_tut(Command):
         if not os.path.exists(tut_dir):
             os.mkdir(tut_dir)
         for in_fname in glob.glob('doc/source/tutorial/*.py'):
-            out_fname = os.path.join(tut_dir, os.path.basename(in_fname))
+            basename = os.path.basename(in_fname)
+            if basename == 'faq.py':
+                # The FAQ script is not meant as an example.
+                continue
+            out_fname = os.path.join(tut_dir, basename)
             with open(in_fname, 'rb') as in_file:
                 with open(out_fname, 'wb') as out_file:
                     for line in in_file:
