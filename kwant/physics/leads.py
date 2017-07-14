@@ -53,8 +53,8 @@ class PropagatingModes(object):
     =====
     The sort order of all the three arrays is identical. The first half of the
     modes have negative velocity, the second half have positive velocity. The
-    modes with negative velocity are ordered from larger to lower momenta, the
-    modes with positive velocity vice versa.
+    modes with negative velocity are ordered by increasing momentum, the
+    modes with positive velocity are ordered by decreasing momentum.
 
     The first dimension of `wave_functions` corresponds to the orbitals of all
     the sites in a unit cell, the second one to the number of the mode.  Each
