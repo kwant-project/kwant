@@ -8,6 +8,7 @@
 /build
 /dist
 /doc/build
+/doc/source/tutorial/*.py
 /doc/source/reference/generated/
 /doc/source/images/*.png
 /doc/source/images/*.pdf

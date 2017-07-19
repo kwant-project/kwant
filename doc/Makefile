@@ -35,6 +35,7 @@ GENERATEDPDF    = $(patsubst %.svg,%.pdf,$(IMAGESOURCES))
 # deleting the corresponding flag file.
 SCRIPTS = $(patsubst source/images/%.diff,%,$(wildcard source/images/*.py.diff))
 FLAGS = $(patsubst %.py,source/images/.%_flag,$(SCRIPTS))
+INCLUDES = $(patsubst %,source/tutorial/%,$(SCRIPTS))
 
 .PHONY: help clean realclean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
@@ -59,37 +60,38 @@ clean:
 
 realclean: clean
 	-rm -f $(FLAGS)
+	-rm -f $(INCLUDES)
 	-rm -f $(patsubst %,source/images/%,$(SCRIPTS))
 	-rm -f $(patsubst %.py,source/images/%_*.png,$(SCRIPTS))
 	-rm -f $(patsubst %.py,source/images/%_*.pdf,$(SCRIPTS))
 
-html:	$(FLAGS)
+html:	$(FLAGS) $(INCLUDES)
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
-dirhtml: $(FLAGS)
+dirhtml: $(FLAGS) $(INCLUDES)
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
-pickle: $(FLAGS)
+pickle: $(FLAGS) $(INCLUDES)
 	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) $(BUILDDIR)/pickle
 	@echo
 	@echo "Build finished; now you can process the pickle files."
 
-json:   $(FLAGS)
+json:   $(FLAGS) $(INCLUDES)
 	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(BUILDDIR)/json
 	@echo
 	@echo "Build finished; now you can process the JSON files."
 
-htmlhelp: $(FLAGS)
+htmlhelp: $(FLAGS) $(INCLUDES)
 	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(BUILDDIR)/htmlhelp
 	@echo
 	@echo "Build finished; now you can run HTML Help Workshop with the" \
 	      ".hhp project file in $(BUILDDIR)/htmlhelp."
 
-qthelp: $(FLAGS)
+qthelp: $(FLAGS) $(INCLUDES)
 	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) $(BUILDDIR)/qthelp
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
@@ -98,7 +100,7 @@ qthelp: $(FLAGS)
 	@echo "To view the help file:"
 	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/kwant.qhc"
 
-latex:  $(GENERATEDPDF) $(FLAGS)
+latex:  $(GENERATEDPDF) $(FLAGS) $(INCLUDES)
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo
 	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
@@ -124,19 +126,48 @@ doctest:
 %.pdf: %.svg
 	rsvg-convert -f pdf -o $@ $<
 
-# Make the image generation scripts by patching tutorial scipts.
+# Make tutorial scripts by extracting the (complete!) context of the "patches".
+# We make sure not to use 'wiggle' here.
 .SECONDARY:
-%.py: %.py.diff
-	@grep -v '^#HIDDEN' source/tutorial/$(notdir $@) >$@
-	@patch $@ $<
+source/tutorial/%.py: source/images/%.py.diff
+	@sed -n '/^[- ]/ s/^.//p' <$< >$@
+	@touch -r $< $@
 
-# The image generation scripts depend on their unpatched originals
+# Make the image generation scripts by patching tutorial scripts.  If the
+# tutorial scripts haven't been modified, don't patch but directly extract the
+# image generation scripts.  This means that 'wiggle' is only needed when the
+# tutorial scripts have been modified.
+.SECONDARY:
+source/images/%.py: source/tutorial/%.py
+	@if [ $< -nt $@.diff ]; then \
+	    cp $< $@; \
+	    rm -f $@.porig; \
+	    if ! wiggle --replace $@ $@.diff; then \
+	        command -v wiggle >/dev/null 2>&1 && \
+	        echo "Resolve conflicts by editing the files named below"; \
+	        touch -d@0 $@; \
+	        exit 1; \
+	    fi \
+	else \
+	    sed -n '/^[+ ]/ s/^.//p' <$@.diff >$@; \
+	    touch -r $@.diff $@; \
+	fi
+
+# Make the image generation scripts also depend on the diffs.
 define makedep
-source/images/$(1): source/tutorial/$(1)
+source/images/$(1): source/images/$(1).diff
 endef
 $(foreach name,$(SCRIPTS),$(eval $(call makedep,$(name))))
 
-# Generation of images
-.%_flag: %.py
+# Run an image generation script.  When successful, and if the script is newer
+# than the corresponding diff, recreate the latter.  Note that the
+# corresponding tutorial script cannot be newer, since if it is, the image
+# generation script is generated from it by patching.
+source/images/.%_flag: source/images/%.py
 	cd $(dir $<) && python3 $(notdir $<)
+	@if [ ! -f $<.diff -o $< -nt $<.diff ]; then \
+	    wiggle --diff --lines source/tutorial/$(notdir $<) $< >$<.diff; \
+	    touch -r $< $<.diff; \
+	fi
+	@rm -f $<.porig
 	@touch $@
