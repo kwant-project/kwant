@@ -1,24 +1,39 @@
+Frequently asked questions
 --------------------------
-Frequently Asked Questions
---------------------------
-It is important to read the tutorials before looking at the questions. This FAQ
-is aimed to add complementary explainations that are not in the tutorials. The `Kwant paper <https://downloads.kwant-project.org/doc/kwant-paper.pdf>`_ also digs deeper into Kwant's structure.
+This FAQ complements the regular Kwant tutorials and thus does not cover
+questions that are discussed there.  The `Kwant paper
+<https://downloads.kwant-project.org/doc/kwant-paper.pdf>`_ also digs deeper
+into Kwant's structure.
 
 
 What is a system, and what is a builder?
 ========================================
-A Kwant system represents a tight-binding model. It contains a graph of edges
-and vertices that are assigned values, and which is used to construct
-the Hamiltonian for the model being simulated.
+A Kwant system represents a particular tight-binding model. It contains a graph
+whose edges and vertices are assigned values, and that corresponds to the
+Hamiltonian matrix of the model being simulated.
 
-In Kwant the specification of the tight-binding model is separated from the use
-of the model in numerical calculations. The `~kwant.builder.Builder` is used
-when specifying/constructing the model, then the
-`~kwant.builder.Builder.finalize` method is called, which produces a so-called
-low-level `~kwant.system.System` that can be used by Kwant's solvers.
+In Kwant the creation of the system is separated from its use in numerical
+calculations. First an instance of the `~kwant.builder.Builder` class is used
+to construct the model, then the `~kwant.builder.Builder.finalize` method is
+called, which produces a so-called low-level `~kwant.system.System` that can be
+used by Kwant's solvers.
 
-In the documentation and in mailing list discussions, the term general term
-"system" can be used to refer either to a ``Builder`` or to a low-level
+The interface of builders mimics Python mappings (e.g. dictionaries).  The
+familiar square-bracket syntax allows to set, get and delete items that
+correspond to elements of the system graph, e.g. ``syst[key] = value``.  An
+item consists of a key and an associated value.  Keys are `sites <What is a
+site?_>`_ and `hoppings <What is a hopping?_>`_.  Values can be numbers, arrays
+of numbers, or functions that return numbers or arrays.
+
+Finalizing a builder returns a copy of the system with the graph *structure*
+frozen.  (This can be equivalently seen as freezing the system geometry or the
+sparsity structure of the Hamiltonian.)  The associated *values* are taken over
+verbatim.  Note that finalizing does not freeze the Hamiltonian matrix: only
+its structure is fixed, values that are functions may depend on an arbitrary
+number of parameters.
+
+In the documentation and in mailing list discussions, the general term
+"system" can refer either to a ``Builder`` or to a low-level
 ``System``, and the context will determine which specific class is being
 referred to. The terms "builder" and "low-level system" (or "finalized system")
 refer respectively to ``Builder`` and ``System``.
@@ -27,9 +42,9 @@ refer respectively to ``Builder`` and ``System``.
 What is a site?
 ===============
 Kwant is a tool for working with tight-binding models, which can be viewed as a
-graph composed of edges and vertices.  Site objects are Kwant’s abstraction for
-the vertices.  Sites have two attributes: a **family** and a **tag** .  The
-combination of family and tag uniquely define a site.
+graph composed of edges and vertices.  Sites are Kwant’s labels for the
+vertices.  Sites have two attributes: a *family* and a *tag*.  The
+combination of family and tag uniquely defines a site.
 
 For example let us create an empty tight binding system and add two sites:
 
@@ -39,14 +54,57 @@ For example let us create an empty tight binding system and add two sites:
 
 .. image:: ../images/faq_site.*
 
-In the above snippet we added 2 sites: ``lat(1 ,0)`` and ``lat(0 , 1)``. Both
+In the above snippet we added 2 sites: ``lat(1, 0)`` and ``lat(0, 1)``. Both
 of these sites belong to the same family, ``lat``, but have different tags:
 ``(1, 0)`` and ``(0, 1)`` respectively.
+
+Both sites were given the value 4 which means that the above system corresponds
+to the Hamiltonian matrix
+
+.. math::
+    H = \left(
+    \begin{array}{cc}
+    4 & 0 \\
+    0 & 4
+    \end{array}
+    \right).
+
+
+What is a hopping?
+==================
+A hopping is simply a tuple of two of sites, which defines an edge of the graph
+that makes up a tight-binding model.  Other sequences of sites that are not
+tuples, for example lists, are not treated as hoppings.
+
+Starting from the example code from `What is a site?`_, we can add a hopping
+to our system in the following way:
+
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_hopping
+    :end-before: #HIDDEN_END_hopping
+
+.. image:: ../images/faq_hopping.*
+
+Visually, a hopping is represented as a line that joins two sites.
+
+The Hamiltonian matrix is now
+
+.. math::
+    H = \left(
+    \begin{array}{cc}
+    4 & i \\
+    -i & 4
+    \end{array}
+    \right).
+
+Note how adding ``(site_a, site_b)`` to a system and assigning it a value
+``v``, implicitly adds the hopping ``(site_b, site_a)`` with the Hermitian
+conjugate of ``v`` as value.
 
 
 What is a site family, and what is a tag?
 =========================================
-a site family "groups" related sites together, and a tag serves as a unique
+A site family groups related sites together, and a tag serves as a unique
 identifier for a site within a given family.
 
 In the previous example we saw a family that was suggestively called ``lat``,
@@ -63,48 +121,53 @@ are tagged by letters of the alphabet.
 
 What is a lattice?
 ==================
-Kwant allows users to define and use Bravais lattices for dealing with
-collections of regularly placed sites. They know about things like which sites
-on the lattice are neighbors, and how to fill a region of realspace with sites.
-``Monatomic`` lattices have a single site in their basis, while ``Polyatomic``
-have more than one site in their basis.
+Kwant allows to define and use Bravais lattices for dealing with collections of
+regularly placed sites. They know about things like what sites are
+neighbors, or what sites belong to a given region of real space.
+`~kwant.lattice.Monatomic` lattices have a single site in their basis, while
+`~kwant.lattice.Polyatomic` lattices have more than one site in their basis.
 
-``Monatomic`` lattices in Kwant *are also site families*, with sites that are
-tagged with tuples of integers: the site's coordinates in the basis of
-primitive vectors of the lattice. ``Polyatomic`` lattices, however, are *not*
-site families, as lattice coordinates are not enough information to uniquely
-identify a site if there is more than one site in the basis. ``Polyatomic``
+Monatomic lattices in Kwant *are also site families*, with sites that are
+tagged by tuples of integers: the site's coordinates in the basis of
+primitive vectors of the lattice. Polyatomic lattices, however, are *not*
+site families, since lattice coordinates are not enough information to uniquely
+identify a site if there is more than one site in the basis. Polyatomic
 lattices do, however, have an attribute ``sublattices`` that is a list of
-``Monatomic`` lattices that together make up the whole ``Polyatomic`` lattice.
+monatomic lattices that together make up the whole polyatomic lattice.
 
-For example:
+Let's create two monatomic lattices (``lat_a`` and ``lat_b``).  ``(1, 0)``
+and ``(0, 1)`` will be the primitive vectors and ``(0, 0)`` and ``(0.5, 0.5)``
+the origins of the two lattices:
 
 .. literalinclude:: faq.py
-    :start-after: #HIDDEN_BEGIN_lattice
-    :end-before: #HIDDEN_END_lattice
+    :start-after: #HIDDEN_BEGIN_lattice_monatomic
+    :end-before: #HIDDEN_END_lattice_monatomic
 
 .. image:: ../images/faq_lattice.*
 
-Above, we created 2 ``Monatomic`` lattices (``lat1`` and ``lat2``).  ``(1, 0)``
-and ``(0, 1)`` are the primitive vectors and ``(0, 0)`` and ``(0.5, 0.5)`` are
-the origins of the two lattices. Next we create a ``Polyatomic`` lattice with the
-same primitive vectors and 2 sites in the basis.
+We can also create a ``Polyatomic`` lattice with the same primitive vectors and
+two sites in the basis:
 
-The two sublattices are equivalent to the two monatomic lattices that we
-created previously. Because a ``Polyatomic`` lattice knows about its
-sublattices, we can do things like calculate neighboring sites, even between
-sublattices, which would not be possible with the two separate ``Monatomic``
-lattices.
+.. literalinclude:: faq.py
+    :start-after: #HIDDEN_BEGIN_lattice_polyatomic
+    :end-before: #HIDDEN_END_lattice_polyatomic
 
-the `kwant.lattice` module also defines several functions, such as
-`~kwant.lattice.square` and `~kwant.lattice.honeycomb`, which serve as a
-convenience for creating lattices of common types, without having to
-explicitly specify all of the lattice vectors and basis vectors.
+The two sublattices ``sub_a`` and ``sub_b`` are nothing else than ``Monatomic``
+instances, and are equivalent to ``lat_a`` and ``lat_b`` that we created
+previously.  The advantage of the second approach is that there is now a
+``Polyatomic`` object that is aware of both of its sublattices, and we can do
+things like calculate neighboring sites, even between sublattices, which would
+not be possible with the two separate ``Monatomic`` lattices.
+
+The `kwant.lattice` module also defines several convenience functions, such as
+`~kwant.lattice.square` and `~kwant.lattice.honeycomb`, for creating lattices
+of common types, without having to explicitly specify all of the lattice
+vectors and basis vectors.
 
 
-How do I plot a polyatomic lattice with different colors?
-=========================================================
-In the following example we shall use a kagome lattice, which has 3 sublattices.
+When plotting, how to color the different sublattices differently?
+==================================================================
+In the following example we shall use a kagome lattice, which has three sublattices.
 
 .. literalinclude:: faq.py
     :start-after: #HIDDEN_BEGIN_colors1
@@ -119,34 +182,18 @@ As we can see below, we create a new plotting function that assigns a color for 
 .. image:: ../images/faq_colors.*
 
 
-What is a hopping?
-==================
-A hopping is simply a pair of sites, which defines an edge of the graph
-that makes up our tight-binding model.
+How to create many similar hoppings in one go?
+==============================================
+This can be achieved with an instance of the class `kwant.builder.HoppingKind`.
+In fact, sites and hoppings are not the only possible keys when assigning
+values to a `~kwant.builder.Builder`.  There exists a mechanism to
+`~kwant.builder.Builder.expand` more general keys into these simple keys.
 
-Starting from the example code from `What is a site?`_, we can add a hopping
-to our system in the following way:
-
-.. literalinclude:: faq.py
-    :start-after: #HIDDEN_BEGIN_hopping
-    :end-before: #HIDDEN_END_hopping
-
-.. image:: ../images/faq_hopping.*
-
-Visually, we represent a hopping as a line that joins two sites.
-
-Whenever we add a hopping ``(site_a, site_b)`` to a system and assign it a
-value ``v``, implicitly the hopping ``(site_b, site_a)`` is also added, with
-value the Hermitian conjugate of ``v``.
-
-
-How do I create all hoppings in a given direction?
-==================================================
-This can be obtained using a `~kwant.builder.HoppingKind`. A ``HoppingKind`` is
-a way of specifying all hoppings of a particular "kind", between two site
-families. For example ``HoppingKind((1, 0), lat_a, lat_b)`` represents all
-hoppings of the form ``(lat_a(x + (1, 0)), lat_b(x))``, where ``x`` is a tag
-(here, a pair of integers).
+A ``HoppingKind``, the most comonly used general key, is a way of specifying
+all hoppings of a particular "kind", between two site families. For example
+``HoppingKind((1, 0), lat_a, lat_b)`` represents all hoppings of the form
+``(lat_a(x + (1, 0)), lat_b(x))``, where ``x`` is a tag (here, a pair of
+integers).
 
 The following example shows how this can be used:
 
@@ -177,10 +224,10 @@ Here, we create hoppings between the sites of the same lattice coordinates but f
 .. image:: ../images/faq_direction3.*
 
 
-How do I create the hoppings between adjacent sites?
-====================================================
+How to set the hoppings between adjacent sites?
+===============================================
 ``Polyatomic`` and ``Monatomic`` lattices have a method `~kwant.lattice.Polyatomic.neighbors`
-that returns a (or several) ``HoppingKind`` that connects sites with their
+that returns a list of ``HoppingKind`` instances that connect sites with their
 (n-nearest) neighors:
 
 .. literalinclude:: faq.py
@@ -199,7 +246,6 @@ sublattices:
     :start-after: #HIDDEN_BEGIN_adjacent2
     :end-before: #HIDDEN_END_adjacent2
 
-
 .. image:: ../images/faq_adjacent3.*
 
 However, if we use the ``neighbors()`` method of a single sublattice, we will
@@ -216,10 +262,11 @@ is an artifact of the visualisation: the red and green sites just happen to lie
 in the path of the hoppings, but are not connected by them.
 
 
-How do I make a hole in a system?
-=================================
-To make a hole in the system, we use ``del syst[site]``. In the following
-example we remove all sites inside some "hole" region:
+How to make a hole in a system?
+===============================
+To make a hole in the system, use ``del syst[site]``, just like with any other
+mapping. In the following example we remove all sites inside some "hole"
+region:
 
 .. literalinclude:: faq.py
     :start-after: #HIDDEN_BEGIN_hole
@@ -232,8 +279,8 @@ example we remove all sites inside some "hole" region:
 If a site is deleted, then all the hoppings to/from that site are also deleted.
 
 
-How can I get access to a system's sites?
-=========================================
+How to access a system's sites?
+===============================
 The ways of accessing system sites is slightly different depending on whether
 we are talking about a ``Builder`` or ``System`` (see `What is a system, and
 what is a builder?`_ if you do not know the difference).
@@ -268,8 +315,8 @@ the index of a given site within the system:
     :end-before: #HIDDEN_END_sites3
 
 
-How do I create a lead with a lattice different from the scattering region?
-===========================================================================
+How to use different lattices for the scattering region and a lead?
+===================================================================
 Let us take the example of a system containing sites from a honeycomb lattice,
 which we want to connect to leads that contain sites from a square lattice.
 
@@ -279,7 +326,7 @@ First we construct the central system:
     :start-after: #HIDDEN_BEGIN_different_lattice1
     :end-before: #HIDDEN_END_different_lattice1
 
-.. image:: ../images/faq_different_latticea1.*
+.. image:: ../images/faq_different_lattice1.*
 
 and the lead:
 
@@ -287,7 +334,7 @@ and the lead:
     :start-after: #HIDDEN_BEGIN_different_lattice2
     :end-before: #HIDDEN_END_different_lattice2
 
-.. image:: ../images/faq_different_latticea2.*
+.. image:: ../images/faq_different_lattice2.*
 
 We cannot simply use `~kwant.builder.Builder.attach_lead` to attach this lead to the
 system with the honeycomb lattice because Kwant does not know how sites from
@@ -300,7 +347,7 @@ add the hoppings from these sites to the sites from the honeycomb lattice:
     :start-after: #HIDDEN_BEGIN_different_lattice3
     :end-before: #HIDDEN_END_different_lattice3
 
-.. image:: ../images/faq_different_latticea3.*
+.. image:: ../images/faq_different_lattice3.*
 
 ``attach_lead()`` will now be able to attach the lead:
 
@@ -308,11 +355,11 @@ add the hoppings from these sites to the sites from the honeycomb lattice:
     :start-after: #HIDDEN_BEGIN_different_lattice4
     :end-before: #HIDDEN_END_different_lattice4
 
-.. image:: ../images/faq_different_latticea4.*
+.. image:: ../images/faq_different_lattice4.*
 
 
-How do I cut a finite system out of a system with translational symmetries?
-===========================================================================
+How to cut a finite system out of a system with translational symmetries?
+=========================================================================
 This can be achieved using the `~kwant.builder.Builder.fill` method to fill a
 ``Builder`` with a ``Builder`` with higher symmetry.
 
@@ -392,9 +439,9 @@ those that have *negative* velocities:
 
 How does Kwant order components of an individual wavefunction?
 ==============================================================
-In `How can I get access to a system's sites?`_ we saw that the sites of a finalized system
-are available as a list through the ``sites`` attribute, and that one can look up the index
-of a site with the ``id_by_site`` attribute.
+In `How to access a system's sites?`_ we saw that the sites of a
+finalized system are available as a list through the ``sites`` attribute, and
+that one can look up the index of a site with the ``id_by_site`` attribute.
 
 When all the site families present in a system have only 1 degree of freedom
 per site (i.e.  the all the onsites are scalars) then the index into a

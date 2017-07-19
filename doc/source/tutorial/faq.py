@@ -1,5 +1,7 @@
-# Frequently Asked Questions
-# ==========================
+# Frequently asked questions
+#
+# This script is a disorganized collection of code snippets.  As a whole, it is
+# not meant as an example of good programming practice.
 
 import kwant
 import numpy as np
@@ -9,7 +11,7 @@ from matplotlib import pyplot as plt
 matplotlib.rcParams['figure.figsize'] = (3.5, 3.5)
 
 
-######## What is a Site? ##############
+#### What is a Site?
 
 #HIDDEN_BEGIN_site
 a = 1
@@ -23,30 +25,7 @@ kwant.plot(syst)
 #HIDDEN_END_site
 
 
-
-################# What is a family? a tag? a lattice? ##################
-
-#HIDDEN_BEGIN_lattice
-# 2 Monatomic lattices
-primitive_vectors = [(1, 0), (0, 1)]
-lat1 = kwant.lattice.Monatomic(primitive_vectors, offset=(0, 0))  # equivalent to kwant.lattice.square()
-lat2 = kwant.lattice.Monatomic(primitive_vectors, offset=(0.5, 0.5))
-
-# 1 Polyatomic lattice containing two sublattices
-lat3 = kwant.lattice.Polyatomic([(1, 0) , (0, 1)], [(0, 0) , (0.5, 0.5)])
-subA, subB = lat3.sublattices
-
-
-syst = kwant.Builder()
-
-syst[lat1(0, 0)] = 4  # syst[subA(0, 0)] = 4
-syst[lat2(0, 0)] = 4  # syst[subB(0, 0)] = 4
-
-kwant.plot(syst)
-#HIDDEN_END_lattice
-
-
-########## What is a hopping? #######################
+#### What is a hopping?
 
 a = 1
 lat = kwant.lattice.square(a)
@@ -55,12 +34,36 @@ syst = kwant.Builder()
 syst[lat(1, 0)] = 4
 syst[lat(1, 1)] = 4
 #HIDDEN_BEGIN_hopping
-syst[(lat(1, 0), lat(1, 1))] = -1
+syst[(lat(1, 0), lat(1, 1))] = 1j
 #HIDDEN_END_hopping
 
 kwant.plot(syst)
 
-########### How to make a hole in a system? ###################"
+
+#### What is a lattice?
+
+#HIDDEN_BEGIN_lattice_monatomic
+# Two monatomic lattices
+primitive_vectors = [(1, 0), (0, 1)]
+lat_a = kwant.lattice.Monatomic(primitive_vectors, offset=(0, 0))
+lat_b = kwant.lattice.Monatomic(primitive_vectors, offset=(0.5, 0.5))
+# lat1 is equivalent to kwant.lattice.square()
+
+syst = kwant.Builder()
+
+syst[lat_a(0, 0)] = 4
+syst[lat_b(0, 0)] = 4
+
+kwant.plot(syst)
+#HIDDEN_END_lattice_monatomic
+
+#HIDDEN_BEGIN_lattice_polyatomic
+# One polyatomic lattice containing two sublattices
+lat = kwant.lattice.Polyatomic([(1, 0), (0, 1)], [(0, 0), (0.5, 0.5)])
+sub_a, sub_b = lat.sublattices
+#HIDDEN_END_lattice_polyatomic
+
+#### How to make a hole in a system?
 
 #HIDDEN_BEGIN_hole
 # Define the lattice and the (empty) system
@@ -90,7 +93,7 @@ kwant.plot(syst)
 #HIDDEN_END_hole
 
 
-################ How can we get access to the sites of our system? ####################
+#### How can we get access to the sites of our system?
 
 builder = kwant.Builder()
 lat = kwant.lattice.square()
@@ -99,7 +102,6 @@ builder[(lat(i, j) for i in range(3) for j in range(3))] = 4
 # Before finalizing the system
 
 sites = list(builder.sites())  # sites() doe *not* return a list
-
 #HIDDEN_END_sites1
 #HIDDEN_BEGIN_sites2
 # After finalizing the system
@@ -111,7 +113,7 @@ i = syst.id_by_site[lat(0, 2)]  # we want the id of the site lat(0, 2)
 #HIDDEN_END_sites3
 
 
-################ How to plot a polyatomic lattice with different colors? ##############"
+#### How to plot a polyatomic lattice with different colors?
 
 #HIDDEN_BEGIN_colors1
 lat = kwant.lattice.kagome()
@@ -122,44 +124,36 @@ a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
 
 #HIDDEN_BEGIN_colors2
 # Plot sites from different families in different colors
+def family_color(site):
+    if site.family == a:
+        return 'red'
+    if site.family == b:
+        return 'green'
+    else:
+        return 'blue'
 
 def plot_system(syst):
+    kwant.plot(syst, site_lw=0.1, site_color=family_color)
 
-    def family_color(site):
-        if site.family == a:
-            return 'red'
-        if site.family == b:
-            return 'green'
-        else:
-            return 'blue'
-
-    def hopping_lw(site1, site2):
-        return 0.1 if site1.family == site2.family else 0.1
-
-    kwant.plot(syst, site_lw=0.1, site_color=family_color, hop_lw=hopping_lw)
-
-
-## Adding sites and hoppings
+## Add sites and hoppings.
 for i in range(4):
     for j in range (4):
-        syst[a(i, j)] = 4  # red
-        syst[b(i, j)] = 4  # green
-        syst[c(i, j)] = 4  # blue
+        syst[a(i, j)] = 4
+        syst[b(i, j)] = 4
+        syst[c(i, j)] = 4
 
 syst[lat.neighbors()] = -1
 
-## Plotting the system
+## Plot the system.
 plot_system(syst)
-
 #HIDDEN_END_colors2
 
 
-############### How to create all hoppings in a given direction using Hoppingkind? ################
+#### How to create all hoppings in a given direction using Hoppingkind?
 
 # Monatomic lattice
 
 #HIDDEN_BEGIN_direction1
-
 # Create hopping between neighbors with HoppingKind
 a = 1
 syst = kwant.Builder()
@@ -177,25 +171,23 @@ syst = kwant.Builder()
 
 a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
 
+def family_color(site):
+    if site.family == a:
+        return 'red'
+    if site.family == b:
+        return 'green'
+    else:
+        return 'blue'
 
 def plot_system(syst):
-
-    def family_color(site):
-        if site.family == a:
-            return 'blue'
-        if site.family == b:
-            return 'red'
-        else:
-            return 'green'
-
     kwant.plot(syst, site_size=0.15, site_lw=0.05, site_color=family_color)
 
 
 for i in range(4):
     for j in range (4):
-        syst[a(i, j)] = 4  # red
-        syst[b(i, j)] = 4  # green
-        syst[c(i, j)] = 4  # blue
+        syst[a(i, j)] = 4
+        syst[b(i, j)] = 4
+        syst[c(i, j)] = 4
 
 
 #HIDDEN_BEGIN_direction2
@@ -213,12 +205,11 @@ syst[kwant.builder.HoppingKind((0, 0), c, b)] = -1
 plot_system(syst)
 
 
-########## How to create the hoppings between adjacent sites? ################
+#### How to create the hoppings between adjacent sites?
 
 # Monatomic lattice
 
 #HIDDEN_BEGIN_adjacent1
-
 # Create hoppings with lat.neighbors()
 syst = kwant.Builder()
 lat = kwant.lattice.square()
@@ -266,7 +257,7 @@ plot_system(syst)
 del syst[lat.neighbors(2)]
 
 
-##### How to create a lead with a lattice different from the scattering region? ##########
+#### How to create a lead with a lattice different from the scattering region?
 
 # Plot sites from different families in different colors
 
@@ -324,7 +315,7 @@ syst.attach_lead(lead1)
 plot_system(syst)
 
 
-############# How to cut a finite system out of a system with translationnal symmetries? ###########
+#### How to cut a finite system out of a system with translationnal symmetries?
 
 #HIDDEN_BEGIN_fill1
 # Create 3d model.
@@ -363,7 +354,7 @@ cuboid.attach_lead(electrode)
 kwant.plot(cuboid);
 
 
-###### How does Kwant order the propagating modes of a lead? ######
+#### How does Kwant order the propagating modes of a lead?
 
 #HIDDEN_BEGIN_pm
 lat = kwant.lattice.square()
@@ -395,7 +386,6 @@ def plot_and_label_modes(lead, E):
     plt.show()
 
 plot_and_label_modes(flead, E)
-plt.clf()
 
 # More involved example
 
@@ -410,11 +400,9 @@ lead2[lat.neighbors()] = -1 * sz
 flead2 = lead2.finalized()
 
 plot_and_label_modes(flead2, 1)
-plt.clf()
 
 
-###### How does Kwant order components of an individual wavefunction? ######
-
+#### How does Kwant order components of an individual wavefunction?
 def circle(R):
     return lambda r: np.linalg.norm(r) < R
 
