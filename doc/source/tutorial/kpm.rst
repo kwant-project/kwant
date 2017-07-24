@@ -24,7 +24,7 @@ vectors.  See notes on accuracy_ below for details.
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/kernel_polynomial_method.py <../../../tutorial/kernel_polynomial_method.py>`
+    :download:`kernel_polynomial_method.py </code/download/kernel_polynomial_method.py>`
 
 .. _accuracy:
 .. specialnote:: Performance and accuracy
@@ -82,14 +82,14 @@ to obtain the density of states of a graphene disk.
 
 We start by importing kwant and defining our system.
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_sys1
     :end-before: #HIDDEN_END_sys1
 
 After making a system we can then create a `~kwant.kpm.SpectralDensity`
 object that represents the density of states for this system.
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_kpm1
     :end-before: #HIDDEN_END_kpm1
 
@@ -97,7 +97,7 @@ The `~kwant.kpm.SpectralDensity` can then be called like a function to obtain a
 sequence of energies in the spectrum of the Hamiltonian, and the corresponding
 density of states at these energies.
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_kpm2
     :end-before: #HIDDEN_END_kpm2
 
@@ -106,11 +106,11 @@ not evenly distributed over the spectrum, see Ref. [1]_ for details), however
 it is also possible to provide an explicit sequence of energies at which to
 evaluate the density of states.
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_kpm3
     :end-before: #HIDDEN_END_kpm3
 
-.. image:: ../images/kpm_dos.*
+.. image:: /code/figure/kpm_dos.*
 
 In addition to being called like functions, `~kwant.kpm.SpectralDensity`
 objects also have a method `~kwant.kpm.SpectralDensity.integrate` which can be
@@ -118,22 +118,22 @@ used to integrate the density of states against some distribution function over
 the whole spectrum. If no distribution function is specified, then the uniform
 distribution is used:
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_int1
     :end-before: #HIDDEN_END_int1
 
-.. literalinclude:: ../images/kpm_normalization.txt
+.. literalinclude:: /code/figure/kpm_normalization.txt
 
 We see that the integral of the density of states is normalized to the total
 number of available states in the system. If we wish to calculate, say, the
 number of states populated in equilibrium, then we should integrate with
 respect to a Fermi-Dirac distribution:
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_int2
     :end-before: #HIDDEN_END_int2
 
-.. literalinclude:: ../images/kpm_total_states.txt
+.. literalinclude:: /code/figure/kpm_total_states.txt
 
 .. specialnote:: Stability and performance: spectral bounds
 
@@ -161,7 +161,7 @@ exactly is changed.
 The simplest way to obtain a more accurate solution is to use the
 ``add_moments`` method:
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_acc1
     :end-before: #HIDDEN_END_acc1
 
@@ -169,16 +169,16 @@ This will update the number of calculated moments and also the default
 number of sampling points such that the maximum distance between successive
 energy points is ``energy_resolution`` (see notes on accuracy_).
 
-.. image:: ../images/kpm_dos_acc.*
+.. image:: /code/figure/kpm_dos_acc.*
 
 Alternatively, you can directly increase the number of moments
 with ``add_moments``, or the number of random vectors with ``add_vectors``.
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_acc2
     :end-before: #HIDDEN_END_acc2
 
-.. image:: ../images/kpm_dos_r.*
+.. image:: /code/figure/kpm_dos_r.*
 
 
 .. _operator_spectral_density:
@@ -200,14 +200,14 @@ the spectral density of the given operator that is calculated.
 If an explicit matrix is provided then it must have the same
 shape as the system Hamiltonian.
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_op1
     :end-before: #HIDDEN_END_op1
 
 
 Or, to do the same calculation using `kwant.operator.Density`:
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_op2
     :end-before: #HIDDEN_END_op2
 
@@ -215,7 +215,7 @@ Using operators from `kwant.operator` allows us to calculate quantities
 such as the *local* density of states by telling the operator not to
 sum over all the sites of the system:
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_op3
     :end-before: #HIDDEN_END_op3
 
@@ -223,11 +223,11 @@ sum over all the sites of the system:
 which allows us to plot the local density of states at different
 point in the spectrum:
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_op4
     :end-before: #HIDDEN_END_op4
 
-.. image:: ../images/kpm_ldos.*
+.. image:: /code/figure/kpm_ldos.*
 
 This nicely illustrates the edge states of the graphene dot at zero
 energy, and the bulk states at higher energy.
@@ -248,7 +248,7 @@ To change how the random vectors are generated, you need only specify a
 function that takes the dimension of the Hilbert space as a single parameter,
 and which returns a vector in that Hilbert space:
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_fact1
     :end-before: #HIDDEN_END_fact1
 
@@ -275,7 +275,7 @@ first argument, and linear in its second argument. Below, we compare two
 methods for computing the local density of states, one using
 `kwant.operator.Density`, and the other using a custom function.
 
-.. literalinclude:: kernel_polynomial_method.py
+.. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_blm
     :end-before: #HIDDEN_END_blm
 

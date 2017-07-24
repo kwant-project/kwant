@@ -11,7 +11,7 @@ Matrix structure of on-site and hopping elements
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/spin_orbit.py <../../../tutorial/spin_orbit.py>`
+    :download:`spin_orbit.py </code/download/spin_orbit.py>`
 
 We begin by extending the simple 2DEG-Hamiltonian by a Rashba spin-orbit
 coupling and a Zeeman splitting due to an external magnetic field:
@@ -42,14 +42,14 @@ use matrices in our program, we import the Tinyarray package.  (`NumPy
 <http://www.numpy.org/>`_ would work as well, but Tinyarray is much faster
 for small arrays.)
 
-.. literalinclude:: spin_orbit.py
+.. literalinclude:: /code/include/spin_orbit.py
     :start-after: #HIDDEN_BEGIN_xumz
     :end-before: #HIDDEN_END_xumz
 
 For convenience, we define the Pauli-matrices first (with :math:`\sigma_0` the
 unit matrix):
 
-.. literalinclude:: spin_orbit.py
+.. literalinclude:: /code/include/spin_orbit.py
     :start-after: #HIDDEN_BEGIN_hwbt
     :end-before: #HIDDEN_END_hwbt
 
@@ -57,7 +57,7 @@ Previously, we used numbers as the values of our matrix elements.
 However, `~kwant.builder.Builder` also accepts matrices as values, and
 we can simply write:
 
-.. literalinclude:: spin_orbit.py
+.. literalinclude:: /code/include/spin_orbit.py
     :start-after: #HIDDEN_BEGIN_uxrm
     :end-before: #HIDDEN_END_uxrm
 
@@ -85,14 +85,14 @@ when specifying `(1, 0)` it is not necessary to specify `(-1, 0)`),
 
 The leads also allow for a matrix structure,
 
-.. literalinclude:: spin_orbit.py
+.. literalinclude:: /code/include/spin_orbit.py
     :start-after: #HIDDEN_BEGIN_yliu
     :end-before: #HIDDEN_END_yliu
 
 The remainder of the code is unchanged, and as a result we should obtain
 the following, clearly non-monotonic conductance steps:
 
-.. image:: ../images/spin_orbit_result.*
+.. image:: /code/figure/spin_orbit_result.*
 
 .. specialnote:: Technical details
 
@@ -129,7 +129,7 @@ Spatially dependent values through functions
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/quantum_well.py <../../../tutorial/quantum_well.py>`
+    :download:`quantum_well.py </code/download/quantum_well.py>`
 
 Up to now, all examples had position-independent matrix-elements
 (and thus translational invariance along the wire, which
@@ -148,7 +148,7 @@ changing the potential then implies the need to build up the system again.
 Instead, we use a python *function* to define the onsite energies. We
 define the potential profile of a quantum well as:
 
-.. literalinclude:: quantum_well.py
+.. literalinclude:: /code/include/quantum_well.py
     :start-after: #HIDDEN_BEGIN_ehso
     :end-before: #HIDDEN_END_ehso
 
@@ -161,7 +161,7 @@ namespace of `make_system`.
 Kwant now allows us to pass a function as a value to
 `~kwant.builder.Builder`:
 
-.. literalinclude:: quantum_well.py
+.. literalinclude:: /code/include/quantum_well.py
     :start-after: #HIDDEN_BEGIN_coid
     :end-before: #HIDDEN_END_coid
 
@@ -180,7 +180,7 @@ of the lead -- this should be kept in mind.
 
 Finally, we compute the transmission probability:
 
-.. literalinclude:: quantum_well.py
+.. literalinclude:: /code/include/quantum_well.py
     :start-after: #HIDDEN_BEGIN_sqvr
     :end-before: #HIDDEN_END_sqvr
 
@@ -189,7 +189,7 @@ additional arguments to the functions that provide the Hamiltonian matrix
 elements.  In this example we are able to solve the system for different depths
 of the potential well by passing the potential value. We obtain the result:
 
-.. image:: ../images/quantum_well_result.*
+.. image:: /code/figure/quantum_well_result.*
 
 Starting from no potential (well depth = 0), we observe the typical
 oscillatory transmission behavior through resonances in the quantum well.
@@ -216,13 +216,13 @@ Nontrivial shapes
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/ab_ring.py <../../../tutorial/ab_ring.py>`
+    :download:`ab_ring.py </code/download/ab_ring.py>`
 
 Up to now, we only dealt with simple wire geometries. Now we turn to the case
 of a more complex geometry, namely transport through a quantum ring
 that is pierced by a magnetic flux :math:`\Phi`:
 
-.. image:: ../images/ab_ring_sketch.*
+.. image:: /code/figure/ab_ring_sketch.*
 
 For a flux line, it is possible to choose a gauge such that a
 charged particle acquires a phase :math:`e\Phi/h` whenever it
@@ -236,7 +236,7 @@ First, define a boolean function defining the desired shape, i.e. a function
 that returns ``True`` whenever a point is inside the shape, and
 ``False`` otherwise:
 
-.. literalinclude:: ab_ring.py
+.. literalinclude:: /code/include/ab_ring.py
     :start-after: #HIDDEN_BEGIN_eusz
     :end-before: #HIDDEN_END_eusz
 
@@ -247,7 +247,7 @@ We can now simply add all of the lattice points inside this shape at
 once, using the function `~kwant.lattice.Square.shape`
 provided by the lattice:
 
-.. literalinclude:: ab_ring.py
+.. literalinclude:: /code/include/ab_ring.py
     :start-after: #HIDDEN_BEGIN_lcak
     :end-before: #HIDDEN_END_lcak
 
@@ -262,7 +262,7 @@ along the branch cut in the lower arm of the ring. For this we select
 all hoppings in x-direction that are of the form `(lat(1, j), lat(0, j))`
 with ``j<0``:
 
-.. literalinclude:: ab_ring.py
+.. literalinclude:: /code/include/ab_ring.py
     :start-after: #HIDDEN_BEGIN_lvkt
     :end-before: #HIDDEN_END_lvkt
 
@@ -277,7 +277,7 @@ by the parameter `phi`.
 
 For the leads, we can also use the ``lat.shape``-functionality:
 
-.. literalinclude:: ab_ring.py
+.. literalinclude:: /code/include/ab_ring.py
     :start-after: #HIDDEN_BEGIN_qwgr
     :end-before: #HIDDEN_END_qwgr
 
@@ -288,7 +288,7 @@ no restriction on ``x`` in ``lead_shape``) [#]_.
 
 Attaching the leads is done as before:
 
-.. literalinclude:: ab_ring.py
+.. literalinclude:: /code/include/ab_ring.py
     :start-after: #HIDDEN_BEGIN_skbz
     :end-before: #HIDDEN_END_skbz
 
@@ -303,16 +303,16 @@ back (going opposite to the direction of the translational vector)
 until it intersects the scattering region. At this intersection,
 the lead is attached:
 
-.. image:: ../images/ab_ring_sketch2.*
+.. image:: /code/figure/ab_ring_sketch2.*
 
 After the lead has been attached, the system should look like this:
 
-.. image:: ../images/ab_ring_syst.*
+.. image:: /code/figure/ab_ring_syst.*
 
 The computation of the conductance goes in the same fashion as before.
 Finally you should get the following result:
 
-.. image:: ../images/ab_ring_result.*
+.. image:: /code/figure/ab_ring_result.*
 
 where one can observe the conductance oscillations with the
 period of one flux quantum.
@@ -328,7 +328,7 @@ period of one flux quantum.
     becomes more apparent if we attach the leads a bit further away
     from the central axis o the ring, as was done in this example:
 
-    .. image:: ../images/ab_ring_note1.*
+    .. image:: /code/figure/ab_ring_note1.*
 
   - Per default, `~kwant.builder.Builder.attach_lead` attaches
     the lead to the "outside" of the structure, by tracing the
@@ -343,7 +343,7 @@ period of one flux quantum.
     starts the trace-back in the middle of the ring, resulting
     in the lead being attached to the inner circle:
 
-    .. image:: ../images/ab_ring_note2.*
+    .. image:: /code/figure/ab_ring_note2.*
 
     Note that here the lead is treated as if it would pass over
     the other arm of the ring, without intersecting it.

@@ -18,7 +18,7 @@ continuum models and for discretizing them into tight-binding models.
 
 .. seealso::
     The complete source code of this tutorial can be found in
-    :download:`tutorial/discretize.py <../../../tutorial/discretize.py>`
+    :download:`discretize.py </code/download/discretize.py>`
 
 
 .. _tutorial_discretizer_introduction:
@@ -60,7 +60,7 @@ symmetry that serves as a template.
 (We will see how to use the template to build systems with a particular
 shape later).
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_symbolic_discretization
     :end-before: #HIDDEN_END_symbolic_discretization
 
@@ -70,7 +70,7 @@ discretization process.
 
 The builder produced by ``discretize`` may be printed to show the source code of its onsite and hopping functions (this is a special feature of builders returned by ``discretize``):
 
-.. literalinclude:: ../images/discretizer_intro_verbose.txt
+.. literalinclude:: /code/figure/discretizer_intro_verbose.txt
 
 .. specialnote:: Technical details
 
@@ -134,7 +134,7 @@ where :math:`V(x, y)` is some arbitrary potential.
 First, use ``discretize`` to obtain a
 builder that we will use as a template:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_template
     :end-before: #HIDDEN_END_template
 
@@ -142,18 +142,18 @@ We now use this system with the `~kwant.builder.Builder.fill`
 method of `~kwant.builder.Builder` to construct the system we
 want to investigate:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_fill
     :end-before: #HIDDEN_END_fill
 
 After finalizing this system, we can plot one of the system's
 energy eigenstates:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_plot_eigenstate
     :end-before: #HIDDEN_END_plot_eigenstate
 
-.. image:: ../images/discretizer_gs.*
+.. image:: /code/figure/discretizer_gs.*
 
 Note in the above that we provided the function ``V`` to
 ``syst.hamiltonian_submatrix`` using ``params=dict(V=potential)``, rather than
@@ -171,32 +171,32 @@ model [1]_ [2]_, one can provide matrix input to `~kwant.continuum.discretize`
 using ``identity`` and ``kron``. For example, the definition of the BHZ model can be
 written succinctly as:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_define_qsh
     :end-before: #HIDDEN_END_define_qsh
 
 We can then make a ribbon out of this template system:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_define_qsh_build
     :end-before: #HIDDEN_END_define_qsh_build
 
 and plot its dispersion using `kwant.plotter.bands`:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_plot_qsh_band
     :end-before: #HIDDEN_END_plot_qsh_band
 
-.. image:: ../images/discretizer_qsh_band.*
+.. image:: /code/figure/discretizer_qsh_band.*
 
 In the above we see the edge states of the quantum spin Hall effect, which
 we can visualize using `kwant.plotter.map`:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_plot_qsh_wf
     :end-before: #HIDDEN_END_plot_qsh_wf
 
-.. image:: ../images/discretizer_qsh_wf.*
+.. image:: /code/figure/discretizer_qsh_wf.*
 
 
 Limitations of discretization
@@ -233,28 +233,28 @@ example. Let us start from the continuum Hamiltonian
 We start by defining this model as a string and setting the value of the
 :math:`α` parameter:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_ls_def
     :end-before: #HIDDEN_END_ls_def
 
 Now we can use `kwant.continuum.lambdify` to obtain a function that computes
 :math:`H(k)`:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_ls_hk_cont
     :end-before: #HIDDEN_END_ls_hk_cont
 
 We can also construct a discretized approximation using
 `kwant.continuum.discretize`, in a similar manner to previous examples:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_ls_hk_tb
     :end-before: #HIDDEN_END_ls_hk_tb
 
 Below we can see the continuum and tight-binding dispersions for two
 different values of the discretization grid spacing :math:`a`:
 
-.. image:: ../images/discretizer_lattice_spacing.*
+.. image:: /code/figure/discretizer_lattice_spacing.*
 
 
 We clearly see that the smaller grid spacing is, the better we approximate
@@ -279,20 +279,20 @@ It is possible to use ``identity`` (for identity matrix), ``kron`` (for Kronecke
 expressions involving matrices. Matrices can also be provided explicitly using
 square ``[]`` brackets. For example, all following expressions are equivalent:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_subs_1
     :end-before: #HIDDEN_END_subs_1
 
-.. literalinclude:: ../images/discretizer_subs_1.txt
+.. literalinclude:: /code/figure/discretizer_subs_1.txt
 
 We can use the ``locals`` keyword parameter to substitute expressions
 and numerical values:
 
-.. literalinclude:: discretize.py
+.. literalinclude:: /code/include/discretize.py
     :start-after: #HIDDEN_BEGIN_subs_2
     :end-before: #HIDDEN_END_subs_2
 
-.. literalinclude:: ../images/discretizer_subs_2.txt
+.. literalinclude:: /code/figure/discretizer_subs_2.txt
 
 Symbolic expressions obtained in this way can be directly passed to all
 ``discretizer`` functions.

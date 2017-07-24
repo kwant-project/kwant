@@ -1,6 +1,6 @@
 # Makefile for Sphinx documentation
 
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2017 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -21,21 +21,23 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) sou
 
 # We convert all SVG files to PDF for LaTeX output.  For HTML output, we don't
 # create PNGs but rather use the SVG files directly.
-IMAGESOURCES    = $(shell find source -name "*.svg")
-GENERATEDPDF    = $(patsubst %.svg,%.pdf,$(IMAGESOURCES))
+FIGURESOURCES    = $(shell find source -name "*.svg")
+GENERATEDPDF    = $(patsubst %.svg,%.pdf,$(FIGURESOURCES))
 
-# Image generation from patched tutorial scripts
+# Figure generation from patched tutorial scripts
 #
 # As make does not support the generation of multiple targets by a single
 # invocation of a (non-implicit) rule, we use a trick: We pretend to be
-# generating a single (empty) flag file per invocation.  The image files are
+# generating a single (empty) flag file per invocation.  The figure files are
 # generated as well, but only as side-effects.  Each flag file is used to
-# remember the time at which the corresponding image-generating script was run.
+# remember the time at which the corresponding figure-generating script was run.
 # This works perfectly unless the actual output files are deleted without
 # deleting the corresponding flag file.
-SCRIPTS = $(patsubst source/images/%.diff,%,$(wildcard source/images/*.py.diff))
-FLAGS = $(patsubst %.py,source/images/.%_flag,$(SCRIPTS))
-INCLUDES = $(patsubst %,source/tutorial/%,$(SCRIPTS))
+FIGSCRIPTS = $(patsubst %.diff,%,$(notdir $(wildcard source/code/figure/*.py.diff)))
+FIGURES = $(patsubst %.py,source/code/figure/.%_flag,$(FIGSCRIPTS))
+SCRIPTS = $(sort $(FIGSCRIPTS) $(notdir $(wildcard source/code/include/*.py)))
+INCLUDES = $(patsubst %,source/code/include/%,$(SCRIPTS))
+DOWNLOADS = $(patsubst %,source/code/download/%,$(SCRIPTS))
 
 .PHONY: help clean realclean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
@@ -59,39 +61,40 @@ clean:
 	-rm -rf source/reference/generated
 
 realclean: clean
-	-rm -f $(FLAGS)
-	-rm -f $(INCLUDES)
-	-rm -f $(patsubst %,source/images/%,$(SCRIPTS))
-	-rm -f $(patsubst %.py,source/images/%_*.png,$(SCRIPTS))
-	-rm -f $(patsubst %.py,source/images/%_*.pdf,$(SCRIPTS))
+	-rm -f $(FIGURES)
+	-rm -f $(patsubst %,source/code/include/%,$(FIGSCRIPTS))
+	-rm -f $(DOWNLOADS)
+	-rm -f $(patsubst %,source/code/figure/%,$(FIGSCRIPTS))
+	-rm -f $(patsubst %.py,source/code/figure/%_*.png,$(FIGSCRIPTS))
+	-rm -f $(patsubst %.py,source/code/figure/%_*.pdf,$(FIGSCRIPTS))
 
-html:	$(FLAGS) $(INCLUDES)
+html:	$(FIGURES) $(INCLUDES) $(DOWNLOADS)
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
-dirhtml: $(FLAGS) $(INCLUDES)
+dirhtml: $(FIGURES) $(INCLUDES) $(DOWNLOADS)
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
-pickle: $(FLAGS) $(INCLUDES)
+pickle: $(FIGURES) $(INCLUDES) $(DOWNLOADS)
 	$(SPHINXBUILD) -b pickle $(ALLSPHINXOPTS) $(BUILDDIR)/pickle
 	@echo
 	@echo "Build finished; now you can process the pickle files."
 
-json:   $(FLAGS) $(INCLUDES)
+json:   $(FIGURES) $(INCLUDES) $(DOWNLOADS)
 	$(SPHINXBUILD) -b json $(ALLSPHINXOPTS) $(BUILDDIR)/json
 	@echo
 	@echo "Build finished; now you can process the JSON files."
 
-htmlhelp: $(FLAGS) $(INCLUDES)
+htmlhelp: $(FIGURES) $(INCLUDES) $(DOWNLOADS)
 	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(BUILDDIR)/htmlhelp
 	@echo
 	@echo "Build finished; now you can run HTML Help Workshop with the" \
 	      ".hhp project file in $(BUILDDIR)/htmlhelp."
 
-qthelp: $(FLAGS) $(INCLUDES)
+qthelp: $(FIGURES) $(INCLUDES) $(DOWNLOADS)
 	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) $(BUILDDIR)/qthelp
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
@@ -100,7 +103,7 @@ qthelp: $(FLAGS) $(INCLUDES)
 	@echo "To view the help file:"
 	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/kwant.qhc"
 
-latex:  $(GENERATEDPDF) $(FLAGS) $(INCLUDES)
+latex:  $(GENERATEDPDF) $(FIGURES) $(INCLUDES) $(DOWNLOADS)
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo
 	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
@@ -129,16 +132,20 @@ doctest:
 # Make tutorial scripts by extracting the (complete!) context of the "patches".
 # We make sure not to use 'wiggle' here.
 .SECONDARY:
-source/tutorial/%.py: source/images/%.py.diff
+source/code/include/%.py: source/code/figure/%.py.diff
 	@sed -n '/^[- ]/ s/^.//p' <$< >$@
 	@touch -r $< $@
 
-# Make the image generation scripts by patching tutorial scripts.  If the
+source/code/download/%.py: source/code/include/%.py
+	@mkdir -p source/code/download
+	@grep -v '^#HIDDEN' <$< >$@
+
+# Make the figure generation scripts by patching tutorial scripts.  If the
 # tutorial scripts haven't been modified, don't patch but directly extract the
-# image generation scripts.  This means that 'wiggle' is only needed when the
+# figure generation scripts.  This means that 'wiggle' is only needed when the
 # tutorial scripts have been modified.
 .SECONDARY:
-source/images/%.py: source/tutorial/%.py
+source/code/figure/%.py: source/code/include/%.py
 	@if [ $< -nt $@.diff ]; then \
 	    cp $< $@; \
 	    rm -f $@.porig; \
@@ -153,20 +160,20 @@ source/images/%.py: source/tutorial/%.py
 	    touch -r $@.diff $@; \
 	fi
 
-# Make the image generation scripts also depend on the diffs.
+# Make the figure generation scripts also depend on the diffs.
 define makedep
-source/images/$(1): source/images/$(1).diff
+source/code/figure/$(1): source/code/figure/$(1).diff
 endef
-$(foreach name,$(SCRIPTS),$(eval $(call makedep,$(name))))
+$(foreach name,$(FIGSCRIPTS),$(eval $(call makedep,$(name))))
 
-# Run an image generation script.  When successful, and if the script is newer
+# Run an figure generation script.  When successful, and if the script is newer
 # than the corresponding diff, recreate the latter.  Note that the
-# corresponding tutorial script cannot be newer, since if it is, the image
+# corresponding tutorial script cannot be newer, since if it is, the figure
 # generation script is generated from it by patching.
-source/images/.%_flag: source/images/%.py
+source/code/figure/.%_flag: source/code/figure/%.py
 	cd $(dir $<) && python3 $(notdir $<)
 	@if [ ! -f $<.diff -o $< -nt $<.diff ]; then \
-	    wiggle --diff --lines source/tutorial/$(notdir $<) $< >$<.diff; \
+	    wiggle --diff --lines source/code/include/$(notdir $<) $< >$<.diff; \
 	    touch -r $< $<.diff; \
 	fi
 	@rm -f $<.porig

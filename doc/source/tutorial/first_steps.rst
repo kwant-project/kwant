@@ -62,11 +62,11 @@ Transport through a quantum wire
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/quantum_wire.py <../../../tutorial/quantum_wire.py>`
+    :download:`quantum_wire.py </code/download/quantum_wire.py>`
 
 In order to use Kwant, we need to import it:
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_dwhx
     :end-before: #HIDDEN_END_dwhx
 
@@ -76,7 +76,7 @@ The first step is now the definition of the system with scattering region and
 leads. For this we make use of the `~kwant.builder.Builder` type that allows to
 define a system in a convenient way. We need to create an instance of it:
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_goiq
     :end-before: #HIDDEN_END_goiq
 
@@ -92,7 +92,7 @@ Apart from `~kwant.builder.Builder` we also need to specify
 what kind of sites we want to add to the system. Here we work with
 a square lattice. For simplicity, we set the lattice constant to unity:
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_suwo
     :end-before: #HIDDEN_END_suwo
 
@@ -111,7 +111,7 @@ needed in Builder (more about that in the technical details below).
 We now build a rectangular scattering region that is `W`
 lattice points wide and `L` lattice points long:
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_zfvr
     :end-before: #HIDDEN_END_zfvr
 
@@ -140,7 +140,7 @@ Next, we define the leads. Leads are also constructed using
 `~kwant.builder.Builder`, but in this case, the
 system must have a translational symmetry:
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_xcmc
     :end-before: #HIDDEN_END_xcmc
 
@@ -155,7 +155,7 @@ as the hoppings inside one unit cell and to the next unit cell of the lead.
 For a square lattice, and a lead in y-direction the unit cell is
 simply a vertical line of points:
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_ndez
     :end-before: #HIDDEN_END_ndez
 
@@ -163,7 +163,7 @@ Note that here it doesn't matter if you add the hoppings to the next or the
 previous unit cell -- the translational symmetry takes care of that.  The
 isolated, infinite is attached at the correct position using
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_fskr
     :end-before: #HIDDEN_END_fskr
 
@@ -175,7 +175,7 @@ We also want to add a lead on the right side. The only difference to
 the left lead is that the vector of the translational
 symmetry must point to the right, the remaining code is the same:
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_xhqc
     :end-before: #HIDDEN_END_xhqc
 
@@ -187,13 +187,13 @@ you do not need to worry about that.
 Now we have finished building our system! We plot it, to make sure we didn't
 make any mistakes:
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_wsgh
     :end-before: #HIDDEN_END_wsgh
 
 This should bring up this picture:
 
-.. image:: /images/quantum_wire_syst.*
+.. image:: /code/figure/quantum_wire_syst.*
 
 The system is represented in the usual way for tight-binding systems:
 dots represent the lattice points `(i, j)`, and for every
@@ -203,14 +203,14 @@ fading color.
 
 In order to use our system for a transport calculation, we need to finalize it
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_dngj
     :end-before: #HIDDEN_END_dngj
 
 Having successfully created a system, we now can immediately start to compute
 its conductance as a function of energy:
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_buzn
     :end-before: #HIDDEN_END_buzn
 
@@ -227,13 +227,13 @@ Finally we can use ``matplotlib`` to make a plot of the computed data
 (although writing to file and using an external viewer such as
 gnuplot or xmgrace is just as viable)
 
-.. literalinclude:: quantum_wire.py
+.. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_lliv
     :end-before: #HIDDEN_END_lliv
 
 This should yield the result
 
-.. image:: /images/quantum_wire_result.*
+.. image:: /code/figure/quantum_wire_result.*
 
 We see a conductance quantized in units of :math:`e^2/h`,
 increasing in steps as the energy is increased. The
@@ -333,7 +333,7 @@ Building the same system with less code
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/quantum_wire_revisited.py <../../../tutorial/quantum_wire_revisited.py>`
+    :download:`quantum_wire_revisited.py </code/download/quantum_wire_revisited.py>`
 
 Kwant allows for more than one way to build a system. The reason is that
 `~kwant.builder.Builder` is essentially just a container that can be filled in
@@ -350,14 +350,14 @@ We begin the program collecting all imports in the beginning of the
 file and put the build-up of the system into a separate function
 `make_system`:
 
-.. literalinclude:: quantum_wire_revisited.py
+.. literalinclude:: /code/include/quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_xkzy
     :end-before: #HIDDEN_END_xkzy
 
 Previously, the scattering region was build using two ``for``-loops.
 Instead, we now write:
 
-.. literalinclude:: quantum_wire_revisited.py
+.. literalinclude:: /code/include/quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_vvjt
     :end-before: #HIDDEN_END_vvjt
 
@@ -375,7 +375,7 @@ hoppings. In this case, an iterable like for the lattice
 points becomes a bit cumbersome, and we use instead another
 feature of Kwant:
 
-.. literalinclude:: quantum_wire_revisited.py
+.. literalinclude:: /code/include/quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_nooi
     :end-before: #HIDDEN_END_nooi
 
@@ -397,7 +397,7 @@ values for all the nth-nearest neighbors at once, one can similarly use
 
 The left lead is constructed in an analogous way:
 
-.. literalinclude:: quantum_wire_revisited.py
+.. literalinclude:: /code/include/quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_iepx
     :end-before: #HIDDEN_END_iepx
 
@@ -408,20 +408,20 @@ symmetry vector.  Here, we only construct the left lead, and use the method
 of a lead pointing in the opposite direction.  Both leads are attached as
 before and the finished system returned:
 
-.. literalinclude:: quantum_wire_revisited.py
+.. literalinclude:: /code/include/quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_yxot
     :end-before: #HIDDEN_END_yxot
 
 The remainder of the script has been organized into two functions.  One for the
 plotting of the conductance.
 
-.. literalinclude:: quantum_wire_revisited.py
+.. literalinclude:: /code/include/quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_ayuk
     :end-before: #HIDDEN_END_ayuk
 
 And one ``main`` function.
 
-.. literalinclude:: quantum_wire_revisited.py
+.. literalinclude:: /code/include/quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_cjel
     :end-before: #HIDDEN_END_cjel
 
@@ -429,7 +429,7 @@ Finally, we use the following standard Python construct [#]_ to execute
 ``main`` if the program is used as a script (i.e. executed as
 ``python quantum_wire_revisited.py``):
 
-.. literalinclude:: quantum_wire_revisited.py
+.. literalinclude:: /code/include/quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_ypbj
     :end-before: #HIDDEN_END_ypbj
 
@@ -455,7 +455,7 @@ The result of the example should be identical to the previous one.
      using a tuple of sites. Hence it is worth noting
      a subtle detail in
 
-     .. literalinclude:: quantum_wire_revisited.py
+     .. literalinclude:: /code/include/quantum_wire_revisited.py
          :start-after: #HIDDEN_BEGIN_vvjt
          :end-before: #HIDDEN_END_vvjt
 
