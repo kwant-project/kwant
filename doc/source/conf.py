@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
               'sphinx.ext.todo', 'sphinx.ext.mathjax', 'numpydoc',
-              'kwantdoc']
+              'kwantdoc', 'sphinx.ext.linkcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['../templates']
@@ -43,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Kwant'
-copyright = '2011-2015, C. W. Groth (CEA), M. Wimmer, A. R. Akhmerov, X. Waintal (CEA), and others'
+copyright = '2011-2017, C. W. Groth (CEA), M. Wimmer, A. R. Akhmerov, X. Waintal (CEA), and others'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -231,6 +231,7 @@ autosummary_generate = True
 autoclass_content = "both"
 autodoc_default_flags = ['show-inheritance']
 
+
 # -- Teach Sphinx to document bound methods like functions ---------------------
 import types
 from sphinx.ext import autodoc
@@ -271,3 +272,30 @@ nitpick_ignore = [('py:class', 'Warning'), ('py:class', 'Exception'),
 
 # Use custom MathJax CDN, as cdn.mathjax.org will soon shut down
 mathjax_path = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+
+
+# -- Make Sphinx insert source code links --------------------------------------
+def linkcode_resolve(domain, info):
+    def find_source():
+        # try to find the file and line number, based on code from numpy:
+        # https://github.com/numpy/numpy/blob/master/doc/source/conf.py#L286
+        obj = sys.modules[info['module']]
+        for part in info['fullname'].split('.'):
+            obj = getattr(obj, part)
+        import inspect
+        fn = inspect.getsourcefile(obj)
+        fn = os.path.relpath(fn, start=os.path.dirname(kwant.__file__))
+        source, lineno = inspect.getsourcelines(obj)
+        return fn, lineno, lineno + len(source) - 1
+
+    if domain != 'py' or not info['module']:
+        return None
+    try:
+        filename = 'kwant/%s#L%d-%d' % find_source()
+    except Exception:
+        filename = info['module'].replace('.', '/') + '.py'
+    source_branch = os.environ.get('REFNAME', 'master')
+    url = os.environ.get('SOURCE_URL',
+                         "https://gitlab.kwant-project.org/kwant/kwant/blob")
+
+    return "{}/{}/{}".format(url, source_branch, filename)

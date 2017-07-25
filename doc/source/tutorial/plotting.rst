@@ -12,13 +12,13 @@ these options can be used to achieve various very different objectives.
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/plot_graphene.py <../../../tutorial/plot_graphene.py>`
+    :download:`plot_graphene.py </code/download/plot_graphene.py>`
 
 We begin by first considering a circular graphene quantum dot (similar to what
 has been used in parts of the tutorial :ref:`tutorial-graphene`.)  In contrast
 to previous examples, we will also use hoppings beyond next-nearest neighbors:
 
-.. literalinclude:: plot_graphene.py
+.. literalinclude:: /code/include/plot_graphene.py
     :start-after: #HIDDEN_BEGIN_makesyst
     :end-before: #HIDDEN_END_makesyst
 
@@ -31,14 +31,14 @@ next-nearest-neighbor hopping [#]_.
 
 Of course, the system can be plotted simply with default settings:
 
-.. literalinclude:: plot_graphene.py
+.. literalinclude:: /code/include/plot_graphene.py
     :start-after: #HIDDEN_BEGIN_plotsyst1
     :end-before: #HIDDEN_END_plotsyst1
 
 However, due to the richer structure of the lattice, this results in a rather
 busy plot:
 
-.. image:: ../images/plot_graphene_syst1.*
+.. image:: /code/figure/plot_graphene_syst1.*
 
 A much clearer plot can be obtained by using different colors for both
 sublattices, and by having different line widths for different hoppings.  This
@@ -47,7 +47,7 @@ can be achieved by passing a function to the arguments of
 must be a function taking one site as argument, for hoppings a function taking
 the start end end site of hopping as arguments:
 
-.. literalinclude:: plot_graphene.py
+.. literalinclude:: /code/include/plot_graphene.py
     :start-after: #HIDDEN_BEGIN_plotsyst2
     :end-before: #HIDDEN_END_plotsyst2
 
@@ -55,7 +55,7 @@ Note that since we are using an unfinalized Builder, a ``site`` is really an
 instance of `~kwant.builder.Site`. With these adjustments we arrive at a plot
 that carries the same information, but is much easier to interpret:
 
-.. image:: ../images/plot_graphene_syst2.*
+.. image:: /code/figure/plot_graphene_syst2.*
 
 Apart from plotting the *system* itself, `~kwant.plotter.plot` can also be used
 to plot *data* living on the system.
@@ -67,7 +67,7 @@ nearest-neighbor hopping.  Computing the wave functions is done in the usual
 way (note that for a large-scale system, one would probably want to use sparse
 linear algebra):
 
-.. literalinclude:: plot_graphene.py
+.. literalinclude:: /code/include/plot_graphene.py
     :start-after: #HIDDEN_BEGIN_plotdata1
     :end-before: #HIDDEN_END_plotdata1
 
@@ -75,7 +75,7 @@ In most cases, to plot the wave function probability, one wouldn't use
 `~kwant.plotter.plot`, but rather `~kwant.plotter.map`. Here, we plot the
 `n`-th wave function using it:
 
-.. literalinclude:: plot_graphene.py
+.. literalinclude:: /code/include/plot_graphene.py
     :start-after: #HIDDEN_BEGIN_plotdata2
     :end-before: #HIDDEN_END_plotdata2
 
@@ -83,7 +83,7 @@ This results in a standard pseudocolor plot, showing in this case (``n=225``) a
 graphene edge state, i.e. a wave function mostly localized at the zigzag edges
 of the quantum dot.
 
-.. image:: ../images/plot_graphene_data1.*
+.. image:: /code/figure/plot_graphene_data1.*
 
 However although in general preferable, `~kwant.plotter.map` has a few
 deficiencies for this small system: For example, there are a few distortions at
@@ -99,7 +99,7 @@ the symbol shape depending on the sublattice. With a triangle pointing up and
 down on the respective sublattice, the symbols used by plot fill the space
 completely:
 
-.. literalinclude:: plot_graphene.py
+.. literalinclude:: /code/include/plot_graphene.py
     :start-after: #HIDDEN_BEGIN_plotdata3
     :end-before: #HIDDEN_END_plotdata3
 
@@ -116,7 +116,7 @@ is represented by an integer. In order to obtain the original
 
 With this we arrive at
 
-.. image:: ../images/plot_graphene_data2.*
+.. image:: /code/figure/plot_graphene_data2.*
 
 with the same information as `~kwant.plotter.map`, but with a cleaner look.
 
@@ -125,7 +125,7 @@ are best visible in a given plot. With `~kwant.plotter.plot` one can easily go
 beyond pseudocolor-like plots. For example, we can represent the wave function
 probability using the symbols itself:
 
-.. literalinclude:: plot_graphene.py
+.. literalinclude:: /code/include/plot_graphene.py
     :start-after: #HIDDEN_BEGIN_plotdata4
     :end-before: #HIDDEN_END_plotdata4
 
@@ -135,7 +135,7 @@ visible. The hoppings are also plotted in order to show the underlying lattice.
 
 With this, we arrive at
 
-.. image:: ../images/plot_graphene_data3.*
+.. image:: /code/figure/plot_graphene_data3.*
 
 which shows the edge state nature of the wave function most clearly.
 
@@ -150,7 +150,7 @@ which shows the edge state nature of the wave function most clearly.
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/plot_zincblende.py <../../../tutorial/plot_zincblende.py>`
+    :download:`plot_zincblende.py </code/download/plot_zincblende.py>`
 
 Zincblende is a very common crystal structure of semiconductors. It is a
 face-centered cubic crystal with two inequivalent atoms in the unit cell
@@ -159,7 +159,7 @@ structure, but two equivalent atoms per unit cell).
 
 It is very easily generated in Kwant with `kwant.lattice.general`:
 
-.. literalinclude:: plot_zincblende.py
+.. literalinclude:: /code/include/plot_zincblende.py
     :start-after: #HIDDEN_BEGIN_zincblende1
     :end-before: #HIDDEN_END_zincblende1
 
@@ -168,7 +168,7 @@ Note how we keep references to the two different sublattices for later use.
 A three-dimensional structure is created as easily as in two dimensions, by
 using the `~kwant.lattice.PolyatomicLattice.shape`-functionality:
 
-.. literalinclude:: plot_zincblende.py
+.. literalinclude:: /code/include/plot_zincblende.py
     :start-after: #HIDDEN_BEGIN_zincblende2
     :end-before: #HIDDEN_END_zincblende2
 
@@ -179,13 +179,13 @@ real calculation, several atomic orbitals would have to be considered).
 `~kwant.plotter.plot` can plot 3D systems just as easily as its two-dimensional
 counterparts:
 
-.. literalinclude:: plot_zincblende.py
+.. literalinclude:: /code/include/plot_zincblende.py
     :start-after: #HIDDEN_BEGIN_plot1
     :end-before: #HIDDEN_END_plot1
 
 resulting in
 
-.. image:: ../images/plot_zincblende_syst1.*
+.. image:: /code/figure/plot_zincblende_syst1.*
 
 You might notice that the standard options for plotting are quite different in
 3D than in 2D. For example, by default hoppings are not printed, but sites are
@@ -207,14 +207,14 @@ Also for 3D it is possible to customize the plot. For example, we
 can explicitly plot the hoppings as lines, and color sites differently
 depending on the sublattice:
 
-.. literalinclude:: plot_zincblende.py
+.. literalinclude:: /code/include/plot_zincblende.py
     :start-after: #HIDDEN_BEGIN_plot2
     :end-before: #HIDDEN_END_plot2
 
 which results in a 3D plot that allows to interactively (when plotted
 in a window) explore the crystal structure:
 
-.. image:: ../images/plot_zincblende_syst2.*
+.. image:: /code/figure/plot_zincblende_syst2.*
 
 Hence, a few lines of code using Kwant allow to explore all the different
 crystal lattices out there!

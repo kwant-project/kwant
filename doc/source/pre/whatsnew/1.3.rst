@@ -28,11 +28,11 @@ tight-binding band structures or construct systems with different/lower
 symmetry. For example in just a few lines we can construct a two-band model that exhibits
 a quantum anomalous spin Hall phase:
 
-.. literalinclude:: ../../tutorial/plot_qahe.py
+.. literalinclude:: ../../code/include/plot_qahe.py
     :start-after: HIDDEN_BEGIN_model
     :end-before: HIDDEN_END_model
 
-From: :download:`QAHE example script <../../tutorial/plot_qahe.py>`
+From: :download:`QAHE example script <../../code/download/plot_qahe.py>`
 
 See the tutorial: :doc:`../../tutorial/discretize`
 
@@ -71,13 +71,13 @@ The example below shows edge states of a quantum anomalous Hall phase
 of the two-band model shown in the `above section
 <#tools-for-continuum-hamiltonians>`_:
 
-.. literalinclude:: ../../tutorial/plot_qahe.py
+.. literalinclude:: ../../code/include/plot_qahe.py
     :start-after: HIDDEN_BEGIN_current
     :end-before: HIDDEN_END_current
 
-.. image:: ../../images/plot_qahe_current.*
+.. image:: ../../code/figure/plot_qahe_current.*
 
-From: :download:`QAHE example script <../../tutorial/plot_qahe.py>`
+From: :download:`QAHE example script <../../code/download/plot_qahe.py>`
 
 Scattering states with discrete symmetries and conservation laws
 ----------------------------------------------------------------

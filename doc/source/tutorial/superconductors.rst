@@ -3,7 +3,7 @@ Superconductors: orbital degrees of freedom, conservation laws and symmetries
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/superconductor.py <../../../tutorial/superconductor.py>`
+    :download:`superconductor.py </code/download/superconductor.py>`
 
 This example deals with superconductivity on the level of the
 Bogoliubov-de Gennes (BdG) equation. In this framework, the Hamiltonian
@@ -51,14 +51,14 @@ of freedom.
 Let us consider a system that consists of a normal lead on the left,
 a superconductor on the right, and a tunnel barrier in between:
 
-.. image:: ../images/superconductor_transport_sketch.*
+.. image:: /code/figure/superconductor_transport_sketch.*
 
 We implement the BdG Hamiltonian in Kwant using a 2x2 matrix structure
 for all Hamiltonian matrix elements, as we did
 previously in the :ref:`spin example <tutorial_spinorbit>`. We declare
 the square lattice and construct the scattering region with the following:
 
-.. literalinclude:: superconductor.py
+.. literalinclude:: /code/include/superconductor.py
     :start-after: #HIDDEN_BEGIN_nbvn
     :end-before: #HIDDEN_END_nbvn
 
@@ -80,7 +80,7 @@ of it). The next step towards computing conductance is to attach leads.
 Let's attach two leads: a normal one to the left end, and a superconducting
 one to the right end. Starting with the left lead, we have:
 
-.. literalinclude:: superconductor.py
+.. literalinclude:: /code/include/superconductor.py
     :start-after: #HIDDEN_BEGIN_ttth
     :end-before: #HIDDEN_END_ttth
 
@@ -120,7 +120,7 @@ of ascending eigenvalues of the conservation law.
 In order to move on with the conductance calculation, let's attach the second
 lead to the right side of the scattering region:
 
-.. literalinclude:: superconductor.py
+.. literalinclude:: /code/include/superconductor.py
     :start-after: #HIDDEN_BEGIN_zuuw
     :end-before: #HIDDEN_END_zuuw
 
@@ -140,7 +140,7 @@ confused by the fact that it says ``transmission`` -- transmission
 into the same lead is reflection), and reflection from electrons to holes
 is ``smatrix.transmission((0, 1), (0, 0))``:
 
-.. literalinclude:: superconductor.py
+.. literalinclude:: /code/include/superconductor.py
     :start-after: #HIDDEN_BEGIN_jbjt
     :end-before: #HIDDEN_END_jbjt
 
@@ -150,7 +150,7 @@ reflection of electrons to electrons, and from its size we can extract the numbe
 
 For the default parameters, we obtain the following conductance:
 
-.. image:: ../images/superconductor_transport_result.*
+.. image:: /code/figure/superconductor_transport_result.*
 
 We a see a conductance that is proportional to the square of the tunneling
 probability within the gap, and proportional to the tunneling probability
@@ -176,13 +176,13 @@ the electron and hole blocks. The exception is of course at zero energy, in whic
 case particle-hole symmetry transforms between the electron and hole blocks, resulting
 in a symmetric scattering matrix. We can check the symmetry explicitly with
 
-.. literalinclude:: superconductor.py
+.. literalinclude:: /code/include/superconductor.py
     :start-after: #HIDDEN_BEGIN_pqmp
     :end-before: #HIDDEN_END_pqmp
 
 which yields the output
 
-.. literalinclude:: ../images/check_PHS_out.txt
+.. literalinclude:: /code/figure/check_PHS_out.txt
 
 Note that :math:`\mathcal{P}` flips the sign of momentum, and for the parameters
 we consider here, there are two electron and two hole modes active at zero energy.

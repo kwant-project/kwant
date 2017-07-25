@@ -247,7 +247,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
                 else:
                     rhs.append(None)
             else:
-                sigma = lead.selfenergy(energy, args, params=params)
+                sigma = np.asarray(lead.selfenergy(energy, args, params=params))
                 lead_info.append(sigma)
                 coords = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                       for i in interface)]

@@ -5,7 +5,7 @@ Beyond square lattices: graphene
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/graphene.py <../../../tutorial/graphene.py>`
+    :download:`graphene.py </code/download/graphene.py>`
 
 In the following example, we are going to calculate the
 conductance through a graphene quantum dot with a p-n junction
@@ -18,7 +18,7 @@ We begin by defining the honeycomb lattice of graphene. This is
 in principle already done in `kwant.lattice.honeycomb`, but we do it
 explicitly here to show how to define a new lattice:
 
-.. literalinclude:: graphene.py
+.. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_hnla
     :end-before: #HIDDEN_END_hnla
 
@@ -31,7 +31,7 @@ itself forms a regular lattice of the same type as well, and those
 In the next step we define the shape of the scattering region (circle again)
 and add all lattice points using the ``shape``-functionality:
 
-.. literalinclude:: graphene.py
+.. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_shzy
     :end-before: #HIDDEN_END_shzy
 
@@ -45,7 +45,7 @@ As a next step we add the hoppings, making use of
 `~kwant.builder.HoppingKind`. For illustration purposes we define
 the hoppings ourselves instead of using ``graphene.neighbors()``:
 
-.. literalinclude:: graphene.py
+.. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_hsmc
     :end-before: #HIDDEN_END_hsmc
 
@@ -63,7 +63,7 @@ respect to the two primitive vectors ``[(1, 0), (sin_30, cos_30)]``.
 
 Adding the hoppings however still works the same way:
 
-.. literalinclude:: graphene.py
+.. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_bfwb
     :end-before: #HIDDEN_END_bfwb
 
@@ -72,7 +72,7 @@ do something crazy, and remove an atom in sublattice A
 (which removes also the hoppings from/to this site) as well
 as add an additional link:
 
-.. literalinclude:: graphene.py
+.. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_efut
     :end-before: #HIDDEN_END_efut
 
@@ -81,7 +81,7 @@ is done by the sublattices `a` and `b`.
 
 The leads are defined almost as before:
 
-.. literalinclude:: graphene.py
+.. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_aakh
     :end-before: #HIDDEN_END_aakh
 
@@ -101,14 +101,14 @@ Later, we will compute some eigenvalues of the closed scattering region without
 leads. This is why we postpone attaching the leads to the system. Instead,
 we return the scattering region and the leads separately.
 
-.. literalinclude:: graphene.py
+.. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_kmmw
     :end-before: #HIDDEN_END_kmmw
 
 The computation of some eigenvalues of the closed system is done
 in the following piece of code:
 
-.. literalinclude:: graphene.py
+.. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_zydk
     :end-before: #HIDDEN_END_zydk
 
@@ -120,7 +120,7 @@ to the previous examples, and needs not be further explained here.
 
 Finally, in the `main` function we make and plot the system:
 
-.. literalinclude:: graphene.py
+.. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_itkk
     :end-before: #HIDDEN_END_itkk
 
@@ -137,11 +137,11 @@ independent on the overall figure size.
 
 Plotting the closed system gives this result:
 
-.. image:: ../images/graphene_syst1.*
+.. image:: /code/figure/graphene_syst1.*
 
 Computing the eigenvalues of largest magnitude,
 
-.. literalinclude:: graphene.py
+.. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_jmbi
     :end-before: #HIDDEN_END_jmbi
 
@@ -151,11 +151,11 @@ should yield two eigenvalues equal to ``[ 3.07869311,
 The remaining code of `main` attaches the leads to the system and plots it
 again:
 
-.. image:: ../images/graphene_syst2.*
+.. image:: /code/figure/graphene_syst2.*
 
 It computes the band structure of one of lead 0:
 
-.. image:: ../images/graphene_bs.*
+.. image:: /code/figure/graphene_bs.*
 
 showing all the features of a zigzag lead, including the flat
 edge state bands (note that the band structure is not symmetric around
@@ -163,7 +163,7 @@ zero energy, due to a potential in the leads).
 
 Finally the transmission through the system is computed,
 
-.. image:: ../images/graphene_result.*
+.. image:: /code/figure/graphene_result.*
 
 showing the typical resonance-like transmission probability through
 an open quantum dot

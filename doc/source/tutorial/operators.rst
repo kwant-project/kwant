@@ -13,7 +13,7 @@ texture.
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`tutorial/magnetic_texture.py <../../../tutorial/magnetic_texture.py>`
+    :download:`magnetic_texture.py </code/download/magnetic_texture.py>`
 
 
 Introduction
@@ -47,26 +47,26 @@ of site :math:`i`, and :math:`r_i = \sqrt{x_i^2 + y_i^2}`.
 To define this model in Kwant we start as usual by defining functions that
 depend on the model parameters:
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_model
     :end-before: #HIDDEN_END_model
 
 and define our system as a square shape on a square lattice with two orbitals
 per site, with leads attached on the left and right:
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_syst
     :end-before: #HIDDEN_END_syst
 
 Below is a plot of a projection of :math:`\mathbf{m}_i` onto the x-y plane
 inside the scattering region. The z component is shown by the color scale:
 
-.. image:: ../images/mag_field_direction.*
+.. image:: /code/figure/mag_field_direction.*
 
 We will now be interested in analyzing the form of the scattering states
 that originate from the left lead:
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_wavefunction
     :end-before: #HIDDEN_END_wavefunction
 
@@ -82,7 +82,7 @@ When there are multiple degrees of freedom per site, however, one has to be
 more careful. In the present case with two (spin) degrees of freedom per site
 one could calculate the per-site density like:
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_ldos
     :end-before: #HIDDEN_END_ldos
 
@@ -91,14 +91,14 @@ local quantities we can meaningfully compute. For example, we may wish to
 calculate the local z-projected spin density. We could calculate
 this in the following way:
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_lsdz
     :end-before: #HIDDEN_END_lsdz
 
 If we wanted instead to calculate the local y-projected spin density, we would
 need to use an even more complicated expression:
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_lsdy
     :end-before: #HIDDEN_END_lsdy
 
@@ -107,7 +107,7 @@ book-keeping by providing a simple interface for defining operators that act on
 wavefunctions. To calculate the above quantities we would use the
 `~kwant.operator.Density` operator like so:
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_lden
     :end-before: #HIDDEN_END_lden
 
@@ -126,7 +126,7 @@ Below we can see colorplots of the above-calculated quantities. The array that
 is returned by evaluating a `~kwant.operator.Density` can be used directly with
 `kwant.plotter.map`:
 
-.. image:: ../images/spin_densities.*
+.. image:: /code/figure/spin_densities.*
 
 
 .. specialnote:: Technical Details
@@ -180,14 +180,14 @@ where :math:`\mathbf{H}_{ab}` is the hopping matrix from site :math:`b` to site
 :math:`a`.  For example, to calculate the local current and
 spin current:
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_current
     :end-before: #HIDDEN_END_current
 
 Evaluating a `~kwant.operator.Current` operator on a wavefunction returns a
 1D array of values that can be directly used with `kwant.plotter.current`:
 
-.. image:: ../images/spin_currents.*
+.. image:: /code/figure/spin_currents.*
 
 .. note::
 
@@ -262,7 +262,7 @@ scattering region.
 Doing this is as simple as passing a *function* when instantiating
 the `~kwant.operator.Current`, instead of a constant matrix:
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_following
     :end-before: #HIDDEN_END_following
 
@@ -286,7 +286,7 @@ Using this we can see that the spin current is essentially oriented along
 the direction of :math:`m_i` in the present regime where the onsite term
 in the Hamiltonian is dominant:
 
-.. image:: ../images/spin_current_comparison.*
+.. image:: /code/figure/spin_current_comparison.*
 
 .. note:: Although this example used exclusively `~kwant.operator.Current`,
           you can do the same with `~kwant.operator.Density`.
@@ -308,11 +308,11 @@ Density of states in a circle
 To calculate the density of states inside a circle of radius
 20 we can simply do:
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_density_cut
     :end-before: #HIDDEN_END_density_cut
 
-.. literalinclude:: ../images/circle_dos.txt
+.. literalinclude:: /code/figure/circle_dos.txt
 
 note that we also provide ``sum=True``, which means that evaluating the
 operator on a wavefunction will produce a single scalar. This is semantically
@@ -325,11 +325,11 @@ Current flowing through a cut
 Below we calculate the probability current and z-projected spin current near
 the interfaces with the left and right leads.
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_current_cut
     :end-before: #HIDDEN_END_current_cut
 
-.. literalinclude:: ../images/current_cut.txt
+.. literalinclude:: /code/figure/current_cut.txt
 
 We see that the probability current is conserved across the scattering region,
 but the z-projected spin current is not due to the fact that the Hamiltonian
@@ -360,8 +360,8 @@ This can be achieved with `~kwant.operator.Current.bind`:
              *different* set of parameters. This will almost certainly give
              incorrect results.
 
-.. literalinclude:: magnetic_texture.py
+.. literalinclude:: /code/include/magnetic_texture.py
     :start-after: #HIDDEN_BEGIN_bind
     :end-before: #HIDDEN_END_bind
 
-.. image:: ../images/bound_current.*
+.. image:: /code/figure/bound_current.*

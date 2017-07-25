@@ -243,36 +243,7 @@ Build configuration was:
 """
 
 
-class build_tut(Command):
-    description = "build the tutorial scripts"
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        tut_dir = 'tutorial'
-        if not os.path.exists(tut_dir):
-            os.mkdir(tut_dir)
-        for in_fname in glob.glob('doc/source/tutorial/*.py'):
-            out_fname = os.path.join(tut_dir, os.path.basename(in_fname))
-            with open(in_fname, 'rb') as in_file:
-                with open(out_fname, 'wb') as out_file:
-                    for line in in_file:
-                        if not line.startswith(b'#HIDDEN'):
-                            out_file.write(line)
-
-
-# Our version of the "build" command also makes sure the tutorial is made.
-# Even though the tutorial is not necessary for installation, and "build" is
-# supposed to make everything needed to install, this is a robust way to ensure
-# that the tutorial is present.
 class build(build_orig):
-    sub_commands = [('build_tut', None)] + build_orig.sub_commands
-
     def run(self):
         super().run()
         write_version(os.path.join(self.build_lib, *STATIC_VERSION_PATH))
@@ -651,7 +622,6 @@ def main():
           cmdclass={'build': build,
                     'sdist': sdist,
                     'build_ext': build_ext,
-                    'build_tut': build_tut,
                     'test': test},
           ext_modules=exts,
           install_requires=['numpy >= 1.11.0', 'scipy >= 0.17.0',
