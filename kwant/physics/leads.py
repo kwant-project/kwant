@@ -130,6 +130,10 @@ class PropagatingModes:
     eigenvalue the modes with negative velocity are ordered by increasing
     momentum, and the modes with positive velocity are ordered by decreasing
     momentum. Finally, modes are ordered by the magnitude of their velocity.
+    To summarize, the modes are ordered according to the key
+    `(sign(v), conserved_quantity, sign(v) * k , abs(v))` where `v` is
+    velocity, `k` is momentum and `conserved_quantity` is the conservation
+    law eigenvalue.
 
     The first dimension of `wave_functions` corresponds to the orbitals of all
     the sites in a unit cell, the second one to the number of the mode.  Each
