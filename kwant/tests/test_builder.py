@@ -432,11 +432,11 @@ def test_finalization():
             neighbors)
 
     # test that we cannot finalize a system with a badly sorted interface order
-    raises(ValueError, lead._finalized_infinite,
+    raises(ValueError, builder.InfiniteSystem, lead,
            [builder.Site(fam, n) for n in reversed(neighbors)])
     # site ordering independent of whether interface was specified
-    flead_order = lead._finalized_infinite([builder.Site(fam, n)
-                                            for n in neighbors])
+    flead_order = builder.InfiniteSystem(lead, [builder.Site(fam, n)
+                                                for n in neighbors])
     assert flead.sites == flead_order.sites
 
 

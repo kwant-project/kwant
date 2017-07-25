@@ -576,7 +576,7 @@ class BuilderLead(Lead):
 
         The order of interface sites is kept during finalization.
         """
-        syst = self.builder._finalized_infinite(self.interface)
+        syst = InfiniteSystem(self.builder, self.interface)
         _transfer_symmetry(syst, self.builder)
 
         return syst
@@ -1576,9 +1576,9 @@ class Builder:
         `Symmetry` can be finalized.
         """
         if self.symmetry.num_directions == 0:
-            syst = self._finalized_finite()
+            syst = FiniteSystem(self)
         elif self.symmetry.num_directions == 1:
-            syst = self._finalized_infinite()
+            syst = InfiniteSystem(self)
         else:
             raise ValueError('Currently, only builders without or with a 1D '
                              'translational symmetry can be finalized.')
@@ -1587,230 +1587,6 @@ class Builder:
 
         return syst
 
-    def _finalized_finite(self):
-        assert self.symmetry.num_directions == 0
-
-        #### Make translation tables.
-        sites = tuple(sorted(self.H))
-        id_by_site = {}
-        for site_id, site in enumerate(sites):
-            id_by_site[site] = site_id
-
-        #### Make graph.
-        g = graph.Graph()
-        g.num_nodes = len(sites)  # Some sites could not appear in any edge.
-        for tail, hvhv in self.H.items():
-            for head in islice(hvhv, 2, None, 2):
-                if tail == head:
-                    continue
-                g.add_edge(id_by_site[tail], id_by_site[head])
-        g = g.compressed()
-
-        #### Connect leads.
-        finalized_leads = []
-        lead_interfaces = []
-        for lead_nr, lead in enumerate(self.leads):
-            try:
-                with warnings.catch_warnings(record=True) as ws:
-                    warnings.simplefilter("always")
-                    # The following line is the whole "payload" of the entire
-                    # try-block.
-                    finalized_leads.append(lead.finalized())
-                for w in ws:
-                    # Re-raise any warnings with an additional message and the
-                    # proper stacklevel.
-                    w = w.message
-                    msg = 'When finalizing lead {0}:'.format(lead_nr)
-                    warnings.warn(w.__class__(' '.join((msg,) + w.args)),
-                                  stacklevel=3)
-            except ValueError as e:
-                # Re-raise the exception with an additional message.
-                msg = 'Problem finalizing lead {0}:'.format(lead_nr)
-                e.args = (' '.join((msg,) + e.args),)
-                raise
-            try:
-                interface = [id_by_site[isite] for isite in lead.interface]
-            except KeyError as e:
-                msg = ("Lead {0} is attached to a site that does not "
-                       "belong to the scattering region:\n {1}")
-                raise ValueError(msg.format(lead_nr, e.args[0]))
-
-            lead_interfaces.append(np.array(interface))
-
-        #### Find parameters taken by all value functions
-        hoppings = [self._get_edge(sites[tail], sites[head])
-                           for tail, head in g]
-        onsite_hamiltonians = [self.H[site][1] for site in sites]
-
-        _ham_param_map = {}
-        for hams, skip in [(onsite_hamiltonians, 1), (hoppings, 2)]:
-            for ham in hams:
-                if (not callable(ham) or ham is Other or
-                    ham in _ham_param_map):
-                    continue
-                # parameters come in the same order as in the function signature
-                params, defaults, takes_kwargs = get_parameters(ham)
-                params = params[skip:]  # remove site argument(s)
-                _ham_param_map[ham] = (params, defaults, takes_kwargs)
-
-        #### Assemble and return result.
-        result = FiniteSystem()
-        result.graph = g
-        result.sites = sites
-        result.site_ranges = _site_ranges(sites)
-        result.id_by_site = id_by_site
-        result.leads = finalized_leads
-        result.hoppings = hoppings
-        result.onsite_hamiltonians = onsite_hamiltonians
-        result._ham_param_map = _ham_param_map
-        result.lead_interfaces = lead_interfaces
-        result.symmetry = self.symmetry
-        return result
-
-    def _finalized_infinite(self, interface_order=None):
-        """
-        Finalize this builder instance which has to have exactly a single
-        symmetry direction.
-
-        If interface_order is not set, the order of the interface sites in the
-        finalized system will be arbitrary.  If interface_order is set to a
-        sequence of interface sites, this order will be kept.
-        """
-        sym = self.symmetry
-        assert sym.num_directions == 1
-
-
-        #### For each site of the fundamental domain, determine whether it has
-        #### neighbors in the previous domain or not.
-        lsites_with = []       # Fund. domain sites with neighbors in prev. dom
-        lsites_without = []    # Remaining sites of the fundamental domain
-        for tail in self.H:    # Loop over all sites of the fund. domain.
-            for head in self._out_neighbors(tail):
-                fd = sym.which(head)[0]
-                if fd == 1:
-                    # Tail belongs to fund. domain, head to the next domain.
-                    lsites_with.append(tail)
-                    break
-            else:
-                # Tail is a fund. domain site not connected to prev. domain.
-                lsites_without.append(tail)
-        cell_size = len(lsites_with) + len(lsites_without)
-
-        if not lsites_with:
-            warnings.warn('Infinite system with disconnected cells.',
-                          RuntimeWarning, stacklevel=3)
-
-        ### Create list of sites and a lookup table
-        minus_one = ta.array((-1,))
-        plus_one = ta.array((1,))
-        if interface_order is None:
-            # interface must be sorted
-            interface = [sym.act(minus_one, s) for s in lsites_with]
-            interface.sort()
-        else:
-            lsites_with_set = set(lsites_with)
-            lsites_with = []
-            interface = []
-            if interface_order:
-                shift = ta.array((-sym.which(interface_order[0])[0] - 1,))
-            for shifted_iface_site in interface_order:
-                # Shift the interface domain before the fundamental domain.
-                # That's the right place for the interface of a lead to be, but
-                # the sites of interface_order might live in a different
-                # domain.
-                iface_site = sym.act(shift, shifted_iface_site)
-                lsite = sym.act(plus_one, iface_site)
-
-                try:
-                    lsites_with_set.remove(lsite)
-                except KeyError:
-                    if (-sym.which(shifted_iface_site)[0] - 1,) != shift:
-                        raise ValueError(
-                            'The sites in interface_order do not all '
-                            'belong to the same lead cell.')
-                    else:
-                        raise ValueError('A site in interface_order is not an '
-                                         'interface site:\n' + str(iface_site))
-                interface.append(iface_site)
-                lsites_with.append(lsite)
-            if lsites_with_set:
-                raise ValueError(
-                    'interface_order did not contain all interface sites.')
-            # `interface_order` *must* be sorted, hence `interface` should also
-            if interface != sorted(interface):
-                raise ValueError('Interface sites must be sorted.')
-            del lsites_with_set
-
-        # we previously sorted the interface, so don't sort it again
-        sites = sorted(lsites_with) + sorted(lsites_without) + interface
-        del lsites_with
-        del lsites_without
-        del interface
-        id_by_site = {}
-        for site_id, site in enumerate(sites):
-            id_by_site[site] = site_id
-
-        #### Make graph and extract onsite Hamiltonians.
-        g = graph.Graph()
-        g.num_nodes = len(sites)  # Some sites could not appear in any edge.
-        onsite_hamiltonians = []
-        for tail_id, tail in enumerate(sites[:cell_size]):
-            onsite_hamiltonians.append(self.H[tail][1])
-            for head in self._out_neighbors(tail):
-                head_id = id_by_site.get(head)
-                if head_id is None:
-                    # Head belongs neither to the fundamental domain nor to the
-                    # previous domain.  Check that it belongs to the next
-                    # domain and ignore it otherwise as an edge corresponding
-                    # to this one has been added already or will be added.
-                    fd = sym.which(head)[0]
-                    if fd != 1:
-                        msg = ('Further-than-nearest-neighbor cells '
-                               'are connected by hopping\n{0}.')
-                        raise ValueError(msg.format((tail, head)))
-                    continue
-                if head_id >= cell_size:
-                    # Head belongs to previous domain.  The edge added here
-                    # correspond to one left out just above.
-                    g.add_edge(head_id, tail_id)
-                g.add_edge(tail_id, head_id)
-        g = g.compressed()
-
-        #### Extract hoppings.
-        hoppings = []
-        for tail_id, head_id in g:
-            tail = sites[tail_id]
-            head = sites[head_id]
-            if tail_id >= cell_size:
-                # The tail belongs to the previous domain.  Find the
-                # corresponding hopping with the tail in the fund. domain.
-                tail, head = sym.to_fd(tail, head)
-            hoppings.append(self._get_edge(tail, head))
-
-        #### Find parameters taken by all value functions
-        _ham_param_map = {}
-        for hams, skip in [(onsite_hamiltonians, 1), (hoppings, 2)]:
-            for ham in hams:
-                if (not callable(ham) or ham is Other or
-                    ham in _ham_param_map):
-                    continue
-                # parameters come in the same order as in the function signature
-                params, defaults, takes_kwargs = get_parameters(ham)
-                params = params[skip:]  # remove site argument(s)
-                _ham_param_map[ham] = (params, defaults, takes_kwargs)
-
-        #### Assemble and return result.
-        result = InfiniteSystem()
-        result.cell_size = cell_size
-        result.sites = sites
-        result.id_by_site = id_by_site
-        result.site_ranges = _site_ranges(sites)
-        result.graph = g
-        result.hoppings = hoppings
-        result.onsite_hamiltonians = onsite_hamiltonians
-        result._ham_param_map = _ham_param_map
-        result.symmetry = self.symmetry
-        return result
 
 
 ################ Finalized systems
@@ -1913,6 +1689,84 @@ class FiniteSystem(system.FiniteSystem):
         The inverse of ``sites``; maps from ``i`` to ``sites[i]``.
     """
 
+    def __init__(self, builder):
+        assert builder.symmetry.num_directions == 0
+
+        #### Make translation tables.
+        sites = tuple(sorted(builder.H))
+        id_by_site = {}
+        for site_id, site in enumerate(sites):
+            id_by_site[site] = site_id
+
+        #### Make graph.
+        g = graph.Graph()
+        g.num_nodes = len(sites)  # Some sites could not appear in any edge.
+        for tail, hvhv in builder.H.items():
+            for head in islice(hvhv, 2, None, 2):
+                if tail == head:
+                    continue
+                g.add_edge(id_by_site[tail], id_by_site[head])
+        g = g.compressed()
+
+        #### Connect leads.
+        finalized_leads = []
+        lead_interfaces = []
+        for lead_nr, lead in enumerate(builder.leads):
+            try:
+                with warnings.catch_warnings(record=True) as ws:
+                    warnings.simplefilter("always")
+                    # The following line is the whole "payload" of the entire
+                    # try-block.
+                    finalized_leads.append(lead.finalized())
+                for w in ws:
+                    # Re-raise any warnings with an additional message and the
+                    # proper stacklevel.
+                    w = w.message
+                    msg = 'When finalizing lead {0}:'.format(lead_nr)
+                    warnings.warn(w.__class__(' '.join((msg,) + w.args)),
+                                  stacklevel=3)
+            except ValueError as e:
+                # Re-raise the exception with an additional message.
+                msg = 'Problem finalizing lead {0}:'.format(lead_nr)
+                e.args = (' '.join((msg,) + e.args),)
+                raise
+            try:
+                interface = [id_by_site[isite] for isite in lead.interface]
+            except KeyError as e:
+                msg = ("Lead {0} is attached to a site that does not "
+                       "belong to the scattering region:\n {1}")
+                raise ValueError(msg.format(lead_nr, e.args[0]))
+
+            lead_interfaces.append(np.array(interface))
+
+        #### Find parameters taken by all value functions
+        hoppings = [builder._get_edge(sites[tail], sites[head])
+                           for tail, head in g]
+        onsite_hamiltonians = [builder.H[site][1] for site in sites]
+
+        _ham_param_map = {}
+        for hams, skip in [(onsite_hamiltonians, 1), (hoppings, 2)]:
+            for ham in hams:
+                if (not callable(ham) or ham is Other or
+                    ham in _ham_param_map):
+                    continue
+                # parameters come in the same order as in the function signature
+                params, defaults, takes_kwargs = get_parameters(ham)
+                params = params[skip:]  # remove site argument(s)
+                _ham_param_map[ham] = (params, defaults, takes_kwargs)
+
+        self.graph = g
+        self.sites = sites
+        self.site_ranges = _site_ranges(sites)
+        self.id_by_site = id_by_site
+        self.leads = finalized_leads
+        self.hoppings = hoppings
+        self.onsite_hamiltonians = onsite_hamiltonians
+        self._ham_param_map = _ham_param_map
+        self.lead_interfaces = lead_interfaces
+        self.symmetry = builder.symmetry
+
+
     def hamiltonian(self, i, j, *args, params=None):
         if args and params:
             raise TypeError("'args' and 'params' are mutually exclusive.")
@@ -1993,6 +1847,149 @@ class InfiniteSystem(system.InfiniteSystem):
     hoppings to neighboring cells, and sites in FD+1 attached to the FD by
     hoppings. Each of these three subsequences is individually sorted.
     """
+
+    def __init__(self, builder, interface_order=None):
+        """
+        Finalize a builder instance which has to have exactly a single
+        symmetry direction.
+
+        If interface_order is not set, the order of the interface sites in the
+        finalized system will be arbitrary.  If interface_order is set to a
+        sequence of interface sites, this order will be kept.
+        """
+        sym = builder.symmetry
+        assert sym.num_directions == 1
+
+
+        #### For each site of the fundamental domain, determine whether it has
+        #### neighbors in the previous domain or not.
+        lsites_with = []       # Fund. domain sites with neighbors in prev. dom
+        lsites_without = []    # Remaining sites of the fundamental domain
+        for tail in builder.H: # Loop over all sites of the fund. domain.
+            for head in builder._out_neighbors(tail):
+                fd = sym.which(head)[0]
+                if fd == 1:
+                    # Tail belongs to fund. domain, head to the next domain.
+                    lsites_with.append(tail)
+                    break
+            else:
+                # Tail is a fund. domain site not connected to prev. domain.
+                lsites_without.append(tail)
+        cell_size = len(lsites_with) + len(lsites_without)
+
+        if not lsites_with:
+            warnings.warn('Infinite system with disconnected cells.',
+                          RuntimeWarning, stacklevel=3)
+
+        ### Create list of sites and a lookup table
+        minus_one = ta.array((-1,))
+        plus_one = ta.array((1,))
+        if interface_order is None:
+            # interface must be sorted
+            interface = [sym.act(minus_one, s) for s in lsites_with]
+            interface.sort()
+        else:
+            lsites_with_set = set(lsites_with)
+            lsites_with = []
+            interface = []
+            if interface_order:
+                shift = ta.array((-sym.which(interface_order[0])[0] - 1,))
+            for shifted_iface_site in interface_order:
+                # Shift the interface domain before the fundamental domain.
+                # That's the right place for the interface of a lead to be, but
+                # the sites of interface_order might live in a different
+                # domain.
+                iface_site = sym.act(shift, shifted_iface_site)
+                lsite = sym.act(plus_one, iface_site)
+
+                try:
+                    lsites_with_set.remove(lsite)
+                except KeyError:
+                    if (-sym.which(shifted_iface_site)[0] - 1,) != shift:
+                        raise ValueError(
+                            'The sites in interface_order do not all '
+                            'belong to the same lead cell.')
+                    else:
+                        raise ValueError('A site in interface_order is not an '
+                                         'interface site:\n' + str(iface_site))
+                interface.append(iface_site)
+                lsites_with.append(lsite)
+            if lsites_with_set:
+                raise ValueError(
+                    'interface_order did not contain all interface sites.')
+            # `interface_order` *must* be sorted, hence `interface` should also
+            if interface != sorted(interface):
+                raise ValueError('Interface sites must be sorted.')
+            del lsites_with_set
+
+        # we previously sorted the interface, so don't sort it again
+        sites = sorted(lsites_with) + sorted(lsites_without) + interface
+        del lsites_with
+        del lsites_without
+        del interface
+        id_by_site = {}
+        for site_id, site in enumerate(sites):
+            id_by_site[site] = site_id
+
+        #### Make graph and extract onsite Hamiltonians.
+        g = graph.Graph()
+        g.num_nodes = len(sites)  # Some sites could not appear in any edge.
+        onsite_hamiltonians = []
+        for tail_id, tail in enumerate(sites[:cell_size]):
+            onsite_hamiltonians.append(builder.H[tail][1])
+            for head in builder._out_neighbors(tail):
+                head_id = id_by_site.get(head)
+                if head_id is None:
+                    # Head belongs neither to the fundamental domain nor to the
+                    # previous domain.  Check that it belongs to the next
+                    # domain and ignore it otherwise as an edge corresponding
+                    # to this one has been added already or will be added.
+                    fd = sym.which(head)[0]
+                    if fd != 1:
+                        msg = ('Further-than-nearest-neighbor cells '
+                               'are connected by hopping\n{0}.')
+                        raise ValueError(msg.format((tail, head)))
+                    continue
+                if head_id >= cell_size:
+                    # Head belongs to previous domain.  The edge added here
+                    # correspond to one left out just above.
+                    g.add_edge(head_id, tail_id)
+                g.add_edge(tail_id, head_id)
+        g = g.compressed()
+
+        #### Extract hoppings.
+        hoppings = []
+        for tail_id, head_id in g:
+            tail = sites[tail_id]
+            head = sites[head_id]
+            if tail_id >= cell_size:
+                # The tail belongs to the previous domain.  Find the
+                # corresponding hopping with the tail in the fund. domain.
+                tail, head = sym.to_fd(tail, head)
+            hoppings.append(builder._get_edge(tail, head))
+
+        #### Find parameters taken by all value functions
+        _ham_param_map = {}
+        for hams, skip in [(onsite_hamiltonians, 1), (hoppings, 2)]:
+            for ham in hams:
+                if (not callable(ham) or ham is Other or
+                    ham in _ham_param_map):
+                    continue
+                # parameters come in the same order as in the function signature
+                params, defaults, takes_kwargs = get_parameters(ham)
+                params = params[skip:]  # remove site argument(s)
+                _ham_param_map[ham] = (params, defaults, takes_kwargs)
+
+        self.cell_size = cell_size
+        self.sites = sites
+        self.id_by_site = id_by_site
+        self.site_ranges = _site_ranges(sites)
+        self.graph = g
+        self.hoppings = hoppings
+        self.onsite_hamiltonians = onsite_hamiltonians
+        self._ham_param_map = _ham_param_map
+        self.symmetry = builder.symmetry
+
 
     def hamiltonian(self, i, j, *args, params=None):
         if args and params:
