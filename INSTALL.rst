@@ -193,7 +193,7 @@ below.
        python setup.py build
        sudo python setup.py install
 
-5. Unpack Kwant, go to the Kwant directory, and edit ``build.conf`` to read::
+4. Unpack Kwant, go to the Kwant directory, and edit ``build.conf`` to read::
 
        [lapack]
        extra_link_args = -Wl,-framework -Wl,Accelerate
@@ -202,7 +202,7 @@ below.
        library_dirs = /opt/local/lib
        libraries = zmumps_seq mumps_common_seq pord_seq esmumps scotch scotcherr mpiseq gfortran
 
-6. Then, build and install Kwant. ::
+5. Then, build and install Kwant. ::
 
        CC=gcc-mp-4.7 LDSHARED='gcc-mp-4.7 -shared -undefined dynamic_lookup' python setup.py build
        sudo python setup.py install
