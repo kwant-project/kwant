@@ -15,6 +15,8 @@ Types
    BuilderLead
    SelfEnergyLead
    ModesLead
+   FiniteSystem
+   InfiniteSystem
 
 Abstract base classes
 ---------------------
