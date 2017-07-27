@@ -267,7 +267,8 @@ nitpick_ignore = [('py:class', 'Warning'), ('py:class', 'Exception'),
                   ('py:class', 'object'), ('py:class', 'tuple'),
                   ('py:class', 'kwant.operator._LocalOperator'),
                   ('py:class', 'numpy.ndarray'),
-                  ('py:class', 'kwant.solvers.common.BlockResult')]
+                  ('py:class', 'kwant.solvers.common.BlockResult'),
+                  ('py:class', 'kwant.builder._FinalizedBuilderMixin')]
 
 
 # Use custom MathJax CDN, as cdn.mathjax.org will soon shut down
