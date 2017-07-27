@@ -46,6 +46,7 @@ if bdiag_broken:  # skip coverage
         return b_mat
 
 
+# TODO: Remove the workaround once we depend on scipy >= 1.0
 def lstsq(a, b):
     """Least squares version that works also with 0-shaped matrices."""
     if a.shape[1] == 0:
