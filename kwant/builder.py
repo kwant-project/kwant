@@ -576,10 +576,7 @@ class BuilderLead(Lead):
 
         The order of interface sites is kept during finalization.
         """
-        syst = InfiniteSystem(self.builder, self.interface)
-        _transfer_symmetry(syst, self.builder)
-
-        return syst
+        return InfiniteSystem(self.builder, self.interface)
 
 
 # Check that a modes/selfenergy function has a keyword-only parameter
@@ -1576,16 +1573,12 @@ class Builder:
         `Symmetry` can be finalized.
         """
         if self.symmetry.num_directions == 0:
-            syst = FiniteSystem(self)
+            return FiniteSystem(self)
         elif self.symmetry.num_directions == 1:
-            syst = InfiniteSystem(self)
+            return InfiniteSystem(self)
         else:
             raise ValueError('Currently, only builders without or with a 1D '
                              'translational symmetry can be finalized.')
-
-        _transfer_symmetry(syst, self)
-
-        return syst
 
 
 
@@ -1620,21 +1613,11 @@ def discrete_symmetry(self, args=(), *, params=None):
                                           self._symmetries))
 
 
-def _transfer_symmetry(syst, builder):
-    """Take a symmetry from builder and transfer it to finalized system."""
-    def operator(op):
-        if op is None:
-            return
-        return Density(syst, op, check_hermiticity=False)
-
-    # Conservation law requires preprocessing to split it into eigenvectors
-    # and eigenvalues.
-    cons_law = builder.conservation_law
-
-    if cons_law is None:
-        syst._cons_law = None
-
-    elif callable(cons_law):
+def _translate_cons_law(cons_law):
+    """Translate a conservation law from builder format to something that can
+    be used to initialize operator.Density.
+    """
+    if callable(cons_law):
         @wraps(cons_law)
         def vals(site, *args, **kwargs):
             if site.family.norbs == 1:
@@ -1647,8 +1630,6 @@ def _transfer_symmetry(syst, builder):
                 return 1
             return np.linalg.eigh(cons_law(site, *args, **kwargs))[1]
 
-        syst._cons_law = operator(vals), operator(vecs)
-
     elif isinstance(cons_law, collections.Mapping):
         vals = {family: (value if family.norbs == 1 else
                          ta.array(np.diag(np.linalg.eigvalsh(value))))
@@ -1656,7 +1637,6 @@ def _transfer_symmetry(syst, builder):
         vecs = {family: (1 if family.norbs == 1 else
                          ta.array(np.linalg.eigh(value)[1]))
                 for family, value in cons_law.items()}
-        syst._cons_law = operator(vals), operator(vecs)
 
     else:
         try:
@@ -1667,11 +1647,22 @@ def _transfer_symmetry(syst, builder):
                 raise e  # skip coverage
             vals, vecs = cons_law, 1
 
-        syst._cons_law = operator(vals), operator(vecs)
+    return vals, vecs
 
-    syst._symmetries = [operator(symm) for symm in (builder.time_reversal,
-                                                    builder.particle_hole,
-                                                    builder.chiral)]
+
+def _init_discrete_symmetries(self, builder):
+        def _operator(op):
+            return Density(self, op, check_hermiticity=False)
+
+        if builder.conservation_law is None:
+            self._cons_law = None
+        else:
+            self._cons_law = tuple(map(
+                _operator, _translate_cons_law(builder.conservation_law)))
+        self._symmetries = tuple(None if op is None else _operator(op)
+                                 for op in [builder.time_reversal,
+                                            builder.particle_hole,
+                                            builder.chiral])
 
 
 class FiniteSystem(system.FiniteSystem):
@@ -1765,7 +1756,7 @@ class FiniteSystem(system.FiniteSystem):
         self._ham_param_map = _ham_param_map
         self.lead_interfaces = lead_interfaces
         self.symmetry = builder.symmetry
-
+        _init_discrete_symmetries(self, builder)
 
     def hamiltonian(self, i, j, *args, params=None):
         if args and params:
@@ -1989,7 +1980,7 @@ class InfiniteSystem(system.InfiniteSystem):
         self.onsite_hamiltonians = onsite_hamiltonians
         self._ham_param_map = _ham_param_map
         self.symmetry = builder.symmetry
-
+        _init_discrete_symmetries(self, builder)
 
     def hamiltonian(self, i, j, *args, params=None):
         if args and params:
