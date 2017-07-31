@@ -40,7 +40,7 @@
      theta = (tanh(r_tilde) - 1) * (pi / 2)
  
      if r == 0:
-         m_i = [0, 0, 1]
+         m_i = [0, 0, -1]
      else:
          m_i = [
              (x / r) * sin(theta),
