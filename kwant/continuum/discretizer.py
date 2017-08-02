@@ -8,9 +8,11 @@
 
 from collections import defaultdict
 import itertools
+import warnings
 
 import numpy as np
 import tinyarray as ta
+import scipy.linalg as la
 
 import sympy
 from sympy.utilities.lambdify import lambdastr
@@ -19,6 +21,7 @@ from sympy.printing.precedence import precedence
 from sympy.core.function import AppliedUndef
 
 from .. import builder, lattice
+from .. import KwantDeprecationWarning
 from ._common import (sympify, gcd, position_operators, momentum_operators,
                       monomials)
 
@@ -81,8 +84,8 @@ class _DiscretizedBuilder(builder.Builder):
 
 ################ Interface functions
 
-def discretize(hamiltonian, coords=None, *, grid_spacing=1,
-               locals=None):
+def discretize(hamiltonian, coords=None, *, grid=None, locals=None,
+               grid_spacing=None):
     """Construct a tight-binding model from a continuum Hamiltonian.
 
     If necessary, the given Hamiltonian is sympified using
@@ -108,14 +111,19 @@ def discretize(hamiltonian, coords=None, *, grid_spacing=1,
         differential operators. May contain only "x", "y" and "z" and must be
         sorted.  If not provided, `coords` will be obtained from the input
         Hamiltonian by reading the present coordinates and momentum operators.
-    grid_spacing : int or float, default: 1
-        Spacing of the (quadratic or cubic) discretization grid.
+    grid : int, float, or kwant.lattice.Monatomic instance, default: None
+        Lattice that will be used as a discretization grid. If scalar value
+        is given a lattice with appriopriate grid spacing will be generated.
+        If left as None the default grid spacing will be equal to 1.
     locals : dict or ``None`` (default)
         Additional namespace entries for `~kwant.continuum.sympify`.  May be
         used to simplify input of matrices or modify input before proceeding
         further. For example:
         ``locals={'k': 'k_x + I * k_y'}`` or
         ``locals={'sigma_plus': [[0, 2], [0, 0]]}``.
+    grid_spacing : int or float, default: None
+        (deprecated) Spacing of the discretization grid. If unset the default
+        value will be 1. Cannot be used together with ``grid``.
 
     Returns
     -------
@@ -129,7 +137,9 @@ def discretize(hamiltonian, coords=None, *, grid_spacing=1,
     """
     tb, coords = discretize_symbolic(hamiltonian, coords, locals=locals)
 
-    return build_discretized(tb, coords, grid_spacing=grid_spacing)
+    return build_discretized(
+        tb, coords, grid_spacing=grid_spacing, grid=grid
+    )
 
 
 def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
@@ -226,7 +236,8 @@ def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
     return tb, coords
 
 
-def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, locals=None):
+def build_discretized(tb_hamiltonian, coords, *, grid=None, locals=None,
+                      grid_spacing=None):
     """Create a template builder from a symbolic tight-binding Hamiltonian.
 
     The provided symbolic tight-binding Hamiltonian is put on a (hyper) square
@@ -252,8 +263,10 @@ def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, locals=None):
         The coordinates for which momentum operators will be treated as
         differential operators. May contain only "x", "y" and "z" and must be
         sorted.
-    grid_spacing : int or float, default: 1
-        Spacing of the (quadratic or cubic) discretization grid.
+    grid : int, float, or kwant.lattice.Monatomic instance, default: None
+        Lattice that will be used as a discretization grid. If scalar value
+        is given a lattice with appriopriate grid spacing will be generated.
+        If left as None the default grid spacing will be equal to 1.
     locals : dict, defaults to empty
         Additional namespace entries for the calls of
         `~kwant.continuum.sympify` on the values of `tb_hamiltonian`.  May be
@@ -261,6 +274,9 @@ def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, locals=None):
         further. For example:
         ``locals={'k': 'k_x + I * k_y'}`` or
         ``locals={'sigma_plus': [[0, 2], [0, 0]]}``.
+    grid_spacing : int or float, default: None
+        (deprecated) Spacing of the discretization grid. If unset the default
+        value will be 1. Cannot be used together with ``grid``.
 
     Returns
     -------
@@ -273,16 +289,57 @@ def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, locals=None):
         `grid_spacing`) in the ``lattice`` attribute.
 
     """
+    # check already available constraints (grid will be check later)
     if len(coords) == 0:
         raise ValueError('Discrete coordinates cannot be empty.')
 
-    for k, v in tb_hamiltonian.items():
-        tb_hamiltonian[k] = sympify(v, locals)
+    if grid_spacing is not None:
+        warnings.warn('The "grid_spacing" parameter is deprecated. Use '
+                      '"grid" instead.', KwantDeprecationWarning, stacklevel=2)
+
+    if (grid is not None) and (grid_spacing is not None):
+        raise ValueError('"grid_spacing" and "grid" are mutually exclusive.')
+
+    if grid_spacing is not None:
+        grid = grid_spacing
 
     coords = list(coords)
+    grid_dim = len(coords)
+
     if coords != sorted(coords):
         raise ValueError("The argument 'coords' must be sorted.")
 
+    # run sympifcation on hamiltonian values
+    for k, v in tb_hamiltonian.items():
+        tb_hamiltonian[k] = sympify(v, locals)
+
+    # generate grid if required, check constraints if provided
+    random_element = next(iter(tb_hamiltonian.values()))
+    norbs = (1 if isinstance(random_element, sympy.Expr)
+             else random_element.shape[0])
+    if grid is None or np.isscalar(grid):
+        a = (1 if grid is None else grid)
+        prim_vecs =  a * np.eye(grid_dim)
+        lat = lattice.Monatomic(prim_vecs, norbs=norbs)
+    else:
+        if grid.prim_vecs.shape[0] != len(coords):
+            raise ValueError('Dimension of "grid" must match number of '
+                             '"coords".')
+
+        a = la.norm(grid.prim_vecs) / np.sqrt(grid_dim)
+        if not np.allclose(grid.prim_vecs / a, np.eye(grid_dim)):
+            raise ValueError('Primitive vectors of "grid" must be propotional '
+                             'to the identity.')
+
+        if (grid.norbs is not None) and (grid.norbs != norbs):
+            raise ValueError(
+                'If "norbs" is not None, it must corrseponds to '
+                'actual number of orbitals, here {}.'.format(norbs)
+            )
+
+        lat = grid
+
+    # continue with building the template
     tb = {}
     for n, (offset, hopping) in enumerate(tb_hamiltonian.items()):
         onsite = all(i == 0 for i in offset)
@@ -292,25 +349,17 @@ def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, locals=None):
         else:
             name = 'hopping_{}'.format(n)
 
-        tb[offset] = _builder_value(hopping, coords,
-                                    grid_spacing, onsite, name)
+        tb[offset] = _builder_value(hopping, coords, a, onsite, name)
 
-    dim = len(coords)
-    onsite_zeros = (0,) * dim
-
-    prim_vecs = grid_spacing * np.eye(dim)
-    random_element = next(iter(tb_hamiltonian.values()))
-    norbs = (1 if isinstance(random_element, sympy.Expr)
-             else random_element.shape[0])
-    lat = lattice.Monatomic(prim_vecs, norbs=norbs)
-
+    onsite_zeros = (0,) * grid_dim
     onsite = tb.pop(onsite_zeros)
     # 'delta' parameter to HoppingKind is the negative of the 'hopping offset'
     hoppings = {builder.HoppingKind(tuple(-i for i in d), lat): val
                 for d, val in tb.items()}
 
-    syst = _DiscretizedBuilder(coords, lat,
-                               lattice.TranslationalSymmetry(*prim_vecs))
+    syst = _DiscretizedBuilder(
+        coords, lat, lattice.TranslationalSymmetry(*lat.prim_vecs)
+    )
     syst[lat(*onsite_zeros)] = onsite
     for hop, val in hoppings.items():
         syst[hop] = val

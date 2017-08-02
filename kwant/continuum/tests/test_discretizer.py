@@ -7,6 +7,7 @@
 # http://kwant-project.org/authors.
 
 import inspect
+import warnings
 from functools import wraps
 
 import numpy as np
@@ -18,6 +19,8 @@ from ..discretizer import discretize
 from ..discretizer import discretize_symbolic
 from ..discretizer import build_discretized
 from ..discretizer import  _wf
+
+from ...lattice import Monatomic
 
 
 def swallows_extra_kwargs(f):
@@ -314,13 +317,13 @@ def test_numeric_functions_basic_symbolic():
         p = dict(t=i)
 
         tb = {(0,): sympy.sympify("2*t"), (1,): sympy.sympify('-t')}
-        builder = build_discretized(tb, 'x', grid_spacing=1)
+        builder = build_discretized(tb, 'x', grid=1)
         lat = next(iter(builder.sites()))[0]
         assert 2*p['t'] == builder[lat(0)](None, **p)
         assert -p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
         tb = {(0,): sympy.sympify("0"), (1,): sympy.sympify('-1j * t')}
-        builder = build_discretized(tb, 'x', grid_spacing=1)
+        builder = build_discretized(tb, 'x', grid=1)
         lat = next(iter(builder.sites()))[0]
         assert -1j * p['t'] == builder[lat(0), lat(1)](None, None, **p)
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
@@ -370,19 +373,19 @@ def test_numeric_functions_basic_string():
         p = dict(t=i)
 
         tb = {(0,): "2*t", (1,): "-t"}
-        builder = build_discretized(tb, 'x', grid_spacing=1)
+        builder = build_discretized(tb, 'x', grid=1)
         lat = next(iter(builder.sites()))[0]
         assert 2*p['t'] == builder[lat(0)](None, **p)
         assert -p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
         tb = {(0,): "0", (1,): "-1j * t"}
-        builder = build_discretized(tb, 'x', grid_spacing=1)
+        builder = build_discretized(tb, 'x', grid=1)
         lat = next(iter(builder.sites()))[0]
         assert -1j * p['t'] == builder[lat(0), lat(1)](None, None, **p)
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
         tb = {(0,): "0", (-1,): "+1j * t"}
-        builder = build_discretized(tb, 'x', grid_spacing=1)
+        builder = build_discretized(tb, 'x', grid=1)
         lat = next(iter(builder.sites()))[0]
         assert -1j * p['t'] == builder[lat(0), lat(1)](None, None, **p)
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
@@ -423,7 +426,7 @@ def test_numeric_functions_advance():
         for a in [1, 2, 5]:
             for fA in [lambda x: x, lambda x: x**2, lambda x: x**3]:
                 symbolic, coords = discretize_symbolic(hamiltonian, 'x')
-                builder = build_discretized(symbolic, coords, grid_spacing=a)
+                builder = build_discretized(symbolic, coords, grid=a)
                 lat = next(iter(builder.sites()))[0]
 
                 p = dict(A=fA, B=5, sin=np.sin)
@@ -468,7 +471,7 @@ def test_numeric_functions_with_parameter():
     for a in [1, 2, 5]:
         for fA in [lambda c, x: x+c, lambda c, x: x**2 + c]:
             symbolic, coords = discretize_symbolic(hamiltonian, 'x')
-            builder = build_discretized(symbolic, coords, grid_spacing=a)
+            builder = build_discretized(symbolic, coords, grid=a)
             lat = next(iter(builder.sites()))[0]
 
             p = dict(A=fA, B=5)
@@ -509,3 +512,61 @@ def test_numeric_functions_with_parameter():
                         rhs = f_num
 
                     assert np.allclose(lhs, rhs)
+
+
+###### test grid parameter
+@pytest.mark.parametrize('ham, grid_spacing, grid', [
+    ('k_x', None, Monatomic([[1, ]], norbs=1)),
+    ('k_x * sigma_z', None, Monatomic([[1, ]], norbs=2)),
+    ('k_x', 0.5, Monatomic([[0.5, ]], norbs=1)),
+    ('k_x**2 + k_y**2', 2, Monatomic([[2, 0], [0, 2]], norbs=1)),
+])
+def test_grid(ham, grid_spacing, grid):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        t1 = discretize(ham, grid_spacing=grid_spacing)
+        t2 = discretize(ham, grid=grid_spacing)
+        t3 = discretize(ham, grid=grid)
+    assert t1.lattice == t2.lattice == t3.lattice
+
+
+@pytest.mark.parametrize('ham, grid_offset, offset, norbs', [
+    ('k_x', None, 0, None),
+    ('k_x', None, 0, 1),
+    ('k_x * eye(2)', None, 0, 2),
+    ('k_x', (0,), 0, None),
+    ('k_x', (1,), 1, None),
+    ('k_x + k_y', None, (0, 0), None),
+    ('k_x + k_y', (0, 0), (0, 0), None),
+    ('k_x + k_y', (1, 2), (1, 2), None),
+])
+def test_grid_input(ham, grid_offset, offset, norbs):
+    # build appriopriate grid
+    if isinstance(offset, int):
+        prim_vecs = [[1, ]]
+    else:
+        prim_vecs = np.eye(len(offset))
+    grid = Monatomic(prim_vecs, offset=grid_offset, norbs=norbs)
+
+    tmp = discretize(ham, grid=grid)
+    assert np.allclose(tmp.lattice.offset, offset)
+    assert tmp.lattice.norbs == norbs
+
+    tb_ham, coords = discretize_symbolic(ham)
+    tmp = build_discretized(
+        tb_ham, coords, grid=grid
+    )
+    assert np.allclose(tmp.lattice.offset, offset)
+    assert tmp.lattice.norbs == norbs
+
+
+@pytest.mark.parametrize("ham, coords, grid", [
+    ("k_x", None, Monatomic([[1, 0]])),
+    ("k_x", 'xy', Monatomic([[1, 0]])),
+    ("k_x", 'xy', Monatomic([[1, 0], [0, 2]])),
+    ("k_x", None, Monatomic([[1, ]], norbs=2)),
+    ("k_x * eye(2)", None, Monatomic([[1, ]], norbs=1)),
+])
+def test_grid_constraints(ham, coords, grid):
+    with pytest.raises(ValueError):
+        discretize(ham, coords, grid=grid)
