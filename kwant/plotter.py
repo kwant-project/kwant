@@ -1029,7 +1029,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
     site_color : ``matplotlib`` color description, function, array, or `None`
         A color used for plotting a site in the system. If a colormap is used,
         it should be a function returning single floats or a one-dimensional
-        array of floats.
+        array of floats. By default sites are colored by their site family,
+        using the current matplotlib color cycle.
     site_edgecolor : ``matplotlib`` color description, function, array, or `None`
         Color used for plotting the edges of the site symbols. Only
         valid matplotlib color descriptions are allowed (and no
@@ -1240,6 +1241,23 @@ def plot(sys, num_lead_cells=2, unit='nn',
         symbol_slcs = [(site_symbol, slice(n_syst_sites))]
         fancy_indexing = False
 
+    if site_color is None:
+        cycle = (x['color'] for x in matplotlib.rcParams['axes.prop_cycle'])
+        if isinstance(syst, (builder.FiniteSystem, builder.InfiniteSystem)):
+            # Skipping the leads for brevity.
+            families = sorted({site.family for site in syst.sites})
+            color_mapping = dict(zip(families, cycle))
+            def site_color(site):
+                return color_mapping[syst.sites[site].family]
+        elif isinstance(syst, builder.Builder):
+            families = sorted({site[0].family for site in sites})
+            color_mapping = dict(zip(families, cycle))
+            def site_color(site):
+                return color_mapping[site.family]
+        else:
+            # Unknown finalized system, no sites access.
+            site_color = defaults['site_color'][dim]
+
     site_size = make_proper_site_spec(site_size, fancy_indexing)
     site_color = make_proper_site_spec(site_color, fancy_indexing)
     site_edgecolor = make_proper_site_spec(site_edgecolor, fancy_indexing)
@@ -1250,7 +1268,6 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
     # Choose defaults depending on dimension, if None was given
     if site_size is None: site_size = defaults['site_size'][dim]
-    if site_color is None: site_color = defaults['site_color'][dim]
     if site_edgecolor is None:
         site_edgecolor = defaults['site_edgecolor'][dim]
     if site_lw is None: site_lw = defaults['site_lw'][dim]
