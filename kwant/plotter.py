@@ -1182,18 +1182,18 @@ def plot(sys, num_lead_cells=2, unit='nn',
                  'site_lw']:
         check_length(name)
 
+    # Apply transformations to the data
+    if pos_transform is not None:
+        sites_pos = np.apply_along_axis(pos_transform, 1, sites_pos)
+        end_pos = np.apply_along_axis(pos_transform, 1, end_pos)
+        start_pos = np.apply_along_axis(pos_transform, 1, start_pos)
+
     dim = 3 if (sites_pos.shape[1] == 3) else 2
     if dim == 3 and not has3d:
         raise RuntimeError("Installed matplotlib does not support 3d plotting")
     sites_pos = resize_to_dim(sites_pos)
     end_pos = resize_to_dim(end_pos)
     start_pos = resize_to_dim(start_pos)
-
-    # Apply transformations to the data
-    if pos_transform is not None:
-        sites_pos = np.apply_along_axis(pos_transform, 1, sites_pos)
-        end_pos = np.apply_along_axis(pos_transform, 1, end_pos)
-        start_pos = np.apply_along_axis(pos_transform, 1, start_pos)
 
     # Determine the reference length.
     if unit == 'pt':
