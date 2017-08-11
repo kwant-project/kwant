@@ -9,6 +9,7 @@
 import collections
 import inspect
 import cmath
+import warnings
 
 import tinyarray as ta
 import numpy as np
@@ -257,9 +258,13 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
     ret.conservation_law = bind_site(cons) if callable(cons) else cons
     chiral = builder.chiral
     ret.chiral = bind_site(chiral) if callable(chiral) else chiral
-    # Set these to zero, as they can only hold @ k=0, and we currently
-    # have no mechanism for telling the system about the existence
-    # (or not) of a symmetry at different parameter values.
+
+    if builder.particle_hole is not None or builder.time_reversal is not None:
+        warnings.warn('`particle_hole` and `time_reversal` symmetries are set '
+                      'on the input builder. However they are ignored for the '
+                      'wrapped system, since Kwant lacks a way to express the '
+                      'existence (or not) of a symmetry at k != 0.',
+                      RuntimeWarning, stacklevel=2)
     ret.particle_hole = None
     ret.time_reversal = None
 
