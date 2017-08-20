@@ -32,3 +32,35 @@ def test_cvp():
                 point = 50 * rng.randn(j)
                 assert np.array_equal(lll.cvp(point, mat, 10)[:3],
                                       lll.cvp(point, mat, 3))
+
+    # Test equidistant vectors
+    # Cubic lattice
+    basis = np.eye(3)
+    vec = np.zeros((3))
+    assert len(lll.cvp(vec, basis, n=2, group_by_length=True)) == 7
+    assert len(lll.cvp(vec, basis, n=3, group_by_length=True)) == 19
+    vec = 0.5 * np.array([1, 1, 1])
+    assert len(lll.cvp(vec, basis, group_by_length=True)) == 8
+    vec = 0.5 * np.array([1, 1, 0])
+    assert len(lll.cvp(vec, basis, group_by_length=True)) == 4
+    vec = 0.5 * np.array([1, 0, 0])
+    assert len(lll.cvp(vec, basis, group_by_length=True)) == 2
+    # Square lattice with offset
+    offset = np.array([0, 0, 1])
+    basis = np.eye(3)[:2]
+    vec = np.zeros((3)) + rng.rand() * offset
+    assert len(lll.cvp(vec, basis, n=2, group_by_length=True)) == 5
+    assert len(lll.cvp(vec, basis, n=3, group_by_length=True)) == 9
+    vec = 0.5 * np.array([1, 1, 0]) + rng.rand() * offset
+    assert len(lll.cvp(vec, basis, group_by_length=True)) == 4
+    vec = 0.5 * np.array([1, 0, 0]) + rng.rand() * offset
+    assert len(lll.cvp(vec, basis, group_by_length=True)) == 2
+    # Hexagonal lattice
+    basis = np.array([[1, 0], [-0.5, 0.5 * np.sqrt(3)]])
+    vec = np.zeros((2))
+    assert len(lll.cvp(vec, basis, n=2, group_by_length=True)) == 7
+    assert len(lll.cvp(vec, basis, n=3, group_by_length=True)) == 13
+    vec = np.array([0.5, 0.5 / np.sqrt(3)])
+    assert len(lll.cvp(vec, basis, group_by_length=True)) == 3
+    assert len(lll.cvp(vec, basis, n=2, group_by_length=True)) == 6
+    assert len(lll.cvp(vec, basis, n=3, group_by_length=True)) == 12

@@ -286,7 +286,8 @@ class Polyatomic:
         Parameters
         ----------
         n : integer
-            Order of the hoppings to return.
+            Order of the hoppings to return. Note that the zeroth neighbor is
+            the site itself or any other sites with the same position.
         eps : float
             Tolerance relative to the length of the shortest lattice vector for
             when to consider lengths to be approximately equal.
@@ -309,6 +310,7 @@ class Polyatomic:
         sls = self.sublattices
         shortest_hopping = sls[0].n_closest(
             sls[0].pos(([0] * sls[0].lattice_dim)), 2)[-1]
+        rtol = eps
         eps *= np.linalg.norm(self.vec(shortest_hopping))
         nvec = len(self._prim_vecs)
         sublat_pairs = [(i, j) for (i, j) in product(sls, sls)
@@ -323,36 +325,25 @@ class Polyatomic:
                     continue
             return True
 
+        # Find the `n` closest neighbors (with multiplicity) for each
+        # pair of lattices, this surely includes the `n` closest neighbors overall.
+        sites = []
+        for i, j in sublat_pairs:
+            origin = Site(j, ta.zeros(nvec)).pos
+            tags = i.n_closest(origin, n=n+1, group_by_length=True, rtol=rtol)
+            ij_dist = [np.linalg.norm(Site(i, tag).pos - origin)
+                          for tag in tags]
+            sites.append((tags, (j, i), ij_dist))
+        distances = np.r_[tuple((i[2] for i in sites))]
+        distances = np.sort(distances)
+        group_boundaries = np.where(np.diff(distances) > eps)[0]
+        # Find distance in `n`-th group.
+        if len(group_boundaries) == n:
+            n_dist = distances[-1]
+        else:
+            n_dist = distances[group_boundaries[n]]
 
-        # Find the correct number of neighbors to calculate on each lattice.
-        cutoff = n + 2
-        while True:
-            max_dist = []
-            sites = []
-            for i, j in sublat_pairs:
-                origin = Site(j, ta.zeros(nvec)).pos
-                tags = i.n_closest(origin, n=cutoff**nvec)
-
-                ij_dist = [np.linalg.norm(Site(i, tag).pos - origin)
-                              for tag in tags]
-                sites.append((tags, (j, i), ij_dist))
-            max_dist = [i[2][-1] for i in sites]
-            distances = np.r_[tuple((i[2] for i in sites))]
-            distances = np.sort(distances)
-            group_boundaries = np.argwhere(np.diff(distances) > eps)
-            if len(group_boundaries) < n:
-                cutoff += 1
-                continue
-            try:
-                n_dist = distances[group_boundaries[n]]
-            except IndexError:
-                cutoff += 1
-                continue
-            if np.all(max_dist > n_dist):
-                break
-            cutoff += 1
-
-        # We now have all the required sites, we need to find n-th.
+        # We now have all the required sites, select the ones in `n`-th group.
         result = []
         for group in sites:
             tags, distance = group[0], group[2]
@@ -485,7 +476,7 @@ class Monatomic(builder.SiteFamily, Polyatomic):
             raise ValueError("Dimensionality mismatch.")
         return tag
 
-    def n_closest(self, pos, n=1):
+    def n_closest(self, pos, n=1, group_by_length=False, rtol=1e-9):
         """Find n sites closest to position `pos`.
 
         Returns
@@ -494,7 +485,8 @@ class Monatomic(builder.SiteFamily, Polyatomic):
             An array with sites coordinates.
         """
         # TODO (Anton): transform to tinyarrays, once ta indexing is better.
-        return np.dot(lll.cvp(pos - self.offset, self.reduced_vecs, n),
+        return np.dot(lll.cvp(pos - self.offset, self.reduced_vecs,
+                              n=n, group_by_length=group_by_length, rtol=rtol),
                       self.transf.T)
 
     def closest(self, pos):
