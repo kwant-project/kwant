@@ -1923,8 +1923,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     if dim > 3:
         raise ValueError("'interpolate_current' only works for systems "
                          "with dimension <= 3.")
-    factors = [16 / 15, np.pi / 3, 32 * np.pi / 105]
-    cross_section_factor = factors[dim - 1]
+    cross_section_factors = [16 / 15, np.pi / 3, 32 * np.pi / 105]
 
     # Interpolate the field for each hopping.
     for i in range(len(current)):
@@ -1949,9 +1948,11 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
         rho *= scale
 
         magns = F(rho, z) - F(rho, z - lens[i])
-        magns *= current[i] * scale / cross_section_factor
+        magns *= current[i]
 
         field[field_slice] += dirs[i] * magns[..., None]
+
+    field *= scale / cross_section_factors[dim - 1]
 
     # 'field' contains contributions from both hoppings (i, j) and (j, i)
     return field, ((region[0][0], region[0][-1]), (region[1][0], region[1][-1]))
