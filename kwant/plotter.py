@@ -1931,6 +1931,10 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
             # Zero volume: nothing to do.
             continue
 
+        if np.isclose(current[i], 0):
+            # Current is 0, skip costly interpolation
+            continue
+
         field_slice = [slice(*slices[i, d]) for d in range(dim)]
 
         # Coordinates of the grid points that are within range of the current
