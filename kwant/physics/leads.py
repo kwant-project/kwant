@@ -1034,12 +1034,11 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *,
 
     Notes
     -----
-    The propagating modes are sorted according to the longitudinal component of
-    their k-vector, with incoming modes having k sorted in descending order,
-    and outgoing modes having k sorted in ascending order.  In simple cases
-    where bands do not cross, this ordering corresponds to "lowest modes
-    first". In general, however, it is necessary to examine the band structure
-    -- something this function is not doing by design.
+    The sorting of the propagating modes is fully described in the
+    documentation for `~kwant.physics.PropagatingModes`.  In simple cases where
+    bands do not cross, this ordering corresponds to "lowest modes first". In
+    general, however, it is necessary to examine the band structure --
+    something this function is not doing by design.
 
     Propagating modes with the same momentum are orthogonalized. All the
     propagating modes are normalized by current.
