@@ -1781,6 +1781,35 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         return output_fig(fig, file=file, show=show)
 
 
+# Smoothing functions used with 'interpolate_current'.
+
+# We generate the smoothing function by convolving the current
+# defined on a line between the two sites with
+# f(ρ, z) = (1 - ρ^2 - z^2)^2 Θ(1 - ρ^2 - z^2), where ρ and z are
+# cylindrical coords defined with respect to the hopping.
+# 'F' is the result of the convolution.
+def _smoothing(rho, z):
+    r = 1 - rho * rho
+    r[r < 0] = 0
+    r = np.sqrt(r)
+    m = np.clip(z, -r, r)
+    rr = r * r
+    rrrr = rr * rr
+    mm = m * m
+    return m * (mm * (mm/5 - (2/3) * rr) + rrrr) + (8 / 15) * rrrr * r
+
+
+# We need to normalize the smoothing function so that it has unit cross
+# section in the plane perpendicular to the hopping. This is equivalent
+# to normalizing the integral of 'f' over the unit hypersphere to 1.
+# The smoothing function goes as F(ρ) = (16/15) (1 - ρ^2)^(5/2) in the
+# plane perpendicular to the hopping, so the cross section is:
+# A_n = (16 / 15) * σ_n * ∫_0^1 ρ^(n-1) (1 - ρ^2)^(5/2) dρ
+# where σ_n is the surface element prefactor (2 in 2D, 2π in 3D). Rather
+# that calculate A_n every time, we hard code its value for 1, 2 and 3D.
+_smoothing_cross_sections = [16 / 15, np.pi / 3, 32 * np.pi / 105]
+
+
 def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     """Interpolate currents in a system onto a regular grid.
 
@@ -1895,36 +1924,6 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     slices[:, :, 0] = np.floor((min_hops - bbox_min) * grid_density)
     slices[:, :, 1] = np.ceil((max_hops + 1.5*width - bbox_min) * grid_density)
 
-    # Define the smoothing function.
-
-    # We generate the smoothing function by convolving the current
-    # defined on a line between the two sites with
-    # f(ρ, z) = (1 - ρ^2 - z^2)^2 Θ(1 - ρ^2 - z^2), where ρ and z are
-    # cylindrical coords defined with respect to the hopping.
-    # 'F' is the result of the convolution.
-    def F(rho, z):
-        r = 1 - rho * rho
-        r[r < 0] = 0
-        r = np.sqrt(r)
-        m = np.clip(z, -r, r)
-        rr = r * r
-        rrrr = rr * rr
-        mm = m * m
-        return m * (mm * (mm/5 - (2/3) * rr) + rrrr) + (8 / 15) * rrrr * r
-
-    # We need to normalize the smoothing function so that it has unit cross
-    # section in the plane perpendicular to the hopping. This is equivalent
-    # to normalizing the integral of 'f' over the unit hypersphere to 1.
-    # The smoothing function goes as F(ρ) = (16/15) (1 - ρ^2)^(5/2) in the
-    # plane perpendicular to the hopping, so the cross section is:
-    # A_n = (16 / 15) * σ_n * ∫_0^1 ρ^(n-1) (1 - ρ^2)^(5/2) dρ
-    # where σ_n is the surface element prefactor (2 in 2D, 2π in 3D). Rather
-    # that calculate A_n every time, we hard code its value for 1, 2 and 3D.
-    if dim > 3:
-        raise ValueError("'interpolate_current' only works for systems "
-                         "with dimension <= 3.")
-    cross_section_factors = [16 / 15, np.pi / 3, 32 * np.pi / 105]
-
     # Interpolate the field for each hopping.
     for i in range(len(current)):
 
@@ -1947,12 +1946,12 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
         z *= scale
         rho *= scale
 
-        magns = F(rho, z) - F(rho, z - lens[i])
+        magns = _smoothing(rho, z) - _smoothing(rho, z - lens[i])
         magns *= current[i]
 
         field[field_slice] += dirs[i] * magns[..., None]
 
-    field *= scale / cross_section_factors[dim - 1]
+    field *= scale / _smoothing_cross_sections[dim - 1]
 
     # 'field' contains contributions from both hoppings (i, j) and (j, i)
     return field, ((region[0][0], region[0][-1]), (region[1][0], region[1][-1]))
