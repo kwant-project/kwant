@@ -219,7 +219,7 @@ and its discretized approximation
 
 
 where :math:`t=\frac{\hbar^2}{2ma^2}`, are only valid in the limit
-:math:`E \lt t`. The grid spacing :math:`a` must be chosen according
+:math:`E < t`. The grid spacing :math:`a` must be chosen according
 to how high in energy you need your tight-binding model to be valid.
 
 It is possible to set :math:`a` through the ``grid_spacing`` parameter

@@ -199,6 +199,8 @@ r"""\makeatletter
 \newcommand{\braket}[2]{\left\langle#1|#2\right\rangle}
 \newcommand{\ri}{\text{i}}
 \newcommand{\rd}{\text{d}}
+
+\usepackage{unicode-math}
 """}
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -209,6 +211,8 @@ latex_documents = [
    'C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal, et al.',
    'manual'),
 ]
+
+latex_engine = 'xelatex'
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
