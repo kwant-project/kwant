@@ -1781,6 +1781,35 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         return output_fig(fig, file=file, show=show)
 
 
+# Smoothing functions used with 'interpolate_current'.
+
+# We generate the smoothing function by convolving the current
+# defined on a line between the two sites with
+# f(ρ, z) = (1 - ρ^2 - z^2)^2 Θ(1 - ρ^2 - z^2), where ρ and z are
+# cylindrical coords defined with respect to the hopping.
+# 'F' is the result of the convolution.
+def _smoothing(rho, z):
+    r = 1 - rho * rho
+    r[r < 0] = 0
+    r = np.sqrt(r)
+    m = np.clip(z, -r, r)
+    rr = r * r
+    rrrr = rr * rr
+    mm = m * m
+    return m * (mm * (mm/5 - (2/3) * rr) + rrrr) + (8 / 15) * rrrr * r
+
+
+# We need to normalize the smoothing function so that it has unit cross
+# section in the plane perpendicular to the hopping. This is equivalent
+# to normalizing the integral of 'f' over the unit hypersphere to 1.
+# The smoothing function goes as F(ρ) = (16/15) (1 - ρ^2)^(5/2) in the
+# plane perpendicular to the hopping, so the cross section is:
+# A_n = (16 / 15) * σ_n * ∫_0^1 ρ^(n-1) (1 - ρ^2)^(5/2) dρ
+# where σ_n is the surface element prefactor (2 in 2D, 2π in 3D). Rather
+# that calculate A_n every time, we hard code its value for 1, 2 and 3D.
+_smoothing_cross_sections = [16 / 15, np.pi / 3, 32 * np.pi / 105]
+
+
 def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     """Interpolate currents in a system onto a regular grid.
 
@@ -1791,7 +1820,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     To make this vector field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
-    determined by the `max_res` and `width` parameters.
+    determined by the `relwidth` or `abswidth` parameters.
 
     This routine samples the smoothed field on a regular (square or cubic)
     grid.
@@ -1808,7 +1837,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
         of the length of the longest side of the bounding box.  This argument
         is only used if `abswidth` is not given.
     abswidth : float or `None`
-        Absolute width ot the bumps used to generate the field.  Takes
+        Absolute width of the bumps used to generate the field.  Takes
         precedence over `relwidth`.  If neither is given, the bump width is set
         to four times the length of the shortest hopping.
     n : int
@@ -1872,11 +1901,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     else:
         width = abswidth
 
-    # TODO: Generalize 'factor' prefactor to arbitrary dimensions and remove
-    #       this check. This check is done here to keep changes local
-    if dim != 2:
-        raise ValueError("'interpolate_current' only works for 2D systems.")
-    factor = (3 / np.pi) / (width / 2)
+    # Define length scale in terms of the bump width.
     scale = 2 / width
     lens *= scale
 
@@ -1899,24 +1924,15 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     slices[:, :, 0] = np.floor((min_hops - bbox_min) * grid_density)
     slices[:, :, 1] = np.ceil((max_hops + 1.5*width - bbox_min) * grid_density)
 
-    # F is the antiderivative of the smoothing function
-    # f(ρ, z) = (1 - ρ^2 - z^2)^2 Θ(1 - ρ^2 - z^2), with respect to
-    # z,with F(ρ, -∞) = 0 and where Θ is the heaviside function.
-    def F(rho, z):
-        r = 1 - rho * rho
-        r[r < 0] = 0
-        r = np.sqrt(r)
-        m = np.clip(z, -r, r)
-        rr = r * r
-        rrrr = rr * rr
-        mm = m * m
-        return m * (mm * (mm/5 - (2/3) * rr) + rrrr) + (8 / 15) * rrrr * r
-
     # Interpolate the field for each hopping.
     for i in range(len(current)):
 
         if not np.diff(slices[i]).all():
             # Zero volume: nothing to do.
+            continue
+
+        if np.isclose(current[i], 0):
+            # Current is 0, skip costly interpolation
             continue
 
         field_slice = [slice(*slices[i, d]) for d in range(dim)]
@@ -1934,10 +1950,12 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
         z *= scale
         rho *= scale
 
-        magns = F(rho, z) - F(rho, z - lens[i])
-        magns *= current[i] * factor
+        magns = _smoothing(rho, z) - _smoothing(rho, z - lens[i])
+        magns *= current[i]
 
         field[field_slice] += dirs[i] * magns[..., None]
+
+    field *= scale / _smoothing_cross_sections[dim - 1]
 
     # 'field' contains contributions from both hoppings (i, j) and (j, i)
     return field, ((region[0][0], region[0][-1]), (region[1][0], region[1][-1]))
