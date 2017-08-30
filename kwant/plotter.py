@@ -1820,7 +1820,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     To make this vector field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
-    determined by the `max_res` and `width` parameters.
+    determined by the `relwidth` or `abswidth` parameters.
 
     This routine samples the smoothed field on a regular (square or cubic)
     grid.
@@ -1837,7 +1837,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
         of the length of the longest side of the bounding box.  This argument
         is only used if `abswidth` is not given.
     abswidth : float or `None`
-        Absolute width ot the bumps used to generate the field.  Takes
+        Absolute width of the bumps used to generate the field.  Takes
         precedence over `relwidth`.  If neither is given, the bump width is set
         to four times the length of the shortest hopping.
     n : int
