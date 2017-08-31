@@ -1459,7 +1459,7 @@ class Builder:
 
         Notes
         -----
-        This method is not fool-proof, i.e. if it returns an error, there is
+        This method is not fool-proof, i.e. if it raises an error, there is
         no guarantee that the system stayed unaltered.
 
         The system must "interrupt" the lead that is being attached. This means
