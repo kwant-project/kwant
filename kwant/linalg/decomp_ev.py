@@ -50,5 +50,5 @@ def gen_eig(a, b, left=False, right=True, overwrite_ab=False):
         The right eigenvector corresponding to the eigenvalue
         ``alpha[i]/beta[i]`` is the column ``vr[:,i]``.
     """
-    ltype, a, b = lapack.prepare_for_lapack(overwrite_ab, a, b)
+    a, b = lapack.prepare_for_lapack(overwrite_ab, a, b)
     return lapack.ggev(a, b, left, right)

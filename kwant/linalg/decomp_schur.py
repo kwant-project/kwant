@@ -62,7 +62,7 @@ def schur(a, calc_q=True, calc_ev=True, overwrite_a=False):
     LinAlgError
         If the underlying QR iteration fails to converge.
     """
-    ltype, a = lapack.prepare_for_lapack(overwrite_a, a)
+    a = lapack.prepare_for_lapack(overwrite_a, a)
     return lapack.gees(a, calc_q, calc_ev)
 
 
@@ -182,7 +182,7 @@ def order_schur(select, t, q, calc_ev=True, overwrite_tq=False):
         ``calc_ev == True``
     """
 
-    ltype, t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
+    t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
 
     # Figure out if select is a function or array.
     isfun = isarray = True
@@ -255,7 +255,7 @@ def evecs_from_schur(t, q, select=None, left=False, right=True,
         ``right == True``.
     """
 
-    ltype, t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
+    t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
 
     # check if select is a function or an array
     if select is not None:
@@ -346,7 +346,7 @@ def gen_schur(a, b, calc_q=True, calc_z=True, calc_ev=True,
     LinAlError
         If the underlying QZ iteration fails to converge.
     """
-    ltype, a, b = lapack.prepare_for_lapack(overwrite_ab, a, b)
+    a, b = lapack.prepare_for_lapack(overwrite_ab, a, b)
     return lapack.gges(a, b, calc_q, calc_z, calc_ev)
 
 
@@ -408,7 +408,7 @@ def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
     LinAlError
         If the problem is too ill-conditioned.
     """
-    ltype, s, t, q, z = lapack.prepare_for_lapack(overwrite_stqz, s, t, q, z)
+    s, t, q, z = lapack.prepare_for_lapack(overwrite_stqz, s, t, q, z)
 
 
     # Figure out if select is a function or array.
@@ -491,7 +491,7 @@ def convert_r2c_gen_schur(s, t, q=None, z=None):
         If it fails to convert a 2x2 block into complex form (unlikely).
     """
 
-    ltype, s, t, q, z = lapack.prepare_for_lapack(True, s, t, q, z)
+    s, t, q, z = lapack.prepare_for_lapack(True, s, t, q, z)
     # Note: overwrite=True does not mean much here, the arrays are all copied
 
     if (s.ndim != 2 or t.ndim != 2 or
@@ -611,7 +611,7 @@ def evecs_from_gen_schur(s, t, q=None, z=None, select=None,
 
     """
 
-    ltype, s, t, q, z = lapack.prepare_for_lapack(overwrite_qz, s, t, q, z)
+    s, t, q, z = lapack.prepare_for_lapack(overwrite_qz, s, t, q, z)
 
     if left and q is None:
         raise ValueError("Matrix q must be provided for left eigenvectors")

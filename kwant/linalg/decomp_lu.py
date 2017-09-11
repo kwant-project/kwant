@@ -45,7 +45,7 @@ def lu_factor(a, overwrite_a=False):
     singular : boolean
         Whether the matrix a is singular (up to machine precision)
     """
-    ltype, a = lapack.prepare_for_lapack(overwrite_a, a)
+    a = lapack.prepare_for_lapack(overwrite_a, a)
     return lapack.getrf(a)
 
 
@@ -71,7 +71,7 @@ def lu_solve(matrix_factorization, b):
                              "a singular matrix. Result of solve step "
                              "are probably unreliable")
 
-    ltype, lu, b = lapack.prepare_for_lapack(False, lu, b)
+    lu, b = lapack.prepare_for_lapack(False, lu, b)
     ipiv = np.ascontiguousarray(np.asanyarray(ipiv), dtype=lapack.int_dtype)
     return lapack.getrs(lu, ipiv, b)
 
@@ -102,5 +102,5 @@ def rcond_from_lu(matrix_factorization, norm_a, norm="1"):
     """
     (lu, ipiv, singular) = matrix_factorization
     norm = norm.encode('utf8')  # lapack expects bytes
-    ltype, lu = lapack.prepare_for_lapack(False, lu)
+    lu = lapack.prepare_for_lapack(False, lu)
     return lapack.gecon(lu, norm_a, norm)
