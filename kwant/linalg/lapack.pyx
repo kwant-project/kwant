@@ -1274,8 +1274,7 @@ def prepare_for_lapack(overwrite, *args):
     If an argument is ``None``, it is just passed through and not used to
     determine the proper LAPACK type.
 
-    `prepare_for_lapack` returns a character indicating the proper LAPACK data
-    type ('s', 'd', 'c', 'z') and a list of properly converted arrays.
+    Returns a list of properly converted arrays.
     """
 
     # Make sure we have NumPy arrays
@@ -1296,18 +1295,10 @@ def prepare_for_lapack(overwrite, *args):
     #       kind.
     dtype = np.common_type(*[arr for arr, ovwrt in mats if arr is not None])
 
-    if dtype == np.float32:
-        lapacktype = 's'
-    elif dtype == np.float64:
-        lapacktype = 'd'
-    elif dtype == np.complex64:
-        lapacktype = 'c'
-    elif dtype == np.complex128:
-        lapacktype = 'z'
-    else:
+    if dtype not in (np.float32, np.float64, np.complex64, np.complex128):
         raise AssertionError("Unexpected data type from common_type")
 
-    ret = [ lapacktype ]
+    ret = []
     for npmat, ovwrt in mats:
         # Now make sure that the array is contiguous, and copy if necessary.
         if npmat is not None:
@@ -1332,4 +1323,7 @@ def prepare_for_lapack(overwrite, *args):
 
         ret.append(npmat)
 
-    return tuple(ret)
+    if len(ret) == 1:
+        return ret[0]
+    else:
+        return tuple(ret)
