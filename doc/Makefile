@@ -127,7 +127,7 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 %.pdf: %.svg
-	rsvg-convert -f pdf -o $@ $<
+	inkscape --export-pdf=$@ $<
 
 # Make tutorial scripts by extracting the (complete!) context of the "patches".
 # We make sure not to use 'wiggle' here.
