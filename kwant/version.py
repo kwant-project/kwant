@@ -19,7 +19,7 @@ __all__ = []
 package_root = os.path.dirname(os.path.realpath(__file__))
 distr_root = os.path.dirname(package_root)
 
-def ensure_python(required_version=(3, 4)):
+def ensure_python(required_version=(3, 5)):
     v = sys.version_info
     if v[:3] < required_version:
         error = "This version of Kwant requires Python {} or above.".format(
