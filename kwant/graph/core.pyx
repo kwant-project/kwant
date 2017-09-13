@@ -719,15 +719,17 @@ cdef class CGraph_malloc(CGraph):
         init_args = (twoway, edge_nr_translation, num_nodes,
                 num_pp_edges, num_pn_edges, num_np_edges)
 
-        return (init_args, self._heads_idxs, self._heads, self._tails_idxs,
-                self._tails, self._edge_ids, self._edge_ids_by_edge_nr)
+        return init_args, (self._heads_idxs, self._heads, self._tails_idxs,
+                           self._tails, self._edge_ids,
+                           self._edge_ids_by_edge_nr)
 
     def __setstate__(self, state):
-        self.__init__(*state[0])
+        init_args, arrays = state
+        self.__init__(*init_args)
         array_attributes = (self._heads_idxs, self._heads, self._tails_idxs,
                             self._tails, self._edge_ids,
                             self._edge_ids_by_edge_nr)
-        for attribute, value in zip(array_attributes, state[1:]):
+        for attribute, value in zip(array_attributes, arrays):
             if attribute is None:
                 continue
             attribute[:] = value
