@@ -733,3 +733,8 @@ cdef class CGraph_malloc(CGraph):
             if attribute is None:
                 continue
             attribute[:] = value
+
+    # We are required to implement this as of Cython 0.26
+    def __reduce__(self):
+        state = init_args, _ = self.__getstate__()
+        return (CGraph_malloc, init_args, state, None, None)
