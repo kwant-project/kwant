@@ -45,20 +45,8 @@ def lu_factor(a, overwrite_a=False):
     singular : boolean
         Whether the matrix a is singular (up to machine precision)
     """
-
-    ltype, a = lapack.prepare_for_lapack(overwrite_a, a)
-
-    if a.ndim != 2:
-        raise ValueError("lu_factor expects a matrix")
-
-    if ltype == 'd':
-        return lapack.dgetrf(a)
-    elif ltype == 'z':
-        return lapack.zgetrf(a)
-    elif ltype == 's':
-        return lapack.sgetrf(a)
-    else:
-        return lapack.cgetrf(a)
+    a = lapack.prepare_for_lapack(overwrite_a, a)
+    return lapack.getrf(a)
 
 
 def lu_solve(matrix_factorization, b):
@@ -83,23 +71,9 @@ def lu_solve(matrix_factorization, b):
                              "a singular matrix. Result of solve step "
                              "are probably unreliable")
 
-    ltype, lu, b = lapack.prepare_for_lapack(False, lu, b)
+    lu, b = lapack.prepare_for_lapack(False, lu, b)
     ipiv = np.ascontiguousarray(np.asanyarray(ipiv), dtype=lapack.int_dtype)
-
-    if b.ndim > 2:
-        raise ValueError("lu_solve: b must be a vector or matrix")
-
-    if lu.shape[0] != b.shape[0]:
-        raise ValueError("lu_solve: incompatible dimensions of b")
-
-    if ltype == 'd':
-        return lapack.dgetrs(lu, ipiv, b)
-    elif ltype == 'z':
-        return lapack.zgetrs(lu, ipiv, b)
-    elif ltype == 's':
-        return lapack.sgetrs(lu, ipiv, b)
-    else:
-        return lapack.cgetrs(lu, ipiv, b)
+    return lapack.getrs(lu, ipiv, b)
 
 
 def rcond_from_lu(matrix_factorization, norm_a, norm="1"):
@@ -127,17 +101,6 @@ def rcond_from_lu(matrix_factorization, norm_a, norm="1"):
         norm specified in norm
     """
     (lu, ipiv, singular) = matrix_factorization
-    if not norm in ("1", "I"):
-        raise ValueError("norm in rcond_from_lu must be either '1' or 'I'")
     norm = norm.encode('utf8')  # lapack expects bytes
-
-    ltype, lu = lapack.prepare_for_lapack(False, lu)
-
-    if ltype == 'd':
-        return lapack.dgecon(lu, norm_a, norm)
-    elif ltype == 'z':
-        return lapack.zgecon(lu, norm_a, norm)
-    elif ltype == 's':
-        return lapack.sgecon(lu, norm_a, norm)
-    else:
-        return lapack.cgecon(lu, norm_a, norm)
+    lu = lapack.prepare_for_lapack(False, lu)
+    return lapack.gecon(lu, norm_a, norm)

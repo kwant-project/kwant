@@ -50,18 +50,5 @@ def gen_eig(a, b, left=False, right=True, overwrite_ab=False):
         The right eigenvector corresponding to the eigenvalue
         ``alpha[i]/beta[i]`` is the column ``vr[:,i]``.
     """
-
-    ltype, a, b = lapack.prepare_for_lapack(overwrite_ab, a, b)
-
-    if a.ndim != 2 or b.ndim != 2:
-        raise ValueError("gen_eig requires both a and be to be matrices")
-
-    if a.shape[0] != a.shape[1]:
-        raise ValueError("gen_eig requires square matrix input")
-
-    if b.shape[0] != a.shape[0] or b.shape[1] != a.shape[1]:
-        raise ValueError("gen_eig requires a and be to have the same shape")
-
-    ggev = getattr(lapack, ltype + "ggev")
-
-    return ggev(a, b, left, right)
+    a, b = lapack.prepare_for_lapack(overwrite_ab, a, b)
+    return lapack.ggev(a, b, left, right)
