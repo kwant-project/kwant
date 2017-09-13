@@ -62,8 +62,18 @@ def schur(a, calc_q=True, calc_ev=True, overwrite_a=False):
     LinAlgError
         If the underlying QR iteration fails to converge.
     """
-    a = lapack.prepare_for_lapack(overwrite_a, a)
-    return lapack.gees(a, calc_q, calc_ev)
+
+    ltype, a = lapack.prepare_for_lapack(overwrite_a, a)
+
+    if a.ndim != 2:
+        raise ValueError("Expect matrix as input")
+
+    if a.shape[0] != a.shape[1]:
+        raise ValueError("Expect square matrix")
+
+    gees = getattr(lapack, ltype + "gees")
+
+    return gees(a, calc_q, calc_ev)
 
 
 def convert_r2c_schur(t, q):
@@ -182,7 +192,9 @@ def order_schur(select, t, q, calc_ev=True, overwrite_tq=False):
         ``calc_ev == True``
     """
 
-    t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
+    ltype, t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
+
+    trsen = getattr(lapack, ltype + "trsen")
 
     # Figure out if select is a function or array.
     isfun = isarray = True
@@ -211,7 +223,7 @@ def order_schur(select, t, q, calc_ev=True, overwrite_tq=False):
             t, q = convert_r2c_schur(t, q)
             return order_schur(select, t, q, calc_ev, True)
 
-    return lapack.trsen(select, t, q, calc_ev)
+    return trsen(select, t, q, calc_ev)
 
 
 def evecs_from_schur(t, q, select=None, left=False, right=True,
@@ -255,7 +267,13 @@ def evecs_from_schur(t, q, select=None, left=False, right=True,
         ``right == True``.
     """
 
-    t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
+    ltype, t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
+
+    if (t.shape[0] != t.shape[1] or q.shape[0] != q.shape[1]
+        or t.shape[0] != q.shape[0]):
+        raise ValueError("Invalid Schur decomposition as input")
+
+    trevc = getattr(lapack, ltype + "trevc")
 
     # check if select is a function or an array
     if select is not None:
@@ -282,7 +300,7 @@ def evecs_from_schur(t, q, select=None, left=False, right=True,
     else:
         selectarr = None
 
-    return lapack.trevc(t, q, selectarr, left, right)
+    return trevc(t, q, selectarr, left, right)
 
 
 def gen_schur(a, b, calc_q=True, calc_z=True, calc_ev=True,
@@ -346,8 +364,21 @@ def gen_schur(a, b, calc_q=True, calc_z=True, calc_ev=True,
     LinAlError
         If the underlying QZ iteration fails to converge.
     """
-    a, b = lapack.prepare_for_lapack(overwrite_ab, a, b)
-    return lapack.gges(a, b, calc_q, calc_z, calc_ev)
+
+    ltype, a, b = lapack.prepare_for_lapack(overwrite_ab, a, b)
+
+    if a.ndim != 2 or b.ndim != 2:
+        raise ValueError("Expect matrices as input")
+
+    if a.shape[0] != a.shape[1]:
+        raise ValueError("Expect square matrix a")
+
+    if a.shape[0] != b.shape[0] or a.shape[0] != b.shape[1]:
+        raise ValueError("Shape of b is incompatible to matrix a")
+
+    gges = getattr(lapack, ltype + "gges")
+
+    return gges(a, b, calc_q, calc_z, calc_ev)
 
 
 def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
@@ -408,8 +439,22 @@ def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
     LinAlError
         If the problem is too ill-conditioned.
     """
-    s, t, q, z = lapack.prepare_for_lapack(overwrite_stqz, s, t, q, z)
+    ltype, s, t, q, z = lapack.prepare_for_lapack(overwrite_stqz, s, t, q, z)
 
+    if (s.ndim != 2 or t.ndim != 2 or
+        (q is not None and q.ndim != 2) or
+        (z is not None and z.ndim != 2)):
+        raise ValueError("Expect matrices as input")
+
+    if ((s.shape[0] != s.shape[1] or t.shape[0] != t.shape[1] or
+         s.shape[0] != t.shape[0]) or
+        (q is not None and (q.shape[0] != q.shape[1] or
+                            s.shape[0] != q.shape[0])) or
+        (z is not None and (z.shape[0] != z.shape[1] or
+                            s.shape[0] != z.shape[0]))):
+        raise ValueError("Invalid Schur decomposition as input")
+
+    tgsen = getattr(lapack, ltype + "tgsen")
 
     # Figure out if select is a function or array.
     isfun = isarray = True
@@ -447,7 +492,7 @@ def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
 
             return order_gen_schur(select, s, t, q, z, calc_ev, True)
 
-    return lapack.tgsen(select, s, t, q, z, calc_ev)
+    return tgsen(select, s, t, q, z, calc_ev)
 
 
 def convert_r2c_gen_schur(s, t, q=None, z=None):
@@ -491,7 +536,7 @@ def convert_r2c_gen_schur(s, t, q=None, z=None):
         If it fails to convert a 2x2 block into complex form (unlikely).
     """
 
-    s, t, q, z = lapack.prepare_for_lapack(True, s, t, q, z)
+    ltype, s, t, q, z = lapack.prepare_for_lapack(True, s, t, q, z)
     # Note: overwrite=True does not mean much here, the arrays are all copied
 
     if (s.ndim != 2 or t.ndim != 2 or
@@ -611,13 +656,28 @@ def evecs_from_gen_schur(s, t, q=None, z=None, select=None,
 
     """
 
-    s, t, q, z = lapack.prepare_for_lapack(overwrite_qz, s, t, q, z)
+    ltype, s, t, q, z = lapack.prepare_for_lapack(overwrite_qz, s, t, q, z)
+
+    if (s.ndim != 2 or t.ndim != 2 or
+        (q is not None and q.ndim != 2) or
+        (z is not None and z.ndim != 2)):
+        raise ValueError("Expect matrices as input")
+
+    if ((s.shape[0] != s.shape[1] or t.shape[0] != t.shape[1] or
+         s.shape[0] != t.shape[0]) or
+        (q is not None and (q.shape[0] != q.shape[1] or
+                            s.shape[0] != q.shape[0])) or
+        (z is not None and (z.shape[0] != z.shape[1] or
+                            s.shape[0] != z.shape[0]))):
+        raise ValueError("Invalid Schur decomposition as input")
 
     if left and q is None:
         raise ValueError("Matrix q must be provided for left eigenvectors")
 
     if right and z is None:
         raise ValueError("Matrix z must be provided for right eigenvectors")
+
+    tgevc = getattr(lapack, ltype + "tgevc")
 
     # Check if select is a function or an array.
     if select is not None:
@@ -644,4 +704,4 @@ def evecs_from_gen_schur(s, t, q=None, z=None, select=None,
     else:
         selectarr = None
 
-    return lapack.tgevc(s, t, q, z, selectarr, left, right)
+    return tgevc(s, t, q, z, selectarr, left, right)
