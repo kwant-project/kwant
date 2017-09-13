@@ -1426,7 +1426,10 @@ class Builder:
     def attach_lead(self, lead_builder, origin=None, add_cells=0):
         """Attach a lead to the builder, possibly adding missing sites.
 
-        Returns the lead number (integer) of the attached lead.
+        This method first adds sites from 'lead_builder' until the interface
+        where the lead will attach is "smooth".  Then it appends the
+        'lead_builder' and the interface sites as a
+        `~kwant.builder.BuilderLead` to the 'leads' of this builder.
 
         Parameters
         ----------
@@ -1453,11 +1456,41 @@ class Builder:
 
         Notes
         -----
-        This method is not fool-proof, i.e. if it returns an error, there is
+        This method is not fool-proof, i.e. if it raises an error, there is
         no guarantee that the system stayed unaltered.
 
-        The lead numbering starts from zero and increments from there, i.e.
-        the leads are numbered in the order in which they are attached.
+        The system must "interrupt" the lead that is being attached. This means
+        that for each site in the lead that has a hopping to a neighbnoring
+        unit cell there must be at least one site in the system that is an
+        image of the lead site under the action of the lead's translational
+        symmetry.  In order to interrupt the lead, the system must contain
+        sites from the same site family as the sites in the lead.  Below are
+        three examples of leads being attached to systems::
+
+            Successful           Successful          Unsuccessful
+            ----------           ----------          ------------
+            Lead   System        Lead   System        Lead  System
+            x-  …      o         x   …                x-  …
+            |          |         |                    |
+            x-  …    o-o         x-  …    o-o         x-  …  o-o
+            |        | |         |        | |         |      | |
+            x-  …  o-o-o         x-  …  o-o-o         x-  …  o-o
+
+        The second case succeeds, as even though the top site has no image in
+        the system, because the top site has no hoppings to sites in other unit
+        cells.
+
+        Sites may be added to the system when the lead is attached, so that the
+        interface to the lead is "smooth". Below we show the system after
+        having attached a lead. The 'x' symbols in the system indicate the
+        added sites::
+
+            Lead   System        Lead   System
+            x-  …  x-x-o         x   …  x
+            |      | | |         |      |
+            x-  …  x-o-o         x-  …  x-o-o
+            |      | | |         |      | | |
+            x-  …  o-o-o         x-  …  o-o-o
         """
         if self.symmetry.num_directions:
             raise ValueError("Leads can only be attached to finite systems.")

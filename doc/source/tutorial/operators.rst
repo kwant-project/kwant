@@ -34,12 +34,12 @@ that, on site :math:`i`, points in the direction of the unit vector
 We shall take the following form for :math:`\mathbf{m}_i`:
 
 .. math::
-    \mathbf{m}_i &=&\ \left(
+    \mathbf{m}_i &=\ \left(
         \frac{x_i}{x_i^2 + y_i^2} \sin θ_i,\
         \frac{y_i}{x_i^2 + y_i^2} \sin θ_i,\
         \cos θ_i \right)^T,
     \\
-    θ_i &=&\ \frac{π}{2} \tanh \frac{r_i - r_0}{δ},
+    θ_i &=\ \frac{π}{2} (\tanh \frac{r_i - r_0}{δ} - 1),
 
 where :math:`x_i` and :math:`y_i` are the :math:`x` and :math:`y` coordinates
 of site :math:`i`, and :math:`r_i = \sqrt{x_i^2 + y_i^2}`.

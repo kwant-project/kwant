@@ -52,8 +52,8 @@ the following::
     psi = kwant.wave_function(syst)(0)[0]
 
     # create the operators
-    Q = kwant.physics.LocalOperator(syst)
-    J = kwant.physics.Current(syst)
+    Q = kwant.operator.Density(syst)
+    J = kwant.operator.Current(syst)
 
     # evaluate the expectation value with the wavefunction
     q = Q(psi)
