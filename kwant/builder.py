@@ -830,7 +830,8 @@ class Builder:
     # Each edge, specified by a ``(tail, head)`` pair of nodes, holds an object
     # as a value.  Likewise, each tail which occurs in the graph also holds a
     # value.  (Nodes which only occur as heads are not required to have
-    # values.)
+    # values.) Every tail node has to be in the fundamental domain of the
+    # builder's symmetry.
     #
     # For a given `tail` site, H[tail] is a list alternately storing
     # heads and values.  (The heads occupy even locations followed by the
