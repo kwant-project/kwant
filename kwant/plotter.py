@@ -2108,7 +2108,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     linewidth[linewidth < min_linewidth] = min_linewidth
     color[color > 1] = 1
 
-    line_cmap = _linear_cmap(linecolor, cmap(0))
+    line_cmap = _linear_cmap(linecolor, bgcolor)
 
     ax.streamplot(X, Y, field[:,:,0], field[:,:,1],
                   density=density, linewidth=linewidth,
@@ -2118,7 +2118,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     ax.set_ylim(*box[1])
 
     if fig is not None:
-        if colorbar and bgcolor is None:
+        if colorbar and cmap:
             fig.colorbar(image)
         return output_fig(fig, file=file, show=show)
 
