@@ -84,6 +84,17 @@ class _DiscretizedBuilder(builder.Builder):
 
 ################ Interface functions
 
+def _process_grid_args(grid, grid_spacing):
+    if grid_spacing is not None:
+        warnings.warn('The "grid_spacing" parameter is deprecated. Use '
+                      '"grid" instead.', KwantDeprecationWarning, stacklevel=3)
+
+    if not (grid is None or grid_spacing is None):
+        raise ValueError('"grid_spacing" and "grid" are mutually exclusive.')
+
+    return grid if grid is not None else grid_spacing
+
+
 def discretize(hamiltonian, coords=None, *, grid=None, locals=None,
                grid_spacing=None):
     """Construct a tight-binding model from a continuum Hamiltonian.
@@ -136,10 +147,8 @@ def discretize(hamiltonian, coords=None, *, grid=None, locals=None,
         `grid_spacing`) in the ``lattice`` attribute.
     """
     tb, coords = discretize_symbolic(hamiltonian, coords, locals=locals)
-
-    return build_discretized(
-        tb, coords, grid_spacing=grid_spacing, grid=grid
-    )
+    grid = _process_grid_args(grid, grid_spacing)
+    return build_discretized(tb, coords, grid=grid)
 
 
 def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
@@ -293,15 +302,7 @@ def build_discretized(tb_hamiltonian, coords, *, grid=None, locals=None,
     if len(coords) == 0:
         raise ValueError('Discrete coordinates cannot be empty.')
 
-    if grid_spacing is not None:
-        warnings.warn('The "grid_spacing" parameter is deprecated. Use '
-                      '"grid" instead.', KwantDeprecationWarning, stacklevel=2)
-
-    if (grid is not None) and (grid_spacing is not None):
-        raise ValueError('"grid_spacing" and "grid" are mutually exclusive.')
-
-    if grid_spacing is not None:
-        grid = grid_spacing
+    grid = _process_grid_args(grid, grid_spacing)
 
     coords = list(coords)
     grid_dim = len(coords)
