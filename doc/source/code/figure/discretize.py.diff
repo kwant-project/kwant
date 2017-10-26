@@ -76,7 +76,7 @@
         - A * k_y * kron(sigma_0, sigma_y)
      """
  
-     template = kwant.continuum.discretize(hamiltonian, grid_spacing=a)
+     template = kwant.continuum.discretize(hamiltonian, grid=a)
  #HIDDEN_END_define_qsh
  
  #HIDDEN_BEGIN_define_qsh_build
@@ -166,7 +166,7 @@
  #HIDDEN_END_ls_hk_cont
  
  #HIDDEN_BEGIN_ls_hk_tb
-         template = kwant.continuum.discretize(hamiltonian, grid_spacing=a)
+         template = kwant.continuum.discretize(hamiltonian, grid=a)
          syst = kwant.wraparound.wraparound(template).finalized()
  
          def h_k(k_x):

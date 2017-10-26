@@ -25,7 +25,7 @@
             "+ (m + beta * kk) * sigma_z"
             "+ (gamma * kk + U) * sigma_0")
      subs = {"kk": "k_x**2 + k_y**2"}
-     return kwant.continuum.discretize(ham, locals=subs, grid_spacing=a)
+     return kwant.continuum.discretize(ham, locals=subs, grid=a)
  #HIDDEN_END_model
  
  
