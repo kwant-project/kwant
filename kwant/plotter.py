@@ -1812,7 +1812,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     To make this vector field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
-    determined by the `max_res` and `width` parameters.
+    determined by the `relwidth` and `abswidth` parameters.
 
     This routine samples the smoothed field on a regular (square or cubic)
     grid.
@@ -2006,12 +2006,13 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
                show=True, dpi=None, fig_size=None, ax=None):
     """Draw streamlines of a flow field in Kwant style
 
-    Solid colored streamlines are drawn, superimposed on a color plot of the
-    flow speed that may be disabled by setting `bgcolor`.  The width of the
-    streamlines is proportional to the flow speed.  Lines that would be thinner
-    than `min_linewidth` are blended into the background color in order to
-    create the illusion of arbitrarily thin lines.  (This is done because some
-    plot backends like PDF do not support lines of arbitrary width.)
+    Solid colored streamlines are drawn, superimposed on a color plot of
+    the flow speed that may be disabled by setting `bgcolor`.  The width
+    of the streamlines is proportional to the flow speed.  Lines that
+    would be thinner than `min_linewidth` are blended in a perceptually
+    correct way into the background color in order to create the
+    illusion of arbitrarily thin lines.  (This is done because some plot
+    backends like PDF do not support lines of arbitrarily thin width.)
 
     Internally, this routine uses ``matplotlib.pyplot.streamplot``.
 
@@ -2059,7 +2060,6 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     -------
     fig : matplotlib figure
         A figure with the output if `ax` is not set, else None.
-
     """
     if not mpl_enabled:
         raise RuntimeError("matplotlib was not found, but is required "
@@ -2133,7 +2133,7 @@ def current(syst, current, relwidth=0.05, **kwargs):
     To make this vector field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
-    determined by the `limit` and `width` parameters.
+    determined by the `relwidth` parameter.
 
     This routine samples the smoothed field on a regular (square or cubic) grid
     and displays it using an enhanced variant of matplotlib's streamplot.
