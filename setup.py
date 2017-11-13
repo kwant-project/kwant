@@ -505,6 +505,20 @@ def maybe_cythonize(exts):
     return result
 
 
+def maybe_add_numpy_include(exts):
+    # Add NumPy header path to include_dirs of all the extensions.
+    try:
+        import numpy
+    except ImportError:
+        print(banner(' Caution '), 'NumPy header directory cannot be determined'
+              ' ("import numpy" failed).', banner(), sep='\n', file=sys.stderr)
+    else:
+        numpy_include = numpy.get_include()
+        for ext in exts.values():
+            ext.setdefault('include_dirs', []).append(numpy_include)
+    return exts
+
+
 def main():
     check_python_version((3, 5))
     check_versions()
@@ -540,17 +554,6 @@ def main():
          dict(sources=['kwant/linalg/_mumps.pyx'],
               depends=['kwant/linalg/cmumps.pxd']))])
 
-    # Add NumPy header path to include_dirs of all the extensions.
-    try:
-        import numpy
-    except ImportError:
-        print(banner(' Caution '), 'NumPy header directory cannot be determined'
-              ' ("import numpy" failed).', banner(), sep='\n', file=sys.stderr)
-    else:
-        numpy_include = numpy.get_include()
-        for ext in exts.values():
-            ext.setdefault('include_dirs', []).append(numpy_include)
-
     aliases = [('mumps', 'kwant.linalg._mumps')]
 
     init_cython()
@@ -559,6 +562,7 @@ def main():
     build_summary = []
     exts = configure_extensions(exts, aliases, build_summary)
     exts = configure_special_extensions(exts, build_summary)
+    exts = maybe_add_numpy_include(exts)
     exts = maybe_cythonize(exts)
 
     classifiers = """\
