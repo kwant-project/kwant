@@ -1944,12 +1944,8 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     # Interpolate the field for each hopping.
     for i in range(len(current)):
 
-        if not np.diff(slices[i]).all():
-            # Zero volume: nothing to do.
-            continue
-
-        if np.isclose(current[i], 0):
-            # Current is 0, skip costly interpolation
+        if not np.diff(slices[i]).all() or not current[i]:
+            # Zero volume or zero current: nothing to do.
             continue
 
         field_slice = [slice(*slices[i, d]) for d in range(dim)]
