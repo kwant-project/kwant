@@ -266,8 +266,7 @@ def git_lsfiles():
 
 # Make the command "sdist" depend on "build".  This verifies that the
 # distribution in the current state actually builds.  It also makes sure that
-# the Cython-made C files and the tutorial will be included in the source
-# distribution and that they will be up-to-date.
+# the Cython-made C files will be up-to-date and included in the source.
 class sdist(sdist_orig):
     sub_commands = [('build', None)] + sdist_orig.sub_commands
 

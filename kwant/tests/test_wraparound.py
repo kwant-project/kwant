@@ -300,10 +300,9 @@ def test_fd_mismatch():
         else:
             def _(*args):
                 args = list(args)
-                assert len(args) == 2
                 kext = args.pop(keep)
-                kint = args[0]
-                B = kwant.physics.Bands(syst, args=(kint,))
+                kint = args
+                B = kwant.physics.Bands(syst, args=kint)
                 return B(kext)
         return _
 
@@ -312,3 +311,82 @@ def test_fd_mismatch():
     # is more tricky, as we would also need to transform the k vectors
     E_k = np.array([spec(0, 0) for spec in spectra]).transpose()
     assert all(np.allclose(E, E[0]) for E in E_k)
+
+    # Test square lattice with oblique unit cell
+    lat = kwant.lattice.general(np.eye(2))
+    translations = kwant.lattice.TranslationalSymmetry([2, 2], [0, 2])
+    syst = kwant.Builder(symmetry=translations)
+    syst[lat.shape(lambda site: True, [0, 0])] = 1
+    syst[lat.neighbors()] = 1
+    # Check that spectra are the same at k=0.
+    spectra = [spectrum(syst, keep) for keep in (None, 0, 1)]
+    E_k = np.array([spec(0, 0) for spec in spectra]).transpose()
+    assert all(np.allclose(E, E[0]) for E in E_k)
+
+    # Test Rocksalt structure
+    # cubic lattice that contains both sublattices
+    lat = kwant.lattice.general(np.eye(3))
+    # Builder with FCC translational symmetries.
+    translations = kwant.lattice.TranslationalSymmetry([1, 1, 0], [1, 0, 1], [0, 1, 1])
+    syst = kwant.Builder(symmetry=translations)
+    syst[lat(0, 0, 0)] = 1
+    syst[lat(0, 0, 1)] = -1
+    syst[lat.neighbors()] = 1
+    # Check that spectra are the same at k=0.
+    spectra = [spectrum(syst, keep) for keep in (None, 0, 1, 2)]
+    E_k = np.array([spec(0, 0, 0) for spec in spectra]).transpose()
+    assert all(np.allclose(E, E[0]) for E in E_k)
+    # Same with different translation vectors
+    translations = kwant.lattice.TranslationalSymmetry([1, 1, 0], [1, -1, 0], [0, 1, 1])
+    syst = kwant.Builder(symmetry=translations)
+    syst[lat(0, 0, 0)] = 1
+    syst[lat(0, 0, 1)] = -1
+    syst[lat.neighbors()] = 1
+    # Check that spectra are the same at k=0.
+    spectra = [spectrum(syst, keep) for keep in (None, 0, 1, 2)]
+    E_k = np.array([spec(0, 0, 0) for spec in spectra]).transpose()
+    assert all(np.allclose(E, E[0]) for E in E_k)
+
+    # Test that spectrum in slab geometry is identical regardless of choice of unit
+    # cell in rocksalt structure
+    def shape(site):
+        return abs(site.tag[2]) < 4
+
+    lat = kwant.lattice.general(np.eye(3))
+    # First choice: primitive UC
+    translations = kwant.lattice.TranslationalSymmetry([1, 1, 0], [1, -1, 0], [1, 0, 1])
+    syst = kwant.Builder(symmetry=translations)
+    syst[lat(0, 0, 0)] = 1
+    syst[lat(0, 0, 1)] = -1
+    # Set all the nearest neighbor hoppings
+    for d in [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]:
+        syst[(lat(0, 0, 0), lat(*d))] = 1
+
+    wrapped = kwant.wraparound.wraparound(syst, keep=2)
+    finitewrapped = kwant.Builder()
+    finitewrapped.fill(wrapped, shape, start=np.zeros(3));
+
+    sysf = finitewrapped.finalized()
+    spectrum1 = [np.linalg.eigvalsh(sysf.hamiltonian_submatrix(args=(k, 0)))
+                for k in np.linspace(-np.pi, np.pi, 5)]
+
+    # Second choice: doubled UC with third translation purely in z direction
+    translations = kwant.lattice.TranslationalSymmetry([1, 1, 0], [1, -1, 0], [0, 0, 2])
+    syst = kwant.Builder(symmetry=translations)
+    syst[lat(0, 0, 0)] = 1
+    syst[lat(0, 0, 1)] = -1
+    syst[lat(1, 0, 1)] = 1
+    syst[lat(-1, 0, 0)] = -1
+    for s in np.array([[0, 0, 0], [1, 0, 1]]):
+        for d in np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]]):
+            syst[(lat(*s), lat(*(s + d)))] = 1
+    wrapped = kwant.wraparound.wraparound(syst, keep=2)
+    finitewrapped = kwant.Builder()
+
+    finitewrapped.fill(wrapped, shape, start=np.zeros(3));
+
+    sysf = finitewrapped.finalized()
+    spectrum2 = [np.linalg.eigvalsh(sysf.hamiltonian_submatrix(args=(k, 0)))
+                for k in np.linspace(-np.pi, np.pi, 5)]
+
+    assert np.allclose(spectrum1, spectrum2)

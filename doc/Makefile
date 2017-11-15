@@ -129,6 +129,9 @@ doctest:
 %.pdf: %.svg
 	inkscape --export-pdf=$@ $<
 
+#### Tutorial and figure script generation machinery ####
+# See source/code/README for an explanation.
+
 # Make tutorial scripts by extracting the (complete!) context of the "patches".
 # We make sure not to use 'wiggle' here.
 .SECONDARY:

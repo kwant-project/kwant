@@ -1157,18 +1157,18 @@ def plot(sys, num_lead_cells=2, unit='nn',
                  'site_lw']:
         check_length(name)
 
+    # Apply transformations to the data
+    if pos_transform is not None:
+        sites_pos = np.apply_along_axis(pos_transform, 1, sites_pos)
+        end_pos = np.apply_along_axis(pos_transform, 1, end_pos)
+        start_pos = np.apply_along_axis(pos_transform, 1, start_pos)
+
     dim = 3 if (sites_pos.shape[1] == 3) else 2
     if dim == 3 and not has3d:
         raise RuntimeError("Installed matplotlib does not support 3d plotting")
     sites_pos = resize_to_dim(sites_pos)
     end_pos = resize_to_dim(end_pos)
     start_pos = resize_to_dim(start_pos)
-
-    # Apply transformations to the data
-    if pos_transform is not None:
-        sites_pos = np.apply_along_axis(pos_transform, 1, sites_pos)
-        end_pos = np.apply_along_axis(pos_transform, 1, end_pos)
-        start_pos = np.apply_along_axis(pos_transform, 1, start_pos)
 
     # Determine the reference length.
     if unit == 'pt':
@@ -1837,7 +1837,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     To make this vector field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
-    determined by the `relwidth` or `abswidth` parameters.
+    determined by the `relwidth` and `abswidth` parameters.
 
     This routine samples the smoothed field on a regular (square or cubic)
     grid.
@@ -2016,12 +2016,13 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
                show=True, dpi=None, fig_size=None, ax=None):
     """Draw streamlines of a flow field in Kwant style
 
-    Solid colored streamlines are drawn, superimposed on a color plot of the
-    flow speed that may be disabled by setting `bgcolor`.  The width of the
-    streamlines is proportional to the flow speed.  Lines that would be thinner
-    than `min_linewidth` are blended into the background color in order to
-    create the illusion of arbitrarily thin lines.  (This is done because some
-    plot backends like PDF do not support lines of arbitrary width.)
+    Solid colored streamlines are drawn, superimposed on a color plot of
+    the flow speed that may be disabled by setting `bgcolor`.  The width
+    of the streamlines is proportional to the flow speed.  Lines that
+    would be thinner than `min_linewidth` are blended in a perceptually
+    correct way into the background color in order to create the
+    illusion of arbitrarily thin lines.  (This is done because some plot
+    backends like PDF do not support lines of arbitrarily thin width.)
 
     Internally, this routine uses ``matplotlib.pyplot.streamplot``.
 
@@ -2069,7 +2070,6 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     -------
     fig : matplotlib figure
         A figure with the output if `ax` is not set, else None.
-
     """
     if not mpl_enabled:
         raise RuntimeError("matplotlib was not found, but is required "
@@ -2118,7 +2118,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     linewidth[linewidth < min_linewidth] = min_linewidth
     color[color > 1] = 1
 
-    line_cmap = _linear_cmap(linecolor, cmap(0))
+    line_cmap = _linear_cmap(linecolor, bgcolor)
 
     ax.streamplot(X, Y, field[:,:,0], field[:,:,1],
                   density=density, linewidth=linewidth,
@@ -2128,7 +2128,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     ax.set_ylim(*box[1])
 
     if fig is not None:
-        if colorbar and bgcolor is None:
+        if colorbar and cmap:
             fig.colorbar(image)
         return output_fig(fig, file=file, show=show)
 
@@ -2143,7 +2143,7 @@ def current(syst, current, relwidth=0.05, **kwargs):
     To make this vector field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
-    determined by the `limit` and `width` parameters.
+    determined by the `relwidth` parameter.
 
     This routine samples the smoothed field on a regular (square or cubic) grid
     and displays it using an enhanced variant of matplotlib's streamplot.

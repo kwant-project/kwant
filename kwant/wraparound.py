@@ -274,22 +274,29 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
     mnp = -len(sym.periods)      # Used by the bound functions above.
 
     # Store lists of values, so that multiple values can be assigned to the
-    # same site or hopping. We map to the FD of 'sym', as the hopping-processing
-    # code assumes the sites are in the FD.
+    # same site or hopping.
     for site, val in builder.site_value_pairs():
-        sites[sym.to_fd(site)] = [bind_site(val) if callable(val) else val]
+        # Every 'site' is in the FD of the original symmetry.
+        # Move the sites to the FD of the remaining symmetry, this guarantees that
+        # every site in the new system is an image of an original FD site translated
+        # purely by the remaining symmetry.
+        sites[ret.symmetry.to_fd(site)] = [bind_site(val) if callable(val) else val]
 
     for hop, val in builder.hopping_value_pairs():
-        # Map hopping to FD of 'sym', as the code afterwards assumes that 'a'
-        # is in this domain.
-        a, b = sym.to_fd(*hop)
-        b_dom = sym.which(b)
+        a, b = hop
+        # 'a' is in the FD of original symmetry.
+        # Get translation from FD of original symmetry to 'b',
+        # this is different from 'b_dom = sym.which(b)'.
+        b_dom = builder.symmetry.which(b)
+        # Throw away part that is in the remaining translation direction, so we get
+        # an element of 'sym' which is being wrapped
+        b_dom = ta.array([t for i, t in enumerate(b_dom) if i != keep])
+        # Pull back using the remainder, which is purely in the wrapped directions.
+        # This guarantees that 'b_wa' is an image of an original FD site translated
+        # purely by the remaining symmetry.
         b_wa = sym.act(-b_dom, b)
-        # Now map 'b_wa' to another domain of 'sym', so that the hopping
-        # is compatible with 'ret.symmetry'. This is necessary when the
-        # fundamental domains of the symmetries do not coincide.
-        w = ret.symmetry.which(b_wa)
-        b_wa = ret.symmetry.act(w, sym.to_fd(ret.symmetry.act(-w, b_wa)))
+        # Move the hopping to the FD of the remaining symmetry
+        a, b_wa = ret.symmetry.to_fd(a, b_wa)
 
         if a == b_wa:
             # The hopping gets wrapped-around into an onsite Hamiltonian.
@@ -297,13 +304,14 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
             sites[a].append(bind_hopping_as_site(b_dom, val))
         else:
             # The hopping remains a hopping.
-            if b != b_wa or callable(val):
+            if any(b_dom) or callable(val):
                 # The hopping got wrapped-around or is a function.
                 val = bind_hopping(b_dom, val)
 
             # Make sure that there is only one entry for each hopping
-            # (pointing in one direction).
-            if (b_wa, a) in hops:
+            # pointing in one direction, modulo the remaining translations.
+            b_wa_r, a_r = ret.symmetry.to_fd(b_wa, a)
+            if (b_wa_r, a_r) in hops:
                 assert (a, b_wa) not in hops
                 if callable(val):
                     assert not isinstance(val, HermConjOfFunc)
@@ -311,7 +319,7 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
                 else:
                     val = herm_conj(val)
 
-                hops[b_wa, a].append(val)
+                hops[b_wa_r, a_r].append(val)
             else:
                 hops[a, b_wa].append(val)
 

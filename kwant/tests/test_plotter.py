@@ -132,6 +132,9 @@ def test_plot():
             warnings.simplefilter("ignore")
             plot(syst2d.finalized(), file=out)
 
+        # test 2D projections of 3D systems
+        plot(syst3d, file=out, pos_transform=lambda pos: pos[:2])
+
 def good_transform(pos):
     x, y = pos
     return y, x

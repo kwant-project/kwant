@@ -1,0 +1,42 @@
+This directory contains the code examples from the documentation.
+Most scripts are present in three related but different versions that
+correspond to three different usages.
+
+* Subdirectory 'figure': scripts used for figure generation.  Figures
+  are not displayed but saved to disk.
+
+* Subdirectory 'include': scripts that display figures on screen.
+  They contain commented marks for including snippets in the
+  documentation.
+
+* Subdirectory 'download': complete scripts to be offered for download
+  by readers.  Like 'include' but with the include marks removed.
+
+Most scripts are extracted from corresponding '*.py.diff' files inside
+'figure/'.  These are patches from the 'include' version to the
+'figure' version.  The patches include complete context and as such
+can be used to recreate both files.  It's these patches that are kept
+under version control.
+
+running 'make html' or 'make latex' inside '/doc' will automatically
+update all these scripts according to the following scheme:
+
+            ---->------------->------
+           /                         \
+          /         download/x.py     \
+figure/x.py.diff         ^             \
+     ^           \       |              \
+     |            -> include/x.py ---(patch)---> figure/x.py
+     |                   |                          |
+     |                   |                          |
+      \                  v                         /
+       ----<----------(diff)--------------<--------
+
+Thus, it is possible to update figure/x.py.diff, include/x.py or
+figure/x.py and any changes will be propagated automatically when
+'make' is run.  (Only download/x.py is a dead end.)  The user will be
+informed about any conflicts.  The makefile will only update files
+that are older than their sources and is careful to propagate time
+stamps in order to avoid infinite loops.
+
+Editing only figure/x.py.diff is a sure way to avoid any conflicts.
