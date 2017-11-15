@@ -33,10 +33,6 @@ Building Kwant requires
    version to support Python 2),
  * `NumPy <http://numpy.org/>`_ 1.11.0 or newer,
  * `SciPy <https://scipy.org/>`_ 0.17.0 or newer,
- * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
-   (For best performance we recommend the free `OpenBLAS
-   <http://www.openblas.net/>`_ or the nonfree `MKL
-   <https://software.intel.com/en-us/intel-mkl>`_.)
  * `Tinyarray <https://gitlab.kwant-project.org/kwant/tinyarray>`_ 1.2 or newer,
 a NumPy-like Python package optimized for very small arrays,
  * An environment which allows to compile Python extensions written in C and
@@ -100,7 +96,7 @@ sections, one for each extension module that is contained in Kwant, led by a
 ``[section name]`` header and followed by ``key = value`` lines.
 
 The sections bear the names of the extension modules, for example
-``[kwant.operator]`` or ``[kwant.linalg.lapack]``.  There can be also a
+``[kwant.operator]``.  There can be also a
 ``[DEFAULT]`` section that provides default values for all extensions, also
 those not explicitly present in the file.
 
@@ -116,20 +112,15 @@ trace feature::
     undef_macros = NDEBUG
     define_macros = CYTHON_TRACE=1
 
-Kwant must be linked against LAPACK & BLAS, and, optionally, MUMPS.  The main
+Kwant can optionally be linked against MUMPS.  The main
 application of build configuration is adopting the build process to the various
-(deployment) variants of these libraries.  By default ``setup.py`` assumes that
-LAPACK and BLAS can be found under their usual names.  MUMPS will be not linked
+deployments of MUMPS. MUMPS will be not linked
 against by default, except on Debian-based systems when the package
 ``libmumps-scotch-dev`` is installed.
 
-The sections ``[kwant.linalg.lapack]`` and ``[kwant.linalg._mumps]`` may be
-used to adapt the build process.  (For simplicity and backwards compatibility,
-``[lapack]`` and ``[mumps]`` are aliases for the above.)
+The section ``[kwant.linalg._mumps]`` may be used to adapt the build process.
+(For simplicity and backwards compatibility, ``[mumps]`` is an aliases for the above.)
 
-The section ``[lapack]`` configures the linking against LAPACK _AND_ BLAS, the
-section ``[mumps]`` against MUMPS.  The contents of ``[lapack]`` are
-appended to the configuration for MUMPS itself needs LAPACK and BLAS as well.
 
 Example ``build.conf`` for linking Kwant against a self-compiled MUMPS, `SCOTCH
 <http://www.labri.fr/perso/pelegrin/scotch/>`_ and `METIS
@@ -137,13 +128,6 @@ Example ``build.conf`` for linking Kwant against a self-compiled MUMPS, `SCOTCH
 
     [mumps]
     libraries = zmumps mumps_common pord metis esmumps scotch scotcherr mpiseq gfortran
-
-Example ``build.conf`` for linking Kwant with Intel MKL.::
-
-    [lapack]
-    libraries = mkl_intel_lp64 mkl_sequential mkl_core mkl_def
-    library_dirs = /opt/intel/mkl/lib/intel64
-    extra_link_args = -Wl,-rpath=/opt/intel/mkl/lib/intel64
 
 The detailed syntax of ``build.conf`` is explained in the `documentation of
 Python's configparser module
@@ -206,7 +190,7 @@ root.
 1. Install the required packages.  On Debian-based systems like Ubuntu this can
    be done by running the command ::
 
-       sudo apt-get install python3-dev python3-setuptools python3-scipy python3-matplotlib python3-pytest python3-sympy g++ gfortran libopenblas-dev liblapack-dev libmumps-scotch-dev
+       sudo apt-get install python3-dev python3-setuptools python3-scipy python3-matplotlib python3-pytest python3-sympy g++ gfortran libmumps-scotch-dev
 
 2. Unpack Tinyarray, enter its directory. To build and install, run ::
 
@@ -248,8 +232,6 @@ below.
 
 4. Unpack Kwant, go to the Kwant directory, and edit ``build.conf`` to read::
 
-       [lapack]
-       extra_link_args = -Wl,-framework -Wl,Accelerate
        [mumps]
        include_dirs = /opt/local/include
        library_dirs = /opt/local/lib
