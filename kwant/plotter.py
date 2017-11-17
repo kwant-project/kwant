@@ -67,7 +67,7 @@ def matplotlib_chores():
         warnings.warn("Matplotlib 1.4.0 has a bug that makes 3D plotting "
                       "unusable (2D plotting is not affected). Please "
                       "consider using a different version of matplotlib.",
-                      RuntimeWarning)
+                      RuntimeWarning, stacklevel=2)
 
     pre_1_4_matplotlib = [int(x) for x in ver.split('.')[:2]] < [1, 4]
 
@@ -1457,7 +1457,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
     if min_dist < 1e-6 * np.linalg.norm(cmax - cmin):
         warnings.warn("Some sites have nearly coinciding positions, "
                       "interpolation may be confusing.",
-                      RuntimeWarning)
+                      RuntimeWarning, stacklevel=2)
 
     if a is None:
         a = min_dist

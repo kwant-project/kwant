@@ -151,8 +151,10 @@ def sympify(expr, locals=None):
     # if ``expr`` is already a ``sympy`` object we may terminate a code path
     if isinstance(expr, tuple(sympy_classes)):
         if locals:
-            warnings.warn('Input expression is already SymPy object: ' +
-                          '"locals" will not be used.', RuntimeWarning)
+            warnings.warn('Input expression is already SymPy object: '
+                          '"locals" will not be used.',
+                          RuntimeWarning,
+                          stacklevel=2)
         return expr
 
     # if ``expr`` is not a "sympy" then we proceed with sympifying process
