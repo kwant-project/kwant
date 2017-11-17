@@ -428,7 +428,9 @@ cdef class _LocalOperator:
         If True, checks that ``onsite``, as well as any relevant parts
         of the Hamiltonian are hermitian.
     sum : bool, default: False
-        If True, then calling this operator will return a single scalar.
+        If True, then calling this operator will return a single scalar,
+        otherwise a vector will be returned (see
+        `~kwant.operator._LocalOperator.__call__` for details).
     """
 
     cdef public int check_hermiticity, sum
@@ -468,14 +470,27 @@ cdef class _LocalOperator:
 
             >>> A(phi, psi)
 
-        to compute the matrix element :math:`\bra{φ} A \ket{ψ}`.  Note that
-        these quantities may be vectors (e.g. *local* charge or current
-        density).
+        to compute the matrix element :math:`\bra{φ} A \ket{ψ}`.
 
-        For an operator :math:`Q_{iαβ}`, ``bra`` :math:`φ_α` and
-        ``ket`` :math:`ψ_β` this computes :math:`q_i = ∑_{αβ} φ^*_α Q_{iαβ}
-        ψ_β` if ``self.sum`` is False, otherwise computes :math:`q = ∑_{iαβ}
-        φ^*_α Q_{iαβ} ψ_β`.
+        If ``sum=True`` was provided when constructing the operator, then
+        a scalar is returned. If ``sum=False``, then a vector is returned.
+        The vector is defined over the sites of the system if the operator
+        is a `~kwant.operator.Density`, or over the hoppings if it is a
+        `~kwant.operator.Current` or `~kwant.operator.Source`. By default,
+        the returned vector is ordered in the same way as the sites
+        (for `~kwant.operator.Density`) or hoppings in the graph of the
+        system (for `~kwant.operator.Current` or `~kwant.operator.Density`).
+        If the keyword parameter ``where`` was provided when constructing
+        the operator, then the returned vector is instead defined only over
+        the sites or hoppings specified, and is ordered in the same way
+        as ``where``.
+
+        Alternatively stated, for an operator :math:`Q_{iαβ}`, ``bra``
+        :math:`φ_α` and ``ket`` :math:`ψ_β` this computes
+        :math:`q_i = ∑_{αβ} φ^*_α Q_{iαβ} ψ_β` if ``self.sum`` is False,
+        otherwise computes :math:`q = ∑_{iαβ} φ^*_α Q_{iαβ} ψ_β`. where
+        :math:`i` runs over all sites or hoppings, and
+        :math:`α` and :math:`β` run over all the degrees of freedom.
 
         Parameters
         ----------
@@ -681,8 +696,8 @@ cdef class Density(_LocalOperator):
     """An operator for calculating general densities.
 
     An instance of this class can be called like a function to evaluate the
-    expectation value with a wavefunction. See the documentation of the
-    ``__call__`` method for more details.
+    expectation value with a wavefunction. See
+    `~kwant.operator.Density.__call__` for details.
 
     Parameters
     ----------
@@ -703,7 +718,9 @@ cdef class Density(_LocalOperator):
         Hermitian, then an error will be raised when the operator is
         evaluated.
     sum : bool, default: False
-        If True, then calling this operator will return a single scalar.
+        If True, then calling this operator will return a single scalar,
+        otherwise a vector will be returned (see
+        `~kwant.operator.Density.__call__` for details).
 
     Notes
     -----
@@ -818,8 +835,8 @@ cdef class Current(_LocalOperator):
     r"""An operator for calculating general currents.
 
     An instance of this class can be called like a function to evaluate the
-    expectation value with a wavefunction. See the documentation of the
-    ``__call__`` method for more details.
+    expectation value with a wavefunction. See
+    `~kwant.operator.Current.__call__` for details.
 
     Parameters
     ----------
@@ -842,7 +859,9 @@ cdef class Current(_LocalOperator):
         is not Hermitian, then an error will be raised when the
         operator is evaluated.
     sum : bool, default: False
-        If True, then calling this operator will return a single scalar.
+        If True, then calling this operator will return a single scalar,
+        otherwise a vector will be returned (see
+        `~kwant.operator.Current.__call__` for details).
 
     Notes
     -----
@@ -945,8 +964,8 @@ cdef class Source(_LocalOperator):
     """An operator for calculating general sources.
 
     An instance of this class can be called like a function to evaluate the
-    expectation value with a wavefunction. See the documentation of the
-    ``__call__`` method for more details.
+    expectation value with a wavefunction. See
+    `~kwant.operator.Source.__call__` for details.
 
     Parameters
     ----------
@@ -968,7 +987,9 @@ cdef class Source(_LocalOperator):
         Hermitian, then an error will be raised when the operator is
         evaluated.
     sum : bool, default: False
-        If True, then calling this operator will return a single scalar.
+        If True, then calling this operator will return a single scalar,
+        otherwise a vector will be returned (see
+        `~kwant.operator.Source.__call__` for details).
 
     Notes
     -----
