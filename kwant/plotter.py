@@ -1576,7 +1576,8 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
             raise ValueError('List of values is only allowed as input '
                              'for finalized systems.')
     value = np.array(value)
-    img, min, max = mask_interpolate(coords, value, a, method, oversampling)
+    with _common.reraise_warnings():
+        img, min, max = mask_interpolate(coords, value, a, method, oversampling)
     border = 0.5 * (max - min) / (np.asarray(img.shape) - 1)
     min -= border
     max += border
