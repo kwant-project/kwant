@@ -1021,6 +1021,21 @@ def test_HoppingKind():
         assert len({hk: 0, hk2:1, hk3: 2}) == 2
 
 
+def test_invalid_HoppingKind():
+    g = kwant.lattice.general(ta.identity(3))
+    h = kwant.lattice.general(np.identity(3)[:-1])  # 2D lattice in 3D
+
+    delta = (1, 0, 0)
+
+    # families have incompatible tags
+    with raises(ValueError):
+        builder.HoppingKind(delta, g, h)
+
+    # delta is incompatible with tags
+    with raises(ValueError):
+        builder.HoppingKind(delta, h)
+
+
 def test_ModesLead_and_SelfEnergyLead():
     lat = builder.SimpleSiteFamily()
     hoppings = [builder.HoppingKind((1, 0), lat),
