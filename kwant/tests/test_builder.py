@@ -1011,9 +1011,9 @@ def test_HoppingKind():
             assert a.tag - b.tag == delta
 
         # test hashability and equality
-        hk = builder.HoppingKind((1, 0), g)
-        hk2 = builder.HoppingKind((1, 0), g)
-        hk3 = builder.HoppingKind((1, 0), g, h)
+        hk = builder.HoppingKind((1, 0, 0), g)
+        hk2 = builder.HoppingKind((1, 0, 0), g)
+        hk3 = builder.HoppingKind((1, 0, 0), g, h)
         assert hk == hk2
         assert hash(hk) == hash(hk2)
         assert hk != hk3
