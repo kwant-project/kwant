@@ -4,6 +4,7 @@ stages:
   - build
   - test
   - deploy
+  - release
 
 variables:
   # rsync is used to send documentation to our web servers: we never send any
@@ -120,6 +121,7 @@ build and upload conda package (manual):
   <<: *conda_job
   except:
     - master
+    - /^v[0-9]+\.[0-9]+.[0-9]+$/@kwant/kwant
   when: manual
 
 
@@ -209,17 +211,22 @@ upload dev version docs:
   after_script:
     - rm -rf ~/.ssh
 
+# tagged version deploy
 
-upload docs of tagged build:
-  stage: deploy
-  environment:
-    name: production
-  only:
-     - /^v[0-9]+\.[0-9]+.[0-9]+$/@kwant/kwant
-  before_script:
-    - mkdir -p ~/.ssh
-    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+.tagged-version: &tagged_version
+    only:
+       - /^v[0-9]+\.[0-9]+.[0-9]+$/@kwant/kwant
+
+gather release artifacts:
+  <<: *tagged_version
+  stage: release
   script:
-    - rsync -rlv -e "$IGNORE_HOSTKEY" --delete doc/build/html/* kwant@kwant-project.org:doc/$(echo $CI_BUILD_TAG | sed 's/v\([0-9]\+\.[0-9]\+\)\.[0-9]\+/\1/')
-  after_script:
-    - rm -rf ~/.ssh
+    - ./setup.py sdist
+    - mkdir docs
+    - mv doc/build/latex/kwant.pdf docs/kwant-doc-${CI_COMMIT_TAG//v}.pdf
+    - mv doc/build/html docs/html
+    - zip -r docs/kwant-doc-${CI_COMMIT_TAG//v}.zip docs/html
+  artifacts:
+    paths:
+      - docs
+      - dist
