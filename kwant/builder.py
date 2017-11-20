@@ -442,6 +442,17 @@ class HoppingKind(tuple):
         else:
             ensure_isinstance(family_b, SiteFamily)
             family_b = family_b
+
+        try:
+            Site(family_b, family_a.normalize_tag(delta) - delta)
+        except Exception as e:
+            same_fams = family_b is family_a
+            msg = (str(family_a),
+                   'and {} are'.format(family_b) if not same_fams else ' is',
+                   'not compatible with delta={}'.format(delta),
+                  )
+            raise ValueError(' '.join(msg)) from e
+
         return tuple.__new__(cls, (delta, family_a, family_b))
 
     def __call__(self, builder):
