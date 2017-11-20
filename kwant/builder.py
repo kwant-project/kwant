@@ -1846,6 +1846,19 @@ class Builder:
         result.symmetry = self.symmetry
         return result
 
+    # Protect novice users from confusing error messages if they
+    # forget to finalize their Builder.
+
+    @staticmethod
+    def _require_system(*args, **kwargs):
+        """You need a finalized system; Use Builder.finalized() first."""
+        raise TypeError('You need a finalized system; '
+                        'use Builder.finalized() first.')
+
+    hamiltonian = hamiltonian_submatrix = modes = selfenergy = \
+    inter_cell_hopping = cell_hamiltonian = precalculated = \
+    _require_system
+
 
 ################ Finalized systems
 
