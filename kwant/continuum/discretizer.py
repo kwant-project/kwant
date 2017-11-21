@@ -65,7 +65,7 @@ class _DiscretizedBuilder(builder.Builder):
             else:
                 a, b = key
                 assert a is site
-                result.extend(["# Hopping in direction ",
+                result.extend(["# Hopping from ",
                                str(tuple(b.tag)),
                                ":\n"])
             result.append(val._source if callable(val) else repr(val))
