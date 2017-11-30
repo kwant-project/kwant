@@ -1011,14 +1011,29 @@ def test_HoppingKind():
             assert a.tag - b.tag == delta
 
         # test hashability and equality
-        hk = builder.HoppingKind((1, 0), g)
-        hk2 = builder.HoppingKind((1, 0), g)
-        hk3 = builder.HoppingKind((1, 0), g, h)
+        hk = builder.HoppingKind((1, 0, 0), g)
+        hk2 = builder.HoppingKind((1, 0, 0), g)
+        hk3 = builder.HoppingKind((1, 0, 0), g, h)
         assert hk == hk2
         assert hash(hk) == hash(hk2)
         assert hk != hk3
         assert hash(hk) != hash(hk3)
         assert len({hk: 0, hk2:1, hk3: 2}) == 2
+
+
+def test_invalid_HoppingKind():
+    g = kwant.lattice.general(ta.identity(3))
+    h = kwant.lattice.general(np.identity(3)[:-1])  # 2D lattice in 3D
+
+    delta = (1, 0, 0)
+
+    # families have incompatible tags
+    with raises(ValueError):
+        builder.HoppingKind(delta, g, h)
+
+    # delta is incompatible with tags
+    with raises(ValueError):
+        builder.HoppingKind(delta, h)
 
 
 def test_ModesLead_and_SelfEnergyLead():
