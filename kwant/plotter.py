@@ -1003,6 +1003,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
          show=True, dpi=None, fig_size=None, ax=None):
     """Plot a system in 2 or 3 dimensions.
 
+    An alias exists for this common name: ``kwant.plot``.
+
     Parameters
     ----------
     sys : kwant.builder.Builder or kwant.system.FiniteSystem

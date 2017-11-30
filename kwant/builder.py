@@ -393,6 +393,8 @@ class NoSymmetry(Symmetry):
 class HoppingKind(tuple):
     """A pattern for matching hoppings.
 
+    An alias exists for this common name: ``kwant.HoppingKind``.
+
     A hopping ``(a, b)`` matches precisely when the site family of ``a`` equals
     `family_a` and that of ``b`` equals `family_b` and ``(a.tag - b.tag)`` is
     equal to `delta`.  In other words, the matching hoppings have the form:
@@ -713,6 +715,8 @@ def _site_ranges(sites):
 
 class Builder:
     """A tight binding system defined on a graph.
+
+    An alias exists for this common name: ``kwant.Builder``.
 
     This is one of the central types in Kwant.  It is used to construct tight
     binding systems in a flexible way.

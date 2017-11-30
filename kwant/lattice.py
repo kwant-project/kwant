@@ -504,8 +504,9 @@ class Monatomic(builder.SiteFamily, Polyatomic):
 # point precision issues.
 
 class TranslationalSymmetry(builder.Symmetry):
-    """
-    A translational symmetry defined in real space.
+    """A translational symmetry defined in real space.
+
+    An alias exists for this common name: ``kwant.TranslationalSymmetry``.
 
     Group elements of this symmetry are integer tuples of appropriate length.
 

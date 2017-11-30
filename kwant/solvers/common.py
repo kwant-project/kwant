@@ -302,6 +302,8 @@ class SparseSolver(metaclass=abc.ABCMeta):
         """
         Compute the scattering matrix of a system.
 
+        An alias exists for this common name: ``kwant.smatrix``.
+
         Parameters
         ----------
         sys : `kwant.system.FiniteSystem`
@@ -393,6 +395,8 @@ class SparseSolver(metaclass=abc.ABCMeta):
                         *, params=None):
         """
         Compute the retarded Green's function of the system between its leads.
+
+        An alias exists for this common name: ``kwant.greens_function``.
 
         Parameters
         ----------
@@ -489,6 +493,8 @@ class SparseSolver(metaclass=abc.ABCMeta):
         """
         Calculate the local density of states of a system at a given energy.
 
+        An alias exists for this common name: ``kwant.ldos``.
+
         Parameters
         ----------
         sys : `kwant.system.FiniteSystem`
@@ -552,6 +558,8 @@ class SparseSolver(metaclass=abc.ABCMeta):
         """
         Return a callable object for the computation of the wave function
         inside the scattering region.
+
+        An alias exists for this common name: ``kwant.wave_function``.
 
         Parameters
         ----------
