@@ -20,7 +20,7 @@ from . import system, graph, KwantDeprecationWarning, UserCodeError
 from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry
-from ._common import ensure_isinstance, get_parameters
+from ._common import ensure_isinstance, get_parameters, reraise_warnings
 
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
@@ -1517,8 +1517,9 @@ class Builder:
         if hop_range > 1:
             # Automatically increase the period, potentially warn the user.
             new_lead = Builder(sym.subgroup((hop_range,)))
-            new_lead.fill(lead_builder, lambda site: True,
-                          lead_builder.sites(), max_sites=float('inf'))
+            with reraise_warnings():
+                new_lead.fill(lead_builder, lambda site: True,
+                              lead_builder.sites(), max_sites=float('inf'))
             lead_builder = new_lead
             sym = lead_builder.symmetry
             H = lead_builder.H
@@ -1568,8 +1569,9 @@ class Builder:
         # system (this one is guaranteed to contain a complete unit cell of the
         # lead). After flood-fill we remove that domain.
         start = {sym.act((max_dom + 1,), site) for site in H}
-        all_added = self.fill(lead_builder, shape, start,
-                              max_sites=float('inf'))
+        with reraise_warnings():
+            all_added = self.fill(lead_builder, shape, start,
+                                  max_sites=float('inf'))
         all_added = [site for site in all_added if site not in start]
         del self[start]
 

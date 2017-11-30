@@ -19,6 +19,7 @@ from sympy.printing.precedence import precedence
 from sympy.core.function import AppliedUndef
 
 from .. import builder, lattice
+from .._common import reraise_warnings
 from ._common import (sympify, gcd, position_operators, momentum_operators,
                       monomials)
 
@@ -171,7 +172,8 @@ def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
         The coordinates that have been discretized.
 
     """
-    hamiltonian = sympify(hamiltonian, locals)
+    with reraise_warnings():
+        hamiltonian = sympify(hamiltonian, locals)
 
     atoms_names = [s.name for s in hamiltonian.atoms(sympy.Symbol)]
     if any( s == 'a' for s in atoms_names):
@@ -276,8 +278,9 @@ def build_discretized(tb_hamiltonian, coords, *, grid_spacing=1, locals=None):
     if len(coords) == 0:
         raise ValueError('Discrete coordinates cannot be empty.')
 
-    for k, v in tb_hamiltonian.items():
-        tb_hamiltonian[k] = sympify(v, locals)
+    with reraise_warnings():
+        for k, v in tb_hamiltonian.items():
+            tb_hamiltonian[k] = sympify(v, locals)
 
     coords = list(coords)
     if coords != sorted(coords):

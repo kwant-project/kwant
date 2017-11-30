@@ -23,6 +23,8 @@ from sympy.physics.matrices import msigma as _msigma
 
 import warnings
 
+from .._common import reraise_warnings
+
 momentum_operators = sympy.symbols('k_x k_y k_z', commutative=False)
 position_operators = sympy.symbols('x y z', commutative=False)
 
@@ -73,7 +75,8 @@ def lambdify(expr, locals=None):
                [ 0.   ,  0.   ]])
 
     """
-    expr = sympify(expr, locals)
+    with reraise_warnings(level=4):
+        expr = sympify(expr, locals)
 
     args = [s.name for s in expr.atoms(sympy.Symbol)]
     args += [str(f.func) for f in expr.atoms(AppliedUndef, sympy.Function)]
@@ -151,8 +154,10 @@ def sympify(expr, locals=None):
     # if ``expr`` is already a ``sympy`` object we may terminate a code path
     if isinstance(expr, tuple(sympy_classes)):
         if locals:
-            warnings.warn('Input expression is already SymPy object: ' +
-                          '"locals" will not be used.', RuntimeWarning)
+            warnings.warn('Input expression is already SymPy object: '
+                          '"locals" will not be used.',
+                          RuntimeWarning,
+                          stacklevel=2)
         return expr
 
     # if ``expr`` is not a "sympy" then we proceed with sympifying process
