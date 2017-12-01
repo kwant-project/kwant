@@ -1,4 +1,4 @@
-@@ -1,140 +1,157 @@
+@@ -1,144 +1,162 @@
  # Tutorial 2.4.2. Closed systems
  # ==============================
  #
@@ -94,14 +94,19 @@
 +        fig.savefig("closed_system_result." + extension, dpi=_defs.dpi)
  #HIDDEN_END_yvri
  
+ def sorted_eigs(ev):
+     evals, evecs = ev
+-    evals, evecs = map(np.array, zip(*sorted(zip(evals, evecs.transpose())))
++    evals, evecs = map(np.array, zip(*sorted(zip(evals, evecs.transpose()))))
+     return evals, evecs.transpose()
  
  #HIDDEN_BEGIN_wave
- def plot_wave_function(syst):
+ def plot_wave_function(syst, B=0.001):
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +
      # Calculate the wave functions in the system.
-     ham_mat = syst.hamiltonian_submatrix(sparse=True)
-     evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
+     ham_mat = syst.hamiltonian_submatrix(sparse=True, args=[B])
+     evals, evecs = sorted_eigs(sla.eigsh(ham_mat, k=20, which='SM'))
  
      # Plot the probability density of the 10th eigenmode.
 -    kwant.plotter.map(syst, np.abs(evecs[:, 9])**2,
@@ -115,16 +120,16 @@
  
  
  #HIDDEN_BEGIN_current
- def plot_current(syst):
+ def plot_current(syst, B=0.001):
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +
      # Calculate the wave functions in the system.
-     ham_mat = syst.hamiltonian_submatrix(sparse=True)
-     evecs = sla.eigsh(ham_mat, k=20, which='SM')[1]
+     ham_mat = syst.hamiltonian_submatrix(sparse=True, args=[B])
+     evals, evecs = sorted_eigs(sla.eigsh(ham_mat, k=20, which='SM'))
  
      # Calculate and plot the local current of the 10th eigenmode.
      J = kwant.operator.Current(syst)
-     current = J(evecs[:, 9])
+     current = J(evecs[:, 9], args=[B])
 -    kwant.plotter.current(syst, current, colorbar=False)
 +    for extension in ('pdf', 'png'):
 +        kwant.plotter.current(
