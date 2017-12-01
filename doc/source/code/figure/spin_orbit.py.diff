@@ -47,10 +47,10 @@
          4 * t * sigma_0 + e_z * sigma_z
      # hoppings in x-direction
      syst[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
-         -t * sigma_0 - 1j * alpha * sigma_y
+         -t * sigma_0 + 1j * alpha * sigma_y / 2
      # hoppings in y-directions
      syst[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
-         -t * sigma_0 + 1j * alpha * sigma_x
+         -t * sigma_0 - 1j * alpha * sigma_x / 2
  #HIDDEN_END_uxrm
  
      #### Define the left lead. ####
@@ -60,10 +60,10 @@
      lead[(lat(0, j) for j in range(W))] = 4 * t * sigma_0 + e_z * sigma_z
      # hoppings in x-direction
      lead[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
-         -t * sigma_0 - 1j * alpha * sigma_y
+         -t * sigma_0 + 1j * alpha * sigma_y / 2
      # hoppings in y-directions
      lead[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
-         -t * sigma_0 + 1j * alpha * sigma_x
+         -t * sigma_0 - 1j * alpha * sigma_x / 2
  #HIDDEN_END_yliu
  
      #### Attach the leads and return the finalized system. ####
