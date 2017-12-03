@@ -177,7 +177,7 @@ def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
         hamiltonian = sympify(hamiltonian, locals)
 
     atoms_names = [s.name for s in hamiltonian.atoms(sympy.Symbol)]
-    if any( s == 'a' for s in atoms_names):
+    if any(s == 'a' for s in atoms_names):
         raise TypeError("'a' is a symbol used internally to represent "
                         "grid spacing; please use a different symbol.")
 
@@ -598,7 +598,7 @@ def _builder_value(expr, coords, grid_spacing, onsite,
     # constants and functions in the sympy input will be passed
     # as arguments to the value function
     arg_names = set.union({s.name for s in const_symbols},
-                                {str(k.func) for k in map_func_calls})
+                          {str(k.func) for k in map_func_calls})
 
     # check if all argument names are valid python identifiers
     for name in arg_names:
