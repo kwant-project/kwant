@@ -6,6 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+from keyword import iskeyword
 from collections import defaultdict
 import itertools
 
@@ -598,6 +599,15 @@ def _builder_value(expr, coords, grid_spacing, onsite,
     # as arguments to the value function
     arg_names = set.union({s.name for s in const_symbols},
                                 {str(k.func) for k in map_func_calls})
+
+    # check if all argument names are valid python identifiers
+    for name in arg_names:
+        if not (name.isidentifier() and not iskeyword(name)):
+            raise ValueError("Invalid name in used symbols: {}\n"
+                             "Names of symbols used in Hamiltonian "
+                             "must be valid Python identifiers and "
+                             "may not be keywords".format(name))
+
     arg_names = ', '.join(sorted(arg_names))
 
     if (not arg_names) and (coords is None):

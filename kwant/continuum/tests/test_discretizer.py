@@ -509,3 +509,16 @@ def test_numeric_functions_with_parameter():
                         rhs = f_num
 
                     assert np.allclose(lhs, rhs)
+
+
+@pytest.mark.parametrize('name', [
+    '1',
+    '1a',
+    '-a',
+    '+a',
+    'while',
+    'for'
+])
+def test_check_symbol_names(name):
+    with pytest.raises(ValueError):
+        discretize(sympy.Symbol(name), 'x')
