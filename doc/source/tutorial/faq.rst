@@ -434,7 +434,12 @@ Scattering states calculated using `~kwant.solvers.default.wave_function` are re
 same order as the "incoming" modes of `~kwant.system.InfiniteSystem.modes`.
 Kwant considers that the translational symmetry of a lead points "towards
 infinity" (*not* towards the system) which means that the incoming modes are
-those that have *negative* velocities:
+those that have *negative* velocities.
+
+This means that for a lead attached on the left of a scattering region (with
+symmetry vector $(-1, 0)$, for example), the
+positive $k$ direction (when inspecting the lead's band structure) actually
+corresponds to the *negative* $x$ direction.
 
 
 How does Kwant order components of an individual wavefunction?

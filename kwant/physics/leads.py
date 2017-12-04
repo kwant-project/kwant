@@ -135,6 +135,9 @@ class PropagatingModes:
     velocity, `k` is momentum and `conserved_quantity` is the conservation
     law eigenvalue.
 
+    In the above, the positive velocity and momentum directions are defined
+    with respect to the translational symmetry direction of the system.
+
     The first dimension of `wave_functions` corresponds to the orbitals of all
     the sites in a unit cell, the second one to the number of the mode.  Each
     mode is normalized to carry unit current. If several modes have the same

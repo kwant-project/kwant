@@ -570,13 +570,23 @@ class SparseSolver(metaclass=abc.ABCMeta):
 
         Notes
         -----
-
         The returned object can be itself called like a function.  Given a lead
         number, it returns a 2d NumPy array that contains the wave function
         within the scattering region due to each incoming mode of the given
-        lead.  Index 0 is the mode number, index 1 is the orbital number.  The
-        modes appear in the same order as incoming modes in
-        `kwant.physics.modes`.
+        lead.  Index 0 is the mode number, index 1 is the orbital number.
+
+        The modes appear in the same order as the negative velocity modes in
+        `kwant.physics.PropagatingModes`. In Kwant's convention leads are attached
+        so that their translational symmetry points *away* from the scattering
+        region::
+
+             left lead    SR   right lead
+             /---------\ /---\ /---------\
+             ...-3-2-1-0-X-X-X-0-1-2-3-...
+
+        This means that incoming modes (coming from infinity towards the
+        scattering region) have *negative* velocity with respect to the
+        lead's symmetry direction.
 
         Examples
         --------
