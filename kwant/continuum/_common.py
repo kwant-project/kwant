@@ -25,6 +25,9 @@ import warnings
 
 from .._common import reraise_warnings
 
+# TODO: remove when sympy correctly includes MutableDenseMatrix (lol).
+sympy_classes = set(sympy_classes) | {sympy.MutableDenseMatrix}
+
 momentum_operators = sympy.symbols('k_x k_y k_z', commutative=False)
 position_operators = sympy.symbols('x y z', commutative=False)
 
