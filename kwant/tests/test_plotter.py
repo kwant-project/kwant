@@ -15,14 +15,26 @@ from math import cos, sin
 import scipy.integrate
 import scipy.stats
 import pytest
+import sys
 
 import kwant
-from kwant import plotter
 from kwant._common import ensure_rng
 
-if plotter.mpl_enabled:
+try:
     from mpl_toolkits import mplot3d
+    import matplotlib
+
+    # If the user did not already choose a backend, then choose
+    # the one with the least dependencies.
+    # This check is the same as the one performed inside matplotlib.use.
+    if 'matplotlib.backends' not in sys.modules:
+        matplotlib.use('Agg')
+
     from matplotlib import pyplot  # pragma: no flakes
+except ImportError:
+    pass
+
+from kwant import plotter
 
 
 def test_importable_without_matplotlib():
