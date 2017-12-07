@@ -311,8 +311,6 @@ if mpl_enabled:
                         self.set_paths(paths[indx])
 
                     if len(self.orig_transforms) > 1:
-                        self.transforms = np.resize(self.orig_transforms,
-                                                     (vs.shape[1],))
                         self.transforms = self.transforms[indx]
 
                     lw_orig = self.linewidths_orig
