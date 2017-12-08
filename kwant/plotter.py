@@ -1770,8 +1770,13 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         if fig_size is not None:
             fig.set_figwidth(fig_size[0])
             fig.set_figheight(fig_size[1])
-        projection = '3d' if y is not None else None
-        ax = fig.add_subplot(1, 1, 1, projection=projection)
+        if y is None:
+            ax = fig.add_subplot(1, 1, 1)
+        else:
+            warnings.filterwarnings('ignore',
+                                    message=r'.*mouse rotation disabled.*')
+            ax = fig.add_subplot(1, 1, 1, projection='3d')
+            warnings.resetwarnings()
         ax.set_xlabel(keys[0])
         if y is None:
             ax.set_ylabel('Energy')

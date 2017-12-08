@@ -715,6 +715,7 @@ def test_fill():
     target = builder.Builder()
     added_sites = target.fill(template_1d, line_200, g(0, 0))
     assert len(added_sites) == 200
+    # raise warning if target already contains all starting sites
     with warns(RuntimeWarning):
         target.fill(template_1d, line_200, g(0, 0))
 
