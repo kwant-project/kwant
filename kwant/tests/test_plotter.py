@@ -105,7 +105,7 @@ def syst_3d(W=3, r1=2, r2=4, a=1, t=1.0):
     return syst
 
 
-@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
+@pytest.mark.skipif(not plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_plot():
     plot = plotter.plot
     syst2d = syst_2d()
@@ -155,7 +155,7 @@ def bad_transform(pos):
     x, y = pos
     return x, y, 0
 
-@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
+@pytest.mark.skipif(not plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_map():
     syst = syst_2d()
     with tempfile.TemporaryFile('w+b') as out:
@@ -191,7 +191,7 @@ def test_mask_interpolate():
                       coords, np.ones(2 * len(coords)))
 
 
-@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
+@pytest.mark.skipif(not plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_bands():
 
     syst = syst_2d().finalized().leads[0]
@@ -206,7 +206,7 @@ def test_bands():
         plotter.bands(syst, ax=ax, file=out)
 
 
-@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
+@pytest.mark.skipif(not plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_spectrum():
 
     def ham_1d(a, b, c):
@@ -417,7 +417,7 @@ def test_current_interpolation():
     assert scipy.stats.linregress(np.log(data))[2] < -0.8
 
 
-@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
+@pytest.mark.skipif(not plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_current():
     syst = syst_2d().finalized()
     J = kwant.operator.Current(syst)
