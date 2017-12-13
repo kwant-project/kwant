@@ -96,8 +96,7 @@
  
  def sorted_eigs(ev):
      evals, evecs = ev
--    evals, evecs = map(np.array, zip(*sorted(zip(evals, evecs.transpose())))
-+    evals, evecs = map(np.array, zip(*sorted(zip(evals, evecs.transpose()))))
+     evals, evecs = map(np.array, zip(*sorted(zip(evals, evecs.transpose()))))
      return evals, evecs.transpose()
  
  #HIDDEN_BEGIN_wave
