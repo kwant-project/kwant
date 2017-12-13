@@ -24,10 +24,11 @@ try:
     from mpl_toolkits import mplot3d
     import matplotlib
 
+    # This check is the same as the one performed inside matplotlib.use.
+    matplotlib_backend_chosen = 'matplotlib.backends' in sys.modules
     # If the user did not already choose a backend, then choose
     # the one with the least dependencies.
-    # This check is the same as the one performed inside matplotlib.use.
-    if 'matplotlib.backends' not in sys.modules:
+    if not matplotlib_backend_chosen:
         matplotlib.use('Agg')
 
     from matplotlib import pyplot  # pragma: no flakes
@@ -35,6 +36,11 @@ except ImportError:
     pass
 
 from kwant import plotter
+
+
+def test_matplotlib_backend_unset():
+    """Simply importing Kwant should not set the matplotlib backend."""
+    assert matplotlib_backend_chosen is False
 
 
 def test_importable_without_matplotlib():

@@ -315,12 +315,12 @@ subbands that increases with energy.
 
    - Instead of plotting to the screen (which is standard)
      `~kwant.plotter.plot` can also write to a file specified by the argument
-     ``file``.  For the plotting to the screen to work the module
-     ``matplotlib.pyplot`` has to be imported.  (An informative error message
-     will remind you if you forget.)  The reason for this is pretty technical:
-     matplotlib's "backend" can only be chosen before ``matplotlib.pyplot`` has
-     been imported.  Would Kwant import that module by itself, it would deprive
-     you of the possibility to choose a non-default backend later.
+     ``file``.
+
+   - Due to matplotlib's limitations, Kwant's plotting routines have the
+     side effect of fixing matplotlib's "backend".  If you would like to choose
+     a different backend than the standard one, you must do so before asking
+     Kwant to plot anything.
 
 
 .. rubric:: Footnotes

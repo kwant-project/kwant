@@ -16,6 +16,7 @@ system in two or three dimensions.
 """
 
 from collections import defaultdict
+import sys
 import itertools
 import functools
 import warnings
@@ -35,7 +36,6 @@ try:
     import matplotlib.cm
     from matplotlib.figure import Figure
     from matplotlib import collections
-    from matplotlib.backends.backend_agg import FigureCanvasAgg
     from . import _colormaps
     mpl_available = True
     try:
@@ -659,15 +659,23 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
     """
     if not mpl_available:
         raise RuntimeError('matplotlib is not installed.')
+
+    # We import backends and pyplot only at the last possible moment (=now)
+    # because this has the side effect of selecting the matplotlib backend for
+    # good.  Warn if backend has not been set yet.  This check is the same as
+    # the one performed inside matplotlib.use.
+    if 'matplotlib.backends' not in sys.modules:
+        warnings.warn("Kwant's plotting functions have\nthe side effect of "
+                      "selecting the matplotlib backend. To avoid this "
+                      "warning,\nimport matplotlib.pyplot, "
+                      "matplotlib.backends or call matplotlib.use().",
+                      RuntimeWarning, stacklevel=3)
+
     if output_mode == 'auto':
         output_mode = 'pyplot' if file is None else 'file'
     if output_mode == 'pyplot':
-        try:
-            fake_fig = matplotlib.pyplot.figure()
-        except AttributeError:
-            msg = ('matplotlib.pyplot is unavailable.  Execute `import '
-                   'matplotlib.pyplot` or use a different output mode.')
-            raise RuntimeError(msg)
+        from matplotlib import pyplot
+        fake_fig = pyplot.figure()
         fake_fig.canvas.figure = fig
         fig.canvas = fake_fig.canvas
         for ax in fig.axes:
@@ -676,16 +684,16 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
             except AttributeError:
                 pass
         if show:
-            matplotlib.pyplot.show()
+            pyplot.show()
     elif output_mode in ['return', 'file']:
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
         fig.canvas = FigureCanvasAgg(fig)
         if output_mode == 'file':
-            fig.canvas = canvas = FigureCanvasAgg(fig)
             if savefile_opts is None:
                 savefile_opts = ([], {})
             if 'dpi' not in savefile_opts[1]:
                 savefile_opts[1]['dpi'] = fig.dpi
-            canvas.print_figure(file, *savefile_opts[0], **savefile_opts[1])
+            fig.canvas.print_figure(file, *savefile_opts[0], **savefile_opts[1])
     else:
         raise ValueError('Unknown output_mode')
     return fig
@@ -2158,8 +2166,9 @@ def current(syst, current, relwidth=0.05, **kwargs):
         A figure with the output if `ax` is not set, else None.
 
     """
-    return streamplot(*interpolate_current(syst, current, relwidth),
-                      **kwargs)
+    with _common.reraise_warnings(4):
+        return streamplot(*interpolate_current(syst, current, relwidth),
+                          **kwargs)
 
 
 # TODO (Anton): Fix plotting of parts of the system using color = np.nan.
