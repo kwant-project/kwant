@@ -40,17 +40,29 @@ Check that there are no glaring deficiencies.
 Update the ``whatsnew`` file
 ----------------------------
 
-Check that there is an appropriate ``whatsnew`` file in ``doc/source/pre/whatsnew``.
-This should be named as::
+For each new mior release, check that there is an appropriate ``whatsnew`` file
+in ``doc/source/pre/whatsnew``.  This should be named as::
 
-    <major>.<minor>.<patch>.rst
+    <major>.<minor>.rst
 
-and should contain a list of the user-facing changes that were made in the
-release. With any luck this file will have been updated after any major
-features were released, if not then you can see what commits were introduced
-since the last release using ``git log``. You can also see what issues were
-assigned to the release's milestons and get an idea of what was introduced
-from there.
+and referenced from ``doc/source/pre/whatsnew/index.rst``.  It should contain a
+list of the user-facing changes that were made in the release. With any luck
+this file will have been updated after any major features were released, if not
+then you can see what commits were introduced since the last release using
+``git log``. You can also see what issues were assigned to the release's
+milestons and get an idea of what was introduced from there.
+
+Starting with Kwant 1.4, we also mention user-visible changes in bugfix
+releases in the whatsnew files.
+
+
+Verify that ``AUTHORS.rst`` is up-to-date
+-----------------------------------------
+
+The following command shows the number of commits per author since the last
+annotated tag::
+
+    t=$(git describe --abbrev=0); echo Commits since $t; git shortlog -s $t..
 
 
 Make a release, but do not publish it yet
@@ -133,12 +145,29 @@ show correct information.
 Release a new version of the Kwant Debian package
 -------------------------------------------------
 
-Fetch the git tag created above into the packaging repo::
+Fetch packaging work (from origin) and the git tag created above (from
+upstream_repo) into the packaging repo::
 
     git fetch --all
 
-Now there are two options.  If, as recommended above, the tarball of the new
-version has not been made public yet, it must be imported as follows::
+Make sure that the branches ``master`` and ``upstream`` are up-to-date::
+
+    git checkout upstream
+    git merge --ff-only origin/upstream
+    git checkout master
+    git merge --ff-only origin/master
+
+Debian packages may include "quilt" patches that are applied on top of the
+pristine tarball.  The tool `gbp pq` manages these patches as a git branch
+``patch-queue/master.  Execute the following commands to (re)create
+that branch based on the patches in ``debian/patches``::
+
+    gbp pq --force import
+    gbp checkout master
+
+Now it is time to import the new source code.  There are two options.  If, as
+recommended above, the tarball of the new version has not been made public yet,
+it must be imported as follows::
 
     gbp import-orig ~/src/kwant/dist/kwant-1.2.3.tar.gz
 
@@ -147,18 +176,39 @@ Alternatively, the following commands will import the newest version from PyPI::
     uscan --report      # This will report if a newer version exists on PyPI
     gbp import-orig --uscan
 
-Update the debian changelog.  Add a point "New upstream release" if there was
-one, and describe any other changes to the Debian *packaging*::
+Now it is time to review the patch queue.  Rebase and checkout the ``patch-queue/master`` branch using
+
+    gbp pq rebase
+
+As ususal, the rebase might require manual intervention.  Once done, review all
+the commits of the ``patch-queue/master`` branch.  Are all patches still
+needed, should any be removed?  When done (even if no changes were needed), recreate the files in ``debian/patches`` using::
+
+    gbp pq export
+
+If ``git diff`` reports any changes, be sure to commit them.
+
+Now is the right moment to verify and modify the packaging information inside
+the ``debian/`` directory.  For example, are the dependencies and versions
+stated in ``debian/control`` up-to-date?
+
+When all changes are commited, it is time to finalize by updating the Debian
+changelog file.  Add a point "New upstream release" if there was one, and
+describe any other changes to the Debian *packaging*::
 
     DEBEMAIL=your.email@somewhere.org gbp dch -R --commit --distribution testing
 
-Now the package can be built with::
+Now verify that the package builds with::
 
     git clean -i
     gbp buildpackage
 
-But this is *not* how the package should be built for distribution.  For that,
-see the following two sections.
+This is *not* how the package should be built for distribution.  For that, see
+the following two sections.
+
+If problems surface that require changing the packaging, undo the changelog
+commit, modify the packaging, and re-iterate.  If the problems require fixing
+Kwant, you will have to go back all the way to recreating the source tarball.  If the version to be packaged has been released publicly already, this will require a new bugfix version.
 
 
 Setup git-pbuilder to build Debian packages
@@ -263,9 +313,9 @@ also made available on the website::
 Debian packages
 ---------------
 
-Go to the Debian packaging repository and push out everything::
+Go to the Debian packaging repository and push out the changes::
 
-    git push --all --tags origin
+    git push --tags origin master upstream
 
 Now the Debian packages that we built previously need to be added to the
 repository of Debian packages on the Kwant website.  So far this the full
