@@ -16,6 +16,7 @@ system in two or three dimensions.
 """
 
 from collections import defaultdict
+import sys
 import itertools
 import functools
 import warnings
@@ -35,9 +36,8 @@ try:
     import matplotlib.cm
     from matplotlib.figure import Figure
     from matplotlib import collections
-    from matplotlib.backends.backend_agg import FigureCanvasAgg
     from . import _colormaps
-    mpl_enabled = True
+    mpl_available = True
     try:
         from mpl_toolkits import mplot3d
         has3d = True
@@ -47,7 +47,7 @@ try:
 except ImportError:
     warnings.warn("matplotlib is not available, only iterator-providing "
                   "functions will work.", RuntimeWarning)
-    mpl_enabled = False
+    mpl_available = False
 
 from . import system, builder, _common
 
@@ -77,7 +77,7 @@ def _sample_array(array, n_samples, rng=None):
     return array[rng.choice(range(la), min(n_samples, la))]
 
 
-if mpl_enabled:
+if mpl_available:
     class LineCollection(collections.LineCollection):
         def __init__(self, segments, reflen=None, **kwargs):
             super().__init__(segments, **kwargs)
@@ -285,8 +285,6 @@ if mpl_enabled:
                         self.set_paths(paths[indx])
 
                     if len(self.orig_transforms) > 1:
-                        self.transforms = np.resize(self.orig_transforms,
-                                                     (vs.shape[1],))
                         self.transforms = self.transforms[indx]
 
                     lw_orig = self.linewidths_orig
@@ -613,10 +611,9 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
         The output mode to be used.  Can be one of the following:
         'pyplot' : attach the figure to pyplot, with the same behavior as if
         pyplot.plot was called to create this figure.
-        'ipython' : attach a `FigureCanvasAgg` to the figure and return it.
-        'return' : return the figure.
-        'file' : same as 'ipython', but also save the figure into a file.
-        'auto' : if fname is given, save to a file, else if pyplot
+        'return' : attach a `FigureCanvasAgg` to the figure and return it.
+        'file' : same as 'return', but also save the figure into a file.
+        'auto' : if fname is given, save to a file, otherwise like pyplot
         is imported, attach to pyplot, otherwise just return.  See also the
         notes below.
     file : string or a file object
@@ -634,24 +631,25 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
     matplotlib in that the `dpi` attribute of the figure is used by defaul
     instead of the matplotlib config setting.
     """
-    if not mpl_enabled:
+    if not mpl_available:
         raise RuntimeError('matplotlib is not installed.')
+
+    # We import backends and pyplot only at the last possible moment (=now)
+    # because this has the side effect of selecting the matplotlib backend for
+    # good.  Warn if backend has not been set yet.  This check is the same as
+    # the one performed inside matplotlib.use.
+    if 'matplotlib.backends' not in sys.modules:
+        warnings.warn("Kwant's plotting functions have\nthe side effect of "
+                      "selecting the matplotlib backend. To avoid this "
+                      "warning,\nimport matplotlib.pyplot, "
+                      "matplotlib.backends or call matplotlib.use().",
+                      RuntimeWarning, stacklevel=3)
+
     if output_mode == 'auto':
-        if file is not None:
-            output_mode = 'file'
-        else:
-            try:
-                matplotlib.pyplot.get_backend()
-                output_mode = 'pyplot'
-            except AttributeError:
-                output_mode = 'pyplot'
+        output_mode = 'pyplot' if file is None else 'file'
     if output_mode == 'pyplot':
-        try:
-            fake_fig = matplotlib.pyplot.figure()
-        except AttributeError:
-            msg = ('matplotlib.pyplot is unavailable.  Execute `import '
-                   'matplotlib.pyplot` or use a different output mode.')
-            raise RuntimeError(msg)
+        from matplotlib import pyplot
+        fake_fig = pyplot.figure()
         fake_fig.canvas.figure = fig
         fig.canvas = fake_fig.canvas
         for ax in fig.axes:
@@ -660,22 +658,19 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
             except AttributeError:
                 pass
         if show:
-            matplotlib.pyplot.show()
-        return fig
-    elif output_mode == 'return':
-        canvas = FigureCanvasAgg(fig)
-        fig.canvas = canvas
-        return fig
-    elif output_mode == 'file':
-        canvas = FigureCanvasAgg(fig)
-        if savefile_opts is None:
-            savefile_opts = ([], {})
-        if 'dpi' not in savefile_opts[1]:
-            savefile_opts[1]['dpi'] = fig.dpi
-        canvas.print_figure(file, *savefile_opts[0], **savefile_opts[1])
-        return fig
+            pyplot.show()
+    elif output_mode in ['return', 'file']:
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
+        fig.canvas = FigureCanvasAgg(fig)
+        if output_mode == 'file':
+            if savefile_opts is None:
+                savefile_opts = ([], {})
+            if 'dpi' not in savefile_opts[1]:
+                savefile_opts[1]['dpi'] = fig.dpi
+            fig.canvas.print_figure(file, *savefile_opts[0], **savefile_opts[1])
     else:
-        assert False, 'Unknown output_mode'
+        raise ValueError('Unknown output_mode')
+    return fig
 
 
 # Extracting necessary data from the system.
@@ -979,6 +974,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
          show=True, dpi=None, fig_size=None, ax=None):
     """Plot a system in 2 or 3 dimensions.
 
+    An alias exists for this common name: ``kwant.plot``.
+
     Parameters
     ----------
     sys : kwant.builder.Builder or kwant.system.FiniteSystem
@@ -1114,7 +1111,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
       its aspect ratio.
 
     """
-    if not mpl_enabled:
+    if not mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for plot()")
 
@@ -1448,7 +1445,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
     if min_dist < 1e-6 * np.linalg.norm(cmax - cmin):
         warnings.warn("Some sites have nearly coinciding positions, "
                       "interpolation may be confusing.",
-                      RuntimeWarning)
+                      RuntimeWarning, stacklevel=2)
 
     if a is None:
         a = min_dist
@@ -1546,7 +1543,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
       correspond to exactly one pixel.
     """
 
-    if not mpl_enabled:
+    if not mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for map()")
 
@@ -1567,7 +1564,8 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
             raise ValueError('List of values is only allowed as input '
                              'for finalized systems.')
     value = np.array(value)
-    img, min, max = mask_interpolate(coords, value, a, method, oversampling)
+    with _common.reraise_warnings():
+        img, min, max = mask_interpolate(coords, value, a, method, oversampling)
     border = 0.5 * (max - min) / (np.asarray(img.shape) - 1)
     min -= border
     max += border
@@ -1642,7 +1640,7 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
     See `~kwant.physics.Bands` for the calculation of dispersion without plotting.
     """
 
-    if not mpl_enabled:
+    if not mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for bands()")
 
@@ -1717,7 +1715,7 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         A figure with the output if `ax` is not set, else None.
     """
 
-    if not mpl_enabled:
+    if not mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for plot_spectrum()")
     if y is not None and not has3d:
@@ -2071,7 +2069,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     fig : matplotlib figure
         A figure with the output if `ax` is not set, else None.
     """
-    if not mpl_enabled:
+    if not mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for current()")
 
@@ -2173,8 +2171,9 @@ def current(syst, current, relwidth=0.05, **kwargs):
         A figure with the output if `ax` is not set, else None.
 
     """
-    return streamplot(*interpolate_current(syst, current, relwidth),
-                      **kwargs)
+    with _common.reraise_warnings(4):
+        return streamplot(*interpolate_current(syst, current, relwidth),
+                          **kwargs)
 
 
 # TODO (Anton): Fix plotting of parts of the system using color = np.nan.

@@ -121,6 +121,9 @@ class PropagatingModes:
     velocity, `k` is momentum and `conserved_quantity` is the conservation
     law eigenvalue.
 
+    In the above, the positive velocity and momentum directions are defined
+    with respect to the translational symmetry direction of the system.
+
     The first dimension of `wave_functions` corresponds to the orbitals of all
     the sites in a unit cell, the second one to the number of the mode.  Each
     mode is normalized to carry unit current. If several modes have the same
@@ -490,7 +493,7 @@ def phs_symmetrization(wfs, particle_hole):
     ----------
     wfs : numpy array
         A matrix of propagating wave functions at a TRIM that all have the same
-        velocity. The wave functions form the columns of this matrix.
+        velocity. The orthonormal wave functions form the columns of this matrix.
     particle_hole : numpy array
         The matrix representation of the unitary part of the particle-hole
         operator, expressed in the tight binding basis.
@@ -508,26 +511,44 @@ def phs_symmetrization(wfs, particle_hole):
         """Apply the particle-hole operator to an array. """
         return particle_hole.dot(mat.conj())
 
-    # P always squares to 1 or -1.
-    P_squared = np.sign(particle_hole[0,:].dot(particle_hole[:,0].conj()))
-    # np.sign returns the same data type as its argument. Make sure
-    # that the comparison with integers is okay.
-    assert P_squared in (-1, 1)
+    # Take P in the subspace of W = wfs: U = W^+ @ P @ W^*.
+    U = wfs.T.conj().dot(Pdot(wfs))
+    # Check that wfs are orthonormal and the space spanned
+    # by them is closed under ph, meaning U is unitary.
+    if not np.allclose(U.dot(U.T.conj()), np.eye(U.shape[0])):
+        raise ValueError('wfs are not orthonormal or not closed under particle_hole.')
+    P_squared = U.dot(U.conj())
+    if np.allclose(P_squared, np.eye(U.shape[0])):
+        P_squared = 1
+    elif np.allclose(P_squared, -np.eye(U.shape[0])):
+        P_squared = -1
+    else:
+        raise ValueError('particle_hole must square to +1 or -1. P_squared = {}'.format(P_squared))
 
     if P_squared == 1:
-        # Make particle hole eigenstates.
-        # Phase factor ensures they are not numerically close.
-        phases = np.diag([np.exp(1j*np.angle(wf.T.conj().dot(
-                            Pdot(wf)))*0.5) for wf in wfs.T])
-        new_wfs = wfs.dot(phases) + Pdot(wfs.dot(phases))
-        # Orthonormalize the modes using QR on the matrix of eigenstates of P.
-        # So long as the matrix of coefficients R is purely real, any linear
-        # combination of these modes remains an eigenstate of P. From the way
-        # we construct eigenstates of P, the coefficients of R are real.
-        new_wfs, r = la.qr(new_wfs, mode='economic', pivoting=True)[:2]
-        if not np.allclose(r.imag, np.zeros(r.shape)):  # skip coverage
-            raise RuntimeError("Numerical instability in finding particle-hole \
-                                symmetric modes.")
+        # Use the matrix square root method from
+        # Applied Mathematics and Computation 234 (2014) 380-384.
+        assert np.allclose(U, U.T)
+        # Schur decomposition guarantees that vecs are orthonormal.
+        vals, vecs = la.schur(U)
+        # U should be normal, so vals is diagonal.
+        assert np.allclose(np.diag(np.diag(vals)), vals)
+        vals = np.diag(vals)
+        # Need to take safe square root of U, the branch cut should not go
+        # through any eigenvalues. Otherwise the square root may not be symmetric.
+        # Find largest gap between eigenvalues
+        phases = np.sort(np.angle(vals))
+        dph = np.append(np.diff(phases), phases[0] + 2*np.pi - phases[-1])
+        i = np.argmax(dph)
+        shift = -np.pi - (phases[i] + dph[i]/2)
+        # Take matrix square root with branch cut in largest gap
+        vals = np.sqrt(vals * np.exp(1j * shift)) * np.exp(-0.5j * shift)
+        sqrtU = vecs.dot(np.diag(vals)).dot(vecs.T.conj())
+        # For symmetric U sqrt(U) is also symmetric.
+        assert np.allclose(sqrtU, sqrtU.T)
+        # We want a new basis W_new such that W_new^+ @ P @ W_new^* = 1.
+        # This is achieved by W_new = W @ sqrt(U).
+        new_wfs = wfs.dot(sqrtU)
         # If P^2 = 1, there is no need to sort the modes further.
         TRIM_sort = np.zeros((wfs.shape[1],), dtype=int)
     else:
@@ -540,7 +561,7 @@ def phs_symmetrization(wfs, particle_hole):
         # If there are only two modes in this subspace, they are orthogonal
         # so we replace the second one with the P applied to the first one.
         if N_modes == 2:
-            wf = wfs[:,0]
+            wf = wfs[:, 0]
             # Store psi_n and P psi_n.
             new_wfs.append(wf)
             new_wfs.append(Pdot(wf))
@@ -553,22 +574,22 @@ def phs_symmetrization(wfs, particle_hole):
             for i in iterations:
                 # Take a mode psi_n from the basis - the first column
                 # of the matrix of remaining modes.
-                wf = wfs[:,0]
+                wf = wfs[:, 0]
                 # Store psi_n and P psi_n.
                 new_wfs.append(wf)
                 P_wf = Pdot(wf)
                 new_wfs.append(P_wf)
                 # Remove psi_n and P psi_n from the basis matrix of modes.
                 # First remove psi_n.
-                wfs = wfs[:,1:]
+                wfs = wfs[:, 1:]
                 # Now we project the remaining modes onto the orthogonal
-                # complement of P psi_n. Projector:
-                Projector = wfs.dot(wfs.T.conj()) - \
+                # complement of P psi_n. projector:
+                projector = wfs.dot(wfs.T.conj()) - \
                             np.outer(P_wf, P_wf.T.conj())
                 # After the projection, the mode matrix is rank deficient -
                 # the span of the column space has dimension one less than
                 # the number of columns.
-                wfs = Projector.dot(wfs)
+                wfs = projector.dot(wfs)
                 wfs = la.qr(wfs, mode='economic', pivoting=True)[0]
                 # Remove the redundant column.
                 wfs = wfs[:, :-1]
@@ -577,13 +598,12 @@ def phs_symmetrization(wfs, particle_hole):
                 # the projection.
                 if i == iterations[-1]:
                     assert wfs.shape[1] == 2
-                    wf = wfs[:,0]
+                    wf = wfs[:, 0]
                     # Store psi_n and P psi_n.
                     new_wfs.append(wf)
-                    P_wf = Pdot(wf)
-                    new_wfs.append(P_wf)
+                    new_wfs.append(Pdot(wf))
                 assert np.allclose(wfs.T.conj().dot(wfs),
-                                      np.eye(wfs.shape[1]))
+                                   np.eye(wfs.shape[1]))
         new_wfs = np.hstack([col.reshape(len(col), 1)/npl.norm(col) for
                              col in new_wfs])
         assert np.allclose(new_wfs[:, 1::2], Pdot(new_wfs[:, ::2]))

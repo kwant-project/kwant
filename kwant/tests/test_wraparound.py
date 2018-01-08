@@ -17,7 +17,7 @@ from kwant import plotter
 from kwant.wraparound import wraparound, plot_2d_bands
 from kwant._common import get_parameters
 
-if plotter.mpl_enabled:
+if plotter.mpl_available:
     from mpl_toolkits import mplot3d  # pragma: no flakes
     from matplotlib import pyplot  # pragma: no flakes
 
@@ -201,7 +201,7 @@ def test_symmetry():
                 assert np.all(orig == new)
 
 
-@pytest.mark.skipif(not plotter.mpl_enabled, reason="No matplotlib available.")
+@pytest.mark.skipif(not plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_plot_2d_bands():
     chain = kwant.lattice.chain()
     square = kwant.lattice.square()

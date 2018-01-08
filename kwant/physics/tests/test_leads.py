@@ -638,15 +638,11 @@ def test_PHS_TRIM():
                     for nmodes in (1, 3, n//4, n//2, n):
                         # Random matrix of 'modes.' Take part of a unitary
                         # matrix to ensure that the modes form a basis.
-                        modes = (rng.random_sample((n, n))
-                                 + 1j*rng.random_sample((n, n)))
-                        modes = la.expm(1j*(modes
-                                            + modes.T.conj()))[:n, :nmodes]
+                        modes = kwant.rmt.circular(n, 'A', rng=rng)[:, :nmodes]
                         # Ensure modes are particle-hole symmetric and
-                        # normalized
+                        # orthonormal
                         modes = modes + p_mat.dot(modes.conj())
-                        modes = np.array([col/np.linalg.norm(col) for col
-                                          in modes.T]).T
+                        modes = la.qr(modes, mode='economic')[0]
                         # Mix the modes with a random unitary transformation
                         U = kwant.rmt.circular(nmodes, 'A', rng=rng)
                         modes = modes.dot(U)
@@ -666,18 +662,14 @@ def test_PHS_TRIM():
                     for nmodes in (2, 4, n//2, n):
                         # Random matrix of 'modes.' Take part of a unitary
                         # matrix to ensure that the modes form a basis.
-                        modes = rng.rand(n, n) + 1j * rng.rand(n, n)
-                        modes = la.expm(1j*(modes +
-                                            modes.T.conj()))[:n, :nmodes]
+                        modes = kwant.rmt.circular(n, 'A', rng=rng)[:, :nmodes]
                         # Ensure modes are particle-hole symmetric and
                         # orthonormal.
                         modes[:, nmodes//2:] = \
                                 p_mat.dot(modes[:, :nmodes//2].conj())
                         modes = la.qr(modes, mode='economic')[0]
                         # Mix the modes with a random unitary transformation
-                        U = (rng.random_sample((nmodes, nmodes))
-                             + 1j*rng.random_sample((nmodes, nmodes)))
-                        U = la.expm(1j*(U + U.T.conj()))
+                        U = kwant.rmt.circular(nmodes, 'A', rng=rng)
                         modes = modes.dot(U)
                         # Make the modes PHS symmetric using the method for a
                         # TRIM.
@@ -690,7 +682,30 @@ def test_PHS_TRIM():
                                             np.eye(phs_modes.shape[1]),
                                             err_msg='Modes are not orthonormal,'
                                                     ' TRIM PHS in ' + sym)
-
+        # Test the off-diagonal case when p_mat = sigma_x
+        p_mat = np.array([[0, 1], [1, 0]])
+        p_mat = np.kron(p_mat, np.identity(n // len(p_mat)))
+        for nmodes in (1, 3, n//4, n//2):
+            if nmodes > n//2:
+                continue
+            # Random matrix of 'modes.' Take part of a unitary
+            # matrix to ensure that the modes form a basis, all modes
+            # are only in half of the space
+            modes = kwant.rmt.circular(n//2, 'A', rng=rng)[:, :nmodes]
+            modes = np.vstack((modes, np.zeros((n//2, nmodes))))
+            # Add an orthogonal set of vectors that are ph images
+            modes = np.hstack((modes, p_mat.dot(modes.conj())))
+            # Make the modes PHS symmetric using the method for a
+            # TRIM.
+            phs_modes = leads.phs_symmetrization(modes, p_mat)[0]
+            assert_almost_equal(phs_modes,
+                                p_mat.dot(phs_modes.conj()),
+                                err_msg='PHS broken at a TRIM in '
+                                        'off-diagonal test')
+            assert_almost_equal(phs_modes.T.conj().dot(phs_modes),
+                                np.eye(phs_modes.shape[1]),
+                                err_msg='Modes are not orthonormal,'
+                                        'off-diagonal test')
 
 
 def random_onsite_hop(n, rng=0):

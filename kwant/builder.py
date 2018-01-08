@@ -20,7 +20,7 @@ from . import system, graph, KwantDeprecationWarning, UserCodeError
 from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry
-from ._common import ensure_isinstance, get_parameters
+from ._common import ensure_isinstance, get_parameters, reraise_warnings
 
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
@@ -393,6 +393,8 @@ class NoSymmetry(Symmetry):
 class HoppingKind(tuple):
     """A pattern for matching hoppings.
 
+    An alias exists for this common name: ``kwant.HoppingKind``.
+
     A hopping ``(a, b)`` matches precisely when the site family of ``a`` equals
     `family_a` and that of ``b`` equals `family_b` and ``(a.tag - b.tag)`` is
     equal to `delta`.  In other words, the matching hoppings have the form:
@@ -442,6 +444,17 @@ class HoppingKind(tuple):
         else:
             ensure_isinstance(family_b, SiteFamily)
             family_b = family_b
+
+        try:
+            Site(family_b, family_a.normalize_tag(delta) - delta)
+        except Exception as e:
+            same_fams = family_b is family_a
+            msg = (str(family_a),
+                   'and {} are'.format(family_b) if not same_fams else ' is',
+                   'not compatible with delta={}'.format(delta),
+                  )
+            raise ValueError(' '.join(msg)) from e
+
         return tuple.__new__(cls, (delta, family_a, family_b))
 
     def __call__(self, builder):
@@ -699,6 +712,8 @@ def _site_ranges(sites):
 
 class Builder:
     """A tight binding system defined on a graph.
+
+    An alias exists for this common name: ``kwant.Builder``.
 
     This is one of the central types in Kwant.  It is used to construct tight
     binding systems in a flexible way.
@@ -1514,8 +1529,9 @@ class Builder:
         if hop_range > 1:
             # Automatically increase the period, potentially warn the user.
             new_lead = Builder(sym.subgroup((hop_range,)))
-            new_lead.fill(lead_builder, lambda site: True,
-                          lead_builder.sites(), max_sites=float('inf'))
+            with reraise_warnings():
+                new_lead.fill(lead_builder, lambda site: True,
+                              lead_builder.sites(), max_sites=float('inf'))
             lead_builder = new_lead
             sym = lead_builder.symmetry
             H = lead_builder.H
@@ -1565,8 +1581,9 @@ class Builder:
         # system (this one is guaranteed to contain a complete unit cell of the
         # lead). After flood-fill we remove that domain.
         start = {sym.act((max_dom + 1,), site) for site in H}
-        all_added = self.fill(lead_builder, shape, start,
-                              max_sites=float('inf'))
+        with reraise_warnings():
+            all_added = self.fill(lead_builder, shape, start,
+                                  max_sites=float('inf'))
         all_added = [site for site in all_added if site not in start]
         del self[start]
 
@@ -1614,6 +1631,18 @@ class Builder:
             raise ValueError('Currently, only builders without or with a 1D '
                              'translational symmetry can be finalized.')
 
+    # Protect novice users from confusing error messages if they
+    # forget to finalize their Builder.
+
+    @staticmethod
+    def _require_system(*args, **kwargs):
+        """You need a finalized system; Use Builder.finalized() first."""
+        raise TypeError('You need a finalized system; '
+                        'use Builder.finalized() first.')
+
+    hamiltonian = hamiltonian_submatrix = modes = selfenergy = \
+    inter_cell_hopping = cell_hamiltonian = precalculated = \
+    _require_system
 
 
 ################ Finalized systems

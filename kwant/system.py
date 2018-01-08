@@ -224,6 +224,12 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
 
         See documentation of `~kwant.physics.PropagatingModes` and
         `~kwant.physics.StabilizedModes` for the return format details.
+
+        The wave functions of the returned modes are defined over the
+        *unit cell* of the system, which corresponds to the degrees of
+        freedom on the first ``cell_sites`` sites of the system
+        (recall that infinite systems store first the sites in the unit
+        cell, then connected sites in the neighboring unit cell).
         """
         from . import physics   # Putting this here avoids a circular import.
         ham = self.cell_hamiltonian(args, params=params)

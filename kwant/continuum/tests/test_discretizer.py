@@ -570,3 +570,9 @@ def test_grid_input(ham, grid_offset, offset, norbs):
 def test_grid_constraints(ham, coords, grid):
     with pytest.raises(ValueError):
         discretize(ham, coords, grid=grid)
+
+
+@pytest.mark.parametrize('name', ['1', '1a', '-a', '+a', 'while', 'for'])
+def test_check_symbol_names(name):
+    with pytest.raises(ValueError):
+        discretize(sympy.Symbol(name), 'x')

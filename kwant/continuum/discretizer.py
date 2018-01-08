@@ -6,6 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+from keyword import iskeyword
 from collections import defaultdict
 import itertools
 import warnings
@@ -22,6 +23,7 @@ from sympy.core.function import AppliedUndef
 
 from .. import builder, lattice
 from .. import KwantDeprecationWarning
+from .._common import reraise_warnings
 from ._common import (sympify, gcd, position_operators, momentum_operators,
                       monomials)
 
@@ -67,7 +69,7 @@ class _DiscretizedBuilder(builder.Builder):
             else:
                 a, b = key
                 assert a is site
-                result.extend(["# Hopping in direction ",
+                result.extend(["# Hopping from ",
                                str(tuple(b.tag)),
                                ":\n"])
             result.append(val._source if callable(val) else repr(val))
@@ -190,10 +192,11 @@ def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
         The coordinates that have been discretized.
 
     """
-    hamiltonian = sympify(hamiltonian, locals)
+    with reraise_warnings():
+        hamiltonian = sympify(hamiltonian, locals)
 
     atoms_names = [s.name for s in hamiltonian.atoms(sympy.Symbol)]
-    if any( s == 'a' for s in atoms_names):
+    if any(s == 'a' for s in atoms_names):
         raise TypeError("'a' is a symbol used internally to represent "
                         "grid spacing; please use a different symbol.")
 
@@ -311,8 +314,9 @@ def build_discretized(tb_hamiltonian, coords, *, grid=None, locals=None,
         raise ValueError("The argument 'coords' must be sorted.")
 
     # run sympifcation on hamiltonian values
-    for k, v in tb_hamiltonian.items():
-        tb_hamiltonian[k] = sympify(v, locals)
+    with reraise_warnings():
+        for k, v in tb_hamiltonian.items():
+            tb_hamiltonian[k] = sympify(v, locals)
 
     # generate grid if required, check constraints if provided
     random_element = next(iter(tb_hamiltonian.values()))
@@ -644,7 +648,16 @@ def _builder_value(expr, coords, grid_spacing, onsite,
     # constants and functions in the sympy input will be passed
     # as arguments to the value function
     arg_names = set.union({s.name for s in const_symbols},
-                                {str(k.func) for k in map_func_calls})
+                          {str(k.func) for k in map_func_calls})
+
+    # check if all argument names are valid python identifiers
+    for name in arg_names:
+        if not (name.isidentifier() and not iskeyword(name)):
+            raise ValueError("Invalid name in used symbols: {}\n"
+                             "Names of symbols used in Hamiltonian "
+                             "must be valid Python identifiers and "
+                             "may not be keywords".format(name))
+
     arg_names = ', '.join(sorted(arg_names))
 
     if (not arg_names) and (coords is None):

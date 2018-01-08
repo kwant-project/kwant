@@ -9,6 +9,8 @@
 import numpy as np
 import numbers
 import inspect
+import warnings
+from contextlib import contextmanager
 
 __all__ = ['KwantDeprecationWarning', 'UserCodeError']
 
@@ -85,6 +87,14 @@ def ensure_rng(rng=None):
         return rng
     raise ValueError("Expecting a seed or an object that offers the "
                      "numpy.random.RandomState interface.")
+
+
+@contextmanager
+def reraise_warnings(level=3):
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        yield
+    for warning in caught_warnings:
+        warnings.warn(warning.message, stacklevel=level)
 
 
 def get_parameters(func):
