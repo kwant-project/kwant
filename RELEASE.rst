@@ -86,10 +86,10 @@ described here.
 
 Make an *annotated*, *signed* tag for the release. The tag must have the name::
 
-    git tag -s v1.2.3 -m "version 1.2.3"
+    git tag -s v<version> -m "version <version>"
 
-Be sure to respect the format of the tag name (leading "v").  The tag message
-format is the one that has been used so far.
+Be sure to respect the format of the tag name (leading "v", e.g. "v1.2.3").
+The tag message format is the one that has been used so far.
 
 Do *not* yet push the tag anywhere, it might have to be undone!
 
@@ -99,12 +99,12 @@ Build a source taball and inspect it
 
     ./setup.py sdist
 
-This creates the file dist/kwant-1.2.3.tar.gz.  It is a good idea to unpack it
+This creates the file dist/kwant-<version>.tar.gz.  It is a good idea to unpack it
 in /tmp and inspect that builds in isolation and that the tests run::
 
     cd /tmp
-    tar xzf ~/src/kwant/dist/kwant-1.2.3.tar.gz
-    cd kwant-1.2.3
+    tar xzf ~/src/kwant/dist/kwant-<version>.tar.gz
+    cd kwant-<version>
     ./setup.py test
 
 
@@ -169,7 +169,7 @@ Now it is time to import the new source code.  There are two options.  If, as
 recommended above, the tarball of the new version has not been made public yet,
 it must be imported as follows::
 
-    gbp import-orig ~/src/kwant/dist/kwant-1.2.3.tar.gz
+    gbp import-orig ~/src/kwant/dist/kwant-<version>.tar.gz
 
 Alternatively, the following commands will import the newest version from PyPI::
 
@@ -196,7 +196,7 @@ When all changes are commited, it is time to finalize by updating the Debian
 changelog file.  Add a point "New upstream release" if there was one, and
 describe any other changes to the Debian *packaging*::
 
-    DEBEMAIL=your.email@somewhere.org gbp dch -R --commit --distribution testing
+    DEBEMAIL=<your-email> gbp dch -R --commit --distribution testing
 
 Now verify that the package builds with::
 
@@ -232,11 +232,11 @@ and
 
     user     ALL = SETENV: BUILD
 
-Now create pbuilder images.  In the following, replace "buster" by the current
-Debian testing codename::
+Now create pbuilder images.  In the following, replace ``<dist>`` by the
+current Debian testing codename, e.g. "buster"::
 
-    ARCH=i386 DIST=buster git-pbuilder create
-    ARCH=amd64 DIST=buster git-pbuilder create
+    ARCH=i386 DIST=<dist> git-pbuilder create
+    ARCH=amd64 DIST=<dist> git-pbuilder create
 
 If the packages to be built have special dependencies, use the trick described in https://wiki.debian.org/git-pbuilder#Using_Local_Packages
 
@@ -244,19 +244,19 @@ If the packages to be built have special dependencies, use the trick described i
 Build Kwant packages using git-pbuilder
 ---------------------------------------
 
-Update the builder environment (again, replace "buster" with the name of the
+Update the builder environment (again, replace ``<dist>`` with the name of the
 current Debian testing)::
 
-    ARCH=i386 DIST=buster git-pbuilder update
-    ARCH=amd64 DIST=buster git-pbuilder update
+    ARCH=i386 DIST=<dist> git-pbuilder update
+    ARCH=amd64 DIST=<dist> git-pbuilder update
 
 Now build the packages.  First the i386 package.  The option "--git-tag" tags
 and signs the tag if the build is successful.  In a second step, the package is
 built for amd64, but only the architecture-dependent files (not the
 documentation package)::
 
-    gbp buildpackage --git-pbuilder --git-arch=i386 --git-dist=buster --git-tag
-    gbp buildpackage --git-pbuilder --git-arch=amd64 --git-dist=buster --git-pbuilder-options='--binary-arch'
+    gbp buildpackage --git-pbuilder --git-arch=i386 --git-dist=<dist> --git-tag
+    gbp buildpackage --git-pbuilder --git-arch=amd64 --git-dist=<dist> --git-pbuilder-options='--binary-arch'
 
 Another example: build source package only::
 
@@ -267,12 +267,15 @@ Build packports for the current Debian stable
 
 Create a changelog entry for the backport::
 
-    DEBEMAIL=your.email@somewhere.org dch --bpo
+    DEBEMAIL=<your-email> dch --bpo
+
+As shown above, run ``git-pbuilder update`` for the appropriate distribution
+codename.
 
 Build backported packages::
 
-    gbp buildpackage --git-pbuilder --git-ignore-new --git-arch=i386 --git-dist=stretch
-    gbp buildpackage --git-pbuilder --git-ignore-new --git-arch=amd64 --git-dist=stretch --git-pbuilder-options='--binary-arch'
+    gbp buildpackage --git-pbuilder --git-ignore-new --git-arch=i386 --git-dist=<dist>
+    gbp buildpackage --git-pbuilder --git-ignore-new --git-arch=amd64 --git-dist=<dist> --git-pbuilder-options='--binary-arch'
 
 Do not commit anything.
 
@@ -288,14 +291,14 @@ git
 
 Push the tag to the official Kwant repository::
 
-    git push origin v1.2.3
+    git push origin v<version>
 
 PyPI
 ----
 
 PyPI (this requires a file ~/.pypirc with a vaild username and password)::
 
-    twine upload -s dist/kwant-1.2.3.tar.gz
+    twine upload -s dist/kwant-<version>.tar.gz
 
 It is very important that the tarball uploaded here is the same (bit-by-bit,
 not only the contents) as the one used for the Debian packaging.  Otherwise it
@@ -308,7 +311,7 @@ Kwant website
 The tarball and its signature (generated by the twine command above) should be
 also made available on the website::
 
-    scp dist/kwant-1.2.3.tar.gz* kwant-website-downloads:downloads/kwant
+    scp dist/kwant-<version>.tar.gz* kwant-website-downloads:downloads/kwant
 
 Debian packages
 ---------------
@@ -323,7 +326,8 @@ version of this repository is kept on Christoph Groth's machine, so this
 instructions are for reference only.
 
 Go to the reprepro repository directory and verify that the configuration file
-"conf/distributions" looks up-to-date.  It should look something like this::
+"conf/distributions" looks up-to-date.  It should look something like this (be
+sure to update the codenames and the versions)::
 
     Origin: Kwant project
     Suite: stretch-backports
@@ -345,15 +349,17 @@ Go to the reprepro repository directory and verify that the configuration file
 
 If the config had to be updated execute::
 
+    reprepro --delete clearvanished
     reprepro export
     reprepro --delete createsymlinks
 
 Now the source and binary Debian packages can be added.  The last line has to
 be executed for all the .deb files and may be automated with a shell loop. (Be
-sure to use the appropriate <dist>: either testing or stretch-backports.)::
+sure to use the appropriate <dist>: for the above configuratoin file either
+"testing" or "stretch-backports".)::
 
-    reprepro includedsc <dist> ../../src/kwant_1.2.3-1.dsc
-    reprepro includedeb <dist> python3-kwant_1.2.3-1_amd64.deb
+    reprepro includedsc <dist> ../../src/kwant_<version>-1.dsc
+    reprepro includedeb <dist> python3-kwant_<version>-1_amd64.deb
 
 Once all the packages have been added, upload the repository::
 
@@ -361,6 +367,9 @@ Once all the packages have been added, upload the repository::
 
 Ubuntu packages
 ---------------
+
+Packages for Ubuntu are provided as a PPA (Personal Package Archive):
+https://launchpad.net/~kwant-project/+archive/ubuntu/ppa
 
 Make sure ~/.dput.cf has something like this::
     [ubuntu-ppa-kwant]
@@ -392,10 +401,13 @@ We will also use the following script (prepare_ppa_upload)::
 
 Make sure that the Debian package builds correctly and go to its directory.
 
-Check https://wiki.ubuntu.com/Releases for the current releases and execute::
-    prepare_ppa_upload trusty vivid wily
+Check https://wiki.ubuntu.com/Releases for the relevant releases (we want to
+provide packages at least for the current LTS release and the newer non-LTS
+releases) and execute::
 
-(if a second upload of the same Debian version is needed, something like vivid2 can be used)
+    prepare_ppa_upload <dist0> <dist1> <dist2>
+
+(if a second upload of the same Debian version is needed, something like "vivid2" instead of "vivid" can be used.)
 
 Now the changes files are "put" to start the build process on the PPA servers::
 
