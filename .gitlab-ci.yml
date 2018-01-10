@@ -95,7 +95,7 @@ check for broken links in doc:
   stage: deploy
   image: condaforge/linux-anvil
   script:
-    - yum install -y devtoolset-2-gcc-gfortran
+    - /usr/bin/sudo -n yum install -y devtoolset-2-gcc-gfortran
     - git clone https://gitlab.kwant-project.org/kwant/conda-recipes.git
     - conda config --add channels kwant
     - conda build --python 3.5 conda-recipes/kwant-dev
