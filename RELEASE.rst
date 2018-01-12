@@ -22,9 +22,11 @@ bumped.
 Ensure that all tests pass
 --------------------------
 
-This should be as simple as verifying that the latest CI pipeline succeeded.
 For major and minor releases we will be tagging the ``master`` branch.
 For patch releases, the ``stable`` branch.
+This should be as simple as verifying that the latest CI pipeline succeeded,
+however in ``stable`` branch also manually trigger CI task of building the
+conda package and verify that it executes.
 
 
 Inspect the documentation
@@ -337,7 +339,7 @@ sure to update the codenames and the versions)::
     Components: main
     Description: Unofficial Debian package repository of http://kwant-project.org/
     SignWith: C3F147F5980F3535
-    
+
     Origin: Kwant project
     Suite: testing
     Codename: buster
@@ -381,22 +383,22 @@ Make sure ~/.dput.cf has something like this::
 
 We will also use the following script (prepare_ppa_upload)::
     #!/bin/sh
-    
+
     if [ $# -eq 0 ]; then
         echo -e "\nUsage: $(basename $0) lousy mourning2 nasty\n"
         exit
     fi
-    
+
     version=`dpkg-parsechangelog --show-field Version`
     mv debian/changelog /tmp/changelog.$$
-    
+
     for release in $@; do
         cp /tmp/changelog.$$ debian/changelog
         DEBEMAIL=christoph.groth@cea.fr dch -b -v "$version~$release" -u low 'Ubuntu PPA upload'
         sed -i -e "1,1 s/UNRELEASED/$release/" debian/changelog
         debuild -S -sa
     done
-    
+
     mv /tmp/changelog.$$ debian/changelog
 
 Make sure that the Debian package builds correctly and go to its directory.
