@@ -404,6 +404,10 @@ def test_numeric_functions_with_subs(e_to_subs, e, subs):
     assert  hop_direct == hop_subs
 
 
+def test_onsite_hopping_function_name():
+    template = str(discretize('A * k_x'))
+    assert 'def hopping' in template
+
 
 def test_numeric_functions_advance():
     hams = [
