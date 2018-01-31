@@ -45,7 +45,7 @@ x, y, z = sympy.symbols('x y z', commutative=False)
 ax, ay, az = sympy.symbols('a_x a_y a_z')
 a = sympy.symbols('a')
 
-wf =  _wf
+wf = _wf
 Psi = wf(x, y, z)
 A, B = sympy.symbols('A B', commutative=False)
 
@@ -62,7 +62,7 @@ def test_reading_coordinates(commutative):
         kx**2 + ky**2 + kz**2         : ['x', 'y', 'z'],
         ky**2 + kz**2                 : ['y', 'z'],
         kz**2                         : ['z'],
-        kx * A(x,y) * kx              : ['x'],
+        kx * A(x, y) * kx              : ['x'],
         kx**2 + kz * B(y)             : ['x', 'z'],
     }
     for inp, out in test.items():
@@ -78,7 +78,7 @@ def test_reading_coordinates_matrix():
         (sympy.Matrix([kx**2 + ky**2 + kz**2])        , ['x', 'y', 'z']),
         (sympy.Matrix([ky**2 + kz**2])                , ['y', 'z']),
         (sympy.Matrix([kz**2])                        , ['z']),
-        (sympy.Matrix([kx * A(x,y) * kx])             , ['x']),
+        (sympy.Matrix([kx * A(x, y) * kx])            , ['x']),
         (sympy.Matrix([kx**2 + kz * B(y)])            , ['x', 'z']),
     ]
     for inp, out in test:
@@ -113,7 +113,7 @@ def test_simple_derivations(commutative):
         kz**2                   : {(0,): 2/a**2, (1,): -1/a**2},
     }
     non_commutative_test = {
-        kx * A(x,y) * kx        : {(1, ): -A(a/2 + x, y)/a**2,
+        kx * A(x, y) * kx       : {(1, ): -A(a/2 + x, y)/a**2,
                                   (0, ): A(-a/2 + x, y)/a**2 + A(a/2 + x, y)/a**2},
         kx**2 + kz * B(y)       : {(1, 0): -1/a**2, (0, 1): -I*B(y)/(2*a),
                                    (0, 0): 2/a**2},
@@ -160,7 +160,7 @@ def test_simple_derivations_matrix():
         ky**2 + kz**2           : {(0, 1): -1/a**2, (0, 0): 4/a**2,
                                    (1, 0): -1/a**2},
         kz**2                   : {(0,): 2/a**2, (1,): -1/a**2},
-        kx * A(x,y) * kx        : {(1, ): -A(a/2 + x, y)/a**2,
+        kx * A(x, y) * kx       : {(1, ): -A(a/2 + x, y)/a**2,
                                   (0, ): A(-a/2 + x, y)/a**2 + A(a/2 + x, y)/a**2},
         kx**2 + kz * B(y)       : {(1, 0): -1/a**2, (0, 1): -I*B(y)/(2*a),
                                    (0, 0): 2/a**2},
@@ -195,9 +195,9 @@ def test_simple_derivations_matrix():
 
 def test_integer_float_input():
     test = {
-        0: {(0,0,0): 0},
-        1: {(0,0,0): 1},
-        5: {(0,0,0): 5},
+        0: {(0, 0, 0): 0},
+        1: {(0, 0, 0): 1},
+        5: {(0, 0, 0): 5},
     }
 
     for inp, out in test.items():
@@ -266,7 +266,7 @@ def test_different_discrete_coordinates():
             'z', {
                 (0,): ky**2 + kx**2 + 2/a**2, (1,): -1/a**2
             }
-        ) ,
+        ),
     ]
     for inp, out in test:
         got, _ = discretize_symbolic(kx**2 + ky**2 + kz**2, inp)
@@ -298,8 +298,8 @@ def test_matrix_with_zeros():
     Matrix = sympy.Matrix
     symbolic, _ = discretize_symbolic("[[k_x*A(x)*k_x, 0], [0, k_x*A(x)*k_x]]")
     output = {
-        (0,) :  Matrix([[A(-a/2 + x)/a**2 + A(a/2 + x)/a**2, 0], [0, A(-a/2 + x)/a**2 + A(a/2 + x)/a**2]]),
-        (1,) :  Matrix([[-A(a/2 + x)/a**2, 0], [0, -A(a/2 + x)/a**2]]),
+        (0,):  Matrix([[A(-a/2 + x)/a**2 + A(a/2 + x)/a**2, 0], [0, A(-a/2 + x)/a**2 + A(a/2 + x)/a**2]]),
+        (1,):  Matrix([[-A(a/2 + x)/a**2, 0], [0, -A(a/2 + x)/a**2]]),
         }
     assert symbolic == output
 
@@ -326,7 +326,7 @@ def test_numeric_functions_basic_symbolic():
         assert +1j * p['t'] == builder[lat(1), lat(0)](None, None, **p)
 
 
-@pytest.mark.parametrize('commutative', [ True, False])
+@pytest.mark.parametrize('commutative', [True, False])
 def test_numeric_function_coords_from_site(commutative):
     tb = {(0,): sympy.symbols('x', commutative=commutative)}
     builder = build_discretized(tb, 'x')
@@ -334,7 +334,6 @@ def test_numeric_function_coords_from_site(commutative):
     lat = next(iter(builder.sites()))[0]
     onsite = builder[lat(0)]
     assert (onsite(lat(0)) == 0 and onsite(lat(1)) == 1)
-
 
 
 def test_numeric_functions_not_discrete_coords():
@@ -401,7 +400,7 @@ def test_numeric_functions_with_subs(e_to_subs, e, subs):
 
     hop_direct = builder_direct[lat(0), lat(1)](None, None, **p)
     hop_subs = builder_subs[lat(0), lat(1)](None, None, **p)
-    assert  hop_direct == hop_subs
+    assert hop_direct == hop_subs
 
 
 def test_onsite_hopping_function_name():
