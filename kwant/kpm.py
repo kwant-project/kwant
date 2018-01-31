@@ -173,7 +173,7 @@ class SpectralDensity:
         self._vector_factory = vector_factory or \
             (lambda n: np.exp(2j * np.pi * rng.random_sample(n)))
         # store this vector for reproducibility
-        self._v0 = self._vector_factory(hamiltonian.shape[0])
+        self._v0 = np.exp(2j * np.pi * rng.random_sample(hamiltonian.shape[0]))
         self._rand_vect_list = []
         # Hamiltonian rescaled as in Eq. (24)
         self.hamiltonian, (self._a, self._b) = _rescale(hamiltonian,
