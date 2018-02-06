@@ -2011,7 +2011,8 @@ def _linear_cmap(a, b):
 def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
                max_linewidth=3, min_linewidth=1, density=2/9,
                colorbar=True, file=None,
-               show=True, dpi=None, fig_size=None, ax=None):
+               show=True, dpi=None, fig_size=None, ax=None,
+               vmax=None):
     """Draw streamlines of a flow field in Kwant style
 
     Solid colored streamlines are drawn, superimposed on a color plot of
@@ -2063,6 +2064,10 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
         If `ax` is not `None`, no new figure is created, but the plot is done
         within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
         and `fig_size` are ignored.
+    vmax : float or `None`
+        The upper saturation limit for the colormap; flows higher than
+        this will saturate.  Note that there is no corresponding vmin
+        option, vmin being fixed at zero.
 
     Returns
     -------
@@ -2102,6 +2107,8 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     Y = np.linspace(*box[1], num=field.shape[0])
 
     speed = np.linalg.norm(field, axis=-1)
+    if vmax is None:
+        vmax = np.max(speed) or 1
 
     if cmap is None:
         ax.set_axis_bgcolor(bgcolor)
@@ -2109,12 +2116,13 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
         image = ax.imshow(speed, cmap=cmap,
                           interpolation='bicubic',
                           extent=[e for c in box for e in c],
-                          origin='lower')
+                          origin='lower', vmin=0, vmax=vmax)
 
-    linewidth = max_linewidth / (np.max(speed) or 1) * speed
+    linewidth = max_linewidth / vmax * speed
     color = linewidth / min_linewidth
-    linewidth[linewidth < min_linewidth] = min_linewidth
-    color[color > 1] = 1
+    thin = linewidth < min_linewidth
+    linewidth[thin] = min_linewidth
+    color[~ thin] = 1
 
     line_cmap = _linear_cmap(linecolor, bgcolor)
 

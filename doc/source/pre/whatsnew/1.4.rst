@@ -5,3 +5,10 @@ This article explains the user-visible changes in Kwant 1.4.0.
 See also the `full list of changes up to the most recent bugfix
 release of the 1.4 series
 <https://gitlab.kwant-project.org/kwant/kwant/compare/v1.4.0...latest-1.4>`_.
+
+Configurable maximum velocity in stream plots
+---------------------------------------------
+The function `~kwant.plotter.streamplot` has got a new option ``vmax``.  Note
+that this option is not available in `~kwant.plotter.current`.  In order to use
+it, one has to call ``streamplot`` directly as shown in the docstring of
+``current``.
