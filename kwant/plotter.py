@@ -2115,7 +2115,8 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
 
     ax.streamplot(X, Y, field[:,:,0], field[:,:,1],
                   density=density, linewidth=linewidth,
-                  color=color, cmap=line_cmap, arrowstyle='->')
+                  color=color, cmap=line_cmap, arrowstyle='->',
+                  norm=matplotlib.colors.Normalize(0, 1))
 
     ax.set_xlim(*box[0])
     ax.set_ylim(*box[1])
