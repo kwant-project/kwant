@@ -651,12 +651,12 @@ def _builder_value(expr, coords, grid_spacing, onsite,
                           {str(k.func) for k in map_func_calls})
 
     # check if all argument names are valid python identifiers
-    for name in arg_names:
-        if not (name.isidentifier() and not iskeyword(name)):
+    for arg_name in arg_names:
+        if not (arg_name.isidentifier() and not iskeyword(arg_name)):
             raise ValueError("Invalid name in used symbols: {}\n"
                              "Names of symbols used in Hamiltonian "
                              "must be valid Python identifiers and "
-                             "may not be keywords".format(name))
+                             "may not be keywords".format(arg_name))
 
     arg_names = ', '.join(sorted(arg_names))
 
