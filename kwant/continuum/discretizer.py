@@ -409,10 +409,10 @@ def _discretize_expression(expression, coords):
     def _extract_hoppings(expr):
         """Read hoppings and perform shortening operation."""
         expr = sympy.expand(expr)
-        summands = expr.as_ordered_terms()
+        summands = [e.as_ordered_factors() for e in expr.as_ordered_terms()]
 
-        offset = [_read_offset(s.args[-1]) for s in summands]
-        coeffs = [sympy.Mul(*s.args[:-1]) for s in summands]
+        offset = [_read_offset(s[-1]) for s in summands]
+        coeffs = [sympy.Mul(*s[:-1]) for s in summands]
         offset = np.array(offset, dtype=int)
         # rescale the offsets for each coordinate by their greatest
         # common divisor across the summands. e.g:
