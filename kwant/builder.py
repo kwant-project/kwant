@@ -1606,9 +1606,9 @@ class Builder:
 
         Returns
         -------
-        finalized_system : `kwant.system.FiniteSystem`
+        finalized_system : `kwant.builder.FiniteSystem`
             If there is no symmetry.
-        finalized_system : `kwant.system.InfiniteSystem`
+        finalized_system : `kwant.builder.InfiniteSystem`
             If a symmetry is present.
 
         Notes
