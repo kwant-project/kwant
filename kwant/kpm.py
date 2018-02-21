@@ -71,10 +71,11 @@ class SpectralDensity:
         Parameter to ensure that the rescaled spectrum lies in the
         interval ``(-1, 1)``; required for stability.
     rng : seed, or random number generator, optional
-        Random number generator used by ``vector_factory``.
-        If not provided, numpy's rng will be used; if it is an Integer,
-        it will be used to seed numpy's rng, and if it is a random
-        number generator, this is the one used.
+        Random number generator used for the calculation of the spectral
+        bounds, and to generate random vectors (if ``vector_factory`` is
+        not provided). If not provided, numpy's rng will be used; if it
+        is an Integer, it will be used to seed numpy's rng, and if it is
+        a random number generator, this is the one used.
 
     Notes
     -----
