@@ -71,10 +71,11 @@ class SpectralDensity:
         Parameter to ensure that the rescaled spectrum lies in the
         interval ``(-1, 1)``; required for stability.
     rng : seed, or random number generator, optional
-        Random number generator used by ``vector_factory``.
-        If not provided, numpy's rng will be used; if it is an Integer,
-        it will be used to seed numpy's rng, and if it is a random
-        number generator, this is the one used.
+        Random number generator used for the calculation of the spectral
+        bounds, and to generate random vectors (if ``vector_factory`` is
+        not provided). If not provided, numpy's rng will be used; if it
+        is an Integer, it will be used to seed numpy's rng, and if it is
+        a random number generator, this is the one used.
 
     Notes
     -----
@@ -173,7 +174,7 @@ class SpectralDensity:
         self._vector_factory = vector_factory or \
             (lambda n: np.exp(2j * np.pi * rng.random_sample(n)))
         # store this vector for reproducibility
-        self._v0 = self._vector_factory(hamiltonian.shape[0])
+        self._v0 = np.exp(2j * np.pi * rng.random_sample(hamiltonian.shape[0]))
         self._rand_vect_list = []
         # Hamiltonian rescaled as in Eq. (24)
         self.hamiltonian, (self._a, self._b) = _rescale(hamiltonian,
