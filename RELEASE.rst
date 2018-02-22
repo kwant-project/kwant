@@ -14,7 +14,7 @@ Check that all issues are resolved
 ----------------------------------
 
 Check that all the issues and merge requests for the appropriate
-`milestone <https://gitlab.kwant-project.org/kwant/kwant/milestones>`
+`milestone <https://gitlab.kwant-project.org/kwant/kwant/milestones>`_
 have been resolved. Any unresolved issues should have their milestone
 bumped.
 
@@ -26,7 +26,7 @@ For major and minor releases we will be tagging the ``master`` branch.
 For patch releases, the ``stable`` branch.
 This should be as simple as verifying that the latest CI pipeline succeeded,
 however in ``stable`` branch also manually trigger CI task of building the
-conda package and verify that it executes.
+conda package and verify that it, too, succeeds.
 
 
 Inspect the documentation
@@ -42,17 +42,17 @@ Check that there are no glaring deficiencies.
 Update the ``whatsnew`` file
 ----------------------------
 
-For each new mior release, check that there is an appropriate ``whatsnew`` file
+For each new minor release, check that there is an appropriate ``whatsnew`` file
 in ``doc/source/pre/whatsnew``.  This should be named as::
 
     <major>.<minor>.rst
 
 and referenced from ``doc/source/pre/whatsnew/index.rst``.  It should contain a
 list of the user-facing changes that were made in the release. With any luck
-this file will have been updated after any major features were released, if not
-then you can see what commits were introduced since the last release using
+this file will have been updated at the same time as a feature was implemented,
+if not then you can see what commits were introduced since the last release using
 ``git log``. You can also see what issues were assigned to the release's
-milestons and get an idea of what was introduced from there.
+milestones and get an idea of what was introduced from there.
 
 Starting with Kwant 1.4, we also mention user-visible changes in bugfix
 releases in the whatsnew files.
@@ -82,10 +82,6 @@ wrongly declared dependencies have been detected in this way.
 Tag the release
 ---------------
 
-A particularly good way to expose hidden problems is building Debian packages
-using an isolated minimal build environment (cowbuilder).  This approach is
-described here.
-
 Make an *annotated*, *signed* tag for the release. The tag must have the name::
 
     git tag -s v<version> -m "version <version>"
@@ -93,11 +89,11 @@ Make an *annotated*, *signed* tag for the release. The tag must have the name::
 Be sure to respect the format of the tag name (leading "v", e.g. "v1.2.3").
 The tag message format is the one that has been used so far.
 
-Do *not* yet push the tag anywhere, it might have to be undone!
+Do *not* yet push the tag anywhere; it might have to be undone!
 
 
-Build a source taball and inspect it
-------------------------------------
+Build a source tarball and inspect it
+-------------------------------------
 
     ./setup.py sdist
 
@@ -108,6 +104,54 @@ in /tmp and inspect that builds in isolation and that the tests run::
     tar xzf ~/src/kwant/dist/kwant-<version>.tar.gz
     cd kwant-<version>
     ./setup.py test
+
+
+Build the documentation
+-----------------------
+Building the documentation requires 'sphinx' and a Latex installation.
+First build the HTML and PDF documentation::
+
+    ./setup.py build
+    make -C doc realclean html latex SPHINXOPTS='-A website_deploy=True -n -W' REFNAME="<version>"
+    cd doc/build/latex
+    make all-pdf
+
+Then create a zipped version of the HTML documentation and name the PDF consistently::
+
+    zip -r docs/build/kwant-doc-<version>.zip docs/build/docs/build/html
+    mv docs/build/latex/kwant.pdf docs/build/kwant-doc-<version>.pdf
+
+
+Clone the repository of the Kwant conda-forge package
+-----------------------------------------------------
+
+This step needs to be performed only once.  The cloned repository can be reused
+for subsequent releases.
+
+Clone the "Kwant feedstock" repository and go into its root directory.  If you
+keep the Kwant source in "src/kwant", a good location for the Conda package
+repository is "src/conda-forge/kwant"::
+
+    cd ~/src
+    mkdir conda-forge
+    cd conda-forge
+    git clone https://github.com/conda-forge/kwant-feedstock kwant
+    cd kwant
+
+Rename the default remote to ``upstream``::
+
+    git remote rename origin upstream
+
+Create a new version of the Kwant conda-forge package
+-----------------------------------------------------
+
+Edit the file ``recipe/meta.yml``. Correctly set the ``version``
+at the top of the file to the version of this release. Set the ``sha256``
+string in the ``source`` section near the top of the file to the SHA256 hash
+of the kwant source tarball that we previously created. You can find the
+SHA256 hash by running ``openssl sha256 <filename>`` on Linux and Mac OSX.
+
+Commit your changes.
 
 
 Clone the repository of the Kwant Debian package
@@ -178,7 +222,7 @@ Alternatively, the following commands will import the newest version from PyPI::
     uscan --report      # This will report if a newer version exists on PyPI
     gbp import-orig --uscan
 
-Now it is time to review the patch queue.  Rebase and checkout the ``patch-queue/master`` branch using
+Now it is time to review the patch queue.  Rebase and checkout the ``patch-queue/master`` branch using::
 
     gbp pq rebase
 
@@ -210,7 +254,8 @@ the following two sections.
 
 If problems surface that require changing the packaging, undo the changelog
 commit, modify the packaging, and re-iterate.  If the problems require fixing
-Kwant, you will have to go back all the way to recreating the source tarball.  If the version to be packaged has been released publicly already, this will require a new bugfix version.
+Kwant, you will have to go back all the way to recreating the source tarball.
+If the version to be packaged has been released publicly already, this will require a new bugfix version.
 
 
 Setup git-pbuilder to build Debian packages
@@ -264,7 +309,7 @@ Another example: build source package only::
 
     gbp buildpackage --git-export-dir=/tmp -S
 
-Build packports for the current Debian stable
+Build backports for the current Debian stable
 ---------------------------------------------
 
 Create a changelog entry for the backport::
@@ -286,7 +331,7 @@ Publish the release
 
 If the Debian packages build correctly that means that all tests pass both on
 i386 and amd64, and that no undeclared dependencies are needed.  We can be
-reasonable sure that the release is ready to be published.
+reasonably sure that the release is ready to be published.
 
 git
 ---
@@ -298,7 +343,9 @@ Push the tag to the official Kwant repository::
 PyPI
 ----
 
-PyPI (this requires a file ~/.pypirc with a vaild username and password)::
+Install `twine <https://pypi.python.org/pypi/twine>`_ and run the following
+(this requires a file ~/.pypirc with a valid username and password: ask
+Christoph Groth to add you as a maintainer on PyPI, if you are not already)::
 
     twine upload -s dist/kwant-<version>.tar.gz
 
@@ -310,10 +357,11 @@ PyPI.
 Kwant website
 -------------
 
-The tarball and its signature (generated by the twine command above) should be
-also made available on the website::
+The following requires ssh access to ``kwant-project.org`` (ask Christoph
+Groth). The tarball and its signature (generated by the twine command above) should be
+uploaded to the downloads section of the website::
 
-    scp dist/kwant-<version>.tar.gz* kwant-website-downloads:downloads/kwant
+    scp dist/kwant-<version>.tar.gz* kwant-project.org:webapps/downloads/kwant
 
 Debian packages
 ---------------
@@ -323,8 +371,8 @@ Go to the Debian packaging repository and push out the changes::
     git push --tags origin master upstream
 
 Now the Debian packages that we built previously need to be added to the
-repository of Debian packages on the Kwant website.  So far this the full
-version of this repository is kept on Christoph Groth's machine, so this
+repository of Debian packages on the Kwant website.  So far the full
+version of this repository is kept on Christoph Groth's machine, so these
 instructions are for reference only.
 
 Go to the reprepro repository directory and verify that the configuration file
@@ -365,7 +413,7 @@ sure to use the appropriate <dist>: for the above configuratoin file either
 
 Once all the packages have been added, upload the repository::
 
-    rsync -avz --delete dists pool wfw:webapps/downloads/debian
+    rsync -avz --delete dists pool kwant-project.org:webapps/downloads/debian
 
 Ubuntu packages
 ---------------
@@ -374,6 +422,7 @@ Packages for Ubuntu are provided as a PPA (Personal Package Archive):
 https://launchpad.net/~kwant-project/+archive/ubuntu/ppa
 
 Make sure ~/.dput.cf has something like this::
+
     [ubuntu-ppa-kwant]
     fqdn = ppa.launchpad.net
     method = ftp
@@ -382,6 +431,7 @@ Make sure ~/.dput.cf has something like this::
     allow_unsigned_uploads = 0
 
 We will also use the following script (prepare_ppa_upload)::
+
     #!/bin/sh
 
     if [ $# -eq 0 ]; then
@@ -417,93 +467,53 @@ Now the changes files are "put" to start the build process on the PPA servers::
     dput ubuntu-ppa-kwant *~*.changes
 
 
-Gather the autobuilt packages from CI
--------------------------------------
+Conda forge
+-----------
+This step requires a GitHub account, as Conda forge packages are autobuilt
+from repositories hosted on GitHub.
 
-(This section needs to be updated.  Using the sdist package as generated by
-PyPI requires pushing the tag to gitlab and as such is incompatible with doing
-the Debian packaging with an unpublished tag.)
+Fork the `Kwant feedstock <https://github.com/conda-forge/kwant-feedstock>`_
+repository and add your fork as a remote to the copy that you previously cloned::
 
-CI automatically generates:
+    cd ~/conda-forge/kwant
+    git remote add myfork https://github.com/<your-gh-username>/kwant-feedstock
 
-+ HTML documentation
-+ Zipped HTML documentation
-+ PDF documentation
-+ ``sdist`` package (for upload to PyPI)
+Push the changes that you previously commited to your fork::
 
-These can be found in the artifacts of the last CI job in the pipeline,
-``gather release artifacts``.
+    git push myfork master
 
-
-Publish to the Kwant website
-----------------------------
-
-(This section needs to be updated.  The twine tool creates the signature file
-during the upload.)
-
-To do the following you will need access to the webroots of ``downloads.kwant-project.org``
-and ``kwant-project.org``. Ask Christoph Groth if you need to be granted access.
-
-Take the tar archive in the ``dist`` directory of the CI artifacts and generate
-a detached GPG signature::
-
-    gpg --armor --detach-sign kwant-<major>.<minor>.<patch>.tar.gz
-
-Take the archive and the ``.asc`` signature file that was just generated
-and upload them to the ``kwant`` directory of ``downloads.kwant-project.org``.
-
-Take the zip archive and the PDF in the ``docs`` directory of the CI artifacts
-and upload them  to the ``doc`` directory of ``downloads.kwant-project.org``.
-Point the symbolic links ``latest.zip`` and ``latest.pdf`` to these new files.
-
-Take the ``docs/html`` directory of the CI artifacts and upload them to::
-
-    doc/<major>.<minor>.<patch>/
-
-on ``kwant-project.org``. Point the symbolic link ``<major>`` to this directory.
+Open a pull request to Kwant feedstock repository. Ask Bas Nijholt or
+Joseph Weston to review and accept the pull request.
 
 
-Publish to PyPI
----------------
+Documentation
+-------------
+The following requires ssh access to  ``kwant-project.org``.
+Ask Christoph Groth if you need to be granted access.
 
-(This also needs to be updated.)
+Upload the zipped HTML and PDF documentation::
 
-Install `twine <https://pypi.python.org/pypi/twine>` and use it to upload
-the tar archive in the ``sdist`` directory of the Ci artifacts downloaded
-in the previous step::
+    scp doc/build/kwant-doc-<version>.zip kwant-project.org:webapps/downloads/doc
+    scp doc/build/kwant-doc-<version>.pdf kwant-project.org:webapps/downloads/doc
 
-    twine upload --sign -u <PyPI username> -p <PyPI password> sdist/*
+Point the symbolic links ``latest.zip`` and ``latest.pdf`` to these new files::
 
-the ``--sign`` flag signs the uploaded package with your default GPG key.
-Ask Christoph Groth for the Kwant PyPI credentials.
+    ssh kwant-project.org "cd webapps/downloads/doc; ln -s kwant-doc-<version>.zip latest.zip"
+    ssh kwant-project.org "cd webapps/downloads/doc; ln -s kwant-doc-<version>.pdf latest.pdf"
 
+Then upload the HTML documentation for the main website::
 
-Publish to Launchpad
---------------------
+    rsync -rlv --delete doc/build/html/* kwant-project.org:webapps/kwant/doc/<short-version>
 
+where in the above ``<short-version`` is just the major and minor version numbers.
 
+Finally point the symbolic link ``<major-version>`` to ``<short-version>``::
 
-Publish to Conda forge
-----------------------
-
-Conda forge automates build/deploy by using CI on Github repositoried containing
-recipes for making packages from their source distributions.
-
-Fork the `Kwant feedstock <https://github.com/conda-forge/kwant-feedstock>`
-repository and  edit the file ``recipe/meta.yml``. Correctly set the ``version``
-at the top of the file. Set the ``sha256`` string in the ``source`` section
-near the top of the file to the SHA256 hash of the kwant source distribution
-that was uploaded to ``downloads.kwant-project.org``. This can be found by::
-
-    sha256sum kwant-<major>.<minor>.<patch>.tar.gz
-
-Now commit these changes and open a pull request on the Kwant feedstock
-repository that includes your change. Ask Bas Nijholt or Joseph Weston
-to review and accept the pull request, so that Kwant will be rebuilt.
+    ssh kwant-project.org "cd webapps/kwant/doc; ln -s <major> <short-version>"
 
 
 Announce the release
---------------------
+####################
 
 Write a short post summarizing the highlights of the release on the
 `Kwant website <https://gitlab.kwant-project.org/kwant/website>`, then
