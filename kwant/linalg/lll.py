@@ -142,7 +142,9 @@ def cvp(vec, basis, n=1):
     if basis.ndim != 2:
         raise ValueError('`basis` must be a 2d array-like object.')
     vec = np.asarray(vec)
-    center_coords = np.array(np.round(np.linalg.lstsq(basis.T, vec)[0]), int)
+    # TODO: change to rcond=None once we depend on numpy >= 1.14.
+    center_coords = np.linalg.lstsq(basis.T, vec, rcond=-1)[0]
+    center_coords = np.array(np.round(center_coords), int)
     # Cutoff radius for n-th nearest neighbor.
     rad = 1
     nth_dist = np.inf
