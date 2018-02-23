@@ -45,7 +45,7 @@ def test_matplotlib_backend_unset():
 
 
 def test_importable_without_matplotlib():
-    prefix, sep, suffix = plotter.__file__.rpartition('.')
+    prefix, sep, suffix = _plotter.__file__.rpartition('.')
     if suffix in ['pyc', 'pyo']:
         suffix = 'py'
     assert suffix == 'py'
