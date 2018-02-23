@@ -14,6 +14,11 @@
 # matplotlib iterators remain useful.  Further, mpl_toolkits used for 3D
 # plotting are also imported separately, to ensure that 2D plotting works even
 # if 3D does not.
+
+import warnings
+from math import sqrt, pi
+import numpy as np
+
 try:
     import matplotlib
     import matplotlib.colors
