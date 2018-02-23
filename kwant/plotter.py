@@ -61,7 +61,7 @@ def _sample_array(array, n_samples, rng=None):
 # matplotlib helper functions.
 
 def _make_figure(dpi, fig_size):
-    fig = Figure()
+    fig = _p.Figure()
     if dpi is not None:
         fig.set_dpi(dpi)
     if fig_size is not None:
@@ -90,7 +90,7 @@ def set_colors(color, collection, cmap, norm=None):
     if (isinstance(color, np.ndarray) and color.dtype == np.dtype('object')):
         color = tuple(color)
 
-    if isinstance(collection, mplot3d.art3d.Line3DCollection):
+    if isinstance(collection, _p.mplot3d.art3d.Line3DCollection):
         length = len(collection._segments3d)  # Once again, matplotlib fault!
 
     if isarray(color) and len(color) == length:
@@ -106,7 +106,7 @@ def set_colors(color, collection, cmap, norm=None):
         except (TypeError, ValueError):
             pass
 
-    colors = matplotlib.colors.colorConverter.to_rgba_array(color)
+    colors = _p.matplotlib.colors.colorConverter.to_rgba_array(color)
     collection.set_color(colors)
 
 
@@ -127,7 +127,7 @@ def get_symbol(symbols):
 
     paths = []
     for symbol in symbols:
-        if isinstance(symbol, matplotlib.path.Path):
+        if isinstance(symbol, _p.matplotlib.path.Path):
             return symbol
         elif hasattr(symbol, '__getitem__') and len(symbol) == 3:
             kind, n, angle = symbol
@@ -141,13 +141,13 @@ def get_symbol(symbols):
                     radius = sqrt(2 * pi / (n * sin(2 * pi / n)))
 
                 angle = pi * angle / 180
-                patch = matplotlib.patches.RegularPolygon((0, 0), n,
-                                                          radius=radius,
-                                                          orientation=angle)
+                patch = _p.matplotlib.patches.RegularPolygon((0, 0), n,
+                                                             radius=radius,
+                                                             orientation=angle)
             else:
                 raise ValueError("Unknown symbol definition " + str(symbol))
         elif symbol == 'o':
-            patch = matplotlib.patches.Circle((0, 0), 1)
+            patch = _p.matplotlib.patches.Circle((0, 0), 1)
 
         paths.append(patch.get_path().transformed(patch.get_transform()))
 
@@ -208,9 +208,9 @@ def symbols(axes, pos, symbol='o', size=1, reflen=None, facecolor='k',
         size = (size, )
 
     if dim == 2:
-        Collection = PathCollection
+        Collection = _p.PathCollection
     else:
-        Collection = Path3DCollection
+        Collection = _p.Path3DCollection
 
     if len(pos) == 0 or np.all(symbol == 'no symbol') or np.all(size == 0):
         paths = []
@@ -282,9 +282,9 @@ def lines(axes, pos0, pos1, reflen=None, colors='k', linestyles='solid',
     dim = pos0.shape[1]
     assert dim == 2 or dim == 3
     if dim == 2:
-        Collection = LineCollection
+        Collection = _p.LineCollection
     else:
-        Collection = Line3DCollection
+        Collection = _p.Line3DCollection
 
     if (len(pos0) == 0 or
         ('linewidths' in kwargs and kwargs['linewidths'] == 0)):
@@ -344,7 +344,7 @@ def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
     matplotlib in that the `dpi` attribute of the figure is used by defaul
     instead of the matplotlib config setting.
     """
-    if not mpl_available:
+    if not _p.mpl_available:
         raise RuntimeError('matplotlib is not installed.')
 
     # We import backends and pyplot only at the last possible moment (=now)
@@ -824,7 +824,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
       its aspect ratio.
 
     """
-    if not mpl_available:
+    if not _p.mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for plot()")
 
@@ -874,7 +874,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         start_pos = np.apply_along_axis(pos_transform, 1, start_pos)
 
     dim = 3 if (sites_pos.shape[1] == 3) else 2
-    if dim == 3 and not has3d:
+    if dim == 3 and not _p.has3d:
         raise RuntimeError("Installed matplotlib does not support 3d plotting")
     sites_pos = resize_to_dim(sites_pos)
     end_pos = resize_to_dim(end_pos)
@@ -952,7 +952,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         fancy_indexing = False
 
     if site_color is None:
-        cycle = (x['color'] for x in matplotlib.rcParams['axes.prop_cycle'])
+        cycle = (x['color'] for x in _p.matplotlib.rcParams['axes.prop_cycle'])
         if isinstance(syst, (builder.FiniteSystem, builder.InfiniteSystem)):
             # Skipping the leads for brevity.
             families = sorted({site.family for site in syst.sites})
@@ -992,8 +992,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
         try:
             if site_color.ndim == 1 and len(site_color) == n_syst_sites:
                 site_color = np.asarray(site_color, dtype=float)
-                norm = matplotlib.colors.Normalize(site_color.min(),
-                                                   site_color.max())
+                norm = _p.matplotlib.colors.Normalize(site_color.min(),
+                                                      site_color.max())
         except:
             pass
 
@@ -1006,7 +1006,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
                           else defaults['site_size'][dim])
     if lead_color is None:
         lead_color = defaults['lead_color'][dim]
-    lead_color = matplotlib.colors.colorConverter.to_rgba(lead_color)
+    lead_color = _p.matplotlib.colors.colorConverter.to_rgba(lead_color)
 
     if lead_site_edgecolor is None:
         lead_site_edgecolor = (site_edgecolor if not isarray(site_edgecolor)
@@ -1057,8 +1057,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
                       zorder=1, cmap=hop_cmap)
 
     # plot lead sites and hoppings
-    norm = matplotlib.colors.Normalize(-0.5, num_lead_cells - 0.5)
-    cmap_from_list = matplotlib.colors.LinearSegmentedColormap.from_list
+    norm = _p.matplotlib.colors.Normalize(-0.5, num_lead_cells - 0.5)
+    cmap_from_list = _p.matplotlib.colors.LinearSegmentedColormap.from_list
     lead_cmap = cmap_from_list(None, [lead_color, (1, 1, 1, lead_color[3])])
 
     for sites_slc, hops_slc in zip(lead_sites_slcs, lead_hops_slcs):
@@ -1256,7 +1256,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
       correspond to exactly one pixel.
     """
 
-    if not mpl_available:
+    if not _p.mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for map()")
 
@@ -1289,7 +1289,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         fig = None
 
     if cmap is None:
-        cmap = _colormaps.kwant_red
+        cmap = _p._colormaps.kwant_red
 
     # Note that we tell imshow to show the array created by mask_interpolate
     # faithfully and not to interpolate by itself another time.
@@ -1353,7 +1353,7 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
     See `~kwant.physics.Bands` for the calculation of dispersion without plotting.
     """
 
-    if not mpl_available:
+    if not _p.mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for bands()")
 
@@ -1428,10 +1428,10 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         A figure with the output if `ax` is not set, else None.
     """
 
-    if not mpl_available:
+    if not _p.mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for plot_spectrum()")
-    if y is not None and not has3d:
+    if y is not None and not _p.has3d:
         raise RuntimeError("Installed matplotlib does not support 3d plotting")
 
     if isinstance(syst, system.FiniteSystem):
@@ -1467,7 +1467,7 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
 
     # set up axes
     if ax is None:
-        fig = Figure()
+        fig = _p.Figure()
         if dpi is not None:
             fig.set_dpi(dpi)
         if fig_size is not None:
@@ -1709,8 +1709,8 @@ _gamma_expand = np.vectorize(_gamma_expand, otypes=[float])
 
 def _linear_cmap(a, b):
     """Make a colormap that linearly interpolates between the colors a and b."""
-    a = matplotlib.colors.colorConverter.to_rgb(a)
-    b = matplotlib.colors.colorConverter.to_rgb(b)
+    a = _p.matplotlib.colors.colorConverter.to_rgb(a)
+    b = _p.matplotlib.colors.colorConverter.to_rgb(b)
     a_linear = _gamma_expand(a)
     b_linear = _gamma_expand(b)
     color_diff = a_linear - b_linear
@@ -1718,7 +1718,7 @@ def _linear_cmap(a, b):
                * color_diff.reshape((1, -1)))
     palette += b_linear
     palette = _gamma_compress(palette)
-    return matplotlib.colors.ListedColormap(palette)
+    return _p.matplotlib.colors.ListedColormap(palette)
 
 
 def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
@@ -1787,7 +1787,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     fig : matplotlib figure
         A figure with the output if `ax` is not set, else None.
     """
-    if not mpl_available:
+    if not _p.mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for current()")
 
@@ -1803,8 +1803,8 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
 
     if bgcolor is None:
         if cmap is None:
-            cmap = _colormaps.kwant_red
-        cmap = matplotlib.cm.get_cmap(cmap)
+            cmap = _p._colormaps.kwant_red
+        cmap = _p.matplotlib.cm.get_cmap(cmap)
         bgcolor = cmap(0)[:3]
     elif cmap is not None:
         raise ValueError("The parameters 'cmap' and 'bgcolor' are "
@@ -1842,7 +1842,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     ax.streamplot(X, Y, field[:,:,0], field[:,:,1],
                   density=density, linewidth=linewidth,
                   color=color, cmap=line_cmap, arrowstyle='->',
-                  norm=matplotlib.colors.Normalize(0, 1))
+                  norm=_p.matplotlib.colors.Normalize(0, 1))
 
     ax.set_xlim(*box[0])
     ax.set_ylim(*box[1])
