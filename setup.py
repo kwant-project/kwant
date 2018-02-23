@@ -15,7 +15,7 @@ import sys
 import re
 import os
 import glob
-import imp
+import importlib
 import subprocess
 import configparser
 import collections
@@ -123,10 +123,9 @@ def check_versions():
 
     # Let Kwant itself determine its own version.  We cannot simply import
     # kwant, as it is not built yet.
-    _dont_write_bytecode_saved = sys.dont_write_bytecode
-    sys.dont_write_bytecode = True
-    version_module = imp.load_source('version', 'kwant/version.py')
-    sys.dont_write_bytecode = _dont_write_bytecode_saved
+    spec = importlib.util.spec_from_file_location('version', 'kwant/version.py')
+    version_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(version_module)
 
     version_module.ensure_python()
     version = version_module.version

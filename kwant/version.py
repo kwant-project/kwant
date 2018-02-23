@@ -83,6 +83,34 @@ def get_version_from_git():
     return "".join(version)
 
 
+# TODO: change this logic when there is a git pretty-format
+#       that gives the same output as 'git describe'.
+#       Currently we can only tell the tag the current commit is
+#       pointing to, or its hash (with no version info)
+#       if it is not tagged.
+def get_version_from_git_archive(version_info):
+    try:
+        refnames = version_info['refnames']
+        git_hash = version_info['git_hash']
+    except KeyError:
+        # These fields are not present if we are running from an sdist.
+        # Execution should never reach here, though
+        return None
+
+    if git_hash.startswith('$Format') or refnames.startswith('$Format'):
+        # variables not expanded during 'git archive'
+        return None
+
+    VTAG = 'tag: v'  # Our version tags always start with 'v'
+    refs = set(r.strip() for r in refnames.split(","))
+    version_tags = set(r[len(VTAG):] for r in refs if r.startswith(VTAG))
+    if version_tags:
+        release, *_ = sorted(version_tags)  # prefer e.g. "2.0" over "2.0rc1"
+        return release
+    else:
+        return ''.join(('unknown', '+g', git_hash))
+
+
 def init(version_file='_kwant_version.py'):
     global version, version_is_from_git
     version_info = {}
@@ -92,6 +120,8 @@ def init(version_file='_kwant_version.py'):
     version_is_from_git = (version == "__use_git__")
     if version_is_from_git:
         version = get_version_from_git()
+        if not version:
+            version = get_version_from_git_archive(version_info)
         if not version:
             version = "unknown"
 
