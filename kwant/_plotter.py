@@ -39,6 +39,19 @@ except ImportError:
     mpl_available = False
 
 
+# Collections that allow for symbols and linewiths to be given in data space
+# (not for general use, only implement what's needed for plotter)
+def isarray(var):
+    if hasattr(var, '__getitem__') and not isinstance(var, str):
+        return True
+    else:
+        return False
+
+
+def nparray_if_array(var):
+    return np.asarray(var) if isarray(var) else var
+
+
 if mpl_available:
     class LineCollection(collections.LineCollection):
         def __init__(self, segments, reflen=None, **kwargs):
