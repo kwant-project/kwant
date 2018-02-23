@@ -137,7 +137,6 @@ class lazy_import:
 
     def __getattr__(self, name):
         if self.__deprecation_warning:
-            absolute_module = '.'.join((self.__package, self.__module))
             msg = ("Accessing {0} without an explicit import is deprecated. "
                    "Instead, explicitly 'import {0}'."
                   ).format('.'.join((self.__package, self.__module)))
