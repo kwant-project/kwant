@@ -6,18 +6,15 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-import sys
-
-from .._common import ExtensionUnavailable
-
 try:
     from .discretizer import discretize, discretize_symbolic, build_discretized
     from ._common import sympify, lambdify
     from ._common import momentum_operators, position_operators
-except ImportError:
-    sys.modules[__name__] = ExtensionUnavailable(__name__, ('sympy',))
+except ImportError as error:
+    msg = ("'kwant.continuum' is not available because one or more of its "
+           "dependencies is not installed.")
+    raise ImportError(msg) from error
 
-del sys, ExtensionUnavailable
 
 __all__ = ['discretize', 'discretize_symbolic', 'build_discretized',
            'sympify', 'lambdify']
