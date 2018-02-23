@@ -33,7 +33,7 @@ try:
 
     from matplotlib import pyplot  # pragma: no flakes
 except ImportError:
-    pass
+    matplotlib_backend_chosen = False
 
 from kwant import plotter
 
