@@ -16,7 +16,9 @@ import sys, os
 from distutils.util import get_platform
 sys.path.insert(0, "../../build/lib.{0}-{1}.{2}".format(
         get_platform(), *sys.version_info[:2]))
+
 import kwant
+import kwant.continuum  # sphinx gets confused with lazy loading
 
 # -- General configuration -----------------------------------------------------
 

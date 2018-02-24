@@ -1,4 +1,4 @@
-@@ -1,71 +1,75 @@
+@@ -1,72 +1,76 @@
  # Comprehensive example: quantum anomalous Hall effect
  # ====================================================
  #
@@ -16,6 +16,7 @@
  import math
  import matplotlib.pyplot
  import kwant
+ import kwant.continuum
  
  
  # 2 band model exhibiting quantum anomalous Hall effect

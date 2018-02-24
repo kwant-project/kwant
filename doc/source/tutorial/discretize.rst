@@ -53,6 +53,11 @@ with :math:`A(x) = \frac{\hbar^2}{2 m(x)}`.
 
 Using `~kwant.continuum.discretize` to obtain a template
 ........................................................
+First we must explicitly import the `kwant.continuum` package:
+
+.. literalinclude:: /code/include/discretize.py
+    :start-after: #HIDDEN_BEGIN_import
+    :end-before: #HIDDEN_END_import
 
 The function `kwant.continuum.discretize` takes a symbolic Hamiltonian and
 turns it into a `~kwant.builder.Builder` instance with appropriate spatial
