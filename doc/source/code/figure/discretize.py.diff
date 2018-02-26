@@ -1,4 +1,4 @@
-@@ -1,222 +1,236 @@
+@@ -1,225 +1,239 @@
  # Tutorial 2.9. Processing continuum Hamiltonians with discretize
  # ===============================================================
  #
@@ -13,6 +13,9 @@
 +import _defs
  
  import kwant
+ #HIDDEN_BEGIN_import
+ import kwant.continuum
+ #HIDDEN_END_import
  import scipy.sparse.linalg
  import scipy.linalg
  import numpy as np

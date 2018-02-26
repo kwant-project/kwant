@@ -33,7 +33,7 @@ from ._common import KwantDeprecationWarning, UserCodeError
 __all__.extend(['KwantDeprecationWarning', 'UserCodeError'])
 
 for module in ['system', 'builder', 'lattice', 'solvers', 'digest', 'rmt',
-               'operator', 'kpm', 'wraparound', 'continuum']:
+               'operator', 'kpm', 'wraparound']:
     exec('from . import {0}'.format(module))
     __all__.append(module)
 
@@ -55,6 +55,13 @@ except:
     pass
 else:
     __all__.extend(['plotter', 'plot'])
+
+# Lazy import continuum package for backwards compatibility
+from ._common import lazy_import
+
+continuum = lazy_import('continuum', deprecation_warning=True)
+__all__.append('continuum')
+del lazy_import
 
 
 def test(verbose=True):

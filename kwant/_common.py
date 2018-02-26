@@ -6,10 +6,12 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+import sys
 import numpy as np
 import numbers
 import inspect
 import warnings
+import importlib
 from contextlib import contextmanager
 
 __all__ = ['KwantDeprecationWarning', 'UserCodeError']
@@ -37,30 +39,6 @@ class UserCodeError(Exception):
     user's function causes an error.
     """
     pass
-
-
-class ExtensionUnavailable:
-    """Class that replaces unavailable extension modules in the Kwant namespace.
-
-    Some extensions for Kwant (e.g. 'kwant.continuum') require additional
-    dependencies that are not required for core functionality. When the
-    additional dependencies are not installed an instance of this class will
-    be inserted into Kwant's root namespace to simulate the presence of the
-    extension and inform users that they need to install additional
-    dependencies.
-
-    See https://mail.python.org/pipermail/python-ideas/2012-May/014969.html
-    for more details.
-    """
-
-    def __init__(self, name, dependencies):
-        self.name = name
-        self.dependencies = ', '.join(dependencies)
-
-    def __getattr__(self, _):
-        msg = ("'{}' is not available because one or more of the following "
-               "dependencies are not installed: {}")
-        raise RuntimeError(msg.format(self.name, self.dependencies))
 
 
 def ensure_isinstance(obj, typ, msg=None):
@@ -123,3 +101,25 @@ def get_parameters(func):
     takes_kwargs = any(i.kind is inspect.Parameter.VAR_KEYWORD
                        for i in pars.values())
     return required_params, default_params, takes_kwargs
+
+
+class lazy_import:
+    def __init__(self, module, package='kwant', deprecation_warning=False):
+        if module.startswith('.') and not package:
+            raise ValueError('Cannot import a relative module without a package.')
+        self.__module = module
+        self.__package = package
+        self.__deprecation_warning = deprecation_warning
+
+    def __getattr__(self, name):
+        if self.__deprecation_warning:
+            msg = ("Accessing {0} without an explicit import is deprecated. "
+                   "Instead, explicitly 'import {0}'."
+                  ).format('.'.join((self.__package, self.__module)))
+            warnings.warn(msg, KwantDeprecationWarning, stacklevel=2)
+        relative_module = '.' + self.__module
+        mod = importlib.import_module(relative_module, self.__package)
+        # Replace this _LazyModuleProxy with an actual module
+        package = sys.modules[self.__package]
+        setattr(package, self.__module, mod)
+        return getattr(mod, name)
