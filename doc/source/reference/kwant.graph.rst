@@ -76,17 +76,6 @@ Graph types
    Graph
    CGraph
 
-Graph algorithms
-----------------
-.. autosummary::
-   :toctree: generated/
-
-   slice
-   make_undirected
-   remove_duplicates
-   induced_subgraph
-   print_graph
-
 Other
 -----
 +----------------+------------------------------------------+
