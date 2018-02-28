@@ -403,6 +403,10 @@ If the config had to be updated execute::
     reprepro export
     reprepro --delete createsymlinks
 
+In addition to the above, if distributions were removed from the
+configuration file the corresponding directories must be removed
+manually from under the `dists` subdirectory.
+
 Now the source and binary Debian packages can be added.  The last line has to
 be executed for all the .deb files and may be automated with a shell loop. (Be
 sure to use the appropriate <dist>: for the above configuratoin file either
