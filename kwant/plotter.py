@@ -1888,7 +1888,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
             unique_lens = np.unique(lens)
             longest = unique_lens[-1]
             for shortest_nonzero in unique_lens:
-                if shortest_nonzero / longest < 1e-5:
+                if shortest_nonzero / longest > 1e-3:
                     break
             width = 4 * shortest_nonzero
         else:
