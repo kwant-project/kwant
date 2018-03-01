@@ -2046,11 +2046,6 @@ def current(syst, current, relwidth=0.05, **kwargs):
     This routine samples the smoothed field on a regular (square or cubic) grid
     and displays it using an enhanced variant of matplotlib's streamplot.
 
-    This is a convenience function that is equivalent to
-    ``streamplot(*interpolate_current(syst, current, relwidth), **kwargs)``.
-    The longer form makes it possible to tweak additional options of
-    `~kwant.plotter.interpolate_current`.
-
     Parameters
     ----------
     syst : `kwant.system.FiniteSystem`
@@ -2075,6 +2070,109 @@ def current(syst, current, relwidth=0.05, **kwargs):
         return streamplot(*interpolate_current(syst, current, relwidth),
                           **kwargs)
 
+
+def density(syst, density, relwidth=0.05,
+            cmap=None, colorbar=True, file=None, show=True,
+            dpi=None, fig_size=None, ax=None, vmin=None, vmax=None):
+    """Show an interpolated density defined on the sites of a system.
+
+    The system sites, together with a scalar per site defines a "discrete"
+    current density field where the current density is non-zero only on the
+    straight lines that connect sites that are coupled by a hopping term.
+
+    To make this vector field easier to visualize and interpret at different
+    length scales, it is smoothed by convoluting it with the bell-shaped bump
+    function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
+    determined by the `relwidth` parameter.
+
+    This routine samples the smoothed field on a regular (square or cubic) grid
+    and displays it using an enhanced variant of matplotlib's streamplot.
+
+    This is a convenience function that is equivalent to
+    ``streamplot(*interpolate_current(syst, current, relwidth), **kwargs)``.
+    The longer form makes it possible to tweak additional options of
+    `~kwant.plotter.interpolate_current`.
+
+    Parameters
+    ----------
+    syst : `kwant.system.FiniteSystem`
+        The system for which to plot the ``current``.
+    density : sequence of float
+        Sequence of values defining density on each site of the system.
+        Ordered in the same way as ``syst.sites``. This typically will be
+        the result of evaluating a `~kwant.operator.Density` operator.
+    relwidth : float or `None`
+        Relative width of the bumps used to generate the field, as a fraction
+        of the length of the longest side of the bounding box.
+    cmap : colormap, optional
+        Colormap for the background color plot.  When not set the colormap
+        "kwant_red" is used by default.
+    colorbar : bool
+        Whether to show a colorbar if a colormap is used. Ignored if `ax` is
+        provided.
+    file : string or file object or `None`
+        The output file.  If `None`, output will be shown instead.
+    show : bool
+        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
+        to be shown immediately.  Defaults to `True`.
+    dpi : float or `None`
+        Number of pixels per inch.  If not set the ``matplotlib`` default is
+        used.
+    fig_size : tuple or `None`
+        Figure size `(width, height)` in inches.  If not set, the default
+        ``matplotlib`` value is used.
+    ax : ``matplotlib.axes.Axes`` instance or `None`
+        If `ax` is not `None`, no new figure is created, but the plot is done
+        within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
+        and `fig_size` are ignored.
+    vmin, vmax : float or `None`
+        The lower/upper saturation limit for the colormap.
+
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output if `ax` is not set, else None.
+    """
+    if not _p.mpl_available:
+        raise RuntimeError("matplotlib was not found, but is required "
+                           "for current()")
+
+    field, box = interpolate_density(syst, density, relwidth=relwidth)
+    # Matplotlib plots images like matrices: image[y, x].  We use the opposite
+    # convention: image[x, y].  Hence, it is necessary to transpose.
+    # Also squeeze out the last axis as it is just a scalar field
+    field = field.squeeze(axis=-1).transpose()
+
+    if field.ndim != 2:
+        raise ValueError("Only 2D field can be plotted.")
+
+    if cmap is None:
+        cmap = _p._colormaps.kwant_red
+    cmap = _p.matplotlib.cm.get_cmap(cmap)
+
+    if ax is None:
+        fig = _make_figure(dpi, fig_size)
+        ax = fig.add_subplot(1, 1, 1, aspect='equal')
+    else:
+        fig = None
+
+    if vmin is None:
+        vmin = np.min(field)
+    if vmax is None:
+        vmax = np.max(field)
+
+    image = ax.imshow(field, cmap=cmap,
+                      interpolation='bicubic',
+                      extent=[e for c in box for e in c],
+                      origin='lower', vmin=vmin, vmax=vmax)
+
+    ax.set_xlim(*box[0])
+    ax.set_ylim(*box[1])
+
+    if fig is not None:
+        if colorbar and cmap:
+            fig.colorbar(image)
+        return output_fig(fig, file=file, show=show)
 
 # TODO (Anton): Fix plotting of parts of the system using color = np.nan.
 # Not plotting sites currently works, not plotting hoppings does not.
