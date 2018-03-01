@@ -1554,6 +1554,14 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
 
 # Smoothing functions used with 'interpolate_current'.
 
+# Convolution kernel with finite support:
+# f(r) = (1-r^2)^2 Θ(1-r^2)
+def _bump(r):
+    r[r > 1] = 1
+    m = 1 - r * r
+    return m * m
+
+
 # We generate the smoothing function by convolving the current
 # defined on a line between the two sites with
 # f(ρ, z) = (1 - ρ^2 - z^2)^2 Θ(1 - ρ^2 - z^2), where ρ and z are
@@ -1722,6 +1730,132 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
         magns *= current[i]
 
         field[field_slice] += dirs[i] * magns[..., None]
+
+    field *= scale / _smoothing_cross_sections[dim - 1]
+
+    # 'field' contains contributions from both hoppings (i, j) and (j, i)
+    return field, ((region[0][0], region[0][-1]), (region[1][0], region[1][-1]))
+
+
+def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
+    """Interpolate density in a system onto a regular grid.
+
+    The system sites together with a scalar for each site defines a "discrete"
+    density field where the density is non-zero only at the site positions.
+
+    To make this vector field easier to visualize and interpret at different
+    length scales, it is smoothed by convoluting it with the bell-shaped bump
+    function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
+    determined by the `relwidth` and `abswidth` parameters.
+
+    This routine samples the smoothed field on a regular (square or cubic)
+    grid.
+
+    Parameters
+    ----------
+    syst : A finalized system
+        The system on which we are going to calculate the field.
+    density : '1D array of float'
+        Must contain the intensity on each site in the same order that they
+        appear in syst.sites.
+    relwidth : float or `None`
+        Relative width of the bumps used to generate the field, as a fraction
+        of the length of the longest side of the bounding box.  This argument
+        is only used if `abswidth` is not given.
+    abswidth : float or `None`
+        Absolute width of the bumps used to generate the field.  Takes
+        precedence over `relwidth`.  If neither is given, the bump width is set
+        to four times the length of the shortest hopping.
+    n : int
+        Number of points the grid must have over the width of the bump.
+
+    Returns
+    -------
+    field : n-d arraylike of float
+        n-d array of n-d vectors.
+    box : sequence of 2-sequences of float
+        the extents of `field`: ((x0, x1), (y0, y1), ...)
+
+    """
+    if not isinstance(syst, builder.FiniteSystem):
+        raise TypeError("The system needs to be finalized.")
+
+    if len(density) != len(syst.sites):
+        raise ValueError("Density and sites arrays do not have the same"
+                         " length.")
+
+    dim = len(syst.sites[0].pos)
+    sites = np.array([s.pos for s in syst.sites])
+
+    bbox_min = np.min(sites, axis=0)
+    bbox_max = np.max(sites, axis=0)
+    bbox_size = bbox_max - bbox_min
+
+    # Determine the optimal width for the bump function
+    dirs = np.array([syst.sites[i].pos - syst.sites[j].pos
+                     for i, j in syst.graph])
+    lens = np.sqrt(np.sum(dirs * dirs, -1))
+    if abswidth is None:
+        if relwidth is None:
+            unique_lens = np.unique(lens)
+            longest = unique_lens[-1]
+            for shortest_nonzero in unique_lens:
+                if shortest_nonzero / longest > 1e-3:
+                    break
+            width = 4 * shortest_nonzero
+        else:
+            width = relwidth * np.max(bbox_size)
+    else:
+        width = abswidth
+
+    # Define length scale in terms of the bump width.
+    scale = 2 / width
+    padding = width / 2
+    lens *= scale
+
+    # Create field array.
+    field_shape = np.zeros(dim + 1, int)
+    field_shape[dim] = 1
+    for d in range(dim):
+        field_shape[d] = int(bbox_size[d] * n / width + n)
+        if field_shape[d] % 2:
+            field_shape[d] += 1
+    field = np.zeros(field_shape)
+
+    region = [np.linspace(bbox_min[d] - padding,
+                          bbox_max[d] + padding,
+                          field_shape[d])
+              for d in range(dim)]
+
+    grid_density = (field_shape[:dim] - 1) / (bbox_max + 2*padding - bbox_min)
+
+    slices = np.empty((len(sites), dim, 2), int)
+    slices[:, :, 0] = np.floor((sites - bbox_min) * grid_density)
+    slices[:, :, 1] = np.ceil((sites + 2*padding - bbox_min) * grid_density)
+
+    # Interpolate the field for each hopping.
+    for i in range(len(density)):
+
+        if not np.diff(slices[i]).all() or not density[i]:
+            # Zero volume or zero density: nothing to do.
+            continue
+
+        field_slice = [slice(*slices[i, d]) for d in range(dim)]
+
+        # Coordinates of the grid points that are within range of the current
+        # hopping.
+        coords = np.meshgrid(*[region[d][field_slice[d]] for d in range(dim)],
+                             sparse=True, indexing='ij')
+
+        # Convert "coords" into distances from the site
+        coords -= sites[i]
+        r = np.sqrt(np.sum(coords * coords))
+        r *= scale
+
+        magns = _bump(r)
+        magns *= density[i]
+
+        field[field_slice] += magns[..., None]
 
     field *= scale / _smoothing_cross_sections[dim - 1]
 
