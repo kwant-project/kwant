@@ -403,7 +403,7 @@ def set_colors(color, collection, cmap, norm=None):
     if (isinstance(color, np.ndarray) and color.dtype == np.dtype('object')):
         color = tuple(color)
 
-    if isinstance(collection, mplot3d.art3d.Line3DCollection):
+    if has3d and isinstance(collection, mplot3d.art3d.Line3DCollection):
         length = len(collection._segments3d)  # Once again, matplotlib fault!
 
     if isarray(color) and len(color) == length:
