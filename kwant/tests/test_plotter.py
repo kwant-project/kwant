@@ -337,6 +337,12 @@ def rotational_currents(g):
     return null_space_basis
 
 
+def _border_is_0(field):
+    borders = [(0, slice(None)), (-1, slice(None)),
+               (slice(None), 0), (slice(None), -1)]
+    return all(np.allclose(field[a, b], 0) for a, b in borders)
+
+
 def test_current_interpolation():
 
     ## Passing a Builder will raise an error
@@ -422,6 +428,28 @@ def test_current_interpolation():
 
     # 3rd value returned from 'linregress' is 'rvalue'
     assert scipy.stats.linregress(np.log(data))[2] < -0.8
+
+    ## Test that the current is always identically zero at the boundaries of the box
+    syst = kwant.Builder()
+    lat = kwant.lattice.square()
+    syst[[lat(0, 0), lat(1, 0)]] = None
+    syst[(lat(0, 0), lat(1, 0))] = None
+    syst = syst.finalized()
+    current = [1, -1]
+
+    ns = [3, 4, 5, 10, 100]
+    abswidths = [0.01, 0.1, 1, 10, 100]
+    relwidths = [0.01, 0.1, 1, 10, 100]
+    for n, abswidth in itertools.product(ns, abswidths):
+        field, _ = kwant.plotter.interpolate_current(syst, current,
+                                                     abswidth=abswidth, n=n)
+        assert _border_is_0(field)
+    for n, relwidth in itertools.product(ns, relwidths):
+        field, _ = kwant.plotter.interpolate_current(syst, current,
+                                                     relwidth=relwidth, n=n)
+        assert _border_is_0(field)
+
+
 
 
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
