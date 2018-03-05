@@ -1618,26 +1618,27 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
 
     # Define length scale in terms of the bump width.
     scale = 2 / width
+    padding = width / 2
     lens *= scale
 
     # Create field array.
     field_shape = np.zeros(dim + 1, int)
     field_shape[dim] = dim
     for d in range(dim):
-        field_shape[d] = int(bbox_size[d] * n / width + 1.5*n)
+        field_shape[d] = int(bbox_size[d] * n / width + n)
         if field_shape[d] % 2:
             field_shape[d] += 1
     field = np.zeros(field_shape)
 
-    region = [np.linspace(bbox_min[d] - 0.75*width,
-                          bbox_max[d] + 0.75*width,
+    region = [np.linspace(bbox_min[d] - padding,
+                          bbox_max[d] + padding,
                           field_shape[d])
               for d in range(dim)]
 
-    grid_density = (field_shape[:dim] - 1) / (bbox_max + 1.5*width - bbox_min)
+    grid_density = (field_shape[:dim] - 1) / (bbox_max + 2*padding - bbox_min)
     slices = np.empty((len(hops), dim, 2), int)
     slices[:, :, 0] = np.floor((min_hops - bbox_min) * grid_density)
-    slices[:, :, 1] = np.ceil((max_hops + 1.5*width - bbox_min) * grid_density)
+    slices[:, :, 1] = np.ceil((max_hops + 2*padding - bbox_min) * grid_density)
 
     # Interpolate the field for each hopping.
     for i in range(len(current)):
