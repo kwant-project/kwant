@@ -343,6 +343,85 @@ def _border_is_0(field):
     return all(np.allclose(field[a, b], 0) for a, b in borders)
 
 
+def _test_border_0(interpolator):
+    ## Test that current is always identically zero at box boundaries
+    syst = kwant.Builder()
+    lat = kwant.lattice.square()
+    syst[[lat(0, 0), lat(1, 0)]] = None
+    syst[(lat(0, 0), lat(1, 0))] = None
+    syst = syst.finalized()
+    values = [1, -1]
+
+    ns = [3, 4, 5, 10, 100]
+    abswidths = [0.01, 0.1, 1, 10, 100]
+    relwidths = [0.01, 0.1, 1, 10, 100]
+    for n, abswidth in itertools.product(ns, abswidths):
+        field, _ = interpolator(syst, values, abswidth=abswidth, n=n)
+        assert _border_is_0(field)
+    for n, relwidth in itertools.product(ns, relwidths):
+        field, _ = interpolator(syst, values, relwidth=relwidth, n=n)
+        assert _border_is_0(field)
+
+
+def test_density_interpolation():
+    ## Passing a Builder will raise an error
+    pytest.raises(TypeError, plotter.interpolate_density, syst_2d(), None)
+
+    # Test that the density is always identically zero at the box boundaries
+    # as the bump function has finite support and we add a padding
+    _test_border_0(kwant.plotter.interpolate_density)
+
+    def R(theta):
+        return ta.array([[cos(theta), -sin(theta)], [sin(theta), cos(theta)]])
+
+    # Make lattice with lattice vectors perturbed from x and y directions
+    def make_lattice(a, salt='0'):
+        theta_x = kwant.digest.uniform('x', salt=salt) * np.pi / 6
+        theta_y = kwant.digest.uniform('y', salt=salt) * np.pi / 6
+        x = ta.dot(R(theta_x), (a, 0))
+        y = ta.dot(R(theta_y), (0, a))
+        return kwant.lattice.general([x, y], norbs=1)
+
+    # Check that integrating the interpolated density gives the same result
+    # as summing the densities on all sites. We check this for several lattice
+    # widths, lattice orientations and bump widths.
+    for a, width in itertools.product((1, 2), (1, 0.5)):
+        lat = make_lattice(a)
+        syst = syst_rect(lat, salt='0').finalized()
+
+        psi = kwant.wave_function(syst, energy=3)(0)[0]
+        density = kwant.operator.Density(syst)(psi)
+        exact_charge = sum(density)
+        # We verify that the result is good by interpolating for
+        # various numbers of points-per-bump and verifying that
+        # the error falls of as 1/n.
+        data = []
+        for n in [4, 6, 8, 11, 16]:
+            rho, box = plotter.interpolate_density(syst, density,
+                                                   n=n, abswidth=width)
+            (xmin, xmax), (ymin, ymax) = box
+            area =  xmax - xmin * (ymax - ymin)
+            N = rho.shape[0] * rho.shape[1]
+            charge = np.sum(rho) * area / N
+            data.append((n, abs(charge - exact_charge)))
+        _, _, rvalue, *_ = scipy.stats.linregress(np.log(data))
+        # Gradient of -1 on log-log plot means error falls off as 1/n
+        assert rvalue < -0.8
+
+    # Test that the interpolation is linear in the input.
+    rng = ensure_rng(1)
+    lat = make_lattice(1, '1')
+    syst = syst_rect(lat, salt='1').finalized()
+    rho_0 = rng.rand(len(syst.sites))
+    rho_1 = rng.rand(len(syst.sites))
+
+    irho_0, _ = plotter.interpolate_density(syst, rho_0)
+    irho_1, _ = plotter.interpolate_density(syst, rho_1)
+
+    rho_tot, _ = plotter.interpolate_density(syst, rho_0 + 2 * rho_1)
+    assert np.allclose(rho_tot, irho_0 + 2 * irho_1)
+
+
 def test_current_interpolation():
 
     ## Passing a Builder will raise an error
