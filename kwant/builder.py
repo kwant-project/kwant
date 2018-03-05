@@ -711,6 +711,93 @@ def _site_ranges(sites):
     return site_ranges
 
 
+def _substitute_sig(func, substitutions):
+    """Substitute different parameter names into a function signature.
+
+    Parameters
+    ----------
+    func : callable
+        The function whose signature we wish to copy
+    substitutions : dict or iterable
+        Mapping from old parameter names to new. Will be
+        fed to 'dict'.
+
+    Returns
+    -------
+    inspect.Signature
+    """
+    substitutions = dict(substitutions)  # Copy because we later destroy it
+
+    def new_name(name):
+        return substitutions.pop(name, name)
+
+    sig = inspect.signature(func)
+
+    new_params = [param.replace(name=new_name(name))
+                  for name, param in sig.parameters.items()]
+
+    if substitutions:
+        raise ValueError('More substitutions than available parameters.')
+
+    return sig.replace(parameters=new_params)
+
+
+def _compose_maps(f, g):
+    """Compose the maps f and g from left to right
+
+    Examples
+    --------
+    >>> _compose_maps(
+    ...     dict(x='a', y='b'),
+    ...     dict(a='c', z='e'))
+    {'x': 'c', 'y': 'b', 'z': 'e'}
+    """
+    composed = dict(g)
+    for fk, fv in f.items():
+        if fv in g:
+            del composed[fv]
+            composed[fk] = g[fv]
+        else:
+            composed[fk] = fv
+
+    # eliminate identity maps k -> k
+    return dict((k, v) for k, v in composed.items() if k != v)
+
+
+def _invert_map(substitutions, arguments):
+    pmap = {new: old for old, new in substitutions}
+    return {pmap.get(param, param): value
+            for param, value in arguments.items()}
+
+
+class ParameterSubstitution:
+    """Proxy that renames function parameters."""
+    __slots__ = ('function', 'substitutions', '__signature__')
+
+    def __init__(self, function, substitutions):
+        if isinstance(function, ParameterSubstitution):
+            self.function = function.function
+            substitutions = _compose_maps(dict(function.substitutions),
+                                          substitutions)
+        else:
+            self.function = function
+        self.substitutions = tuple(sorted(substitutions.items()))
+        self.__signature__ = _substitute_sig(self.function, self.substitutions)
+
+    def __eq__(self, other):
+        if not isinstance(other, ParameterSubstitution):
+            return False
+        return ((self.function, self.substitutions) ==
+                (other.function, other.substitutions))
+
+    def __hash__(self):
+        return hash((self.function, self.substitutions))
+
+    def __call__(self, *args, **kwargs):
+        arguments = self.__signature__.bind(*args, **kwargs).arguments
+        return self.function(**_invert_map(self.substitutions, arguments))
+
+
 class Builder:
     """A tight binding system defined on a graph.
 
