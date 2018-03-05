@@ -435,6 +435,8 @@ def test_current_interpolation():
         y = ta.dot(R(theta), (0, a))
         return kwant.lattice.general([x, y], norbs=1)
 
+    _test_border_0(plotter.interpolate_current)
+
     ## Check current through cross section is same for different lattice
     ## parameters and orientations of the system wrt. the discretization grid
     for a, theta, width in [(1, 0, 1),
@@ -507,28 +509,6 @@ def test_current_interpolation():
 
     # 3rd value returned from 'linregress' is 'rvalue'
     assert scipy.stats.linregress(np.log(data))[2] < -0.8
-
-    ## Test that the current is always identically zero at the boundaries of the box
-    syst = kwant.Builder()
-    lat = kwant.lattice.square()
-    syst[[lat(0, 0), lat(1, 0)]] = None
-    syst[(lat(0, 0), lat(1, 0))] = None
-    syst = syst.finalized()
-    current = [1, -1]
-
-    ns = [3, 4, 5, 10, 100]
-    abswidths = [0.01, 0.1, 1, 10, 100]
-    relwidths = [0.01, 0.1, 1, 10, 100]
-    for n, abswidth in itertools.product(ns, abswidths):
-        field, _ = kwant.plotter.interpolate_current(syst, current,
-                                                     abswidth=abswidth, n=n)
-        assert _border_is_0(field)
-    for n, relwidth in itertools.product(ns, relwidths):
-        field, _ = kwant.plotter.interpolate_current(syst, current,
-                                                     relwidth=relwidth, n=n)
-        assert _border_is_0(field)
-
-
 
 
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
