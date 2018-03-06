@@ -13,6 +13,7 @@ import inspect
 import warnings
 import importlib
 from contextlib import contextmanager
+from collections import namedtuple
 
 __all__ = ['KwantDeprecationWarning', 'UserCodeError']
 
@@ -75,15 +76,18 @@ def reraise_warnings(level=3):
         warnings.warn(warning.message, stacklevel=level)
 
 
+_Params = namedtuple('_Params', ('required', 'defaults', 'takes_kwargs'))
+
+
 def get_parameters(func):
     """Get the names of the parameters to 'func' and whether it takes kwargs.
 
     Returns
     -------
-    required_params : list
+    required : list
         Names of positional, and keyword only parameters that do not have a
         default value and that appear in the signature of 'func'.
-    default_params : list
+    defaults : list
         Names of parameters that have a default value.
     takes_kwargs : bool
         True if 'func' takes '**kwargs'.
@@ -100,7 +104,7 @@ def get_parameters(func):
                       if v.default is not inspect._empty]
     takes_kwargs = any(i.kind is inspect.Parameter.VAR_KEYWORD
                        for i in pars.values())
-    return required_params, default_params, takes_kwargs
+    return _Params(required_params, default_params, takes_kwargs)
 
 
 class lazy_import:
