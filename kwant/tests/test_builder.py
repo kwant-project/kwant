@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Kwant authors.
+# Copyright 2011-2018 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -1301,3 +1301,59 @@ def test_parameter_substitution():
     g = Subs(f, dict(x='a'))
     h = Subs(f, dict(x='a'))
     assert len(set([f, g, h])) == 2
+
+
+def test_subs():
+
+    # Simple case
+
+    def onsite(site, a, b):
+        salt = str(a) + str(b)
+        return kwant.digest.uniform(site.tag, salt=salt)
+
+    def hopping(sitea, siteb, b, c):
+        salt = str(b) + str(c)
+        return kwant.digest.uniform(ta.array((sitea.tag, siteb.tag)), salt=salt)
+
+    lat = kwant.lattice.chain()
+
+    def make_system(sym=kwant.builder.NoSymmetry(), n=3):
+        syst = kwant.Builder(sym)
+        syst[(lat(i) for i in range(n))] = onsite
+        syst[lat.neighbors()] = hopping
+        return syst
+
+    def hamiltonian(syst, **kwargs):
+        return syst.finalized().hamiltonian_submatrix(params=kwargs)
+
+    syst = make_system()
+    # parameter name not an identifier
+    raises(ValueError, syst.subs, a='not-an-identifier?')
+    # substituting a paramter that doesn't exist produces a warning
+    warns(RuntimeWarning, syst.subs, fakeparam='yes')
+    # name clash in value functions
+    raises(ValueError, syst.subs, b='a')
+    raises(ValueError, syst.subs, b='c')
+    raises(ValueError, syst.subs, a='site')
+    raises(ValueError, syst.subs, c='sitea')
+    # cannot call 'subs' on systems with attached leads, because
+    # it is not clear whether the substitutions should propagate
+    # into the leads too.
+    syst = make_system()
+    lead = make_system(kwant.TranslationalSymmetry((-1,)), n=1)
+    syst.attach_lead(lead)
+    raises(ValueError, syst.subs, a='d')
+
+    # test basic substitutions
+    syst = make_system()
+    expected = hamiltonian(syst, a=1, b=2, c=3)
+    # 1 level of substitutions
+    sub_syst = syst.subs(a='d', b='e')
+    assert np.allclose(hamiltonian(sub_syst, d=1, e=2, c=3), expected)
+    # 2 levels of substitution
+    sub_sub_syst = sub_syst.subs(d='g', c='h')
+    assert np.allclose(hamiltonian(sub_sub_syst, g=1, e=2, h=3), expected)
+    # very confusing but technically valid. 'a' does not appear in 'hopping',
+    # so the signature of 'onsite' is valid.
+    sub_syst = syst.subs(a='sitea')
+    assert np.allclose(hamiltonian(sub_syst, sitea=1, b=2, c=3), expected)

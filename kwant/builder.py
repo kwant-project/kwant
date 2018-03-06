@@ -21,7 +21,8 @@ from . import system, graph, KwantDeprecationWarning, UserCodeError
 from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry
-from ._common import ensure_isinstance, get_parameters, reraise_warnings
+from ._common import (ensure_isinstance, get_parameters, reraise_warnings,
+                      interleave)
 
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
@@ -796,6 +797,15 @@ class ParameterSubstitution:
         return self.function(**_invert_map(self.substitutions, arguments))
 
 
+def _substitute_parameters(value_func, relevant_params, subs):
+    """Substitute 'relevant_params' from 'subs' into 'value_func'."""
+    assert callable(value_func)
+    relevant_subs = {n: subs[n] for n in relevant_params if n in subs}
+    if not relevant_subs:
+        return value_func
+    return ParameterSubstitution(value_func, relevant_subs)
+
+
 class Builder:
     """A tight binding system defined on a graph.
 
@@ -1368,6 +1378,63 @@ class Builder:
                       stacklevel=2)
         self.update(other)
         return self
+
+    def subs(self, **subs):
+        """Return a copy of this Builder with modified parameter names."""
+        # Get value *functions* only
+        onsites = list(set(
+            onsite for _, onsite in self.site_value_pairs()
+            if callable(onsite)
+        ))
+        hoppings = list(set(
+            hop for _, hop in self.hopping_value_pairs()
+            if callable(hop)
+        ))
+
+        flatten = chain.from_iterable
+
+        # Get parameter names to be substituted for each function,
+        # without the 'site' parameter(s)
+        onsite_params = [get_parameters(v).required[1:] for v in onsites]
+        hopping_params = [get_parameters(v).required[2:] for v in hoppings]
+
+        system_params = set(flatten(chain(onsite_params, hopping_params)))
+        nonexistant_params = set(subs.keys()).difference(system_params)
+        if nonexistant_params:
+            msg = ('Parameters {} are not used by any onsite or hopping '
+                   'value function in this system.'
+                  ).format(nonexistant_params)
+            warnings.warn(msg, RuntimeWarning, stacklevel=2)
+
+        # Precompute map from old onsite/hopping value functions to ones
+        # with substituted parameters.
+        value_map = {
+            value: _substitute_parameters(value, params, subs)
+            for value, params in chain(zip(onsites, onsite_params),
+                                       zip(hoppings, hopping_params))
+        }
+
+        # Construct the a copy of the system with new value functions.
+        if self.leads:
+            raise ValueError("Using 'subs' on a Builder with attached leads "
+                             "is ambiguous. Consider using 'subs' before "
+                             "attaching leads.")
+        result = copy.copy(self)
+        # if we don't assign a new list we will inadvertantly add leads to
+        # the reversed system if we add leads to *this* system
+        # (because we only shallow copy)
+        result.leads = []
+        # Copy the 'H' dictionary, mapping old values to new ones using
+        # 'value_map'. If a value does not appear in the map then it means
+        # that the old value should be used.
+        result.H = {}
+        for tail, hvhv in self.H.items():
+            result.H[tail] = list(flatten(
+                (head, value_map.get(value, value))
+                for head, value in interleave(hvhv)
+            ))
+
+        return result
 
     def fill(self, template, shape, start, *, max_sites=10**7):
         """Populate builder using another one as a template.
