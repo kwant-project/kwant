@@ -10,6 +10,7 @@ import abc
 import warnings
 import operator
 import collections
+import copy
 from functools import total_ordering, wraps
 from itertools import islice, chain
 import inspect
@@ -991,6 +992,18 @@ class Builder:
         hvhv = self.H[tail]
         return len(hvhv) // 2 - 1
 
+    def __copy__(self):
+        """Shallow copy"""
+        result = object.__new__(Builder)
+        result.symmetry = self.symmetry
+        result.conservation_law = self.conservation_law
+        result.time_reversal = self.time_reversal
+        result.particle_hole = self.particle_hole
+        result.chiral = self.chiral
+        result.leads = self.leads
+        result.H = self.H
+        return result
+
     # TODO: write a test for this method.
     def reversed(self):
         """Return a shallow copy of the builder with the symmetry reversed.
@@ -999,16 +1012,14 @@ class Builder:
         two opposite sides.  It requires a builder to which an infinite
         symmetry is associated.
         """
-        result = object.__new__(Builder)
-        result.symmetry = self.symmetry.reversed()
-        result.conservation_law = self.conservation_law
-        result.time_reversal = self.time_reversal
-        result.particle_hole = self.particle_hole
-        result.chiral = self.chiral
         if self.leads:
             raise ValueError('System to be reversed may not have leads.')
+        result = copy.copy(self)
+        # if we don't assign a new list we will inadvertantly add leads to
+        # the reversed system if we add leads to *this* system
+        # (because we only shallow copy)
         result.leads = []
-        result.H = self.H
+        result.symmetry = self.symmetry.reversed()
         return result
 
     def __bool__(self):
