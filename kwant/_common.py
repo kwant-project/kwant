@@ -42,6 +42,24 @@ class UserCodeError(Exception):
     pass
 
 
+def interleave(seq):
+    """Return an iterator that yields pairs of elements from a sequence.
+
+    If 'seq' has an odd number of elements then the last element is dropped.
+
+    Examples
+    --------
+    >>> list(interleave(range(4)))
+    [(0, 1), (2, 3)]
+    >>> list(interleave(range(5))
+    [(0, 1), (2, 3)]
+    """
+    # zip, when given the same iterator twice, turns a sequence into a
+    # sequence of pairs.
+    iseq = iter(seq)
+    return zip(iseq, iseq)
+
+
 def ensure_isinstance(obj, typ, msg=None):
     if isinstance(obj, typ):
         return

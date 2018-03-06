@@ -677,11 +677,8 @@ class Other:
 
 
 def edges(seq):
-    # izip, when given the same iterator twice, turns a sequence into a
-    # sequence of pairs.
-    seq_iter = iter(seq)
-    result = zip(seq_iter, seq_iter)
-    next(result)                # Skip the special loop edge.
+    result = interleave(seq)
+    next(result)  # Skip the special loop edge.
     return result
 
 
