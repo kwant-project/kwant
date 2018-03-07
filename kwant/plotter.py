@@ -1608,25 +1608,58 @@ def _optimal_width(lens, abswidth, relwidth, bbox_size):
     return width
 
 
-# Create field array and associated array of grid coordinates
-# dim: dimensions of grid, nvector: the dimension of the field vectors,
-# nelements: the number of sites/hoppings
-# bbox: (bbox_min, bbox_max)
-# from_to_slice: pair of sequences of coordinates
-# padding: padding to apply to the bounding box
-# n: number of points to put in 1 bump width
-def _create_field(dim, nvector, nelements, bbox, from_to_slice,
-                  padding, n, width):
-    bbox_min, bbox_max = bbox
-    bbox_size = bbox_max - bbox_min
-
+# Create empty field array that covers the bounding box plus
+# some additional padding
+def _create_field(dim, bbox_size, width, n, is_current):
     field_shape = np.zeros(dim + 1, int)
-    field_shape[dim] = nvector
+    field_shape[dim] = dim if is_current else 1
     for d in range(dim):
         field_shape[d] = int(bbox_size[d] * n / width + n)
         if field_shape[d] % 2:
             field_shape[d] += 1
     field = np.zeros(field_shape)
+    # padding is width / 2
+    return field, width / 2
+
+
+def density_kernel(coords):
+    r = np.sqrt(np.sum(coords * coords))
+    return _bump(r)[..., None]
+
+
+def current_kernel(coords, direction, length):
+    z = np.dot(coords, direction)
+    rho = np.sqrt(np.abs(np.sum(coords * coords) - z * z))
+    magn = (_smoothing(rho, z) - _smoothing(rho, z - length))
+    return direction * magn[..., None]
+
+
+# interpolate a discrete scalar or vector field.
+def _interpolate_field(dim, elements, discrete_field, bbox, width,
+                       padding, field_out):
+
+    field_shape = np.array(field_out.shape)
+    bbox_min, bbox_max = bbox
+
+    scale = 2 / width
+
+    # if density elements is shape (nsites, dim)
+    # if current elements is shape (nhops, 2, dim)
+    assert elements.shape[-1] == dim
+    is_current = len(elements.shape) == 3
+    if is_current:
+        assert elements.shape[1] == 2
+        dirs = elements[:, 1] - elements[:, 0]
+        lens = np.sqrt(np.sum(dirs * dirs, axis=-1))
+        dirs /= lens[:, None]
+        lens = lens * scale
+
+    if is_current:
+        pos_offsets = elements[:, 0]  # first site in hopping
+        kernel = current_kernel
+    else:
+        pos_offsets = elements  # sites themselves
+        kernel = density_kernel
 
     region = [np.linspace(bbox_min[d] - padding,
                           bbox_max[d] + padding,
@@ -1635,12 +1668,38 @@ def _create_field(dim, nvector, nelements, bbox, from_to_slice,
 
     grid_density = (field_shape[:dim] - 1) / (bbox_max + 2*padding - bbox_min)
 
-    slices = np.empty((nelements, dim, 2), int)
-    mn, mx = from_to_slice
+    # slices for indexing 'field' and 'region' array
+    slices = np.empty((len(discrete_field), dim, 2), int)
+    if is_current:
+        mn = np.min(elements, 1)
+        mx = np.max(elements, 1)
+    else:
+        mn = mx = elements
     slices[:, :, 0] = np.floor((mn - bbox_min) * grid_density)
     slices[:, :, 1] = np.ceil((mx + 2*padding - bbox_min) * grid_density)
 
-    return field, region, slices
+    for i in range(len(discrete_field)):
+
+        if not np.diff(slices[i]).all() or not discrete_field[i]:
+            # Zero volume or zero field: nothing to do.
+            continue
+
+        field_slice = [slice(*slices[i, d]) for d in range(dim)]
+
+        # Coordinates of the grid points that are within range of the current
+        # hopping.
+        coords = np.meshgrid(*[region[d][field_slice[d]] for d in range(dim)],
+                             sparse=True, indexing='ij')
+
+        # Convert "coords" into scaled distances from pos_offset
+        coords -= pos_offsets[i]
+        coords *= scale
+        magns = kernel(coords, dirs[i], lens[i]) if is_current else kernel(coords)
+        magns *= discrete_field[i]
+
+        field_out[field_slice] += magns
+
+    field_out *= scale / _smoothing_cross_sections[dim - 1]
 
 
 def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
@@ -1722,46 +1781,14 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     dirs /= lens[:, None]
     width = _optimal_width(lens, abswidth, relwidth, bbox_size)
 
-    # Define length scale in terms of the bump width.
-    scale = 2 / width
-    padding = width / 2
-    lens *= scale
 
-    f = _create_field(dim, dim, len(hops), (bbox_min, bbox_max),
-                      (min_hops, max_hops), padding, n, width)
-    field, region, slices = f
+    field, padding = _create_field(dim, bbox_size, width, n, is_current=True)
+    boundaries = tuple((bbox_min[d] - padding, bbox_max[d] + padding)
+                        for d in range(dim))
+    _interpolate_field(dim, hops, current,
+                       (bbox_min, bbox_max), width, padding, field)
 
-    # Interpolate the field for each hopping.
-    for i in range(len(current)):
-
-        if not np.diff(slices[i]).all() or not current[i]:
-            # Zero volume or zero current: nothing to do.
-            continue
-
-        field_slice = [slice(*slices[i, d]) for d in range(dim)]
-
-        # Coordinates of the grid points that are within range of the current
-        # hopping.
-        coords = np.meshgrid(*[region[d][field_slice[d]] for d in range(dim)],
-                             sparse=True, indexing='ij')
-        coords -= hops[i, 0]
-
-        # Convert "coords" into scaled cylindrical coordinates with regard to
-        # the hopping.
-        z = np.dot(coords, dirs[i])
-        rho = np.sqrt(np.abs(np.sum(coords * coords) - z*z))
-        z *= scale
-        rho *= scale
-
-        magns = _smoothing(rho, z) - _smoothing(rho, z - lens[i])
-        magns *= current[i]
-
-        field[field_slice] += dirs[i] * magns[..., None]
-
-    field *= scale / _smoothing_cross_sections[dim - 1]
-
-    # 'field' contains contributions from both hoppings (i, j) and (j, i)
-    return field, ((region[0][0], region[0][-1]), (region[1][0], region[1][-1]))
+    return field, boundaries
 
 
 def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
@@ -1824,43 +1851,13 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
     lens = np.sqrt(np.sum(dirs * dirs, -1))
     width = _optimal_width(lens, abswidth, relwidth, bbox_size)
 
-    # Define length scale in terms of the bump width.
-    scale = 2 / width
-    padding = width / 2
-    lens *= scale
+    field, padding = _create_field(dim, bbox_size, width, n, is_current=False)
+    boundaries = tuple((bbox_min[d] - padding, bbox_max[d] + padding)
+                        for d in range(dim))
+    _interpolate_field(dim, sites, density,
+                       (bbox_min, bbox_max), width, padding, field)
 
-    f = _create_field(dim, 1, len(sites), (bbox_min, bbox_max),
-                      (sites, sites), padding, n, width)
-    field, region, slices = f
-
-    # Interpolate the field for each hopping.
-    for i in range(len(density)):
-
-        if not np.diff(slices[i]).all() or not density[i]:
-            # Zero volume or zero density: nothing to do.
-            continue
-
-        field_slice = [slice(*slices[i, d]) for d in range(dim)]
-
-        # Coordinates of the grid points that are within range of the current
-        # hopping.
-        coords = np.meshgrid(*[region[d][field_slice[d]] for d in range(dim)],
-                             sparse=True, indexing='ij')
-
-        # Convert "coords" into distances from the site
-        coords -= sites[i]
-        r = np.sqrt(np.sum(coords * coords))
-        r *= scale
-
-        magns = _bump(r)
-        magns *= density[i]
-
-        field[field_slice] += magns[..., None]
-
-    field *= scale / _smoothing_cross_sections[dim - 1]
-
-    # 'field' contains contributions from both hoppings (i, j) and (j, i)
-    return field, ((region[0][0], region[0][-1]), (region[1][0], region[1][-1]))
+    return field, boundaries
 
 
 def _gamma_compress(linear):
