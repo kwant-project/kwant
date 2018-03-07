@@ -1589,6 +1589,25 @@ def _smoothing(rho, z):
 _smoothing_cross_sections = [16 / 15, np.pi / 3, 32 * np.pi / 105]
 
 
+# Determine the optimal bump function width from the absolute and
+# relative widths provided, and the lengths of all the hoppings in the system
+def _optimal_width(lens, abswidth, relwidth, bbox_size):
+    if abswidth is None:
+        if relwidth is None:
+            unique_lens = np.unique(lens)
+            longest = unique_lens[-1]
+            for shortest_nonzero in unique_lens:
+                if shortest_nonzero / longest > 1e-3:
+                    break
+            width = 4 * shortest_nonzero
+        else:
+            width = relwidth * np.max(bbox_size)
+    else:
+        width = abswidth
+
+    return width
+
+
 def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     """Interpolate currents in a system onto a regular grid.
 
@@ -1666,19 +1685,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     dirs = hops[:, 1] - hops[:, 0]
     lens = np.sqrt(np.sum(dirs * dirs, -1))
     dirs /= lens[:, None]
-
-    if abswidth is None:
-        if relwidth is None:
-            unique_lens = np.unique(lens)
-            longest = unique_lens[-1]
-            for shortest_nonzero in unique_lens:
-                if shortest_nonzero / longest < 1e-5:
-                    break
-            width = 4 * shortest_nonzero
-        else:
-            width = relwidth * np.max(bbox_size)
-    else:
-        width = abswidth
+    width = _optimal_width(lens, abswidth, relwidth, bbox_size)
 
     # Define length scale in terms of the bump width.
     scale = 2 / width
@@ -1795,18 +1802,7 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
     dirs = np.array([syst.sites[i].pos - syst.sites[j].pos
                      for i, j in syst.graph])
     lens = np.sqrt(np.sum(dirs * dirs, -1))
-    if abswidth is None:
-        if relwidth is None:
-            unique_lens = np.unique(lens)
-            longest = unique_lens[-1]
-            for shortest_nonzero in unique_lens:
-                if shortest_nonzero / longest > 1e-3:
-                    break
-            width = 4 * shortest_nonzero
-        else:
-            width = relwidth * np.max(bbox_size)
-    else:
-        width = abswidth
+    width = _optimal_width(lens, abswidth, relwidth, bbox_size)
 
     # Define length scale in terms of the bump width.
     scale = 2 / width
