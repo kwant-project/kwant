@@ -1608,6 +1608,41 @@ def _optimal_width(lens, abswidth, relwidth, bbox_size):
     return width
 
 
+# Create field array and associated array of grid coordinates
+# dim: dimensions of grid, nvector: the dimension of the field vectors,
+# nelements: the number of sites/hoppings
+# bbox: (bbox_min, bbox_max)
+# from_to_slice: pair of sequences of coordinates
+# padding: padding to apply to the bounding box
+# n: number of points to put in 1 bump width
+def _create_field(dim, nvector, nelements, bbox, from_to_slice,
+                  padding, n, width):
+    bbox_min, bbox_max = bbox
+    bbox_size = bbox_max - bbox_min
+
+    field_shape = np.zeros(dim + 1, int)
+    field_shape[dim] = nvector
+    for d in range(dim):
+        field_shape[d] = int(bbox_size[d] * n / width + n)
+        if field_shape[d] % 2:
+            field_shape[d] += 1
+    field = np.zeros(field_shape)
+
+    region = [np.linspace(bbox_min[d] - padding,
+                          bbox_max[d] + padding,
+                          field_shape[d])
+              for d in range(dim)]
+
+    grid_density = (field_shape[:dim] - 1) / (bbox_max + 2*padding - bbox_min)
+
+    slices = np.empty((nelements, dim, 2), int)
+    mn, mx = from_to_slice
+    slices[:, :, 0] = np.floor((mn - bbox_min) * grid_density)
+    slices[:, :, 1] = np.ceil((mx + 2*padding - bbox_min) * grid_density)
+
+    return field, region, slices
+
+
 def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     """Interpolate currents in a system onto a regular grid.
 
@@ -1692,24 +1727,9 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     padding = width / 2
     lens *= scale
 
-    # Create field array.
-    field_shape = np.zeros(dim + 1, int)
-    field_shape[dim] = dim
-    for d in range(dim):
-        field_shape[d] = int(bbox_size[d] * n / width + n)
-        if field_shape[d] % 2:
-            field_shape[d] += 1
-    field = np.zeros(field_shape)
-
-    region = [np.linspace(bbox_min[d] - padding,
-                          bbox_max[d] + padding,
-                          field_shape[d])
-              for d in range(dim)]
-
-    grid_density = (field_shape[:dim] - 1) / (bbox_max + 2*padding - bbox_min)
-    slices = np.empty((len(hops), dim, 2), int)
-    slices[:, :, 0] = np.floor((min_hops - bbox_min) * grid_density)
-    slices[:, :, 1] = np.ceil((max_hops + 2*padding - bbox_min) * grid_density)
+    f = _create_field(dim, dim, len(hops), (bbox_min, bbox_max),
+                      (min_hops, max_hops), padding, n, width)
+    field, region, slices = f
 
     # Interpolate the field for each hopping.
     for i in range(len(current)):
@@ -1809,25 +1829,9 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
     padding = width / 2
     lens *= scale
 
-    # Create field array.
-    field_shape = np.zeros(dim + 1, int)
-    field_shape[dim] = 1
-    for d in range(dim):
-        field_shape[d] = int(bbox_size[d] * n / width + n)
-        if field_shape[d] % 2:
-            field_shape[d] += 1
-    field = np.zeros(field_shape)
-
-    region = [np.linspace(bbox_min[d] - padding,
-                          bbox_max[d] + padding,
-                          field_shape[d])
-              for d in range(dim)]
-
-    grid_density = (field_shape[:dim] - 1) / (bbox_max + 2*padding - bbox_min)
-
-    slices = np.empty((len(sites), dim, 2), int)
-    slices[:, :, 0] = np.floor((sites - bbox_min) * grid_density)
-    slices[:, :, 1] = np.ceil((sites + 2*padding - bbox_min) * grid_density)
+    f = _create_field(dim, 1, len(sites), (bbox_min, bbox_max),
+                      (sites, sites), padding, n, width)
+    field, region, slices = f
 
     # Interpolate the field for each hopping.
     for i in range(len(density)):
