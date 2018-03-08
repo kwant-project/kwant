@@ -23,3 +23,27 @@ data would appear near the bottom of the color scale, and all of the features
 would be washed out by the presence of the peak. Now `~kwant.plotter.map`
 employs a heuristic for setting the colorscale when there are outliers,
 and will emit a warning when this is detected.
+
+System parameter names can be modified
+--------------------------------------
+After the introduction of ``Builder.fill`` it has become common to construct
+Kwant systems by first creating a "model" system with high symmetry and then
+filling a lower symmetry system with this model. Often, however, you want
+to use different parameter values in different parts of your system. In
+previous versions of Kwant this was difficult to achieve.
+
+Builders now have a method ``subs`` that makes it easy to substitute different
+names for parameters. For example if you have a Builder ``model`` that has
+a parameter ``V``, and you wish to have different values for ``V`` in your
+scattering region and leads you could do the following::
+
+   syst = kwant.Builder()
+   syst.fill(model.subs(V='V_dot', ...))
+
+   lead = kwant.Builder()
+   lead.fill(model.subs(V='V_lead'), ...)
+
+   syst.attach_lead(lead)
+   fsyst = syst.finalized()
+
+   kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
