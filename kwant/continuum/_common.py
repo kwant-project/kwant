@@ -65,18 +65,17 @@ def lambdify(expr, locals=None):
     locals : dict or ``None`` (default)
         Additional definitions for `~kwant.continuum.sympify`.
 
-    Example:
+    Examples
     --------
-        >>> f = lambdify('a + b', locals={'b': 'b + c'})
-        >>> f(1, 3, 5)
-        9
+    >>> f = lambdify('a + b', locals={'b': 'b + c'})
+    >>> f(1, 3, 5)
+    9
 
-        >>> ns = {'sigma_plus': [[0, 2], [0, 0]]}
-        >>> f = lambdify('k_x**2 * sigma_plus', ns)
-        >>> f(0.25)
-        array([[ 0.   ,  0.125],
-               [ 0.   ,  0.   ]])
-
+    >>> ns = {'sigma_plus': [[0, 2], [0, 0]]}
+    >>> f = lambdify('k_x**2 * sigma_plus', ns)
+    >>> f(0.25)
+    array([[ 0.   ,  0.125],
+           [ 0.   ,  0.   ]])
     """
     with reraise_warnings(level=4):
         expr = sympify(expr, locals)

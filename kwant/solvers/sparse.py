@@ -32,10 +32,11 @@ if uses_umfpack:
         Return a fuction for solving a sparse linear system, with A
         pre-factorized.
 
-        Example:
-        solve = factorized(A) # Makes LU decomposition.
-        x1 = solve(rhs1) # Uses the LU factors.
-        x2 = solve(rhs2) # Uses again the LU factors.
+        Examples
+        --------
+        >>> solve = factorized(A) # Makes LU decomposition.
+        >>> x1 = solve(rhs1) # Uses the LU factors.
+        >>> x2 = solve(rhs2) # Uses again the LU factors.
 
         Parameters
         ----------
