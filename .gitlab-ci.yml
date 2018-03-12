@@ -57,6 +57,7 @@ check for dependencies installed:
 build documentation:
   stage: test
   script:
+    - pip3 install --upgrade matplotlib
     - make -C doc realclean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W' REFNAME="${CI_COMMIT_TAG:-$CI_COMMIT_SHA}" SOURCE_URL="$CI_PROJECT_URL"/blob
   artifacts:
     paths:
@@ -67,6 +68,7 @@ build PDF documentation:
   stage: test
   script:
     - pip3 install sympy
+    - pip3 install --upgrade matplotlib
     - make -C doc latex SPHINXOPTS='-n -W'
     - cd doc/build/latex
     - make all-pdf
