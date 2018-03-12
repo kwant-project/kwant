@@ -1214,6 +1214,11 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     calling `~kwant.plotter.mask_interpolate` and show this pixmap using
     matplotlib.
 
+    This function is similar to `~kwant.plotter.density`, but is more suited
+    to the case where you want site-level resolution of the quantity that
+    you are plotting. If your system has many sites you may get more appealing
+    plots by using `~kwant.plotter.density`.
+
     Parameters
     ----------
     sys : kwant.system.FiniteSystem or kwant.builder.Builder
@@ -1269,6 +1274,10 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     - When plotting a system on a square lattice and `method` is "nearest", it
       makes sense to set `oversampling` to ``1``.  Then, each site will
       correspond to exactly one pixel.
+
+    See Also
+    --------
+    kwant.plotter.density
     """
 
     if not _p.mpl_available:
@@ -2035,13 +2044,14 @@ def current(syst, current, relwidth=0.05, **kwargs):
     current density field where the current density is non-zero only on the
     straight lines that connect sites that are coupled by a hopping term.
 
-    To make this vector field easier to visualize and interpret at different
+    To make this scalar field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
     determined by the `relwidth` parameter.
 
-    This routine samples the smoothed field on a regular (square or cubic) grid
-    and displays it using an enhanced variant of matplotlib's streamplot.
+    This function is similar to `~kwant.plotter.map`, but generally gives more
+    appealing visual results when used on systems with many sites. If you want
+    site-level resolution you may be better off using `~kwant.plotter.map`.
 
     Parameters
     ----------
@@ -2062,6 +2072,9 @@ def current(syst, current, relwidth=0.05, **kwargs):
     fig : matplotlib figure
         A figure with the output if `ax` is not set, else None.
 
+    See Also
+    --------
+    kwant.plotter.density
     """
     with _common.reraise_warnings(4):
         return streamplot(*interpolate_current(syst, current, relwidth),
@@ -2150,6 +2163,11 @@ def density(syst, density, relwidth=0.05,
     -------
     fig : matplotlib figure
         A figure with the output if `ax` is not set, else None.
+
+    See Also
+    --------
+    kwant.plotter.current
+    kwant.plotter.map
     """
     if not _p.mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "

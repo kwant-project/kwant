@@ -11,6 +11,7 @@ Plotting routines
 
    plot
    map
+   density
    current
    bands
    spectrum
@@ -22,6 +23,7 @@ Helper functions
    :toctree: generated/
 
    interpolate_current
+   interpolate_density
    sys_leads_sites
    sys_leads_hoppings
    sys_leads_pos
