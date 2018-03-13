@@ -12,3 +12,14 @@ The function `~kwant.plotter.streamplot` has got a new option ``vmax``.  Note
 that this option is not available in `~kwant.plotter.current`.  In order to use
 it, one has to call ``streamplot`` directly as shown in the docstring of
 ``current``.
+
+Improved heuristic for colorscale limits in `kwant.plotter.map`
+---------------------------------------------------------------
+Previously `~kwant.plotter.map` would set the limits for the color scale
+to the extrema of the data being plotted when ``vmin`` and ``vmax`` were
+not provided. This is the behaviour of ``matplotlib.imshow``. When the data
+to be plotted has very sharp and high peaks this would mean that most of the
+data would appear near the bottom of the color scale, and all of the features
+would be washed out by the presence of the peak. Now `~kwant.plotter.map`
+employs a heuristic for setting the colorscale when there are outliers,
+and will emit a warning when this is detected.
