@@ -2068,9 +2068,28 @@ def current(syst, current, relwidth=0.05, **kwargs):
                           **kwargs)
 
 
+def _mask(field, box, coords):
+    tree = spatial.cKDTree(coords)
+
+    # Select 10 sites to compare -- comparing them all is too costly.
+    points = _sample_array(coords, 10)
+    min_dist = np.min(tree.query(points, 2)[0][:, 1])
+
+    # Build the mask initially as a 2D array
+    dims = tuple(slice(boxmin, boxmax, 1j * shape)
+                 for (boxmin, boxmax), shape in zip(box, field.shape))
+    mask = np.mgrid[dims].reshape(len(box), -1).T
+
+    # '0.4' (which is just below sqrt(2) - 1) makes tree.query() exact
+    # in the common case of a square lattice.
+    mask = tree.query(mask, eps=0.4)[0] > min_dist
+    return np.ma.masked_array(field, mask)
+
+
 def density(syst, density, relwidth=0.05,
             cmap=None, colorbar=True, file=None, show=True,
-            dpi=None, fig_size=None, ax=None, vmin=None, vmax=None):
+            dpi=None, fig_size=None, ax=None, vmin=None, vmax=None,
+            background='#e0e0e0'):
     """Show an interpolated density defined on the sites of a system.
 
     The system sites, together with a scalar per site defines a "discrete"
@@ -2124,6 +2143,8 @@ def density(syst, density, relwidth=0.05,
         and `fig_size` are ignored.
     vmin, vmax : float or `None`
         The lower/upper saturation limit for the colormap.
+    background : matplotlib color spec
+        Areas outside the system are filled with this color.
 
     Returns
     -------
@@ -2135,6 +2156,7 @@ def density(syst, density, relwidth=0.05,
                            "for current()")
 
     field, box = interpolate_density(syst, density, relwidth=relwidth)
+    field = _mask(field, box, np.array([s.pos for s in syst.sites]))
     # Matplotlib plots images like matrices: image[y, x].  We use the opposite
     # convention: image[x, y].  Hence, it is necessary to transpose.
     # Also squeeze out the last axis as it is just a scalar field
@@ -2165,6 +2187,7 @@ def density(syst, density, relwidth=0.05,
 
     ax.set_xlim(*box[0])
     ax.set_ylim(*box[1])
+    ax.patch.set_facecolor(background)
 
     if fig is not None:
         if colorbar and cmap:
