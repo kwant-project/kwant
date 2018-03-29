@@ -1380,7 +1380,15 @@ class Builder:
         return self
 
     def subs(self, **subs):
-        """Return a copy of this Builder with modified parameter names."""
+        """Return a copy of this Builder with modified parameter names.
+
+        Notes
+        -----
+        The value functions of the returned Builder take longer to
+        evaluate due to the parameter renaming. This overhead may be
+        a significant fraction of the total time if the original value
+        function is particularly quick to evaluate.
+        """
         # Get value *functions* only
         onsites = list(set(
             onsite for _, onsite in self.site_value_pairs()
