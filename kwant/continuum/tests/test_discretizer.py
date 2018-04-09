@@ -106,26 +106,27 @@ def test_reading_different_matrix_types():
 def test_simple_derivations(commutative):
     kx, ky, kz = sympy.symbols('k_x k_y k_z', commutative=commutative)
     test = {
-        kx**2                   : {(0,): 2/a**2, (1,): -1/a**2},
-        kx**2 + ky**2           : {(0, 1): -1/a**2, (0, 0): 4/a**2,
-                                   (1, 0): -1/a**2},
-        kx**2 + ky**2 + kz**2   : {(1, 0, 0): -1/a**2, (0, 0, 1): -1/a**2,
-                                   (0, 0, 0): 6/a**2, (0, 1, 0): -1/a**2},
-        ky**2 + kz**2           : {(0, 1): -1/a**2, (0, 0): 4/a**2,
-                                   (1, 0): -1/a**2},
-        kz**2                   : {(0,): 2/a**2, (1,): -1/a**2},
+        kx**2                   : {(0,): 2/ax**2, (1,): -1/ax**2},
+        kx**2 + ky**2           : {(0, 1): -1/ay**2, (0, 0): 2/ax**2 + 2/ay**2,
+                                   (1, 0): -1/ax**2},
+        kx**2 + ky**2 + kz**2   : {(1, 0, 0): -1/ax**2, (0, 0, 1): -1/az**2,
+                                   (0, 0, 0): 2/ax**2 + 2/ay**2 + 2/az**2,
+                                   (0, 1, 0): -1/ay**2},
+        ky**2 + kz**2           : {(0, 1): -1/az**2, (0, 0): 2/ay**2 + 2/az**2,
+                                   (1, 0): -1/ay**2},
+        kz**2                   : {(0,): 2/az**2, (1,): -1/az**2},
     }
     non_commutative_test = {
-        kx * A(x, y) * kx       : {(1, ): -A(a/2 + x, y)/a**2,
-                                  (0, ): A(-a/2 + x, y)/a**2 + A(a/2 + x, y)/a**2},
-        kx**2 + kz * B(y)       : {(1, 0): -1/a**2, (0, 1): -I*B(y)/(2*a),
-                                   (0, 0): 2/a**2},
-        kx * A(x)               : {(0,): 0, (1,): -I*A(a + x)/(2*a)},
-        ky * A(x)               : {(1,): -I*A(x)/(2*a), (0,): 0},
-        kx * A(x) * B           : {(0,): 0, (1,): -I*A(a + x)*B/(2*a)},
-        5 * kx                  : {(0,): 0, (1,): -5*I/(2*a)},
+        kx * A(x, y) * kx       : {(1, ): -A(ax/2 + x, y)/ax**2,
+                                  (0, ): A(-ax/2 + x, y)/ax**2 + A(ax/2 + x, y)/ax**2},
+        kx**2 + kz * B(y)       : {(1, 0): -1/ax**2, (0, 1): -I*B(y)/(2*az),
+                                   (0, 0): 2/ax**2},
+        kx * A(x)               : {(0,): 0, (1,): -I*A(ax + x)/(2*ax)},
+        ky * A(x)               : {(1,): -I*A(x)/(2*ay), (0,): 0},
+        kx * A(x) * B           : {(0,): 0, (1,): -I*A(ax + x)*B/(2*ax)},
+        5 * kx                  : {(0,): 0, (1,): -5*I/(2*ax)},
         kx * (A(x) + B(x))      : {(0,): 0,
-                                   (1,): -I*A(a + x)/(2*a) - I*B(a + x)/(2*a)},
+                                   (1,): -I*A(ax + x)/(2*ax) - I*B(ax + x)/(2*ax)},
     }
 
     if not commutative:
@@ -155,25 +156,27 @@ def test_simple_derivations_with_subs(e_to_subs, e, subs):
 
 def test_simple_derivations_matrix():
     test = {
-        kx**2                   : {(0,): 2/a**2, (1,): -1/a**2},
-        kx**2 + ky**2           : {(0, 1): -1/a**2, (0, 0): 4/a**2,
-                                   (1, 0): -1/a**2},
-        kx**2 + ky**2 + kz**2   : {(1, 0, 0): -1/a**2, (0, 0, 1): -1/a**2,
-                                   (0, 0, 0): 6/a**2, (0, 1, 0): -1/a**2},
-        ky**2 + kz**2           : {(0, 1): -1/a**2, (0, 0): 4/a**2,
-                                   (1, 0): -1/a**2},
-        kz**2                   : {(0,): 2/a**2, (1,): -1/a**2},
-        kx * A(x, y) * kx       : {(1, ): -A(a/2 + x, y)/a**2,
-                                  (0, ): A(-a/2 + x, y)/a**2 + A(a/2 + x, y)/a**2},
-        kx**2 + kz * B(y)       : {(1, 0): -1/a**2, (0, 1): -I*B(y)/(2*a),
-                                   (0, 0): 2/a**2},
-        kx * A(x)               : {(0,): 0, (1,): -I*A(a + x)/(2*a)},
-        ky * A(x)               : {(1,): -I*A(x)/(2*a), (0,): 0},
-        kx * A(x) * B           : {(0,): 0, (1,): -I*A(a + x)*B/(2*a)},
-        5 * kx                  : {(0,): 0, (1,): -5*I/(2*a)},
+        kx**2                   : {(0,): 2/ax**2, (1,): -1/ax**2},
+        kx**2 + ky**2           : {(0, 1): -1/ay**2, (0, 0): 2/ax**2 + 2/ay**2,
+                                   (1, 0): -1/ax**2},
+        kx**2 + ky**2 + kz**2   : {(1, 0, 0): -1/ax**2, (0, 0, 1): -1/az**2,
+                                   (0, 0, 0): 2/ax**2 + 2/ay**2 + 2/az**2,
+                                   (0, 1, 0): -1/ay**2},
+        ky**2 + kz**2           : {(0, 1): -1/az**2, (0, 0): 2/ay**2 + 2/az**2,
+                                   (1, 0): -1/ay**2},
+        kz**2                   : {(0,): 2/az**2, (1,): -1/az**2},
+
+        kx * A(x, y) * kx       : {(1, ): -A(ax/2 + x, y)/ax**2,
+                                  (0, ): A(-ax/2 + x, y)/ax**2 + A(ax/2 + x, y)/ax**2},
+        kx**2 + kz * B(y)       : {(1, 0): -1/ax**2, (0, 1): -I*B(y)/(2*az),
+                                   (0, 0): 2/ax**2},
+        kx * A(x)               : {(0,): 0, (1,): -I*A(ax + x)/(2*ax)},
+        ky * A(x)               : {(1,): -I*A(x)/(2*ay), (0,): 0},
+        kx * A(x) * B           : {(0,): 0, (1,): -I*A(ax + x)*B/(2*ax)},
+        5 * kx                  : {(0,): 0, (1,): -5*I/(2*ax)},
         kx * (A(x) + B(x))      : {(0,): 0,
-                                   (1,): -I*A(a + x)/(2*a) - I*B(a + x)/(2*a)},
-    }
+                                   (1,): -I*A(ax + x)/(2*ax) - I*B(ax + x)/(2*ax)},
+   }
 
     new_test = []
     for inp, out in test.items():
@@ -230,44 +233,44 @@ def test_different_discrete_coordinates():
     test = [
         (
             'xyz', {
-                (1, 0, 0): -1/a**2, (0, 0, 1): -1/a**2,
-                (0, 0, 0): 6/a**2, (0, 1, 0): -1/a**2
+                (1, 0, 0): -1/ax**2, (0, 0, 1): -1/az**2,
+                (0, 0, 0): 2/ax**2 + 2/ay**2 + 2/az**2, (0, 1, 0): -1/ay**2
             }
         ),
         (
             'xy', {
-                (0, 1): -1/a**2,
-                (1, 0): -1/a**2,
-                (0, 0): kz**2 + 4/a**2
+                (0, 1): -1/ay**2,
+                (1, 0): -1/ax**2,
+                (0, 0): kz**2 + 2/ax**2 + 2/ay**2
             }
         ),
         (
             'xz', {
-                (0, 1): -1/a**2,
-                (1, 0): -1/a**2,
-                (0, 0): ky**2 + 4/a**2
+                (0, 1): -1/az**2,
+                (1, 0): -1/ax**2,
+                (0, 0): ky**2 + 2/ax**2 + 2/az**2
             }
         ),
         (
             'yz', {
-                (0, 1): -1/a**2,
-                (1, 0): -1/a**2,
-                (0, 0): kx**2 + 4/a**2
+                (0, 1): -1/az**2,
+                (1, 0): -1/ay**2,
+                (0, 0): kx**2 + 2/ay**2 + 2/az**2
             }
         ),
         (
             'x', {
-                (0,): ky**2 + kz**2 + 2/a**2, (1,): -1/a**2
+                (0,): ky**2 + kz**2 + 2/ax**2, (1,): -1/ax**2
             }
         ),
         (
             'y', {
-                (0,): kx**2 + kz**2 + 2/a**2, (1,): -1/a**2
+                (0,): kx**2 + kz**2 + 2/ay**2, (1,): -1/ay**2
             }
         ),
         (
             'z', {
-                (0,): ky**2 + kx**2 + 2/a**2, (1,): -1/a**2
+                (0,): ky**2 + kx**2 + 2/az**2, (1,): -1/az**2
             }
         ),
     ]
@@ -291,8 +294,8 @@ def test_different_discrete_coordinates():
 def test_non_expended_input():
     symbolic, coords = discretize_symbolic(kx * (kx + A(x)))
     desired = {
-        (0,): 2/a**2,
-        (1,): -I*A(a + x)/(2*a) - 1/a**2
+        (0,): 2/ax**2,
+        (1,): -I*A(ax + x)/(2*ax) - 1/ax**2
     }
     assert symbolic == desired
 
@@ -301,8 +304,8 @@ def test_matrix_with_zeros():
     Matrix = sympy.Matrix
     symbolic, _ = discretize_symbolic("[[k_x*A(x)*k_x, 0], [0, k_x*A(x)*k_x]]")
     output = {
-        (0,):  Matrix([[A(-a/2 + x)/a**2 + A(a/2 + x)/a**2, 0], [0, A(-a/2 + x)/a**2 + A(a/2 + x)/a**2]]),
-        (1,):  Matrix([[-A(a/2 + x)/a**2, 0], [0, -A(a/2 + x)/a**2]]),
+        (0,):  Matrix([[A(-ax/2 + x)/ax**2 + A(ax/2 + x)/ax**2, 0], [0, A(-ax/2 + x)/ax**2 + A(ax/2 + x)/ax**2]]),
+        (1,):  Matrix([[-A(ax/2 + x)/ax**2, 0], [0, -A(ax/2 + x)/ax**2]]),
         }
     assert symbolic == output
 
@@ -435,7 +438,8 @@ def test_numeric_functions_advance():
                 p = dict(A=fA, B=5, sin=np.sin)
 
                 # test onsite
-                v = symbolic.pop((0,)).subs({sympy.symbols('a'): a, B: p['B']})
+                v = symbolic.pop((0,)).subs({sympy.symbols('a_x'): a, B: p['B']})
+                print(v)
                 f_sym = sympy.lambdify(['A', 'x'], v)
                 f_num = builder[lat(0)]
 
@@ -450,7 +454,7 @@ def test_numeric_functions_advance():
 
                 # test hoppings
                 for k, v in symbolic.items():
-                    v = v.subs({sympy.symbols('a'): a, B: p['B']})
+                    v = v.subs({sympy.symbols('a_x'): a, B: p['B']})
                     f_sym = sympy.lambdify(['A', 'x'], v)
                     f_num = builder[lat(0), lat(k[0])]
 
@@ -480,7 +484,7 @@ def test_numeric_functions_with_parameter():
             p = dict(A=fA, B=5)
 
             # test onsite
-            v = symbolic.pop((0,)).subs({sympy.symbols('a'): a, B: p['B']})
+            v = symbolic.pop((0,)).subs({sympy.symbols('a_x'): a, B: p['B']})
             f_sym = sympy.lambdify(['A', 'x'], v)
 
             f_num = builder[lat(0)]
@@ -497,7 +501,7 @@ def test_numeric_functions_with_parameter():
 
             # test hoppings
             for k, v in symbolic.items():
-                v = v.subs({sympy.symbols('a'): a, B: p['B']})
+                v = v.subs({sympy.symbols('a_x'): a, B: p['B']})
                 f_sym = sympy.lambdify(['A', 'x'], v)
                 f_num = builder[lat(0), lat(k[0])]
 
@@ -576,9 +580,9 @@ def test_grid_offset_passed_to_functions():
 @pytest.mark.parametrize("ham, coords, grid", [
     ("k_x", None, Monatomic([[1, 0]])),
     ("k_x", 'xy', Monatomic([[1, 0]])),
-    ("k_x", 'xy', Monatomic([[1, 0], [0, 2]])),
     ("k_x", None, Monatomic([[1, ]], norbs=2)),
     ("k_x * eye(2)", None, Monatomic([[1, ]], norbs=1)),
+    ("k_x+k_y", None, Monatomic([[1, 0], [1, 1]])),
 ])
 def test_grid_constraints(ham, coords, grid):
     with pytest.raises(ValueError):
@@ -589,3 +593,15 @@ def test_grid_constraints(ham, coords, grid):
 def test_check_symbol_names(name):
     with pytest.raises(ValueError):
         discretize(sympy.Symbol(name), 'x')
+
+
+def test_rectangular_grid():
+    lat = Monatomic([[1, 0], [0, 2]])
+
+    tb = discretize("V(x, y)", 'xy', grid=lat)
+    assert np.allclose(tb[lat(0, 0)](lat(1, 0), lambda x, y: x), 1)
+    assert np.allclose(tb[lat(0, 0)](lat(0, 1), lambda x, y: y), 2)
+
+    tb = discretize('k_x**2 + k_y**2', grid=lat)
+    assert np.allclose(tb[lat(0, 0), lat(1, 0)], -1)
+    assert np.allclose(tb[lat(0, 0), lat(0, 1)], -1/4)
