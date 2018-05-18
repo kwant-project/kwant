@@ -538,9 +538,10 @@ class Lead(metaclass=abc.ABCMeta):
 
         Notes
         -----
-        The finalized lead must be an object that can be used as a lead in a
-        `kwant.system.FiniteSystem`.  It could be an instance of
-        `kwant.system.InfiniteSystem` for example.
+        The finalized lead must be an object that can be used as a lead
+        in a `kwant.system.FiniteSystem`, i.e. an instance of
+        `kwant.system.InfiniteSystem`.  Typically it will be a finalized
+        builder: `kwant.builder.InfiniteSystem`.
 
         The order of sites for the finalized lead must be the one specified in
         `interface`.
@@ -584,7 +585,7 @@ class BuilderLead(Lead):
         self.interface = tuple(sorted(interface))
 
     def finalized(self):
-        """Return a `kwant.system.InfiniteSystem` corresponding to the
+        """Return a `kwant.builder.InfiniteSystem` corresponding to the
         compressed lead.
 
         The order of interface sites is kept during finalization.
@@ -1603,9 +1604,9 @@ class Builder:
 
         Returns
         -------
-        finalized_system : `kwant.system.FiniteSystem`
+        finalized_system : `kwant.builder.FiniteSystem`
             If there is no symmetry.
-        finalized_system : `kwant.system.InfiniteSystem`
+        finalized_system : `kwant.builder.InfiniteSystem`
             If a symmetry is present.
 
         Notes
