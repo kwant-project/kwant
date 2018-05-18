@@ -63,7 +63,7 @@ def lambdify(expr, locals=None):
     locals : dict or ``None`` (default)
         Additional definitions for `~kwant.continuum.sympify`.
 
-    Example:
+    Examples
     --------
         >>> f = lambdify('a + b', locals={'b': 'b + c'})
         >>> f(1, 3, 5)
@@ -226,8 +226,8 @@ def monomials(expr, gens=None):
     -------
     dictionary (generator: monomial)
 
-    Example
-    -------
+    Examples
+    --------
         >>> expr = kwant.continuum.sympify("A * (x**2 + y) + B * x + C")
         >>> monomials(expr, gens=('x', 'y'))
         {1: C, x: B, x**2: A, y: A}

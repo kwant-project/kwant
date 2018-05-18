@@ -32,11 +32,6 @@ if uses_umfpack:
         Return a fuction for solving a sparse linear system, with A
         pre-factorized.
 
-        Example:
-        solve = factorized(A) # Makes LU decomposition.
-        x1 = solve(rhs1) # Uses the LU factors.
-        x2 = solve(rhs2) # Uses again the LU factors.
-
         Parameters
         ----------
         A : csc_matrix
@@ -49,6 +44,12 @@ if uses_umfpack:
             0.001 respectively. Whether piv_tol or sym_piv_tol are used is
             decided internally by UMFPACK, depending on whether the matrix is
             "symmetric" enough.
+
+        Examples
+        --------
+        solve = factorized(A) # Makes LU decomposition.
+        x1 = solve(rhs1) # Uses the LU factors.
+        x2 = solve(rhs2) # Uses again the LU factors.
         """
 
         if not sp.isspmatrix_csc(A):
