@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Kwant authors.
+# Copyright 2011-2018 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -1260,3 +1260,100 @@ def test_argument_passing():
         fsyst.hamiltonian_submatrix(params=params),
         expected_hamiltonian(**params)
     )
+
+
+def test_parameter_substitution():
+
+    Subs = builder.ParameterSubstitution
+
+    def f(x, y):
+        return (('x', x), ('y', y))
+
+    # 'f' already has a parameter 'y'
+    assert raises(ValueError, Subs, f, dict(x='y'))
+    # 'f' takes no parameter 'a'
+    assert raises(ValueError, Subs, f, dict(a='x'))
+
+    # reverse argument order
+    g = Subs(f, dict(x='y', y='x'))
+    assert g(1, 2) == f(1, 2)
+    assert g(y=1, x=2) == f(x=1, y=2)
+
+    # reverse again
+    h = Subs(g, dict(x='y', y='x'))
+    assert h(1, 2) == f(1, 2)
+    assert h(x=1, y=2) == f(x=1, y=2)
+    # don't nest wrappers inside each other
+    assert h.function is f
+
+    # composing maps
+    g = Subs(f, dict(x='a'))
+    h = Subs(g, dict(a='b'))
+    assert h(b=1, y=2) == f(x=1, y=2)
+
+    # different names
+    g = Subs(f, dict(x='a', y='b'))
+    assert g(1, 2) == f(1, 2)
+    assert g(a=1, b=2) == f(x=1, y=2)
+    assert g(1, b=2) == f(1, y=2)
+
+    # Can be used in sets/dicts
+    g = Subs(f, dict(x='a'))
+    h = Subs(f, dict(x='a'))
+    assert len(set([f, g, h])) == 2
+
+
+def test_subs():
+
+    # Simple case
+
+    def onsite(site, a, b):
+        salt = str(a) + str(b)
+        return kwant.digest.uniform(site.tag, salt=salt)
+
+    def hopping(sitea, siteb, b, c):
+        salt = str(b) + str(c)
+        return kwant.digest.uniform(ta.array((sitea.tag, siteb.tag)), salt=salt)
+
+    lat = kwant.lattice.chain()
+
+    def make_system(sym=kwant.builder.NoSymmetry(), n=3):
+        syst = kwant.Builder(sym)
+        syst[(lat(i) for i in range(n))] = onsite
+        syst[lat.neighbors()] = hopping
+        return syst
+
+    def hamiltonian(syst, **kwargs):
+        return syst.finalized().hamiltonian_submatrix(params=kwargs)
+
+    syst = make_system()
+    # parameter name not an identifier
+    raises(ValueError, syst.subs, a='not-an-identifier?')
+    # substituting a paramter that doesn't exist produces a warning
+    warns(RuntimeWarning, syst.subs, fakeparam='yes')
+    # name clash in value functions
+    raises(ValueError, syst.subs, b='a')
+    raises(ValueError, syst.subs, b='c')
+    raises(ValueError, syst.subs, a='site')
+    raises(ValueError, syst.subs, c='sitea')
+    # cannot call 'subs' on systems with attached leads, because
+    # it is not clear whether the substitutions should propagate
+    # into the leads too.
+    syst = make_system()
+    lead = make_system(kwant.TranslationalSymmetry((-1,)), n=1)
+    syst.attach_lead(lead)
+    raises(ValueError, syst.subs, a='d')
+
+    # test basic substitutions
+    syst = make_system()
+    expected = hamiltonian(syst, a=1, b=2, c=3)
+    # 1 level of substitutions
+    sub_syst = syst.subs(a='d', b='e')
+    assert np.allclose(hamiltonian(sub_syst, d=1, e=2, c=3), expected)
+    # 2 levels of substitution
+    sub_sub_syst = sub_syst.subs(d='g', c='h')
+    assert np.allclose(hamiltonian(sub_sub_syst, g=1, e=2, h=3), expected)
+    # very confusing but technically valid. 'a' does not appear in 'hopping',
+    # so the signature of 'onsite' is valid.
+    sub_syst = syst.subs(a='sitea')
+    assert np.allclose(hamiltonian(sub_syst, sitea=1, b=2, c=3), expected)

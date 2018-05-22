@@ -10,6 +10,7 @@ import abc
 import warnings
 import operator
 import collections
+import copy
 from functools import total_ordering, wraps
 from itertools import islice, chain
 import inspect
@@ -20,7 +21,8 @@ from . import system, graph, KwantDeprecationWarning, UserCodeError
 from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry
-from ._common import ensure_isinstance, get_parameters, reraise_warnings
+from ._common import (ensure_isinstance, get_parameters, reraise_warnings,
+                      interleave)
 
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
@@ -677,11 +679,8 @@ class Other:
 
 
 def edges(seq):
-    # izip, when given the same iterator twice, turns a sequence into a
-    # sequence of pairs.
-    seq_iter = iter(seq)
-    result = zip(seq_iter, seq_iter)
-    next(result)                # Skip the special loop edge.
+    result = interleave(seq)
+    next(result)  # Skip the special loop edge.
     return result
 
 
@@ -709,6 +708,102 @@ def _site_ranges(sites):
     # add sentinel to the end
     site_ranges.append((len(sites), 0, total_norbs))
     return site_ranges
+
+
+def _substitute_sig(func, substitutions):
+    """Substitute different parameter names into a function signature.
+
+    Parameters
+    ----------
+    func : callable
+        The function whose signature we wish to copy
+    substitutions : dict or iterable
+        Mapping from old parameter names to new. Will be
+        fed to 'dict'.
+
+    Returns
+    -------
+    inspect.Signature
+    """
+    substitutions = dict(substitutions)  # Copy because we later destroy it
+
+    def new_name(name):
+        return substitutions.pop(name, name)
+
+    sig = inspect.signature(func)
+
+    new_params = [param.replace(name=new_name(name))
+                  for name, param in sig.parameters.items()]
+
+    if substitutions:
+        raise ValueError('More substitutions than available parameters.')
+
+    return sig.replace(parameters=new_params)
+
+
+def _compose_maps(f, g):
+    """Compose the maps f and g from left to right
+
+    Examples
+    --------
+    >>> _compose_maps(
+    ...     dict(x='a', y='b'),
+    ...     dict(a='c', z='e'))
+    {'x': 'c', 'y': 'b', 'z': 'e'}
+    """
+    composed = dict(g)
+    for fk, fv in f.items():
+        if fv in g:
+            del composed[fv]
+            composed[fk] = g[fv]
+        else:
+            composed[fk] = fv
+
+    # eliminate identity maps k -> k
+    return dict((k, v) for k, v in composed.items() if k != v)
+
+
+def _invert_map(substitutions, arguments):
+    pmap = {new: old for old, new in substitutions}
+    return {pmap.get(param, param): value
+            for param, value in arguments.items()}
+
+
+class ParameterSubstitution:
+    """Proxy that renames function parameters."""
+    __slots__ = ('function', 'substitutions', '__signature__')
+
+    def __init__(self, function, substitutions):
+        if isinstance(function, ParameterSubstitution):
+            self.function = function.function
+            substitutions = _compose_maps(dict(function.substitutions),
+                                          substitutions)
+        else:
+            self.function = function
+        self.substitutions = tuple(sorted(substitutions.items()))
+        self.__signature__ = _substitute_sig(self.function, self.substitutions)
+
+    def __eq__(self, other):
+        if not isinstance(other, ParameterSubstitution):
+            return False
+        return ((self.function, self.substitutions) ==
+                (other.function, other.substitutions))
+
+    def __hash__(self):
+        return hash((self.function, self.substitutions))
+
+    def __call__(self, *args, **kwargs):
+        arguments = self.__signature__.bind(*args, **kwargs).arguments
+        return self.function(**_invert_map(self.substitutions, arguments))
+
+
+def _substitute_parameters(value_func, relevant_params, subs):
+    """Substitute 'relevant_params' from 'subs' into 'value_func'."""
+    assert callable(value_func)
+    relevant_subs = {n: subs[n] for n in relevant_params if n in subs}
+    if not relevant_subs:
+        return value_func
+    return ParameterSubstitution(value_func, relevant_subs)
 
 
 class Builder:
@@ -907,6 +1002,18 @@ class Builder:
         hvhv = self.H[tail]
         return len(hvhv) // 2 - 1
 
+    def __copy__(self):
+        """Shallow copy"""
+        result = object.__new__(Builder)
+        result.symmetry = self.symmetry
+        result.conservation_law = self.conservation_law
+        result.time_reversal = self.time_reversal
+        result.particle_hole = self.particle_hole
+        result.chiral = self.chiral
+        result.leads = self.leads
+        result.H = self.H
+        return result
+
     # TODO: write a test for this method.
     def reversed(self):
         """Return a shallow copy of the builder with the symmetry reversed.
@@ -915,16 +1022,14 @@ class Builder:
         two opposite sides.  It requires a builder to which an infinite
         symmetry is associated.
         """
-        result = object.__new__(Builder)
-        result.symmetry = self.symmetry.reversed()
-        result.conservation_law = self.conservation_law
-        result.time_reversal = self.time_reversal
-        result.particle_hole = self.particle_hole
-        result.chiral = self.chiral
         if self.leads:
             raise ValueError('System to be reversed may not have leads.')
+        result = copy.copy(self)
+        # if we don't assign a new list we will inadvertantly add leads to
+        # the reversed system if we add leads to *this* system
+        # (because we only shallow copy)
         result.leads = []
-        result.H = self.H
+        result.symmetry = self.symmetry.reversed()
         return result
 
     def __bool__(self):
@@ -1273,6 +1378,71 @@ class Builder:
                       stacklevel=2)
         self.update(other)
         return self
+
+    def subs(self, **subs):
+        """Return a copy of this Builder with modified parameter names.
+
+        Notes
+        -----
+        The value functions of the returned Builder take longer to
+        evaluate due to the parameter renaming. This overhead may be
+        a significant fraction of the total time if the original value
+        function is particularly quick to evaluate.
+        """
+        # Get value *functions* only
+        onsites = list(set(
+            onsite for _, onsite in self.site_value_pairs()
+            if callable(onsite)
+        ))
+        hoppings = list(set(
+            hop for _, hop in self.hopping_value_pairs()
+            if callable(hop)
+        ))
+
+        flatten = chain.from_iterable
+
+        # Get parameter names to be substituted for each function,
+        # without the 'site' parameter(s)
+        onsite_params = [get_parameters(v).required[1:] for v in onsites]
+        hopping_params = [get_parameters(v).required[2:] for v in hoppings]
+
+        system_params = set(flatten(chain(onsite_params, hopping_params)))
+        nonexistant_params = set(subs.keys()).difference(system_params)
+        if nonexistant_params:
+            msg = ('Parameters {} are not used by any onsite or hopping '
+                   'value function in this system.'
+                  ).format(nonexistant_params)
+            warnings.warn(msg, RuntimeWarning, stacklevel=2)
+
+        # Precompute map from old onsite/hopping value functions to ones
+        # with substituted parameters.
+        value_map = {
+            value: _substitute_parameters(value, params, subs)
+            for value, params in chain(zip(onsites, onsite_params),
+                                       zip(hoppings, hopping_params))
+        }
+
+        # Construct the a copy of the system with new value functions.
+        if self.leads:
+            raise ValueError("Using 'subs' on a Builder with attached leads "
+                             "is ambiguous. Consider using 'subs' before "
+                             "attaching leads.")
+        result = copy.copy(self)
+        # if we don't assign a new list we will inadvertantly add leads to
+        # the reversed system if we add leads to *this* system
+        # (because we only shallow copy)
+        result.leads = []
+        # Copy the 'H' dictionary, mapping old values to new ones using
+        # 'value_map'. If a value does not appear in the map then it means
+        # that the old value should be used.
+        result.H = {}
+        for tail, hvhv in self.H.items():
+            result.H[tail] = list(flatten(
+                (head, value_map.get(value, value))
+                for head, value in interleave(hvhv)
+            ))
+
+        return result
 
     def fill(self, template, shape, start, *, max_sites=10**7):
         """Populate builder using another one as a template.
