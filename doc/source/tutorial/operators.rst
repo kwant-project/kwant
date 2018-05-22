@@ -124,7 +124,7 @@ is the square matrix referred to previously.
 
 Below we can see colorplots of the above-calculated quantities. The array that
 is returned by evaluating a `~kwant.operator.Density` can be used directly with
-`kwant.plotter.map`:
+`kwant.plotter.density`:
 
 .. image:: /code/figure/spin_densities.*
 

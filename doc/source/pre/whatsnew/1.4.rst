@@ -47,3 +47,12 @@ scattering region and leads you could do the following::
    fsyst = syst.finalized()
 
    kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
+
+Interpolated density plots
+--------------------------
+A new function `~kwant.plotter.density` has been added that can be used to
+visualize a density defined over the sites of a Kwant system. This convolves
+the "discrete" density (defined over the system sites) with a "bump" function
+in realspace. The output of `~kwant.plotter.density` can be more informative
+that `~kwant.plotter.map` when plotting systems with many sites, where it is
+not important to see the individual contribution from each site.

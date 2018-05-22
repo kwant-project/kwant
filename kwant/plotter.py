@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2011-2017 Kwant authors.
+# Copyright 2011-2018 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -1214,6 +1214,11 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     calling `~kwant.plotter.mask_interpolate` and show this pixmap using
     matplotlib.
 
+    This function is similar to `~kwant.plotter.density`, but is more suited
+    to the case where you want site-level resolution of the quantity that
+    you are plotting. If your system has many sites you may get more appealing
+    plots by using `~kwant.plotter.density`.
+
     Parameters
     ----------
     sys : kwant.system.FiniteSystem or kwant.builder.Builder
@@ -1269,6 +1274,10 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     - When plotting a system on a square lattice and `method` is "nearest", it
       makes sense to set `oversampling` to ``1``.  Then, each site will
       correspond to exactly one pixel.
+
+    See Also
+    --------
+    kwant.plotter.density
     """
 
     if not _p.mpl_available:
@@ -1554,6 +1563,14 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
 
 # Smoothing functions used with 'interpolate_current'.
 
+# Convolution kernel with finite support:
+# f(r) = (1-r^2)^2 Θ(1-r^2)
+def _bump(r):
+    r[r > 1] = 1
+    m = 1 - r * r
+    return m * m
+
+
 # We generate the smoothing function by convolving the current
 # defined on a line between the two sites with
 # f(ρ, z) = (1 - ρ^2 - z^2)^2 Θ(1 - ρ^2 - z^2), where ρ and z are
@@ -1579,6 +1596,119 @@ def _smoothing(rho, z):
 # where σ_n is the surface element prefactor (2 in 2D, 2π in 3D). Rather
 # that calculate A_n every time, we hard code its value for 1, 2 and 3D.
 _smoothing_cross_sections = [16 / 15, np.pi / 3, 32 * np.pi / 105]
+
+
+# Determine the optimal bump function width from the absolute and
+# relative widths provided, and the lengths of all the hoppings in the system
+def _optimal_width(lens, abswidth, relwidth, bbox_size):
+    if abswidth is None:
+        if relwidth is None:
+            unique_lens = np.unique(lens)
+            longest = unique_lens[-1]
+            for shortest_nonzero in unique_lens:
+                if shortest_nonzero / longest > 1e-3:
+                    break
+            width = 4 * shortest_nonzero
+        else:
+            width = relwidth * np.max(bbox_size)
+    else:
+        width = abswidth
+
+    return width
+
+
+# Create empty field array that covers the bounding box plus
+# some additional padding
+def _create_field(dim, bbox_size, width, n, is_current):
+    field_shape = np.zeros(dim + 1, int)
+    field_shape[dim] = dim if is_current else 1
+    for d in range(dim):
+        field_shape[d] = int(bbox_size[d] * n / width + n)
+        if field_shape[d] % 2:
+            field_shape[d] += 1
+    field = np.zeros(field_shape)
+    # padding is width / 2
+    return field, width / 2
+
+
+def density_kernel(coords):
+    r = np.sqrt(np.sum(coords * coords))
+    return _bump(r)[..., None]
+
+
+def current_kernel(coords, direction, length):
+    z = np.dot(coords, direction)
+    rho = np.sqrt(np.abs(np.sum(coords * coords) - z * z))
+    magn = (_smoothing(rho, z) - _smoothing(rho, z - length))
+    return direction * magn[..., None]
+
+
+# interpolate a discrete scalar or vector field.
+def _interpolate_field(dim, elements, discrete_field, bbox, width,
+                       padding, field_out):
+
+    field_shape = np.array(field_out.shape)
+    bbox_min, bbox_max = bbox
+
+    scale = 2 / width
+
+    # if density elements is shape (nsites, dim)
+    # if current elements is shape (nhops, 2, dim)
+    assert elements.shape[-1] == dim
+    is_current = len(elements.shape) == 3
+    if is_current:
+        assert elements.shape[1] == 2
+        dirs = elements[:, 1] - elements[:, 0]
+        lens = np.sqrt(np.sum(dirs * dirs, axis=-1))
+        dirs /= lens[:, None]
+        lens = lens * scale
+
+    if is_current:
+        pos_offsets = elements[:, 0]  # first site in hopping
+        kernel = current_kernel
+    else:
+        pos_offsets = elements  # sites themselves
+        kernel = density_kernel
+
+    region = [np.linspace(bbox_min[d] - padding,
+                          bbox_max[d] + padding,
+                          field_shape[d])
+              for d in range(dim)]
+
+    grid_density = (field_shape[:dim] - 1) / (bbox_max + 2*padding - bbox_min)
+
+    # slices for indexing 'field' and 'region' array
+    slices = np.empty((len(discrete_field), dim, 2), int)
+    if is_current:
+        mn = np.min(elements, 1)
+        mx = np.max(elements, 1)
+    else:
+        mn = mx = elements
+    slices[:, :, 0] = np.floor((mn - bbox_min) * grid_density)
+    slices[:, :, 1] = np.ceil((mx + 2*padding - bbox_min) * grid_density)
+
+    for i in range(len(discrete_field)):
+
+        if not np.diff(slices[i]).all() or not discrete_field[i]:
+            # Zero volume or zero field: nothing to do.
+            continue
+
+        field_slice = [slice(*slices[i, d]) for d in range(dim)]
+
+        # Coordinates of the grid points that are within range of the current
+        # hopping.
+        coords = np.meshgrid(*[region[d][field_slice[d]] for d in range(dim)],
+                             sparse=True, indexing='ij')
+
+        # Convert "coords" into scaled distances from pos_offset
+        coords -= pos_offsets[i]
+        coords *= scale
+        magns = kernel(coords, dirs[i], lens[i]) if is_current else kernel(coords)
+        magns *= discrete_field[i]
+
+        field_out[field_slice] += magns
+
+    field_out *= scale / _smoothing_cross_sections[dim - 1]
 
 
 def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
@@ -1658,75 +1788,85 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     dirs = hops[:, 1] - hops[:, 0]
     lens = np.sqrt(np.sum(dirs * dirs, -1))
     dirs /= lens[:, None]
+    width = _optimal_width(lens, abswidth, relwidth, bbox_size)
 
-    if abswidth is None:
-        if relwidth is None:
-            unique_lens = np.unique(lens)
-            longest = unique_lens[-1]
-            for shortest_nonzero in unique_lens:
-                if shortest_nonzero / longest < 1e-5:
-                    break
-            width = 4 * shortest_nonzero
-        else:
-            width = relwidth * np.max(bbox_size)
-    else:
-        width = abswidth
 
-    # Define length scale in terms of the bump width.
-    scale = 2 / width
-    padding = width / 2
-    lens *= scale
+    field, padding = _create_field(dim, bbox_size, width, n, is_current=True)
+    boundaries = tuple((bbox_min[d] - padding, bbox_max[d] + padding)
+                        for d in range(dim))
+    _interpolate_field(dim, hops, current,
+                       (bbox_min, bbox_max), width, padding, field)
 
-    # Create field array.
-    field_shape = np.zeros(dim + 1, int)
-    field_shape[dim] = dim
-    for d in range(dim):
-        field_shape[d] = int(bbox_size[d] * n / width + n)
-        if field_shape[d] % 2:
-            field_shape[d] += 1
-    field = np.zeros(field_shape)
+    return field, boundaries
 
-    region = [np.linspace(bbox_min[d] - padding,
-                          bbox_max[d] + padding,
-                          field_shape[d])
-              for d in range(dim)]
 
-    grid_density = (field_shape[:dim] - 1) / (bbox_max + 2*padding - bbox_min)
-    slices = np.empty((len(hops), dim, 2), int)
-    slices[:, :, 0] = np.floor((min_hops - bbox_min) * grid_density)
-    slices[:, :, 1] = np.ceil((max_hops + 2*padding - bbox_min) * grid_density)
+def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
+    """Interpolate density in a system onto a regular grid.
 
-    # Interpolate the field for each hopping.
-    for i in range(len(current)):
+    The system sites together with a scalar for each site defines a "discrete"
+    density field where the density is non-zero only at the site positions.
 
-        if not np.diff(slices[i]).all() or not current[i]:
-            # Zero volume or zero current: nothing to do.
-            continue
+    To make this vector field easier to visualize and interpret at different
+    length scales, it is smoothed by convoluting it with the bell-shaped bump
+    function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
+    determined by the `relwidth` and `abswidth` parameters.
 
-        field_slice = [slice(*slices[i, d]) for d in range(dim)]
+    This routine samples the smoothed field on a regular (square or cubic)
+    grid.
 
-        # Coordinates of the grid points that are within range of the current
-        # hopping.
-        coords = np.meshgrid(*[region[d][field_slice[d]] for d in range(dim)],
-                             sparse=True, indexing='ij')
-        coords -= hops[i, 0]
+    Parameters
+    ----------
+    syst : A finalized system
+        The system on which we are going to calculate the field.
+    density : '1D array of float'
+        Must contain the intensity on each site in the same order that they
+        appear in syst.sites.
+    relwidth : float or `None`
+        Relative width of the bumps used to generate the field, as a fraction
+        of the length of the longest side of the bounding box.  This argument
+        is only used if `abswidth` is not given.
+    abswidth : float or `None`
+        Absolute width of the bumps used to generate the field.  Takes
+        precedence over `relwidth`.  If neither is given, the bump width is set
+        to four times the length of the shortest hopping.
+    n : int
+        Number of points the grid must have over the width of the bump.
 
-        # Convert "coords" into scaled cylindrical coordinates with regard to
-        # the hopping.
-        z = np.dot(coords, dirs[i])
-        rho = np.sqrt(np.abs(np.sum(coords * coords) - z*z))
-        z *= scale
-        rho *= scale
+    Returns
+    -------
+    field : n-d arraylike of float
+        n-d array of n-d vectors.
+    box : sequence of 2-sequences of float
+        the extents of `field`: ((x0, x1), (y0, y1), ...)
 
-        magns = _smoothing(rho, z) - _smoothing(rho, z - lens[i])
-        magns *= current[i]
+    """
+    if not isinstance(syst, builder.FiniteSystem):
+        raise TypeError("The system needs to be finalized.")
 
-        field[field_slice] += dirs[i] * magns[..., None]
+    if len(density) != len(syst.sites):
+        raise ValueError("Density and sites arrays do not have the same"
+                         " length.")
 
-    field *= scale / _smoothing_cross_sections[dim - 1]
+    dim = len(syst.sites[0].pos)
+    sites = np.array([s.pos for s in syst.sites])
 
-    # 'field' contains contributions from both hoppings (i, j) and (j, i)
-    return field, ((region[0][0], region[0][-1]), (region[1][0], region[1][-1]))
+    bbox_min = np.min(sites, axis=0)
+    bbox_max = np.max(sites, axis=0)
+    bbox_size = bbox_max - bbox_min
+
+    # Determine the optimal width for the bump function
+    dirs = np.array([syst.sites[i].pos - syst.sites[j].pos
+                     for i, j in syst.graph])
+    lens = np.sqrt(np.sum(dirs * dirs, -1))
+    width = _optimal_width(lens, abswidth, relwidth, bbox_size)
+
+    field, padding = _create_field(dim, bbox_size, width, n, is_current=False)
+    boundaries = tuple((bbox_min[d] - padding, bbox_max[d] + padding)
+                        for d in range(dim))
+    _interpolate_field(dim, sites, density,
+                       (bbox_min, bbox_max), width, padding, field)
+
+    return field, boundaries
 
 
 def _gamma_compress(linear):
@@ -1904,18 +2044,14 @@ def current(syst, current, relwidth=0.05, **kwargs):
     current density field where the current density is non-zero only on the
     straight lines that connect sites that are coupled by a hopping term.
 
-    To make this vector field easier to visualize and interpret at different
+    To make this scalar field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
     determined by the `relwidth` parameter.
 
-    This routine samples the smoothed field on a regular (square or cubic) grid
-    and displays it using an enhanced variant of matplotlib's streamplot.
-
-    This is a convenience function that is equivalent to
-    ``streamplot(*interpolate_current(syst, current, relwidth), **kwargs)``.
-    The longer form makes it possible to tweak additional options of
-    `~kwant.plotter.interpolate_current`.
+    This function is similar to `~kwant.plotter.map`, but generally gives more
+    appealing visual results when used on systems with many sites. If you want
+    site-level resolution you may be better off using `~kwant.plotter.map`.
 
     Parameters
     ----------
@@ -1936,11 +2072,145 @@ def current(syst, current, relwidth=0.05, **kwargs):
     fig : matplotlib figure
         A figure with the output if `ax` is not set, else None.
 
+    See Also
+    --------
+    kwant.plotter.density
     """
     with _common.reraise_warnings(4):
         return streamplot(*interpolate_current(syst, current, relwidth),
                           **kwargs)
 
+
+def _mask(field, box, coords):
+    tree = spatial.cKDTree(coords)
+
+    # Select 10 sites to compare -- comparing them all is too costly.
+    points = _sample_array(coords, 10)
+    min_dist = np.min(tree.query(points, 2)[0][:, 1])
+
+    # Build the mask initially as a 2D array
+    dims = tuple(slice(boxmin, boxmax, 1j * shape)
+                 for (boxmin, boxmax), shape in zip(box, field.shape))
+    mask = np.mgrid[dims].reshape(len(box), -1).T
+
+    # '0.4' (which is just below sqrt(2) - 1) makes tree.query() exact
+    # in the common case of a square lattice.
+    mask = tree.query(mask, eps=0.4)[0] > min_dist
+    return np.ma.masked_array(field, mask)
+
+
+def density(syst, density, relwidth=0.05,
+            cmap=None, colorbar=True, file=None, show=True,
+            dpi=None, fig_size=None, ax=None, vmin=None, vmax=None,
+            background='#e0e0e0'):
+    """Show an interpolated density defined on the sites of a system.
+
+    The system sites, together with a scalar per site defines a "discrete"
+    current density field where the current density is non-zero only on the
+    straight lines that connect sites that are coupled by a hopping term.
+
+    To make this vector field easier to visualize and interpret at different
+    length scales, it is smoothed by convoluting it with the bell-shaped bump
+    function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
+    determined by the `relwidth` parameter.
+
+    This routine samples the smoothed field on a regular (square or cubic) grid
+    and displays it using an enhanced variant of matplotlib's streamplot.
+
+    This is a convenience function that is equivalent to
+    ``streamplot(*interpolate_current(syst, current, relwidth), **kwargs)``.
+    The longer form makes it possible to tweak additional options of
+    `~kwant.plotter.interpolate_current`.
+
+    Parameters
+    ----------
+    syst : `kwant.system.FiniteSystem`
+        The system for which to plot the ``current``.
+    density : sequence of float
+        Sequence of values defining density on each site of the system.
+        Ordered in the same way as ``syst.sites``. This typically will be
+        the result of evaluating a `~kwant.operator.Density` operator.
+    relwidth : float or `None`
+        Relative width of the bumps used to generate the field, as a fraction
+        of the length of the longest side of the bounding box.
+    cmap : colormap, optional
+        Colormap for the background color plot.  When not set the colormap
+        "kwant_red" is used by default.
+    colorbar : bool
+        Whether to show a colorbar if a colormap is used. Ignored if `ax` is
+        provided.
+    file : string or file object or `None`
+        The output file.  If `None`, output will be shown instead.
+    show : bool
+        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
+        to be shown immediately.  Defaults to `True`.
+    dpi : float or `None`
+        Number of pixels per inch.  If not set the ``matplotlib`` default is
+        used.
+    fig_size : tuple or `None`
+        Figure size `(width, height)` in inches.  If not set, the default
+        ``matplotlib`` value is used.
+    ax : ``matplotlib.axes.Axes`` instance or `None`
+        If `ax` is not `None`, no new figure is created, but the plot is done
+        within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
+        and `fig_size` are ignored.
+    vmin, vmax : float or `None`
+        The lower/upper saturation limit for the colormap.
+    background : matplotlib color spec
+        Areas outside the system are filled with this color.
+
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output if `ax` is not set, else None.
+
+    See Also
+    --------
+    kwant.plotter.current
+    kwant.plotter.map
+    """
+    if not _p.mpl_available:
+        raise RuntimeError("matplotlib was not found, but is required "
+                           "for current()")
+
+    field, box = interpolate_density(syst, density, relwidth=relwidth)
+    field = _mask(field, box, np.array([s.pos for s in syst.sites]))
+    # Matplotlib plots images like matrices: image[y, x].  We use the opposite
+    # convention: image[x, y].  Hence, it is necessary to transpose.
+    # Also squeeze out the last axis as it is just a scalar field
+    field = field.squeeze(axis=-1).transpose()
+
+    if field.ndim != 2:
+        raise ValueError("Only 2D field can be plotted.")
+
+    if cmap is None:
+        cmap = _p._colormaps.kwant_red
+    cmap = _p.matplotlib.cm.get_cmap(cmap)
+
+    if ax is None:
+        fig = _make_figure(dpi, fig_size)
+        ax = fig.add_subplot(1, 1, 1, aspect='equal')
+    else:
+        fig = None
+
+    if vmin is None:
+        vmin = np.min(field)
+    if vmax is None:
+        vmax = np.max(field)
+
+    image = ax.imshow(field, cmap=cmap,
+                      interpolation='bicubic',
+                      extent=[e for c in box for e in c],
+                      origin='lower', vmin=vmin, vmax=vmax)
+
+    ax.set_xlim(*box[0])
+    ax.set_ylim(*box[1])
+    ax.patch.set_facecolor(background)
+
+    if fig is not None:
+        if colorbar and cmap:
+            fig.colorbar(image)
+        return output_fig(fig, file=file, show=show)
 
 # TODO (Anton): Fix plotting of parts of the system using color = np.nan.
 # Not plotting sites currently works, not plotting hoppings does not.
