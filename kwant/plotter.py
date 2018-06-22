@@ -1920,7 +1920,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     illusion of arbitrarily thin lines.  (This is done because some plot
     backends like PDF do not support lines of arbitrarily thin width.)
 
-    Internally, this routine uses ``matplotlib.pyplot.streamplot``.
+    Internally, this routine uses matplotlib's streamplot.
 
     Parameters
     ----------
@@ -2049,9 +2049,13 @@ def current(syst, current, relwidth=0.05, **kwargs):
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
     determined by the `relwidth` parameter.
 
-    This function is similar to `~kwant.plotter.map`, but generally gives more
-    appealing visual results when used on systems with many sites. If you want
-    site-level resolution you may be better off using `~kwant.plotter.map`.
+    This routine samples the smoothed field on a regular (square or cubic) grid
+    and displays it using an enhanced variant of matplotlib's streamplot.
+
+    This is a convenience function that is equivalent to
+    ``streamplot(*interpolate_current(syst, current, relwidth), **kwargs)``.
+    The longer form makes it possible to tweak additional options of
+    `~kwant.plotter.interpolate_current`.
 
     Parameters
     ----------
@@ -2106,21 +2110,20 @@ def density(syst, density, relwidth=0.05,
     """Show an interpolated density defined on the sites of a system.
 
     The system sites, together with a scalar per site defines a "discrete"
-    current density field where the current density is non-zero only on the
-    straight lines that connect sites that are coupled by a hopping term.
+    density field that is non-zero only on the sites.
 
-    To make this vector field easier to visualize and interpret at different
+    To make this scalar field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
     determined by the `relwidth` parameter.
 
     This routine samples the smoothed field on a regular (square or cubic) grid
-    and displays it using an enhanced variant of matplotlib's streamplot.
+    and displays it using matplotlib's imshow.
 
-    This is a convenience function that is equivalent to
-    ``streamplot(*interpolate_current(syst, current, relwidth), **kwargs)``.
-    The longer form makes it possible to tweak additional options of
-    `~kwant.plotter.interpolate_current`.
+    This function is similar to `~kwant.plotter.map`, but generally gives more
+    appealing visual results when used on systems with many sites. If you want
+    site-level resolution you may be better off using `~kwant.plotter.map`.
+
 
     Parameters
     ----------
