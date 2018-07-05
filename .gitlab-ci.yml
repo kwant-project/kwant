@@ -113,15 +113,16 @@ check for broken links in doc:
 build and upload conda package:
   <<: *conda_job
   only:
-    - master
+    - master@kwant/kwant
 
 
 # manual triggers for branches other than master possible
 build and upload conda package (manual):
   <<: *conda_job
+  only:
+    - branches@kwant/kwant
   except:
-    - master
-    - /^v[0-9]+\.[0-9]+.[0-9]+$/@kwant/kwant
+    - master@kwant/kwant
   when: manual
 
 
