@@ -582,16 +582,13 @@ def _return_string(expr, coords):
     return 'return {}'.format(output), map_func_calls, const_symbols, _cache
 
 
-def _assign_symbols(map_func_calls, grid_spacing,
-                    coords, onsite):
+def _assign_symbols(map_func_calls, coords, onsite):
     """Generate a series of assignments.
 
     Parameters
     ----------
     map_func_calls : dict
         mapping of function calls to assigned constants.
-    grid_spacing : int or float
-        Used to get site.pos from site.tag
     coords : sequence of strings
         If left as None coordinates will not be read from a site.
     onsite : bool
@@ -606,8 +603,8 @@ def _assign_symbols(map_func_calls, grid_spacing,
 
     if coords:
         site = 'site' if onsite else 'site1'
-        args = ', '.join(coords), str(grid_spacing), site
-        lines.append('({}, ) = {} * {}.tag'.format(*args))
+        args = ', '.join(coords), site
+        lines.append('({}, ) = {}.pos'.format(*args))
 
     for k, v in map_func_calls.items():
         lines.append("{} = {}".format(v, _print_sympy(k)))
@@ -667,10 +664,7 @@ def _builder_value(expr, coords, grid_spacing, onsite,
         else:
             return complex(expr)
 
-    lines = _assign_symbols(map_func_calls, onsite=onsite,
-                            grid_spacing=grid_spacing,
-                            coords=coords)
-
+    lines = _assign_symbols(map_func_calls, onsite=onsite, coords=coords)
     lines.append(return_string)
 
     separator = '\n    '

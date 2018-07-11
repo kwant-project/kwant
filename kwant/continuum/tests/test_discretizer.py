@@ -563,6 +563,16 @@ def test_grid_input(ham, grid_offset, offset, norbs):
     assert tmp.lattice.norbs == norbs
 
 
+def test_grid_offset_passed_to_functions():
+    V = lambda x: x
+    grid = Monatomic([[1, ]], offset=[0.5, ])
+    tb = discretize('V(x)', 'x', grid=grid)
+    onsite = tb[tb.lattice(0)]
+    bools = [np.allclose(onsite(tb.lattice(i), V), V(tb.lattice(i).pos))
+             for i in [0, 1, 5]]
+    assert all(bools)
+
+
 @pytest.mark.parametrize("ham, coords, grid", [
     ("k_x", None, Monatomic([[1, 0]])),
     ("k_x", 'xy', Monatomic([[1, 0]])),
