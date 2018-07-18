@@ -6,7 +6,7 @@ The Kwant authors can be reached at authors@kwant-project.org.
 
 The principal developers of Kwant are
 
-* `Christoph W. Groth <mailto://christoph.groth@cea.fr>`_ (CEA Grenoble)
+* `Christoph W. Groth <mailto:christoph.groth@cea.fr>`_ (CEA Grenoble)
 * `Michael Wimmer <https://michaelwimmer.org>`_ (TU Delft)
 * `Anton R. Akhmerov <http://antonakhmerov.org>`_ (TU Delft)
 * `Xavier Waintal <http://inac.cea.fr/Pisp/xavier.waintal>`_ (CEA Grenoble)
