@@ -167,7 +167,7 @@ def init_cython():
     global cythonize, cython_help
 
     cython_option = '--cython'
-    required_cython_version = (0, 22)
+    required_cython_version = (0, 24)
     try:
         sys.argv.remove(cython_option)
         cythonize = True
