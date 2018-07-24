@@ -457,6 +457,11 @@ def _discretize_expression(expression, coords):
 
 class _NumericPrinter(LambdaPrinter):
 
+    def __init__(self):
+        LambdaPrinter.__init__(self)
+        self.known_functions = {}
+        self.known_constants = {'pi': 'pi', 'Pi': 'pi'}
+
     def _print_ImaginaryUnit(self, expr):
         # prevent sympy from printing 'I' for imaginary unit
         return "1j"

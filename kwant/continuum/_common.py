@@ -190,6 +190,15 @@ def sympify(expr, locals=None):
             converter[list] = stored_value
         else:
             del converter[list]
+
+    # We assume that all present functions, like "sin", "cos", will be
+    # provided by user during the final evaluation through "params".
+    # Therefore we make sure they are define as AppliedUndef, not built-in
+    # sympy types.
+    subs = {r: sympy.Symbol(str(r.func))(*r.args)
+            for r in hamiltonian.atoms(sympy.Function)}
+
+    hamiltonian = hamiltonian.subs(subs)
     return hamiltonian
 
 
