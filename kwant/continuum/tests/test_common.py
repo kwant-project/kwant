@@ -97,9 +97,9 @@ res_mat = sympy.Matrix([[x**3*A + x**2*A + x**2*B, x**3*A + x**2*A + x**2*B + x*
 
 
 def test_make_commutative():
-    assert make_commutative(expr1, x) == make_commutative(expr1, non_x)
-    assert make_commutative(expr1, x) == x**3*A + x**2*A + x**2*B
-    assert make_commutative(matr, x) == res_mat
+    assert make_commutative(expr1, x).expand() == (make_commutative(expr1, non_x)).expand()
+    assert make_commutative(expr1, x).expand() == (x**3*A + x**2*A + x**2*B).expand()
+    assert make_commutative(matr, x).expand() == (res_mat).expand()
 
 
 expr2 = non_x*A*non_x + x**2 * A*2 * x + B*non_x/2 + non_x*B/2 + x + A + non_x + x/A
