@@ -118,23 +118,23 @@ def discretize(hamiltonian, coords=None, *, grid=None, locals=None,
     hamiltonian : str or SymPy expression
         Symbolic representation of a continuous Hamiltonian.  It is
         converted to a SymPy expression using `kwant.continuum.sympify`.
-    coords : sequence of strings, or ``None`` (default)
+    coords : sequence of strings, optional
         The coordinates for which momentum operators will be treated as
         differential operators. May contain only "x", "y" and "z" and must be
         sorted.  If not provided, `coords` will be obtained from the input
         Hamiltonian by reading the present coordinates and momentum operators.
-    grid : scalar or kwant.lattice.Monatomic instance, default: None
+    grid : scalar or kwant.lattice.Monatomic instance, optional
         Lattice that will be used as a discretization grid. It must have
-        orthogonal primitive vectors. If scalar value is given, a lattice wth
-        appriopriate grid spacing will be generated.
-        If left as None the default grid spacing will be equal to 1.
-    locals : dict or ``None`` (default)
+        orthogonal primitive vectors. If a scalar value is given, a lattice
+        with the appropriate grid spacing will be generated. If not provided,
+        a lattice with grid spacing 1 in all directions will be generated.
+    locals : dict, optional
         Additional namespace entries for `~kwant.continuum.sympify`.  May be
         used to simplify input of matrices or modify input before proceeding
         further. For example:
         ``locals={'k': 'k_x + I * k_y'}`` or
         ``locals={'sigma_plus': [[0, 2], [0, 0]]}``.
-    grid_spacing : int or float, default: None
+    grid_spacing : int or float, optional
         (deprecated) Spacing of the discretization grid. If unset the default
         value will be 1. Cannot be used together with ``grid``.
 
@@ -171,12 +171,12 @@ def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
     hamiltonian : str or SymPy expression
         Symbolic representation of a continuous Hamiltonian.  It is
         converted to a SymPy expression using `kwant.continuum.sympify`.
-    coords : sequence of strings, or ``None`` (default)
+    coords : sequence of strings, optional
         The coordinates for which momentum operators will be treated as
         differential operators. May contain only "x", "y" and "z" and must be
         sorted.  If not provided, `coords` will be obtained from the input
         Hamiltonian by reading the present coordinates and momentum operators.
-    locals : dict or ``None`` (default)
+    locals : dict, optional
         Additional namespace entries for `~kwant.continuum.sympify`.  May be
         used to simplify input of matrices or modify input before proceeding
         further. For example:
@@ -190,7 +190,6 @@ def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
         the onsite). Values are symbolic expressions for the hoppings/onsite.
     coords : list of strings
         The coordinates that have been discretized.
-
     """
     with reraise_warnings():
         hamiltonian = sympify(hamiltonian, locals)
@@ -276,21 +275,20 @@ def build_discretized(tb_hamiltonian, coords, *, grid=None, locals=None,
         The coordinates for which momentum operators will be treated as
         differential operators. May contain only "x", "y" and "z" and must be
         sorted.
-    grid : scalar or kwant.lattice.Monatomic instance, default: None
+    grid : scalar or kwant.lattice.Monatomic instance, optional
         Lattice that will be used as a discretization grid. It must have
-        orthogonal primitive vectors. If scalar value is given a lattice with
-        appriopriate grid spacing will be generated.
-        If left as None the default grid spacing will be equal to 1.
-    locals : dict, defaults to empty
-        Additional namespace entries for the calls of
-        `~kwant.continuum.sympify` on the values of `tb_hamiltonian`.  May be
+        orthogonal primitive vectors. If a scalar value is given, a lattice
+        with the appropriate grid spacing will be generated. If not provided,
+        a lattice with grid spacing 1 in all directions will be generated.
+    locals : dict, optional
+        Additional namespace entries for `~kwant.continuum.sympify`.  May be
         used to simplify input of matrices or modify input before proceeding
         further. For example:
         ``locals={'k': 'k_x + I * k_y'}`` or
         ``locals={'sigma_plus': [[0, 2], [0, 0]]}``.
-    grid_spacing : int or float, default: None
-        (deprecated) Spacing of the discretization grid. If unset the default
-        value will be 1. Cannot be used together with ``grid``.
+    grid_spacing : int or float, optional
+        (deprecated) Spacing of the discretization grid. If not provided,
+        the default value will be 1. Cannot be used together with ``grid``.
 
     Returns
     -------
@@ -341,8 +339,8 @@ def build_discretized(tb_hamiltonian, coords, *, grid=None, locals=None,
 
     if (lat.norbs is not None) and (lat.norbs != norbs):
         raise ValueError(
-            'If "norbs" is not None, it must corrseponds to '
-            'actual number of orbitals, here {}.'.format(norbs)
+            'Number of lattice orbitals does not match the number '
+            'of orbitals in the Hamiltonian.'
         )
 
     # continue with building the template
