@@ -421,7 +421,7 @@ def plot_2d_bands(syst, k_x=31, k_y=31, params=None,
     # columns of B are lattice vectors
     B = np.array(syst._wrapped_symmetry.periods).T
     # columns of A are reciprocal lattice vectors
-    A = B.dot(np.linalg.inv(B.T.dot(B)))
+    A = np.linalg.pinv(B).T
 
     ## calculate the bounding box for the 1st Brillouin zone
 
