@@ -319,10 +319,8 @@ def build_discretized(tb_hamiltonian, coords, *, grid=None, locals=None,
     norbs = (1 if isinstance(random_element, sympy.Expr)
              else random_element.shape[0])
 
-    # create lattice if "grid" is scalar or sequence of scalar
     if np.isscalar(grid):
-        prim_vecs =  grid * np.eye(grid_dim)
-        lat = lattice.Monatomic(prim_vecs, norbs=norbs)
+        lat = lattice.Monatomic(grid * np.eye(grid_dim), norbs=norbs)
     else:
         lat = grid
 
