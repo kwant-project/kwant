@@ -85,16 +85,6 @@ class _DiscretizedBuilder(builder.Builder):
 
 ################ Interface functions
 
-def _process_grid_args(grid, grid_spacing):
-    if grid_spacing is not None:
-        warnings.warn('The "grid_spacing" parameter is deprecated. Use '
-                      '"grid" instead.', KwantDeprecationWarning, stacklevel=3)
-
-    if not (grid is None or grid_spacing is None):
-        raise ValueError('"grid_spacing" and "grid" are mutually exclusive.')
-
-    return grid if grid is not None else grid_spacing
-
 
 def discretize(hamiltonian, coords=None, *, grid=None, locals=None,
                grid_spacing=None):
@@ -149,8 +139,7 @@ def discretize(hamiltonian, coords=None, *, grid=None, locals=None,
         `grid_spacing`) in the ``lattice`` attribute.
     """
     tb, coords = discretize_symbolic(hamiltonian, coords, locals=locals)
-    grid = _process_grid_args(grid, grid_spacing)
-    return build_discretized(tb, coords, grid=grid)
+    return build_discretized(tb, coords, grid=grid, grid_spacing=grid_spacing)
 
 
 def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
@@ -304,8 +293,15 @@ def build_discretized(tb_hamiltonian, coords, *, grid=None, locals=None,
     if len(coords) == 0:
         raise ValueError('Discrete coordinates cannot be empty.')
 
-    grid = _process_grid_args(grid, grid_spacing)
-    grid = 1 if grid is None else grid
+    if grid_spacing is not None:  # TODO: remove when we remove 'grid_spacing'
+        warnings.warn('The "grid_spacing" parameter is deprecated. Use '
+                      '"grid" instead.', KwantDeprecationWarning, stacklevel=3)
+    if grid is None and grid_spacing is None:
+        grid = 1  # default case
+    elif grid is None:  # TODO: remove when we remove 'grid_spacing'
+        grid = grid_spacing
+    elif grid_spacing is not None:
+        raise ValueError('"grid_spacing" and "grid" are mutually exclusive.')
 
     coords = list(coords)
     grid_dim = len(coords)
