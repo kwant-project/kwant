@@ -56,3 +56,17 @@ the "discrete" density (defined over the system sites) with a "bump" function
 in realspace. The output of `~kwant.plotter.density` can be more informative
 that `~kwant.plotter.map` when plotting systems with many sites, where it is
 not important to see the individual contribution from each site.
+
+kwant.continuum.discretize can be used with rectangular lattices
+----------------------------------------------------------------
+Previously the discretizer could only be used with lattices with the same
+lattice constant in all directions. Now it is possible to pass rectangular
+lattices to the discretizer::
+
+  kwant.continuum.discretize(
+    'k_x**2 + k_y**2',
+    grid=kwant.lattice.general([(1, 0), (0, 2]),
+  )
+
+This is useful when you need a finer discretization step in some spatial
+directions, and a coarser one in others.
