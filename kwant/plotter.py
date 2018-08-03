@@ -1820,16 +1820,16 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9,
     ----------
     syst : A finalized system
         The system on which we are going to calculate the field.
-    density : '1D array of float'
+    density : 1D array of float
         Must contain the intensity on each site in the same order that they
         appear in syst.sites.
-    relwidth : float or `None`
-        Relative width of the bumps used to generate the field, as a fraction
+    relwidth : float, optional
+        Relative width of the bumps used to smooth the field, as a fraction
         of the length of the longest side of the bounding box.  This argument
-        is only used if `abswidth` is not given.
-    abswidth : float or `None`
-        Absolute width of the bumps used to generate the field.  Takes
-        precedence over `relwidth`.  If neither is given, the bump width is set
+        is only used if ``abswidth`` is not given.
+    abswidth : float, optional
+        Absolute width of the bumps used to smooth the field.  Takes
+        precedence over ``relwidth``.  If neither is given, the bump width is set
         to four times the length of the shortest hopping.
     n : int
         Number of points the grid must have over the width of the bump.
@@ -1843,7 +1843,7 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9,
     field : n-d arraylike of float
         n-d array of n-d vectors.
     box : sequence of 2-sequences of float
-        the extents of `field`: ((x0, x1), (y0, y1), ...)
+        the extents of ``field``: ((x0, x1), (y0, y1), ...)
 
     """
     if not isinstance(syst, builder.FiniteSystem):
@@ -2145,7 +2145,7 @@ def current(syst, current, relwidth=0.05, **kwargs):
     To make this scalar field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
-    determined by the `relwidth` parameter.
+    determined by the ``relwidth`` parameter.
 
     This routine samples the smoothed field on a regular (square or cubic) grid
     and displays it using an enhanced variant of matplotlib's streamplot.
@@ -2164,7 +2164,7 @@ def current(syst, current, relwidth=0.05, **kwargs):
         Ordered in the same way as ``syst.graph``. This typically will be
         the result of evaluating a `~kwant.operator.Current` operator.
     relwidth : float or `None`
-        Relative width of the bumps used to generate the field, as a fraction
+        Relative width of the bumps used to smooth the field, as a fraction
         of the length of the longest side of the bounding box.
     **kwargs : various
         Keyword args to be passed verbatim to `~kwant.plotter.streamplot`.
@@ -2172,7 +2172,7 @@ def current(syst, current, relwidth=0.05, **kwargs):
     Returns
     -------
     fig : matplotlib figure
-        A figure with the output if `ax` is not set, else None.
+        A figure with the output if ``ax`` is not set, else None.
 
     See Also
     --------
@@ -2210,7 +2210,7 @@ def density(syst, density, relwidth=0.05, **kwargs):
     To make this scalar field easier to visualize and interpret at different
     length scales, it is smoothed by convoluting it with the bell-shaped bump
     function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
-    determined by the `relwidth` parameter.
+    determined by the ``relwidth`` parameter.
 
     This routine samples the smoothed field on a regular (square or cubic) grid
     and displays it using matplotlib's imshow.
@@ -2227,13 +2227,13 @@ def density(syst, density, relwidth=0.05, **kwargs):
     Parameters
     ----------
     syst : `kwant.system.FiniteSystem`
-        The system for which to plot the ``current``.
+        The system for which to plot ``density``.
     density : sequence of float
         Sequence of values defining density on each site of the system.
         Ordered in the same way as ``syst.sites``. This typically will be
         the result of evaluating a `~kwant.operator.Density` operator.
     relwidth : float or `None`
-        Relative width of the bumps used to generate the field, as a fraction
+        Relative width of the bumps used to smooth the field, as a fraction
         of the length of the longest side of the bounding box.
     **kwargs : various
         Keyword args to be passed verbatim to `~kwant.plotter.scalarplot`.
@@ -2241,7 +2241,7 @@ def density(syst, density, relwidth=0.05, **kwargs):
     Returns
     -------
     fig : matplotlib figure
-        A figure with the output if `ax` is not set, else None.
+        A figure with the output if ``ax`` is not set, else None.
 
     See Also
     --------
