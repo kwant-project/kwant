@@ -29,8 +29,9 @@ from math import cos, sin, pi, sqrt
 from . import system, builder, _common
 
 
-__all__ = ['plot', 'map', 'bands', 'spectrum', 'current',
-           'interpolate_current', 'streamplot',
+__all__ = ['plot', 'map', 'bands', 'spectrum', 'current', 'density',
+           'interpolate_current', 'interpolate_density',
+           'streamplot', 'scalarplot',
            'sys_leads_sites', 'sys_leads_hoppings', 'sys_leads_pos',
            'sys_leads_hopping_pos', 'mask_interpolate']
 
@@ -1800,7 +1801,8 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     return field, boundaries
 
 
-def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
+def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9,
+                        mask=True):
     """Interpolate density in a system onto a regular grid.
 
     The system sites together with a scalar for each site defines a "discrete"
@@ -1831,6 +1833,10 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
         to four times the length of the shortest hopping.
     n : int
         Number of points the grid must have over the width of the bump.
+    mask : Bool
+        If True, this function returns a masked array that masks positions that
+        are too far away from any sites. This is useful for showing an approximate
+        outline of the system when the field is plotted.
 
     Returns
     -------
@@ -1865,6 +1871,11 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
                         for d in range(dim))
     _interpolate_field(dim, sites, density,
                        (bbox_min, bbox_max), width, padding, field)
+
+    if mask:
+        field = _mask(field,
+                      np.vstack((bbox_min, bbox_max)).transpose(),
+                      np.array([s.pos for s in syst.sites]))
 
     return field, boundaries
 
@@ -2037,6 +2048,93 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
         return output_fig(fig, file=file, show=show)
 
 
+def scalarplot(field, box,
+               cmap=None, colorbar=True, file=None, show=True,
+               dpi=None, fig_size=None, ax=None, vmin=None, vmax=None,
+               background='#e0e0e0'):
+    """Draw a scalar field in Kwant style
+
+    Internally, this routine uses matplotlib's imshow.
+
+    Parameters
+    ----------
+    field : 2d arraylike of float
+        2d scalar field to plot.
+    box : pair of pair of float
+        the realspace extents of ``field``: ((x0, x1), (y0, y1))
+    cmap : colormap, optional
+        Colormap for the background color plot.  When not set the colormap
+        "kwant_red" is used by default.
+    colorbar : bool, default: True
+        Whether to show a colorbar if a colormap is used. Ignored if `ax` is
+        provided.
+    file : string or file object, optional
+        The output file.  If not provided, output will be shown instead.
+    show : bool, default: True
+        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
+        to be shown immediately.
+    dpi : float, optional
+        Number of pixels per inch.  If not set the ``matplotlib`` default is
+        used.
+    fig_size : tuple, optional
+        Figure size ``(width, height)`` in inches.  If not set, the default
+        ``matplotlib`` value is used.
+    ax : ``matplotlib.axes.Axes`` instance, optional
+        If ``ax`` is provided, no new figure is created, but the plot is done
+        within the existing Axes ``ax``. in this case, ``file``, ``show``,
+        ``dpi`` and ``fig_size`` are ignored.
+    vmin, vmax : float, optional
+        The lower/upper saturation limit for the colormap.
+    background : matplotlib color spec
+        Areas outside the system are filled with this color.
+
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output if ``ax`` is not set, else None.
+    """
+    if not _p.mpl_available:
+        raise RuntimeError("matplotlib was not found, but is required "
+                           "for current()")
+
+    # Matplotlib plots images like matrices: image[y, x].  We use the opposite
+    # convention: image[x, y].  Hence, it is necessary to transpose.
+    # Also squeeze out the last axis as it is just a scalar field
+    field = field.squeeze(axis=-1).transpose()
+
+    if field.ndim != 2:
+        raise ValueError("Only 2D field can be plotted.")
+
+    if cmap is None:
+        cmap = _p._colormaps.kwant_red
+    cmap = _p.matplotlib.cm.get_cmap(cmap)
+
+    if ax is None:
+        fig = _make_figure(dpi, fig_size)
+        ax = fig.add_subplot(1, 1, 1, aspect='equal')
+    else:
+        fig = None
+
+    if vmin is None:
+        vmin = np.min(field)
+    if vmax is None:
+        vmax = np.max(field)
+
+    image = ax.imshow(field, cmap=cmap,
+                      interpolation='bicubic',
+                      extent=[e for c in box for e in c],
+                      origin='lower', vmin=vmin, vmax=vmax)
+
+    ax.set_xlim(*box[0])
+    ax.set_ylim(*box[1])
+    ax.patch.set_facecolor(background)
+
+    if fig is not None:
+        if colorbar and cmap:
+            fig.colorbar(image)
+        return output_fig(fig, file=file, show=show)
+
+
 def current(syst, current, relwidth=0.05, **kwargs):
     """Show an interpolated current defined for the hoppings of a system.
 
@@ -2103,10 +2201,7 @@ def _mask(field, box, coords):
     return np.ma.masked_array(field, mask)
 
 
-def density(syst, density, relwidth=0.05,
-            cmap=None, colorbar=True, file=None, show=True,
-            dpi=None, fig_size=None, ax=None, vmin=None, vmax=None,
-            background='#e0e0e0'):
+def density(syst, density, relwidth=0.05, **kwargs):
     """Show an interpolated density defined on the sites of a system.
 
     The system sites, together with a scalar per site defines a "discrete"
@@ -2124,6 +2219,10 @@ def density(syst, density, relwidth=0.05,
     appealing visual results when used on systems with many sites. If you want
     site-level resolution you may be better off using `~kwant.plotter.map`.
 
+    This is a convenience function that is equivalent to
+    ``scalarplot(*interpolate_density(syst, density, relwidth), **kwargs)``.
+    The longer form makes it possible to tweak additional options of
+    `~kwant.plotter.interpolate_density`.
 
     Parameters
     ----------
@@ -2136,31 +2235,8 @@ def density(syst, density, relwidth=0.05,
     relwidth : float or `None`
         Relative width of the bumps used to generate the field, as a fraction
         of the length of the longest side of the bounding box.
-    cmap : colormap, optional
-        Colormap for the background color plot.  When not set the colormap
-        "kwant_red" is used by default.
-    colorbar : bool
-        Whether to show a colorbar if a colormap is used. Ignored if `ax` is
-        provided.
-    file : string or file object or `None`
-        The output file.  If `None`, output will be shown instead.
-    show : bool
-        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
-        to be shown immediately.  Defaults to `True`.
-    dpi : float or `None`
-        Number of pixels per inch.  If not set the ``matplotlib`` default is
-        used.
-    fig_size : tuple or `None`
-        Figure size `(width, height)` in inches.  If not set, the default
-        ``matplotlib`` value is used.
-    ax : ``matplotlib.axes.Axes`` instance or `None`
-        If `ax` is not `None`, no new figure is created, but the plot is done
-        within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
-        and `fig_size` are ignored.
-    vmin, vmax : float or `None`
-        The lower/upper saturation limit for the colormap.
-    background : matplotlib color spec
-        Areas outside the system are filled with this color.
+    **kwargs : various
+        Keyword args to be passed verbatim to `~kwant.plotter.scalarplot`.
 
     Returns
     -------
@@ -2172,48 +2248,10 @@ def density(syst, density, relwidth=0.05,
     kwant.plotter.current
     kwant.plotter.map
     """
-    if not _p.mpl_available:
-        raise RuntimeError("matplotlib was not found, but is required "
-                           "for current()")
+    with _common.reraise_warnings(4):
+        return scalarplot(*interpolate_density(syst, density, relwidth),
+                          **kwargs)
 
-    field, box = interpolate_density(syst, density, relwidth=relwidth)
-    field = _mask(field, box, np.array([s.pos for s in syst.sites]))
-    # Matplotlib plots images like matrices: image[y, x].  We use the opposite
-    # convention: image[x, y].  Hence, it is necessary to transpose.
-    # Also squeeze out the last axis as it is just a scalar field
-    field = field.squeeze(axis=-1).transpose()
-
-    if field.ndim != 2:
-        raise ValueError("Only 2D field can be plotted.")
-
-    if cmap is None:
-        cmap = _p._colormaps.kwant_red
-    cmap = _p.matplotlib.cm.get_cmap(cmap)
-
-    if ax is None:
-        fig = _make_figure(dpi, fig_size)
-        ax = fig.add_subplot(1, 1, 1, aspect='equal')
-    else:
-        fig = None
-
-    if vmin is None:
-        vmin = np.min(field)
-    if vmax is None:
-        vmax = np.max(field)
-
-    image = ax.imshow(field, cmap=cmap,
-                      interpolation='bicubic',
-                      extent=[e for c in box for e in c],
-                      origin='lower', vmin=vmin, vmax=vmax)
-
-    ax.set_xlim(*box[0])
-    ax.set_ylim(*box[1])
-    ax.patch.set_facecolor(background)
-
-    if fig is not None:
-        if colorbar and cmap:
-            fig.colorbar(image)
-        return output_fig(fig, file=file, show=show)
 
 # TODO (Anton): Fix plotting of parts of the system using color = np.nan.
 # Not plotting sites currently works, not plotting hoppings does not.

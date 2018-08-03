@@ -16,6 +16,7 @@ Plotting routines
    bands
    spectrum
    streamplot
+   scalarplot
 
 Helper functions
 ----------------
