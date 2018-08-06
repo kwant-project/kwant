@@ -10,8 +10,7 @@
 hidden/shown on click using javascript"""
 
 from docutils import nodes
-from docutils.parsers.rst import directives
-from sphinx.util.compat import Directive
+from docutils.parsers.rst import directives, Directive
 
 id_count = 0
 
