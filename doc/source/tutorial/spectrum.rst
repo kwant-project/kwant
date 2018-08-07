@@ -78,7 +78,7 @@ interfaces the ARPACK package:
     :start-after: #HIDDEN_BEGIN_tibv
     :end-before: #HIDDEN_END_tibv
 
-We set up the system using the `shape`-function as in
+We set up the system using the ``shape``-function as in
 :ref:`tutorial-abring`, but do not add any leads:
 
 .. literalinclude:: /code/include/closed_system.py

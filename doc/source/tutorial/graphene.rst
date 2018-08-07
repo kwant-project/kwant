@@ -26,7 +26,7 @@ The first argument to the `~kwant.lattice.general` function is the list of
 primitive vectors of the lattice; the second one is the coordinates of basis
 atoms.  The honeycomb lattice has two basis atoms. Each type of basis atom by
 itself forms a regular lattice of the same type as well, and those
-*sublattices* are referenced as `a` and `b` above.
+*sublattices* are referenced as ``a`` and ``b`` above.
 
 In the next step we define the shape of the scattering region (circle again)
 and add all lattice points using the ``shape``-functionality:
@@ -38,7 +38,7 @@ and add all lattice points using the ``shape``-functionality:
 As you can see, this works exactly the same for any kind of lattice.
 We add the onsite energies using a function describing the p-n junction;
 in contrast to the previous tutorial, the potential value is this time taken
-from the scope of `make_system`, since we keep the potential fixed
+from the scope of ``make_system``, since we keep the potential fixed
 in this example.
 
 As a next step we add the hoppings, making use of
@@ -76,8 +76,8 @@ as add an additional link:
     :start-after: #HIDDEN_BEGIN_efut
     :end-before: #HIDDEN_END_efut
 
-Note again that the conversion from a tuple `(i,j)` to site
-is done by the sublattices `a` and `b`.
+Note again that the conversion from a tuple ``(i,j)`` to site
+is done by the sublattices ``a`` and ``b``.
 
 The leads are defined almost as before:
 
@@ -118,21 +118,21 @@ the sparse linear algebra functionality of SciPy.
 The code for computing the band structure and the conductance is identical
 to the previous examples, and needs not be further explained here.
 
-Finally, in the `main` function we make and plot the system:
+Finally, in the ``main`` function we make and plot the system:
 
 .. literalinclude:: /code/include/graphene.py
     :start-after: #HIDDEN_BEGIN_itkk
     :end-before: #HIDDEN_END_itkk
 
-We customize the plotting: we set the `site_colors` argument of
+We customize the plotting: we set the ``site_colors`` argument of
 `~kwant.plotter.plot` to a function which returns 0 for
-sublattice `a` and 1 for sublattice `b`::
+sublattice ``a`` and 1 for sublattice ``b``::
 
     def family_colors(site):
         return 0 if site.family == a else 1
 
 The function `~kwant.plotter.plot` shows these values using a color scale
-(grayscale by default). The symbol `size` is specified in points, and is
+(grayscale by default). The symbol ``size`` is specified in points, and is
 independent on the overall figure size.
 
 Plotting the closed system gives this result:
@@ -148,7 +148,7 @@ Computing the eigenvalues of largest magnitude,
 should yield two eigenvalues equal to ``[ 3.07869311,
 -3.06233144]``.
 
-The remaining code of `main` attaches the leads to the system and plots it
+The remaining code of ``main`` attaches the leads to the system and plots it
 again:
 
 .. image:: /code/figure/graphene_syst2.*
@@ -182,7 +182,7 @@ an open quantum dot
 
        syst[a.shape(...)] = ...
 
-   and the same of course with `b`. Also, you can selectively remove points::
+   and the same of course with ``b``. Also, you can selectively remove points::
 
        del syst[graphene.shape(...)]
        del syst[a.shape(...)]

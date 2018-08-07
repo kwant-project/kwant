@@ -85,8 +85,8 @@ Observe that we just accessed `~kwant.builder.Builder` by the name
 ``kwant.builder.Builder`` instead.  Kwant consists of a number of sub-packages
 that are all covered in the :doc:`reference documentation
 <../reference/index>`.  For convenience, some of the most widely-used members
-of the sub-packages are also accessible directly through the top-level `kwant`
-package.
+of the sub-packages are also accessible directly through the top-level
+`kwant` package.
 
 Apart from `~kwant.builder.Builder` we also need to specify
 what kind of sites we want to add to the system. Here we work with
@@ -97,19 +97,19 @@ a square lattice. For simplicity, we set the lattice constant to unity:
     :end-before: #HIDDEN_END_suwo
 
 Since we work with a square lattice, we label the points with two
-integer coordinates `(i, j)`. `~kwant.builder.Builder` then
+integer coordinates ``(i, j)``. `~kwant.builder.Builder` then
 allows us to add matrix elements corresponding to lattice points:
-``syst[lat(i, j)] = ...`` sets the on-site energy for the point `(i, j)`,
+``syst[lat(i, j)] = ...`` sets the on-site energy for the point ``(i, j)``,
 and ``syst[lat(i1, j1), lat(i2, j2)] = ...`` the hopping matrix element
-**from** point `(i2, j2)` **to** point `(i1, j1)`.
+**from** point ``(i2, j2)`` **to** point ``(i1, j1)``.
 
 Note that we need to specify sites for `~kwant.builder.Builder`
-in the form ``lat(i, j)``. The lattice object `lat` does the
+in the form ``lat(i, j)``. The lattice object ``lat`` does the
 translation from integer coordinates to proper site format
 needed in Builder (more about that in the technical details below).
 
-We now build a rectangular scattering region that is `W`
-lattice points wide and `L` lattice points long:
+We now build a rectangular scattering region that is ``W``
+lattice points wide and ``L`` lattice points long:
 
 .. literalinclude:: /code/include/quantum_wire.py
     :start-after: #HIDDEN_BEGIN_zfvr
@@ -180,8 +180,8 @@ symmetry must point to the right, the remaining code is the same:
     :end-before: #HIDDEN_END_xhqc
 
 Note that here we added points with x-coordinate 0, just as for the left lead.
-You might object that the right lead should be placed `L`
-(or `L+1`?) points to the right with respect to the left lead. In fact,
+You might object that the right lead should be placed ``L``
+(or ``L+1``?) points to the right with respect to the left lead. In fact,
 you do not need to worry about that.
 
 Now we have finished building our system! We plot it, to make sure we didn't
@@ -255,7 +255,7 @@ subbands that increases with energy.
          syst[lat(1, 0), lat(0, 0)] = -t
          syst[lat(0, 0), lat(1, 0)] = -t.conj()
 
-     (assuming that `t` is complex) is perfectly fine. However,
+     (assuming that ``t`` is complex) is perfectly fine. However,
      be aware that also
 
      ::
@@ -267,7 +267,7 @@ subbands that increases with energy.
      lat(0, 0)]`` is overwritten by the last line and also equals to -2.
 
    - Some more details the relation between `~kwant.builder.Builder`
-     and the square lattice `lat` in the example:
+     and the square lattice ``lat`` in the example:
 
      Technically, `~kwant.builder.Builder` expects
      **sites** as indices. Sites themselves have a certain type, and
@@ -276,7 +276,7 @@ subbands that increases with energy.
      proper `~kwant.builder.Site` object that can be used with
      `~kwant.builder.Builder`.
 
-     In the above example, `lat` is the site family. ``lat(i, j)``
+     In the above example, ``lat`` is the site family. ``lat(i, j)``
      then translates the description of a lattice site in terms of two
      integer indices (which is the natural way to do here) into
      a proper `~kwant.builder.Site` object.
@@ -348,7 +348,7 @@ structure.
 
 We begin the program collecting all imports in the beginning of the
 file and put the build-up of the system into a separate function
-`make_system`:
+``make_system``:
 
 .. literalinclude:: /code/include/quantum_wire_revisited.py
     :start-after: #HIDDEN_BEGIN_xkzy
@@ -467,7 +467,7 @@ The result of the example should be identical to the previous one.
      >>> a = (0, 1, 2, 3)
      >>> b = (i for i in range(4))
 
-     Here, `a` is a tuple, whereas `b` is a generator. One difference
+     Here, ``a`` is a tuple, whereas ``b`` is a generator. One difference
      is that one can subscript tuples, but not generators:
 
      >>> a[0]

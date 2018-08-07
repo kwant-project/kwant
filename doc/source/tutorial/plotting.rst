@@ -22,8 +22,8 @@ to previous examples, we will also use hoppings beyond next-nearest neighbors:
     :start-after: #HIDDEN_BEGIN_makesyst
     :end-before: #HIDDEN_END_makesyst
 
-Note that adding hoppings hoppings to the `n`-th nearest neighbors can be
-simply done by passing `n` as an argument to
+Note that adding hoppings hoppings to the ``n``-th nearest neighbors can be
+simply done by passing ``n`` as an argument to
 `~kwant.lattice.Polyatomic.neighbors`. Also note that we use the method
 `~kwant.builder.Builder.eradicate_dangling` to get rid of single atoms sticking
 out of the shape. It is necessary to do so *before* adding the
@@ -73,7 +73,7 @@ linear algebra):
 
 In most cases, to plot the wave function probability, one wouldn't use
 `~kwant.plotter.plot`, but rather `~kwant.plotter.map`. Here, we plot the
-`n`-th wave function using it:
+``n``-th wave function using it:
 
 .. literalinclude:: /code/include/plot_graphene.py
     :start-after: #HIDDEN_BEGIN_plotdata2
@@ -110,7 +110,7 @@ takes all sizes in units of the nearest-neighbor spacing. ``site_size=0.5``
 thus means half the distance between neighboring sites (and for the triangles
 this is interpreted as the radius of the inner circle).
 
-Finally, note that since we are dealing with a finalized system now, a site `i`
+Finally, note that since we are dealing with a finalized system now, a site ``i``
 is represented by an integer. In order to obtain the original
 `~kwant.builder.Site`, ``syst.sites[i]`` can be used.
 

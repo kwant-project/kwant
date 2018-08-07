@@ -116,11 +116,11 @@ the following, clearly non-monotonic conductance steps:
     `~kwant.builder.HoppingKind` is given in terms of
     lattice indices, i.e. relative to the Bravais lattice vectors.
     For a square lattice, the Bravais lattice vectors are simply
-    `(a,0)` and `(0,a)`, and hence the mapping from
-    lattice indices `(i,j)` to real space and back is trivial.
+    ``(a,0)`` and ``(0,a)``, and hence the mapping from
+    lattice indices ``(i,j)`` to real space and back is trivial.
     This becomes more involved in more complicated lattices, where
-    the real-space directions corresponding to, for example, `(1,0)`
-    and `(0,1)` need not be orthogonal any more
+    the real-space directions corresponding to, for example, ``(1,0)``
+    and ``(0,1)`` need not be orthogonal any more
     (see :ref:`tutorial-graphene`).
 
 
@@ -154,9 +154,9 @@ define the potential profile of a quantum well as:
 
 This function takes two arguments: the first of type `~kwant.builder.Site`,
 from which you can get the real-space coordinates using ``site.pos``, and the
-value of the potential as the second.  Note that in `potential` we can access
-variables of the surrounding function: `L` and `L_well` are taken from the
-namespace of `make_system`.
+value of the potential as the second.  Note that in ``potential`` we can access
+variables of the surrounding function: ``L`` and ``L_well`` are taken from the
+namespace of ``make_system``.
 
 Kwant now allows us to pass a function as a value to
 `~kwant.builder.Builder`:
@@ -166,10 +166,10 @@ Kwant now allows us to pass a function as a value to
     :end-before: #HIDDEN_END_coid
 
 For each lattice point, the corresponding site is then passed as the
-first argument to the function `onsite`. The values of any additional
+first argument to the function ``onsite``. The values of any additional
 parameters, which can be used to alter the Hamiltonian matrix elements
-at a later stage, are specified later during the call to `smatrix`.
-Note that we had to define `onsite`, as it is
+at a later stage, are specified later during the call to ``smatrix``.
+Note that we had to define ``onsite``, as it is
 not possible to mix values and functions as in ``syst[...] = 4 * t +
 potential``.
 
@@ -184,7 +184,7 @@ Finally, we compute the transmission probability:
     :start-after: #HIDDEN_BEGIN_sqvr
     :end-before: #HIDDEN_END_sqvr
 
-``kwant.smatrix`` allows us to specify a list, `args`, that will be passed as
+``kwant.smatrix`` allows us to specify a list, ``args``, that will be passed as
 additional arguments to the functions that provide the Hamiltonian matrix
 elements.  In this example we are able to solve the system for different depths
 of the potential well by passing the potential value. We obtain the result:
@@ -206,8 +206,8 @@ oscillatory transmission behavior through resonances in the quantum well.
     two `~kwant.builder.Site`'s as arguments and then an arbitrary number
     of additional arguments.
 
-  - Apart from the real-space position `pos`, `~kwant.builder.Site` has also an
-    attribute `tag` containing the lattice indices of the site.
+  - Apart from the real-space position ``pos``, `~kwant.builder.Site` has also an
+    attribute ``tag`` containing the lattice indices of the site.
 
 .. _tutorial-abring:
 
@@ -266,14 +266,14 @@ with ``j<0``:
     :start-after: #HIDDEN_BEGIN_lvkt
     :end-before: #HIDDEN_END_lvkt
 
-Here, `crosses_branchcut` is a boolean function that returns ``True`` for
+Here, ``crosses_branchcut`` is a boolean function that returns ``True`` for
 the desired hoppings. We then use again a generator (this time with
 an ``if``-conditional) to set the value of all hoppings across
-the branch cut to `fluxphase`. The rationale
+the branch cut to ``fluxphase``. The rationale
 behind using a function instead of a constant value for the hopping
 is again that we want to vary the flux through the ring, without
 constantly rebuilding the system -- instead the flux is governed
-by the parameter `phi`.
+by the parameter ``phi``.
 
 For the leads, we can also use the ``lat.shape``-functionality:
 
