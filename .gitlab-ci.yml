@@ -1,4 +1,4 @@
-image: kwant/testing
+image: gitlab.kwant-project.org:5005/kwant/testing
 
 stages:
   - build
@@ -12,7 +12,7 @@ variables:
   IGNORE_HOSTKEY: "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
 
-build package:
+.build: &build
   stage: build
   script:
     - echo -e "[DEFAULT]\ndefine_macros = CYTHON_TRACE=1" >build.conf
@@ -22,11 +22,73 @@ build package:
     untracked: true
     expire_in: 1 hour
 
+
+.stable-env: &stable_env
+  before_script:
+    - source deactivate
+    - source activate kwant-stable
+    - unset CFLAGS  # https://github.com/conda-forge/toolchain-feedstock/issues/41
+
+.no-extras-env: &no_extras_env
+  before_script:
+    - source deactivate
+    - source activate kwant-stable-no-extras
+    - unset CFLAGS  # https://github.com/conda-forge/toolchain-feedstock/issues/41
+
+# Note that this is 'latest' as of when the image was last built
+.latest-env: &latest_env
+  before_script:
+    - source deactivate
+    - source activate kwant-latest
+    - unset CFLAGS  # https://github.com/conda-forge/toolchain-feedstock/issues/41
+
+.bleeding-edge-env: &bleeding_edge_env
+  before_script:
+    - source deactivate
+    - conda env update -f /kwant-latest.yml
+    - source activate kwant-latest
+
+.ubuntu-env: &ubuntu_env
+  image: gitlab.kwant-project.org:5005/kwant/testing/ubuntu
+
+.debian-env: &debian_env
+  image: gitlab.kwant-project.org:5005/kwant/testing/debian
+
+
+## Build Jobs
+
+build:ubuntu:
+  <<: *build
+  <<: *ubuntu_env
+
+build:debian:
+  <<: *build
+  <<: *debian_env
+
+build:stable:
+  <<: *build
+  <<: *stable_env
+
+build:no-extras:
+  <<: *build
+  <<: *no_extras_env
+
+build:latest:
+  <<: *build
+  <<: *latest_env
+
+build:bleeding-edge:
+  <<: *build
+  <<: *bleeding_edge_env
+  only:
+    - schedules
+
+## Test Jobs
+
 check whitespace style:
-  stage: build
+  stage: test
   script: ./check_whitespace
   allow_failure: true
-
 
 check for dependencies installed:
   stage: test
@@ -35,7 +97,59 @@ check for dependencies installed:
   allow_failure: true
 
 
+.test: &test
+  stage: test
+  script:
+    - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant
+  artifacts:
+    paths:
+      - htmlcov
+
+
+test:stable:
+  <<: *test
+  <<: *stable_env
+  dependencies:
+    - build:stable
+
+test:no-extras:
+  <<: *test
+  <<: *no_extras_env
+  dependencies:
+    - build:no-extras
+
+test:ubuntu:
+  <<: *test
+  <<: *ubuntu_env
+  dependencies:
+    - build:ubuntu
+
+test:debian:
+  <<: *test
+  <<: *debian_env
+  dependencies:
+    - build:debian
+
+test:latest:
+  <<: *test
+  <<: *latest_env
+  dependencies:
+    - build:latest
+
+test:bleeding-edge:
+  <<: *test
+  <<: *bleeding_edge_env
+  dependencies:
+    - build:bleeding-edge
+  only:
+    - schedules
+
+## Documentation building
+
 build documentation:
+  <<: *latest_env
+  dependencies:
+    - build:latest
   stage: test
   script:
     - make -C doc realclean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
@@ -45,9 +159,11 @@ build documentation:
     expire_in: 1 month
 
 build PDF documentation:
+  <<: *latest_env
+  dependencies:
+    - build:latest
   stage: test
   script:
-    - pip3 install sympy
     - make -C doc latex SPHINXOPTS='-n -W'
     - cd doc/build/latex
     - make all-pdf
@@ -56,21 +172,17 @@ build PDF documentation:
       - doc/build/latex/kwant.pdf
     expire_in: 1 month
 
-run tests:
-  stage: test
-  script:
-    - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant
-  artifacts:
-    paths:
-      - htmlcov
-
-
 check for broken links in doc:
+  <<: *latest_env
+  dependencies:
+    - build:latest
   stage: test
   script:
     - make -C doc linkcheck
   allow_failure: true
 
+
+## Conda package building
 
 .conda-template: &conda_job
   stage: deploy
@@ -105,6 +217,7 @@ build and upload conda package (manual):
     - master@kwant/kwant
   when: manual
 
+## Upload coverage reports and dev documentation
 
 upload coverage:
   stage: deploy
@@ -192,7 +305,8 @@ upload dev version docs:
   after_script:
     - rm -rf ~/.ssh
 
-# tagged version deploy
+
+## Build documentation for tagged releases
 
 .tagged-version: &tagged_version
     only:
