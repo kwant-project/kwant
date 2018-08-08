@@ -29,8 +29,9 @@ from math import cos, sin, pi, sqrt
 from . import system, builder, _common
 
 
-__all__ = ['plot', 'map', 'bands', 'spectrum', 'current',
-           'interpolate_current', 'streamplot',
+__all__ = ['plot', 'map', 'bands', 'spectrum', 'current', 'density',
+           'interpolate_current', 'interpolate_density',
+           'streamplot', 'scalarplot',
            'sys_leads_sites', 'sys_leads_hoppings', 'sys_leads_pos',
            'sys_leads_hopping_pos', 'mask_interpolate']
 
@@ -1800,7 +1801,8 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     return field, boundaries
 
 
-def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
+def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9,
+                        mask=True):
     """Interpolate density in a system onto a regular grid.
 
     The system sites together with a scalar for each site defines a "discrete"
@@ -1818,26 +1820,30 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
     ----------
     syst : A finalized system
         The system on which we are going to calculate the field.
-    density : '1D array of float'
+    density : 1D array of float
         Must contain the intensity on each site in the same order that they
         appear in syst.sites.
-    relwidth : float or `None`
-        Relative width of the bumps used to generate the field, as a fraction
+    relwidth : float, optional
+        Relative width of the bumps used to smooth the field, as a fraction
         of the length of the longest side of the bounding box.  This argument
-        is only used if `abswidth` is not given.
-    abswidth : float or `None`
-        Absolute width of the bumps used to generate the field.  Takes
-        precedence over `relwidth`.  If neither is given, the bump width is set
+        is only used if ``abswidth`` is not given.
+    abswidth : float, optional
+        Absolute width of the bumps used to smooth the field.  Takes
+        precedence over ``relwidth``.  If neither is given, the bump width is set
         to four times the length of the shortest hopping.
     n : int
         Number of points the grid must have over the width of the bump.
+    mask : Bool
+        If True, this function returns a masked array that masks positions that
+        are too far away from any sites. This is useful for showing an approximate
+        outline of the system when the field is plotted.
 
     Returns
     -------
     field : n-d arraylike of float
         n-d array of n-d vectors.
     box : sequence of 2-sequences of float
-        the extents of `field`: ((x0, x1), (y0, y1), ...)
+        the extents of ``field``: ((x0, x1), (y0, y1), ...)
 
     """
     if not isinstance(syst, builder.FiniteSystem):
@@ -1865,6 +1871,11 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9):
                         for d in range(dim))
     _interpolate_field(dim, sites, density,
                        (bbox_min, bbox_max), width, padding, field)
+
+    if mask:
+        field = _mask(field,
+                      np.vstack((bbox_min, bbox_max)).transpose(),
+                      np.array([s.pos for s in syst.sites]))
 
     return field, boundaries
 
@@ -2037,127 +2048,42 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
         return output_fig(fig, file=file, show=show)
 
 
-def current(syst, current, relwidth=0.05, **kwargs):
-    """Show an interpolated current defined for the hoppings of a system.
+def scalarplot(field, box,
+               cmap=None, colorbar=True, file=None, show=True,
+               dpi=None, fig_size=None, ax=None, vmin=None, vmax=None,
+               background='#e0e0e0'):
+    """Draw a scalar field in Kwant style
 
-    The system graph together with current intensities defines a "discrete"
-    current density field where the current density is non-zero only on the
-    straight lines that connect sites that are coupled by a hopping term.
-
-    To make this scalar field easier to visualize and interpret at different
-    length scales, it is smoothed by convoluting it with the bell-shaped bump
-    function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
-    determined by the `relwidth` parameter.
-
-    This routine samples the smoothed field on a regular (square or cubic) grid
-    and displays it using an enhanced variant of matplotlib's streamplot.
-
-    This is a convenience function that is equivalent to
-    ``streamplot(*interpolate_current(syst, current, relwidth), **kwargs)``.
-    The longer form makes it possible to tweak additional options of
-    `~kwant.plotter.interpolate_current`.
+    Internally, this routine uses matplotlib's imshow.
 
     Parameters
     ----------
-    syst : `kwant.system.FiniteSystem`
-        The system for which to plot the ``current``.
-    current : sequence of float
-        Sequence of values defining currents on each hopping of the system.
-        Ordered in the same way as ``syst.graph``. This typically will be
-        the result of evaluating a `~kwant.operator.Current` operator.
-    relwidth : float or `None`
-        Relative width of the bumps used to generate the field, as a fraction
-        of the length of the longest side of the bounding box.
-    **kwargs : various
-        Keyword args to be passed verbatim to `~kwant.plotter.streamplot`.
-
-    Returns
-    -------
-    fig : matplotlib figure
-        A figure with the output if `ax` is not set, else None.
-
-    See Also
-    --------
-    kwant.plotter.density
-    """
-    with _common.reraise_warnings(4):
-        return streamplot(*interpolate_current(syst, current, relwidth),
-                          **kwargs)
-
-
-def _mask(field, box, coords):
-    tree = spatial.cKDTree(coords)
-
-    # Select 10 sites to compare -- comparing them all is too costly.
-    points = _sample_array(coords, 10)
-    min_dist = np.min(tree.query(points, 2)[0][:, 1])
-
-    # Build the mask initially as a 2D array
-    dims = tuple(slice(boxmin, boxmax, 1j * shape)
-                 for (boxmin, boxmax), shape in zip(box, field.shape))
-    mask = np.mgrid[dims].reshape(len(box), -1).T
-
-    # '0.4' (which is just below sqrt(2) - 1) makes tree.query() exact
-    # in the common case of a square lattice.
-    mask = tree.query(mask, eps=0.4)[0] > min_dist
-    return np.ma.masked_array(field, mask)
-
-
-def density(syst, density, relwidth=0.05,
-            cmap=None, colorbar=True, file=None, show=True,
-            dpi=None, fig_size=None, ax=None, vmin=None, vmax=None,
-            background='#e0e0e0'):
-    """Show an interpolated density defined on the sites of a system.
-
-    The system sites, together with a scalar per site defines a "discrete"
-    density field that is non-zero only on the sites.
-
-    To make this scalar field easier to visualize and interpret at different
-    length scales, it is smoothed by convoluting it with the bell-shaped bump
-    function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
-    determined by the `relwidth` parameter.
-
-    This routine samples the smoothed field on a regular (square or cubic) grid
-    and displays it using matplotlib's imshow.
-
-    This function is similar to `~kwant.plotter.map`, but generally gives more
-    appealing visual results when used on systems with many sites. If you want
-    site-level resolution you may be better off using `~kwant.plotter.map`.
-
-
-    Parameters
-    ----------
-    syst : `kwant.system.FiniteSystem`
-        The system for which to plot the ``current``.
-    density : sequence of float
-        Sequence of values defining density on each site of the system.
-        Ordered in the same way as ``syst.sites``. This typically will be
-        the result of evaluating a `~kwant.operator.Density` operator.
-    relwidth : float or `None`
-        Relative width of the bumps used to generate the field, as a fraction
-        of the length of the longest side of the bounding box.
+    field : 2d arraylike of float
+        2d scalar field to plot.
+    box : pair of pair of float
+        the realspace extents of ``field``: ((x0, x1), (y0, y1))
     cmap : colormap, optional
         Colormap for the background color plot.  When not set the colormap
         "kwant_red" is used by default.
-    colorbar : bool
+    colorbar : bool, default: True
         Whether to show a colorbar if a colormap is used. Ignored if `ax` is
         provided.
-    file : string or file object or `None`
-        The output file.  If `None`, output will be shown instead.
-    show : bool
+    file : string or file object, optional
+        The output file.  If not provided, output will be shown instead.
+    show : bool, default: True
         Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
-        to be shown immediately.  Defaults to `True`.
-    dpi : float or `None`
+        to be shown immediately.
+    dpi : float, optional
         Number of pixels per inch.  If not set the ``matplotlib`` default is
         used.
-    fig_size : tuple or `None`
-        Figure size `(width, height)` in inches.  If not set, the default
+    fig_size : tuple, optional
+        Figure size ``(width, height)`` in inches.  If not set, the default
         ``matplotlib`` value is used.
-    ax : ``matplotlib.axes.Axes`` instance or `None`
-        If `ax` is not `None`, no new figure is created, but the plot is done
-        within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
-        and `fig_size` are ignored.
-    vmin, vmax : float or `None`
+    ax : ``matplotlib.axes.Axes`` instance, optional
+        If ``ax`` is provided, no new figure is created, but the plot is done
+        within the existing Axes ``ax``. in this case, ``file``, ``show``,
+        ``dpi`` and ``fig_size`` are ignored.
+    vmin, vmax : float, optional
         The lower/upper saturation limit for the colormap.
     background : matplotlib color spec
         Areas outside the system are filled with this color.
@@ -2165,19 +2091,12 @@ def density(syst, density, relwidth=0.05,
     Returns
     -------
     fig : matplotlib figure
-        A figure with the output if `ax` is not set, else None.
-
-    See Also
-    --------
-    kwant.plotter.current
-    kwant.plotter.map
+        A figure with the output if ``ax`` is not set, else None.
     """
     if not _p.mpl_available:
         raise RuntimeError("matplotlib was not found, but is required "
                            "for current()")
 
-    field, box = interpolate_density(syst, density, relwidth=relwidth)
-    field = _mask(field, box, np.array([s.pos for s in syst.sites]))
     # Matplotlib plots images like matrices: image[y, x].  We use the opposite
     # convention: image[x, y].  Hence, it is necessary to transpose.
     # Also squeeze out the last axis as it is just a scalar field
@@ -2214,6 +2133,125 @@ def density(syst, density, relwidth=0.05,
         if colorbar and cmap:
             fig.colorbar(image)
         return output_fig(fig, file=file, show=show)
+
+
+def current(syst, current, relwidth=0.05, **kwargs):
+    """Show an interpolated current defined for the hoppings of a system.
+
+    The system graph together with current intensities defines a "discrete"
+    current density field where the current density is non-zero only on the
+    straight lines that connect sites that are coupled by a hopping term.
+
+    To make this scalar field easier to visualize and interpret at different
+    length scales, it is smoothed by convoluting it with the bell-shaped bump
+    function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
+    determined by the ``relwidth`` parameter.
+
+    This routine samples the smoothed field on a regular (square or cubic) grid
+    and displays it using an enhanced variant of matplotlib's streamplot.
+
+    This is a convenience function that is equivalent to
+    ``streamplot(*interpolate_current(syst, current, relwidth), **kwargs)``.
+    The longer form makes it possible to tweak additional options of
+    `~kwant.plotter.interpolate_current`.
+
+    Parameters
+    ----------
+    syst : `kwant.system.FiniteSystem`
+        The system for which to plot the ``current``.
+    current : sequence of float
+        Sequence of values defining currents on each hopping of the system.
+        Ordered in the same way as ``syst.graph``. This typically will be
+        the result of evaluating a `~kwant.operator.Current` operator.
+    relwidth : float or `None`
+        Relative width of the bumps used to smooth the field, as a fraction
+        of the length of the longest side of the bounding box.
+    **kwargs : various
+        Keyword args to be passed verbatim to `~kwant.plotter.streamplot`.
+
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output if ``ax`` is not set, else None.
+
+    See Also
+    --------
+    kwant.plotter.density
+    """
+    with _common.reraise_warnings(4):
+        return streamplot(*interpolate_current(syst, current, relwidth),
+                          **kwargs)
+
+
+def _mask(field, box, coords):
+    tree = spatial.cKDTree(coords)
+
+    # Select 10 sites to compare -- comparing them all is too costly.
+    points = _sample_array(coords, 10)
+    min_dist = np.min(tree.query(points, 2)[0][:, 1])
+
+    # Build the mask initially as a 2D array
+    dims = tuple(slice(boxmin, boxmax, 1j * shape)
+                 for (boxmin, boxmax), shape in zip(box, field.shape))
+    mask = np.mgrid[dims].reshape(len(box), -1).T
+
+    # '0.4' (which is just below sqrt(2) - 1) makes tree.query() exact
+    # in the common case of a square lattice.
+    mask = tree.query(mask, eps=0.4)[0] > min_dist
+    return np.ma.masked_array(field, mask)
+
+
+def density(syst, density, relwidth=0.05, **kwargs):
+    """Show an interpolated density defined on the sites of a system.
+
+    The system sites, together with a scalar per site defines a "discrete"
+    density field that is non-zero only on the sites.
+
+    To make this scalar field easier to visualize and interpret at different
+    length scales, it is smoothed by convoluting it with the bell-shaped bump
+    function ``f(r) = max(1 - (2*r / width)**2, 0)**2``.  The bump width is
+    determined by the ``relwidth`` parameter.
+
+    This routine samples the smoothed field on a regular (square or cubic) grid
+    and displays it using matplotlib's imshow.
+
+    This function is similar to `~kwant.plotter.map`, but generally gives more
+    appealing visual results when used on systems with many sites. If you want
+    site-level resolution you may be better off using `~kwant.plotter.map`.
+
+    This is a convenience function that is equivalent to
+    ``scalarplot(*interpolate_density(syst, density, relwidth), **kwargs)``.
+    The longer form makes it possible to tweak additional options of
+    `~kwant.plotter.interpolate_density`.
+
+    Parameters
+    ----------
+    syst : `kwant.system.FiniteSystem`
+        The system for which to plot ``density``.
+    density : sequence of float
+        Sequence of values defining density on each site of the system.
+        Ordered in the same way as ``syst.sites``. This typically will be
+        the result of evaluating a `~kwant.operator.Density` operator.
+    relwidth : float or `None`
+        Relative width of the bumps used to smooth the field, as a fraction
+        of the length of the longest side of the bounding box.
+    **kwargs : various
+        Keyword args to be passed verbatim to `~kwant.plotter.scalarplot`.
+
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output if ``ax`` is not set, else None.
+
+    See Also
+    --------
+    kwant.plotter.current
+    kwant.plotter.map
+    """
+    with _common.reraise_warnings(4):
+        return scalarplot(*interpolate_density(syst, density, relwidth),
+                          **kwargs)
+
 
 # TODO (Anton): Fix plotting of parts of the system using color = np.nan.
 # Not plotting sites currently works, not plotting hoppings does not.
