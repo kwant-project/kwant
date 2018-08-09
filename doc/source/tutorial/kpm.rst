@@ -194,7 +194,7 @@ the spectral density of the given operator that is calculated.
 
 `~kwant.kpm.SpectralDensity` accepts the operators in a few formats:
 
-* *explicit matrices* (numpy array of scipy sparse matrices will work)
+* *explicit matrices* (numpy array or scipy sparse matrices will work)
 * *operators* from `kwant.operator`
 
 If an explicit matrix is provided then it must have the same
