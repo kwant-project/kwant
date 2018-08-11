@@ -38,7 +38,7 @@ def test_projectors():
     projectors = [sparse.coo_matrix(p) for p in projectors]
     DiscreteSymmetry(projectors=projectors)
     # Break one projector - setting them should now throw an error.
-    projectors = [p.todense() for p in projectors]
+    projectors = [p.toarray() for p in projectors]
     projectors[1][2, :] = 0
     assert not np.allclose(sum(projector.dot(projector.conj().T) for projector
                                in projectors), np.eye(6))
@@ -54,8 +54,8 @@ def test_projectors():
     # Check that set_symmetry removes zero columns properly.
     p0 = p0[:, 1::2]
     p1 = p1[:, ::2]
-    assert np.allclose(symmetry.projectors[0].todense(), p0)
-    assert np.allclose(symmetry.projectors[1].todense(), p1)
+    assert np.allclose(symmetry.projectors[0].toarray(), p0)
+    assert np.allclose(symmetry.projectors[1].toarray(), p1)
 
 def test_set_discrete_symm():
     n = 20
@@ -103,11 +103,11 @@ def test_set_discrete_symm():
 
     # Check that with two symmetries specified, the third one is computed.
     symm = DiscreteSymmetry(time_reversal=t_mat, particle_hole=p_mat)
-    assert np.allclose(symm.chiral.todense(), c_mat.todense())
+    assert np.allclose(symm.chiral.toarray(), c_mat.toarray())
     DiscreteSymmetry(time_reversal=t_mat, chiral=c_mat)
-    assert np.allclose(symm.particle_hole.todense(), p_mat.todense())
+    assert np.allclose(symm.particle_hole.toarray(), p_mat.toarray())
     DiscreteSymmetry(particle_hole=p_mat, chiral=c_mat)
-    assert np.allclose(symm.time_reversal.todense(), t_mat.todense())
+    assert np.allclose(symm.time_reversal.toarray(), t_mat.toarray())
 
 
 def test_projectors_and_symmetry():

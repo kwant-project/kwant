@@ -101,7 +101,7 @@ class Solver(common.SparseSolver):
         sols = []
         vec = np.empty(b.shape[0], complex)
         for j in range(b.shape[1]):
-            vec[:] = b[:, j].todense().flatten()
+            vec[:] = b[:, j].toarray().flatten()
             sols.append(factorized_a(vec)[kept_vars])
 
         return np.asarray(sols).transpose()

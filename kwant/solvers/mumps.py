@@ -115,7 +115,7 @@ class Solver(common.SparseSolver):
             tmprhs = b[:, j:min(j + self.nrhs, b.shape[1])]
 
             if not self.sparse_rhs:
-                tmprhs = tmprhs.todense()
+                tmprhs = tmprhs.toarray()
             sols.append(solve(tmprhs)[kept_vars, :])
 
         return np.concatenate(sols, axis=1)
