@@ -1130,24 +1130,24 @@ def test_discrete_symmetries():
 
     sym = syst.finalized().discrete_symmetry(args=[0])
     for proj, should_be in zip(sym.projectors, np.identity(3)):
-        assert np.allclose(proj.todense(), should_be.reshape((3, 1)))
-    assert np.allclose(sym.time_reversal.todense(), np.identity(3))
+        assert np.allclose(proj.toarray(), should_be.reshape((3, 1)))
+    assert np.allclose(sym.time_reversal.toarray(), np.identity(3))
     syst.conservation_law = lambda site, p: cons_law[site.family]
     sym = syst.finalized().discrete_symmetry(args=[0])
     for proj, should_be in zip(sym.projectors, np.identity(3)):
-        assert np.allclose(proj.todense(), should_be.reshape((-1, 1)))
+        assert np.allclose(proj.toarray(), should_be.reshape((-1, 1)))
 
     syst = builder.Builder(conservation_law=np.diag([-1, 1]))
     syst[lat(1)] = np.identity(2)
     sym = syst.finalized().discrete_symmetry()
     for proj, should_be in zip(sym.projectors, np.identity(2)):
-        assert np.allclose(proj.todense(), should_be.reshape((-1, 1)))
+        assert np.allclose(proj.toarray(), should_be.reshape((-1, 1)))
 
     syst = builder.Builder(conservation_law=1)
     syst[lat2(1)] = 0
     sym = syst.finalized().discrete_symmetry()
     [proj] = sym.projectors
-    assert np.allclose(proj.todense(), [[1]])
+    assert np.allclose(proj.toarray(), [[1]])
 
     syst = kwant.Builder(conservation_law=np.diag([-1, 1, -1, 1]))
 
@@ -1156,17 +1156,17 @@ def test_discrete_symmetries():
     sym = syst.finalized().discrete_symmetry()
     p1 = np.zeros((4, 2))
     p1[0, 0] = p1[2, 1] = 1
-    assert np.allclose(sym.projectors[0].todense(), p1)
+    assert np.allclose(sym.projectors[0].toarray(), p1)
     p2 = np.zeros((4, 2))
     p2[1, 0] = p2[3, 1] = 1
-    assert np.allclose(sym.projectors[1].todense(), p2)
+    assert np.allclose(sym.projectors[1].toarray(), p2)
 
     # test parameter passing to conservation_law
     syst = builder.Builder(conservation_law=lambda site, b: b)
     syst[lat2(1)] = 0
     sym = syst.finalized().discrete_symmetry(params=dict(a=None, b=1))
     [proj] = sym.projectors
-    assert np.allclose(proj.todense(), [[1]])
+    assert np.allclose(proj.toarray(), [[1]])
 
 
 def test_argument_passing():
