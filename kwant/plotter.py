@@ -1874,7 +1874,7 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9,
 
     if mask:
         field = _mask(field,
-                      np.vstack((bbox_min, bbox_max)).transpose(),
+                      boundaries,
                       np.array([s.pos for s in syst.sites]))
 
     return field, boundaries
