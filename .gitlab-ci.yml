@@ -38,7 +38,7 @@ check for dependencies installed:
 build documentation:
   stage: test
   script:
-    - make -C doc realclean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/$$r/$$f
+    - make -C doc realclean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
   artifacts:
     paths:
       - doc/build/html/
