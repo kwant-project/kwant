@@ -52,6 +52,19 @@ def general(prim_vecs, basis=None, name='', norbs=None):
         return Polyatomic(prim_vecs, basis, name=name, norbs=norbs)
 
 
+def _check_prim_vecs(prim_vecs):
+    """Check constraints to ensure that prim_vecs is correct."""
+    if prim_vecs.ndim != 2:
+        raise ValueError('``prim_vecs`` must be a 2d array-like object.')
+
+    if prim_vecs.shape[0] > prim_vecs.shape[1]:
+        raise ValueError('Number of primitive vectors exceeds '
+                         'the space dimensionality.')
+
+    if np.linalg.matrix_rank(prim_vecs) < len(prim_vecs):
+        raise ValueError('"prim_vecs" must be linearly independent.')
+
+
 class Polyatomic:
     """
     A Bravais lattice with an arbitrary number of sites in the basis.
@@ -81,17 +94,14 @@ class Polyatomic:
     """
     def __init__(self, prim_vecs, basis, name='', norbs=None):
         prim_vecs = ta.array(prim_vecs, float)
-        if prim_vecs.ndim != 2:
-            raise ValueError('`prim_vecs` must be a 2d array-like object.')
+        _check_prim_vecs(prim_vecs)
+
         dim = prim_vecs.shape[1]
         if name is None:
             name = ''
         if isinstance(name, str):
             name = [name + str(i) for i in range(len(basis))]
 
-        if prim_vecs.shape[0] > dim:
-            raise ValueError('Number of primitive vectors exceeds '
-                             'the space dimensionality.')
         basis = ta.array(basis, float)
         if basis.ndim != 2:
             raise ValueError('`basis` must be a 2d array-like object.')
@@ -423,14 +433,12 @@ class Monatomic(builder.SiteFamily, Polyatomic):
 
     def __init__(self, prim_vecs, offset=None, name='', norbs=None):
         prim_vecs = ta.array(prim_vecs, float)
-        if prim_vecs.ndim != 2:
-            raise ValueError('``prim_vecs`` must be a 2d array-like object.')
+        _check_prim_vecs(prim_vecs)
+
         dim = prim_vecs.shape[1]
         if name is None:
             name = ''
-        if prim_vecs.shape[0] > dim:
-            raise ValueError('Number of primitive vectors exceeds '
-                             'the space dimensionality.')
+
         if offset is None:
             offset = ta.zeros(dim)
         else:

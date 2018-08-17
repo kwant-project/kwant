@@ -10,7 +10,7 @@
 hidden/shown on click using javascript"""
 
 from docutils import nodes
-from docutils.parsers.rst import Directive, directives
+from docutils.parsers.rst import directives, Directive
 
 id_count = 0
 

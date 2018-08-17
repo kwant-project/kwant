@@ -107,6 +107,10 @@ def test_simple_derivations(commutative):
     kx, ky, kz = sympy.symbols('k_x k_y k_z', commutative=commutative)
     test = {
         kx**2                   : {(0,): 2/ax**2, (1,): -1/ax**2},
+        kx**2 + 1               : {(0,): 1 + 2/ax**2, (1,): -1/ax**2},
+        kx**2 + 2               : {(0,): 2 + 2/ax**2, (1,): -1/ax**2},
+        kx**2 + 1.0             : {(0,): 1.0 + 2/ax**2, (1,): -1/ax**2},
+        kx**2 + 2.0             : {(0,): 2.0 + 2/ax**2, (1,): -1/ax**2},
         kx**2 + ky**2           : {(0, 1): -1/ay**2, (0, 0): 2/ax**2 + 2/ay**2,
                                    (1, 0): -1/ax**2},
         kx**2 + ky**2 + kz**2   : {(1, 0, 0): -1/ax**2, (0, 0, 1): -1/az**2,

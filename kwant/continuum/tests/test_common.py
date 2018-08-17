@@ -94,9 +94,9 @@ res_mat = sympy.Matrix([[com_x**3*A + com_x**2*A + com_x**2*B, com_x**3*A + com_
 
 
 def test_make_commutative():
-    assert make_commutative(expr1, com_x) == make_commutative(expr1, x)
-    assert make_commutative(expr1, com_x) == com_x**3*A + com_x**2*A + com_x**2*B
-    assert make_commutative(matr_com, com_x) == res_mat
+    assert make_commutative(expr1, com_x).expand() == (make_commutative(expr1, x)).expand()
+    assert make_commutative(expr1, com_x).expand() == (com_x**3*A + com_x**2*A + com_x**2*B).expand()
+    assert make_commutative(matr_com, com_x).expand() == (res_mat).expand()
 
 
 matr_monomials = sympify("[[x+y, a*x**2 + b*y], [y, x]]")

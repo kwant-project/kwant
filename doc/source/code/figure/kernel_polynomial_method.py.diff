@@ -64,7 +64,7 @@
          site_size = site_size_conversion(ldos)  # convert LDoS to sizes
          kwant.plot(fsyst, site_size=site_size, site_color=(0, 0, 1, 0.3), ax=ax)
          ax.set_title(title)
-         ax.set(adjustable='box-forced', aspect='equal')
+         ax.set(adjustable='box', aspect='equal')
 -    plt.show()
 +    save_figure(file_name)
      plt.clf()

@@ -36,7 +36,7 @@ def test_hamiltonian_submatrix():
 
     mat = syst2.hamiltonian_submatrix(sparse=True)
     assert sparse.isspmatrix_coo(mat)
-    mat = mat.todense()
+    mat = mat.toarray()
     mat = mat[perm, :]
     mat = mat[:, perm]
     np.testing.assert_array_equal(mat, mat_should_be)
@@ -45,7 +45,7 @@ def test_hamiltonian_submatrix():
     np.testing.assert_array_equal(mat, mat_should_be[:2, 2:3])
 
     mat = syst2.hamiltonian_submatrix((), perm[[0, 1]], perm[[2]], sparse=True)
-    mat = mat.todense()
+    mat = mat.toarray()
     np.testing.assert_array_equal(mat, mat_should_be[:2, 2:3])
 
     # Test for correct treatment of matrix input.
@@ -57,7 +57,7 @@ def test_hamiltonian_submatrix():
     syst[chain(2), chain(1)] = np.array([[3j]])
     syst2 = syst.finalized()
     mat_dense = syst2.hamiltonian_submatrix()
-    mat_sp = syst2.hamiltonian_submatrix(sparse=True).todense()
+    mat_sp = syst2.hamiltonian_submatrix(sparse=True).toarray()
     np.testing.assert_array_equal(mat_sp, mat_dense)
 
     # Test precalculation of modes.

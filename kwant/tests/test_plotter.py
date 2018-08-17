@@ -307,8 +307,8 @@ def rotational_currents(g):
     # per hopping).
     A = np.zeros((g.num_nodes, g.num_edges // 2))
     hoppings = dict()
-    perm_data = np.zeros(g.num_edges)
-    perm_ij = np.zeros((2, g.num_edges))
+    perm_data = np.zeros(g.num_edges, dtype=int)
+    perm_ij = np.zeros((2, g.num_edges), dtype=int)
     i = 0
     for k, (a, b) in enumerate(g):
         hop = frozenset((a, b))

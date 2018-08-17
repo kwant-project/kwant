@@ -48,14 +48,64 @@ def _sample_array(array, n_samples, rng=None):
 
 # matplotlib helper functions.
 
-def _make_figure(dpi, fig_size):
-    fig = _p.Figure()
+def _make_figure(dpi, fig_size, use_pyplot=False):
+    if 'matplotlib.backends' not in sys.modules:
+        warnings.warn(
+            "Kwant's plotting functions have\nthe side effect of "
+            "selecting the matplotlib backend. To avoid this "
+            "warning,\nimport matplotlib.pyplot, "
+            "matplotlib.backends or call matplotlib.use().",
+            RuntimeWarning, stacklevel=3
+        )
+    if use_pyplot:
+        # We import backends and pyplot only at the last possible moment (=now)
+        # because this has the side effect of selecting the matplotlib backend
+        # for good.  Warn if backend has not been set yet.  This check is the
+        # same as the one performed inside matplotlib.use.
+        from matplotlib import pyplot
+        fig = pyplot.figure()
+    else:
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
+        fig = _p.Figure()
+        fig.canvas = FigureCanvasAgg(fig)
     if dpi is not None:
         fig.set_dpi(dpi)
     if fig_size is not None:
         fig.set_figwidth(fig_size[0])
         fig.set_figheight(fig_size[1])
     return fig
+
+
+def _maybe_output_fig(fig, file=None, show=True):
+    """Output a matplotlib figure using a given output mode.
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure instance
+        The figure to be output.
+    file : string or a file object
+        The name of the target file or the target file itself
+        (opened for writing).
+    show : bool
+        Whether to call ``matplotlib.pyplot.show()``.  Only has an effect if
+        not saving to a file.
+
+    Notes
+    -----
+    The behavior of this function producing a file is different from that of
+    matplotlib in that the `dpi` attribute of the figure is used by defaul
+    instead of the matplotlib config setting.
+    """
+    if fig is None:
+        return
+
+    if file is not None:
+        fig.canvas.print_figure(file, dpi=fig.dpi)
+    elif show:
+        # If there was no file provided, pyplot should already be available and
+        # we can import it safely without additional warnings.
+        from matplotlib import pyplot
+        pyplot.show()
 
 
 def set_colors(color, collection, cmap, norm=None):
@@ -78,7 +128,7 @@ def set_colors(color, collection, cmap, norm=None):
     if (isinstance(color, np.ndarray) and color.dtype == np.dtype('object')):
         color = tuple(color)
 
-    if isinstance(collection, _p.mplot3d.art3d.Line3DCollection):
+    if _p.has3d and isinstance(collection, _p.mplot3d.art3d.Line3DCollection):
         length = len(collection._segments3d)  # Once again, matplotlib fault!
 
     if _p.isarray(color) and len(color) == length:
@@ -326,80 +376,6 @@ def lines(axes, pos0, pos1, reflen=None, colors='k', linestyles='solid',
         axes.add_collection3d(coll)
 
     return coll
-
-
-def output_fig(fig, output_mode='auto', file=None, savefile_opts=None,
-               show=True):
-    """Output a matplotlib figure using a given output mode.
-
-    Parameters
-    ----------
-    fig : matplotlib.figure.Figure instance
-        The figure to be output.
-    output_mode : string
-        The output mode to be used.  Can be one of the following:
-        'pyplot' : attach the figure to pyplot, with the same behavior as if
-        pyplot.plot was called to create this figure.
-        'return' : attach a `FigureCanvasAgg` to the figure and return it.
-        'file' : same as 'return', but also save the figure into a file.
-        'auto' : if fname is given, save to a file, otherwise like pyplot
-        is imported, attach to pyplot, otherwise just return.  See also the
-        notes below.
-    file : string or a file object
-        The name of the target file or the target file itself
-        (opened for writing).
-    savefile_opts : (list, dict) or None
-        args and kwargs passed to `print_figure` of ``matplotlib``
-    show : bool
-        Whether to call ``matplotlib.pyplot.show()``.  Only has an effect if the
-        output uses pyplot.
-
-    Notes
-    -----
-    The behavior of this function producing a file is different from that of
-    matplotlib in that the `dpi` attribute of the figure is used by defaul
-    instead of the matplotlib config setting.
-    """
-    if not _p.mpl_available:
-        raise RuntimeError('matplotlib is not installed.')
-
-    # We import backends and pyplot only at the last possible moment (=now)
-    # because this has the side effect of selecting the matplotlib backend for
-    # good.  Warn if backend has not been set yet.  This check is the same as
-    # the one performed inside matplotlib.use.
-    if 'matplotlib.backends' not in sys.modules:
-        warnings.warn("Kwant's plotting functions have\nthe side effect of "
-                      "selecting the matplotlib backend. To avoid this "
-                      "warning,\nimport matplotlib.pyplot, "
-                      "matplotlib.backends or call matplotlib.use().",
-                      RuntimeWarning, stacklevel=3)
-
-    if output_mode == 'auto':
-        output_mode = 'pyplot' if file is None else 'file'
-    if output_mode == 'pyplot':
-        from matplotlib import pyplot
-        fake_fig = pyplot.figure()
-        fake_fig.canvas.figure = fig
-        fig.canvas = fake_fig.canvas
-        for ax in fig.axes:
-            try:
-                ax.mouse_init()  # Make 3D interface interactive.
-            except AttributeError:
-                pass
-        if show:
-            pyplot.show()
-    elif output_mode in ['return', 'file']:
-        from matplotlib.backends.backend_agg import FigureCanvasAgg
-        fig.canvas = FigureCanvasAgg(fig)
-        if output_mode == 'file':
-            if savefile_opts is None:
-                savefile_opts = ([], {})
-            if 'dpi' not in savefile_opts[1]:
-                savefile_opts[1]['dpi'] = fig.dpi
-            fig.canvas.print_figure(file, *savefile_opts[0], **savefile_opts[1])
-    else:
-        raise ValueError('Unknown output_mode')
-    return fig
 
 
 # Extracting necessary data from the system.
@@ -1043,7 +1019,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
     # make a new figure unless axes specified
     if not ax:
-        fig = _make_figure(dpi, fig_size)
+        fig = _make_figure(dpi, fig_size, use_pyplot=(file is None))
         if dim == 2:
             ax = fig.add_subplot(1, 1, 1, aspect='equal')
             ax.set_xmargin(0.05)
@@ -1119,8 +1095,9 @@ def plot(sys, num_lead_cells=2, unit='nn',
     if line_coll.get_array() is not None and colorbar and fig is not None:
         fig.colorbar(line_coll)
 
-    if fig is not None:
-        return output_fig(fig, file=file, show=show)
+    _maybe_output_fig(fig, file=file, show=show)
+
+    return fig
 
 
 def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
@@ -1308,7 +1285,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     min -= border
     max += border
     if ax is None:
-        fig = _make_figure(dpi, fig_size)
+        fig = _make_figure(dpi, fig_size, use_pyplot=(file is None))
         ax = fig.add_subplot(1, 1, 1, aspect='equal')
     else:
         fig = None
@@ -1359,8 +1336,9 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
             extend = 'max'
         fig.colorbar(image, extend=extend)
 
-    if fig is not None:
-        return output_fig(fig, file=file, show=show)
+    _maybe_output_fig(fig, file=file, show=show)
+
+    return fig
 
 
 def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
@@ -1520,12 +1498,7 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
 
     # set up axes
     if ax is None:
-        fig = _p.Figure()
-        if dpi is not None:
-            fig.set_dpi(dpi)
-        if fig_size is not None:
-            fig.set_figwidth(fig_size[0])
-            fig.set_figheight(fig_size[1])
+        fig = _make_figure(dpi, fig_size, use_pyplot=(file is None))
         if y is None:
             ax = fig.add_subplot(1, 1, 1)
         else:
@@ -1558,8 +1531,9 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
             spec = spectrum[:, :, i].transpose()  # row-major to x-y ordering
             ax.plot_surface(*(grid + [spec]), cstride=1, rstride=1)
 
-    if fig is not None:
-        return output_fig(fig, file=file, show=show)
+    _maybe_output_fig(fig, file=file, show=show)
+
+    return fig
 
 
 # Smoothing functions used with 'interpolate_current'.
@@ -2009,7 +1983,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
                          "mutually exclusive.")
 
     if ax is None:
-        fig = _make_figure(dpi, fig_size)
+        fig = _make_figure(dpi, fig_size, use_pyplot=(file is None))
         ax = fig.add_subplot(1, 1, 1, aspect='equal')
     else:
         fig = None
@@ -2045,10 +2019,12 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     ax.set_xlim(*box[0])
     ax.set_ylim(*box[1])
 
-    if fig is not None:
-        if colorbar and cmap:
-            fig.colorbar(image)
-        return output_fig(fig, file=file, show=show)
+    if colorbar and cmap and fig is not None:
+        fig.colorbar(image)
+
+    _maybe_output_fig(fig, file=file, show=show)
+
+    return fig
 
 
 def scalarplot(field, box,
@@ -2113,7 +2089,7 @@ def scalarplot(field, box,
     cmap = _p.matplotlib.cm.get_cmap(cmap)
 
     if ax is None:
-        fig = _make_figure(dpi, fig_size)
+        fig = _make_figure(dpi, fig_size, use_pyplot=(file is None))
         ax = fig.add_subplot(1, 1, 1, aspect='equal')
     else:
         fig = None
@@ -2132,10 +2108,12 @@ def scalarplot(field, box,
     ax.set_ylim(*box[1])
     ax.patch.set_facecolor(background)
 
-    if fig is not None:
-        if colorbar and cmap:
-            fig.colorbar(image)
-        return output_fig(fig, file=file, show=show)
+    if colorbar and cmap and fig is not None:
+        fig.colorbar(image)
+
+    _maybe_output_fig(fig, file=file, show=show)
+
+    return fig
 
 
 def current(syst, current, relwidth=0.05, **kwargs):

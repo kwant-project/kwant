@@ -12,6 +12,7 @@ import tinyarray as ta
 from pytest import raises
 from kwant import lattice, builder
 from kwant._common import ensure_rng
+import pytest
 
 
 def test_closest():
@@ -197,6 +198,19 @@ def test_monatomic_lattice():
     lat2 = lattice.general(np.identity(2))
     lat3 = lattice.square(name='no')
     assert len(set([lat, lat2, lat3, lat(0, 0), lat2(0, 0), lat3(0, 0)])) == 4
+
+@pytest.mark.parametrize('prim_vecs, basis', [
+    (1, None),
+    ([1], None),
+    ([1, 0], [[0, 0]]),
+    ([[1, 0], [2, 0]], None),
+    ([[1, 0], [2, 0]], [[0, 0]]),
+    ([[1, 0], [0, 2], [1, 2]], None),
+    ([[1, 0], [0, 2], [1, 2]], [[0, 0]]),
+])
+def test_lattice_constraints(prim_vecs, basis):
+    with pytest.raises(ValueError):
+        lattice.general(prim_vecs, basis)
 
 
 def test_norbs():

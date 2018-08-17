@@ -11,8 +11,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
-
+import sys
+import os
+import string
 from distutils.util import get_platform
 sys.path.insert(0, "../../build/lib.{0}-{1}.{2}".format(
         get_platform(), *sys.version_info[:2]))
@@ -301,8 +302,18 @@ def linkcode_resolve(domain, info):
         filename = 'kwant/%s#L%d-%d' % find_source()
     except Exception:
         filename = info['module'].replace('.', '/') + '.py'
-    source_branch = os.environ.get('REFNAME', 'master')
-    url = os.environ.get('SOURCE_URL',
-                         "https://gitlab.kwant-project.org/kwant/kwant/blob")
 
-    return "{}/{}/{}".format(url, source_branch, filename)
+    # The following relies on the documented format of kwant.__version__.
+    rel = release.rstrip('.dirty')
+    if '.dev' in rel:
+        try:
+            refname = rel[rel.index('+g') + 2:]
+        except ValueError:
+            return
+    else:
+        refname = 'v' + rel
+
+    templ = os.environ.get(
+        "SOURCE_LINK_TEMPLATE",
+        "https://gitlab.kwant-project.org/kwant/kwant/blob/$r/$f")
+    return string.Template(templ).safe_substitute(r=refname, f=filename)

@@ -65,16 +65,15 @@ def lambdify(expr, locals=None):
 
     Examples
     --------
-        >>> f = lambdify('a + b', locals={'b': 'b + c'})
-        >>> f(1, 3, 5)
-        9
+    >>> f = lambdify('a + b', locals={'b': 'b + c'})
+    >>> f(1, 3, 5)
+    9
 
-        >>> ns = {'sigma_plus': [[0, 2], [0, 0]]}
-        >>> f = lambdify('k_x**2 * sigma_plus', ns)
-        >>> f(0.25)
-        array([[ 0.   ,  0.125],
-               [ 0.   ,  0.   ]])
-
+    >>> ns = {'sigma_plus': [[0, 2], [0, 0]]}
+    >>> f = lambdify('k_x**2 * sigma_plus', ns)
+    >>> f(0.25)
+    array([[ 0.   ,  0.125],
+           [ 0.   ,  0.   ]])
     """
     with reraise_warnings(level=4):
         expr = sympify(expr, locals)
@@ -189,6 +188,15 @@ def sympify(expr, locals=None):
             converter[list] = stored_value
         else:
             del converter[list]
+
+    # We assume that all present functions, like "sin", "cos", will be
+    # provided by user during the final evaluation through "params".
+    # Therefore we make sure they are define as AppliedUndef, not built-in
+    # sympy types.
+    subs = {r: sympy.Symbol(str(r.func))(*r.args)
+            for r in hamiltonian.atoms(sympy.Function)}
+
+    hamiltonian = hamiltonian.subs(subs)
     return hamiltonian
 
 

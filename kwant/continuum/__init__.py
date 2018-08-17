@@ -17,4 +17,4 @@ except ImportError as error:
 
 
 __all__ = ['discretize', 'discretize_symbolic', 'build_discretized',
-           'sympify', 'lambdify']
+           'sympify', 'lambdify', 'momentum_operators', 'position_operators']

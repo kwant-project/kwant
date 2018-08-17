@@ -387,13 +387,13 @@ def test_tocoo():
     assert isinstance(op.tocoo(), coo_matrix)
 
     # Constant and non-constant values.
-    assert np.all(op.tocoo().todense() == np.eye(2))
+    assert np.all(op.tocoo().toarray() == np.eye(2))
     op = ops.Density(syst, lambda site: 1)
-    assert np.all(op.tocoo().todense() == np.eye(2))
+    assert np.all(op.tocoo().toarray() == np.eye(2))
 
     # Correct treatment of where
     op = ops.Density(syst, where=[lat1(0)])
-    assert np.all(op.tocoo().todense() == [[1, 0], [0, 0]])
+    assert np.all(op.tocoo().toarray() == [[1, 0], [0, 0]])
 
     # No accidental transpose.
     syst = kwant.Builder()
@@ -401,7 +401,7 @@ def test_tocoo():
     syst[lat2(0)] = lambda site, paramerer: np.eye(2)
     syst = syst.finalized()
     op = ops.Density(syst, [[1, 1], [0, 1]], check_hermiticity=False)
-    assert np.all(op.tocoo().todense() == [[1, 1], [0, 1]])
+    assert np.all(op.tocoo().toarray() == [[1, 1], [0, 1]])
 
     op = ops.Density(syst, lambda site, p: [[1, 1], [0, 1]],
                      check_hermiticity=False)
@@ -427,7 +427,7 @@ def test_arg_passing(A):
     act_should_be = op.act(wf, args=canonical_args)
     has_tocoo = hasattr(op, 'tocoo')
     if has_tocoo:
-        tocoo_should_be = op.tocoo(args=canonical_args).todense()
+        tocoo_should_be = op.tocoo(args=canonical_args).toarray()
 
     with raises(TypeError) as exc:
         op(wf, args=canonical_args, params=params)
@@ -449,7 +449,7 @@ def test_arg_passing(A):
         act_should_be, op.act(wf, params=params))
     if has_tocoo:
         np.testing.assert_array_equal(
-            tocoo_should_be, op.tocoo(params=params).todense())
+            tocoo_should_be, op.tocoo(params=params).toarray())
     # after binding
     op2 = op.bind(params=params)
     np.testing.assert_array_equal(
@@ -458,7 +458,7 @@ def test_arg_passing(A):
         act_should_be, op2.act(wf))
     if has_tocoo:
         np.testing.assert_array_equal(
-            tocoo_should_be, op2.tocoo().todense())
+            tocoo_should_be, op2.tocoo().toarray())
 
     # system and onsite having different args
     def onsite(site, flip):
@@ -477,7 +477,7 @@ def test_arg_passing(A):
         act_should_be, op.act(wf, params=params))
     if has_tocoo:
         np.testing.assert_array_equal(
-            tocoo_should_be, op.tocoo(params=params).todense())
+            tocoo_should_be, op.tocoo(params=params).toarray())
     # after binding
     op2 = op.bind(params=params)
     np.testing.assert_array_equal(
@@ -486,7 +486,7 @@ def test_arg_passing(A):
         act_should_be, op2.act(wf))
     if has_tocoo:
         np.testing.assert_array_equal(
-            tocoo_should_be, op2.tocoo().todense())
+            tocoo_should_be, op2.tocoo().toarray())
 
 
 def random_onsite(i):
