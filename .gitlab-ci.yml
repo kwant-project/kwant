@@ -61,10 +61,12 @@ build PDF documentation:
 run tests:
   stage: test
   script:
-    - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant
+    - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant --junitxml=tests.xml
   artifacts:
     paths:
       - htmlcov
+    reports:
+      junit: tests.xml
 
 
 check for broken links in doc:
