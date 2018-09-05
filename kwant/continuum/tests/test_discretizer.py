@@ -443,7 +443,6 @@ def test_numeric_functions_advance():
 
                 # test onsite
                 v = symbolic.pop((0,)).subs({sympy.symbols('a_x'): a, B: p['B']})
-                print(v)
                 f_sym = sympy.lambdify(['A', 'x'], v)
                 f_num = builder[lat(0)]
 
