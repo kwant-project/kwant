@@ -116,6 +116,7 @@ def get_parameters(func):
     # Signature.parameters is an *ordered mapping*
     required_params = [k for (k, v) in pars.items()
                        if v.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                                     inspect.Parameter.POSITIONAL_ONLY,
                                      inspect.Parameter.KEYWORD_ONLY)
                        and v.default is inspect._empty]
     default_params = [k for (k, v) in pars.items()

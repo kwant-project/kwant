@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Kwant authors.
+# Copyright 2011-2018 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -50,27 +50,19 @@ def _memoize(f):
     return lookup
 
 
-def _modify_signature(func, parameter_names, takes_kwargs):
-    """Modify the signature of 'func', and return 'func'.
+def _set_signature(func, params):
+    """Set the signature of 'func'.
 
     Parameters
     ----------
     func : callable
-    parameter_names: sequence of str
+    params: sequence of str
         Parameter names to put in the signature. These will be added as
-        'POSITIONAL_OR_KEYWORD' type parameters.
-    takes_kwargs: bool
-        If 'True', then a 'kwargs' parameter with type 'VAR_KEYWORD' is added
-        to the end of the signature.
+        'POSITIONAL_ONLY' type parameters.
     """
-    params = [inspect.Parameter(name, inspect.Parameter.POSITIONAL_OR_KEYWORD)
-               for name in parameter_names]
-    if takes_kwargs:
-        params.append(inspect.Parameter('kwargs',
-                                        inspect.Parameter.VAR_KEYWORD))
-
+    params = [inspect.Parameter(name, inspect.Parameter.POSITIONAL_ONLY)
+              for name in params]
     func.__signature__ = inspect.Signature(params)
-    return func
 
 
 ## This wrapper is needed so that finalized systems that
@@ -86,7 +78,7 @@ class WrappedBuilder(builder.Builder):
         return ret
 
 
-def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
+def wraparound(builder, keep=None, *, coordinate_names='xyz'):
     """Replace translational symmetries by momentum parameters.
 
     A new Builder instance is returned.  By default, each symmetry is replaced
@@ -100,7 +92,7 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
     builder : `~kwant.builder.Builder`
     keep : int, optional
         Which (if any) translational symmetry to keep.
-    coordinate_names : sequence of strings, default: ('x', 'y', 'z')
+    coordinate_names : sequence of strings, default: 'xyz'
         The names of the coordinates along the symmetry
         directions of 'builder'.
 
@@ -111,133 +103,125 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
     format. It will be deprecated in the 2.0 release of Kwant.
     """
 
-    # In the following 'assert' because 'syst.hamiltonian'
-    # should force the function to be called with *either* '*args'
-    # or '**kwargs', not both. Also, we use different codepaths for
-    # the two cases to avoid a performance drop when using '*args' only.
-
     @_memoize
     def bind_site(val):
-        assert callable(val)
-
-        def f(*args, **kwargs):
+        def f(*args):
             a, *args = args
-            assert not (args and kwargs)
-            if kwargs:
-                if not takes_kwargs:
-                    kwargs = {p: kwargs[p] for p in extra_params}
-                return val(a, **kwargs)
-            else:
-                return val(a, *args[:mnp])
+            return val(a, *args[:mnp])
 
+        assert callable(val)
         params, defaults, takes_kwargs = get_parameters(val)
-        extra_params = params[1:]
-        return _modify_signature(f, params + momenta, takes_kwargs)
+        assert not defaults
+        assert not takes_kwargs
+        _set_signature(f, params + momenta)
+        return f
 
     @_memoize
     def bind_hopping_as_site(elem, val):
-
-        def f(*args, **kwargs):
+        def f(*args):
             a, *args = args
-            assert not (args and kwargs)
-            sym_a = sym.act(elem, a)
-            k = [kwargs[k] for k in momenta] if kwargs else args[mnp:]
-            phase = cmath.exp(1j * ta.dot(elem, k))
-            if not callable(val):
-                v = val
-            elif kwargs:
-                if not takes_kwargs:
-                    kwargs = {p: kwargs[p] for p in extra_params}
-                v = val(a, sym_a, **kwargs)
-            else:
-                v = val(a, sym_a, *args[:mnp])
-
+            phase = cmath.exp(1j * ta.dot(elem, args[mnp:]))
+            v = val(a, sym.act(elem, a), *args[:mnp]) if callable(val) else val
             pv = phase * v
             return pv + herm_conj(pv)
 
-        params, takes_kwargs = ['_site0'], False
+        params = ['_site0']
         if callable(val):
             p, defaults, takes_kwargs = get_parameters(val)
-            extra_params = p[2:]  # cut off both site parameters
-            params += extra_params
-
-        return _modify_signature(f,  params + momenta, takes_kwargs)
+            assert not defaults
+            assert not takes_kwargs
+            params += p[2:]     # cut off both site parameters
+        _set_signature(f, params + momenta)
+        return f
 
     @_memoize
     def bind_hopping(elem, val):
-
-        def f(*args, **kwargs):
+        def f(*args):
             a, b, *args = args
-            assert not (args and kwargs)
-            sym_b = sym.act(elem, b)
-            k = [kwargs[k] for k in momenta] if kwargs else args[mnp:]
-            phase = cmath.exp(1j * ta.dot(elem, k))
-            if not callable(val):
-                v = val
-            elif kwargs:
-                if not takes_kwargs:
-                    kwargs = {p: kwargs[p] for p in extra_params}
-                v = val(a, sym_b, **kwargs)
-            else:
-                v = val(a, sym_b, *args[:mnp])
-
+            phase = cmath.exp(1j * ta.dot(elem, args[mnp:]))
+            v = val(a, sym.act(elem, b), *args[:mnp]) if callable(val) else val
             return phase * v
 
-        params, takes_kwargs = ['_site0', '_site1'], False
+        params = ['_site0', '_site1']
         if callable(val):
             p, defaults, takes_kwargs = get_parameters(val)
-            extra_params = p[2:]  # cut off site parameters
-            params += extra_params
-
-        return _modify_signature(f, params + momenta, takes_kwargs)
+            assert not defaults
+            assert not takes_kwargs
+            params += p[2:]  # cut off site parameters
+        _set_signature(f, params + momenta)
+        return f
 
     @_memoize
     def bind_sum(num_sites, *vals):
-        # Inside 'f' we do not have to split off only the used args/kwargs
-        # because if 'val' is callable, it is guaranteed to have been wrapped
-        # by 'bind_site', 'bind_hopping' or 'bind_hopping_as_site', which do
-        # the disambiguation for us.
-        def f(*args, **kwargs):
-            return sum((val(*args, **kwargs) if callable(val) else val)
-                       for val in vals)
+        """Construct joint signature for all 'vals'."""
 
-        # construct joint signature for all 'vals'.
-        parameters, takes_kwargs = collections.OrderedDict(), False
-        # first the 'site' parameters
-        for s in range(num_sites):
-            name = '_site{}'.format(s)
-            parameters[name] = inspect.Parameter(
-                name, inspect.Parameter.POSITIONAL_OR_KEYWORD)
-        # now all the other parameters, except for the momenta
-        for val in filter(callable, vals):
+        def f(*in_args):
+            acc = 0
+            for val, selection in val_selection_pairs:
+                if selection:   # Otherwise: reuse previous out_args.
+                    out_args = tuple(in_args[i] for i in selection)
+                if callable(val):
+                    acc = acc + val(*out_args)
+                else:
+                    acc = acc + val
+            return acc
+
+        params = collections.OrderedDict()
+
+        # Add the leading one or two 'site' parameters.
+        site_params = ['_site{}'.format(i) for i in range(num_sites)]
+        for name in site_params:
+            params[name] = inspect.Parameter(
+                name, inspect.Parameter.POSITIONAL_ONLY)
+
+        # Add all the other parameters, except for the momenta.
+        selections = []
+        for val in vals:
+            if not callable(val):
+                selections.append(())
+                continue
             val_params, defaults, val_takes_kwargs = get_parameters(val)
-            val_params = val_params[num_sites:]   # remove site parameters
-            takes_kwargs = takes_kwargs or val_takes_kwargs
+            assert not defaults
+            assert not val_takes_kwargs
+            val_params = val_params[num_sites:]
+            selections.append((*site_params, *val_params))
             for p in val_params:
                 # Skip parameters that exist in previously added functions,
                 # and the momenta, which will be placed at the end.
-                if p in parameters or p in momenta:
+                if p in params or p in momenta:
                     continue
-                parameters[p] = inspect.Parameter(
-                    p, inspect.Parameter.POSITIONAL_OR_KEYWORD)
-        # finally add the momenta.
-        for k in momenta:
-            parameters[k] = inspect.Parameter(
-                k, inspect.Parameter.POSITIONAL_OR_KEYWORD)
-        if takes_kwargs:
-            parameters['kwargs'] = inspect.Parameter(
-                'kwargs', inspect.Parameter.VAR_KEYWORD)
-        f.__signature__ = inspect.Signature(parameters.values())
+                params[p] = inspect.Parameter(
+                    p, inspect.Parameter.POSITIONAL_ONLY)
 
+        # Finally, add the momenta.
+        for k in momenta:
+            params[k] = inspect.Parameter(
+                k, inspect.Parameter.POSITIONAL_ONLY)
+
+        # Sort values such that ones with the same arguments are bunched.
+        # Prepare 'val_selection_pairs' that is used in the function 'f' above.
+        params_keys = list(params.keys())
+        val_selection_pairs = []
+        prev_selection = None
+        argsort = sorted(range(len(selections)), key=selections.__getitem__)
+        for i in argsort:
+            selection = selections[i]
+            if selection and selection != prev_selection:
+                prev_selection = selection = tuple(
+                    params_keys.index(s) for s in selection)
+            else:
+                selection = ()
+            val_selection_pairs.append((vals[i], selection))
+
+        f.__signature__ = inspect.Signature(params.values())
         return f
 
-
-    if len(builder.symmetry.periods) > len(coordinate_names):
+    try:
+        momenta = ['k_{}'.format(coordinate_names[i])
+                   for i in range(len(builder.symmetry.periods))]
+    except IndexError:
         raise ValueError("All symmetry directions must have a name specified "
                          "in coordinate_names")
-
-    momenta = ['k_{}'.format(n) for n, _ in
-               zip(coordinate_names, builder.symmetry.periods)]
 
     if keep is None:
         ret = WrappedBuilder()
@@ -247,6 +231,8 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
         ret = WrappedBuilder(TranslationalSymmetry(periods.pop(keep)))
         sym = TranslationalSymmetry(*periods)
         momenta.pop(keep)
+    mnp = -len(sym.periods)      # Used by the bound functions above.
+
     # Store the names of the momentum parameters and the symmetry of the
     # old Builder (this will be needed for band structure plotting)
     ret._momentum_names = momenta
@@ -270,8 +256,6 @@ def wraparound(builder, keep=None, *, coordinate_names=('x', 'y', 'z')):
 
     sites = {}
     hops = collections.defaultdict(list)
-
-    mnp = -len(sym.periods)      # Used by the bound functions above.
 
     # Store lists of values, so that multiple values can be assigned to the
     # same site or hopping.

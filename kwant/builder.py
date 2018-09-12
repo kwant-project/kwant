@@ -514,6 +514,10 @@ class HermConjOfFunc:
     def __call__(self, i, j, *args, **kwargs):
         return herm_conj(self.function(j, i, *args, **kwargs))
 
+    @property
+    def __signature__(self):
+        return inspect.signature(self.function)
+
 
 ################ Leads
 
@@ -1909,17 +1913,12 @@ class _FinalizedBuilderMixin:
                         raise ValueError("Parameters {} have default values "
                                          "and may not be set with 'params'"
                                          .format(', '.join(invalid_params)))
-                    if not takes_kw:
-                        params = {pn: params[pn] for pn in required}
-                    try:
-                        value = value(site, **params)
-                    except Exception as exc:
-                        _raise_user_error(exc, value)
-                else:
-                    try:
-                        value = value(site, *args)
-                    except Exception as exc:
-                        _raise_user_error(exc, value)
+                    assert not takes_kw
+                    args = map(params.__getitem__, required)
+                try:
+                    value = value(site, *args)
+                except Exception as exc:
+                    _raise_user_error(exc, value)
         else:
             edge_id = self.graph.first_edge_id(i, j)
             value = self.hoppings[edge_id]
@@ -1938,17 +1937,12 @@ class _FinalizedBuilderMixin:
                         raise ValueError("Parameters {} have default values "
                                          "and may not be set with 'params'"
                                          .format(', '.join(invalid_params)))
-                    if not takes_kw:
-                        params = {pn: params[pn] for pn in required}
-                    try:
-                        value = value(site_i, site_j, **params)
-                    except Exception as exc:
-                        _raise_user_error(exc, value)
-                else:
-                    try:
-                        value = value(site_i, site_j, *args)
-                    except Exception as exc:
-                        _raise_user_error(exc, value)
+                    assert not takes_kw
+                    args = map(params.__getitem__, required)
+                try:
+                    value = value(site_i, site_j, *args)
+                except Exception as exc:
+                    _raise_user_error(exc, value)
             if conj:
                 value = herm_conj(value)
         return value
