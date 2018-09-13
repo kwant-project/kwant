@@ -1407,8 +1407,8 @@ class Builder:
 
         # Get parameter names to be substituted for each function,
         # without the 'site' parameter(s)
-        onsite_params = [get_parameters(v).required[1:] for v in onsites]
-        hopping_params = [get_parameters(v).required[2:] for v in hoppings]
+        onsite_params = [get_parameters(v)[1:] for v in onsites]
+        hopping_params = [get_parameters(v)[2:] for v in hoppings]
 
         system_params = set(flatten(chain(onsite_params, hopping_params)))
         nonexistant_params = set(subs.keys()).difference(system_params)
@@ -1868,21 +1868,16 @@ def _translate_cons_law(cons_law):
 class _FinalizedBuilderMixin:
     """Common functionality for all finalized builders"""
 
-    def _init_ham_param_maps(self):
-        """Find parameters taken by all value functions
+    def _init_param_names(self):
+        """For each value function, store the required parameters.
         """
-        ham_param_map = {}
-        for hams, skip in [(self.onsite_hamiltonians, 1), (self.hoppings, 2)]:
-            for ham in hams:
-                if (not callable(ham) or ham is Other or
-                    ham in ham_param_map):
+        pn = {}
+        for values, skip in [(self.onsite_hamiltonians, 1), (self.hoppings, 2)]:
+            for value in values:
+                if not callable(value) or value is Other or value in pn:
                     continue
-                # parameters come in the same order as in the function signature
-                params, defaults, takes_kwargs = get_parameters(ham)
-                params = params[skip:]  # remove site argument(s)
-                ham_param_map[ham] = (params, defaults, takes_kwargs)
-
-        self._ham_param_map = ham_param_map
+                pn[value] = get_parameters(value)[skip:]
+        self._param_names = pn
 
 
     def _init_discrete_symmetries(self, builder):
@@ -1907,14 +1902,7 @@ class _FinalizedBuilderMixin:
             if callable(value):
                 site = self.symmetry.to_fd(self.sites[i])
                 if params:
-                    required, defaults, takes_kw = self._ham_param_map[value]
-                    invalid_params = set(params).intersection(set(defaults))
-                    if invalid_params:
-                        raise ValueError("Parameters {} have default values "
-                                         "and may not be set with 'params'"
-                                         .format(', '.join(invalid_params)))
-                    assert not takes_kw
-                    args = map(params.__getitem__, required)
+                    args = map(params.__getitem__, self._param_names[value])
                 try:
                     value = value(site, *args)
                 except Exception as exc:
@@ -1931,14 +1919,7 @@ class _FinalizedBuilderMixin:
                 sites = self.sites
                 site_i, site_j = self.symmetry.to_fd(sites[i], sites[j])
                 if params:
-                    required, defaults, takes_kw = self._ham_param_map[value]
-                    invalid_params = set(params).intersection(set(defaults))
-                    if invalid_params:
-                        raise ValueError("Parameters {} have default values "
-                                         "and may not be set with 'params'"
-                                         .format(', '.join(invalid_params)))
-                    assert not takes_kw
-                    args = map(params.__getitem__, required)
+                    args = map(params.__getitem__, self._param_names[value])
                 try:
                     value = value(site_i, site_j, *args)
                 except Exception as exc:
@@ -2049,7 +2030,7 @@ class FiniteSystem(_FinalizedBuilderMixin, system.FiniteSystem):
         self.symmetry = builder.symmetry
         self.leads = finalized_leads
         self.lead_interfaces = lead_interfaces
-        self._init_ham_param_maps()
+        self._init_param_names()
         self._init_discrete_symmetries(builder)
 
 
@@ -2203,7 +2184,7 @@ class InfiniteSystem(_FinalizedBuilderMixin, system.InfiniteSystem):
         self.onsite_hamiltonians = onsite_hamiltonians
         self.symmetry = builder.symmetry
         self.cell_size = cell_size
-        self._init_ham_param_maps()
+        self._init_param_names()
         self._init_discrete_symmetries(builder)
 
 

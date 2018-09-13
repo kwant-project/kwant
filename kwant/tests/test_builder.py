@@ -1210,10 +1210,10 @@ def test_argument_passing():
 
     # test that passing parameters without default values works, and that
     # passing parameters with default values fails
-    def onsite(site, p1, p2=1):
+    def onsite(site, p1, p2):
         return p1 + p2
 
-    def hopping(site, site2, p1, p2=2):
+    def hopping(site, site2, p1, p2):
         return p1 - p2
 
     fill_syst = ft.partial(gen_fill_syst, onsite, hopping)
@@ -1231,12 +1231,7 @@ def test_argument_passing():
 
     for test in tests:
         np.testing.assert_array_equal(
-            test(args=(1,)), test(params=dict(p1=1)))
-
-    # providing value for parameter with default value -- error
-    for test in tests:
-        with raises(ValueError):
-            test(params=dict(p1=1, p2=2))
+            test(args=(1, 2)), test(params=dict(p1=1, p2=2)))
 
     # Some common, some different args for value functions
     def onsite2(site, a, b):

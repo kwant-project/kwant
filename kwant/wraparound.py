@@ -110,10 +110,7 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
             return val(a, *args[:mnp])
 
         assert callable(val)
-        params, defaults, takes_kwargs = get_parameters(val)
-        assert not defaults
-        assert not takes_kwargs
-        _set_signature(f, params + momenta)
+        _set_signature(f, get_parameters(val) + momenta)
         return f
 
     @_memoize
@@ -125,12 +122,9 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
             pv = phase * v
             return pv + herm_conj(pv)
 
-        params = ['_site0']
+        params = ('_site0',)
         if callable(val):
-            p, defaults, takes_kwargs = get_parameters(val)
-            assert not defaults
-            assert not takes_kwargs
-            params += p[2:]     # cut off both site parameters
+            params += get_parameters(val)[2:] # cut off both site parameters
         _set_signature(f, params + momenta)
         return f
 
@@ -142,12 +136,9 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
             v = val(a, sym.act(elem, b), *args[:mnp]) if callable(val) else val
             return phase * v
 
-        params = ['_site0', '_site1']
+        params = ('_site0', '_site1')
         if callable(val):
-            p, defaults, takes_kwargs = get_parameters(val)
-            assert not defaults
-            assert not takes_kwargs
-            params += p[2:]  # cut off site parameters
+            params += get_parameters(val)[2:] # cut off site parameters
         _set_signature(f, params + momenta)
         return f
 
@@ -180,10 +171,7 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
             if not callable(val):
                 selections.append(())
                 continue
-            val_params, defaults, val_takes_kwargs = get_parameters(val)
-            assert not defaults
-            assert not val_takes_kwargs
-            val_params = val_params[num_sites:]
+            val_params = get_parameters(val)[num_sites:]
             selections.append((*site_params, *val_params))
             for p in val_params:
                 # Skip parameters that exist in previously added functions,
@@ -231,6 +219,7 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
         ret = WrappedBuilder(TranslationalSymmetry(periods.pop(keep)))
         sym = TranslationalSymmetry(*periods)
         momenta.pop(keep)
+    momenta = tuple(momenta)
     mnp = -len(sym.periods)      # Used by the bound functions above.
 
     # Store the names of the momentum parameters and the symmetry of the

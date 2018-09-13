@@ -420,6 +420,20 @@ def test_arg_passing(A):
 
     wf = np.ones(len(fsyst.sites))
 
+    # test missing params
+    op = A(fsyst, onsite=lambda x, a, b: 1)
+    params = dict(a=1)
+    with raises(TypeError) as exc:
+        op(wf, params=params)
+    with raises(TypeError) as exc:
+        op.act(wf, params=params)
+    with raises(TypeError) as exc:
+        op.bind(params=params)
+    if hasattr(op, 'tocoo'):
+        with raises(TypeError) as exc:
+            op.tocoo(params=params)
+
+
     op = A(fsyst)
     canonical_args = (1, 2)
     params = dict(a=1, b=2)

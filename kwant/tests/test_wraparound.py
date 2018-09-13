@@ -132,26 +132,26 @@ def test_signatures():
 
     ## testing
 
-    momenta = ['k_x', 'k_y']
+    momenta = ('k_x', 'k_y')
 
     onsites = [
         (lat(-2, 0), momenta),
-        (lat(-1, 0), ['E1', 't1'] + momenta),
-        (lat(0, 0), ['E2', 't2'] + momenta),
+        (lat(-1, 0), ('E1', 't1') + momenta),
+        (lat(0, 0), ('E2', 't2') + momenta),
     ]
 
     for site, params_should_be in onsites:
-        params, _, takes_kwargs = get_parameters(wrapped_syst[site])
+        params = get_parameters(wrapped_syst[site])
         assert params[1:] == params_should_be
 
     hoppings = [
         ((lat(-2, 0), lat(-1, 0)), momenta),
-        ((lat(-2, 0), lat(0, 0)), ['t3'] + momenta),
-        ((lat(-1, 0), lat(0, 0)), ['t4', 't5'] + momenta),
+        ((lat(-2, 0), lat(0, 0)), ('t3',) + momenta),
+        ((lat(-1, 0), lat(0, 0)), ('t4', 't5') + momenta),
     ]
 
     for hopping, params_should_be in hoppings:
-        params, _, takes_kwargs = get_parameters(wrapped_syst[hopping])
+        params = get_parameters(wrapped_syst[hopping])
         assert params[2:] == params_should_be
 
 
@@ -174,8 +174,8 @@ def test_symmetry():
             new = getattr(wrapped, attr)
             orig = getattr(syst, attr)
             if callable(orig):
-                params, _, _ = get_parameters(new)
-                assert params[1:] == ['k_x', 'k_y']
+                params = get_parameters(new)
+                assert params[1:] == ('k_x', 'k_y')
                 assert np.all(orig(None) == new(None, None, None))
             else:
                 assert np.all(orig == new)
