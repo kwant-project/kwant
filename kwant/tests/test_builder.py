@@ -1259,42 +1259,31 @@ def test_argument_passing():
 
 def test_parameter_substitution():
 
-    Subs = builder.ParameterSubstitution
+    subs = builder._substitute_params
 
     def f(x, y):
         return (('x', x), ('y', y))
 
     # 'f' already has a parameter 'y'
-    assert raises(ValueError, Subs, f, dict(x='y'))
-    # 'f' takes no parameter 'a'
-    assert raises(ValueError, Subs, f, dict(a='x'))
+    assert raises(ValueError, subs, f, dict(x='y'))
 
-    # reverse argument order
-    g = Subs(f, dict(x='y', y='x'))
+    # Swap argument names.
+    g = subs(f, dict(x='y', y='x'))
     assert g(1, 2) == f(1, 2)
-    assert g(y=1, x=2) == f(x=1, y=2)
 
-    # reverse again
-    h = Subs(g, dict(x='y', y='x'))
+    # Swap again.
+    h = subs(g, dict(x='y', y='x'))
     assert h(1, 2) == f(1, 2)
-    assert h(x=1, y=2) == f(x=1, y=2)
     # don't nest wrappers inside each other
-    assert h.function is f
+    assert h.func is f
 
-    # composing maps
-    g = Subs(f, dict(x='a'))
-    h = Subs(g, dict(a='b'))
-    assert h(b=1, y=2) == f(x=1, y=2)
-
-    # different names
-    g = Subs(f, dict(x='a', y='b'))
+    # Try different names.
+    g = subs(f, dict(x='a', y='b'))
     assert g(1, 2) == f(1, 2)
-    assert g(a=1, b=2) == f(x=1, y=2)
-    assert g(1, b=2) == f(1, y=2)
 
-    # Can be used in sets/dicts
-    g = Subs(f, dict(x='a'))
-    h = Subs(f, dict(x='a'))
+    # Can substitutions be used in sets/dicts?
+    g = subs(f, dict(x='a'))
+    h = subs(f, dict(x='a'))
     assert len(set([f, g, h])) == 2
 
 
@@ -1322,8 +1311,6 @@ def test_subs():
         return syst.finalized().hamiltonian_submatrix(params=kwargs)
 
     syst = make_system()
-    # parameter name not an identifier
-    raises(ValueError, syst.subs, a='not-an-identifier?')
     # substituting a paramter that doesn't exist produces a warning
     warns(RuntimeWarning, syst.subs, fakeparam='yes')
     # name clash in value functions
