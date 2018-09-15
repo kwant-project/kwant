@@ -294,7 +294,7 @@ def check_onsite(fsyst, sites, subset=False, check_values=True):
         site = fsyst.sites[node].tag
         freq[site] = freq.get(site, 0) + 1
         if check_values and site in sites:
-            assert fsyst.onsite_hamiltonians[node] is sites[site]
+            assert fsyst.onsites[node][0] is sites[site]
     if not subset:
         # Check that all sites of `fsyst` are in `sites`.
         for site in freq.keys():
@@ -310,7 +310,7 @@ def check_hoppings(fsyst, hops):
         tail, head = edge
         tail = fsyst.sites[tail].tag
         head = fsyst.sites[head].tag
-        value = fsyst.hoppings[edge_id]
+        value = fsyst.hoppings[edge_id][0]
         if value is builder.Other:
             assert (head, tail) in hops
         else:
@@ -1207,6 +1207,10 @@ def test_argument_passing():
         syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
     with raises(TypeError):
         inf_syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
+
+    # test that missing any parameters raises TypeError
+    with raises(TypeError):
+        syst.hamiltonian(0, 0, params=dict(fake=10))
 
     # test that passing parameters without default values works, and that
     # passing parameters with default values fails

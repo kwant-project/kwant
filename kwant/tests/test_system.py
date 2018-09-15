@@ -27,7 +27,7 @@ def test_hamiltonian_submatrix():
     mat = syst2.hamiltonian_submatrix()
     assert mat.shape == (3, 3)
     # Sorting is required due to unknown compression order of builder.
-    perm = np.argsort(syst2.onsite_hamiltonians)
+    perm = np.argsort([os[0] for os in syst2.onsites])
     mat_should_be = np.array([[0, 1j, 0], [-1j, 0.5, 2j], [0, -2j, 1]])
 
     mat = mat[perm, :]
