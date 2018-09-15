@@ -1340,7 +1340,7 @@ class Builder:
         self.update(other)
         return self
 
-    def subs(self, **subs):
+    def substitute(self, **subs):
         """Return a copy of this Builder with modified parameter names.
         """
         # Get value *functions* only
