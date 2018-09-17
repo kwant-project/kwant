@@ -1343,6 +1343,12 @@ class Builder:
     def substitute(self, **subs):
         """Return a copy of this Builder with modified parameter names.
         """
+        # Construct the a copy of the system with new value functions.
+        if self.leads:
+            raise ValueError("For simplicity, 'subsitute' is limited "
+                             "to builders without leads. Use 'substitute' "
+                             "before attaching leads to avoid this error.")
+
         # Get value *functions* only
         onsites = list(set(
             onsite for _, onsite in self.site_value_pairs()
@@ -1371,11 +1377,6 @@ class Builder:
         value_map = {value: _substitute_params(value, subs)
                      for value in chain(onsites, hoppings)}
 
-        # Construct the a copy of the system with new value functions.
-        if self.leads:
-            raise ValueError("Using 'subs' on a Builder with attached leads "
-                             "is ambiguous. Consider using 'subs' before "
-                             "attaching leads.")
         result = copy.copy(self)
         # if we don't assign a new list we will inadvertantly add leads to
         # the reversed system if we add leads to *this* system
