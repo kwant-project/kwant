@@ -1346,6 +1346,14 @@ class Builder:
             if start and not isinstance(start[0], Site):
                 start = [template.closest(start)]
 
+        if any(s not in template for s in start):
+            warnings.warn("fill(): Some of the starting sites are "
+                          "not in the template builder.",
+                          RuntimeWarning, stacklevel=2)
+        start = [s for s in start if s in template]
+        if not start:
+            return []
+
         try:
             # "Active" are sites (mapped to the target's FD) that have been
             # verified to lie inside the shape, have been added to the target
