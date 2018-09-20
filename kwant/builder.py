@@ -1436,9 +1436,9 @@ class Builder:
             self.H = {}
             # Re-raise the exception with an additional message.
             msg = ("All sites of this builder have been deleted because an "
-                   "exception\noccurred during the execution of fill():")
-            e.args = ('\n'.join((msg,) + e.args),)
-            raise
+                   "exception\noccurred during the execution of fill(): "
+                   "see above.")
+            raise RuntimeError(msg) from e
 
         return done
 
