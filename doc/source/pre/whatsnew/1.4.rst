@@ -48,6 +48,35 @@ the scattering region and leads, one could do the following::
 
    kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
 
+Value functions no longer accept default values for parameters
+--------------------------------------------------------------
+Using value functions with default values for parameters can be
+problematic, especially when re-using value functions between simulations.
+When parameters have default values it is easy to forget that such a
+parameter exists at all, because it is not necessary to provide them explicitly
+to functions that use the Kwant system. This means that other value functions
+might be introduced that also depend on the same parameter,
+but in an inconsistent way (e.g. a parameter 'phi' that is a superconducting
+phase in one value function, but a peierls phase in another). This leads
+to bugs that are confusing and hard to track down.
+
+Concretely, the above means that the following no longer works::
+
+  syst = kwant.Builder()
+
+  # Parameter 't' has a default value of 1
+  def onsite(site, V, t=1):
+    return V = 2 * t
+
+  def hopping(site_a, site_b, t=1):
+    return -t
+
+  syst[...] = onsite
+  syst[...] = hopping
+
+  # Raises ValueError
+  syst = syst.finalized()
+
 Interpolated density plots
 --------------------------
 A new function `~kwant.plotter.density` has been added that can be used to
