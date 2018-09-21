@@ -13,7 +13,6 @@ import inspect
 import warnings
 import importlib
 from contextlib import contextmanager
-from collections import namedtuple
 
 __all__ = ['KwantDeprecationWarning', 'UserCodeError']
 
@@ -94,35 +93,41 @@ def reraise_warnings(level=3):
         warnings.warn(warning.message, stacklevel=level)
 
 
-_Params = namedtuple('_Params', ('required', 'defaults', 'takes_kwargs'))
-
-
 def get_parameters(func):
-    """Get the names of the parameters to 'func' and whether it takes kwargs.
+    """Return the names of parameters of a function.
+
+    It is made sure that the function can be called as func(*args) with
+    'args' corresponding to the returned parameter names.
 
     Returns
     -------
-    required : list
-        Names of positional, and keyword only parameters that do not have a
-        default value and that appear in the signature of 'func'.
-    defaults : list
-        Names of parameters that have a default value.
-    takes_kwargs : bool
-        True if 'func' takes '**kwargs'.
+    param_names : list
+        Names of positional parameters that appear in the signature of 'func'.
     """
-    sig = inspect.signature(func)
-    pars = sig.parameters
+    def error(msg):
+        fname = inspect.getsourcefile(func)
+        try:
+            line = inspect.getsourcelines(func)[1]
+        except OSError:
+            line = '<unknown line>'
+        raise ValueError("{}:\nFile {}, line {}, in {}".format(
+            msg, repr(fname), line, func.__name__))
 
-    # Signature.parameters is an *ordered mapping*
-    required_params = [k for (k, v) in pars.items()
-                       if v.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                                     inspect.Parameter.KEYWORD_ONLY)
-                       and v.default is inspect._empty]
-    default_params = [k for (k, v) in pars.items()
-                      if v.default is not inspect._empty]
-    takes_kwargs = any(i.kind is inspect.Parameter.VAR_KEYWORD
-                       for i in pars.values())
-    return _Params(required_params, default_params, takes_kwargs)
+    P = inspect.Parameter
+    pars = inspect.signature(func).parameters # an *ordered mapping*
+    names = []
+    for k, v in pars.items():
+        if v.kind in (P.POSITIONAL_ONLY, P.POSITIONAL_OR_KEYWORD):
+            if v.default is P.empty:
+                names.append(k)
+            else:
+                error("Arguments of value functions "
+                      "must not have default values")
+        elif v.kind is P.KEYWORD_ONLY:
+            error("Keyword-only arguments are not allowed in value functions")
+        elif v.kind in (P.VAR_POSITIONAL, P.VAR_KEYWORD):
+            error("Value functions must not take *args or **kwargs")
+    return tuple(names)
 
 
 class lazy_import:

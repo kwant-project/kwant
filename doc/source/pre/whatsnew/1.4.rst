@@ -24,29 +24,58 @@ would be washed out by the presence of the peak. Now `~kwant.plotter.map`
 employs a heuristic for setting the colorscale when there are outliers,
 and will emit a warning when this is detected.
 
-System parameter names can be modified
---------------------------------------
-After the introduction of ``Builder.fill`` it has become common to construct
+System parameter substitution
+-----------------------------
+After the introduction of ``Builder.fill`` it has become possible to construct
 Kwant systems by first creating a "model" system with high symmetry and then
-filling a lower symmetry system with this model. Often, however, you want
-to use different parameter values in different parts of your system. In
+filling a lower symmetry system with this model. Often, however, one wants
+to use different parameter values in different parts of a system. In
 previous versions of Kwant this was difficult to achieve.
 
-Builders now have a method ``subs`` that makes it easy to substitute different
-names for parameters. For example if you have a Builder ``model`` that has
-a parameter ``V``, and you wish to have different values for ``V`` in your
-scattering region and leads you could do the following::
+Builders now have a method ``substitute`` that makes it easy to substitute
+different names for parameters. For example if a builder ``model``
+has a parameter ``V``, and one wishes to have different values for ``V`` in
+the scattering region and leads, one could do the following::
 
    syst = kwant.Builder()
-   syst.fill(model.subs(V='V_dot', ...))
+   syst.fill(model.substitute(V='V_dot', ...))
 
    lead = kwant.Builder()
-   lead.fill(model.subs(V='V_lead'), ...)
+   lead.fill(model.substitute(V='V_lead'), ...)
 
    syst.attach_lead(lead)
    fsyst = syst.finalized()
 
    kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
+
+Value functions no longer accept default values for parameters
+--------------------------------------------------------------
+Using value functions with default values for parameters can be
+problematic, especially when re-using value functions between simulations.
+When parameters have default values it is easy to forget that such a
+parameter exists at all, because it is not necessary to provide them explicitly
+to functions that use the Kwant system. This means that other value functions
+might be introduced that also depend on the same parameter,
+but in an inconsistent way (e.g. a parameter 'phi' that is a superconducting
+phase in one value function, but a peierls phase in another). This leads
+to bugs that are confusing and hard to track down.
+
+Concretely, the above means that the following no longer works::
+
+  syst = kwant.Builder()
+
+  # Parameter 't' has a default value of 1
+  def onsite(site, V, t=1):
+    return V = 2 * t
+
+  def hopping(site_a, site_b, t=1):
+    return -t
+
+  syst[...] = onsite
+  syst[...] = hopping
+
+  # Raises ValueError
+  syst = syst.finalized()
 
 Interpolated density plots
 --------------------------

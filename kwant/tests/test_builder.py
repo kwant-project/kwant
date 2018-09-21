@@ -294,7 +294,7 @@ def check_onsite(fsyst, sites, subset=False, check_values=True):
         site = fsyst.sites[node].tag
         freq[site] = freq.get(site, 0) + 1
         if check_values and site in sites:
-            assert fsyst.onsite_hamiltonians[node] is sites[site]
+            assert fsyst.onsites[node][0] is sites[site]
     if not subset:
         # Check that all sites of `fsyst` are in `sites`.
         for site in freq.keys():
@@ -310,7 +310,7 @@ def check_hoppings(fsyst, hops):
         tail, head = edge
         tail = fsyst.sites[tail].tag
         head = fsyst.sites[head].tag
-        value = fsyst.hoppings[edge_id]
+        value = fsyst.hoppings[edge_id][0]
         if value is builder.Other:
             assert (head, tail) in hops
         else:
@@ -1208,12 +1208,16 @@ def test_argument_passing():
     with raises(TypeError):
         inf_syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
 
+    # test that missing any parameters raises TypeError
+    with raises(TypeError):
+        syst.hamiltonian(0, 0, params=dict(fake=10))
+
     # test that passing parameters without default values works, and that
     # passing parameters with default values fails
-    def onsite(site, p1, p2=1):
+    def onsite(site, p1, p2):
         return p1 + p2
 
-    def hopping(site, site2, p1, p2=2):
+    def hopping(site, site2, p1, p2):
         return p1 - p2
 
     fill_syst = ft.partial(gen_fill_syst, onsite, hopping)
@@ -1231,12 +1235,7 @@ def test_argument_passing():
 
     for test in tests:
         np.testing.assert_array_equal(
-            test(args=(1,)), test(params=dict(p1=1)))
-
-    # providing value for parameter with default value -- error
-    for test in tests:
-        with raises(ValueError):
-            test(params=dict(p1=1, p2=2))
+            test(args=(1, 2)), test(params=dict(p1=1, p2=2)))
 
     # Some common, some different args for value functions
     def onsite2(site, a, b):
@@ -1264,42 +1263,31 @@ def test_argument_passing():
 
 def test_parameter_substitution():
 
-    Subs = builder.ParameterSubstitution
+    subs = builder._substitute_params
 
     def f(x, y):
         return (('x', x), ('y', y))
 
     # 'f' already has a parameter 'y'
-    assert raises(ValueError, Subs, f, dict(x='y'))
-    # 'f' takes no parameter 'a'
-    assert raises(ValueError, Subs, f, dict(a='x'))
+    assert raises(ValueError, subs, f, dict(x='y'))
 
-    # reverse argument order
-    g = Subs(f, dict(x='y', y='x'))
+    # Swap argument names.
+    g = subs(f, dict(x='y', y='x'))
     assert g(1, 2) == f(1, 2)
-    assert g(y=1, x=2) == f(x=1, y=2)
 
-    # reverse again
-    h = Subs(g, dict(x='y', y='x'))
+    # Swap again.
+    h = subs(g, dict(x='y', y='x'))
     assert h(1, 2) == f(1, 2)
-    assert h(x=1, y=2) == f(x=1, y=2)
     # don't nest wrappers inside each other
-    assert h.function is f
+    assert h.func is f
 
-    # composing maps
-    g = Subs(f, dict(x='a'))
-    h = Subs(g, dict(a='b'))
-    assert h(b=1, y=2) == f(x=1, y=2)
-
-    # different names
-    g = Subs(f, dict(x='a', y='b'))
+    # Try different names.
+    g = subs(f, dict(x='a', y='b'))
     assert g(1, 2) == f(1, 2)
-    assert g(a=1, b=2) == f(x=1, y=2)
-    assert g(1, b=2) == f(1, y=2)
 
-    # Can be used in sets/dicts
-    g = Subs(f, dict(x='a'))
-    h = Subs(f, dict(x='a'))
+    # Can substitutions be used in sets/dicts?
+    g = subs(f, dict(x='a'))
+    h = subs(f, dict(x='a'))
     assert len(set([f, g, h])) == 2
 
 
@@ -1327,33 +1315,31 @@ def test_subs():
         return syst.finalized().hamiltonian_submatrix(params=kwargs)
 
     syst = make_system()
-    # parameter name not an identifier
-    raises(ValueError, syst.subs, a='not-an-identifier?')
     # substituting a paramter that doesn't exist produces a warning
-    warns(RuntimeWarning, syst.subs, fakeparam='yes')
+    warns(RuntimeWarning, syst.substitute, fakeparam='yes')
     # name clash in value functions
-    raises(ValueError, syst.subs, b='a')
-    raises(ValueError, syst.subs, b='c')
-    raises(ValueError, syst.subs, a='site')
-    raises(ValueError, syst.subs, c='sitea')
-    # cannot call 'subs' on systems with attached leads, because
+    raises(ValueError, syst.substitute, b='a')
+    raises(ValueError, syst.substitute, b='c')
+    raises(ValueError, syst.substitute, a='site')
+    raises(ValueError, syst.substitute, c='sitea')
+    # cannot call 'substitute' on systems with attached leads, because
     # it is not clear whether the substitutions should propagate
     # into the leads too.
     syst = make_system()
     lead = make_system(kwant.TranslationalSymmetry((-1,)), n=1)
     syst.attach_lead(lead)
-    raises(ValueError, syst.subs, a='d')
+    raises(ValueError, syst.substitute, a='d')
 
     # test basic substitutions
     syst = make_system()
     expected = hamiltonian(syst, a=1, b=2, c=3)
     # 1 level of substitutions
-    sub_syst = syst.subs(a='d', b='e')
+    sub_syst = syst.substitute(a='d', b='e')
     assert np.allclose(hamiltonian(sub_syst, d=1, e=2, c=3), expected)
     # 2 levels of substitution
-    sub_sub_syst = sub_syst.subs(d='g', c='h')
+    sub_sub_syst = sub_syst.substitute(d='g', c='h')
     assert np.allclose(hamiltonian(sub_sub_syst, g=1, e=2, h=3), expected)
     # very confusing but technically valid. 'a' does not appear in 'hopping',
     # so the signature of 'onsite' is valid.
-    sub_syst = syst.subs(a='sitea')
+    sub_syst = syst.substitute(a='sitea')
     assert np.allclose(hamiltonian(sub_syst, sitea=1, b=2, c=3), expected)

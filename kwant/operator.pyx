@@ -241,8 +241,8 @@ class _FunctionalOnsite:
         self.onsite = onsite
         self.sites = sites
 
-    def __call__(self, site_id, *args, **kwargs):
-        return self.onsite(self.sites[site_id], *args, **kwargs)
+    def __call__(self, site_id, *args):
+        return self.onsite(self.sites[site_id], *args)
 
 
 class _DictOnsite(_FunctionalOnsite):
@@ -257,13 +257,11 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
     If `onsite` is a function or a mapping (dictionary) then a function
     is returned.
     """
-    parameter_info =  ((), (), False)
+    param_names = ()
 
     if callable(onsite):
         # make 'onsite' compatible with hamiltonian value functions
-        required, defaults, takes_kwargs = get_parameters(onsite)
-        required = required[1:]  # skip 'site' parameter
-        parameter_info = (tuple(required), defaults, takes_kwargs)
+        param_names = get_parameters(onsite)[1:]
         try:
             _onsite = _FunctionalOnsite(onsite, syst.sites)
         except AttributeError:
@@ -301,7 +299,7 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
                    'different numbers of orbitals on different sites')
             raise ValueError(msg)
 
-    return _onsite, parameter_info
+    return _onsite, param_names
 
 
 cdef class BlockSparseMatrix:
@@ -434,7 +432,7 @@ cdef class _LocalOperator:
     """
 
     cdef public int check_hermiticity, sum
-    cdef public object syst, onsite, _onsite_params_info
+    cdef public object syst, onsite, _onsite_param_names
     cdef public gint[:, :]  where, _site_ranges
     cdef public BlockSparseMatrix _bound_onsite, _bound_hamiltonian
 
@@ -448,8 +446,8 @@ cdef class _LocalOperator:
                              'the site families (lattices).')
 
         self.syst = syst
-        self.onsite, self._onsite_params_info = \
-            _normalize_onsite(syst, onsite, check_hermiticity)
+        self.onsite, self._onsite_param_names = _normalize_onsite(
+            syst, onsite, check_hermiticity)
         self.check_hermiticity = check_hermiticity
         self.sum = sum
         self._site_ranges = np.asarray(syst.site_ranges, dtype=gint_dtype)
@@ -598,7 +596,7 @@ cdef class _LocalOperator:
         q = cls.__new__(cls)
         q.syst = self.syst
         q.onsite = self.onsite
-        q._onsite_params_info = self._onsite_params_info
+        q._onsite_param_names = self._onsite_param_names
         q.where = self.where
         q.sum = self.sum
         q._site_ranges = self._site_ranges
@@ -638,23 +636,22 @@ cdef class _LocalOperator:
         """Evaluate the onsite matrices on all elements of `where`"""
         assert callable(self.onsite)
         assert not (args and params)
-        params = params or {}
         matrix = ta.matrix
         onsite = self.onsite
         check_hermiticity = self.check_hermiticity
 
-        required, defaults, takes_kw = self._onsite_params_info
-        invalid_params = set(params).intersection(set(defaults))
-        if invalid_params:
-            raise ValueError("Parameters {} have default values "
-                             "and may not be set with 'params'"
-                             .format(', '.join(invalid_params)))
-
-        if params and not takes_kw:
-            params = {pn: params[pn] for pn in required}
+        if params:
+            try:
+                args = tuple(params[pn] for pn in self._onsite_param_names)
+            except KeyError:
+                missing = [p for p in self._onsite_param_names
+                           if p not in params]
+                msg = ('Operator is missing required arguments: ',
+                       ', '.join(map('"{}"'.format, missing)))
+                raise TypeError(''.join(msg))
 
         def get_onsite(a, a_norbs, b, b_norbs):
-            mat = matrix(onsite(a, *args, **params), complex)
+            mat = matrix(onsite(a, *args), complex)
             _check_onsite(mat, a_norbs, check_hermiticity)
             return mat
 
@@ -679,14 +676,14 @@ cdef class _LocalOperator:
     def __getstate__(self):
         return (
             (self.check_hermiticity, self.sum),
-            (self.syst, self.onsite, self._onsite_params_info),
+            (self.syst, self.onsite, self._onsite_param_names),
             tuple(map(np.asarray, (self.where, self._site_ranges))),
             (self._bound_onsite, self._bound_hamiltonian),
         )
 
     def __setstate__(self, state):
         ((self.check_hermiticity, self.sum),
-         (self.syst, self.onsite, self._onsite_params_info),
+         (self.syst, self.onsite, self._onsite_param_names),
          (self.where, self._site_ranges),
          (self._bound_onsite, self._bound_hamiltonian),
         ) = state

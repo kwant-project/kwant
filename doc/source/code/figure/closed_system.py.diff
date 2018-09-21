@@ -1,4 +1,4 @@
-@@ -1,144 +1,162 @@
+@@ -1,144 +1,161 @@
  # Tutorial 2.4.2. Closed systems
  # ==============================
  #
@@ -41,7 +41,7 @@
          rsq = x ** 2 + y ** 2
          return rsq < r ** 2
  
-     def hopx(site1, site2, B=0):
+     def hopx(site1, site2, B):
          # The magnetic field is controlled by the parameter B
          y = site1.pos[1]
          return -t * exp(-1j * B * y)
