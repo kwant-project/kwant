@@ -684,7 +684,7 @@ def test_fill():
         assert (set(clone.hopping_value_pairs())
                 == set(orig.hopping_value_pairs()))
 
-    ## Test for warning when "start" is out.
+    ## Test for warning when "start" is outside the filling shape.
     target = builder.Builder()
     for start in [(-101, 0), (101, 0)]:
         with warns(RuntimeWarning):
@@ -732,7 +732,6 @@ def test_fill():
     assert sorted(target.sites()) == sorted(should_be_syst.sites())
     assert sorted(target.hoppings()) == sorted(should_be_syst.hoppings())
 
-
     ## test multiplying unit cell size in 2D
     template_2d = builder.Builder(sym_xy)
     template_2d[g(0, 0)] = None
@@ -751,7 +750,6 @@ def test_fill():
 
     assert sorted(target.sites()) == sorted(should_be_syst.sites())
     assert sorted(target.hoppings()) == sorted(should_be_syst.hoppings())
-
 
     ## test filling 0D builder with 2D builder
     def square_shape(site):
@@ -789,6 +787,22 @@ def test_fill():
     assert target[lat(-1)] == template[lat(0)]
     assert len(new_sites) == 1
     assert to_target_fd(new_sites[0]) == to_target_fd(lat(-1))
+
+    # Test for warning with an empty template
+    template = builder.Builder(kwant.TranslationalSymmetry((-1,)))
+    target = builder.Builder()
+    with warns(RuntimeWarning):
+        target.fill(template, lambda x: True, lat(0))
+
+    # Test for warning when one of the starting sites is outside the template
+    lat = kwant.lattice.square()
+    template = builder.Builder(kwant.TranslationalSymmetry((-1, 0)))
+    template[lat(0, 0)] = None
+    template[lat.neighbors()] = None
+    target = builder.Builder()
+    with warns(RuntimeWarning):
+        target.fill(template, lambda x: -1 < x.pos[0] < 1,
+                    [lat(0, 0), lat(0, 1)])
 
 
 def test_fill_sticky():
