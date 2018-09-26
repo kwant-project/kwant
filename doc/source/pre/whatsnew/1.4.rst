@@ -6,48 +6,6 @@ See also the `full list of changes up to the most recent bugfix
 release of the 1.4 series
 <https://gitlab.kwant-project.org/kwant/kwant/compare/v1.4.0...latest-1.4>`_.
 
-Configurable maximum velocity in stream plots
----------------------------------------------
-The function `~kwant.plotter.streamplot` has got a new option ``vmax``.  Note
-that this option is not available in `~kwant.plotter.current`.  In order to use
-it, one has to call ``streamplot`` directly as shown in the docstring of
-``current``.
-
-Improved heuristic for colorscale limits in `kwant.plotter.map`
----------------------------------------------------------------
-Previously `~kwant.plotter.map` would set the limits for the color scale
-to the extrema of the data being plotted when ``vmin`` and ``vmax`` were
-not provided. This is the behaviour of ``matplotlib.imshow``. When the data
-to be plotted has very sharp and high peaks this would mean that most of the
-data would appear near the bottom of the color scale, and all of the features
-would be washed out by the presence of the peak. Now `~kwant.plotter.map`
-employs a heuristic for setting the colorscale when there are outliers,
-and will emit a warning when this is detected.
-
-System parameter substitution
------------------------------
-After the introduction of ``Builder.fill`` it has become possible to construct
-Kwant systems by first creating a "model" system with high symmetry and then
-filling a lower symmetry system with this model. Often, however, one wants
-to use different parameter values in different parts of a system. In
-previous versions of Kwant this was difficult to achieve.
-
-Builders now have a method ``substitute`` that makes it easy to substitute
-different names for parameters. For example if a builder ``model``
-has a parameter ``V``, and one wishes to have different values for ``V`` in
-the scattering region and leads, one could do the following::
-
-   syst = kwant.Builder()
-   syst.fill(model.substitute(V='V_dot', ...))
-
-   lead = kwant.Builder()
-   lead.fill(model.substitute(V='V_lead'), ...)
-
-   syst.attach_lead(lead)
-   fsyst = syst.finalized()
-
-   kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
-
 Value functions no longer accept default values for parameters
 --------------------------------------------------------------
 Using value functions with default values for parameters can be
@@ -77,6 +35,30 @@ Concretely, the above means that the following no longer works::
   # Raises ValueError
   syst = syst.finalized()
 
+System parameter substitution
+-----------------------------
+After the introduction of ``Builder.fill`` it has become possible to construct
+Kwant systems by first creating a "model" system with high symmetry and then
+filling a lower symmetry system with this model. Often, however, one wants
+to use different parameter values in different parts of a system. In
+previous versions of Kwant this was difficult to achieve.
+
+Builders now have a method ``substitute`` that makes it easy to substitute
+different names for parameters. For example if a builder ``model``
+has a parameter ``V``, and one wishes to have different values for ``V`` in
+the scattering region and leads, one could do the following::
+
+   syst = kwant.Builder()
+   syst.fill(model.substitute(V='V_dot', ...))
+
+   lead = kwant.Builder()
+   lead.fill(model.substitute(V='V_lead'), ...)
+
+   syst.attach_lead(lead)
+   fsyst = syst.finalized()
+
+   kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
+
 Interpolated density plots
 --------------------------
 A new function `~kwant.plotter.density` has been added that can be used to
@@ -85,6 +67,13 @@ the "discrete" density (defined over the system sites) with a "bump" function
 in realspace. The output of `~kwant.plotter.density` can be more informative
 that `~kwant.plotter.map` when plotting systems with many sites, where it is
 not important to see the individual contribution from each site.
+
+Configurable maximum velocity in stream plots
+---------------------------------------------
+The function `~kwant.plotter.streamplot` has got a new option ``vmax``.  Note
+that this option is not available in `~kwant.plotter.current`.  In order to use
+it, one has to call ``streamplot`` directly as shown in the docstring of
+``current``.
 
 kwant.continuum.discretize can be used with rectangular lattices
 ----------------------------------------------------------------
@@ -99,3 +88,14 @@ lattices to the discretizer::
 
 This is useful when you need a finer discretization step in some spatial
 directions, and a coarser one in others.
+
+Improved heuristic for colorscale limits in `kwant.plotter.map`
+---------------------------------------------------------------
+Previously `~kwant.plotter.map` would set the limits for the color scale
+to the extrema of the data being plotted when ``vmin`` and ``vmax`` were
+not provided. This is the behaviour of ``matplotlib.imshow``. When the data
+to be plotted has very sharp and high peaks this would mean that most of the
+data would appear near the bottom of the color scale, and all of the features
+would be washed out by the presence of the peak. Now `~kwant.plotter.map`
+employs a heuristic for setting the colorscale when there are outliers,
+and will emit a warning when this is detected.
