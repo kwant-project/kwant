@@ -6,8 +6,8 @@ See also the `full list of changes up to the most recent bugfix
 release of the 1.4 series
 <https://gitlab.kwant-project.org/kwant/kwant/compare/v1.4.0...latest-1.4>`_.
 
-Value functions no longer accept default values for parameters
---------------------------------------------------------------
+Value functions may no longer have default values for parameters
+----------------------------------------------------------------
 Using value functions with default values for parameters can be
 problematic, especially when re-using value functions between simulations.
 When parameters have default values it is easy to forget that such a
@@ -34,6 +34,16 @@ Concretely, the above means that the following no longer works::
 
   # Raises ValueError
   syst = syst.finalized()
+
+As a solution, simply remove the default values and always provide ``t``.
+To deal with many parameters, the following idiom may be useful::
+
+  defaults = dict(a=0, b=1, c=2, d=3)
+  ...
+  smatrix = kwant.smatrix(syst, E, params=dict(defaults, d=4, e=5))
+
+Note that it allows to override defaults as well as to add additional
+parameters.
 
 System parameter substitution
 -----------------------------
