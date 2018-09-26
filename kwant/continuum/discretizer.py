@@ -206,7 +206,7 @@ def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
     if len(coords) == 0:
         raise ValueError("Failed to read any discrete coordinates. This is "
                          "probably due to a lack of momentum operators in "
-                         "your input. You can use the 'coords'"
+                         "your input. You can use the 'coords' "
                          "parameter to provide them.")
 
     onsite_zeros = (0,) * len(coords)
