@@ -23,17 +23,18 @@ from kwant.continuum._common import lambdify
 
 
 com_A, com_B, com_C = sympy.symbols('A B C')
+fA, fB, fC = sympy.symbols('A B C', cls=sympy.Function)
 x_op, y_op, z_op = position_operators
 kx, ky, kz = momentum_operators
 
 
 @pytest.mark.parametrize('input_expr, output_expr', [
-    ('k_x * A(x) * k_x', kx * com_A(x_op) * kx),
-    ('[[k_x * A(x) * k_x]]', sympy.Matrix([kx * com_A(x_op) * kx])),
+    ('k_x * A(x) * k_x', kx * fA(x_op) * kx),
+    ('[[k_x * A(x) * k_x]]', sympy.Matrix([kx * fA(x_op) * kx])),
     ('k_x * sigma_y + k_y * sigma_x', kx * msigma(2) + ky * msigma(1)),
     ('[[k_x*A(x)*k_x, B(x, y)*k_x], [k_x*B(x, y), C*k_y**2]]',
-     sympy.Matrix([[kx*com_A(x_op)*kx, com_B(x_op, y_op)*kx],
-                   [kx*com_B(x_op, y_op), com_C*ky**2]])),
+     sympy.Matrix([[kx*fA(x_op)*kx, fB(x_op, y_op)*kx],
+                   [kx*fB(x_op, y_op), com_C*ky**2]])),
     ('kron(sigma_x, sigma_y)', TensorProduct(msigma(1), msigma(2))),
     ('identity(2)', sympy.eye(2)),
     ('eye(2)', sympy.eye(2)),
@@ -49,7 +50,7 @@ def test_sympify(input_expr, output_expr):
     ('k_x', kx + ky, {'k_x': 'k_x + k_y'}),
     ('x', x_op + y_op, {'x': 'x + y'}),
     ('A', com_A + com_B, {'A': 'A + B'}),
-    ('A', com_A + com_B(x_op), {'A': 'A + B(x)'}),
+    ('A', com_A + fB(x_op), {'A': 'A + B(x)'}),
     ('A', msigma(2), {'A': "[[0, -1j], [1j, 0]]"}),
 ])
 def test_sympify_substitutions(input_expr, output_expr, subs):
@@ -106,7 +107,8 @@ expr2 = non_x*A*non_x + x**2 * A*2 * x + B*non_x/2 + non_x*B/2 + x + A + non_x +
 
 
 def test_monomials():
-    f, g, a, b = sympy.symbols('f g a b')
+    a, b = sympy.symbols('a b')
+    f, g = sympy.symbols('f g', cls=sympy.Function)
 
     assert monomials(expr2, x) == {x**3: 2*A, 1: A, x: 2 + A**(-1) + B, x**2: A}
     assert monomials(expr1, x) == {x**2: A + B, x**3: A}
