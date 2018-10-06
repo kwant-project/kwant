@@ -1340,13 +1340,13 @@ class Builder:
         self.update(other)
         return self
 
-    def substitute(self, **subs):
+    def substituted(self, **subs):
         """Return a copy of this Builder with modified parameter names.
         """
         # Construct the a copy of the system with new value functions.
         if self.leads:
-            raise ValueError("For simplicity, 'subsitute' is limited "
-                             "to builders without leads. Use 'substitute' "
+            raise ValueError("For simplicity, 'subsituted' is limited "
+                             "to builders without leads. Use 'substituted' "
                              "before attaching leads to avoid this error.")
 
         # Get value *functions* only

@@ -1330,30 +1330,30 @@ def test_subs():
 
     syst = make_system()
     # substituting a paramter that doesn't exist produces a warning
-    warns(RuntimeWarning, syst.substitute, fakeparam='yes')
+    warns(RuntimeWarning, syst.substituted, fakeparam='yes')
     # name clash in value functions
-    raises(ValueError, syst.substitute, b='a')
-    raises(ValueError, syst.substitute, b='c')
-    raises(ValueError, syst.substitute, a='site')
-    raises(ValueError, syst.substitute, c='sitea')
-    # cannot call 'substitute' on systems with attached leads, because
+    raises(ValueError, syst.substituted, b='a')
+    raises(ValueError, syst.substituted, b='c')
+    raises(ValueError, syst.substituted, a='site')
+    raises(ValueError, syst.substituted, c='sitea')
+    # cannot call 'substituted' on systems with attached leads, because
     # it is not clear whether the substitutions should propagate
     # into the leads too.
     syst = make_system()
     lead = make_system(kwant.TranslationalSymmetry((-1,)), n=1)
     syst.attach_lead(lead)
-    raises(ValueError, syst.substitute, a='d')
+    raises(ValueError, syst.substituted, a='d')
 
     # test basic substitutions
     syst = make_system()
     expected = hamiltonian(syst, a=1, b=2, c=3)
     # 1 level of substitutions
-    sub_syst = syst.substitute(a='d', b='e')
+    sub_syst = syst.substituted(a='d', b='e')
     assert np.allclose(hamiltonian(sub_syst, d=1, e=2, c=3), expected)
     # 2 levels of substitution
-    sub_sub_syst = sub_syst.substitute(d='g', c='h')
+    sub_sub_syst = sub_syst.substituted(d='g', c='h')
     assert np.allclose(hamiltonian(sub_sub_syst, g=1, e=2, h=3), expected)
     # very confusing but technically valid. 'a' does not appear in 'hopping',
     # so the signature of 'onsite' is valid.
-    sub_syst = syst.substitute(a='sitea')
+    sub_syst = syst.substituted(a='sitea')
     assert np.allclose(hamiltonian(sub_syst, sitea=1, b=2, c=3), expected)

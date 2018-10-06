@@ -53,16 +53,16 @@ filling a lower symmetry system with this model. Often, however, one wants
 to use different parameter values in different parts of a system. In
 previous versions of Kwant this was difficult to achieve.
 
-Builders now have a method ``substitute`` that makes it easy to substitute
+Builders now have a method ``substituted`` that makes it easy to substitute
 different names for parameters. For example if a builder ``model``
 has a parameter ``V``, and one wishes to have different values for ``V`` in
 the scattering region and leads, one could do the following::
 
    syst = kwant.Builder()
-   syst.fill(model.substitute(V='V_dot', ...))
+   syst.fill(model.substituted(V='V_dot', ...))
 
    lead = kwant.Builder()
-   lead.fill(model.substitute(V='V_lead'), ...)
+   lead.fill(model.substituted(V='V_lead'), ...)
 
    syst.attach_lead(lead)
    fsyst = syst.finalized()
