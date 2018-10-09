@@ -38,6 +38,7 @@ except ImportError:
 from kwant import plotter
 
 
+@pytest.mark.skipif(not plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_matplotlib_backend_unset():
     """Simply importing Kwant should not set the matplotlib backend."""
     assert matplotlib_backend_chosen is False
