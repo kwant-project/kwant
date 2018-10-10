@@ -51,6 +51,7 @@ a = sympy.symbols('a')
 wf = _wf
 Psi = wf(x, y, z)
 A, B = sympy.symbols('A B', commutative=False)
+fA, fB = sympy.symbols('A B', cls=sympy.Function)
 
 ns = {'A': A, 'B': B, 'a_x': ax, 'a_y': ay, 'az': az, 'x': x, 'y': y, 'z': z}
 
@@ -65,8 +66,8 @@ def test_reading_coordinates(commutative):
         kx**2 + ky**2 + kz**2         : ['x', 'y', 'z'],
         ky**2 + kz**2                 : ['y', 'z'],
         kz**2                         : ['z'],
-        kx * A(x, y) * kx              : ['x'],
-        kx**2 + kz * B(y)             : ['x', 'z'],
+        kx * fA(x, y) * kx              : ['x'],
+        kx**2 + kz * fB(y)             : ['x', 'z'],
     }
     for inp, out in test.items():
         ham, got = discretize_symbolic(inp)
@@ -81,8 +82,8 @@ def test_reading_coordinates_matrix():
         (sympy.Matrix([kx**2 + ky**2 + kz**2])        , ['x', 'y', 'z']),
         (sympy.Matrix([ky**2 + kz**2])                , ['y', 'z']),
         (sympy.Matrix([kz**2])                        , ['z']),
-        (sympy.Matrix([kx * A(x, y) * kx])            , ['x']),
-        (sympy.Matrix([kx**2 + kz * B(y)])            , ['x', 'z']),
+        (sympy.Matrix([kx * fA(x, y) * kx])            , ['x']),
+        (sympy.Matrix([kx**2 + kz * fB(y)])            , ['x', 'z']),
     ]
     for inp, out in test:
         ham, got = discretize_symbolic(inp)
@@ -121,16 +122,16 @@ def test_simple_derivations(commutative):
         kz**2                   : {(0,): 2/az**2, (1,): -1/az**2},
     }
     non_commutative_test = {
-        kx * A(x, y) * kx       : {(1, ): -A(ax/2 + x, y)/ax**2,
-                                  (0, ): A(-ax/2 + x, y)/ax**2 + A(ax/2 + x, y)/ax**2},
-        kx**2 + kz * B(y)       : {(1, 0): -1/ax**2, (0, 1): -I*B(y)/(2*az),
+        kx * fA(x, y) * kx       : {(1, ): -fA(ax/2 + x, y)/ax**2,
+                                  (0, ): fA(-ax/2 + x, y)/ax**2 + fA(ax/2 + x, y)/ax**2},
+        kx**2 + kz * fB(y)       : {(1, 0): -1/ax**2, (0, 1): -I*fB(y)/(2*az),
                                    (0, 0): 2/ax**2},
-        kx * A(x)               : {(0,): 0, (1,): -I*A(ax + x)/(2*ax)},
-        ky * A(x)               : {(1,): -I*A(x)/(2*ay), (0,): 0},
-        kx * A(x) * B           : {(0,): 0, (1,): -I*A(ax + x)*B/(2*ax)},
+        kx * fA(x)               : {(0,): 0, (1,): -I*fA(ax + x)/(2*ax)},
+        ky * fA(x)               : {(1,): -I*fA(x)/(2*ay), (0,): 0},
+        kx * fA(x) * B           : {(0,): 0, (1,): -I*fA(ax + x)*B/(2*ax)},
         5 * kx                  : {(0,): 0, (1,): -5*I/(2*ax)},
-        kx * (A(x) + B(x))      : {(0,): 0,
-                                   (1,): -I*A(ax + x)/(2*ax) - I*B(ax + x)/(2*ax)},
+        kx * (fA(x) + fB(x))      : {(0,): 0,
+                                   (1,): -I*fA(ax + x)/(2*ax) - I*fB(ax + x)/(2*ax)},
     }
 
     if not commutative:
@@ -170,16 +171,16 @@ def test_simple_derivations_matrix():
                                    (1, 0): -1/ay**2},
         kz**2                   : {(0,): 2/az**2, (1,): -1/az**2},
 
-        kx * A(x, y) * kx       : {(1, ): -A(ax/2 + x, y)/ax**2,
-                                  (0, ): A(-ax/2 + x, y)/ax**2 + A(ax/2 + x, y)/ax**2},
-        kx**2 + kz * B(y)       : {(1, 0): -1/ax**2, (0, 1): -I*B(y)/(2*az),
+        kx * fA(x, y) * kx       : {(1, ): -fA(ax/2 + x, y)/ax**2,
+                                  (0, ): fA(-ax/2 + x, y)/ax**2 + fA(ax/2 + x, y)/ax**2},
+        kx**2 + kz * fB(y)       : {(1, 0): -1/ax**2, (0, 1): -I*fB(y)/(2*az),
                                    (0, 0): 2/ax**2},
-        kx * A(x)               : {(0,): 0, (1,): -I*A(ax + x)/(2*ax)},
-        ky * A(x)               : {(1,): -I*A(x)/(2*ay), (0,): 0},
-        kx * A(x) * B           : {(0,): 0, (1,): -I*A(ax + x)*B/(2*ax)},
+        kx * fA(x)               : {(0,): 0, (1,): -I*fA(ax + x)/(2*ax)},
+        ky * fA(x)               : {(1,): -I*fA(x)/(2*ay), (0,): 0},
+        kx * fA(x) * B           : {(0,): 0, (1,): -I*fA(ax + x)*B/(2*ax)},
         5 * kx                  : {(0,): 0, (1,): -5*I/(2*ax)},
-        kx * (A(x) + B(x))      : {(0,): 0,
-                                   (1,): -I*A(ax + x)/(2*ax) - I*B(ax + x)/(2*ax)},
+        kx * (fA(x) + fB(x))      : {(0,): 0,
+                                   (1,): -I*fA(ax + x)/(2*ax) - I*fB(ax + x)/(2*ax)},
    }
 
     new_test = []
@@ -296,10 +297,10 @@ def test_different_discrete_coordinates():
 
 
 def test_non_expended_input():
-    symbolic, coords = discretize_symbolic(kx * (kx + A(x)))
+    symbolic, coords = discretize_symbolic(kx * (kx + fA(x)))
     desired = {
         (0,): 2/ax**2,
-        (1,): -I*A(ax + x)/(2*ax) - 1/ax**2
+        (1,): -I*fA(ax + x)/(2*ax) - 1/ax**2
     }
     assert symbolic == desired
 
@@ -308,8 +309,8 @@ def test_matrix_with_zeros():
     Matrix = sympy.Matrix
     symbolic, _ = discretize_symbolic("[[k_x*A(x)*k_x, 0], [0, k_x*A(x)*k_x]]")
     output = {
-        (0,):  Matrix([[A(-ax/2 + x)/ax**2 + A(ax/2 + x)/ax**2, 0], [0, A(-ax/2 + x)/ax**2 + A(ax/2 + x)/ax**2]]),
-        (1,):  Matrix([[-A(ax/2 + x)/ax**2, 0], [0, -A(ax/2 + x)/ax**2]]),
+        (0,):  Matrix([[fA(-ax/2 + x)/ax**2 + fA(ax/2 + x)/ax**2, 0], [0, fA(-ax/2 + x)/ax**2 + fA(ax/2 + x)/ax**2]]),
+        (1,):  Matrix([[-fA(ax/2 + x)/ax**2, 0], [0, -fA(ax/2 + x)/ax**2]]),
         }
     assert symbolic == output
 
@@ -354,20 +355,26 @@ def test_numeric_functions_not_discrete_coords():
     assert onsite(None, k_y=2, y=1) == 2 + 1
 
 
-def test_numeric_functions_with_pi():
-    # Two cases because once it is casted
-    # to complex, one there is a function created
-
-    builder = discretize('A + pi', 'x')
+@pytest.mark.parametrize('ham, val, params', [
+    ("pi", np.pi, {}),
+    ("A + pi", 1 + np.pi, {"A": 1}),
+    ("A + B(pi)", 1 + np.pi, {"A": 1, "B": lambda x: x}),
+    ("A + I", 1 + 1j, {"A": 1}),
+    ("A + 1j", 1 + 1j, {"A": 1}),
+    ("A + B(I)", 1 + 1j, {"A": 1, "B": lambda x: x}),
+    ("A + B(1j)", 1 + 1j, {"A": 1, "B": lambda x: x}),
+    ("exp(1j * pi)", np.exp(1j*np.pi), {"exp": np.exp}),
+    (sympy.exp(sympy.sympify("1j * pi * A")), np.exp(1j*np.pi),
+        {"exp": np.exp, "A": 1}),
+])
+def test_numeric_functions_advanced(ham, val, params):
+    builder = discretize(ham, 'x')
     lat = next(iter(builder.sites()))[0]
     onsite = builder[lat(0)]
-    assert onsite(None, A=1) == 1 + np.pi
-
-
-    builder = discretize('pi', 'x')
-    lat = next(iter(builder.sites()))[0]
-    onsite = builder[lat(0)]
-    assert onsite == np.pi
+    try:
+        assert np.allclose(onsite(None, **params), val)
+    except TypeError:
+        assert np.allclose(onsite, val)
 
 
 def test_numeric_functions_basic_string():
@@ -422,9 +429,9 @@ def test_numeric_functions_advance():
     hams = [
         kx**2,
         kx**2 + x,
-        A(x),
-        kx*A(x)*kx,
-        sympy.Matrix([[kx * A(x) * kx, A(x)*kx], [kx*A(x), A(x)+B]]),
+        fA(x),
+        kx*fA(x)*kx,
+        sympy.Matrix([[kx * fA(x) * kx, fA(x)*kx], [kx*fA(x), fA(x)+B]]),
         kx**2 + B * x,
         'k_x**2 + sin(x)',
         B ** 0.5 * kx**2,
@@ -434,12 +441,12 @@ def test_numeric_functions_advance():
     ]
     for hamiltonian in hams:
         for a in [1, 2, 5]:
-            for fA in [lambda x: x, lambda x: x**2, lambda x: x**3]:
+            for func in [lambda x: x, lambda x: x**2, lambda x: x**3]:
                 symbolic, coords = discretize_symbolic(hamiltonian, 'x')
                 builder = build_discretized(symbolic, coords, grid=a)
                 lat = next(iter(builder.sites()))[0]
 
-                p = dict(A=fA, B=5, sin=np.sin)
+                p = dict(A=func, B=5, sin=np.sin)
 
                 # test onsite
                 v = symbolic.pop((0,)).subs({sympy.symbols('a_x'): a, B: p['B']})
@@ -449,10 +456,10 @@ def test_numeric_functions_advance():
                 if callable(f_num):
                     f_num = swallows_extra_kwargs(f_num)
                     for n in range(-100, 100, 10):
-                        assert np.allclose(f_sym(fA, a*n), f_num(lat(n), **p))
+                        assert np.allclose(f_sym(func, a*n), f_num(lat(n), **p))
                 else:
                     for n in range(-100, 100, 10):
-                        assert np.allclose(f_sym(fA, a*n), f_num)
+                        assert np.allclose(f_sym(func, a*n), f_num)
 
 
                 # test hoppings
@@ -464,7 +471,7 @@ def test_numeric_functions_advance():
                     if callable(f_num):
                         f_num = swallows_extra_kwargs(f_num)
                         for n in range(10):
-                            lhs = f_sym(fA, a * n)
+                            lhs = f_sym(func, a * n)
                             rhs = f_num(lat(n), lat(n+k[0]), **p)
                             assert np.allclose(lhs, rhs)
                     else:
@@ -476,15 +483,15 @@ def test_numeric_functions_advance():
 
 def test_numeric_functions_with_parameter():
 
-    hamiltonian = kx**2 + A(B, x)
+    hamiltonian = kx**2 + fA(B, x)
 
     for a in [1, 2, 5]:
-        for fA in [lambda c, x: x+c, lambda c, x: x**2 + c]:
+        for func in [lambda c, x: x+c, lambda c, x: x**2 + c]:
             symbolic, coords = discretize_symbolic(hamiltonian, 'x')
             builder = build_discretized(symbolic, coords, grid=a)
             lat = next(iter(builder.sites()))[0]
 
-            p = dict(A=fA, B=5)
+            p = dict(A=func, B=5)
 
             # test onsite
             v = symbolic.pop((0,)).subs({sympy.symbols('a_x'): a, B: p['B']})
@@ -498,9 +505,9 @@ def test_numeric_functions_with_parameter():
                 s = lat(n)
                 xi = a * n
                 if callable(f_num):
-                    assert np.allclose(f_sym(fA, xi), f_num(s, **p))
+                    assert np.allclose(f_sym(func, xi), f_num(s, **p))
                 else:
-                    assert np.allclose(f_sym(fA, xi), f_num)
+                    assert np.allclose(f_sym(func, xi), f_num)
 
             # test hoppings
             for k, v in symbolic.items():
@@ -515,7 +522,7 @@ def test_numeric_functions_with_parameter():
                     s = lat(n)
                     xi = a * n
 
-                    lhs = f_sym(fA, xi)
+                    lhs = f_sym(func, xi)
                     if callable(f_num):
                         rhs = f_num(lat(n), lat(n+k[0]), **p)
                     else:

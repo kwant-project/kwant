@@ -502,9 +502,16 @@ def _discretize_expression(expression, coords):
 class _NumericPrinter(LambdaPrinter):
 
     def __init__(self):
-        LambdaPrinter.__init__(self)
+        if 'allow_unknown_functions' in LambdaPrinter._default_settings:
+            settings = {'allow_unknown_functions': True}
+        else:
+            # We're on Sympy without "allow_unknown_functions" setting
+            settings = {}
+
+        LambdaPrinter.__init__(self, settings=settings)
+
         self.known_functions = {}
-        self.known_constants = {'pi': 'pi', 'Pi': 'pi'}
+        self.known_constants = {'pi': 'pi', 'Pi': 'pi', 'I': 'I'}
 
     def _print_ImaginaryUnit(self, expr):
         # prevent sympy from printing 'I' for imaginary unit
@@ -678,7 +685,10 @@ def _builder_value(expr, coords, grid_spacing, onsite,
         header = 'def {}({}):'.format(name, site_string)
     func_code = separator.join([header] + list(lines))
 
-    namespace = {'pi': np.pi}
+    # Add "I" to namespace just in case sympy again would miss to replace it
+    # with Python's 1j as it was the case with SymPy 1.2 when I was argument
+    # of some function.
+    namespace = {'pi': np.pi, 'I': 1j}
     namespace.update(_cache)
 
     source = []

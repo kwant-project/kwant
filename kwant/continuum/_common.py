@@ -158,7 +158,15 @@ def sympify(expr, locals=None):
                           '"locals" will not be used.',
                           RuntimeWarning,
                           stacklevel=2)
-        return expr
+
+        # We assume that all present functions, like "sin", "cos", will be
+        # provided by user during the final evaluation through "params".
+        # Therefore we make sure they are defined as AppliedUndef, not built-in
+        # sympy types.
+        subs = {r: sympy.Function(str(r.func))(*r.args)
+                for r in expr.atoms(sympy.Function)}
+
+        return expr.subs(subs)
 
     # if ``expr`` is not a "sympy" then we proceed with sympifying process
     if locals is None:
@@ -189,14 +197,6 @@ def sympify(expr, locals=None):
         else:
             del converter[list]
 
-    # We assume that all present functions, like "sin", "cos", will be
-    # provided by user during the final evaluation through "params".
-    # Therefore we make sure they are define as AppliedUndef, not built-in
-    # sympy types.
-    subs = {r: sympy.Symbol(str(r.func))(*r.args)
-            for r in hamiltonian.atoms(sympy.Function)}
-
-    hamiltonian = hamiltonian.subs(subs)
     return hamiltonian
 
 

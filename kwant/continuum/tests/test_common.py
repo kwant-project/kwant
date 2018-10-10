@@ -20,17 +20,18 @@ from kwant.continuum._common import lambdify
 
 
 com_A, com_B, com_C = sympy.symbols('A B C')
+fA, fB, fC = sympy.symbols('A B C', cls=sympy.Function)
 x_op, y_op, z_op = position_operators
 kx, ky, kz = momentum_operators
 
 
 @pytest.mark.parametrize('input_expr, output_expr', [
-    ('k_x * A(x) * k_x', kx * com_A(x_op) * kx),
-    ('[[k_x * A(x) * k_x]]', sympy.Matrix([kx * com_A(x_op) * kx])),
+    ('k_x * A(x) * k_x', kx * fA(x_op) * kx),
+    ('[[k_x * A(x) * k_x]]', sympy.Matrix([kx * fA(x_op) * kx])),
     ('k_x * sigma_y + k_y * sigma_x', kx * msigma(2) + ky * msigma(1)),
     ('[[k_x*A(x)*k_x, B(x, y)*k_x], [k_x*B(x, y), C*k_y**2]]',
-     sympy.Matrix([[kx*com_A(x_op)*kx, com_B(x_op, y_op)*kx],
-                   [kx*com_B(x_op, y_op), com_C*ky**2]])),
+     sympy.Matrix([[kx*fA(x_op)*kx, fB(x_op, y_op)*kx],
+                   [kx*fB(x_op, y_op), com_C*ky**2]])),
     ('kron(sigma_x, sigma_y)', TensorProduct(msigma(1), msigma(2))),
     ('identity(2)', sympy.eye(2)),
     ('eye(2)', sympy.eye(2)),
@@ -46,7 +47,7 @@ def test_sympify(input_expr, output_expr):
     ('k_x', kx + ky, {'k_x': 'k_x + k_y'}),
     ('x', x_op + y_op, {'x': 'x + y'}),
     ('A', com_A + com_B, {'A': 'A + B'}),
-    ('A', com_A + com_B(x_op), {'A': 'A + B(x)'}),
+    ('A', com_A + fB(x_op), {'A': 'A + B(x)'}),
     ('A', msigma(2), {'A': "[[0, -1j], [1j, 0]]"}),
 ])
 def test_sympify_substitutions(input_expr, output_expr, subs):
@@ -102,10 +103,11 @@ def test_make_commutative():
 matr_monomials = sympify("[[x+y, a*x**2 + b*y], [y, x]]")
 x, y, z = position_operators
 a, b = sympy.symbols('a, b')
+fA, fB = sympy.symbols('A B', cls=sympy.Function)
 
 @pytest.mark.parametrize('expr, gens, output', [
-    (x * a(x) * x + x**2 * a, None, {x**2: a(x), a*x**2: 1}),
-    (x * a(x) * x + x**2 * a, [x], {x**2: a(x) + a}),
+    (x * fA(x) * x + x**2 * a, None, {x**2: fA(x), a*x**2: 1}),
+    (x * fA(x) * x + x**2 * a, [x], {x**2: fA(x) + a}),
     (x**2, [x], {x**2: 1}),
     (2 * x + 3 * x**2, [x], {x: 2, x**2: 3}),
     (2 * x + 3 * x**2, 'x', {x: 2, x**2: 3}),
