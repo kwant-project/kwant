@@ -1668,7 +1668,7 @@ def _interpolate_field(dim, elements, discrete_field, bbox, width,
             # Zero volume or zero field: nothing to do.
             continue
 
-        field_slice = [slice(*slices[i, d]) for d in range(dim)]
+        field_slice = tuple([slice(*slices[i, d]) for d in range(dim)])
 
         # Coordinates of the grid points that are within range of the current
         # hopping.
