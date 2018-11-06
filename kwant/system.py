@@ -11,6 +11,7 @@
 __all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
 
 import abc
+import warnings
 from copy import copy
 from . import _system
 
@@ -235,12 +236,26 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         ham = self.cell_hamiltonian(args, params=params)
         hop = self.inter_cell_hopping(args, params=params)
         symmetries = self.discrete_symmetry(args, params=params)
-        broken = symmetries.validate(ham)
-        if broken is not None:
-            raise ValueError("Cell Hamiltonian breaks " + broken.lower())
-        broken = symmetries.validate(hop)
-        if broken is not None:
-            raise ValueError("Inter-cell hopping breaks " + broken.lower())
+        # Check whether each symmetry is broken.
+        # If a symmetry is broken, it is ignored in the computation.
+        symmetry_names = ['Conservation law'] + physics.symmetry._names
+        broken = (symmetries.validate(ham),
+                  symmetries.validate(hop))
+        for name in symmetry_names:
+            if name in broken:
+                warnings.warn("Hamiltonian breaks " + name +
+                              ", ignoring the symmetry in the computation.")
+                if name == symmetry_names[0]:
+                    symmetries.projectors = None
+                elif name == symmetry_names[1]:
+                    symmetries.time_reversal = None
+                elif name == symmetry_names[2]:
+                    symmetries.particle_hole = None
+                elif name == symmetry_names[3]:
+                    symmetries.chiral = None
+                else:
+                    warnings.warn("Misidentified a broken symmetry"
+                                  +" in the lead.")
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
