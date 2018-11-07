@@ -157,19 +157,25 @@ class DiscreteSymmetry:
                 matrix = new_matrix
             else:
                 matrix = hstack([matrix, csr_matrix((n, n-m))])
+        broken_symmetries = []
         if self.projectors is not None:
             for proj in self.projectors:
                 full = proj.dot(proj.T.conj())
                 commutator = full.dot(matrix) - (full.T.dot(matrix.T)).T
                 if np.linalg.norm(commutator.data) > 1e-8:
-                    return 'Conservation law'
+                    broken_symmetries.append('Conservation law')
+                    break
         for symm, conj, sign, name in zip(self[1:], _conj, _signs, _names):
             if symm is None:
                 continue
             commutator = symm.T.conj().dot((symm.T.dot(matrix.T)).T)
             commutator = commutator - sign * cond_conj(matrix, conj)
             if np.linalg.norm(commutator.data) > 1e-8:
-                return name
+                broken_symmetries.append(name)
+        if not len(broken_symmetries):
+            return None
+        else:
+            return broken_symmetries
 
     def __getitem__(self, item):
         return (self.projectors, self.time_reversal,

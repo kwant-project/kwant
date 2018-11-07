@@ -238,24 +238,23 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         symmetries = self.discrete_symmetry(args, params=params)
         # Check whether each symmetry is broken.
         # If a symmetry is broken, it is ignored in the computation.
-        symmetry_names = ['Conservation law'] + physics.symmetry._names
-        broken = (symmetries.validate(ham),
-                  symmetries.validate(hop))
-        for name in symmetry_names:
-            if name in broken:
-                warnings.warn("Hamiltonian breaks " + name +
-                              ", ignoring the symmetry in the computation.")
-                if name == symmetry_names[0]:
-                    symmetries.projectors = None
-                elif name == symmetry_names[1]:
-                    symmetries.time_reversal = None
-                elif name == symmetry_names[2]:
-                    symmetries.particle_hole = None
-                elif name == symmetry_names[3]:
-                    symmetries.chiral = None
-                else:
-                    warnings.warn("Misidentified a broken symmetry"
-                                  +" in the lead.")
+        broken = {symmetry for item in (symmetries.validate(ham),
+                                        symmetries.validate(hop))
+                  if item is not None for symmetry in item}
+        for name in broken:
+            warnings.warn("Hamiltonian breaks " + name +
+                          ", ignoring the symmetry in the computation.")
+            if name == 'Conservation law':
+                symmetries.projectors = None
+            elif name == 'Time reversal':
+                symmetries.time_reversal = None
+            elif name == 'Particle-hole':
+                symmetries.particle_hole = None
+            elif name == 'Chiral':
+                symmetries.chiral = None
+            else:
+                warnings.warn("Misidentified a broken symmetry"
+                              " in the lead.")
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]

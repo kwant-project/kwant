@@ -151,21 +151,21 @@ def test_validate():
     csr = sparse.csr_matrix
     sym = DiscreteSymmetry(projectors=[csr(np.array([[1], [0]])),
                                        csr(np.array([[0], [1]]))])
-    assert sym.validate(csr(np.array([[0], [1]]))) == 'Conservation law'
+    assert sym.validate(csr(np.array([[0], [1]]))) == ['Conservation law']
     assert sym.validate(np.array([[1], [0]])) is None
     assert sym.validate(np.eye(2)) is None
-    assert sym.validate(1 - np.eye(2)) == 'Conservation law'
+    assert sym.validate(1 - np.eye(2)) == ['Conservation law']
 
     sym = DiscreteSymmetry(particle_hole=sparse.identity(2))
     assert sym.validate(1j * sparse.identity(2)) is None
-    assert sym.validate(sparse.identity(2)) == 'Particle-hole'
+    assert sym.validate(sparse.identity(2)) == ['Particle-hole']
 
     sym = DiscreteSymmetry(time_reversal=sparse.identity(2))
     assert sym.validate(sparse.identity(2)) is None
-    assert sym.validate(1j * sparse.identity(2)) == 'Time reversal'
+    assert sym.validate(1j * sparse.identity(2)) == ['Time reversal']
 
     sym = DiscreteSymmetry(chiral=csr(np.diag((1, -1))))
-    assert sym.validate(np.eye(2)) == 'Chiral'
+    assert sym.validate(np.eye(2)) == ['Chiral']
     assert sym.validate(1 - np.eye(2)) is None
 
 
@@ -203,4 +203,4 @@ def test_validate_commutator():
                                      chiral=c_mat)
         assert disc_symm.validate(h) == None
         a = random_onsite_hop(n, rng=rng)[1]
-        assert disc_symm.validate(a) in ['Time reversal', 'Particle-hole', 'Chiral']
+        assert len(disc_symm.validate(a))
