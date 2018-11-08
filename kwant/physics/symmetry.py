@@ -141,10 +141,11 @@ class DiscreteSymmetry:
 
         Returns
         -------
-        broken_symmetry : string or ``None``
-            One of "Conservation law", "Time reversal", "Particle-hole",
-            "Chiral": the symmetry broken by the matrix. If the matrix breaks
-            more than one symmetry, returns only the first failed check.
+        broken_symmetries : list or ``None``
+            List of strings, the names of symmetries broken by the
+            matrix: any combination of "Conservation law", "Time reversal",
+            "Particle-hole", "Chiral". If no symmetries are broken, returns
+            None.
         """
         # Extra transposes are to enforse sparse dot product in case matrix is
         # dense.

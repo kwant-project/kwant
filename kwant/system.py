@@ -164,6 +164,17 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
         result.leads = new_leads
         return result
 
+    def validate_symmetries(self, args=(), *, params=None):
+        """Check that the Hamiltonian satisfies discrete symmetries.
+
+        Applies `~kwant.physics.DiscreteSymmetry.validate` to the
+        Hamiltonian, see its documentation for details on the return
+        format.
+        """
+        symmetries = self.discrete_symmetry(args=args, params=params)
+        ham = self.hamiltonian_submatrix(args, sparse=True, params=params)
+        return symmetries.validate(ham)
+
 
 class InfiniteSystem(System, metaclass=abc.ABCMeta):
     """Abstract infinite low-level system.
@@ -242,8 +253,8 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
                                         symmetries.validate(hop))
                   if item is not None for symmetry in item}
         for name in broken:
-            warnings.warn("Hamiltonian breaks " + name +
-                          ", ignoring the symmetry in the computation.")
+            warnings.warn('Hamiltonian breaks ' + name +
+                          ', ignoring the symmetry in the computation.')
             if name == 'Conservation law':
                 symmetries.projectors = None
             elif name == 'Time reversal':
@@ -253,8 +264,8 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
             elif name == 'Chiral':
                 symmetries.chiral = None
             else:
-                warnings.warn("Misidentified a broken symmetry"
-                              " in the lead.")
+                warnings.warn('Misidentified a broken symmetry'
+                              ' in the lead.')
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
@@ -282,6 +293,24 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         ham.flat[::ham.shape[0] + 1] -= energy
         return physics.selfenergy(ham,
                                   self.inter_cell_hopping(args, params=params))
+
+    def validate_symmetries(self, args=(), *, params=None):
+        """Check that the Hamiltonian satisfies discrete symmetries.
+
+        Returns `~kwant.physics.DiscreteSymmetry.validate` applied
+        to the onsite matrix and the hopping. See its documentation for
+        details on the return format.
+        """
+        symmetries = self.discrete_symmetry(args=args, params=params)
+        ham = self.cell_hamiltonian(args=args, sparse=True, params=params)
+        hop = self.inter_cell_hopping(args=args, sparse=True, params=params)
+        broken = list({symmetry for item in (symmetries.validate(ham),
+                                             symmetries.validate(hop))
+                       if item is not None for symmetry in item})
+        if len(broken):
+            return broken
+        else:
+            return broken
 
 
 class PrecalculatedLead:
