@@ -152,21 +152,21 @@ def test_validate():
     sym = DiscreteSymmetry(projectors=[csr(np.array([[1], [0]])),
                                        csr(np.array([[0], [1]]))])
     assert sym.validate(csr(np.array([[0], [1]]))) == ['Conservation law']
-    assert sym.validate(np.array([[1], [0]])) is None
-    assert sym.validate(np.eye(2)) is None
+    assert sym.validate(np.array([[1], [0]])) == []
+    assert sym.validate(np.eye(2)) == []
     assert sym.validate(1 - np.eye(2)) == ['Conservation law']
 
     sym = DiscreteSymmetry(particle_hole=sparse.identity(2))
-    assert sym.validate(1j * sparse.identity(2)) is None
+    assert sym.validate(1j * sparse.identity(2)) == []
     assert sym.validate(sparse.identity(2)) == ['Particle-hole']
 
     sym = DiscreteSymmetry(time_reversal=sparse.identity(2))
-    assert sym.validate(sparse.identity(2)) is None
+    assert sym.validate(sparse.identity(2)) == []
     assert sym.validate(1j * sparse.identity(2)) == ['Time reversal']
 
     sym = DiscreteSymmetry(chiral=csr(np.diag((1, -1))))
     assert sym.validate(np.eye(2)) == ['Chiral']
-    assert sym.validate(1 - np.eye(2)) is None
+    assert sym.validate(1 - np.eye(2)) == []
 
 
 def random_onsite_hop(n, rng=0):
@@ -178,7 +178,13 @@ def random_onsite_hop(n, rng=0):
 
 
 def test_validate_commutator():
-    symm_class = ['AI', 'AII', 'D', 'C', 'AIII']
+    symm_class = ['AI', 'AII', 'D', 'C', 'AIII', 'BDI']
+    sym_dict = {'AI': ['Time reversal'],
+                'AII': ['Time reversal'],
+                'D': ['Particle-hole'],
+                'C': ['Particle-hole'],
+                'AIII': ['Chiral'],
+                'BDI': ['Time reversal', 'Particle-hole', 'Chiral']}
     n = 10
     rng = 10
     for sym in symm_class:
@@ -201,6 +207,7 @@ def test_validate_commutator():
         disc_symm = DiscreteSymmetry(particle_hole=p_mat,
                                      time_reversal=t_mat,
                                      chiral=c_mat)
-        assert disc_symm.validate(h) == None
+        assert disc_symm.validate(h) == []
         a = random_onsite_hop(n, rng=rng)[1]
-        assert len(disc_symm.validate(a))
+        for symmetry in disc_symm.validate(a):
+            assert symmetry in sym_dict[sym]

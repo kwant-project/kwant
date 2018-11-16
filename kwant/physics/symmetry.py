@@ -141,11 +141,11 @@ class DiscreteSymmetry:
 
         Returns
         -------
-        broken_symmetries : list or ``None``
+        broken_symmetries : list
             List of strings, the names of symmetries broken by the
             matrix: any combination of "Conservation law", "Time reversal",
             "Particle-hole", "Chiral". If no symmetries are broken, returns
-            None.
+            an empty list.
         """
         # Extra transposes are to enforse sparse dot product in case matrix is
         # dense.
@@ -173,10 +173,7 @@ class DiscreteSymmetry:
             commutator = commutator - sign * cond_conj(matrix, conj)
             if np.linalg.norm(commutator.data) > 1e-8:
                 broken_symmetries.append(name)
-        if not len(broken_symmetries):
-            return None
-        else:
-            return broken_symmetries
+        return broken_symmetries
 
     def __getitem__(self, item):
         return (self.projectors, self.time_reversal,

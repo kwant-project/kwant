@@ -249,9 +249,7 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         symmetries = self.discrete_symmetry(args, params=params)
         # Check whether each symmetry is broken.
         # If a symmetry is broken, it is ignored in the computation.
-        broken = {symmetry for item in (symmetries.validate(ham),
-                                        symmetries.validate(hop))
-                  if item is not None for symmetry in item}
+        broken = set(symmetries.validate(ham) + symmetries.validate(hop))
         for name in broken:
             warnings.warn('Hamiltonian breaks ' + name +
                           ', ignoring the symmetry in the computation.')
@@ -304,13 +302,8 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         symmetries = self.discrete_symmetry(args=args, params=params)
         ham = self.cell_hamiltonian(args=args, sparse=True, params=params)
         hop = self.inter_cell_hopping(args=args, sparse=True, params=params)
-        broken = list({symmetry for item in (symmetries.validate(ham),
-                                             symmetries.validate(hop))
-                       if item is not None for symmetry in item})
-        if len(broken):
-            return broken
-        else:
-            return broken
+        broken = set(symmetries.validate(ham) + symmetries.validate(hop))
+        return list(broken)
 
 
 class PrecalculatedLead:
