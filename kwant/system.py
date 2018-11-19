@@ -250,20 +250,16 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         # Check whether each symmetry is broken.
         # If a symmetry is broken, it is ignored in the computation.
         broken = set(symmetries.validate(ham) + symmetries.validate(hop))
+        attribute_names = {'Conservation law': 'projectors',
+                          'Time reversal': 'time_reversal',
+                          'Particle-hole': 'particle-hole',
+                          'Chiral': 'chiral'}
         for name in broken:
             warnings.warn('Hamiltonian breaks ' + name +
                           ', ignoring the symmetry in the computation.')
-            if name == 'Conservation law':
-                symmetries.projectors = None
-            elif name == 'Time reversal':
-                symmetries.time_reversal = None
-            elif name == 'Particle-hole':
-                symmetries.particle_hole = None
-            elif name == 'Chiral':
-                symmetries.chiral = None
-            else:
-                warnings.warn('Misidentified a broken symmetry'
-                              ' in the lead.')
+            assert name in attribute_names, 'Inconsistent naming of symmetries'
+            setattr(symmetries, attribute_names[name], None)
+
         shape = ham.shape
         assert len(shape) == 2
         assert shape[0] == shape[1]
