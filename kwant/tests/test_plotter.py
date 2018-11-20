@@ -155,6 +155,20 @@ def test_plot():
         # test 2D projections of 3D systems
         plot(syst3d, file=out, pos_transform=lambda pos: pos[:2])
 
+
+@pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
+def test_plot_more_site_families_than_colors():
+    # test against regression reported in
+    # https://gitlab.kwant-project.org/kwant/kwant/issues/257
+    ncolors = len(pyplot.rcParams['axes.prop_cycle'])
+    syst = kwant.Builder()
+    lattices = [kwant.lattice.square(name=i) for i in range(ncolors + 1)]
+    for i, lat in enumerate(lattices):
+        syst[lat(i, 0)] = None
+    with tempfile.TemporaryFile('w+b') as out:
+        plotter.plot(syst, file=out)
+
+
 def good_transform(pos):
     x, y = pos
     return y, x

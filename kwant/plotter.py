@@ -48,6 +48,12 @@ def _sample_array(array, n_samples, rng=None):
 
 # matplotlib helper functions.
 
+def _color_cycle():
+    """Infinitely cycle through colors from the matplotlib color cycle."""
+    props = _p.matplotlib.rcParams['axes.prop_cycle']
+    return itertools.cycle(x['color'] for x in props)
+
+
 def _make_figure(dpi, fig_size, use_pyplot=False):
     if 'matplotlib.backends' not in sys.modules:
         warnings.warn(
@@ -944,7 +950,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
         fancy_indexing = False
 
     if site_color is None:
-        cycle = (x['color'] for x in _p.matplotlib.rcParams['axes.prop_cycle'])
+        cycle = _color_cycle()
         if isinstance(syst, (builder.FiniteSystem, builder.InfiniteSystem)):
             # Skipping the leads for brevity.
             families = sorted({site.family for site in syst.sites})
