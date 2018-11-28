@@ -23,7 +23,7 @@ from .operator import (_LocalOperator, _get_tot_norbs, _get_all_orbs,
                        _normalize_site_where)
 from .graph.defs import gint_dtype
 
-__all__ = ['SpectralDensity',
+__all__ = ['SpectralDensity', 'Correlator', 'conductivity',
            'RandomVectors', 'LocalVectors', 'jackson_kernel', 'lorentz_kernel',
            'fermi_distribution']
 
@@ -476,6 +476,358 @@ class SpectralDensity:
                 self._moments_list[r] = one_moment
 
 
+class Correlator:
+    """Calculates the response of the correlation between two operators.
+
+    The response tensor :math:`χ_{α β}` of an operator :math:`O_α`
+    to a perturbation in an operator :math:`O_β`, is defined here based
+    on [3]_, and [4]_, and takes the form
+
+    .. math::
+       χ_{α β}(µ, T) =
+       \\int_{-\\infty}^{\\infty}{\\mathrm{d}E} f(µ-E, T)
+       \\left({O_α ρ(E) O_β \\frac{\\mathrm{d}G^{+}}{\\mathrm{d}E}} -
+       {O_α \\frac{\\mathrm{d}G^{-}}{\\mathrm{d}E} O_β ρ(E)}\\right)
+
+    .. [3] `Phys. Rev. Lett. 114, 116602 (2015)
+       <https://arxiv.org/abs/1410.8140>`_.
+    .. [4] `Phys. Rev. B 92, 184415 (2015)
+       <https://doi.org/10.1103/PhysRevB.92.184415>`_
+
+    Internally, the correlation is approximated with a
+    two dimensional KPM expansion,
+
+    .. math::
+
+       χ_{α β}(µ, T) =
+       \\int_{-1}^1{\\mathrm{d}E} \\frac{f(µ-E,T)}{(1-E^2)^2}
+       \\sum_{m,n}Γ_{n m}(E)µ_{n m}^{α β},
+
+    with coefficients
+
+    .. math::
+
+       Γ_{m n}(E) =
+       (E - i n \\sqrt{1 - E^2}) e^{i n \\arccos(E)} T_m(E)
+
+       + (E + i m \\sqrt{1 - E^2}) e^{-i m \\arccos(E)} T_n(E),
+
+    and moments matrix
+    :math:`µ_{n m}^{α β} = \\mathrm{Tr}(O_α T_m(H) O_β T_n(H))`.
+
+    The trace is calculated creating two instances of
+    `~kwant.kpm.SpectralDensity`, and saving the vectors
+    :math:`Ψ_{n r} = O_β T_n(H)\\rvert r\\rangle`,
+    and :math:`Ω_{m r} = T_m(H) O_α\\rvert r\\rangle` , where
+    :math:`\\rvert r\\rangle` is a vector provided by the
+    ``vector_factory``.
+    The moments matrix is formed with the product
+    :math:`µ_{m n} = \\langle Ω_{m r} \\rvert Ψ_{n r}\\rangle` for
+    every :math:`\\rvert r\\rangle`.
+
+    Parameters
+    ----------
+    hamiltonian : `~kwant.system.FiniteSystem` or matrix Hamiltonian
+        If a system is passed, it should contain no leads.
+    operator1, operator2 : operators, dense matrix, or sparse matrix, optional
+        Operators to be passed to two different instances of
+        `~kwant.kpm.SpectralDensity`.
+    **kwargs : dict
+        Keyword arguments to pass to `~kwant.kpm.SpectralDensity`.
+
+    Notes
+    -----
+    The ``operator1`` must act to the right as :math:`O_α\\rvert r\\rangle`.
+    """
+
+    def __init__(self, hamiltonian, operator1=None, operator2=None, **kwargs):
+
+        # Normalize 'operator1' and 'operator2' to functions that take
+        # and return a vector.
+        params = kwargs.get('params')
+        self.mean = kwargs.get('mean', True)
+        accumulate_vectors = kwargs.get('accumulate_vectors', False)
+        kwargs['accumulate_vectors'] = True
+        kwargs.pop('operator', None)
+        self.operator1 = _normalize_operator(operator1, params)
+        self.operator2 = _normalize_operator(operator2, params)
+
+        # initialize `SpectralDensity` to get `T_n(H)|r>` with a fake operator
+        def fake_op(bra, ket): return ket
+
+        # The vector factory used is the one passed by the user (or rng)
+        # to save the vectors, accumulate_vectors must be 'True'
+        self._spectrum_R = SpectralDensity(hamiltonian, operator=fake_op,
+                                           **kwargs)
+        self._a = self._spectrum_R._a
+        self._b = self._spectrum_R._b
+        _a = self._a * (1 - self._spectrum_R.eps / 2)
+        bounds = (self._b - _a, self._b + _a)
+        self.num_vectors = self._spectrum_R.num_vectors
+        self.num_moments = self._spectrum_R.num_moments
+        # apply operator2 to obtain `Psi_{n,r} = op2 T_n(H)|r>`
+        self._update_psi()
+
+        # instantiate the second `SpectralDensity`
+        # `accumulate_vectors` is set to the user defined option
+        # rewrite the bounds to match the rescaled bounds in the next call
+        kwargs['accumulate_vectors'] = accumulate_vectors
+        kwargs['num_vectors'] = self.num_vectors
+        kwargs['num_moments'] = self.num_moments
+        kwargs['energy_resolution'] = None
+        # Now we must take operator1 applied to the initial
+        # vectors to get `op1|r>`
+        # The vector factory used is defined below to ensure applying the
+        # same initial vectors stored in `self._vector_factory.saved_vectors`
+        kwargs['vector_factory'] = self._op_factory()
+        kwargs['bounds'] = bounds
+        self._spectrum_L = SpectralDensity(hamiltonian, operator=fake_op,
+                                           **kwargs)
+        # and now self._moments_list is `Omega_{m,r} = T_m(H) op1|r>`
+        # The shape of '_omega' is '(num_vecs, num_moments, dim_output)',
+        # where 'dim_output' is the dimension of the output of 'operator1'
+        self._omega = np.array(self._spectrum_L._moments_list)
+
+        self._calculate_moments_matrix()
+        self._build_integral_factor()
+
+    def __call__(self, mu=0, temp=0):
+        """Returns the linear response χ_{α β}(µ, T)
+
+        Parameters
+        ----------
+        mu : float
+            Chemical potential defined in the same units of energy as
+            the Hamiltonian.
+        temp : float
+            Temperature in units of energy, the same as defined in the
+            Hamiltonian.
+        """
+        e = self.energies
+        e_rescaled = (e - self._b) / self._a
+
+        # rescale the energy to compare with the chemical potential
+        distribution_array = fermi_distribution(e, mu, temp)
+        integrand = np.divide(distribution_array, (1 - e_rescaled ** 2) ** 2)
+        integrand = np.multiply(integrand, self._integral_factor)
+        integral = simps(integrand, x=e_rescaled)
+        # gives the linear response in units of volume * e^2/h
+        prefactor = 2 * 4**2 / ((2 * self._a) ** 2)
+        return prefactor * integral
+
+    @property
+    def energies(self):
+        return self._spectrum_R.energies
+
+    def add_moments(self, num_moments=None, *, energy_resolution=None):
+        """Increase the number of Chebyshev moments
+
+        Parameters
+        ----------
+        num_moments: positive int, optional
+            The number of Chebyshev moments to add. Mutually
+            exclusive with 'energy_resolution'.
+        energy_resolution: positive float, optional
+            Features wider than this resolution are visible
+            in the spectral density. Mutually exclusive with
+            ``num_moments``.
+        """
+
+        self._spectrum_R.add_moments(num_moments=num_moments,
+                                     energy_resolution=energy_resolution)
+        self.num_moments = self._spectrum_R.num_moments
+        # apply operator2 to obtain `Psi_{n,r} = op2
+        self._update_psi()
+
+        self._spectrum_L.add_moments(num_moments=num_moments,
+                                     energy_resolution=energy_resolution)
+        self._omega = np.array(self._spectrum_L._moments_list)
+
+        self._calculate_moments_matrix()
+        self._build_integral_factor()
+
+    def add_vectors(self, num_vectors=None):
+        """Increase the number of vectors
+
+        Parameters
+        ----------
+        num_vectors: positive int, optional
+            The number of vectors to add.
+        """
+        # get `T_n(H)|r>` with a fake operator
+        self._spectrum_R.add_vectors(num_vectors)
+        # apply operator2 to obtain `Psi_{n,r} = op2 T_n(H)|r>`
+        self._update_psi()
+
+        # _spectrum_L vector_factory is linked to _spectrum_R vector_factory
+        self._spectrum_L.add_vectors(num_vectors)
+        self.num_vectors = self._spectrum_L.num_vectors
+        # and now self._moments_list is `Omega_{m,r} = T_m(H) op1|r>`
+        self._omega = np.array(self._spectrum_L._moments_list)
+
+        self._calculate_moments_matrix()
+        self._build_integral_factor()
+
+    def _calculate_moments_matrix(self):
+        """Return the moments matrix, averaged over the vectors used """
+        # The final matrix is ready to be computed as
+        # `µ_{m,n} = <Omega_{m,r} | Psi_{n,r}>`
+        # for every `r` in `num_vectors`.
+        # 'moments_matrix' will be an array of moments matrix for each vector
+        # the shape of `moments_matrix` is
+        # `(num_vecs, num_moments, num_moments)`
+        self.moments_matrix = self._omega.conjugate() @ self._psi
+        if self.mean:
+            self.moments_matrix = np.mean(self.moments_matrix, axis=0)
+
+    def _op_factory(self):
+        """Factory of vectors ``operator1(vec[idx])``.
+
+        This factory will get updated with more vectors when
+        ``_spectrum_R._vector_factory`` gets updated to include more
+        vectors.
+        """
+        for vector in self._spectrum_R._vector_factory:
+            yield self.operator1(vector)
+        return
+
+    def _update_psi(self):
+        """Axes are swapped in the end the get the shape
+        '(num_vecs, dim_output, num_moments)', where 'dim_output'
+        is the dimension of the output of 'operator2'."""
+        self._psi = np.array([
+            [
+                self.operator2(self._spectrum_R._moments_list[r][n])
+                for n in range(self._spectrum_R.num_moments)
+            ]
+            for r in range(self._spectrum_R.num_vectors)
+        ]).swapaxes(1, 2)
+
+    def _build_integral_factor(self):
+        """ Build the integral factor
+
+        .. math::
+           Γ_{m n}(E)
+           = (E - i n \\sqrt{1 - E^2}) e^{i n \\arccos(E)} T_m(E)
+
+           + (E + i m \\sqrt{1 - E^2}) e^{-i m \\arccos(E)} T_n(E),
+
+        times the moments matrix :math:`µ_{m n}` and sum over :math:`m`
+        and :math:`n`. :math:`E` is the array of the sampling points
+        selected as the Chebyshev nodes.
+        """
+
+        n_moments = self.num_moments
+
+        # get kernel array
+        g_kernel = self._spectrum_R.kernel(np.ones(n_moments))
+        g_kernel[0] /= 2
+        mu_kernel = np.outer(g_kernel, g_kernel) * self.moments_matrix
+
+        e = (self.energies - self._b) / self._a
+
+        # arrays for faster calculation
+        sqrt_e = np.sqrt(1 - e ** 2)
+        arccos_e = np.arccos(e)
+
+        exp_n = np.exp(1j * np.outer(arccos_e, np.arange(n_moments)))
+        t_n = np.real(exp_n)
+
+        e_plus = (np.outer(e, np.ones(n_moments)) -
+                  1j * np.outer(sqrt_e, np.arange(n_moments)))
+        e_plus = e_plus * exp_n
+
+        big_gamma = e_plus[:, None, :] * t_n[:, :, None]
+        big_gamma += big_gamma.conj().swapaxes(1, 2)
+
+        self._integral_factor = np.tensordot(mu_kernel, big_gamma.T)
+
+
+def conductivity(hamiltonian, alpha='x', beta='x', positions=None, **kwargs):
+    """Returns a callable object to obtain the elements of the
+    conductivity tensor using the Kubo-Bastin approach.
+
+    A `~kwant.kpm.Correlator` instance is created to obtain the
+    correlation between two components of the current operator
+
+    .. math::
+
+       σ_{α β}(µ, T) =
+       \\frac{1}{V} \\int_{-\\infty}^{\\infty}{\\mathrm{d}E} f(µ-E, T)
+       \\left({j_α ρ(E) j_β \\frac{\\mathrm{d}G^{+}}{\\mathrm{d}E}} -
+       {j_α \\frac{\\mathrm{d}G^{-}}{\\mathrm{d}E} j_β ρ(E)}\\right),
+
+    where :math:`V` is the volume where the conductivity is sampled.
+    In this implementation it is assumed that the vectors are normalized
+    and :math:`V=1`, otherwise the result of this calculation must be
+    normalized with the corresponding volume.
+
+    The equations used here are based on [3]_ and [4]_
+
+    .. [3] `Phys. Rev. Lett. 114, 116602 (2015)
+       <https://arxiv.org/abs/1410.8140>`_.
+    .. [4] `Phys. Rev. B 92, 184415 (2015)
+       <https://doi.org/10.1103/PhysRevB.92.184415>`_
+
+    Parameters
+    ----------
+    alpha, beta : str, or operators
+        If ``hamiltonian`` is a kwant system, or if the ``positions``
+        are provided, ``alpha`` and ``beta`` can be the directions of the
+        velocities as strings {'x', 'y', 'z'}.
+        Otherwise ``alpha`` and ``beta`` should be the proper velocity
+        operators, which can be members of `~kwant.operator` or matrices.
+    positions : array of float, optioinal
+        If ``hamiltonian`` is a matrix, the velocities can be calculated
+        internally by passing the positions of each orbital in the system
+        when ``alpha`` or ``beta`` are one of the directions {'x', 'y', 'z'}.
+    **kwargs : dict
+        Keyword arguments to pass to `~kwant.kpm.Correlator`.
+
+    Examples
+    --------
+    We will obtain the conductivity of the Haldane model, defined as a
+    honeycomb lattice with first nearest neighbors coupling, and
+    imaginary second nearest neighbors coupling.
+
+    We start by importing kwant and defining a
+    `~kwant.system.FiniteSystem`,
+
+    >>> import kwant
+    ...
+    >>> def circle(pos):
+    ...     x, y = pos
+    ...     return x**2 + y**2 < 100
+    ...
+    >>> lat = kwant.lattice.honeycomb()
+    >>> syst = kwant.Builder()
+    >>> syst[lat.shape(circle, (0, 0))] = 0
+    >>> syst[lat.neighbors()] = -1
+    >>> syst[lat.a.neighbors()] = -0.5j
+    >>> syst[lat.b.neighbors()] = 0.5j
+    >>> fsyst = syst.finalized()
+
+    Now we can call `~kwant.kpm.conductivity` to calculate the transverse
+    conductivity at chemical potential 0 and temperature 0.01.
+
+    >>> cond = kwant.kpm.conductivity(fsyst, alpha='x', beta='y')
+    >>> cond(mu=0, temp=0.01)
+    """
+
+    if positions is None and not isinstance(hamiltonian, system.System):
+        raise ValueError("If 'hamiltonian' is a matrix, positions "
+                         "must be provided")
+
+    params = kwargs.get('params')
+    alpha = _velocity(hamiltonian, params, alpha, positions)
+    beta = _velocity(hamiltonian, params, beta, positions)
+
+    correlator = Correlator(
+        hamiltonian, operator1=alpha, operator2=beta, **kwargs)
+
+    return correlator
+
+
 class _VectorFactory:
     """Factory for Hilbert space vectors.
 
@@ -659,6 +1011,69 @@ def _normalize_orbs_where(syst, where):
         orbs = (range(tot_norbs) if where is None
                 else np.asarray(where, int))
     return tot_norbs, orbs
+
+
+def _velocity(hamiltonian, params, op_type, positions):
+    """Construct the velocity operator
+
+    Parameters
+    ----------
+    hamiltonian : ndarray or a Kwant system
+        System for which the velocity operator is calculated.
+    params : dict
+        Parametres of the system
+    op_type : str, matrix or operator
+        If ``op_type`` is a 'str' in {'x', 'y', 'z'}, the velocity operator
+        is calculated using the ``hamiltonian`` and ``positions``, else
+        if ``op_type`` is an operator or a matrix, this is the velocity
+        operator.
+    positions : ndarray of shape ``(N, dim)``
+        Positions of each orbital. This parameter is not used if
+        ``hamiltonian`` is a Kwant system.
+    """
+    directions = dict(x=0, y=1, z=2)
+
+    if isinstance(op_type, _LocalOperator):
+        operator = op_type
+    elif isinstance(op_type, str):
+        direction = directions[op_type]
+        if isinstance(hamiltonian, system.System):
+            operator = hamiltonian.hamiltonian_submatrix(params=params,
+                                                         sparse=True)
+            positions = np.array([site.pos for site in hamiltonian.sites
+                                  for iorb in range(site.family.norbs)])
+        elif positions is not None:
+            operator = coo_matrix(hamiltonian, copy=True)
+        displacements = positions[operator.col] - positions[operator.row]
+        if direction > displacements.shape[1]:
+            raise ValueError("{} is not an allowed direction.".format(op_type))
+        operator.data *= 1j * displacements[:, direction]
+        operator = operator.tocsr()
+    else:
+        try:
+            operator = csr_matrix(op_type)
+        except Exception:
+            raise ValueError("Velocity operator must be provided as a matrix, "
+                             "a kwant operator, or a direction.")
+    return operator
+
+
+def _normalize_operator(op, params):
+    """Normalize 'op' to a function that takes and returns a vector."""
+    if op is None:
+        def r_op(v): return v
+    elif isinstance(op, _LocalOperator):
+        op = op.bind(params=params)
+        r_op = op.act
+    elif callable(op):
+        r_op = op
+    elif hasattr(op, 'dot'):
+        op = csr_matrix(op)
+        r_op = op.dot
+    else:
+        raise TypeError("The operators must have a '.dot' "
+                        "attribute or must be callable.")
+    return r_op
 
 
 def jackson_kernel(moments):
