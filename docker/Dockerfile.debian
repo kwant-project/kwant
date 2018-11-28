@@ -1,0 +1,30 @@
+FROM debian:latest
+
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gnupg dirmngr apt-transport-https ca-certificates curl software-properties-common
+
+RUN echo "deb http://downloads.kwant-project.org/debian/ stretch-backports main" >> /etc/apt/sources.list && \
+    apt-key adv --no-tty --keyserver pool.sks-keyservers.net --recv-key C3F147F5980F3535 && \
+    apt-get update && apt-get install -y --no-install-recommends \
+        # all the hard non-Python dependencies
+        git g++ make patch gfortran libblas-dev liblapack-dev \
+        libmumps-scotch-dev pkg-config libfreetype6-dev \
+        # all the hard Python dependencies
+        python3-all-dev python3-setuptools python3-pip python3-tk python3-wheel \
+        python3-numpy python3-scipy python3-matplotlib python3-sympy python3-tinyarray \
+        # Additional tools for running CI
+        file rsync openssh-client \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+### install build and testing dependencies
+RUN pip3 install \
+      cython \
+      pytest \
+      pytest-runner \
+      pytest-cov \
+      pytest-flakes \
+      pytest-pep8
