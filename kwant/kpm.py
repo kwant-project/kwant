@@ -30,11 +30,11 @@ class SpectralDensity:
     In general
 
     .. math::
-       ρ_A(e) = ρ(e) A(e),
+       ρ_A(E) = ρ(E) A(E),
 
-    where :math:`ρ(e) = \sum_{k=0}^{D-1} δ(E-E_k)` is the density of
-    states, and :math:`A(e)` is the expectation value of :math:`A` for
-    all the eigenstates with energy :math:`e`.
+    where :math:`ρ(E) = \\sum_{k=0}^{D-1} δ(E-E_k)` is the density of
+    states, and :math:`A(E)` is the expectation value of :math:`A` for
+    all the eigenstates with energy :math:`E`.
 
     Parameters
     ----------
@@ -45,7 +45,7 @@ class SpectralDensity:
     operator : operator, dense matrix, or sparse matrix, optional
         Operator for which the spectral density will be evaluated. If
         it is callable, the ``densities`` at each energy will have the
-        dimension of the result of `operator(bra, ket)`. If it has a
+        dimension of the result of ``operator(bra, ket)``. If it has a
         ``dot`` method, such as ``numpy.ndarray`` and
         ``scipy.sparse.matrices``, the densities will be scalars.
         If no operator is provided, the density of states is calculated
@@ -54,7 +54,7 @@ class SpectralDensity:
         Number of random vectors for the KPM method.
     num_moments : positive int, default: 100
         Number of moments, order of the KPM expansion. Mutually exclusive
-        with 'energy_resolution'.
+        with ``energy_resolution``.
     energy_resolution : positive float, optional
         The resolution in energy of the KPM approximation to the spectral
         density. Mutually exclusive with 'num_moments'.
@@ -76,10 +76,22 @@ class SpectralDensity:
         not provided). If not provided, numpy's rng will be used; if it
         is an Integer, it will be used to seed numpy's rng, and if it is
         a random number generator, this is the one used.
+    kernel : callable, optional
+        Callable that takes moments and returns stabilized moments.
+        By default, the `~kwant.kpm.jackson_kernel` is used.
+        The Lorentz kernel is also accesible by passing
+        `~kwant.kpm.lorentz_kernel`.
+    mean : bool, default: ``True``
+        If ``True``, return the mean spectral density for the vectors
+        used, otherwise return an array of densities for each vector.
+    accumulate_vectors : bool, default: ``True``
+        Whether to save or discard each vector produced by the vector
+        factory. If it is set to ``False``, it is not possible to
+        increase the number of moments, but less memory is used.
 
     Notes
     -----
-    When passing an ``operator`` defined in `~kwant.operator`, the
+    When passing an operator defined in `~kwant.operator`, the
     result of ``operator(bra, ket)`` depends on the attribute ``sum``
     of such operator. If ``sum=True``, densities will be scalars, that
     is, total densities of the system. If ``sum=False`` the densities
@@ -109,7 +121,7 @@ class SpectralDensity:
     >>> lat = kwant.lattice.honeycomb()
     >>> syst = kwant.Builder()
     >>> syst[lat.shape(circle, (0, 0))] = 0
-    >>> syst[lat.neighbors()] = 1
+    >>> syst[lat.neighbors()] = -1
 
     and after finalizing the system, create an instance of
     `~kwant.kpm.SpectralDensity`
@@ -152,7 +164,7 @@ class SpectralDensity:
             hamiltonian = hamiltonian.hamiltonian_submatrix(params=params,
                                                             sparse=True)
         try:
-            hamiltonian = scipy.sparse.csr_matrix(hamiltonian)
+            hamiltonian = csr_matrix(hamiltonian)
         except Exception:
             raise ValueError("'hamiltonian' is neither a matrix "
                              "nor a Kwant system.")
@@ -165,11 +177,11 @@ class SpectralDensity:
         elif callable(operator):
             self.operator = operator
         elif hasattr(operator, 'dot'):
-            operator = scipy.sparse.csr_matrix(operator)
+            operator = csr_matrix(operator)
             self.operator = lambda bra, ket: np.vdot(bra, operator.dot(ket))
         else:
-            raise ValueError('Parameter `operator` has no `.dot` '
-                             'attribute and is not callable.')
+            raise ValueError("Parameter 'operator' has no '.dot' "
+                             "attribute and is not callable.")
 
         self._vector_factory = vector_factory or \
             (lambda n: np.exp(2j * np.pi * rng.random_sample(n)))
@@ -188,43 +200,59 @@ class SpectralDensity:
         elif num_moments is None:
             num_moments = 100
 
-        must_be_positive_int = ['num_vectors', 'num_moments']
-        for var in must_be_positive_int:
-            val = locals()[var]
-            if val <= 0 or val != int(val):
-                raise ValueError('{} must be a positive integer'.format(var))
+        if num_moments <= 0 or num_moments != int(num_moments):
+                raise ValueError("'num_moments' must be a positive integer")
         if eps <= 0:
-            raise ValueError('eps must be positive')
+            raise ValueError("'eps' must be positive")
 
-        for r in range(num_vectors):
-            self._rand_vect_list.append(
-                self._vector_factory(self.hamiltonian.shape[0]))
-        self._last_two_alphas = [0.] * num_vectors
-        self._moments_list = [0.] * num_vectors
+        if vector_factory is None:
+            self._vector_factory = _VectorFactory(
+                RandomVectors(hamiltonian, rng=rng),
+                num_vectors=num_vectors,
+                accumulate=accumulate_vectors)
+        else:
+            self._vector_factory = _VectorFactory(
+                vector_factory,
+                num_vectors=num_vectors,
+                accumulate=accumulate_vectors)
+        num_vectors = self._vector_factory.num_vectors
+
+        self._last_two_alphas = []
+        self._moments_list = []
 
         self.num_moments = num_moments
-        self.num_vectors = 0  # new random vectors will be used
         self._update_moments_list(self.num_moments, num_vectors)
-        self.num_vectors = num_vectors
 
+        # set kernel before calling moments
+        self.kernel = kernel if kernel is not None else jackson_kernel
         moments = self._moments()
-        xk_rescaled, rho, self._gammas = _calc_fft_moments(
-            moments, 2 * self.num_moments)
-        self.energies = xk_rescaled * self._a + self._b
-        self.densities = rho
+        self.densities, self._gammas = _calc_fft_moments(moments)
+
+    @property
+    def energies(self):
+        return (self._a * _chebyshev_nodes(SAMPLING * self.num_moments)
+                + self._b)
+    @property
+    def num_vectors(self):
+        return len(self._moments_list)
 
     def __call__(self, energy=None):
         """Return the spectral density evaluated at ``energy``.
 
         Parameters
         ----------
-        energy : float or sequence of float, optional
+        energy : float or sequence of floats, optional
 
         Returns
         -------
-        float, if ``energy`` is float, array of float if ``energy``
-        is a sequence, a tuple (energies, densities) if
-        ``energy`` was not provided.
+        ``(energies, densities)`` if the ``energy`` parameter is not
+        provided, else ``densities``.
+
+        energies : array of floats
+            Drawn from the nodes of the highest Chebyshev polynomial.
+        densities : float or array of floats
+            single ``float`` if the ``energy`` parameter is a single
+            ``float``, else an array of ``float``.
 
         Notes
         -----
@@ -284,11 +312,11 @@ class SpectralDensity:
         ----------
         num_moments: positive int
             The number of Chebyshev moments to add. Mutually
-            exclusive with 'energy_resolution'.
+            exclusive with ``energy_resolution``.
         energy_resolution: positive float, optional
             Features wider than this resolution are visible
             in the spectral density. Mutually exclusive with
-            'num_moments'.
+            ``num_moments``.
         """
         if not ((num_moments is None) ^ (energy_resolution is None)):
             raise TypeError("either 'num_moments' or 'energy_resolution' "
@@ -309,7 +337,7 @@ class SpectralDensity:
             num_moments = math.ceil((1.6 * self._a) / energy_resolution)
 
         if (num_moments is None or num_moments <= 0
-            or num_moments != int(num_moments)):
+                or num_moments != int(num_moments)):
             raise ValueError("'num_moments' must be a positive integer")
 
         self._update_moments_list(self.num_moments + num_moments,
@@ -328,8 +356,8 @@ class SpectralDensity:
 
         Parameters
         ----------
-        num_vectors: positive int
-            The number of random vectors to add.
+        num_vectors: positive int, optional
+            The number of vectors to add.
         """
         if num_vectors <= 0 or num_vectors != int(num_vectors):
             raise ValueError("'num_vectors' must be a positive integer")
@@ -350,14 +378,15 @@ class SpectralDensity:
         self.densities = rho
 
     def _moments(self):
-        # sum moments of all random vectors
-        moments = np.sum(np.asarray(self._moments_list).real, axis=0)
-        # divide by the number of random vectors
-        moments /= self.num_vectors
+        moments = np.real_if_close(self._moments_list)
+        # put moments in the first axis, to return an array of densities
+        moments = np.swapaxes(moments, 0, 1)
+        if self.mean:
+            moments = np.mean(moments, axis=1)
         # divide by scale factor to reflect the integral rescaling
         return moments / self._a
 
-    def _update_moments_list(self, n_moments, n_rand):
+    def _update_moments_list(self, n_moments, num_vectors):
         """Calculate the Chebyshev moments of an operator's spectral
         density.
 
@@ -369,23 +398,25 @@ class SpectralDensity:
         ----------
         n_moments : integer
             Number of Chebyshev moments.
-        n_rand : integer
-            Number of random vectors used for sampling.
+        num_vectors : integer
+            Number of vectors used for sampling.
         """
 
-        if self.num_vectors == n_rand:
+        if self.num_vectors == num_vectors:
             r_start = 0
-            new_rand_vect = 0
-        elif self.num_vectors < n_rand:
+            new_vectors = 0
+        elif self.num_vectors < num_vectors:
             r_start = self.num_vectors
-            new_rand_vect = n_rand - self.num_vectors
+            new_vectors = num_vectors - self.num_vectors
         else:
-            raise ValueError('Cannot decrease number of random vectors')
+            raise ValueError('Cannot decrease number of vectors')
+        self._moments_list.extend([0.] * new_vectors)
+        self._last_two_alphas.extend([0.] * new_vectors)
 
         if n_moments == self.num_moments:
             m_start = 2
             new_moments = 0
-            if new_rand_vect == 0:
+            if new_vectors == 0:
                 # nothing new to calculate
                 return
         else:
@@ -394,15 +425,15 @@ class SpectralDensity:
             if new_moments < 0:
                 raise ValueError('Cannot decrease number of moments')
 
-            if new_rand_vect != 0:
+            if new_vectors != 0:
                 raise ValueError("Only 'num_moments' *or* 'num_vectors' "
                                  "may be updated at a time.")
 
-        for r in range(r_start, n_rand):
-            alpha_zero = self._rand_vect_list[r]
+        for r in range(r_start, num_vectors):
+            alpha_zero = self._vector_factory[r]
 
             one_moment = [0.] * n_moments
-            if new_rand_vect > 0:
+            if new_vectors > 0:
                 alpha = alpha_zero
                 alpha_next = self.hamiltonian.matvec(alpha)
                 if self.operator is None:
@@ -463,7 +494,7 @@ def _rescale(hamiltonian, eps, v0, bounds):
     hamiltonian : 2D array
         Hamiltonian of the system.
     eps : scalar
-        Ensures that the bounds 'a' and 'b' are strict.
+        Ensures that the bounds are strict.
     v0 : random vector, or None
         Used as the initial residual vector for the algorithm that
         finds the lowest and highest eigenvalues.
@@ -479,10 +510,10 @@ def _rescale(hamiltonian, eps, v0, bounds):
     if bounds:
         lmin, lmax = bounds
     else:
-        lmax = float(sla.eigsh(hamiltonian, k=1, which='LA',
-                               return_eigenvectors=False, tol=tol, v0=v0))
-        lmin = float(sla.eigsh(hamiltonian, k=1, which='SA',
-                               return_eigenvectors=False, tol=tol, v0=v0))
+        lmax = float(eigsh(hamiltonian, k=1, which='LA',
+                           return_eigenvectors=False, tol=tol, v0=v0))
+        lmin = float(eigsh(hamiltonian, k=1, which='SA',
+                           return_eigenvectors=False, tol=tol, v0=v0))
 
     a = np.abs(lmax-lmin) / (2. - eps)
     b = (lmax+lmin) / 2.
@@ -495,7 +526,7 @@ def _rescale(hamiltonian, eps, v0, bounds):
     def rescaled(v):
         return (hamiltonian.dot(v) - b * v) / a
 
-    rescaled_ham = sla.LinearOperator(shape=hamiltonian.shape, matvec=rescaled)
+    rescaled_ham = LinearOperator(shape=hamiltonian.shape, matvec=rescaled)
 
     return rescaled_ham, (a, b)
 
