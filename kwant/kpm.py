@@ -7,6 +7,9 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 import math
+from operator import add
+from collections import Iterable
+from functools import reduce
 import numpy as np
 from numpy.polynomial.chebyshev import chebval
 from scipy.sparse import coo_matrix, csr_matrix
@@ -16,10 +19,12 @@ import scipy.fftpack as fft
 
 from . import system
 from ._common import ensure_rng
-from .operator import _LocalOperator
+from .operator import (_LocalOperator, _get_tot_norbs, _get_all_orbs,
+                       _normalize_site_where)
+from .graph.defs import gint_dtype
 
 __all__ = ['SpectralDensity',
-           'jackson_kernel', 'lorentz_kernel',
+           'RandomVectors', 'LocalVectors', 'jackson_kernel', 'lorentz_kernel',
            'fermi_distribution']
 
 SAMPLING = 2 # number of sampling points to number of moments ratio
@@ -52,20 +57,18 @@ class SpectralDensity:
         dimension of the result of ``operator(bra, ket)``. If it has a
         ``dot`` method, such as ``numpy.ndarray`` and
         ``scipy.sparse.matrices``, the densities will be scalars.
-        If no operator is provided, the density of states is calculated
-        with a faster algorithm.
-    num_vectors : positive int, default: 10
-        Number of random vectors for the KPM method.
+    num_vectors : positive int, or None, default: 10
+        Number of vectors used in the KPM expansion. If ``None``, the
+        number of vectors used equals the length of the 'vector_factory'.
     num_moments : positive int, default: 100
         Number of moments, order of the KPM expansion. Mutually exclusive
         with ``energy_resolution``.
     energy_resolution : positive float, optional
         The resolution in energy of the KPM approximation to the spectral
-        density. Mutually exclusive with 'num_moments'.
-    vector_factory : function, optional
-        The user defined function ``f(n)`` generates random vectors of
-        length ``n`` that will be used in the algorithm.
-        If not provided, random phase vectors are used.
+        density. Mutually exclusive with ``num_moments``.
+    vector_factory : iterable, optional
+        If provided, it should contain (or yield) vectors of the size of
+        the system. If not provided, random phase vectors are used.
         The default random vectors are optimal for most cases, see the
         discussions in [1]_ and [2]_.
     bounds : pair of floats, optional
@@ -187,13 +190,11 @@ class SpectralDensity:
             raise ValueError("Parameter 'operator' has no '.dot' "
                              "attribute and is not callable.")
 
-        self._vector_factory = vector_factory or \
-            (lambda n: np.exp(2j * np.pi * rng.random_sample(n)))
         self.mean = mean
         rng = ensure_rng(rng)
         # store this vector for reproducibility
         self._v0 = np.exp(2j * np.pi * rng.random_sample(hamiltonian.shape[0]))
-        self._rand_vect_list = []
+
         # Hamiltonian rescaled as in Eq. (24)
         self.hamiltonian, (self._a, self._b) = _rescale(hamiltonian,
                                                         eps=self.eps,
@@ -342,8 +343,8 @@ class SpectralDensity:
         moments = self._moments()
         self.densities, self._gammas = _calc_fft_moments(moments)
 
-    def add_vectors(self, num_vectors):
-        """Increase the number of random vectors.
+    def add_vectors(self, num_vectors=None):
+        """Increase the number of vectors
 
         Parameters
         ----------
@@ -355,7 +356,6 @@ class SpectralDensity:
 
         self._update_moments_list(self.num_moments,
                                   self.num_vectors + num_vectors)
-        self.num_vectors += num_vectors
 
         # recalculate quantities derived from the moments
         moments = self._moments()
@@ -407,6 +407,9 @@ class SpectralDensity:
                 # nothing new to calculate
                 return
         else:
+            if not self._vector_factory.accumulate:
+                raise ValueError("Cannot increase the number of moments if "
+                                 "'accumulate_vectors' is 'False'.")
             new_moments = n_moments - self.num_moments
             m_start = self.num_moments
             if new_moments < 0:
@@ -473,6 +476,142 @@ class SpectralDensity:
                 self._moments_list[r] = one_moment
 
 
+class _VectorFactory:
+    """Factory for Hilbert space vectors.
+
+    Parameters
+    ----------
+    vectors : iterable
+        Iterable of Hilbert space vectors.
+    num_vectors : int, optional
+        Total number of vectors. If not specified, will be set to the
+        length of 'vectors'.
+    accumulate : bool, default: True
+        If True, the attribute 'saved_vectors' will store the vectors
+        generated.
+    """
+
+    def __init__(self, vectors=None, num_vectors=None, accumulate=True):
+        assert isinstance(vectors, Iterable)
+        try:
+            _len = len(vectors)
+            if num_vectors is None:
+                num_vectors = _len
+        except TypeError:
+            _len = np.inf
+            if num_vectors is None:
+                raise ValueError("'num_vectors' must be specified when "
+                                 "'vectors' has no len() method.")
+        self._max_vectors = _len
+        self._iterator = iter(vectors)
+
+        self.accumulate = accumulate
+        self.saved_vectors = []
+
+        self.num_vectors = 0
+        self.add_vectors(num_vectors=num_vectors)
+
+        self._last_idx = -np.inf
+        self._last_vector = None
+
+    def _fill_in_saved_vectors(self, index):
+        if index < self._last_idx and not self.accumulate:
+            raise ValueError("Cannot get previous values if 'accumulate' "
+                             "is False")
+
+        if index >= self.num_vectors:
+            raise IndexError('Requested more vectors than available')
+
+        self._last_idx = index
+        if self.accumulate:
+            if self.saved_vectors[index] is None:
+                self.saved_vectors[index] = next(self._iterator)
+        else:
+            self._last_vector = next(self._iterator)
+
+    def __getitem__(self, index):
+        self._fill_in_saved_vectors(index)
+        if self.accumulate:
+            return self.saved_vectors[index]
+        return self._last_vector
+
+    def add_vectors(self, num_vectors=None):
+        """Increase the number of vectors
+
+        Parameters
+        ----------
+        num_vectors: positive int, optional
+            The number of vectors to add.
+        """
+        if num_vectors is None:
+            raise ValueError("'num_vectors' must be specified.")
+        else:
+            if num_vectors <= 0 or num_vectors != int(num_vectors):
+                raise ValueError("'num_vectors' must be a positive integer")
+            elif self.num_vectors + num_vectors > self._max_vectors:
+                raise ValueError("'num_vectors' is larger than available "
+                                 "vectors")
+
+        self.num_vectors += num_vectors
+
+        if self.accumulate:
+            self.saved_vectors.extend([None] * num_vectors)
+
+
+def RandomVectors(syst, where=None, rng=None):
+    """Returns a random phase vector iterator for the sites in 'where'.
+
+    Parameters
+    ----------
+    syst : `~kwant.system.FiniteSystem` or matrix Hamiltonian
+        If a system is passed, it should contain no leads.
+    where : sequence of `int` or `~kwant.builder.Site`, or callable, optional
+        Spatial range of the vectors produced. If ``syst`` is a
+        `~kwant.system.FiniteSystem`, where behaves as in
+        `~kwant.operator.Density`. If ``syst`` is a matrix, ``where``
+        must be a list of integers with the indices where column vectors
+        are nonzero.
+    """
+    rng = ensure_rng(rng)
+    tot_norbs, orbs = _normalize_orbs_where(syst, where)
+    while True:
+        vector = np.zeros(tot_norbs, dtype=complex)
+        vector[orbs] = np.exp(2j * np.pi * rng.random_sample(len(orbs)))
+        yield vector
+
+
+class LocalVectors:
+    """Generates a local vector iterator for the sites in 'where'.
+
+    Parameters
+    ----------
+    syst : `~kwant.system.FiniteSystem` or matrix Hamiltonian
+        If a system is passed, it should contain no leads.
+    where : sequence of `int` or `~kwant.builder.Site`, or callable, optional
+        Spatial range of the vectors produced. If ``syst`` is a
+        `~kwant.system.FiniteSystem`, where behaves as in
+        `~kwant.operator.Density`. If ``syst`` is a matrix, ``where``
+        must be a list of integers with the indices where column vectors
+        are nonzero.
+    """
+    def __init__(self, syst, where, *args):
+        self.tot_norbs, self.orbs = _normalize_orbs_where(syst, where)
+        self._idx = 0
+
+    def __len__(self,):
+        return len(self.orbs)
+
+    def __iter__(self,):
+        return self
+
+    def __next__(self,):
+        if self._idx < len(self):
+            vector = np.zeros(self.tot_norbs)
+            vector[self.orbs[self._idx]] = 1
+            self._idx = self._idx + 1
+            return vector
+        raise StopIteration('Too many vectors requested from this generator')
+
 # ### Auxiliary functions
 
 def fermi_distribution(e, mu, temp):
@@ -495,6 +634,31 @@ def fermi_distribution(e, mu, temp):
         return np.array(np.less(e - mu, 0), dtype=float)
     else:
         return 1 / (1 + np.exp((e - mu) / temp))
+
+def _from_where_to_orbs(syst, where):
+    """Returns a list of slices of the orbitals in 'where'"""
+    assert isinstance(syst, system.System)
+    where = _normalize_site_where(syst, where)
+    _site_ranges = np.asarray(syst.site_ranges, dtype=gint_dtype)
+    offsets, norbs = _get_all_orbs(where, _site_ranges)
+    # concatenate all the orbitals
+    orbs = [list(range(start, start+orbs))
+            for start, orbs in zip(offsets[:, 0], norbs[:, 0])]
+    orbs = reduce(add, orbs)
+    return orbs
+
+
+def _normalize_orbs_where(syst, where):
+    """Return total number of orbitals and a list of slices of
+    orbitals in 'where'"""
+    if isinstance(syst, system.System):
+        tot_norbs = _get_tot_norbs(syst)
+        orbs = _from_where_to_orbs(syst, where)
+    else:
+        tot_norbs = csr_matrix(syst).shape[0]
+        orbs = (range(tot_norbs) if where is None
+                else np.asarray(where, int))
+    return tot_norbs, orbs
 
 
 def jackson_kernel(moments):
