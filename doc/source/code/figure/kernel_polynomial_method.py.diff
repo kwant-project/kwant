@@ -40,35 +40,88 @@
      return syst
  #HIDDEN_END_sys1
  
+ #HIDDEN_BEGIN_sys2
+ # define a Haldane system
+ def make_syst_topo(r=30, a=1, t=1, t2=0.5):
+     syst = kwant.Builder()
+     lat = kwant.lattice.honeycomb(a, norbs=1, name=['a', 'b'])
+ 
+     def circle(pos):
+         x, y = pos
+         return x ** 2 + y ** 2 < r ** 2
+ 
+     syst[lat.shape(circle, (0, 0))] = 0.
+     syst[lat.neighbors()] = t
+     # add second neighbours hoppings
+     syst[lat.a.neighbors()] = 1j * t2
+     syst[lat.b.neighbors()] = -1j * t2
+     syst.eradicate_dangling()
+ 
+     return lat, syst.finalized()
+ #HIDDEN_END_sys2
+ 
+ 
+ #HIDDEN_BEGIN_sys3
+ # define the system
+ def make_syst_staggered(r=30, t=-1, a=1, m=0.1):
+     syst = kwant.Builder()
+     lat = kwant.lattice.honeycomb(a, norbs=1)
+ 
+     def circle(pos):
+         x, y = pos
+         return x ** 2 + y ** 2 < r ** 2
+ 
+     syst[lat.a.shape(circle, (0, 0))] = m
+     syst[lat.b.shape(circle, (0, 0))] = -m
+     syst[lat.neighbors()] = t
+     syst.eradicate_dangling()
+ 
+     return syst
+ #HIDDEN_END_sys3
  
  # Plot several density of states curves on the same axes.
 -def plot_dos(labels_to_data):
-+def plot_dos(labels_to_data, file_name=None):
++def plot_dos(labels_to_data, file_name=None, ylabel="DoS [a.u.]"):
+     plt.figure(figsize=(5,4))
      for label, (x, y) in labels_to_data:
-         plt.plot(x, y, label=label, linewidth=2)
+         plt.plot(x, y.real, label=label, linewidth=2)
      plt.legend(loc=2, framealpha=0.5)
      plt.xlabel("energy [t]")
-     plt.ylabel("DoS [a.u.]")
+     plt.ylabel(ylabel)
 -    plt.show()
 +    save_figure(file_name)
      plt.clf()
  
+ 
+ # Plot fill density of states plus curves on the same axes.
+-def plot_dos_and_curves(dos labels_to_data):
++def plot_dos_and_curves(dos, labels_to_data, file_name=None, ylabel="DoS [a.u.]"):
+     plt.figure(figsize=(5,4))
+     plt.fill_between(dos[0], dos[1], label="DoS [a.u.]",
+                      alpha=0.5, color='gray')
+     for label, (x, y) in labels_to_data:
+         plt.plot(x, y, label=label, linewidth=2)
+     plt.legend(loc=2, framealpha=0.5)
+     plt.xlabel("energy [t]")
+     plt.ylabel(ylabel)
+-    plt.show()
++    save_figure(file_name)
+     plt.clf()
  
  def site_size_conversion(densities):
      return 3 * np.abs(densities) / max(densities)
  
  
  # Plot several local density of states maps in different subplots
- def plot_ldos(fsyst, axes, titles_to_data, file_name=None):
-     for ax, (title, ldos) in zip(axes, titles_to_data):
-         site_size = site_size_conversion(ldos)  # convert LDoS to sizes
-         kwant.plot(fsyst, site_size=site_size, site_color=(0, 0, 1, 0.3), ax=ax)
+ def plot_ldos(syst, densities, file_name=None):
+     fig, axes = plt.subplots(1, len(densities), figsize=(7*len(densities), 7))
+     for ax, (title, rho) in zip(axes, densities):
+         kwant.plotter.density(syst, rho.real, ax=ax)
          ax.set_title(title)
          ax.set(adjustable='box', aspect='equal')
 -    plt.show()
 +    save_figure(file_name)
      plt.clf()
- 
  
 +def save_figure(file_name):
 +    if not file_name:
@@ -187,11 +240,9 @@
  #HIDDEN_BEGIN_op4
      zero_energy_ldos = local_dos(energy=0)
      finite_energy_ldos = local_dos(energy=1)
- 
-     _, axes = plt.subplots(1, 2, figsize=(12, 7))
-     plot_ldos(fsyst, axes,[
+     plot_ldos(fsyst, [
          ('energy = 0', zero_energy_ldos),
-         ('energy = 1', finite_energy_ldos),
+         ('energy = 1', finite_energy_ldos)
 -    ])
 +     ],
 +     file_name='kpm_ldos'
@@ -199,15 +250,43 @@
  #HIDDEN_END_op4
  
  
+ def ldos_sites_example():
+     fsyst = make_syst_staggered().finalized()
+ #HIDDEN_BEGIN_op5
+     # find 'A' and 'B' sites in the unit cell at the center of the disk
+     center_tag = np.array([0, 0])
+     where = lambda s: s.tag == center_tag
+     # make local vectors
+     vector_factory = kwant.kpm.LocalVectors(fsyst, where)
+ #HIDDEN_END_op5
+ 
+ #HIDDEN_BEGIN_op6
+     # 'num_vectors' can be unspecified when using 'LocalVectors'
+     local_dos = kwant.kpm.SpectralDensity(fsyst, num_vectors=None,
+                                           vector_factory=vector_factory,
+                                           mean=False)
+     energies, densities = local_dos()
+     plot_dos([
+         ('A sublattice', (energies, densities[:, 0])),
+         ('B sublattice', (energies, densities[:, 1])),
+-    ])
++     ],
++     file_name='kpm_ldos_sites'
++    )
+ #HIDDEN_END_op6
+ 
+ 
  def vector_factory_example(fsyst):
      spectrum = kwant.kpm.SpectralDensity(fsyst)
  #HIDDEN_BEGIN_fact1
-     # construct vectors with n random elements -1 or +1.
-     def binary_vectors(n):
-         return np.rint(np.random.random_sample(n)) * 2 - 1
+     # construct a generator of vectors with n random elements -1 or +1.
+     n = fsyst.hamiltonian_submatrix(sparse=True).shape[0]
+     def binary_vectors():
+         while True:
+            yield np.rint(np.random.random_sample(n)) * 2 - 1
  
      custom_factory = kwant.kpm.SpectralDensity(fsyst,
-                                                vector_factory=binary_vectors)
+                                                vector_factory=binary_vectors())
  #HIDDEN_END_fact1
      plot_dos([
          ('default vector factory', spectrum()),
@@ -232,6 +311,47 @@
          ('bilinear operator', rho_alt_spectrum()),
      ])
  
+ def conductivity_example():
+ #HIDDEN_BEGIN_cond
+     # construct the Haldane model
+     lat, fsyst = make_syst_topo()
+     # find 'A' and 'B' sites in the unit cell at the center of the disk
+     where = lambda s: np.linalg.norm(s.pos) < 3
+ 
+     # component 'xx'
+     s_factory = kwant.kpm.LocalVectors(fsyst, where)
+     cond_xx = kwant.kpm.conductivity(fsyst, alpha='x', beta='x', mean=True,
+                                      num_vectors=None, vector_factory=s_factory)
+     # component 'xy'
+     s_factory = kwant.kpm.LocalVectors(fsyst, where)
+     cond_xy = kwant.kpm.conductivity(fsyst, alpha='x', beta='y', mean=True,
+                                      num_vectors=None, vector_factory=s_factory)
+ 
+     energies = cond_xx.energies
+     cond_array_xx = np.array([cond_xx(e, temp=0.01) for e in energies])
+     cond_array_xy = np.array([cond_xy(e, temp=0.01) for e in energies])
+ 
+     # area of the unit cell per site
+     area_per_site = np.abs(np.cross(*lat.prim_vecs)) / len(lat.sublattices)
+     cond_array_xx /= area_per_site
+     cond_array_xy /= area_per_site
+ #HIDDEN_END_cond
+     # ldos
+     s_factory = kwant.kpm.LocalVectors(fsyst, where)
+     spectrum = kwant.kpm.SpectralDensity(fsyst, num_vectors=None,
+                                          vector_factory=s_factory)
+ 
+     plot_dos_and_curves(
+     (spectrum.energies, spectrum.densities * 8),
+     [
+         (r'Longitudinal conductivity $\sigma_{xx} / 4$',
+          (energies, cond_array_xx / 4)),
+         (r'Hall conductivity $\sigma_{xy}$',
+          (energies, cond_array_xy))],
+         ylabel=r'$\sigma [e^2/h]$',
+         file_name='kpm_cond'
+     )
+ 
  
  def main():
      simple_dos_example()
@@ -242,8 +362,10 @@
      increasing_accuracy_example(fsyst)
      operator_example(fsyst)
      ldos_example(fsyst)
+     ldos_sites_example()
      vector_factory_example(fsyst)
      bilinear_map_operator_example(fsyst)
+     conductivity_example()
  
  
  # Call the main function if the script gets executed (as opposed to imported).

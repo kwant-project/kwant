@@ -13,18 +13,48 @@ eigenenergies and eigenstates, but more in the *density of states*.
 The kernel polynomial method (KPM), is an algorithm to obtain a polynomial
 expansion of the density of states. It can also be used to calculate the
 spectral density of arbitrary operators.  Kwant has an implementation of the
-KPM method that is based on the algorithms presented in Ref. [1]_.
-
-Roughly speaking, KPM approximates the density of states (or any other spectral
-density) by expanding the action of the Hamiltonian (and operator of interest)
-on a (small) set of *random vectors* as a sum of Chebyshev polynomials up to
-some order, and then averaging. The accuracy of the method can be tuned by
-modifying the order of the Chebyshev expansion and the number of random
-vectors.  See notes on accuracy_ below for details.
+KPM method `kwant.kpm`, that is based on the algorithms presented in Ref. [1]_.
 
 .. seealso::
     The complete source code of this example can be found in
     :download:`kernel_polynomial_method.py </code/download/kernel_polynomial_method.py>`
+
+
+Introduction
+************
+
+Our aim is to use the kernel polynomial method to obtain the spectral density
+:math:`ρ_A(E)`, as a function of the energy :math:`E`, of some Hilbert space
+operator :math:`A`.  We define
+
+.. math::
+
+    ρ_A(E) = ρ(E) A(E),
+
+where :math:`A(E)` is the expectation value of :math:`A` for all the
+eigenstates of the Hamiltonian with energy :math:`E`,  and the density of
+states is
+
+.. math::
+
+  ρ(E) = \sum_{k=0}^{D-1} δ(E-E_k) = \mathrm{Tr}\left(\delta(E-H)\right),
+
+where :math:`H` is the Hamiltonian of the system, :math:`D` the
+Hilbert space dimension, and :math:`E_k` the eigenvalues.
+
+In the special case when :math:`A` is the identity, then :math:`ρ_A(E)` is
+simply :math:`ρ(E)`, the density of states.
+
+
+Calculating the density of states
+*********************************
+
+Roughly speaking, KPM approximates the density of states, or any other spectral
+density, by expanding the action of the Hamiltonian and operator of interest
+on a small set of *random vectors* (or *local vectors* for local density of
+states), as a sum of Chebyshev polynomials up to some order, and then averaging.
+The accuracy of the method can be tuned by modifying the order of the Chebyshev
+expansion and the number of vectors. See notes on accuracy_ below for details.
 
 .. _accuracy:
 .. specialnote:: Performance and accuracy
@@ -48,37 +78,28 @@ vectors.  See notes on accuracy_ below for details.
     number of random vectors is in general enough, and increasing this number
     will not result in a visible improvement of the approximation.
 
-
-Introduction
-************
-
-Our aim is to use the kernel polynomial method to obtain the spectral density
-:math:`ρ_A(E)`, as a function of the energy :math:`E`, of some Hilbert space
-operator :math:`A`.  We define
+The global *spectral density* :math:`ρ_A(E)` is approximated by the stochastic
+trace, the average expectation value of random vectors :math:`r`
 
 .. math::
 
-    ρ_A(E) = ρ(E) A(E),
+    ρ_A(E) = \mathrm{Tr}\left(A\delta(E-H)\right) \sim \frac{1}{R}
+    \sum_r \langle r \lvert A \delta(E-H) \rvert r \rangle,
 
-where :math:`A(E)` is the expectation value of :math:`A` for all the
-eigenstates of the Hamiltonian with energy :math:`E`,  and the density of
-states is
+while the *local spectral density* for a site :math:`i` is
 
 .. math::
 
-  ρ(E) = \sum_{k=0}^{D-1} δ(E-E_k),
+    ρ^i_A(E) = \langle i \lvert A \delta(E-H) \rvert i \rangle,
 
-:math:`D` being the Hilbert space dimension, and :math:`E_k` the eigenvalues.
-
-In the special case when :math:`A` is the identity, then :math:`ρ_A(E)` is
-simply :math:`ρ(E)`, the density of states.
+which is an exact expression.
 
 
-Calculating the density of states
-*********************************
+Global spectral densities using random vectors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the following example, we will use the KPM implementation in Kwant
-to obtain the density of states of a graphene disk.
+to obtain the (global) density of states of a graphene disk.
 
 We start by importing kwant and defining our system.
 
@@ -138,7 +159,7 @@ respect to a Fermi-Dirac distribution:
 .. specialnote:: Stability and performance: spectral bounds
 
     The KPM method internally rescales the spectrum of the Hamiltonian to the
-    interval ``(-1, 1)`` (see Ref [1]_ for details), which requires calculating
+    interval ``(-1, 1)`` (see Ref. [1]_ for details), which requires calculating
     the boundaries of the spectrum (using ``scipy.sparse.linalg.eigsh``). This
     can be very costly for large systems, so it is possible to pass this
     explicitly as via the ``bounds`` parameter when instantiating the
@@ -149,6 +170,49 @@ respect to a Fermi-Dirac distribution:
     spectrum strictly contained in the interval ``(-1, 1)``. If bounds are not
     provided then the tolerance on the bounds calculated with
     ``scipy.sparse.linalg.eigsh`` is set to ``epsilon/2``.
+
+
+Local spectral densities using local vectors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The *local density of states* can be obtained without
+using random vectors, and using local vectors instead. This approach is best
+when we want to estimate the local density on a small number of sites of
+the system. The accuracy of this approach depends only on the number of
+moments, but the computational cost increases linearly with the number of
+sites sampled.
+
+To output local densities for each local vector, and not the average,
+we set the parameter ``mean=False``, and the local vectors will be created
+with the `~kwant.kpm.LocalVectors` generator (see advanced_topics_ for details).
+
+The spectral density can be restricted to the expectation value inside
+a region of the system by passing a ``where`` function or list of sites
+to the `~kwant.kpm.RandomVectors` or `~kwant.kpm.LocalVectors` generators.
+
+In the following example, we compute the local density of states at the center
+of the graphene disk, and we add a staggering potential between the two
+sublattices.
+
+.. literalinclude:: /code/include/kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_sys3
+    :end-before: #HIDDEN_END_sys3
+
+Next, we choose one site of each sublattice "A" and "B",
+
+.. literalinclude:: /code/include/kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_op5
+    :end-before: #HIDDEN_END_op5
+
+and plot their respective local density of states.
+
+.. literalinclude:: /code/include/kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_op6
+    :end-before: #HIDDEN_END_op6
+
+.. image:: /code/figure/kpm_ldos_sites.*
+
+Note that there is no noise comming from the random vectors.
 
 
 Increasing the accuracy of the approximation
@@ -169,10 +233,9 @@ This will update the number of calculated moments and also the default
 number of sampling points such that the maximum distance between successive
 energy points is ``energy_resolution`` (see notes on accuracy_).
 
-.. image:: /code/figure/kpm_dos_acc.*
-
 Alternatively, you can directly increase the number of moments
 with ``add_moments``, or the number of random vectors with ``add_vectors``.
+The added vectors will be generated with the ``vector_factory``.
 
 .. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_acc2
@@ -182,6 +245,7 @@ with ``add_moments``, or the number of random vectors with ``add_vectors``.
 
 
 .. _operator_spectral_density:
+
 
 Calculating the spectral density of an operator
 ***********************************************
@@ -211,6 +275,10 @@ Or, to do the same calculation using `kwant.operator.Density`:
     :start-after: #HIDDEN_BEGIN_op2
     :end-before: #HIDDEN_END_op2
 
+
+Spectral density with random vectors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Using operators from `kwant.operator` allows us to calculate quantities
 such as the *local* density of states by telling the operator not to
 sum over all the sites of the system:
@@ -220,8 +288,11 @@ sum over all the sites of the system:
     :end-before: #HIDDEN_END_op3
 
 `~kwant.kpm.SpectralDensity` will properly handle this vector output,
-which allows us to plot the local density of states at different
-point in the spectrum:
+and will average the local density obtained with random vectors.
+
+The accuracy of this approximation depends on the number of random vectors used.
+This allows us to plot an approximate local density of states at different
+points in the spectrum:
 
 .. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_op4
@@ -229,18 +300,69 @@ point in the spectrum:
 
 .. image:: /code/figure/kpm_ldos.*
 
-This nicely illustrates the edge states of the graphene dot at zero
-energy, and the bulk states at higher energy.
+
+Calculating Kubo conductivity
+*****************************
+
+The Kubo conductivity can be calculated for a closed system with two
+KPM expansions. In `~kwant.kpm.Conductivity` we implemented the
+Kubo-Bastin formula of the conductivity and any temperature (see Ref. [2]_).
+With the help of `~kwant.kpm.Conductivity`,
+we can calculate any element of the conductivity tensor :math:`σ_{αβ}`,
+that relates the applied electric field to the expected current.
+
+.. math::
+
+    j_α = σ_{α, β} E_β
+
+In the following example, we will calculate the longitudinal
+conductivity :math:`σ_{xx}` and the Hall conductivity
+:math:`σ_{xy}`, for the Haldane model. This model is the first
+and one of the most simple ones for a topological insulator.
+
+The Haldane model consist of a honeycomb lattice, similar to graphene,
+with nearest neigbours hoppings. To turn it into a topological
+insulator we add imaginary second nearest neigbours hoppings, where
+the sign changes for each sublattice.
+
+.. literalinclude:: /code/include/kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_sys2
+    :end-before: #HIDDEN_END_sys2
+
+To calculate the bulk conductivity, we will select sites in the unit cell
+in the middle of the sample, and create a vector factory that outputs local
+vectors
+
+.. literalinclude:: /code/include/kernel_polynomial_method.py
+    :start-after: #HIDDEN_BEGIN_cond
+    :end-before: #HIDDEN_END_cond
+
+Note that the Kubo conductivity must be normalized with the area covered
+by the vectors. In this case, each local vector represents a site, and
+covers an area of half a unit cell, while the sum covers one unit cell.
+It is possible to use random vectors to get an average spectation
+value of the conductivity over large parts of the system. In this
+case, the area that normalizes the result, is the area covered by
+the random vectors.
+
+.. image:: /code/figure/kpm_cond.*
+
+
+.. _advanced_topics:
 
 
 Advanced topics
 ***************
 
-Custom distributions for random vectors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Custom distributions of vectors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 By default `~kwant.kpm.SpectralDensity` will use random vectors
 whose components are unit complex numbers with phases drawn
-from a uniform distribution. There are several reasons why you may
+from a uniform distribution. The generator is accesible through
+`~kwant.kpm.RandomVectors`.
+
+For large systems, one will generally resort to random vectors to sample the
+Hilbert space of the system. There are several reasons why you may
 wish to make a different choice of distribution for your random vectors,
 for example to enforce certain symmetries or to only use real-valued vectors.
 
@@ -251,6 +373,16 @@ and which returns a vector in that Hilbert space:
 .. literalinclude:: /code/include/kernel_polynomial_method.py
     :start-after: #HIDDEN_BEGIN_fact1
     :end-before: #HIDDEN_END_fact1
+
+Aditionally, a `~kwant.kpm.LocalVectors` generator is also available, that
+returns local vectors that correspond to the sites passed. Note that
+the vectors generated match the sites in order, and will be exhausted
+after all vectors are drawn from the factory.
+
+Both `~kwant.kpm.RandomVectors` and `~kwant.kpm.LocalVectors` take the
+argument ``where``, that restricts the non zero values of the vectors
+generated to the sites in ``where``.
+
 
 Reproducible calculations
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -286,3 +418,5 @@ __ operator_spectral_density_
 
 .. [1] `Rev. Mod. Phys., Vol. 78, No. 1 (2006)
     <https://arxiv.org/abs/cond-mat/0504627>`_.
+.. [2] `Phys. Rev. Lett. 114, 116602 (2015)
+    <https://arxiv.org/abs/1410.8140>`_.
