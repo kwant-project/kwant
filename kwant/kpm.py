@@ -6,19 +6,23 @@
 # http://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
-
 import math
 import numpy as np
-import scipy
-import scipy.sparse.linalg as sla
+from numpy.polynomial.chebyshev import chebval
+from scipy.sparse import coo_matrix, csr_matrix
+from scipy.integrate import simps
+from scipy.sparse.linalg import eigsh, LinearOperator
 import scipy.fftpack as fft
 
 from . import system
 from ._common import ensure_rng
 from .operator import _LocalOperator
 
-__all__ = ['SpectralDensity']
+__all__ = ['SpectralDensity',
+           'jackson_kernel', 'lorentz_kernel',
+           'fermi_distribution']
 
+SAMPLING = 2 # number of sampling points to number of moments ratio
 
 class SpectralDensity:
     """Calculate the spectral density of an operator.
@@ -148,13 +152,13 @@ class SpectralDensity:
 
     def __init__(self, hamiltonian, params=None, operator=None,
                  num_vectors=10, num_moments=None, energy_resolution=None,
-                 vector_factory=None, bounds=None, eps=0.05, rng=None):
+                 vector_factory=None, bounds=None, eps=0.05, rng=None,
+                 kernel=None, mean=True, accumulate_vectors=True):
 
         if num_moments and energy_resolution:
             raise TypeError("either 'num_moments' or 'energy_resolution' "
                             "must be provided.")
 
-        rng = ensure_rng(rng)
         # self.eps ensures that the rescaled Hamiltonian has a
         # spectrum strictly in the interval (-1,1).
         self.eps = eps
@@ -185,6 +189,8 @@ class SpectralDensity:
 
         self._vector_factory = vector_factory or \
             (lambda n: np.exp(2j * np.pi * rng.random_sample(n)))
+        self.mean = mean
+        rng = ensure_rng(rng)
         # store this vector for reproducibility
         self._v0 = np.exp(2j * np.pi * rng.random_sample(hamiltonian.shape[0]))
         self._rand_vect_list = []
@@ -262,27 +268,15 @@ class SpectralDensity:
         if energy is None:
             return self.energies, self.densities
         else:
-            energy = np.asarray(energy, dtype=complex)
-            rescaled_energy = (energy - self._b) / self._a
-            g_e = (np.pi * np.sqrt(1 - rescaled_energy)
-                   * np.sqrt(1 + rescaled_energy))
+            energy = np.asarray(energy)
+            e = (energy - self._b) / self._a
+            g_e = (np.pi * np.sqrt(1 - e) * np.sqrt(1 + e))
 
             moments = self._moments()
+            # factor 2 comes from the norm of the Chebyshev polynomials
+            moments[1:] = 2 * moments[1:]
 
-            m = np.arange(self.num_moments)
-
-            kernel = ((self.num_moments - m + 1) *
-                      np.cos(np.pi * m/(self.num_moments + 1)) +
-                      np.sin(np.pi * m/(self.num_moments + 1)) /
-                      np.tan(np.pi/(self.num_moments + 1)))
-            kernel = kernel / (self.num_moments + 1)
-
-            # transposes handle the case where operators have vector outputs
-            coef_cheb = np.transpose(moments.transpose() * kernel)
-            coef_cheb[1:] = 2 * coef_cheb[1:]
-
-            return np.transpose(np.polynomial.chebyshev.chebval(
-                    rescaled_energy, coef_cheb) / g_e).real
+            return np.transpose(chebval(e, moments) / g_e)
 
     def integrate(self, distribution_function=None):
         """Returns the total spectral density.
@@ -346,10 +340,7 @@ class SpectralDensity:
 
         # recalculate quantities derived from the moments
         moments = self._moments()
-        xk_rescaled, rho, self._gammas = _calc_fft_moments(
-            moments, 2 * self.num_moments)
-        self.energies = xk_rescaled * self._a + self._b
-        self.densities = rho
+        self.densities, self._gammas = _calc_fft_moments(moments)
 
     def add_vectors(self, num_vectors):
         """Increase the number of random vectors.
@@ -359,23 +350,16 @@ class SpectralDensity:
         num_vectors: positive int, optional
             The number of vectors to add.
         """
-        if num_vectors <= 0 or num_vectors != int(num_vectors):
-            raise ValueError("'num_vectors' must be a positive integer")
-        for r in range(num_vectors):
-            self._rand_vect_list.append(
-                self._vector_factory(self.hamiltonian.shape[0]))
-        self._moments_list.extend([0.] * num_vectors)
-        self._last_two_alphas.extend([0.] * num_vectors)
+        self._vector_factory.add_vectors(num_vectors)
+        num_vectors = self._vector_factory.num_vectors - self.num_vectors
+
         self._update_moments_list(self.num_moments,
                                   self.num_vectors + num_vectors)
         self.num_vectors += num_vectors
 
         # recalculate quantities derived from the moments
         moments = self._moments()
-        xk_rescaled, rho, self._gammas = _calc_fft_moments(
-            moments, 2 * self.num_moments)
-        self.energies = xk_rescaled * self._a + self._b
-        self.densities = rho
+        self.densities, self._gammas = _calc_fft_moments(moments)
 
     def _moments(self):
         moments = np.real_if_close(self._moments_list)
@@ -384,7 +368,10 @@ class SpectralDensity:
         if self.mean:
             moments = np.mean(moments, axis=1)
         # divide by scale factor to reflect the integral rescaling
-        return moments / self._a
+        moments /= self._a
+        # stabilized moments with a kernel
+        moments = self.kernel(moments)
+        return moments
 
     def _update_moments_list(self, n_moments, num_vectors):
         """Calculate the Chebyshev moments of an operator's spectral
@@ -479,11 +466,74 @@ class SpectralDensity:
                     alpha = alpha_save
                     one_moment[n] = self.operator(alpha_zero, alpha_next)
 
-            self._last_two_alphas[r] = (alpha, alpha_next)
-            self._moments_list[r] = one_moment[:]
+            if self._vector_factory.accumulate:
+                self._last_two_alphas[r] = (alpha, alpha_next)
+                self._moments_list[r] = one_moment[:]
+            else:
+                self._moments_list[r] = one_moment
 
 
 # ### Auxiliary functions
+
+def fermi_distribution(e, mu, temp):
+    """Returns the Fermi distribution f(e, µ, T) evaluated at 'e'.
+
+    Parameters
+    ----------
+    e : float or sequence of floats
+        Energy array where the Fermi distribution is evaluated.
+    mu : float
+        Chemical potential defined in the same units of energy as
+        the Hamiltonian.
+    temp : float
+        Temperature in units of energy, the same as defined in the
+        Hamiltonian.
+    """
+    if temp < 0:
+        raise ValueError("'temp' must be non-negative")
+    elif temp == 0:
+        return np.array(np.less(e - mu, 0), dtype=float)
+    else:
+        return 1 / (1 + np.exp((e - mu) / temp))
+
+
+def jackson_kernel(moments):
+    """Convolutes ``moments`` with the Jackson kernel.
+
+    Taken from Eq. (71) of `Rev. Mod. Phys., Vol. 78, No. 1 (2006)
+    <https://arxiv.org/abs/cond-mat/0504627>`_.
+    """
+
+    n_moments, *extra_shape = moments.shape
+    m = np.arange(n_moments)
+    kernel_array = ((n_moments - m + 1) *
+                    np.cos(np.pi * m/(n_moments + 1)) +
+                    np.sin(np.pi * m/(n_moments + 1)) /
+                    np.tan(np.pi/(n_moments + 1)))
+    kernel_array /= n_moments + 1
+
+    # transposes handle the case where operators have vector outputs
+    conv_moments = np.transpose(moments.transpose() * kernel_array)
+    return conv_moments
+
+
+def lorentz_kernel(moments, l=4):
+    """Convolutes ``moments`` with the Lorentz kernel.
+
+    Taken from Eq. (71) of `Rev. Mod. Phys., Vol. 78, No. 1 (2006)
+    <https://arxiv.org/abs/cond-mat/0504627>`_.
+
+    The additional parameter ``l`` controls the decay of the kernel.
+    """
+
+    n_moments, *extra_shape = moments.shape
+
+    m = np.arange(n_moments)
+    kernel_array = np.sinh(l * (1 - m / n_moments)) / np.sinh(l)
+
+    # transposes handle the case where operators have vector outputs
+    conv_moments = np.transpose(moments.transpose() * kernel_array)
+    return conv_moments
 
 
 def _rescale(hamiltonian, eps, v0, bounds):
@@ -530,37 +580,36 @@ def _rescale(hamiltonian, eps, v0, bounds):
 
     return rescaled_ham, (a, b)
 
+def _chebyshev_nodes(n_sampling):
+    """Return an array of 'n_sampling' points in the interval (-1,1)"""
+    raw, step = np.linspace(np.pi, 0, n_sampling,
+                            endpoint=False, retstep=True)
+    return np.cos(raw + step / 2)
 
-def _calc_fft_moments(moments, n_sampling):
-    """This function takes the normalised moments and returns an array
+
+def _calc_fft_moments(moments):
+    """This function takes the stabilized moments and returns an array
     of points and an array of the evaluated function at those points.
     """
     moments = np.asarray(moments)
     # extra_shape handles the case where operators have vector outputs
     n_moments, *extra_shape = moments.shape
-    moments_ext = np.zeros([n_sampling] + extra_shape)
-
-    # Jackson kernel, as in Eq. (71), and kernel improved moments,
-    # as in Eq. (81).
-    m = np.arange(n_moments)
-    kernel = ((n_moments - m + 1) * np.cos(np.pi * m / (n_moments + 1)) +
-              np.sin(np.pi * m / (n_moments + 1)) /
-              np.tan(np.pi / (n_moments + 1))) / (n_moments + 1)
+    n_sampling = SAMPLING * n_moments
+    moments_ext = np.zeros([n_sampling] + extra_shape, dtype=moments.dtype)
 
     # special points at the abscissas of Chebyshev integration
-    k = np.arange(0, n_sampling)
-    xk_rescaled = np.cos(np.pi * (k + 0.5) / n_sampling)
-    # prefactor in Eq. (80)
-    gk = np.pi * np.sqrt(1 - xk_rescaled ** 2)
+    e_rescaled = _chebyshev_nodes(n_sampling)
 
     # transposes handle the case where operators have vector outputs
-    moments_ext[:n_moments] = np.transpose(moments.transpose() * kernel)
+    moments_ext[:n_moments] = moments
     # The function evaluated in these special data points is the FFT of
     # the moments as in Eq. (83).
-    gammas = np.transpose(fft.dct(moments_ext.transpose(), type=3))
+    # The order of gammas must be reversed to match the energies in
+    # ascending order
+    gammas = np.transpose(fft.dct(moments_ext.transpose(), type=3))[::-1]
 
     # Element-wise division of moments_FFT over gk, as in Eq. (83).
+    gk = np.pi * np.sqrt(1 - e_rescaled ** 2)
     rho = np.transpose(np.divide(gammas.transpose(), gk))
 
-    # Reverse energies and densities to set ascending order.
-    return xk_rescaled[::-1], rho[::-1], gammas[::-1]
+    return rho, gammas
