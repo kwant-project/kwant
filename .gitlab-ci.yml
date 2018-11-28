@@ -1,6 +1,7 @@
-image: gitlab.kwant-project.org:5005/kwant/testing
+image: gitlab.kwant-project.org:5005/kwant/kwant
 
 stages:
+  - build-env
   - build
   - test
   - deploy
@@ -11,6 +12,69 @@ variables:
   # secret information, and using 'ssh-keyscan' causes the CI server's IP to be blacklisted
   IGNORE_HOSTKEY: "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
+## Building Docker environments
+## Only runs when docker specifications change
+
+.build-env: &build-env
+  stage: build-env
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  artifacts:
+    untracked: true
+    expire_in: 1 hour
+  before_script:
+    - mkdir -p /root/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /root/.docker/config.json
+
+build-env:ubuntu:
+  <<: *build-env
+  only:
+    changes:
+      - docker/Dockerfile.ubuntu
+  script:
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR/docker
+      --dockerfile $CI_PROJECT_DIR/docker/Dockerfile.ubuntu
+      --destination $CI_REGISTRY_IMAGE/ubuntu
+
+build-env:debian:
+  <<: *build-env
+  only:
+    changes:
+      - docker/Dockerfile.debian
+  script:
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR/docker
+      --dockerfile $CI_PROJECT_DIR/docker/Dockerfile.debian
+      --destination $CI_REGISTRY_IMAGE/debian
+
+build-env:conda:
+  <<: *build-env
+  only:
+    changes:
+      - docker/Dockerfile.conda
+      - docker/*.yml
+  script:
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR/docker
+      --dockerfile $CI_PROJECT_DIR/docker/Dockerfile.conda
+      --destination $CI_REGISTRY_IMAGE/conda
+
+build-env:default:
+  <<: *build-env
+  only:
+    changes:
+      - docker/Dockerfile.conda
+      - docker/*.yml
+  script:
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR/docker
+      --dockerfile $CI_PROJECT_DIR/docker/Dockerfile.conda
+      --destination $CI_REGISTRY_IMAGE
+
+
+## Build environment specifications
 
 .build: &build
   stage: build
@@ -49,10 +113,10 @@ variables:
     - source activate kwant-latest
 
 .ubuntu-env: &ubuntu_env
-  image: gitlab.kwant-project.org:5005/kwant/testing/ubuntu
+  image: gitlab.kwant-project.org:5005/kwant/kwant/ubuntu
 
 .debian-env: &debian_env
-  image: gitlab.kwant-project.org:5005/kwant/testing/debian
+  image: gitlab.kwant-project.org:5005/kwant/kwant/debian
 
 
 ## Build Jobs
