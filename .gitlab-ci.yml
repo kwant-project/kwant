@@ -84,7 +84,7 @@ build-env:default:
     - ./setup.py build_ext -i
   artifacts:
     untracked: true
-    expire_in: 1 hour
+    expire_in: 2 hour
 
 
 .stable-env: &stable_env
