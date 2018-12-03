@@ -62,7 +62,7 @@ def test_band_velocities():
     bands = kwant.physics.Bands(syst.finalized())
     eps = 1E-4
     for k in linspace(-pi, pi, 200):
-        vel = bands(k, deriv=1)[1]
+        vel = bands(k, derivative_order=1)[1]
         # higher order formula for first derivative to get required accuracy
         num_vel = (- bands(k+2*eps) + bands(k-2*eps) +
                    8*(bands(k+eps) - bands(k-eps))) / (12 * eps)
@@ -84,7 +84,7 @@ def test_band_velocity_derivative():
     c1 = 3 / 2
     c0 = - 49 / 18
     for k in linspace(-pi, pi, 200):
-        dvel = bands(k, deriv=2)[2]
+        dvel = bands(k, derivative_order=2)[2]
         # higher order formula for second derivative to get required accuracy
         num_dvel = (c3 * (bands(k+3*eps) + bands(k-3*eps)) +
                     c2 * (bands(k+2*eps) + bands(k-2*eps)) +
@@ -101,8 +101,8 @@ def test_raise_implemented():
     syst[((lat(1, y), lat(0, y)) for y in range(2))] = -1
     bands = kwant.physics.Bands(syst.finalized())
     assert bands(1.).shape == (2,)
-    assert bands(1., deriv=0).shape == (2,)
-    assert bands(1., deriv=1).shape == (2, 2)
-    assert bands(1., deriv=2).shape == (3, 2)
-    raises(NotImplementedError, bands, 1., -1)
-    raises(NotImplementedError, bands, 1., 3)
+    assert bands(1., derivative_order=0).shape == (2,)
+    assert bands(1., derivative_order=1).shape == (2, 2)
+    assert bands(1., derivative_order=2).shape == (3, 2)
+    raises(NotImplementedError, bands, 1., derivative_order=-1)
+    raises(NotImplementedError, bands, 1., derivative_order=3)

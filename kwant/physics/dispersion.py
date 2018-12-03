@@ -36,7 +36,7 @@ class Bands:
     (currently this must be a scalar as all infinite systems are quasi-1-d), it
     returns a NumPy array containing the eigenenergies of all modes at this
     momentum. Velocities and velocity derivatives are calculated if the flag
-    ``deriv`` is set.
+    ``derivative_order`` is set.
 
     Examples
     --------
@@ -58,7 +58,7 @@ class Bands:
         self.hop[:, : hop.shape[1]] = hop
         self.hop[:, hop.shape[1]:] = 0
 
-    def __call__(self, k, deriv=0):
+    def __call__(self, k, *, derivative_order=0):
         """Calculate all energies :math:`E`, velocities :math:`v`
         and velocity derivatives `v'` for a given momentum :math:`k`
 
@@ -72,7 +72,7 @@ class Bands:
         k : float
             momentum
 
-        deriv : {0, 1, 2}, optional
+        derivative_order : {0, 1, 2}, optional
             Maximal derivative order to calculate. Default is zero
 
 
@@ -81,10 +81,10 @@ class Bands:
         ener : numpy float array
             energies (and optionally also higher momentum derivatives)
 
-            if deriv = 0
+            if derivative_order = 0
                 numpy float array of the energies :math:`E`, shape (nbands,)
-            if deriv > 0
-                numpy float array, shape (deriv + 1, nbands) of
+            if derivative_order > 0
+                numpy float array, shape (derivative_order + 1, nbands) of
                 energies and derivatives :math:`(E, E', E'')`
 
         Notes
@@ -101,14 +101,14 @@ class Bands:
 
         mat = self.hop * complex(math.cos(k), -math.sin(k))
         ham = mat + mat.conjugate().transpose() + self.ham
-        if deriv == 0:
+        if derivative_order == 0:
             return np.sort(np.linalg.eigvalsh(ham).real)
 
         ener, psis = np.linalg.eigh(ham)
         h1 = 1j*(- mat + mat.conjugate().transpose())
         ph1p = np.dot(psis.conjugate().transpose(), np.dot(h1, psis))
         velo = np.real(np.diag(ph1p))
-        if deriv == 1:
+        if derivative_order == 1:
             return np.array([ener, velo])
 
         ediff = ener.reshape(-1, 1) - ener.reshape(1, -1)
@@ -117,6 +117,7 @@ class Bands:
         curv = (np.real(np.diag(
                 np.dot(psis.conjugate().transpose(), np.dot(h2, psis)))) +
                 2 * np.sum(ediff * np.abs(ph1p)**2, axis=1))
-        if deriv == 2:
+        if derivative_order == 2:
             return np.array([ener, velo, curv])
-        raise NotImplementedError('deriv= {} not implemented'.format(deriv))
+        raise NotImplementedError('derivative_order= {} not implemented'
+                                  .format(derivative_order))
