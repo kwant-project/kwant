@@ -11,12 +11,14 @@ from types import SimpleNamespace
 
 import pytest
 import numpy as np
+import scipy.sparse
 import scipy.sparse.linalg as sla
 from scipy.integrate import simps
 
 import kwant
-from ..kpm import _rescale
+from ..kpm import _rescale, LocalVectors, RandomVectors
 from .._common import ensure_rng
+
 
 SpectralDensity = kwant.kpm.SpectralDensity
 
@@ -40,6 +42,140 @@ def assert_allclose(arr1, arr2):
 
 def assert_allclose_sp(arr1, arr2):
     np.testing.assert_allclose(arr1, arr2, rtol=0., atol=TOL_SP)
+
+def test_mean_SD():
+    kpm_params = dict(num_vectors=1, num_moments=10, rng=0)
+    sites = [np.random.randint(dim), np.random.randint(dim)]
+    local_spectrum = SpectralDensity(
+        ham, vector_factory=LocalVectors(ham, where=sites),
+        mean=False, **kpm_params)
+    spectrum = SpectralDensity(
+        ham, vector_factory=LocalVectors(ham, where=sites),
+        mean=True, **kpm_params)
+    assert_allclose(local_spectrum.energies, spectrum.energies)
+    assert_allclose(local_spectrum.densities.sum(axis=1), spectrum.densities)
+
+def test_conductivity():
+    radius = 3
+    letters = [('x','x'), ('x','y'), ('y','x'), ('y','y')]
+    syst = kwant.Builder()
+    lat = kwant.lattice.square(norbs=1)
+    syst._lattice = lat
+    def circle(x):
+        return np.linalg.norm(x) < radius
+    syst[lat.shape(circle, (0, 0))] = 0
+    syst[lat.neighbors()] = -1
+    syst = syst.finalized()
+    hamiltonian = syst.hamiltonian_submatrix()
+    positions = np.array([s.pos for s in syst.sites])
+
+    # results for num_moments=10, num_vectors=10
+    kpm_params = dict(
+        params=None, num_vectors=10, num_moments=12,
+        energy_resolution=None, vector_factory=None, bounds=None,
+        eps=0.05, rng=0, accumulate_vectors=False)
+
+    # test system and no positions
+    for alpha, beta in letters:
+        cond = kwant.kpm.conductivity(syst, alpha=alpha, beta=beta,
+                                        positions=None, **kpm_params)
+
+    # test system or hamiltonian, no positions, but velocity operators
+    cond_xx = kwant.kpm.conductivity(syst, alpha='x', beta='x',
+                                     positions=None, **kpm_params)
+    x_op = scipy.sparse.coo_matrix(hamiltonian, copy=True)
+    displacements = positions[x_op.col] - positions[x_op.row]
+    x_op.data *= 1j * displacements[:, 0]
+    for ham, pos in [(syst, None), (hamiltonian, positions)]:
+        # test formatting of alpha and beta
+        for alpha, beta in [('x',x_op), (x_op, 'x'), (x_op, x_op)]:
+            cond = kwant.kpm.conductivity(ham, alpha=alpha, beta=beta,
+                                          positions=pos, **kpm_params)
+            assert_allclose(cond(), cond_xx())
+
+    # test increase number of moments
+    increase_moments = 90
+    kpm_params['accumulate_vectors'] = True
+    cond = kwant.kpm.conductivity(syst, alpha='x', beta='x', positions=None,
+                                  **kpm_params)
+    cond.add_moments(num_moments=increase_moments)
+
+    # assert that it's equivalent to construct the instance directly
+    kpm_params['accumulate_vectors'] = False
+    kpm_params['num_moments'] = kpm_params['num_moments'] + increase_moments
+    cond_100 = kwant.kpm.conductivity(syst, alpha='x', beta='x', positions=None,
+                                      **kpm_params)
+    assert_allclose(cond_100(), cond())
+
+def test_where():
+    radius = 3
+    syst = kwant.Builder()
+    lat = kwant.lattice.honeycomb(norbs=1)
+    syst._lattice = lat
+    def circle(x):
+        return np.linalg.norm(x) < radius
+    syst[lat.shape(circle, (0, 0))] = 0
+    syst[lat.neighbors()] = -1
+    syst = syst.finalized()
+
+    where = lambda s: np.linalg.norm(s.pos) < 2
+    sites = [s for s in syst.sites if where(s)]
+
+    kpm_params = dict(num_vectors=None, num_moments=10, rng=0)
+    spectrum2 = SpectralDensity(
+        syst, vector_factory=LocalVectors(syst, where=where), **kpm_params)
+    spectrum1 = SpectralDensity(
+        syst, vector_factory=LocalVectors(syst, where=sites), **kpm_params)
+    assert_allclose(spectrum1(), spectrum2())
+
+    # test local vectors
+    cond_xy1 = kwant.kpm.conductivity(
+        syst, vector_factory=LocalVectors(syst, where=sites),
+        alpha='x', beta='y', **kpm_params)
+    cond_xy2 = kwant.kpm.conductivity(
+        syst, vector_factory=LocalVectors(syst, where=where),
+        alpha='x', beta='y', **kpm_params)
+    assert_allclose(cond_xy1(), cond_xy2())
+
+    # test random factory
+    kpm_params = dict(num_vectors=10, num_moments=10, rng=0)
+    cond_xy1 = kwant.kpm.conductivity(
+        syst, vector_factory=RandomVectors(syst, sites, kpm_params['rng']),
+        alpha='x', beta='y', **kpm_params)
+    cond_xy2 = kwant.kpm.conductivity(
+        syst, vector_factory=RandomVectors(syst, where, kpm_params['rng']),
+        alpha='x', beta='y', **kpm_params)
+    assert_allclose(cond_xy1(), cond_xy2())
+
+def test_vector_factory():
+
+    vectors = np.identity(dim)
+    def vectors2():
+        count = 0
+        while count < 6:
+            yield 'string'[count]
+            count += 1
+
+    vf = lambda n, v: kwant.kpm._VectorFactory(num_vectors=n, vectors=v)
+    this_vf = vf(None, vectors)
+    assert this_vf.num_vectors == dim
+    this_vf = vf(3, vectors)
+    assert this_vf.num_vectors == 3
+    this_vf.add_vectors(num_vectors=2)
+    assert this_vf.num_vectors == 5
+
+    spectrum = lambda n, v : SpectralDensity(ham, vector_factory=v,
+                                             num_vectors=n)
+    corr = lambda n, v : kwant.kpm.Correlator(ham, vector_factory=v,
+                                              num_vectors=n)
+
+    for instance in [spectrum, corr]:
+        this_instance = instance(None, vectors)
+        assert this_instance.num_vectors == dim
+        this_instance = instance(3, vectors)
+        assert this_instance.num_vectors == 3
+        this_instance.add_vectors(num_vectors=2)
+        assert this_instance.num_vectors == 5
 
 
 def make_spectrum(ham, p, operator=None, vector_factory=None, rng=None, params=None):
@@ -99,8 +235,7 @@ def kpm_derivative(spectrum, e, order=1):
         i += 1
         coef_cheb = np.polynomial.chebyshev.chebder(coef_cheb)
 
-    return np.real(np.polynomial.chebyshev.chebval(
-                   rescaled_energy, coef_cheb)/g_e)
+    return np.polynomial.chebyshev.chebval(rescaled_energy, coef_cheb)/g_e
 
 
 def make_spectrum_and_peaks(ham, precise, threshold=0.005):
@@ -449,8 +584,9 @@ def test_check_convergence_decreasing_values():
 def test_convergence_custom_vector_factory():
     rng = ensure_rng(1)
 
-    def random_binary_vectors(dim):
-        return np.rint(rng.random_sample(dim)) * 2 - 1
+    def random_binary_vectors():
+        while True:
+            yield np.rint(rng.random_sample(dim)) * 2 - 1
 
     # extracted from `deviation_from_eigenvalues
     def deviation(ham, spectrum):
@@ -482,7 +618,7 @@ def test_convergence_custom_vector_factory():
         for ii in range(iterations):
             ham = kwant.rmt.gaussian(dim)
             spectrum = make_spectrum(ham, precise,
-                                     vector_factory=random_binary_vectors)
+                                     vector_factory=random_binary_vectors())
             results.append(deviation(ham, spectrum))
 
         difference_list.append(results)
