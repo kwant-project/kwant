@@ -1,0 +1,26 @@
+name: kwant-stable-no-extras
+channels:
+    - conda-forge
+dependencies:
+    - python=3.5
+    - numpy=1.11.0
+    - scipy=0.17  # No minor version because conda-forge has no 0.17.0
+    - tinyarray=1.2.0
+    # Linear algebra libraraies
+    - blas #=1.1 openblas
+    - openblas #=0.2.20
+    # Build toolchain
+    - toolchain
+    - cython
+    - gcc
+    - libgfortran
+    ## Dev Dependencies
+    # Testing
+    - pytest
+    - pytest-cov
+    - pytest-flakes
+    - pytest-pep8
+    # Documentation building
+    - sphinx=1.7.4  # later versions seem to have problems
+    - numpydoc
+    - requests

@@ -1,0 +1,28 @@
+FROM ubuntu:16.04
+
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gnupg dirmngr apt-transport-https software-properties-common
+RUN apt-add-repository -s ppa:kwant-project/ppa && \
+    apt-get update && apt-get install -y --no-install-recommends \
+        # all the hard non-Python dependencies
+        git g++ make patch gfortran libblas-dev liblapack-dev \
+        libmumps-scotch-dev pkg-config libfreetype6-dev \
+        # all the hard Python dependencies
+        python3-all-dev python3-setuptools python3-pip python3-tk python3-wheel \
+        python3-numpy python3-scipy python3-matplotlib python3-sympy python3-tinyarray \
+        # Additional tools for running CI
+        file rsync openssh-client \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+### install build and testing dependencies
+RUN pip3 install \
+      cython \
+      pytest \
+      pytest-runner \
+      pytest-cov \
+      pytest-flakes \
+      pytest-pep8

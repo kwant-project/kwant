@@ -1,0 +1,29 @@
+name: kwant-latest
+channels:
+    - conda-forge
+dependencies:
+    - python=3.6
+    - numpy
+    - scipy
+    - tinyarray
+    - sympy
+    - matplotlib
+    # Linear algebra libraraies
+    - mumps
+    - blas #=1.1 openblas
+    - openblas #=0.2.20
+    # Build toolchain
+    - toolchain
+    - cython
+    - gcc
+    - libgfortran
+    ## Dev Dependencies
+    # Testing
+    - pytest
+    - pytest-cov
+    - pytest-flakes
+    - pytest-pep8
+    # Documentation building
+    - sphinx=1.7.4  # later versions seem to have problems
+    - numpydoc
+    - requests
