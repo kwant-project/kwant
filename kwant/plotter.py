@@ -1429,27 +1429,37 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
         Either a number of sampling points on the interval [-pi, pi], or an
         array of points at which the band structure has to be evaluated.
     file : string or file object or `None`
-        The output file.  If `None`, output will be shown instead.
+        The output file.  If `None`, output will be shown instead. If plotly is
+        selected as the backend, the filename has to end with a html extension.
     show : bool
-        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
-        to be shown immediately.  Defaults to `True`.
+        For matplotlib backend, whether ``matplotlib.pyplot.show()`` is to be
+        called, and the output is to be shown immediately.
+        For the plotly backend, a call to ``iplot(fig)`` is made if
+        show is True.
+        Defaults to `True` for both backends.
     dpi : float
         Number of pixels per inch.  If not set the ``matplotlib`` default is
         used.
+        Only for matplotlib backend. If the plotly backend is selected and
+        this argument is not None, then a RuntimeError will be triggered.
     fig_size : tuple
         Figure size `(width, height)` in inches.  If not set, the default
         ``matplotlib`` value is used.
+        Only for matplotlib backend. If the plotly backend is selected and
+        this argument is not None, then a RuntimeError will be triggered.
     ax : ``matplotlib.axes.Axes`` instance or `None`
         If `ax` is not `None`, no new figure is created, but the plot is done
         within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
         and `fig_size` are ignored.
+        Only for matplotlib backend. If the plotly backend is selected and
+        this argument is not None, then a RuntimeError will be triggered.
     params : dict, optional
         Dictionary of parameter names and their values. Mutually exclusive
         with 'args'.
 
     Returns
     -------
-    fig : matplotlib figure
+    fig : matplotlib figure or plotly Figure object
         A figure with the output if `ax` is not set, else None.
 
     Notes
@@ -1457,11 +1467,19 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
     See `~kwant.physics.Bands` for the calculation of dispersion without plotting.
     """
 
-    if not _p.mpl_available:
+    if not _p.mpl_available and (get_backend() == _p.Backends.matplotlib):
         raise RuntimeError("matplotlib was not found, but is required "
-                           "for bands()")
+                           "for bands() by the selected backend")
+
+    if not _p.plotly_available and (get_backend() == _p.Backends.plotly):
+        raise RuntimeError("plotly was not found, but is required "
+                           "for bands() by the selected backend")
 
     syst = sys  # for naming consistency inside function bodies
+
+    if get_backend() == _p.Backends.plotly:
+        _check_incompatible_args_plotly(dpi, fig_size, ax)
+
     _common.ensure_isinstance(syst, system.InfiniteSystem)
 
     momenta = np.array(momenta)
