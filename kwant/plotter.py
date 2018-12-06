@@ -2302,17 +2302,65 @@ def scalarplot(field, box,
     fig : matplotlib figure
         A figure with the output if ``ax`` is not set, else None.
     """
-    if not _p.mpl_available:
-        raise RuntimeError("matplotlib was not found, but is required "
-                           "for current()")
 
     # Matplotlib plots images like matrices: image[y, x].  We use the opposite
     # convention: image[x, y].  Hence, it is necessary to transpose.
     # Also squeeze out the last axis as it is just a scalar field
+
     field = field.squeeze(axis=-1).transpose()
 
     if field.ndim != 2:
         raise ValueError("Only 2D field can be plotted.")
+
+    if vmin is None:
+        vmin = np.min(field)
+    if vmax is None:
+        vmax = np.max(field)
+
+    if get_backend() == _p.Backends.matplotlib:
+        fig = _scalarplot_matplotlib(field, box, cmap, colorbar,
+                                     file, show, dpi, fig_size, ax,
+                                     vmin, vmax, background)
+    elif get_backend() == _p.Backends.plotly:
+        _check_incompatible_args_plotly(dpi, fig_size, ax)
+        fig = _scalarplot_plotly(field, box, cmap, colorbar, file,
+                                 show, vmin, vmax, background)
+    _maybe_output_fig(fig, file=file, show=show)
+
+    return fig
+
+
+def _scalarplot_plotly(field, box, cmap, colorbar, file,
+                       show, vmin, vmax, background):
+    if not _p.plotly_available:
+        raise RuntimeError("plotly was not found, but is required "
+                           "for scalarplot()")
+
+    if cmap is None:
+        cmap = _p.kwant_red_plotly
+
+    contour_object = _p.plotly_graph_objs.Heatmap()
+    contour_object.z = field
+    contour_object.x = np.linspace(*box[0],field.shape[0])
+    contour_object.y = np.linspace(*box[1],field.shape[1])
+    contour_object.zsmooth = 'best'
+    contour_object.colorscale = cmap
+    contour_object.zmax = vmax
+    contour_object.zmin = vmin
+
+    contour_object.showscale = colorbar
+
+    fig = _p.plotly_graph_objs.Figure(data=[contour_object])
+    fig.layout.plot_bgcolor = background
+
+    return fig
+
+
+def _scalarplot_matplotlib(field, box, cmap, colorbar, file, show, dpi,
+                           fig_size, ax, vmin, vmax, background):
+    if not _p.mpl_available:
+        raise RuntimeError("matplotlib was not found, but is required "
+                           "for scalarplot()")
 
     if cmap is None:
         cmap = _p.kwant_red_matplotlib
@@ -2323,11 +2371,6 @@ def scalarplot(field, box,
         ax = fig.add_subplot(1, 1, 1, aspect='equal')
     else:
         fig = None
-
-    if vmin is None:
-        vmin = np.min(field)
-    if vmax is None:
-        vmax = np.max(field)
 
     image = ax.imshow(field, cmap=cmap,
                       interpolation='bicubic',
@@ -2340,8 +2383,6 @@ def scalarplot(field, box,
 
     if colorbar and cmap and fig is not None:
         fig.colorbar(image)
-
-    _maybe_output_fig(fig, file=file, show=show)
 
     return fig
 
