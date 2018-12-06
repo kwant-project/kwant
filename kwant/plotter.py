@@ -1479,7 +1479,10 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
 
 def spectrum(syst, x, y=None, params=None, mask=None, file=None,
              show=True, dpi=None, fig_size=None, ax=None):
-    """Plot the spectrum of a Hamiltonian as a function of 1 or 2 parameters
+    """Plot the spectrum of a Hamiltonian as a function of 1 or 2 parameters.
+
+    This function requires either matplotlib or plotly to be installed.
+    The default backend uses matplotlib for plotting.
 
     Parameters
     ----------
@@ -1500,32 +1503,67 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         if the spectrum should not be calculated for the given parameter
         values.
     file : string or file object or `None`
-        The output file.  If `None`, output will be shown instead.
+        The output file.  If `None`, output will be shown instead. If plotly is
+        selected as the backend, the filename has to end with a html extension.
     show : bool
-        Whether ``matplotlib.pyplot.show()`` is to be called, and the output is
-        to be shown immediately.  Defaults to `True`.
+        For matplotlib backend, whether ``matplotlib.pyplot.show()`` is to be
+        called, and the output is to be shown immediately.
+        For the plotly backend, a call to ``iplot(fig)`` is made if
+        show is True.
+        Defaults to `True` for both backends.
     dpi : float
         Number of pixels per inch.  If not set the ``matplotlib`` default is
         used.
+        Only for matplotlib backend. If the plotly backend is selected and
+        this argument is not None, then a RuntimeError will be triggered.
     fig_size : tuple
         Figure size `(width, height)` in inches.  If not set, the default
         ``matplotlib`` value is used.
+        Only for matplotlib backend. If the plotly backend is selected and
+        this argument is not None, then a RuntimeError will be triggered.
     ax : ``matplotlib.axes.Axes`` instance or `None`
         If `ax` is not `None`, no new figure is created, but the plot is done
         within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
         and `fig_size` are ignored.
+        Only for matplotlib backend. If the plotly backend is selected and
+        this argument is not None, then a RuntimeError will be triggered.
 
     Returns
     -------
-    fig : matplotlib figure
-        A figure with the output if `ax` is not set, else None.
+    fig : matplotlib figure or plotly Figure object
     """
 
-    if not _p.mpl_available:
-        raise RuntimeError("matplotlib was not found, but is required "
-                           "for plot_spectrum()")
-    if y is not None and not _p.has3d:
-        raise RuntimeError("Installed matplotlib does not support 3d plotting")
+    params = params or dict()
+
+    if get_backend() == _p.Backends.matplotlib:
+        return _spectrum_matplotlib(syst, x, y, params, mask, file,
+                                    show, dpi, fig_size, ax)
+    elif get_backend() == _p.Backends.plotly:
+        if(dpi or fig_size or ax):
+            raise RuntimeError('Incompatible arguments of dpi, fig_size, or '
+                               'ax. Current plotting backend is plotly.')
+        return _spectrum_plotly(syst, x, y, params, mask, file, show)
+
+
+def _generate_spectrum(syst, params, mask, x, y):
+    """Generates the spectrum dataset for the internal plotting
+    functions of spectrum().
+
+    Parameters
+    ----------
+    See spectrum(...) documentation.
+
+    Returns
+    -------
+    spectrum : Numpy array
+         The energies of the system calculated at each coordinate.
+    planar : bool
+         True if y is None
+    array_values : tuple
+         The coordinates of x, y values of the dataset for plotting.
+    keys : tuple
+         Labels for the x and y axes.
+    """
 
     if system.is_finite(syst):
         def ham(**kwargs):
@@ -1536,9 +1574,9 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         raise TypeError("Expected 'syst' to be a finite Kwant system "
                         "or a function.")
 
-    params = params or dict()
-    keys = (x[0],) if y is None else (x[0], y[0])
-    array_values = (x[1],) if y is None else (x[1], y[1])
+    planar = y is None
+    keys = (x[0],) if planar else (x[0], y[0])
+    array_values = (x[1],) if planar else (x[1], y[1])
 
     # calculate spectrum on the grid of points
     spectrum = []
@@ -1558,10 +1596,91 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
     new_shape = [len(v) for v in array_values] + [-1]
     spectrum = np.array(spectrum).reshape(new_shape)
 
+    return spectrum, planar, array_values, keys
+
+
+def _spectrum_plotly(syst, x, y=None, params=None, mask=None,
+                     file=None, show=True):
+    """Plot the spectrum of a Hamiltonian as a function of 1 or 2 parameters
+    using the plotly backend.
+
+    Parameters
+    ----------
+    See spectrum(...) documentation.
+
+    Returns
+    -------
+    fig : plotly Figure / dict
+    """
+
+    if not _p.plotly_available:
+        raise RuntimeError("plotly was not found, but is required for using"
+                           "the spectrum() plotly backend")
+
+    spectrum, planar, array_values, keys = _generate_spectrum(syst, params,
+                                                              mask, x, y)
+
+    if planar:
+        fig = _p.plotly_graph_objs.Figure(data=[
+          _p.plotly_graph_objs.Scatter(
+                 x=array_values[0],
+                 y=energies,
+          ) for energies in spectrum.T
+        ])
+        fig.layout.xaxis.title = keys[0]
+        fig.layout.yaxis.title = 'Energy'
+        fig.layout.showlegend = False
+    else:
+        fig = _p.plotly_graph_objs.Figure(data=[
+          _p.plotly_graph_objs.Surface(
+                 x=array_values[0],
+                 y=array_values[1],
+                 z=energies,
+                 cmax=np.max(spectrum),
+                 cmin=np.min(spectrum),
+          ) for energies in spectrum.T
+        ])
+        fig.layout.scene.xaxis.title = keys[0]
+        fig.layout.scene.yaxis.title = keys[1]
+        fig.layout.scene.zaxis.title = 'Energy'
+
+    fig.layout.title = (
+        ', '.join('{} = {}'.format(*kv) for kv in params.items())
+    )
+
+    _maybe_output_fig(fig, file=file, show=show)
+
+    return fig
+
+
+def _spectrum_matplotlib(syst, x, y=None, params=None, mask=None, file=None,
+                         show=True, dpi=None, fig_size=None, ax=None):
+    """Plot the spectrum of a Hamiltonian as a function of 1 or 2 parameters
+    using the matplotlib backend.
+
+    Parameters
+    ----------
+    See spectrum(...) documentation.
+
+    Returns
+    -------
+    fig : matplotlib figure
+        A figure with the output if `ax` is not set, else None.
+    """
+
+    if not _p.mpl_available:
+        raise RuntimeError("matplotlib was not found, but is required for"
+                           "using the spectrum() matplotlib backend")
+    if y is not None and not _p.has3d:
+        raise RuntimeError("Installed matplotlib does not support 3d plotting")
+
+    spectrum, planar, array_values, keys = _generate_spectrum(syst, params,
+                                                              mask, x, y)
+
     # set up axes
     if ax is None:
         fig = _make_figure(dpi, fig_size, use_pyplot=(file is None))
-        if y is None:
+        if planar:
             ax = fig.add_subplot(1, 1, 1)
         else:
             warnings.filterwarnings('ignore',
@@ -1569,7 +1688,7 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
             ax = fig.add_subplot(1, 1, 1, projection='3d')
             warnings.resetwarnings()
         ax.set_xlabel(keys[0])
-        if y is None:
+        if planar:
             ax.set_ylabel('Energy')
         else:
             ax.set_ylabel(keys[1])
@@ -1585,7 +1704,7 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         fig = None
 
     # actually do the plot
-    if y is None:
+    if planar:
         ax.plot(array_values[0], spectrum)
     else:
         if not hasattr(ax, 'plot_surface'):
