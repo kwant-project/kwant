@@ -1367,7 +1367,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         fig = None
 
     if cmap is None:
-        cmap = _p._colormaps.kwant_red
+        cmap = _p.kwant_red_matplotlib
 
     # Calculate the min/max bounds for the colormap.
     # User-provided values take precedence.
@@ -2205,7 +2205,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
 
     if bgcolor is None:
         if cmap is None:
-            cmap = _p._colormaps.kwant_red
+            cmap = _p.kwant_red_matplotlib
         cmap = _p.get_cmap(cmap)
         bgcolor = cmap(0)[:3]
     elif cmap is not None:
@@ -2315,7 +2315,7 @@ def scalarplot(field, box,
         raise ValueError("Only 2D field can be plotted.")
 
     if cmap is None:
-        cmap = _p._colormaps.kwant_red
+        cmap = _p.kwant_red_matplotlib
     cmap = _p.get_cmap(cmap)
 
     if ax is None:
