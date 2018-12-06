@@ -16,6 +16,7 @@ RUN echo "deb http://downloads.kwant-project.org/debian/ stable main" >> /etc/ap
         # all the hard Python dependencies
         python3-all-dev python3-setuptools python3-pip python3-tk python3-wheel \
         python3-numpy python3-scipy python3-matplotlib python3-sympy python3-tinyarray \
+        python3-plotly \
         # Additional tools for running CI
         file rsync openssh-client \
     && apt-get clean && \
