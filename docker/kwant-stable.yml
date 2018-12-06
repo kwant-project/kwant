@@ -9,6 +9,7 @@ dependencies:
     - sympy=1.1.1
     - matplotlib=2.1.1
     - qsymm=1.2.6
+    - plotly=2.2.2
     # Linear algebra libraraies
     - mumps
     - blas #=1.1 openblas
