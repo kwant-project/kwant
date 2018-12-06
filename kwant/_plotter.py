@@ -18,6 +18,7 @@
 import warnings
 from math import sqrt, pi
 import numpy as np
+from enum import Enum
 
 try:
     import matplotlib
@@ -34,9 +35,32 @@ try:
         warnings.warn("3D plotting not available.", RuntimeWarning)
         has3d = False
 except ImportError:
-    warnings.warn("matplotlib is not available, only iterator-providing "
-                  "functions will work.", RuntimeWarning)
+    warnings.warn("matplotlib is not available, if other backends are "
+                  "unavailable, only iterator-providing functions will work",
+                  RuntimeWarning)
     mpl_available = False
+
+
+try:
+    import plotly.offline as plotly
+    import plotly.graph_objs as plotly_graph_objs
+    plotly.init_notebook_mode(connected=True)
+    plotly_available = True
+except ImportError:
+    warnings.warn("plotly is not available, if other backends are unavailable,"
+                  " only iterator-providing functions will work",
+                  RuntimeWarning)
+    plotly_available = False
+
+
+class Backends(Enum):
+    matplotlib = 0
+    plotly = 1
+
+backend = Backends.matplotlib
+
+if not ((mpl_available) or (plotly_available)):
+    backend = None
 
 
 # Collections that allow for symbols and linewiths to be given in data space

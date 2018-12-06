@@ -585,7 +585,8 @@ def main():
                             'tinyarray >= 1.2'],
           extras_require={
               # The oldest versions between: Debian stable, Ubuntu LTS
-              'plotting': 'matplotlib >= 2.1.1',
+              'plotting': ['matplotlib >= 2.1.1',
+                           'plotly >= 2.2.2'],
               'continuum': 'sympy >= 1.1.1',
               # qsymm is only packaged on PyPI
               'qsymm': 'qsymm >= 1.2.6',
