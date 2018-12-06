@@ -35,7 +35,10 @@ try:
     from matplotlib.figure import Figure
     from matplotlib import collections
     from . import _colormaps
+    from matplotlib.colors import ListedColormap
     mpl_available = True
+    kwant_red_matplotlib = ListedColormap(_colormaps.kwant_red,
+                                          name="kwant red")
     try:
         from mpl_toolkits import mplot3d
         has3d = True
@@ -53,7 +56,13 @@ try:
     import plotly.offline as plotly_module
     import plotly.graph_objs as plotly_graph_objs
     init_notebook_mode_set = False
+    from . import _colormaps
     plotly_available = True
+
+    _cmap_plotly = 255 * _colormaps.kwant_red
+    _cmap_levels = np.linspace(0, 1, len(_cmap_plotly))
+    kwant_red_plotly = [(level, 'rgb({},{},{})'.format(*rgb))
+                        for level, rgb in zip(_cmap_levels, _cmap_plotly)]
 except ImportError:
     warnings.warn("plotly is not available, if other backends are unavailable,"
                   " only iterator-providing functions will work",
@@ -353,3 +362,14 @@ if mpl_available:
                     self.set_linewidths(self.linewidths_orig2 * factor)
 
                 super().draw(renderer)
+
+if plotly_available:
+    def matplotlib_to_plotly_cmap(cmap, pl_entries):
+        h = 1.0/(pl_entries-1)
+        pl_colorscale = []
+
+        for k in range(pl_entries):
+            C = map(np.uint8, np.array(cmap(k*h)[:3])*255)
+            pl_colorscale.append([k*h, 'rgb'+str((C[0], C[1], C[2]))])
+
+        return pl_colorscale
