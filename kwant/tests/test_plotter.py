@@ -45,7 +45,7 @@ def test_matplotlib_backend_unset():
     assert matplotlib_backend_chosen is False
 
 
-def test_importable_without_matplotlib():
+def test_importable_without_backends():
     prefix, sep, suffix = _plotter.__file__.rpartition('.')
     if suffix in ['pyc', 'pyo']:
         suffix = 'py'
@@ -55,13 +55,16 @@ def test_importable_without_matplotlib():
         code = f.read()
     code = code.replace(b'from . import', b'from kwant import')
     code = code.replace(b'matplotlib', b'totalblimp')
+    code = code.replace(b'plotly', b'plylot')
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         exec(code)               # Trigger the warning.
-        assert len(w) == 1
+        assert len(w) == 2
         assert issubclass(w[0].category, RuntimeWarning)
-        assert "only iterator-providing functions" in str(w[0].message)
+        assert issubclass(w[1].category, RuntimeWarning)
+        assert "totalblimp is not available" in str(w[0].message)
+        assert "plylot is not available" in str(w[1].message)
 
 
 def syst_2d(W=3, r1=3, r2=8):

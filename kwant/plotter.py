@@ -79,6 +79,17 @@ def set_backend(backend):
 def get_backend():
     return _p.backend
 
+
+def _check_incompatible_args_plotly(dpi, fig_size, ax):
+    assert(get_backend() == _p.Backends.plotly)
+    if(dpi or fig_size or ax):
+        raise RuntimeError(
+            "Plotly backend does not support setting 'dpi', 'fig_size' "
+            "or 'ax', either leave these parameters unspecified, or "
+            "select the matplotlib backend with"
+            "'kwant.plotter.select_backend(\"matplotlib\")'")
+
+
 def _sample_array(array, n_samples, rng=None):
     rng = _common.ensure_rng(rng)
     la = len(array)
@@ -1539,10 +1550,10 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         return _spectrum_matplotlib(syst, x, y, params, mask, file,
                                     show, dpi, fig_size, ax)
     elif get_backend() == _p.Backends.plotly:
-        if(dpi or fig_size or ax):
-            raise RuntimeError('Incompatible arguments of dpi, fig_size, or '
-                               'ax. Current plotting backend is plotly.')
+        _check_incompatible_args_plotly(dpi, fig_size, ax)
         return _spectrum_plotly(syst, x, y, params, mask, file, show)
+    else:
+        raise RuntimeError("Backend not supported by spectrum().")
 
 
 def _generate_spectrum(syst, params, mask, x, y):
