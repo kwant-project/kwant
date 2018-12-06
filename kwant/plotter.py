@@ -30,7 +30,8 @@ from . import system, builder, _common
 from ._common import deprecate_args
 
 
-__all__ = ['plot', 'map', 'bands', 'spectrum', 'current', 'density',
+__all__ = ['set_backend',
+           'plot', 'map', 'bands', 'spectrum', 'current', 'density',
            'interpolate_current', 'interpolate_density',
            'streamplot', 'scalarplot',
            'sys_leads_sites', 'sys_leads_hoppings', 'sys_leads_pos',
@@ -40,6 +41,43 @@ __all__ = ['plot', 'map', 'bands', 'spectrum', 'current', 'density',
 # to avoid slowing down the initial import of Kwant.
 _p = _common.lazy_import('_plotter')
 
+
+def set_backend(backend):
+    """Set the plotting backend to use.
+
+    Parameters
+    ----------
+    backend : str
+        Options are: 'matplotlib', 'plotly'.
+    """
+
+    if ((_p.mpl_available) or (_p.plotly_available)):
+        try:
+            _p.backend = _p.Backends[backend]
+        except KeyError:
+            list_available_backends = []
+            if (_p.mpl_available):
+                list_available_backends.append('matplotlib')
+            if (_p.plotly_available):
+                list_available_backends.append('plotly')
+            error_message = "Tried to set an unknown backend \'{}\'.".format(
+                                                                       backend)
+            error_message += " Supported backends are {}".format(
+                                                       list_available_backends)
+            raise RuntimeError(error_message)
+    else:
+        warnings.warn("Tried to set \'{}\' but is not "
+                      "available.".format(backend), RuntimeWarning)
+
+    if (_p.is_ipython_kernel):
+        if ((_p.backend == _p.Backends.plotly) and
+            (not _p.init_notebook_mode_set)):
+            _p.init_notebook_mode_set = True
+            _p.plotly_module.init_notebook_mode(connected=True)
+
+
+def get_backend():
+    return _p.backend
 
 def _sample_array(array, n_samples, rng=None):
     rng = _common.ensure_rng(rng)
@@ -106,13 +144,19 @@ def _maybe_output_fig(fig, file=None, show=True):
     if fig is None:
         return
 
-    if file is not None:
-        fig.canvas.print_figure(file, dpi=fig.dpi)
-    elif show:
-        # If there was no file provided, pyplot should already be available and
-        # we can import it safely without additional warnings.
-        from matplotlib import pyplot
-        pyplot.show()
+    if get_backend() == _p.Backends.matplotlib:
+        if file is not None:
+            fig.canvas.print_figure(file, dpi=fig.dpi)
+        elif show:
+            # If there was no file provided, pyplot should already be available
+            # and we can import it safely without additional warnings.
+            from matplotlib import pyplot
+            pyplot.show()
+    elif get_backend() == _p.Backends.plotly:
+        if file is not None:
+            _p.plotly.plot(fig, show_link=False, filename=file, auto_open=False)
+        if show:
+            _p.plotly.iplot(fig)
 
 
 def set_colors(color, collection, cmap, norm=None):
