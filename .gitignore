@@ -2,6 +2,7 @@
 *.pyc
 *.pyo
 *.so
+*.pyd
 /kwant/*.c
 /kwant/*/*.c
 /build
@@ -16,3 +17,4 @@
 .coverage
 .eggs/
 htmlcov/
+.ipynb_checkpoints/
