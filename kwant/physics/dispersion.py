@@ -58,7 +58,7 @@ class Bands:
         self.hop[:, : hop.shape[1]] = hop
         self.hop[:, hop.shape[1]:] = 0
 
-    def __call__(self, k, *, derivative_order=0):
+    def __call__(self, k, *, derivative_order=0, return_eigenvectors=False):
         """Calculate all energies :math:`E`, velocities :math:`v`
         and velocity derivatives `v'` for a given momentum :math:`k`
 
@@ -102,6 +102,9 @@ class Bands:
         mat = self.hop * complex(math.cos(k), -math.sin(k))
         ham = mat + mat.conjugate().transpose() + self.ham
         if derivative_order == 0:
+            if return_eigenvectors:
+                ener, psis = np.linalg.eigh(ham)
+                return ener, psis
             return np.sort(np.linalg.eigvalsh(ham).real)
 
         ener, psis = np.linalg.eigh(ham)
@@ -109,7 +112,9 @@ class Bands:
         ph1p = np.dot(psis.conjugate().transpose(), np.dot(h1, psis))
         velo = np.real(np.diag(ph1p))
         if derivative_order == 1:
-            return np.array([ener, velo])
+            if return_eigenvectors:
+                return ener, velo, psis
+            return ener, velo
 
         ediff = ener.reshape(-1, 1) - ener.reshape(1, -1)
         ediff = np.divide(1, ediff, out=np.zeros_like(ediff), where=ediff != 0)
@@ -118,6 +123,8 @@ class Bands:
                 np.dot(psis.conjugate().transpose(), np.dot(h2, psis)))) +
                 2 * np.sum(ediff * np.abs(ph1p)**2, axis=1))
         if derivative_order == 2:
-            return np.array([ener, velo, curv])
+            if return_eigenvectors:
+                return ener, velo, curv, psis
+            return ener, velo, curv
         raise NotImplementedError('derivative_order= {} not implemented'
                                   .format(derivative_order))
