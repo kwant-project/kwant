@@ -846,7 +846,8 @@ class Builder:
     sites live on a regular lattice, like the ones provided by `kwant.lattice`.
 
     Attaching a lead manually (without the use of `~Builder.attach_lead`)
-    amounts to creating a `Lead` object and appending it to this list.
+    amounts to creating a `Lead` object and appending it to the list of leads
+    accessbile as the `~Builder.leads` attribute.
 
     .. warning::
 
