@@ -71,7 +71,8 @@
          ham_mat = syst.hamiltonian_submatrix(args=[B], sparse=True)
  
          # we only calculate the 15 lowest eigenvalues
-         ev = sla.eigsh(ham_mat, k=15, sigma=0, return_eigenvectors=False)
+         ev = sla.eigsh(ham_mat.tocsc(), k=15, sigma=0,
+                        return_eigenvectors=False)
  
          energies.append(ev)
  
@@ -105,7 +106,7 @@
 +
      # Calculate the wave functions in the system.
      ham_mat = syst.hamiltonian_submatrix(sparse=True, args=[B])
-     evals, evecs = sorted_eigs(sla.eigsh(ham_mat, k=20, sigma=0))
+     evals, evecs = sorted_eigs(sla.eigsh(ham_mat.tocsc(), k=20, sigma=0))
  
      # Plot the probability density of the 10th eigenmode.
 -    kwant.plotter.map(syst, np.abs(evecs[:, 9])**2,
@@ -124,7 +125,7 @@
 +
      # Calculate the wave functions in the system.
      ham_mat = syst.hamiltonian_submatrix(sparse=True, args=[B])
-     evals, evecs = sorted_eigs(sla.eigsh(ham_mat, k=20, sigma=0))
+     evals, evecs = sorted_eigs(sla.eigsh(ham_mat.tocsc(), k=20, sigma=0))
  
      # Calculate and plot the local current of the 10th eigenmode.
      J = kwant.operator.Current(syst)
