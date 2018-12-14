@@ -71,7 +71,7 @@
          ham_mat = syst.hamiltonian_submatrix(args=[B], sparse=True)
  
          # we only calculate the 15 lowest eigenvalues
-         ev = sla.eigsh(ham_mat, k=15, which='SM', return_eigenvectors=False)
+         ev = sla.eigsh(ham_mat, k=15, sigma=0, return_eigenvectors=False)
  
          energies.append(ev)
  
