@@ -99,7 +99,8 @@ def test_band_velocity_derivative():
 
 def test_eigenvector_calculation(k=1.2, lead=make_lead()):  # k-point arbitrary
 
-    bands = kwant.physics.Bands(lead.finalized())
+    lead = lead.finalized()
+    bands = kwant.physics.Bands(lead)
 
     # check if eigenvalues are sorted and always sorted in the same way
     energies = bands(k)
@@ -133,6 +134,14 @@ def test_eigenvector_calculation(k=1.2, lead=make_lead()):  # k-point arbitrary
         hamiltonian = mat + mat.conjugate().transpose() + bands.ham
         energies = np.asarray([energies])
         assert_array_almost_equal(hamiltonian @ psi, energies * psi)
+
+    # check that algorithm switch is correct
+    bands_switch = kwant.physics.Bands(lead)
+    bands_switch._crossover_size = 0
+    for order in [1, 2]:
+        e_1, v_1, *_ = bands(k, order)
+        e_2, v_2, *_ = bands_switch(k, order)
+        assert_array_almost_equal(v_1, v_2)
 
 
 def test_raise_implemented(k=1, lead=make_lead()):  # k-point arbitrary
