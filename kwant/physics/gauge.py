@@ -5,7 +5,13 @@
 # http://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
-"""Functions for fixing the magnetic gauge automatically in a Kwant system."""
+"""Functions for fixing the magnetic gauge automatically in a Kwant system.
+
+
+The "gauge" module has been included in Kwant on a provisional basis.
+Backwards incompatible changes (up to and including removal of the package)
+may occur if deemed necessary by the core developers.
+"""
 
 import functools as ft
 
@@ -365,6 +371,9 @@ def magnetic_gauge(syst):
     Fix the magnetic gauge for a Kwant system. This can
     be used to later calculate the Peierls phases that
     should be applied to each hopping, given a magnetic field.
+
+    This API is currently provisional. Refer to the documentation
+    for details.
 
     Parameters
     ----------
