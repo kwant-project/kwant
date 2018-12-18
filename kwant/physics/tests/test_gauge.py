@@ -1,4 +1,5 @@
 from collections import namedtuple, Counter
+import warnings
 from math import sqrt
 import numpy as np
 import pytest
@@ -151,7 +152,7 @@ def translational_symmetry(lat, neighbors):
 ## Tests
 
 # Tests that phase around a loop is equal to the flux through the loop.
-# First we define the loops that we want to test, for various latticeutils.
+# First we define the loops that we want to test, for various lattices.
 # If a system does not support a particular kind of loop, they will simply
 # not be generated.
 
@@ -214,8 +215,8 @@ def _test_phase_loops(syst, phases, loops):
 
 
 @pytest.mark.parametrize("neighbors", [1, 2, 3])
-@pytest.mark.parametrize("symmetry", [no_symmetry],
-                         ids=['finite'])
+@pytest.mark.parametrize("symmetry", [no_symmetry, translational_symmetry],
+                         ids=['finite', 'infinite'])
 @pytest.mark.parametrize("lattice, loops", [square, honeycomb, cubic],
                          ids=['square', 'honeycomb', 'cubic'])
 def test_phases(lattice, neighbors, symmetry, loops):
@@ -234,6 +235,176 @@ def test_phases(lattice, neighbors, symmetry, loops):
 
     _test_phase_loops(syst, phases, loops)
 
+
+@pytest.mark.parametrize("neighbors", [1, 2, 3])
+@pytest.mark.parametrize("lat, loops", [square, honeycomb],
+                         ids=['square', 'honeycomb'])
+def test_phases_composite(neighbors, lat, loops):
+    """Check that the phases around common loops are equal to the flux, for
+    composite systems with uniform magnetic field.
+    """
+    W = 4
+    dim = len(lat.prim_vecs)
+    field = np.array([0, 0, 1]) if dim == 3 else 1
+
+    lead = Builder(lattice.TranslationalSymmetry(-lat.prim_vecs[0]))
+    lead.fill(model(lat, neighbors), *hypercube(dim, W))
+
+    # Case where extra sites are added and fields are same in
+    # scattering region and lead.
+    syst = Builder()
+    syst.fill(model(lat, neighbors), *ball(dim, W + 1))
+    extra_sites = syst.attach_lead(lead)
+    assert extra_sites  # make sure we're testing the edge case with added sites
+
+    this_gauge = gauge.magnetic_gauge(syst.finalized())
+    # same field in scattering region and lead
+    phases, lead_phases = this_gauge(field, field)
+
+    # When extra sites are added to the central region we need to select
+    # the correct phase function.
+    def combined_phases(a, b):
+        if a in extra_sites or b in extra_sites:
+            return lead_phases(a, b)
+        else:
+            return phases(a, b)
+
+    _test_phase_loops(syst, combined_phases, loops)
+    _test_phase_loops(lead, lead_phases, loops)
+
+
+@pytest.mark.parametrize("neighbors", [1, 2])
+def test_overlapping_interfaces(neighbors):
+    """Test composite systems with overlapping lead interfaces."""
+
+    lat = square_lattice
+
+    def _make_syst(edge, W=5):
+
+        syst = Builder()
+        syst.fill(model(lat, neighbors), *rectangle(W, W))
+
+        leadx = Builder(lattice.TranslationalSymmetry((-1, 0)))
+        leadx[(lat(0, j) for j in range(edge, W - edge))] = None
+        for n in range(1, neighbors + 1):
+            leadx[lat.neighbors(n)] = None
+
+        leady = Builder(lattice.TranslationalSymmetry((0, -1)))
+        leady[(lat(i, 0) for i in range(edge, W - edge))] = None
+        for n in range(1, neighbors + 1):
+            leady[lat.neighbors(n)] = None
+
+        assert not syst.attach_lead(leadx)  # sanity check; no sites added
+        assert not syst.attach_lead(leady)  # sanity check; no sites added
+
+        return syst, leadx, leady
+
+    # edge == 0: lead interfaces overlap
+    # edge == 1: lead interfaces partition scattering region
+    #            into 2 disconnected components
+    for edge in (0, 1):
+        syst, leadx, leady = _make_syst(edge)
+        this_gauge = gauge.magnetic_gauge(syst.finalized())
+        phases, leadx_phases, leady_phases = this_gauge(1, 1, 1)
+        _test_phase_loops(syst, phases, square_loops)
+        _test_phase_loops(leadx, leadx_phases, square_loops)
+        _test_phase_loops(leady, leady_phases, square_loops)
+
+
+def _make_square_syst(sym, neighbors=1):
+    lat = square_lattice
+    syst = Builder(sym)
+    syst[(lat(i, j) for i in (0, 1) for j in (0, 1))] = None
+    for n in range(1, neighbors + 1):
+        syst[lat.neighbors(n)] = None
+    return syst
+
+
+def test_unfixable_gauge():
+    """Check error is raised when we cannot fix the gauge."""
+
+    leadx = _make_square_syst(lattice.TranslationalSymmetry((-1, 0)))
+    leady = _make_square_syst(lattice.TranslationalSymmetry((0, -1)))
+
+    # 1x2 line with 2 leads
+    syst = _make_square_syst(NoSymmetry())
+    del syst[[square_lattice(1, 0), square_lattice(1, 1)]]
+    syst.attach_lead(leadx)
+    syst.attach_lead(leadx.reversed())
+    with pytest.raises(ValueError):
+        gauge.magnetic_gauge(syst.finalized())
+
+    # 2x2 square with leads attached from all 4 sides,
+    # and nearest neighbor hoppings
+    syst = _make_square_syst(NoSymmetry())
+    # Until we add the last lead we have enough gauge freedom
+    # to specify independent fields in the scattering region
+    # and each of the leads. We check that no extra sites are
+    # added as a sanity check.
+    assert not syst.attach_lead(leadx)
+    gauge.magnetic_gauge(syst.finalized())
+    assert not syst.attach_lead(leady)
+    gauge.magnetic_gauge(syst.finalized())
+    assert not syst.attach_lead(leadx.reversed())
+    gauge.magnetic_gauge(syst.finalized())
+    # Adding the last lead removes our gauge freedom.
+    assert not syst.attach_lead(leady.reversed())
+    with pytest.raises(ValueError):
+        gauge.magnetic_gauge(syst.finalized())
+
+    # 2x2 square with 2 leads, but 4rd nearest neighbor hoppings
+    syst = _make_square_syst(NoSymmetry())
+    del syst[(square_lattice(1, 0), square_lattice(1, 1))]
+    leadx = _make_square_syst(lattice.TranslationalSymmetry((-1, 0)))
+    leadx[square_lattice.neighbors(4)] = None
+    for lead in (leadx, leadx.reversed()):
+        syst.attach_lead(lead)
+
+    with pytest.raises(ValueError):
+        gauge.magnetic_gauge(syst.finalized())
+
+
+def _test_disconnected(syst):
+    with pytest.raises(ValueError) as excinfo:
+        gauge.magnetic_gauge(syst.finalized())
+        assert 'unit cell not connected' in str(excinfo.value)
+
+def test_invalid_lead():
+    """Check error is raised when a lead unit cell is not connected
+       within the unit cell itself.
+
+       In order for the algorithm to work we need to be able to close
+       loops within the lead. However we only add a single lead unit
+       cell, so not all paths can be closed, even if the lead is
+       connected.
+    """
+    lat = square_lattice
+
+    lead = _make_square_syst(lattice.TranslationalSymmetry((-1, 0)),
+                             neighbors=0)
+    # Truly disconnected system
+    # Ignore warnings to suppress Kwant's complaint about disconnected lead
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        _test_disconnected(lead)
+
+    # 2 disconnected chains (diagonal)
+    lead[(lat(0, 0), lat(1, 1))] = None
+    lead[(lat(0, 1), lat(1, 0))] = None
+    _test_disconnected(lead)
+
+    lead = _make_square_syst(lattice.TranslationalSymmetry((-1, 0)),
+                             neighbors=0)
+    # 2 disconnected chains (horizontal)
+    lead[(lat(0, 0), lat(1, 0))] = None
+    lead[(lat(0, 1), lat(1, 1))] = None
+    _test_disconnected(lead)
+
+    # System has loops, but need 3 unit cells
+    # to express them.
+    lead[(lat(0, 0), lat(1, 1))] = None
+    lead[(lat(0, 1), lat(1, 0))] = None
+    _test_disconnected(lead)
 
 # Test internal parts of magnetic_gauge
 
