@@ -97,10 +97,10 @@ def test_band_velocity_derivative():
         assert_array_almost_equal(dvel, num_dvel)
 
 
-def test_eigenvector_calculation(k=1.2, lead=make_lead()):  # k-point arbitrary
-
-    lead = lead.finalized()
+def test_eigenvector_calculation():
+    lead = make_lead().finalized()
     bands = kwant.physics.Bands(lead)
+    k = 1.2   # k-point arbitrary
 
     # check if eigenvalues are sorted and always sorted in the same way
     energies = bands(k)
@@ -144,7 +144,7 @@ def test_eigenvector_calculation(k=1.2, lead=make_lead()):  # k-point arbitrary
         assert_array_almost_equal(v_1, v_2)
 
 
-def test_raise_implemented(k=1, lead=make_lead()):  # k-point arbitrary
-    bands = kwant.physics.Bands(lead.finalized())
-    raises(NotImplementedError, bands, k, derivative_order=-1)
+def test_raise_implemented():
+    k = 1  # k-point arbitrary
+    bands = kwant.physics.Bands(make_lead().finalized())
     raises(NotImplementedError, bands, k, derivative_order=3)
