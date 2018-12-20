@@ -987,7 +987,6 @@ def _plot_plotly(sys, num_lead_cells, unit,
         raise RuntimeError("plotly was not found, but is required "
                            "for plot()")
 
-    print('In _plot_plotly')
     syst = sys  # for naming consistency inside function bodies
     # Generate data.
     sites, lead_sites_slcs = sys_leads_sites(syst, num_lead_cells)
@@ -1019,7 +1018,6 @@ def _plot_plotly(sys, num_lead_cells, unit,
     if unit != 'pt':
         raise RuntimeError('Plotly backend currently only supports '
                          'the pt symbol size unit')
-
 
     site_symbol = _make_proper_site_spec('site_symbol', site_symbol, sites)
     if site_symbol is None: site_symbol = defaults['site_symbol'][dim]
@@ -1073,15 +1071,10 @@ def _plot_plotly(sys, num_lead_cells, unit,
     if hop_color is None: hop_color = defaults['hop_color'][dim]
     if hop_lw is None: hop_lw = defaults['hop_lw'][dim]
 
-    # if symbols are split up into different collections,
-    # the colormapping will fail without normalization
-    norm = None
     if len(symbol_slcs) > 1:
         try:
             if site_color.ndim == 1 and len(site_color) == n_syst_sites:
                 site_color = np.asarray(site_color, dtype=float)
-                norm = _p.matplotlib.colors.Normalize(site_color.min(),
-                                                      site_color.max())
         except:
             pass
 
@@ -1112,7 +1105,10 @@ def _plot_plotly(sys, num_lead_cells, unit,
             cmap, hop_cmap = cmap
         except TypeError:
             pass
-    # plot system sites and hoppings
+    # Plot system sites and hoppings
+
+    # First plot the nodes (sites) of the graph
+    assert dim == 2 or dim == 3
     site_node_trace, site_edge_trace = [], []
     for symbol, slc in symbol_slcs:
         size = site_size[slc] if _p.isarray(site_size) else site_size
@@ -1121,109 +1117,144 @@ def _plot_plotly(sys, num_lead_cells, unit,
                    site_edgecolor)
         lw = site_lw[slc] if _p.isarray(site_lw) else site_lw
 
-        site_symbol_plotly = _p.convert_symbol_mpl_plotly(symbol)
-        site_node_trace_elem = _p.plotly_graph_objs.Scatter(
-                        x=[],
-                        y=[],
-                        text=[],
-                        mode='markers',
-                        hoverinfo='text',
-                        marker=dict(
-                            showscale=False,
-                            colorscale=_p.convert_cmap_list_mpl_plotly(cmap),
-                            reversescale=True,
-                            color=col,
-                            size=_p.convert_site_size_mpl_plotly(size,
-                                       defaults['plotly_site_size_reference']),
-                            symbol=site_symbol_plotly,
-                            line=dict(width=lw,
-                                      color=edgecol)
-                            ))
+        if dim == 3:
+            site_node_trace_elem = _p.plotly_graph_objs.Scatter3d(x=[], y=[],
+                                                                  z=[])
+            for i in range(len(sites_pos[slc])):
+                x, y, z = sites_pos[slc][i]
+                site_node_trace_elem.x += tuple([x])
+                site_node_trace_elem.y += tuple([y])
+                site_node_trace_elem.z += tuple([z])
+            site_node_trace_elem.marker.symbol = _p.convert_symbol_mpl_plotly_3d(
+                                                                        symbol)
+        else:
+            site_node_trace_elem = _p.plotly_graph_objs.Scatter(x=[], y=[])
+            for i in range(len(sites_pos[slc])):
+                x, y = sites_pos[slc][i]
+                site_node_trace_elem.x += tuple([x])
+                site_node_trace_elem.y += tuple([y])
+            site_node_trace_elem.marker.symbol = _p.convert_symbol_mpl_plotly(
+                                                                        symbol)
 
+        site_node_trace_elem.mode = 'markers'
+        site_node_trace_elem.hoverinfo = 'text'
+        site_node_trace_elem.marker.showscale = False
+        site_node_trace_elem.marker.colorscale = \
+                                          _p.convert_cmap_list_mpl_plotly(cmap)
+        site_node_trace_elem.marker.reversescale = False
+        site_node_trace_elem.marker.color = col
+        site_node_trace_elem.marker.size = \
+                                _p.convert_site_size_mpl_plotly(size,
+                                        defaults['plotly_site_size_reference'])
 
-        for i in range(len(sites_pos[slc])):
-            x, y = sites_pos[slc][i]
-            site_node_trace_elem['x'] += tuple([x])
-            site_node_trace_elem['y'] += tuple([y])
+        site_node_trace_elem.line.width = lw
+        site_node_trace_elem.line.color = edgecol
 
         site_node_trace.append(site_node_trace_elem)
 
+    # Now plot the edges (hops) of the graph
     end, start = end_pos[: n_syst_hops], start_pos[: n_syst_hops]
-    dim = end.shape[1]
-    assert dim == 2 or dim == 3
-    if dim == 2:
-        site_edge_trace_elem = _p.plotly_graph_objs.Scatter(
-                                x=[],
-                                y=[],
-                                line=dict(width=hop_lw,color=hop_color),
-                                hoverinfo='none',
-                                mode='lines')
+
+    if dim == 3:
+        site_edge_trace_elem = _p.plotly_graph_objs.Scatter3d(x=[], y=[], z=[])
+        for i in range(len(end)):
+            x0, y0, z0 = end[i]
+            x1, y1, z1 = start[i]
+            site_edge_trace_elem.x += tuple([x0, x1, None])
+            site_edge_trace_elem.y += tuple([y0, y1, None])
+            site_edge_trace_elem.z += tuple([z0, z1, None])
+    else:
+        site_edge_trace_elem = _p.plotly_graph_objs.Scatter(x=[], y=[])
         for i in range(len(end)):
             x0, y0 = end[i]
             x1, y1 = start[i]
-            site_edge_trace_elem['x'] += tuple([x0, x1, None])
-            site_edge_trace_elem['y'] += tuple([y0, y1, None])
-        site_edge_trace.append(site_edge_trace_elem)
-    else:
-        raise RuntimeError('dim=3 is unsupported yet in plotly backend')
+            site_edge_trace_elem.x += tuple([x0, x1, None])
+            site_edge_trace_elem.y += tuple([y0, y1, None])
 
-    # Make conversion of colormap
 
-    lead_site_symbol_plotly = _p.convert_symbol_mpl_plotly(lead_site_symbol)
+    site_edge_trace_elem.line.width = hop_lw
+    site_edge_trace_elem.line.color = hop_color
+    site_edge_trace_elem.hoverinfo = 'none'
+    site_edge_trace_elem.mode = 'lines'
+    site_edge_trace.append(site_edge_trace_elem)
+
+    # Plot lead sites and edges
 
     lead_node_trace, lead_edge_trace = [], []
     for sites_slc, hops_slc in zip(lead_sites_slcs, lead_hops_slcs):
         lead_site_colors = np.array([i[2] for i in sites[sites_slc]],
                                     dtype=float)
-        lead_node_trace_elem = _p.plotly_graph_objs.Scatter(
-                        x=[],
-                        y=[],
-                        text=[],
-                        mode='markers',
-                        hoverinfo='text',
-                        marker=dict(
-                            showscale=False,
-                            reversescale=True,
-                            color=lead_site_colors,
-                            colorscale=_p.convert_lead_cmap_mpl_plotly(
-                                            lead_color, [1,1,1,lead_color[3]]),
-                            size=_p.convert_site_size_mpl_plotly(
-                                   lead_site_size,
-                                   defaults['plotly_site_size_reference']),
-                            symbol=lead_site_symbol_plotly,
-                            line=dict(width=lead_site_lw,
-                                      color=lead_site_edgecolor)
-                            ))
-        for i in range(len(sites_pos[sites_slc])):
-            x, y = sites_pos[sites_slc][i]
-            lead_node_trace_elem['x'] += tuple([x])
-            lead_node_trace_elem['y'] += tuple([y])
+        if dim == 3:
+            lead_node_trace_elem = _p.plotly_graph_objs.Scatter3d(x=[], y=[],
+                                                                  z=[])
+            for i in range(len(sites_pos[sites_slc])):
+                x, y, z = sites_pos[sites_slc][i]
+                lead_node_trace_elem.x += tuple([x])
+                lead_node_trace_elem.y += tuple([y])
+                lead_node_trace_elem.z += tuple([z])
+            lead_node_trace_elem.marker.symbol = \
+                              _p.convert_symbol_mpl_plotly_3d(lead_site_symbol)
+        else:
+            lead_node_trace_elem = _p.plotly_graph_objs.Scatter(x=[], y=[])
+            for i in range(len(sites_pos[sites_slc])):
+                x, y = sites_pos[sites_slc][i]
+                lead_node_trace_elem.x += tuple([x])
+                lead_node_trace_elem.y += tuple([y])
+            lead_node_trace_elem.marker.symbol = \
+                                 _p.convert_symbol_mpl_plotly(lead_site_symbol)
+
+        lead_node_trace_elem.mode = 'markers'
+        lead_node_trace_elem.hoverinfo = 'text'
+        lead_node_trace_elem.marker.showscale = False
+        lead_node_trace_elem.marker.reversescale = False
+        lead_node_trace_elem.marker.color = lead_site_colors
+        lead_node_trace_elem.marker.colorscale = \
+                                    _p.convert_lead_cmap_mpl_plotly(lead_color,
+                                                      [1, 1, 1, lead_color[3]])
+        lead_node_trace_elem.marker.size = _p.convert_site_size_mpl_plotly(
+                                        lead_site_size,
+                                        defaults['plotly_site_size_reference'])
+
+        if _p.isarray(lead_site_lw) or _p.isarray(lead_site_edgecolor):
+            raise RuntimeError("Plotly backend not currently support an array "
+                               "of linecolors or linewidths. Please restrict "
+                               "to only a constant (i.e. no function or array) "
+                               "lead_site_lw and lead_site_edgecolor property "
+                               "for the entire plot.")
+        lead_node_trace_elem.line.width = lead_site_lw
+        lead_node_trace_elem.line.color = lead_site_edgecolor
+
         lead_node_trace.append(lead_node_trace_elem)
+
         lead_hop_colors = np.array([i[2] for i in hops[hops_slc]], dtype=float)
-        # Note: the previous version of the code had in addition this
-        # line in the 3D case:
-        # lead_hop_colors = 1 / np.sqrt(1. + lead_hop_colors)
-        # Uses lead_cmap for the colormap
-        # 1) Make each line a scatter object. Takes a lot of memory but should work
-        # 2) Get the color from the previous object
+
         end, start = end_pos[hops_slc], start_pos[hops_slc]
-        if dim == 2:
-            lead_edge_trace_elem = _p.plotly_graph_objs.Scatter(
-                                    x=[],
-                                    y=[],
-                                    line=dict(width=lead_hop_lw,
-                                              color='red'),
-                                    hoverinfo='none',
-                                    mode='lines')
+
+        if dim == 3:
+            lead_edge_trace_elem = _p.plotly_graph_objs.Scatter3d(x=[], y=[],
+                                                                  z=[])
+            for i in range(len(end)):
+                x0, y0, z0 = end[i]
+                x1, y1, z1 = start[i]
+                lead_edge_trace_elem.x += tuple([x0, x1, None])
+                lead_edge_trace_elem.y += tuple([y0, y1, None])
+                lead_edge_trace_elem.z += tuple([z0, z1, None])
+
+        else:
+            lead_edge_trace_elem = _p.plotly_graph_objs.Scatter(x=[], y=[])
             for i in range(len(end)):
                 x0, y0 = end[i]
                 x1, y1 = start[i]
-                lead_edge_trace_elem['x'] += tuple([x0, x1, None])
-                lead_edge_trace_elem['y'] += tuple([y0, y1, None])
+                lead_edge_trace_elem.x += tuple([x0, x1, None])
+                lead_edge_trace_elem.y += tuple([y0, y1, None])
 
-            lead_edge_trace.append(lead_edge_trace_elem)
-        else:
-            raise RuntimeError('dim=3 is unsupported yet in plotly backend')
+        lead_edge_trace_elem.line.width = lead_hop_lw
+        lead_edge_trace_elem.line.color = _p.convert_colormap_mpl_plotly(
+                                                        lead_color)
+        lead_edge_trace_elem.hoverinfo = 'none'
+        lead_edge_trace_elem.mode = 'lines'
+
+        lead_edge_trace.append(lead_edge_trace_elem)
 
     layout = _p.plotly_graph_objs.Layout(
                                 showlegend=False,
@@ -1255,7 +1286,6 @@ def _plot_matplotlib(sys, num_lead_cells, unit,
         raise RuntimeError("matplotlib was not found, but is required "
                            "for plot()")
 
-    print('In _plot_matplotlib')
     syst = sys  # for naming consistency inside function bodies
     # Generate data.
     sites, lead_sites_slcs = sys_leads_sites(syst, num_lead_cells)

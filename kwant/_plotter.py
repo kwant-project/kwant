@@ -116,6 +116,14 @@ if plotly_available:
         "h": 14
     }
 
+    converter_map_3d = {
+        "o": "circle",
+        "s": "square",
+        "+": "cross",
+        "x": "x",
+        "d": "diamond",
+    }
+
 
     def convert_symbol_mpl_plotly(mpl_symbol):
         if isarray(mpl_symbol):
@@ -127,6 +135,23 @@ if plotly_available:
             raise RuntimeWarning('Input symbol \'{}\' not supported. '
                             'Only the following are supported: {}'.format(
                                 mpl_symbol, converter_map.keys()))
+        return converted_symbol
+
+    def convert_symbol_mpl_plotly_3d(mpl_symbol):
+        if isarray(mpl_symbol) or isinstance(mpl_symbol, tuple):
+            converted_symbol = [converter_map_3d.get(i) for i in mpl_symbol]
+            if None in converted_symbol:
+                raise RuntimeError('Input tuple \'{}\' not supported. '
+                                'Only the following characters '
+                                'are supported: {}'.format(
+                                    mpl_symbol, converter_map_3d.keys()))
+        else:
+            converted_symbol = converter_map_3d.get(mpl_symbol)
+            if converted_symbol == None:
+                raise RuntimeError('Input symbol \'{}\' not supported. '
+                                'Only the following are supported: {}'.format(
+                                    mpl_symbol, converter_map_3d.keys()))
+
         return converted_symbol
 
 
@@ -143,7 +168,7 @@ if plotly_available:
     def convert_cmap_list_mpl_plotly(mpl_cmap_name, N=255):
         cmap_mpl = matplotlib.cm.get_cmap(mpl_cmap_name)
         cmap_mpl_arr = matplotlib.colors.makeMappingArray(N, cmap_mpl)
-        level = np.linspace(1, 0, N)
+        level = np.linspace(0, 1, N)
         cmap_plotly_linear = [(level, convert_colormap_mpl_plotly(cmap_mpl))
                                 for level, cmap_mpl in zip(level,
                                                             cmap_mpl_arr)]
@@ -160,13 +185,12 @@ if plotly_available:
                                mpl_lead_cmap_end[2], N) * 255
         a_levels = np.linspace(mpl_lead_cmap_init[3],
                                mpl_lead_cmap_end[3], N)
-        level = np.linspace(1, 0, N)
+        level = np.linspace(0, 1, N)
         cmap_plotly_linear = [(level, 'rgba({},{},{},{})'.format(*rgba))
-                                    for level, rgba in zip(level, zip(r_levels,
-                                                                      g_levels,
-                                                                      b_levels,
-                                                                      a_levels
-                                                                      ))]
+                                for level, rgba in zip(level,
+                                                        zip(r_levels, g_levels,
+                                                            b_levels, a_levels
+                                                            ))]
         return cmap_plotly_linear
 
 
