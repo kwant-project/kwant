@@ -117,11 +117,12 @@ class Bands:
         h0 = mat + mat.conjugate().transpose() + self.ham
 
         # compute energies and if required eigenvectors
+        # numpy routines eigh and eigvalsh return eigenvalues in ascending order
         if return_eigenvectors or derivative_order > 0:
             energies, eigenvectors = np.linalg.eigh(h0)
         else:
-            energies = np.sort(np.linalg.eigvalsh(h0).real)
-        output = (energies,)
+            energies = np.linalg.eigvalsh(h0)
+        output = (energies.real,)
 
         if derivative_order >= 1:  # compute velocities
             h1 = 1j*(- mat + mat.conjugate().transpose())
