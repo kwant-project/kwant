@@ -532,6 +532,8 @@ def main():
          dict(sources=['kwant/graph/core.pyx'],
               depends=['kwant/graph/core.pxd', 'kwant/graph/defs.h',
                        'kwant/graph/defs.pxd'])),
+        ('kwant.graph.dijkstra',
+         dict(sources=['kwant/graph/dijkstra.pyx'])),
         ('kwant.linalg.lapack',
          dict(sources=['kwant/linalg/lapack.pyx'])),
         ('kwant.linalg._mumps',

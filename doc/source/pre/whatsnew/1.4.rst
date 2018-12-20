@@ -6,6 +6,32 @@ See also the `full list of changes up to the most recent bugfix
 release of the 1.4 series
 <https://gitlab.kwant-project.org/kwant/kwant/compare/v1.4.0...latest-1.4>`_.
 
+Automatic Peierls phase calculation
+-----------------------------------
+When defining systems with orbital magnetic fields it is often cumbersome to
+manually calculate the phases required by the Peierls substitution, and to
+ensure that the chosen gauge is consistent across the whole system
+(this is especially true for systems with leads that point in different
+directions). This release introduces `kwant.physics.magnetic_gauge`,
+which calculates the Peierls phases for you::
+
+  import numpy as np
+  import kwant
+
+  def hopping(a, b, t, phi):
+    return -t * np.exp(-1j * phi(a, b))
+
+  syst = make_system(hopping).finalized()
+  gauge = kwant.physics.magnetic_gauge(syst)
+
+  def B(pos):
+    return np.exp(-np.sum(pos * pos))
+
+  kwant.hamiltonian_submatrix(syst, params=dict(t=1, phi=gauge(B))
+
+Note that the API for this functionality is provisional, and may be
+revised in a future version of Kwant.
+
 Value functions may no longer have default values for parameters
 ----------------------------------------------------------------
 Using value functions with default values for parameters can be
