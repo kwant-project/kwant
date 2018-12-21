@@ -106,7 +106,8 @@ if plotly_available:
         "x": 4,
         "*": 17,
         "d": 2,
-        "h": 14
+        "h": 14,
+        "no symbol": -1
     }
 
     converter_map_3d = {
