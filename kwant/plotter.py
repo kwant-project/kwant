@@ -981,7 +981,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
          lead_site_edgecolor, lead_site_lw,
          lead_hop_lw, pos_transform,
          cmap, colorbar, file,
-         show):
+         show, fig=None):
 
     if not _p.plotly_available:
         raise RuntimeError("plotly was not found, but is required "
@@ -1111,6 +1111,9 @@ def _plot_plotly(sys, num_lead_cells, unit,
     assert dim == 2 or dim == 3
     site_node_trace, site_edge_trace = [], []
     for symbol, slc in symbol_slcs:
+        site_symbol_plotly = _p.convert_symbol_mpl_plotly(symbol)
+        if site_symbol_plotly == -1:
+            continue
         size = site_size[slc] if _p.isarray(site_size) else site_size
         col = site_color[slc] if _p.isarray(site_color) else site_color
         if _p.isarray(site_edgecolor) or _p.isarray(site_lw):
@@ -1144,7 +1147,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
                                                                         symbol)
 
         site_node_trace_elem.mode = 'markers'
-        site_node_trace_elem.hoverinfo = 'text'
+        site_node_trace_elem.hoverinfo = 'none'
         site_node_trace_elem.marker.showscale = False
         site_node_trace_elem.marker.colorscale = \
                                           _p.convert_cmap_list_mpl_plotly(cmap)
@@ -1158,6 +1161,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
 
         site_node_trace_elem.line.width = lw
         site_node_trace_elem.line.color = edgecol
+        site_node_trace_elem.showlegend = False
 
         site_node_trace.append(site_node_trace_elem)
 
@@ -1189,6 +1193,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
     site_edge_trace_elem.line.width = hop_lw
     site_edge_trace_elem.line.color = hop_color
     site_edge_trace_elem.hoverinfo = 'none'
+    site_edge_trace_elem.showlegend = False
     site_edge_trace_elem.mode = 'lines'
     site_edge_trace.append(site_edge_trace_elem)
 
@@ -1218,7 +1223,8 @@ def _plot_plotly(sys, num_lead_cells, unit,
                                  _p.convert_symbol_mpl_plotly(lead_site_symbol)
 
         lead_node_trace_elem.mode = 'markers'
-        lead_node_trace_elem.hoverinfo = 'text'
+        lead_node_trace_elem.hoverinfo = 'none'
+        lead_node_trace_elem.showlegend = False
         lead_node_trace_elem.marker.showscale = False
         lead_node_trace_elem.marker.reversescale = False
         lead_node_trace_elem.marker.color = lead_site_colors
@@ -1238,7 +1244,8 @@ def _plot_plotly(sys, num_lead_cells, unit,
         lead_node_trace_elem.line.width = lead_site_lw
         lead_node_trace_elem.line.color = lead_site_edgecolor
 
-        lead_node_trace.append(lead_node_trace_elem)
+        if lead_node_trace_elem:
+            lead_node_trace.append(lead_node_trace_elem)
 
         lead_hop_colors = np.array([i[2] for i in hops[hops_slc]], dtype=float)
 
@@ -1267,6 +1274,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
                                                         lead_color)
         lead_edge_trace_elem.hoverinfo = 'none'
         lead_edge_trace_elem.mode = 'lines'
+        lead_edge_trace_elem.showlegend = False
 
         lead_edge_trace.append(lead_edge_trace_elem)
 
@@ -1277,11 +1285,17 @@ def _plot_plotly(sys, num_lead_cells, unit,
                                            showticklabels=True),
                                 yaxis=dict(showgrid=False, zeroline=False,
                                            showticklabels=True))
-    full_trace = list(itertools.chain.from_iterable([site_edge_trace,
-                                        site_node_trace, lead_edge_trace,
-                                        lead_node_trace]))
-    fig = _p.plotly_graph_objs.Figure(data=full_trace,
-                                      layout=layout)
+    if fig == None:
+        full_trace = list(itertools.chain.from_iterable([site_edge_trace,
+                                            site_node_trace, lead_edge_trace,
+                                            lead_node_trace]))
+        fig = _p.plotly_graph_objs.Figure(data=full_trace,
+                                          layout=layout)
+    else:
+        full_trace = list(itertools.chain.from_iterable([lead_edge_trace,
+                                            lead_node_trace]))
+        for trace in full_trace:
+            fig.add_trace(trace)
 
     return fig
 
@@ -1610,7 +1624,14 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
     # * 0.4 (which is just below sqrt(2) - 1) makes tree.query() exact.
     mask = tree.query(mask, eps=0.4)[0] > 0.99 * a
 
-    return np.ma.masked_array(img, mask), cmin, cmax
+    masked_result_array = np.ma.masked_array(img, mask)
+
+    if get_backend() != _p.Backends.matplotlib:
+        result_array = masked_result_array.filled(np.NaN)
+    else:
+        result_array = masked_result_array
+
+    return result_array, img, cmin, cmax
 
 
 def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
@@ -1689,7 +1710,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     kwant.plotter.density
     """
 
-    if not _p.mpl_available:
+    if not (_p.mpl_available or _p.plotly_available):
         raise RuntimeError("matplotlib was not found, but is required "
                            "for map()")
 
@@ -1711,18 +1732,8 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
                              'for finalized systems.')
     value = np.array(value)
     with _common.reraise_warnings():
-        img, min, max = mask_interpolate(coords, value, a, method, oversampling)
-    border = 0.5 * (max - min) / (np.asarray(img.shape) - 1)
-    min -= border
-    max += border
-    if ax is None:
-        fig = _make_figure(dpi, fig_size, use_pyplot=(file is None))
-        ax = fig.add_subplot(1, 1, 1, aspect='equal')
-    else:
-        fig = None
-
-    if cmap is None:
-        cmap = _p.kwant_red_matplotlib
+        img, unmasked_data, _min, _max = mask_interpolate(coords, value,
+                                                       a, method, oversampling)
 
     # Calculate the min/max bounds for the colormap.
     # User-provided values take precedence.
@@ -1745,9 +1756,96 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         warnings.warn(''.join(msg), RuntimeWarning, stacklevel=2)
     vmin, vmax = new_vmin, new_vmax
 
+    if get_backend() == _p.Backends.matplotlib:
+        fig = _map_matplotlib(syst, img, colorbar, _max, _min,  vmin, vmax,
+                        overflow_pct, underflow_pct, cmap, num_lead_cells,
+                        background, dpi, fig_size, ax, file)
+    elif get_backend() == _p.Backends.plotly:
+        fig = _map_plotly(syst, img, colorbar, _max, _min,  vmin, vmax,
+                          overflow_pct, underflow_pct, cmap, num_lead_cells,
+                          background)
+    else:
+        raise RuntimeError('Backend not supported by map().')
+
+    _maybe_output_fig(fig, file=file, show=show)
+
+    return fig
+
+
+def _map_plotly(syst, img, colorbar, _max, _min,  vmin, vmax, overflow_pct,
+                underflow_pct, cmap, num_lead_cells, background):
+
+    border = 0.5 * (_max - _min) / (np.asarray(img.shape) - 1)
+    _min -= border
+    _max += border
+
+    if cmap is None:
+        cmap = _p._colormaps.kwant_red
+
     # Note that we tell imshow to show the array created by mask_interpolate
     # faithfully and not to interpolate by itself another time.
-    image = ax.imshow(img.T, extent=(min[0], max[0], min[1], max[1]),
+    # image = ax.imshow(img.T, extent=(_min[0], _max[0], _min[1], _max[1]),
+    #                   origin='lower', interpolation='none', cmap=cmap,
+    #                   vmin=vmin, vmax=vmax)
+    if not _p.plotly_available:
+        raise RuntimeError("plotly was not found, but is required "
+                           "for _map_plotly()")
+
+    if cmap is None:
+        cmap = _p.kwant_red_plotly
+
+    img = img.T
+    contour_object = _p.plotly_graph_objs.Heatmap()
+    contour_object.z = img
+    contour_object.x = np.linspace(_min[0],_max[0],img.shape[0])
+    contour_object.y = np.linspace(_min[1],_max[1],img.shape[1])
+    contour_object.zsmooth = False
+    contour_object.connectgaps = False
+    contour_object.colorscale = _p.convert_cmap_list_mpl_plotly(cmap)
+    contour_object.zmax = vmax
+    contour_object.zmin = vmin
+    contour_object.showlegend = False
+    contour_object.hoverinfo = 'none'
+
+    contour_object.showscale = colorbar
+
+    fig = _p.plotly_graph_objs.Figure(data=[contour_object])
+    fig.layout.plot_bgcolor = background
+    # fig.layout.width = 720
+    # fig.layout.height = fig.layout.width
+
+    if num_lead_cells:
+        fig = _plot_plotly(syst, num_lead_cells, site_symbol='no symbol',
+                           hop_lw=0, lead_site_symbol='s',
+                           lead_site_size=0.501, lead_site_lw=0,lead_hop_lw=0,
+                           lead_color='black', colorbar=False, show=False,
+                           fig=fig, unit='pt', site_size=None, site_color=None,
+                           site_edgecolor=None, site_lw=0, hop_color=None,
+                           lead_site_edgecolor=None,pos_transform=None,
+                           cmap=None, file=None)
+
+    return fig
+
+
+def _map_matplotlib(syst, img, colorbar, _max, _min,  vmin, vmax,
+                    overflow_pct, underflow_pct, cmap, num_lead_cells,
+                    background, dpi, fig_size, ax, file):
+
+    border = 0.5 * (_max - _min) / (np.asarray(img.shape) - 1)
+    _min -= border
+    _max += border
+    if ax is None:
+        fig = _make_figure(dpi, fig_size, use_pyplot=(file is None))
+        ax = fig.add_subplot(1, 1, 1, aspect='equal')
+    else:
+        fig = None
+
+    if cmap is None:
+        cmap = _p._colormaps.kwant_red
+
+    # Note that we tell imshow to show the array created by mask_interpolate
+    # faithfully and not to interpolate by itself another time.
+    image = ax.imshow(img.T, extent=(_min[0], _max[0], _min[1], _max[1]),
                       origin='lower', interpolation='none', cmap=cmap,
                       vmin=vmin, vmax=vmax)
     if num_lead_cells:
@@ -1767,8 +1865,6 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         elif overflow_pct > 0:
             extend = 'max'
         fig.colorbar(image, extend=extend)
-
-    _maybe_output_fig(fig, file=file, show=show)
 
     return fig
 
