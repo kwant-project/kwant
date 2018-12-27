@@ -20,6 +20,14 @@ from math import sqrt, pi
 import numpy as np
 from enum import Enum
 
+
+try:
+    __IPYTHON__
+    is_ipython_kernel = True
+except NameError:
+    is_ipython_kernel = False
+
+
 try:
     import matplotlib
     import matplotlib.colors
@@ -42,9 +50,9 @@ except ImportError:
 
 
 try:
-    import plotly.offline as plotly
+    import plotly.offline as plotly_module
     import plotly.graph_objs as plotly_graph_objs
-    plotly.init_notebook_mode(connected=True)
+    init_notebook_mode_set = False
     plotly_available = True
 except ImportError:
     warnings.warn("plotly is not available, if other backends are unavailable,"
