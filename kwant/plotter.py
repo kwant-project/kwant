@@ -165,9 +165,14 @@ def _maybe_output_fig(fig, file=None, show=True):
             pyplot.show()
     elif get_backend() == _p.Backends.plotly:
         if file is not None:
-            _p.plotly.plot(fig, show_link=False, filename=file, auto_open=False)
+            _p.plotly_module.plot(fig, show_link=False, filename=file, auto_open=False)
         if show:
-            _p.plotly.iplot(fig)
+            if (_p.is_ipython_kernel):
+                _p.plotly_module.iplot(fig)
+            else:
+                raise RuntimeError('show flag using the plotly backend can '
+                                   'only be True if and only if called from a '
+                                   'jupyter/ipython environment.')
 
 
 def set_colors(color, collection, cmap, norm=None):
