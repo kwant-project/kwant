@@ -17,6 +17,7 @@ variables:
 
 .build-env: &build-env
   stage: build-env
+  when: manual
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
