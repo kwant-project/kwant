@@ -13,7 +13,7 @@ __all__ = ['two_terminal_shotnoise']
 
 
 def two_terminal_shotnoise(smatrix):
-    """Compute the shot-noise in a two-terminal setup.
+    r"""Compute the shot-noise in a two-terminal setup.
 
     In a two terminal system the shot noise is given by `tr((1 - t*t^\dagger) *
     t*t^\dagger)`.
