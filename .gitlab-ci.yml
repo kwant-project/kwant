@@ -165,7 +165,7 @@ check for dependencies installed:
 .test: &test
   stage: test
   script:
-    - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant --junitxml=tests.xml
+    - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant --junitxml=tests.xml --durations=10
   artifacts:
     paths:
       - htmlcov
