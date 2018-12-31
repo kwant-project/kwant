@@ -1357,3 +1357,33 @@ def test_subs():
     # so the signature of 'onsite' is valid.
     sub_syst = syst.substituted(a='sitea')
     assert np.allclose(hamiltonian(sub_syst, sitea=1, b=2, c=3), expected)
+
+
+def test_attach_stores_padding():
+    lat = kwant.lattice.chain()
+    syst = kwant.Builder()
+    syst[lat(0)] = 0
+    lead = kwant.Builder(kwant.TranslationalSymmetry(lat.prim_vecs[0]))
+    lead[lat(0)] = 0
+    lead[lat(1), lat(0)] = 0
+    added_sites = syst.attach_lead(lead, add_cells=2)
+    assert syst.leads[0].padding == sorted(added_sites)
+
+
+def test_finalization_preserves_padding():
+    lat = kwant.lattice.chain()
+    syst = kwant.Builder()
+    for i in range(10):
+        syst[lat(i)] = 0
+
+    lead = kwant.Builder(kwant.TranslationalSymmetry(lat.prim_vecs[0]))
+    lead[lat(0)] = 0
+    lead[lat(0), lat(1)] = 0
+    # We use a low level way to provide a lead to directly check that the
+    # padding is preserved. We also check that the sites that do not belong to
+    # the system don't end up in the padding of the finalized system.
+    padding = [lat(0), lat(3), lat(5), lat(11)]
+    syst.leads.append(kwant.builder.BuilderLead(lead, [lat(0)], padding))
+    syst = syst.finalized()
+    # The order is guaranteed because the paddings are sorted.
+    assert [syst.sites[i] for i in syst.lead_paddings[0]] == padding[:-1]

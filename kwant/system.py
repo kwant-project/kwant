@@ -85,10 +85,15 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
     lead_interfaces : sequence of sequences of integers
         Each sub-sequence contains the indices of the system sites
         to which the lead is connected.
+    lead_paddings : sequence of sequences of integers
+        Each sub-sequence contains the indices of the system sites
+        that belong to the lead, and therefore have the same onsite as the lead
+        sites, and are connected by the same hoppings as the lead sites.
 
     Notes
     -----
-    The length of ``leads`` must be equal to the length of ``lead_interfaces``.
+    The length of ``leads`` must be equal to the length of ``lead_interfaces``
+    and ``lead_paddings``.
 
     For lead ``n``, the method leads[n].selfenergy must return a square matrix
     whose size is ``sum(len(self.hamiltonian(site, site)) for site in

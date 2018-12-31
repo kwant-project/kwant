@@ -574,6 +574,10 @@ class BuilderLead(Lead):
         The tight-binding system of a lead.
     interface : list of `Site` instances
         A sorted list of interface sites.
+    padding : list of `Site` instances
+        A sorted list of sites that originate from the lead, have the same
+        onsite Hamiltonian, and are connected by the same hoppings as the lead
+        sites.
 
     Notes
     -----
@@ -586,9 +590,10 @@ class BuilderLead(Lead):
     `BuilderLead` objects with all the information about the leads that are
     attached.
     """
-    def __init__(self, builder, interface):
+    def __init__(self, builder, interface, padding=None):
         self.builder = builder
-        self.interface = tuple(sorted(interface))
+        self.interface = sorted(interface)
+        self.padding = sorted(padding) if padding is not None else []
 
     def finalized(self):
         """Return a `kwant.builder.InfiniteSystem` corresponding to the
@@ -1725,7 +1730,7 @@ class Builder:
                 if sym.which(neighbor)[0] == max_dom:
                     interface.add(neighbor)
 
-        self.leads.append(BuilderLead(lead_builder, tuple(interface)))
+        self.leads.append(BuilderLead(lead_builder, interface, all_added))
         return all_added
 
     def finalized(self):
@@ -1964,6 +1969,7 @@ class FiniteSystem(_FinalizedBuilderMixin, system.FiniteSystem):
         #### Connect leads.
         finalized_leads = []
         lead_interfaces = []
+        lead_paddings = []
         for lead_nr, lead in enumerate(builder.leads):
             try:
                 with warnings.catch_warnings(record=True) as ws:
@@ -1992,6 +1998,16 @@ class FiniteSystem(_FinalizedBuilderMixin, system.FiniteSystem):
 
             lead_interfaces.append(np.array(interface))
 
+            padding = getattr(lead, 'padding', [])
+            # Some padding sites might have been removed after the lead was
+            # attached. Unlike in the case of the interface, this is not a
+            # problem.
+            finalized_padding = [
+                id_by_site[isite] for isite in padding if isite in id_by_site
+            ]
+
+            lead_paddings.append(np.array(finalized_padding))
+
         # Because many onsites/hoppings share the same (value, parameter)
         # pairs, we keep them in a cache so that we only store a given pair
         # in memory *once*. This is a similar idea to interning strings.
@@ -2010,6 +2026,7 @@ class FiniteSystem(_FinalizedBuilderMixin, system.FiniteSystem):
         self.symmetry = builder.symmetry
         self.leads = finalized_leads
         self.lead_interfaces = lead_interfaces
+        self.lead_paddings = lead_paddings
         self._init_discrete_symmetries(builder)
 
 
