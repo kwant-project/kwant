@@ -599,21 +599,23 @@ class BuilderLead(Lead):
         return InfiniteSystem(self.builder, self.interface)
 
 
-# Check that a modes/selfenergy function has a keyword-only parameter
-# 'params', or takes '**kwargs'. If not, we wrap it
 def _ensure_signature(func):
-        parameters = inspect.signature(func).parameters
-        has_params = bool(parameters.get('params'))
-        has_kwargs = any(p.kind == inspect.Parameter.VAR_KEYWORD
-                         for p in parameters.values())
-        if has_params or has_kwargs:
-            return func
-        else:  # function conforming to old API: needs wrapping
+    """
+    Ensure that a modes/selfenergy function has a keyword-only parameter
+    ``params``, or takes ``**kwargs`` by potentially wrapping it.
+    """
+    parameters = inspect.signature(func).parameters
+    has_params = bool(parameters.get('params'))
+    has_kwargs = any(p.kind == inspect.Parameter.VAR_KEYWORD
+                     for p in parameters.values())
+    if has_params or has_kwargs:
+        return func
 
-            def wrapper(energy, args=(), *, params=None):
-                return func(energy, args)
+    # function conforming to old API: needs wrapping
+    def wrapper(energy, args=(), *, params=None):
+        return func(energy, args)
 
-            return wrapper
+    return wrapper
 
 
 class SelfEnergyLead(Lead):
