@@ -21,3 +21,11 @@ Symmetry
    :toctree: generated/
 
    DiscreteSymmetry
+
+Computation of magnetic field gauge
+-----------------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   magnetic_gauge
