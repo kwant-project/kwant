@@ -261,7 +261,7 @@ def test_spectrum():
                              params=dict(c=1), fig_size=(10, 10), file=out)
 
         # test 2D plot and explicitly passing axis
-        fig = pyplot.Figure()
+        fig = pyplot.figure()
         ax = fig.add_subplot(1, 1, 1, projection='3d')
         plotter.spectrum(ham_1d, ('a', vals), ('b', 2 * vals),
                          params=dict(c=1), ax=ax, file=out)

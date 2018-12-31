@@ -166,7 +166,8 @@ def test_symmetry():
         syst.particle_hole = ph
         syst.time_reversal = tr
 
-        wrapped = wraparound(syst)
+        with pytest.warns(RuntimeWarning):
+            wrapped = wraparound(syst)
 
         assert wrapped.time_reversal is None
         assert wrapped.particle_hole is None
