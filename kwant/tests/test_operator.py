@@ -77,7 +77,6 @@ def test_operator_construction():
             raises(ValueError, a, ket)
             raises(ValueError, a, ket, ket)
             raises(ValueError, a.act, ket)
-            raises(ValueError, a.act, ket, ket)
 
     # Test failure on non-hermitian
     for A in (ops.Density, ops.Current, ops.Source):

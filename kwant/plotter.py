@@ -1302,6 +1302,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     # Calculate the min/max bounds for the colormap.
     # User-provided values take precedence.
     unmasked_data = img[~img.mask].data.flatten()
+    unmasked_data = unmasked_data[~np.isnan(unmasked_data)]
     new_vmin, new_vmax = percentile_bound(unmasked_data, vmin, vmax)
     overflow_pct = 100 * np.sum(unmasked_data > new_vmax) / len(unmasked_data)
     underflow_pct = 100 * np.sum(unmasked_data < new_vmin) / len(unmasked_data)

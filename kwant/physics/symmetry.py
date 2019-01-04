@@ -16,6 +16,18 @@ def almost_identity(mat):
     return np.all(abs(mat - identity(mat.shape[0])).data < 1e-10)
 
 
+def _column_sum(matrix):
+    """Sum the columns of a sparse matrix.
+
+    This is fully analogous to ``matrix.sum(0)``, and uses an implementation
+    similar to that in scipy v1.1.0, however it avoids using ``numpy.matrix``
+    interface and therefore does not raise a ``PendingDeprecationWarning``.
+    This should be removed once we depend on scipy v1.2.0, where the warning is
+    silenced.
+    """
+    return matrix.T @ np.ones(matrix.shape[0])
+
+
 def cond_conj(op, conj):
     return op.conj() if conj else op
 
@@ -106,8 +118,9 @@ class DiscreteSymmetry:
             symms[i] = symm
 
         if projectors is not None:
-            projectors = [p[:, np.asarray(abs(p).sum(0)).flatten() > 1e-10]
-                          for p in projectors]
+            projectors = [
+                p[:, _column_sum(abs(p)) > 1e-10] for p in projectors
+            ]
             if not almost_identity(sum(projector.dot(projector.conj().T) for
                                        projector in projectors)):
                 raise ValueError("Projectors should stack to a unitary matrix.")

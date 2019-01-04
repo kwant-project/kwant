@@ -555,7 +555,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
 
     def wave_function(self, sys, energy=0, args=(), check_hermiticity=True,
                       *, params=None):
-        """
+        r"""
         Return a callable object for the computation of the wave function
         inside the scattering region.
 
