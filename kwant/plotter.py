@@ -1519,7 +1519,13 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         else:
             ax.set_ylabel(keys[1])
             ax.set_zlabel('Energy')
-        ax.set_title(', '.join('{} = {}'.format(*kv) for kv in params.items()))
+        ax.set_title(
+            ', '.join(
+                '{} = {}'.format(key, value)
+                for key, value in params.items()
+                if not callable(value)
+            )
+        )
     else:
         fig = None
 
