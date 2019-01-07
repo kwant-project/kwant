@@ -195,6 +195,9 @@ class SpectralDensity:
         # store this vector for reproducibility
         self._v0 = np.exp(2j * np.pi * rng.random_sample(hamiltonian.shape[0]))
 
+        if eps <= 0:
+            raise ValueError("'eps' must be positive")
+
         # Hamiltonian rescaled as in Eq. (24)
         self.hamiltonian, (self._a, self._b) = _rescale(hamiltonian,
                                                         eps=self.eps,
@@ -209,8 +212,6 @@ class SpectralDensity:
 
         if num_moments <= 0 or num_moments != int(num_moments):
                 raise ValueError("'num_moments' must be a positive integer")
-        if eps <= 0:
-            raise ValueError("'eps' must be positive")
 
         if vector_factory is None:
             self._vector_factory = _VectorFactory(
