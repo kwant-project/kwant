@@ -139,8 +139,7 @@ class Bands:
         if derivative_order >= 2:  # compute curvatures
             # ediff_{i,j} =  1 / (E_i - E_j) if i != j, else 0
             ediff = energies.reshape((-1, 1)) - energies.reshape((1, -1))
-            ediff = np.divide(1, ediff, out=np.zeros_like(ediff),
-                              where=(ediff != 0))
+            ediff = np.divide(1, ediff, where=(ediff != 0))
             h2 = - (mat + mat.conjugate().transpose())
             curvatures = np.sum(eigenvectors.conjugate() * (h2 @ eigenvectors)
                                 - 2 * ediff * np.abs(ph1p)**2, axis=0).real
