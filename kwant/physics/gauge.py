@@ -366,8 +366,9 @@ def loops_in_composite(syst):
     Returns
     -------
     loops : sequence of sequences of integers
-        The sites in each loop belong to the extended system (see notes).
-        The first and last site in each loop are guaranteed to be in 'syst'.
+        The sites in each loop belong to the extended scattering region
+        (see notes). The first and last site in each loop are guaranteed
+        to be in 'syst'.
     which_patch : callable : int -> int
         Given a site index in the extended scattering region (see notes),
         returns the lead patch (see notes) to which the site belongs. Returns
@@ -378,7 +379,7 @@ def loops_in_composite(syst):
 
     Notes
     -----
-    extended system
+    extended scattering region
         The scattering region with a single lead unit cell attached at
         each interface. This unit cell is added so that we can "see" any
         loops formed with sites in the lead (see 'check_infinite_syst'
@@ -386,19 +387,21 @@ def loops_in_composite(syst):
         order as the leads, and within a given added unit cell the sites
         are ordered in the same way as the associated lead.
     lead patch
-        Sites in the extended system that belong to the added unit cell
-        for a given lead, or the lead padding for a given lead are said
-        to be in the "lead patch" for that lead.
+        Sites in the extended scattering region that belong to the added
+        unit cell for a given lead, or the lead padding for a given lead
+        are said to be in the "lead patch" for that lead.
     reduced scattering region
-        The sites of the extended system that are not in a lead patch.
+        The sites of the extended scattering region that are not
+        in a lead patch.
     """
     # Check that we can consistently fix the gauge in the scattering region,
     # given that we have independently fixed gauges in the leads.
     check_composite_syst(syst)
 
-    # Get distance matrix for the extended system, a function that maps sites
-    # to their lead patches (-1 for sites in the reduced scattering region),
-    # and a function that maps sites to high-level 'kwant.builder.Site' objects.
+    # Get distance matrix for the extended scattering region,
+    # a function that maps sites to their lead patches (-1 for sites
+    # in the reduced scattering region), and a function that maps sites
+    # to high-level 'kwant.builder.Site' objects.
     distance_matrix, which_patch, extended_sites = extended_scattering_region(syst)
 
     spanning_tree = spanning_tree_composite(distance_matrix, which_patch).tocsr()
@@ -864,75 +867,64 @@ def _infinite_wrapper(syst, phases, a, b):
     return phases.get((i, j), -phases.get((j, i), 0))
 
 
-def _gauge_finite(syst):
-    loops = loops_in_finite(syst)
-
-    def _gauge(syst_field, tol=1E-8, average=False):
-        integrate = partial(surface_integral, syst_field,
-                               tol=tol, average=average)
-        phases = calculate_phases(
-            loops,
-            syst.pos,
-            _previous_phase_finite,
-            integrate,
-        )
-        return partial(_finite_wrapper, syst, phases)
-
-    return _gauge
+def _peierls_finite(syst, loops, syst_field, tol, average):
+    integrate = partial(surface_integral, syst_field,
+                        tol=tol, average=average)
+    phases = calculate_phases(
+        loops,
+        syst.pos,
+        _previous_phase_finite,
+        integrate,
+    )
+    return partial(_finite_wrapper, syst, phases)
 
 
-def _gauge_infinite(syst):
-    loops, extended_sites = loops_in_infinite(syst)
-
-    def _gauge(syst_field, tol=1E-8, average=False):
-        integrate = partial(surface_integral, syst_field,
-                            tol=tol, average=average)
-        phases = calculate_phases(
-            loops,
-            lambda i: extended_sites(i).pos,
-            partial(_previous_phase_infinite, syst.cell_size),
-            integrate,
-        )
-        return partial(_infinite_wrapper, syst, phases)
-
-    return _gauge
+def _peierls_infinite(syst, loops, extended_sites, syst_field, tol, average):
+    integrate = partial(surface_integral, syst_field,
+                        tol=tol, average=average)
+    phases = calculate_phases(
+        loops,
+        lambda i: extended_sites(i).pos,
+        partial(_previous_phase_infinite, syst.cell_size),
+        integrate,
+    )
+    return partial(_infinite_wrapper, syst, phases)
 
 
-def _gauge_composite(syst):
-    loops, which_patch, extended_sites = loops_in_composite(syst)
-    lead_gauges = [_gauge_infinite(lead) for lead in syst.leads]
+def _peierls_composite(syst, loops, which_patch, extended_sites, lead_gauges,
+                       syst_field, *lead_fields, tol, average):
+    if len(lead_fields) != len(syst.leads):
+        raise ValueError('Magnetic fields must be provided for all leads.')
 
-    def _gauge(syst_field, *lead_fields, tol=1E-8, average=False):
-        if len(lead_fields) != len(syst.leads):
-            raise ValueError('Magnetic fields must be provided for all leads.')
+    lead_phases = [gauge(B, tol=tol, average=average)
+                   for gauge, B in zip(lead_gauges, lead_fields)]
 
-        lead_phases = [gauge(B, tol=tol, average=average)
-                       for gauge, B in zip(lead_gauges, lead_fields)]
+    flux = partial(surface_integral, syst_field, tol=tol, average=average)
 
-        flux = partial(surface_integral, syst_field, tol=tol, average=average)
+    # NOTE: uses the scattering region magnetic field to set the phase
+    # of the inteface hoppings this choice is somewhat arbitrary,
+    # but it is consistent with the position defined in the scattering
+    # region coordinate system. the integrate functions for the leads
+    # may be defined far from the interface.
+    phases = calculate_phases(
+        loops,
+        lambda i: extended_sites(i).pos,
+        partial(_previous_phase_composite,
+                which_patch, extended_sites, lead_phases),
+        flux,
+    )
 
-        # NOTE: uses the scattering region magnetic field to set the phase
-        # of the inteface hoppings this choice is somewhat arbitrary,
-        # but it is consistent with the position defined in the scattering
-        # region coordinate system. the integrate functions for the leads
-        # may be defined far from the interface.
-        phases = calculate_phases(
-            loops,
-            lambda i: extended_sites(i).pos,
-            partial(_previous_phase_composite,
-                    which_patch, extended_sites, lead_phases),
-            flux,
-        )
+    return (partial(_finite_wrapper, syst, phases), *lead_phases)
 
-        return (partial(_finite_wrapper, syst, phases), *lead_phases)
 
-    return _gauge
+# This class is essentially a closure, but documenting closures is a pain.
+# To emphasise the lack of manipulatable or inspectable state, we name the
+# class as we would for a function.
 
-def magnetic_gauge(syst):
+class magnetic_gauge:
     """Fix the magnetic gauge for a finalized system.
 
-    Fix the magnetic gauge for a Kwant system. This can
-    be used to later calculate the Peierls phases that
+    This can be used to later calculate the Peierls phases that
     should be applied to each hopping, given a magnetic field.
 
     This API is currently provisional. Refer to the documentation
@@ -941,19 +933,6 @@ def magnetic_gauge(syst):
     Parameters
     ----------
     syst : kwant.builder.FiniteSystem or kwant.builder.InfiniteSystem
-
-    Returns
-    -------
-    gauge : a callable or sequence thereof
-        If 'syst' is an infinite system, or a finite system without
-        leads, returns a single callable. If 'syst' has leads, then
-        returns a sequence of callables, where the first callable
-        is the gauge of the scattering region, and the rest are
-        the gauges of the leads.
-        When the returned callable(s) is called with a magnetic field
-        as argument, returns another callable 'phase' that takes pairs
-        of sites and returns the Peierls phase to apply to the
-        corresponding hopping.
 
     Examples
     --------
@@ -965,20 +944,72 @@ def magnetic_gauge(syst):
     >>> def hopping(a, b, t, phi):
     >>>     return -t * np.exp(-1j * phi(a, b))
     >>>
-    >>> syst = make_system(hopping).finalized()
+    >>> syst = make_system(hopping)
+    >>> lead = make_lead(hopping)
+    >>> lead.substitute(phi='phi_lead')
+    >>> syst.attach_lead(lead)
+    >>> syst = syst.finalized()
+    >>>
     >>> gauge = kwant.physics.magnetic_gauge(syst)
     >>>
-    >>> def B(pos):
+    >>> def B_syst(pos):
     >>>    return np.exp(-np.sum(pos * pos))
     >>>
-    >>> kwant.hamiltonian_submatrix(syst, params=dict(t=1, phi=gauge(B))
+    >>> phi_syst, phi_lead = gauge(B_syst, 0)
+    >>>
+    >>> params = dict(t=1, phi=phi_syst, phi_lead=phi_lead)
+    >>> kwant.hamiltonian_submatrix(syst, params=params)
     """
-    if isinstance(syst, builder.FiniteSystem):
-        if syst.leads:
-            return _gauge_composite(syst)
+
+    def __init__(self, syst):
+        if isinstance(syst, builder.FiniteSystem):
+            if syst.leads:
+                loops, which_patch, extended_sites = loops_in_composite(syst)
+                lead_gauges = [magnetic_gauge(lead) for lead in syst.leads]
+                self._peierls = partial(_peierls_composite, syst,
+                                        loops, which_patch,
+                                        extended_sites, lead_gauges)
+            else:
+                loops = loops_in_finite(syst)
+                self._peierls = partial(_peierls_finite, syst, loops)
+        elif isinstance(syst, builder.InfiniteSystem):
+            loops, extended_sites = loops_in_infinite(syst)
+            self._peierls = partial(_peierls_infinite, syst,
+                                    loops, extended_sites)
         else:
-            return _gauge_finite(syst)
-    elif isinstance(syst, builder.InfiniteSystem):
-        return _gauge_infinite(syst)
-    else:
-        raise TypeError('Expected a finalized Builder')
+            raise TypeError('Expected a finalized Builder')
+
+    def __call__(self, syst_field, *lead_fields, tol=1E-8, average=False):
+        """Return the Peierls phase for a magnetic field configuration.
+
+        Parameters
+        ----------
+        syst_field : scalar, vector or callable
+            The magnetic field to apply to the scattering region.
+            If callable, takes a position and returns the
+            magnetic field at that position. Can be a scalar if
+            the system is 1D or 2D, otherwise must be a vector.
+        *lead_fields : scalar, vector or callable
+            The magnetic fields to apply to each of the leads, in
+            the same format as 'syst_field'. In addition, if a callable
+            is provided, then the magnetic field must have the symmetry
+            of the associated lead.
+        tol : float, default: 1E-8
+            The tolerance to which to calculate the flux through each
+            hopping loop in the system.
+        average : bool, default: False
+            If True, estimate the magnetic flux through each hopping loop
+            in the system by evaluating the magnetic field at a single
+            position inside the loop and multiplying it by the area of the
+            loop. If False, then `~scipy.integrate.quad` is used to integrate
+            the magnetic field. This parameter is only used when 'syst_field'
+            or 'lead_fields' are callable.
+
+        Returns
+        -------
+        phases : callable, or sequence of callables
+            The first callable computes the Peierls phase in the scattering
+            region and the remaining callables compute the Peierls phases
+            in each of the leads.
+        """
+        return self._peierls(syst_field, *lead_fields, tol=tol, average=False)
