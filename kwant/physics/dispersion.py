@@ -74,16 +74,14 @@ class Bands:
         ----------
         k : float
             momentum
-
         derivative_order : {0, 1, 2}, optional
             Maximal derivative order to calculate. Default is zero.
-
         return_eigenvectors : bool, optional
             if set to `True` return the eigenvectors as last tuple element.
             By default, no eigenvectors are returned.
 
         Returns
-        ----------
+        -------
         energies : numpy float array, size ``nbands``
             energies :math:`E`
         velocities : numpy float array, size ``nbands``
@@ -93,18 +91,18 @@ class Bands:
         eigenvectors : numpy float array, size ``nbands x nbands``
             eigenvectors
 
-        The number of retured elements varies. If `derivative_order > 0`
-        we return all derivatives up to the order `derivative_order`,
-        and total the number of returned elements is `derivative_order + 1`
-        If 'return_eigenvectors=True', in addition the eigenvectors are
+        The number of returned elements varies. If ``derivative_order > 0``
+        we return all derivatives up to the order ``derivative_order``,
+        and total the number of returned elements is ``derivative_order + 1``
+        If ``return_eigenvectors`` is True, in addition the eigenvectors are
         returned as the last element. In that case, the total number of
-        returned elements is `derivative_order + 2`.
+        returned elements is ``derivative_order + 2``.
 
         Notes
         -----
-        *   All the output arrays are sorted from the lowest energy band
-            to the highest.
-        *   The curvature `E''` can be only calculated for non-degenerate bands.
+        * All the output arrays are sorted from the lowest energy band
+          to the highest.
+        * The curvature `E''` can be only calculated for non-degenerate bands.
         """
         # Equation to solve is
         # (V^\dagger e^{ik} + H + V e^{-ik}) \psi = E \psi
@@ -137,6 +135,7 @@ class Bands:
                 ph1p = eigenvectors.conjugate().transpose() @ h1 @ eigenvectors
                 velocities = np.diag(ph1p).real
             output += (velocities,)
+
         if derivative_order >= 2:  # compute curvatures
             # ediff_{i,j} =  1 / (E_i - E_j) if i != j, else 0
             ediff = energies.reshape((-1, 1)) - energies.reshape((1, -1))
@@ -149,6 +148,7 @@ class Bands:
             # np.diag(eigenvectors.conjugate().transpose() @ h2 @ eigenvectors
             #         + 2 * ediff @ np.abs(ph1p)**2).real
             output += (curvatures,)
+
         if derivative_order > 2:
             raise NotImplementedError('Derivatives of the energy dispersion ' +
                                       'only implemented up to second order.')
