@@ -772,8 +772,8 @@ def calculate_phases(loops, pos, previous_phase, flux):
         A map from site (integer) to realspace position.
     previous_phase : callable
         Takes a dict that maps from links to phases, and a loop and returns
-        the sum of the phases across each link in the loop, *except* the link
-        between the first and last site in the loop.
+        the product of the phases across each link in the loop,
+        *except* the link between the first and last site in the loop.
     flux : callable
         Takes a sequence of positions and returns the magnetic flux through the
         surface defined by the provided loop.
@@ -787,7 +787,8 @@ def calculate_phases(loops, pos, previous_phase, flux):
     for loop in loops:
         tail, head = loop[-1], loop[0]
         integral = flux([pos(p) for p in loop])
-        phases[tail, head] = integral - previous_phase(phases, loop)
+        phase = np.exp(2j * np.pi * integral)
+        phases[tail, head] = phase / previous_phase(phases, loop)
     return phases
 
 
@@ -798,15 +799,15 @@ def calculate_phases(loops, pos, previous_phase, flux):
 
 
 def _previous_phase_finite(phases, path):
-    previous_phase = 0
+    previous_phase = 1
     for i, j in zip(path, path[1:]):
-        previous_phase += phases.get((i, j), 0)
-        previous_phase -= phases.get((j, i), 0)
+        previous_phase *= phases.get((i, j), 1)
+        previous_phase /= phases.get((j, i), 1)
     return previous_phase
 
 
 def _previous_phase_infinite(cell_size, phases, path):
-    previous_phase = 0
+    previous_phase = 1
     for i, j in zip(path, path[1:]):
         # i and j are only in the fundamental unit cell (0 <= i < cell_size)
         # or the next one (cell_size <= i < 2 * cell_size).
@@ -814,21 +815,21 @@ def _previous_phase_infinite(cell_size, phases, path):
             assert i // cell_size == j // cell_size
             i = i % cell_size
             j = j % cell_size
-        previous_phase += phases.get((i, j), 0)
-        previous_phase -= phases.get((j, i), 0)
+        previous_phase *= phases.get((i, j), 1)
+        previous_phase /= phases.get((j, i), 1)
     return previous_phase
 
 
 def _previous_phase_composite(which_patch, extended_sites, lead_phases,
                               phases, path):
-    previous_phase = 0
+    previous_phase = 1
     for i, j in zip(path, path[1:]):
         patch_i = which_patch(i)
         patch_j = which_patch(j)
         if patch_i == -1 and patch_j == -1:
             # Both sites in reduced scattering region.
-            previous_phase += phases.get((i, j), 0)
-            previous_phase -= phases.get((j, i), 0)
+            previous_phase *= phases.get((i, j), 1)
+            previous_phase /= phases.get((j, i), 1)
         else:
             # At least one site in a lead patch; use the phase from the
             # associated lead. Check that if both are in a patch, they
@@ -836,7 +837,7 @@ def _previous_phase_composite(which_patch, extended_sites, lead_phases,
             assert patch_i * patch_j <= 0 or patch_i == patch_j
             patch = max(patch_i, patch_j)
             a, b = extended_sites(i), extended_sites(j)
-            previous_phase += lead_phases[patch](a, b)
+            previous_phase *= lead_phases[patch](a, b)
 
     return previous_phase
 
@@ -850,8 +851,13 @@ def _finite_wrapper(syst, phases, a, b):
     i = syst.id_by_site[a]
     j = syst.id_by_site[b]
     # We only store *either* (i, j) *or* (j, i). If not present
-    # then the phase is zero by definition.
-    return phases.get((i, j), -phases.get((j, i), 0))
+    # then the phase is unity by definition.
+    if (i, j) in phases:
+        return phases[i, j]
+    elif (j, i) in phases:
+        return phases[j, i].conjugate()
+    else:
+        return 1
 
 
 def _infinite_wrapper(syst, phases, a, b):
@@ -863,8 +869,13 @@ def _infinite_wrapper(syst, phases, a, b):
     i = syst.id_by_site[a]
     j = syst.id_by_site[b]
     # We only store *either* (i, j) *or* (j, i). If not present
-    # then the phase is zero by definition.
-    return phases.get((i, j), -phases.get((j, i), 0))
+    # then the phase is unity by definition.
+    if (i, j) in phases:
+        return phases[i, j]
+    elif (j, i) in phases:
+        return phases[j, i].conjugate()
+    else:
+        return 1
 
 
 def _peierls_finite(syst, loops, syst_field, tol, average):
@@ -936,17 +947,18 @@ class magnetic_gauge:
 
     Examples
     --------
-    The following illustrates basic usage for a finite system:
+    The following illustrates basic usage for a scattering region with
+    a single lead attached:
 
     >>> import numpy as np
     >>> import kwant
     >>>
-    >>> def hopping(a, b, t, phi):
-    >>>     return -t * np.exp(-1j * phi(a, b))
+    >>> def hopping(a, b, t, peierls):
+    >>>     return -t * peierls(a, b)
     >>>
     >>> syst = make_system(hopping)
     >>> lead = make_lead(hopping)
-    >>> lead.substitute(phi='phi_lead')
+    >>> lead.substitute(peierls='peierls_lead')
     >>> syst.attach_lead(lead)
     >>> syst = syst.finalized()
     >>>
@@ -955,9 +967,9 @@ class magnetic_gauge:
     >>> def B_syst(pos):
     >>>    return np.exp(-np.sum(pos * pos))
     >>>
-    >>> phi_syst, phi_lead = gauge(B_syst, 0)
+    >>> peierls_syst, peierls_lead = gauge(B_syst, 0)
     >>>
-    >>> params = dict(t=1, phi=phi_syst, phi_lead=phi_lead)
+    >>> params = dict(t=1, peierls=peierls_syst, peierls_lead=peierls_lead)
     >>> kwant.hamiltonian_submatrix(syst, params=params)
     """
 
@@ -1010,6 +1022,8 @@ class magnetic_gauge:
         phases : callable, or sequence of callables
             The first callable computes the Peierls phase in the scattering
             region and the remaining callables compute the Peierls phases
-            in each of the leads.
+            in each of the leads. Each callable takes a pair of
+            `~kwant.builder.Site`s 'a, b' and returns a unit complex
+            number (Peierls phase) that multiplies that hopping.
         """
         return self._peierls(syst_field, *lead_fields, tol=tol, average=False)

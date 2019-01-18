@@ -210,8 +210,9 @@ cubic = (cubic_lattice, cubic_loops)
 def _test_phase_loops(syst, phases, loops):
     for loop_kind, loop_flux in loops:
         for loop in available_loops(syst, loop_kind):
-            loop_phase = sum(phases(a, b) for a, b in loop_to_links(loop))
-            assert np.isclose(loop_phase, loop_flux)
+            loop_phase = np.prod([phases(a, b) for a, b in loop_to_links(loop)])
+            expected_loop_phase = np.exp(2j * np.pi * loop_flux)
+            assert np.isclose(loop_phase, expected_loop_phase)
 
 
 @pytest.mark.parametrize("neighbors", [1, 2, 3])
