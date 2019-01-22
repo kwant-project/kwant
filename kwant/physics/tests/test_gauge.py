@@ -211,7 +211,7 @@ def _test_phase_loops(syst, phases, loops):
     for loop_kind, loop_flux in loops:
         for loop in available_loops(syst, loop_kind):
             loop_phase = np.prod([phases(a, b) for a, b in loop_to_links(loop)])
-            expected_loop_phase = np.exp(2j * np.pi * loop_flux)
+            expected_loop_phase = np.exp(1j * np.pi * loop_flux)
             assert np.isclose(loop_phase, expected_loop_phase)
 
 

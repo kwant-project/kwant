@@ -787,7 +787,7 @@ def calculate_phases(loops, pos, previous_phase, flux):
     for loop in loops:
         tail, head = loop[-1], loop[0]
         integral = flux([pos(p) for p in loop])
-        phase = np.exp(2j * np.pi * integral)
+        phase = np.exp(1j * np.pi * integral)
         phases[tail, head] = phase / previous_phase(phases, loop)
     return phases
 
@@ -1001,6 +1001,9 @@ class magnetic_gauge:
             If callable, takes a position and returns the
             magnetic field at that position. Can be a scalar if
             the system is 1D or 2D, otherwise must be a vector.
+            Magnetic field is expressed in units :math:`φ₀ / l²`,
+            where :math:`φ₀` is the magnetic flux quantum and
+            :math:`l` is the unit of length.
         *lead_fields : scalar, vector or callable
             The magnetic fields to apply to each of the leads, in
             the same format as 'syst_field'. In addition, if a callable
