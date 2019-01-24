@@ -4,9 +4,11 @@ from math import sqrt
 import numpy as np
 import pytest
 
+import kwant
 from ... import lattice
 from ...builder import HoppingKind, Builder, NoSymmetry, Site
 from .. import gauge
+
 
 ## Utilities
 
@@ -478,3 +480,71 @@ def test_invariant_surface_integral():
         rot = special_ortho_group.rvs(3)
         loop = orig_loop @ rot.transpose()
         assert np.isclose(I, integral(lambda r: rot @ circular_field(rot.transpose() @ r), loop))
+
+
+@pytest.fixture
+def system_and_gauge():
+    def hopping(a, b, peierls):
+        return -1 * peierls(a, b)
+
+    syst = Builder()
+    syst[(square_lattice(i, j) for i in range(3) for j in range(10))] = 4
+    syst[square_lattice.neighbors()] = hopping
+
+    lead = Builder(lattice.TranslationalSymmetry((-1, 0)))
+    lead[(square_lattice(0, j) for j in range(10))] = 4
+    lead[square_lattice.neighbors()] = hopping
+
+    syst.attach_lead(lead.substituted(peierls='peierls_left'))
+    syst.attach_lead(lead.reversed().substituted(peierls='peierls_right'))
+
+    syst = syst.finalized()
+
+    magnetic_gauge = gauge.magnetic_gauge(syst)
+
+    return syst, magnetic_gauge
+
+
+@pytest.mark.parametrize('B',[0, 0.1, lambda r: 0.1 * np.exp(-r[1]**2)])
+def test_uniform_magnetic_field(system_and_gauge, B):
+    syst, gauge = system_and_gauge
+
+    peierls, peierls_left, peierls_right = gauge(B, B, B)
+
+    params = dict(peierls=peierls, peierls_left=peierls_left,
+                  peierls_right=peierls_right)
+
+    s = kwant.smatrix(syst, energy=0.6, params=params)
+    t = s.submatrix(1, 0)
+
+    b = kwant.physics.Bands(syst.leads[0], params=params)
+    print(b(0))
+
+    assert t.shape > (0, 0)  # sanity check
+    assert np.allclose(np.abs(t)**2, np.eye(*t.shape))
+
+
+def test_phase_sign(system_and_gauge):
+    syst, gauge = system_and_gauge
+
+    peierls, peierls_left, peierls_right = gauge(0.1, 0.1, 0.1)
+
+    params = dict(peierls=peierls, peierls_left=peierls_left,
+                  peierls_right=peierls_right)
+
+    cut = [(square_lattice(1, j), square_lattice(0, j))
+            for j in range(10)]
+    J = kwant.operator.Current(syst, where=cut)
+    J = J.bind(params=params)
+
+    psi = kwant.wave_function(syst, energy=0.6, params=params)(0)[0]
+
+    # Electrons incident from the left travel along the *top*
+    # edge of the Hall bar in the presence of a magnetic field
+    # out of the plane
+    j = J(psi)
+    j_bottom = sum(j[0:5])
+    j_top = sum(j[5:10])
+
+    assert np.isclose(j_top + j_bottom, 1)  # sanity check
+    assert j_top > 0.9
