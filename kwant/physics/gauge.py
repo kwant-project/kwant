@@ -31,7 +31,7 @@ __all__ = ['magnetic_gauge']
 
 ### Integation
 
-# Integrate vector field over triangle, for internal use by 'surface_integral'
+# Integrate vector field over triangle, for internal use by '_surface_integral'
 # Triangle is (origin, origin + v1, origin + v2), 'n' is np.cross(v1, v2)
 
 def _quad_triangle(f, origin, v1, v2, n, tol):
@@ -53,7 +53,7 @@ def _average_triangle(f, origin, v1, v2, n, tol):
     return np.dot(n, f(origin + 1/3 * (v1 + v2))) / 2
 
 
-def surface_integral(f, loop, tol=1e-8, average=False):
+def _surface_integral(f, loop, tol=1e-8, average=False):
     """Calculate the surface integral of 'f' over a surface enclosed by 'loop'.
 
     This function only works for *divergence free* vector fields, where the
@@ -93,7 +93,7 @@ def surface_integral(f, loop, tol=1e-8, average=False):
 
 ### Loop finding graph algorithm
 
-def find_loops(graph, subgraph):
+def _find_loops(graph, subgraph):
     """
     Parameters
     ----------
@@ -117,13 +117,13 @@ def find_loops(graph, subgraph):
     # matrix rather than convert to LIL and back every iteration.
     subgraph = subgraph.tocsr()
     graph = graph.tocsr()
-    assert same_sparsity_structure(subgraph, graph)
+    assert _same_sparsity_structure(subgraph, graph)
 
     # Links in graph, but not in subgraph.
     links_to_find = scipy.sparse.triu(graph - subgraph).tocoo()
     links_to_find = np.vstack((links_to_find.row, links_to_find.col)).transpose()
 
-    links_to_find, min_length = order_links(subgraph, links_to_find)
+    links_to_find, min_length = _order_links(subgraph, links_to_find)
 
     # Find shortest path between each link in turn, updating the subgraph with
     # the links as we go.
@@ -140,18 +140,18 @@ def find_loops(graph, subgraph):
         # The "little bit" is needed so we don't needlessly re-order the links
         # on amorphous lattices.
         if path_length > min_length * 1.1:
-            links_to_find, min_length = order_links(subgraph, links_to_find)
+            links_to_find, min_length = _order_links(subgraph, links_to_find)
         else:
             # Assumes that 'graph' and 'subgraph' have the same sparsity structure.
-            assign_csr(subgraph, graph, (frm, to))
-            assign_csr(subgraph, graph, (to, frm))
+            _assign_csr(subgraph, graph, (frm, to))
+            _assign_csr(subgraph, graph, (to, frm))
             loops.append(path)
             links_to_find = links_to_find[1:]
 
     return loops
 
 
-def order_links(subgraph, links_to_find):
+def _order_links(subgraph, links_to_find):
     if len(links_to_find) == 0:
         return [], None
     # Order 'links_to_find' by length of shortest path between the nodes of the link
@@ -165,7 +165,7 @@ def order_links(subgraph, links_to_find):
 
 ### Generic sparse matrix utilities
 
-def assign_csr(a, b, element):
+def _assign_csr(a, b, element):
     """Assign a single element from a CSR matrix to another.
 
     Parameters
@@ -190,14 +190,14 @@ def assign_csr(a, b, element):
         a.data[j] = b
 
 
-def same_sparsity_structure(a, b):
+def _same_sparsity_structure(a, b):
     a = a.tocsr().sorted_indices()
     b = b.tocsr().sorted_indices()
     return (np.array_equal(a.indices, b.indices)
             and np.array_equal(a.indptr, b.indptr))
 
 
-def add_coo_matrices(*mats, shape):
+def _add_coo_matrices(*mats, shape):
     """Add a sequence of COO matrices by appending their constituent arrays."""
     values = np.hstack([mat.data for mat in mats])
     rows = np.hstack([mat.row for mat in mats])
@@ -205,14 +205,14 @@ def add_coo_matrices(*mats, shape):
     return scipy.sparse.coo_matrix((values, (rows, cols)), shape=shape)
 
 
-def shift_diagonally(mat, shift, shape):
+def _shift_diagonally(mat, shift, shape):
     """Shift the row/column indices of a COO matrix."""
     return scipy.sparse.coo_matrix(
         (mat.data, (mat.row + shift, mat.col + shift)),
         shape=shape)
 
 
-def distance_matrix(links, pos, shape):
+def _distance_matrix(links, pos, shape):
     """Return the distances between the provided links as a COO matrix.
 
     Parameters
@@ -247,7 +247,7 @@ def distance_matrix(links, pos, shape):
 # link is the one to be determined.
 
 
-def loops_in_finite(syst):
+def _loops_in_finite(syst):
     """Find the loops in a finite system with no leads.
 
     The site indices in the returned loops are those of the system,
@@ -257,13 +257,13 @@ def loops_in_finite(syst):
     nsites = len(syst.sites)
 
     # Fix the gauge across the minimum spanning tree of the system graph.
-    graph = distance_matrix(list(syst.graph),
-                            pos=syst.pos, shape=(nsites, nsites))
-    spanning_tree = shortest_distance_forest(graph)
-    return find_loops(graph, spanning_tree)
+    graph = _distance_matrix(list(syst.graph),
+                             pos=syst.pos, shape=(nsites, nsites))
+    spanning_tree = _shortest_distance_forest(graph)
+    return _find_loops(graph, spanning_tree)
 
 
-def shortest_distance_forest(graph):
+def _shortest_distance_forest(graph):
     # Grow a forest of minimum distance trees for all connected components of the graph
     graph = graph.tocsr()
     tree = graph.copy()
@@ -285,12 +285,12 @@ def shortest_distance_forest(graph):
             # or it was not reached.
             if p != -1:
                 unvisited.remove(i)
-                assign_csr(tree, graph, (i, p))
-                assign_csr(tree, graph, (p, i))
+                _assign_csr(tree, graph, (i, p))
+                _assign_csr(tree, graph, (p, i))
     return tree
 
 
-def loops_in_infinite(syst):
+def _loops_in_infinite(syst):
     """Find the loops in an infinite system.
 
     Returns
@@ -306,31 +306,31 @@ def loops_in_infinite(syst):
         `kwant.builder.Site`.
     """
     assert isinstance(syst, system.InfiniteSystem)
-    check_infinite_syst(syst)
+    _check_infinite_syst(syst)
 
     cell_size = syst.cell_size
 
     unit_cell_links = [(i, j) for i, j in syst.graph
                        if i < cell_size and j < cell_size]
-    unit_cell_graph = distance_matrix(unit_cell_links,
-                                      pos=syst.pos,
-                                      shape=(cell_size, cell_size))
+    unit_cell_graph = _distance_matrix(unit_cell_links,
+                                       pos=syst.pos,
+                                       shape=(cell_size, cell_size))
 
     # Loops in the interior of the unit cell
-    spanning_tree = shortest_distance_forest(unit_cell_graph)
-    loops = find_loops(unit_cell_graph, spanning_tree)
+    spanning_tree = _shortest_distance_forest(unit_cell_graph)
+    loops = _find_loops(unit_cell_graph, spanning_tree)
 
     # Construct an extended graph consisting of 2 unit cells connected
     # by the inter-cell links.
     extended_shape = (2 * cell_size, 2 * cell_size)
-    uc1 = shift_diagonally(unit_cell_graph, 0, shape=extended_shape)
-    uc2 = shift_diagonally(unit_cell_graph, cell_size, shape=extended_shape)
+    uc1 = _shift_diagonally(unit_cell_graph, 0, shape=extended_shape)
+    uc2 = _shift_diagonally(unit_cell_graph, cell_size, shape=extended_shape)
     hop_links = [(i, j) for i, j in syst.graph if j >= cell_size]
-    hop = distance_matrix(hop_links,
-                          pos=syst.pos,
-                          shape=extended_shape)
-    graph = add_coo_matrices(uc1, uc2, hop, hop.T,
-                             shape=extended_shape)
+    hop = _distance_matrix(hop_links,
+                           pos=syst.pos,
+                           shape=extended_shape)
+    graph = _add_coo_matrices(uc1, uc2, hop, hop.T,
+                              shape=extended_shape)
 
     # Construct a subgraph where only the shortest link between the
     # 2 unit cells is added. The other links are added with infinite
@@ -342,11 +342,11 @@ def loops_in_infinite(syst):
     smallest_edge = scipy.sparse.coo_matrix(
         (data, (hop.row, hop.col)),
         shape=extended_shape)
-    subgraph = add_coo_matrices(uc1, uc2, smallest_edge, smallest_edge.T,
-                                shape=extended_shape)
+    subgraph = _add_coo_matrices(uc1, uc2, smallest_edge, smallest_edge.T,
+                                 shape=extended_shape)
 
     # Use these two graphs to find the loops between unit cells.
-    loops.extend(find_loops(graph, subgraph))
+    loops.extend(_find_loops(graph, subgraph))
 
     def extended_sites(i):
         unit_cell = np.array([i // cell_size])
@@ -356,7 +356,7 @@ def loops_in_infinite(syst):
     return loops, extended_sites
 
 
-def loops_in_composite(syst):
+def _loops_in_composite(syst):
     """Find the loops in finite system with leads.
 
     Parameters
@@ -396,30 +396,31 @@ def loops_in_composite(syst):
     """
     # Check that we can consistently fix the gauge in the scattering region,
     # given that we have independently fixed gauges in the leads.
-    check_composite_syst(syst)
+    _check_composite_system(syst)
 
     # Get distance matrix for the extended scattering region,
     # a function that maps sites to their lead patches (-1 for sites
     # in the reduced scattering region), and a function that maps sites
     # to high-level 'kwant.builder.Site' objects.
-    distance_matrix, which_patch, extended_sites = extended_scattering_region(syst)
+    distance_matrix, which_patch, extended_sites =\
+        _extended_scattering_region(syst)
 
-    spanning_tree = spanning_tree_composite(distance_matrix, which_patch).tocsr()
+    spanning_tree = _spanning_tree_composite(distance_matrix, which_patch).tocsr()
 
     # Fill in all links with at least 1 site in a lead patch;
     # their gauge is fixed by the lead gauge.
     for i, j, v in zip(distance_matrix.row, distance_matrix.col,
                        distance_matrix.data):
         if which_patch(i) > -1 or which_patch(j) > -1:
-            assign_csr(spanning_tree, v, (i, j))
-            assign_csr(spanning_tree, v, (j, i))
+            _assign_csr(spanning_tree, v, (i, j))
+            _assign_csr(spanning_tree, v, (j, i))
 
-    loops = find_loops(distance_matrix, spanning_tree)
+    loops = _find_loops(distance_matrix, spanning_tree)
 
     return loops, which_patch, extended_sites
 
 
-def extended_scattering_region(syst):
+def _extended_scattering_region(syst):
     """Return the distance matrix of a finite system with 1 unit cell
        added to each lead interface.
 
@@ -444,7 +445,7 @@ def extended_scattering_region(syst):
     -----
     Definitions of the terms 'extended scatteringr region',
     'lead patch' and 'reduced scattering region' are given
-    in the notes for `kwant.physics.gauge.loops_in_composite`.
+    in the notes for `kwant.physics.gauge._loops_in_composite`.
     """
     extended_size = (syst.graph.num_nodes
                      + sum(l.cell_size for l in syst.leads))
@@ -456,8 +457,8 @@ def extended_scattering_region(syst):
         # Here we assume that the distance between sites in the added
         # unit cell and sites in the interface is the same as between sites
         # in neighboring unit cells.
-        uc = distance_matrix(list(lead.graph),
-                             pos=lead.pos, shape=extended_shape)
+        uc = _distance_matrix(list(lead.graph),
+                              pos=lead.pos, shape=extended_shape)
         # Map unit cell lead sites to their indices in the extended scattering,
         # region and sites in next unit cell to their interface sites.
         hop_from_syst = uc.row >= lead.cell_size
@@ -471,12 +472,12 @@ def extended_scattering_region(syst):
         added_unit_cells.append(uc)
         first_lead_site += lead.cell_size
 
-    scattering_region = distance_matrix(list(syst.graph),
-                                        pos=syst.pos, shape=extended_shape)
+    scattering_region = _distance_matrix(list(syst.graph),
+                                         pos=syst.pos, shape=extended_shape)
 
-    extended_scattering_region = add_coo_matrices(scattering_region,
-                                                  *added_unit_cells,
-                                                  shape=extended_shape)
+    extended_scattering_region = _add_coo_matrices(scattering_region,
+                                                   *added_unit_cells,
+                                                   shape=extended_shape)
 
     lead_starts = np.cumsum([syst.graph.num_nodes,
                              *[lead.cell_size for lead in syst.leads]])
@@ -577,7 +578,7 @@ def _make_metatree(graph, links_to_delete):
     return csgraph.minimum_spanning_tree(metagraph).astype(int)
 
 
-def spanning_tree_composite(distance_matrix, which_patch):
+def _spanning_tree_composite(distance_matrix, which_patch):
     """Find a spanning tree for a composite system.
 
     We cannot use a simple minimum-distance spanning tree because
@@ -604,7 +605,7 @@ def spanning_tree_composite(distance_matrix, which_patch):
     -----
     Definitions of the terms 'extended scattering region', 'lead patch'
     and 'reduced scattering region' are given in the notes for
-    `kwant.physics.gauge.loops_in_composite`.
+    `kwant.physics.gauge._loops_in_composite`.
 
     We cannot use a simple minimum-distance spanning tree because
     we have the additional constraint that all links with at least
@@ -637,7 +638,7 @@ def spanning_tree_composite(distance_matrix, which_patch):
     # obtained by cutting the links.
     cut_syst = distance_matrix.copy()
     cut_syst.data[links_to_delete] = np.inf
-    forest = shortest_distance_forest(cut_syst)
+    forest = _shortest_distance_forest(cut_syst)
     # Connect the forest back up with representative links until
     # we have a single tree (if the original system was not connected,
     # we get a forest).
@@ -645,13 +646,13 @@ def spanning_tree_composite(distance_matrix, which_patch):
     for k in np.unique(metatree.data):
         value = distance_matrix.data[k]
         i, j = distance_matrix.row[k], distance_matrix.col[k]
-        assign_csr(forest, value, (i, j))
-        assign_csr(forest, value, (j, i))
+        _assign_csr(forest, value, (i, j))
+        _assign_csr(forest, value, (j, i))
 
     return forest
 
 
-def check_infinite_syst(syst):
+def _check_infinite_syst(syst):
     r"""Check that the unit cell is a connected graph.
 
     If the unit cell is not connected then we cannot be sure whether
@@ -697,7 +698,7 @@ def check_infinite_syst(syst):
         )
 
 
-def check_composite_syst(syst):
+def _check_composite_system(syst):
     """Check that we can consistently fix the gauge in a system with leads.
 
     If not, raise an exception with an informative error message.
@@ -759,7 +760,7 @@ def check_composite_syst(syst):
 
 ### Phase calculation
 
-def calculate_phases(loops, pos, previous_phase, flux):
+def _calculate_phases(loops, pos, previous_phase, flux):
     """Calculate the phase across the terminal links of a set of loops
 
     Parameters
@@ -792,7 +793,7 @@ def calculate_phases(loops, pos, previous_phase, flux):
     return phases
 
 
-# These functions are to be used with 'calculate_phases'.
+# These functions are to be used with '_calculate_phases'.
 # 'phases' always stores *either* the phase across (i, j) *or*
 # (j, i), and never both. If a phase is not present it is assumed to
 # be zero.
@@ -879,9 +880,9 @@ def _infinite_wrapper(syst, phases, a, b):
 
 
 def _peierls_finite(syst, loops, syst_field, tol, average):
-    integrate = partial(surface_integral, syst_field,
+    integrate = partial(_surface_integral, syst_field,
                         tol=tol, average=average)
-    phases = calculate_phases(
+    phases = _calculate_phases(
         loops,
         syst.pos,
         _previous_phase_finite,
@@ -891,9 +892,9 @@ def _peierls_finite(syst, loops, syst_field, tol, average):
 
 
 def _peierls_infinite(syst, loops, extended_sites, syst_field, tol, average):
-    integrate = partial(surface_integral, syst_field,
+    integrate = partial(_surface_integral, syst_field,
                         tol=tol, average=average)
-    phases = calculate_phases(
+    phases = _calculate_phases(
         loops,
         lambda i: extended_sites(i).pos,
         partial(_previous_phase_infinite, syst.cell_size),
@@ -910,14 +911,14 @@ def _peierls_composite(syst, loops, which_patch, extended_sites, lead_gauges,
     lead_phases = [gauge(B, tol=tol, average=average)
                    for gauge, B in zip(lead_gauges, lead_fields)]
 
-    flux = partial(surface_integral, syst_field, tol=tol, average=average)
+    flux = partial(_surface_integral, syst_field, tol=tol, average=average)
 
     # NOTE: uses the scattering region magnetic field to set the phase
     # of the inteface hoppings this choice is somewhat arbitrary,
     # but it is consistent with the position defined in the scattering
     # region coordinate system. the integrate functions for the leads
     # may be defined far from the interface.
-    phases = calculate_phases(
+    phases = _calculate_phases(
         loops,
         lambda i: extended_sites(i).pos,
         partial(_previous_phase_composite,
@@ -976,16 +977,16 @@ class magnetic_gauge:
     def __init__(self, syst):
         if isinstance(syst, builder.FiniteSystem):
             if syst.leads:
-                loops, which_patch, extended_sites = loops_in_composite(syst)
+                loops, which_patch, extended_sites = _loops_in_composite(syst)
                 lead_gauges = [magnetic_gauge(lead) for lead in syst.leads]
                 self._peierls = partial(_peierls_composite, syst,
                                         loops, which_patch,
                                         extended_sites, lead_gauges)
             else:
-                loops = loops_in_finite(syst)
+                loops = _loops_in_finite(syst)
                 self._peierls = partial(_peierls_finite, syst, loops)
         elif isinstance(syst, builder.InfiniteSystem):
-            loops, extended_sites = loops_in_infinite(syst)
+            loops, extended_sites = _loops_in_infinite(syst)
             self._peierls = partial(_peierls_infinite, syst,
                                     loops, extended_sites)
         else:

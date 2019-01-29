@@ -428,7 +428,7 @@ def test_minimal_cycle_basis(lattice, neighbors, shape):
     syst.fill(model(lattice, neighbors), *shape)
     syst = syst.finalized()
 
-    loops = gauge.loops_in_finite(syst)
+    loops = gauge._loops_in_finite(syst)
     loop_counts = Counter(map(len, loops))
     min_loop = min(loop_counts)
     # arbitrarily allow 1% of slightly longer loops;
@@ -457,7 +457,7 @@ def test_constant_surface_integral():
     field_direction /= np.linalg.norm(field_direction)
     loop = random_loop(7)
 
-    integral = gauge.surface_integral
+    integral = gauge._surface_integral
 
     I = integral(lambda r: field_direction, loop)
     assert np.isclose(I, integral(field_direction, loop))
@@ -472,7 +472,7 @@ def test_invariant_surface_integral():
     """Surface integral should be identical if we apply a random
        rotation to loop and vector field.
     """
-    integral = gauge.surface_integral
+    integral = gauge._surface_integral
     # loop with random orientation
     orig_loop = loop = random_loop(7)
     I = integral(circular_field, loop)
