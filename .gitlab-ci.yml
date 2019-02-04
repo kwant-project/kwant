@@ -147,6 +147,7 @@ build:bleeding-edge:
   <<: *bleeding_edge_env
   only:
     - schedules
+  allow_failure: true
 
 ## Test Jobs
 
@@ -210,6 +211,7 @@ test:bleeding-edge:
     - build:bleeding-edge
   only:
     - schedules
+  allow_failure: true
 
 ## Documentation building
 
