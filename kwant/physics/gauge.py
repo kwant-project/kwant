@@ -14,7 +14,6 @@ may occur if deemed necessary by the core developers.
 """
 
 import bisect
-import functools as ft
 from functools import partial
 from itertools import permutations
 
@@ -869,7 +868,7 @@ def _gauge_finite(syst):
     loops = loops_in_finite(syst)
 
     def _gauge(syst_field, tol=1E-8, average=False):
-        integrate = ft.partial(surface_integral, syst_field,
+        integrate = partial(surface_integral, syst_field,
                                tol=tol, average=average)
         phases = calculate_phases(
             loops,
@@ -877,7 +876,7 @@ def _gauge_finite(syst):
             _previous_phase_finite,
             integrate,
         )
-        return ft.partial(_finite_wrapper, syst, phases)
+        return partial(_finite_wrapper, syst, phases)
 
     return _gauge
 
