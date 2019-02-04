@@ -18,16 +18,26 @@ which calculates the Peierls phases for you::
   import numpy as np
   import kwant
 
-  def hopping(a, b, t, phi):
-    return -t * np.exp(-1j * phi(a, b))
+  def hopping(a, b, t, peierls):
+      return -t * peierls(a, b)
 
-  syst = make_system(hopping).finalized()
+  syst = make_system(hopping)
+  lead = make_lead(hopping)
+  lead.substitute(peierls='peierls_lead')
+  syst.attach_lead(lead)
+  syst = syst.finalized()
+
   gauge = kwant.physics.magnetic_gauge(syst)
 
-  def B(pos):
-    return np.exp(-np.sum(pos * pos))
+  def B_syst(pos):
+     return np.exp(-np.sum(pos * pos))
 
-  kwant.hamiltonian_submatrix(syst, params=dict(t=1, phi=gauge(B))
+  # B_syst in scattering region, 0 in lead.
+  # Ensure that the fields match at the system/lead interface!
+  peierls_syst, peierls_lead = gauge(B_syst, 0)
+
+  params = dict(t=1, peierls=peierls_syst, peierls_lead=peierls_lead)
+  kwant.hamiltonian_submatrix(syst, params=params)
 
 Note that the API for this functionality is provisional, and may be
 revised in a future version of Kwant.
