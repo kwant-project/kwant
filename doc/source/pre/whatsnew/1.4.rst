@@ -23,7 +23,7 @@ which calculates the Peierls phases for you::
 
   syst = make_system(hopping)
   lead = make_lead(hopping)
-  lead.substitute(peierls='peierls_lead')
+  lead.substituted(peierls='peierls_lead')
   syst.attach_lead(lead)
   syst = syst.finalized()
 
