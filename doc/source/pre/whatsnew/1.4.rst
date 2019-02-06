@@ -6,6 +6,39 @@ See also the `full list of changes up to the most recent bugfix
 release of the 1.4 series
 <https://gitlab.kwant-project.org/kwant/kwant/compare/v1.4.0...latest-1.4>`_.
 
+
+Integration with Qsymm package
+------------------------------
+Kwant now contains an integration with the Qsymm library for analysing
+model symmetries. This functionality is available under ``kwant.qsymm``.
+Here is an example for extracting the symmetry group of a graphene system::
+
+    import numpy as np
+    import kwant
+    import kwant.qsymm
+
+    s_0 = np.eye(2)
+
+    lat = kwant.lattice.honeycomb(norbs=[1, 1])
+    sym = kwant.TranslationalSymmetry(lat.vec((1, 0)), lat.vec((0, 1)))
+
+    graphene = kwant.Builder(sym)
+    graphene[[lat.a(0, 0), lat.b(0, 0)]] = 0
+    graphene[lat.neighbors()] = 1
+
+    symmetry_generators = kwant.qsymm.find_builder_symmetries(graphene)
+
+    # Let's find what the chiral symmetry looks like
+
+    def is_chiral(g):
+      return g.antisymmetry and not g.conjugate and np.allclose(g.R, s_0)
+
+    print(next(g for g in symmetry_generators if is_chiral(g)))
+
+``kwant.qsymm`` also contains functionality for converting Qsymm models to Kwant Builders,
+and vice versa, and for working with continuum Hamiltonians (such as would be used with
+``kwant.continuum``)
+
 Automatic Peierls phase calculation
 -----------------------------------
 When defining systems with orbital magnetic fields it is often cumbersome to
