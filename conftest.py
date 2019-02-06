@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Kwant authors.
+# Copyright 2011-2018 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -17,7 +17,8 @@ import importlib
 
 # map from subpackage to sequence of dependency module names
 subpackage_dependencies = {
-    'kwant/continuum': ['sympy']
+    'kwant/continuum': ['sympy'],
+    'kwant/tests/test_qsymm': ['qsymm', 'sympy'],
 }
 
 

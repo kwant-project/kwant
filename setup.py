@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2011-2017 Kwant authors.
+# Copyright 2011-2018 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -586,6 +586,8 @@ def main():
               # The oldest versions between: Debian stable, Ubuntu LTS
               'plotting': 'matplotlib >= 1.5.1',
               'continuum': 'sympy >= 0.7.6',
+              # qsymm is only packaged on PyPI
+              'qsymm': 'qsymm >= 1.1.2',
           },
           classifiers=[c.strip() for c in classifiers.split('\n')])
 
