@@ -92,13 +92,11 @@ build-env:default:
   before_script:
     - source deactivate
     - source activate kwant-stable
-    - unset CFLAGS  # https://github.com/conda-forge/toolchain-feedstock/issues/41
 
 .no-extras-env: &no_extras_env
   before_script:
     - source deactivate
     - source activate kwant-stable-no-extras
-    - unset CFLAGS  # https://github.com/conda-forge/toolchain-feedstock/issues/41
 
 # Note that this is 'latest' as of when the image was last built
 .latest-env: &latest_env
@@ -106,7 +104,6 @@ build-env:default:
     - source deactivate
     - source activate kwant-latest
     - pip install qsymm
-    - unset CFLAGS  # https://github.com/conda-forge/toolchain-feedstock/issues/41
 
 .bleeding-edge-env: &bleeding_edge_env
   before_script:
