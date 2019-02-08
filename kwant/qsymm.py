@@ -35,30 +35,30 @@ from kwant._common import get_parameters
 
 def builder_to_model(syst, momenta=None, real_space=True,
                      params=None):
-    """Make a qsymm.BlochModel out of a Builder.
+    """Make a qsymm.BlochModel out of a `~kwant.builder.Builder`.
 
     Parameters
     ----------
-    syst: kwant.Builder
+    syst : `~kwant.builder.Builder`
         May have translational symmetries.
-    momenta: list of strings or None
+    momenta : list of strings or None
         Names of momentum variables. If None, 'k_x', 'k_y', ... is used.
-    real_space: bool (default True)
+    real_space : bool (default True)
         If False, use the unit cell convention for Bloch basis, the
         exponential has the difference in the unit cell coordinates and
         k is expressed in the reciprocal lattice basis. This is consistent
-        with kwant.wraparound.
+        with `kwant.wraparound`.
         If True, the difference in the real space coordinates is used
         and k is given in an absolute basis.
         Only the default choice guarantees that qsymm is able to find
         nonsymmorphic symmetries.
-    params: dict, optional
+    params : dict, optional
         Dictionary of parameter names and their values; used when
         evaluating the Hamiltonian matrix elements.
 
     Returns
     -------
-    qsymm.BlochModel
+    model : qsymm.BlochModel
         Model representing the tight-binding Hamiltonian.
 
     Notes
@@ -176,21 +176,21 @@ def builder_to_model(syst, momenta=None, real_space=True,
 
 
 def model_to_builder(model, norbs, lat_vecs, atom_coords, *, coeffs=None):
-    """Make a Builder out of qsymm.Models or qsymm.BlochModels.
+    """Make a `~kwant.builder.Builder` out of qsymm.Models or qsymm.BlochModels.
 
     Parameters
     ----------
-    model: qsymm.model.Model, qsymm.model.BlochModel, or an iterable thereof
+    model : qsymm.Model, qsymm.BlochModel, or an iterable thereof
         The Hamiltonian (or terms of the Hamiltonian) to convert to a
         Builder.
-    norbs: OrderedDict or sequence of pairs
+    norbs : OrderedDict or sequence of pairs
         Maps sites to the number of orbitals per site in a unit cell.
-    lat_vecs: list of arrays
+    lat_vecs : list of arrays
         Lattice vectors of the underlying tight binding lattice.
-    atom_coords: list of arrays
+    atom_coords : list of arrays
         Positions of the sites (or atoms) within a unit cell.
         The ordering of the atoms is the same as in norbs.
-    coeffs: list of sympy.Symbol, default None.
+    coeffs : list of sympy.Symbol, default None.
         Constant prefactors for the individual terms in model, if model
         is a list of multiple objects. If model is a single Model or BlochModel
         object, this argument is ignored. By default assigns the coefficient
@@ -198,14 +198,15 @@ def model_to_builder(model, norbs, lat_vecs, atom_coords, *, coeffs=None):
 
     Returns
     -------
-    syst: kwant.Builder
+    syst : `~kwant.builder.Builder`
         The unfinalized Kwant system representing the qsymm Model(s).
 
     Notes
     -----
     Onsite terms that are not provided in the input model are set
     to zero by default.
-    The input Model(s) representing the tight binding Hamiltonian in
+
+    The input model(s) representing the tight binding Hamiltonian in
     Bloch form should follow the convention where the difference in the real
     space atomic positions appear in the Bloch factors.
     """
@@ -371,11 +372,11 @@ def _get_builder_symmetries(builder):
 
     Parameters
     ----------
-    builder: kwant.Builder
+    builder : `~kwant.builder.Builder`
 
     Returns
     -------
-    builder_symmetries: dict
+    builder_symmetries : dict
         Dictionary of the discrete symmetries that the builder has.
         The symmetries can be particle-hole, time-reversal or chiral,
         which are returned as qsymm.PointGroupElements, or
@@ -413,18 +414,18 @@ def find_builder_symmetries(builder, momenta=None, params=None,
 
     Parameters
     ----------
-    builder: kwant.Builder
-    momenta: list of strings or None
+    builder : `~kwant.builder.Builder`
+    momenta : list of strings or None
         Names of momentum variables, if None 'k_x', 'k_y', ... is used.
-    params: dict, optional
+    params : dict, optional
         Dictionary of parameter names and their values; used when
         evaluating the Hamiltonian matrix elements.
-    spatial_symmetries: bool (default True)
+    spatial_symmetries : bool (default True)
         If True, search for all symmetries.
         If False, only searches for the symmetries that are declarable in
-        kwant.Builder objects, i.e. time-reversal symmetry, particle-hole
-        symmetry, chiral symmetry, or conservation laws. This can save
-        computation time.
+        `~kwant.builder.Builder` objects, i.e. time-reversal symmetry,
+        particle-hole symmetry, chiral symmetry, or conservation laws.
+        This can save computation time.
     prettify : bool (default True)
         Whether to carry out sparsification of the continuous symmetry
         generators, in general an arbitrary linear combination of the
@@ -432,8 +433,7 @@ def find_builder_symmetries(builder, momenta=None, params=None,
 
     Returns
     -------
-    symmetries: list of qsymm.PointGroupElements and/or
-                qsymm.ContinuousGroupElement
+    symmetries : list of qsymm.PointGroupElements and/or qsymm.ContinuousGroupElement
         The symmetries of the Kwant system.
     """
 

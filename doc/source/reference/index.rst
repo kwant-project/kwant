@@ -27,6 +27,7 @@ The following modules provide functionality for special applications.
    kwant.kpm
    kwant.continuum
    kwant.wraparound
+   kwant.qsymm
 
 Modules mainly for internal use
 ===============================

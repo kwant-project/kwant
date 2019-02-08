@@ -19,6 +19,7 @@ sys.path.insert(0, "../../build/lib.{0}-{1}.{2}".format(
         get_platform(), *sys.version_info[:2]))
 
 import kwant
+import kwant.qsymm
 import kwant.continuum  # sphinx gets confused with lazy loading
 
 # -- General configuration -----------------------------------------------------
