@@ -253,41 +253,6 @@ check for broken links in doc:
   allow_failure: true
 
 
-## Conda package building
-
-.conda-template: &conda_job
-  stage: deploy
-  image: condaforge/linux-anvil
-  script:
-    - /usr/bin/sudo -n yum install -y devtoolset-2-gcc-gfortran
-    - git clone https://gitlab.kwant-project.org/kwant/conda-recipes.git
-    - conda config --add channels kwant
-    - conda build --python 3.5 conda-recipes/kwant-dev
-    - conda build --python 3.6 conda-recipes/kwant-dev
-    - mv /opt/conda/conda-bld/linux-64/kwant-dev*.tar.bz2 .
-    - if [ ! -z $ANACONDA_TOKEN ]; then anaconda --token=$ANACONDA_TOKEN upload --force kwant-dev*tar.bz2; fi
-  artifacts:
-    paths:
-      - kwant-dev*.tar.bz2
-    expire_in: 1 month
-
-
-# build on master always
-build and upload conda package:
-  <<: *conda_job
-  only:
-    - master@kwant/kwant
-
-
-# manual triggers for branches other than master possible
-build and upload conda package (manual):
-  <<: *conda_job
-  only:
-    - branches@kwant/kwant
-  except:
-    - master@kwant/kwant
-  when: manual
-
 ## Upload coverage reports and dev documentation
 
 upload coverage:
