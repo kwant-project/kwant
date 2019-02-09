@@ -8,7 +8,7 @@ The principal developers of Kwant are
 
 * `Christoph W. Groth <mailto:christoph.groth@cea.fr>`_ (CEA Grenoble)
 * `Michael Wimmer <https://michaelwimmer.org>`_ (TU Delft)
-* `Anton R. Akhmerov <http://antonakhmerov.org>`_ (TU Delft)
+* `Anton Akhmerov <http://antonakhmerov.org>`_ (TU Delft)
 * `Xavier Waintal <http://inac.cea.fr/Pisp/xavier.waintal>`_ (CEA Grenoble)
 * `Joseph Weston <http://josephweston.org>`_ (TU Delft)
 
@@ -27,6 +27,8 @@ Contributors to Kwant include
 * Rafał Skolasiński (TU Delft)
 * Adrien Sorgniard (CEA Grenoble)
 * Dániel Varjas (TU Delft)
+* Thomas Kloss (CEA Grenoble)
+* Pierre Carmier (CEA Grenoble)
 
 We thank Christoph Gohlke for the creation of installers for Microsoft Windows.
 
