@@ -58,14 +58,16 @@ Starting with Kwant 1.4, we also mention user-visible changes in bugfix
 releases in the whatsnew files.
 
 
-Verify that ``AUTHORS.rst`` is up-to-date
+Verify that ``AUTHORS.rst`` and ``.mailmap`` are up-to-date
 -----------------------------------------
 
-The following command shows the number of commits per author since the last
-annotated tag::
+The following command shows if there are any committers that are missing from
+``AUTHORS.rst``::
 
-    t=$(git describe --abbrev=0); echo Commits since $t; git shortlog -s $t..
+  git shortlog -s | sed -e "s/^ *[0-9\t ]*//"| xargs -i sh -c 'grep -q "{}" AUTHORS.rst || echo "{}"'
 
+If it outputs anything, then either add the new contributors to the list, or add
+new identities of old contributors to the ``.mailmap``
 
 Make a release, but do not publish it yet
 #########################################
