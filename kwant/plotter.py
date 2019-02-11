@@ -43,7 +43,7 @@ _p = _common.lazy_import('_plotter')
 def _sample_array(array, n_samples, rng=None):
     rng = _common.ensure_rng(rng)
     la = len(array)
-    return array[rng.choice(range(la), min(n_samples, la))]
+    return array[rng.choice(range(la), min(n_samples, la), replace=False)]
 
 
 # matplotlib helper functions.
@@ -891,7 +891,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
             # from ten randomly selected points to the remaining points in the
             # system.
             points = _sample_array(sites_pos, 10).T
-            distances = (sites_pos.T.reshape(1, -1, dim) -
+            distances = (sites_pos.reshape(1, -1, dim) -
                          points.reshape(-1, 1, dim)).reshape(-1, dim)
         distances = np.sort(np.sum(distances**2, axis=1))
         # Then check if distances are present that are way shorter than the
