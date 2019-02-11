@@ -1088,7 +1088,7 @@ def test_ModesLead_and_SelfEnergyLead():
     interface = [lat(L-1, lead.sites[i].tag[1]) for i in range(L)]
 
     # Re-attach right lead as ModesLead.
-    syst.leads[1] = builder.ModesLead(lead.modes, interface)
+    syst.leads[1] = builder.ModesLead(lead.modes, interface, lead.parameters)
     fsyst = syst.finalized()
     ts2 = [kwant.smatrix(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)
@@ -1096,13 +1096,15 @@ def test_ModesLead_and_SelfEnergyLead():
     # Re-attach right lead as ModesLead with old-style modes API
     # that does not take a 'params' keyword parameter.
     syst.leads[1] = builder.ModesLead(
-        lambda energy, args: lead.modes(energy, args), interface)
+        lambda energy, args: lead.modes(energy, args),
+        interface, lead.parameters)
     fsyst = syst.finalized()
     ts2 = [kwant.smatrix(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)
 
     # Re-attach right lead as SelfEnergyLead.
-    syst.leads[1] = builder.SelfEnergyLead(lead.selfenergy, interface)
+    syst.leads[1] = builder.SelfEnergyLead(lead.selfenergy, interface,
+                                           lead.parameters)
     fsyst = syst.finalized()
     ts2 = [kwant.greens_function(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)
@@ -1110,7 +1112,8 @@ def test_ModesLead_and_SelfEnergyLead():
     # Re-attach right lead as SelfEnergyLead with old-style selfenergy API
     # that does not take a 'params' keyword parameter.
     syst.leads[1] = builder.SelfEnergyLead(
-        lambda energy, args: lead.selfenergy(energy, args), interface)
+        lambda energy, args: lead.selfenergy(energy, args),
+        interface, lead.parameters)
     fsyst = syst.finalized()
     ts2 = [kwant.greens_function(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)
@@ -1119,7 +1122,7 @@ def test_ModesLead_and_SelfEnergyLead():
     # Also verifies that the selfenergy callback function can return exotic
     # arraylikes.
     syst.leads.append(builder.SelfEnergyLead(
-        lambda *args: list(ta.zeros((L, L))), interface))
+        lambda *args: list(ta.zeros((L, L))), interface, lead.parameters))
     fsyst = syst.finalized()
     ts2 = [kwant.greens_function(fsyst, e).transmission(1, 0) for e in energies]
     assert_almost_equal(ts2, ts)
@@ -1346,18 +1349,28 @@ def test_subs():
 
     # test basic substitutions
     syst = make_system()
+    assert syst.finalized().parameters == {'a', 'b', 'c'}
     expected = hamiltonian(syst, a=1, b=2, c=3)
     # 1 level of substitutions
     sub_syst = syst.substituted(a='d', b='e')
+    assert sub_syst.finalized().parameters == {'d', 'e', 'c'}
     assert np.allclose(hamiltonian(sub_syst, d=1, e=2, c=3), expected)
     # 2 levels of substitution
     sub_sub_syst = sub_syst.substituted(d='g', c='h')
     assert np.allclose(hamiltonian(sub_sub_syst, g=1, e=2, h=3), expected)
+    assert sub_sub_syst.finalized().parameters == {'g', 'e', 'h'}
     # very confusing but technically valid. 'a' does not appear in 'hopping',
     # so the signature of 'onsite' is valid.
     sub_syst = syst.substituted(a='sitea')
+    assert sub_syst.finalized().parameters == {'sitea', 'b', 'c'}
     assert np.allclose(hamiltonian(sub_syst, sitea=1, b=2, c=3), expected)
 
+    # Check that this also works for infinite systems, as their finalization
+    # follows a different code path.
+    lead = make_system(kwant.TranslationalSymmetry((-1,)), n=1)
+    lead = lead.substituted(a='lead_a', b='lead_b', c='lead_c')
+    lead = lead.finalized()
+    assert lead.parameters == {'lead_a', 'lead_b', 'lead_c'}
 
 def test_attach_stores_padding():
     lat = kwant.lattice.chain()

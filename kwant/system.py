@@ -326,6 +326,9 @@ class PrecalculatedLead:
             raise ValueError("No precalculated values provided.")
         self._modes = modes
         self._selfenergy = selfenergy
+        # Modes/Self-energy have already been evaluated, so there
+        # is no parametric dependence anymore
+        self.parameters = frozenset()
 
     def modes(self, energy=0, args=(), *, params=None):
         if self._modes is not None:

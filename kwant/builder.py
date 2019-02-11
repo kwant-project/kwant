@@ -632,13 +632,16 @@ class SelfEnergyLead(Lead):
         Has the same signature as `selfenergy` (without the ``self``
         parameter) and returns the self energy matrix for the interface sites.
     interface : sequence of `Site` instances
+    parameters : sequence of strings
+        The parameters on which the lead depends.
     """
-    def __init__(self, selfenergy_func, interface):
+    def __init__(self, selfenergy_func, interface, parameters):
         self.interface = tuple(interface)
         # we changed the API of 'selfenergy_func' to have a keyword-only
         # parameter 'params', but we still need to support the old API
         # XXX: remove this when releasing Kwant 2.0
         self.selfenergy_func = _ensure_signature(selfenergy_func)
+        self.parameters = frozenset(parameters)
 
     def finalized(self):
         """Trivial finalization: the object is returned itself."""
@@ -659,14 +662,16 @@ class ModesLead(Lead):
         `~kwant.physics.PropagatingModes` and `~kwant.physics.StabilizedModes`.
     interface :
         sequence of `Site` instances
-
+    parameters : sequence of strings
+        The parameters on which the lead depends.
     """
-    def __init__(self, modes_func, interface):
+    def __init__(self, modes_func, interface, parameters):
         self.interface = tuple(interface)
         # we changed the API of 'selfenergy_func' to have a keyword-only
         # parameter 'params', but we still need to support the old API
         # XXX: remove this when releasing Kwant 2.0
         self.modes_func = _ensure_signature(modes_func)
+        self.parameters = frozenset(parameters)
 
     def finalized(self):
         """Trivial finalization: the object is returned itself."""
@@ -2018,18 +2023,26 @@ class FiniteSystem(_FinalizedBuilderMixin, system.FiniteSystem):
         hoppings = [cache(builder._get_edge(sites[tail], sites[head]))
                     for tail, head in g]
 
+        # System parameters are the union of the parameters
+        # of onsites and hoppings.
+        # Here 'onsites' and 'hoppings' are pairs whos second element
+        # is a tuple of parameter names when matrix element is a function,
+        # and None otherwise.
+        parameters = frozenset(chain.from_iterable(
+            p for _, p in chain(onsites, hoppings) if p))
+
         self.graph = g
         self.sites = sites
         self.site_ranges = _site_ranges(sites)
         self.id_by_site = id_by_site
         self.hoppings = hoppings
         self.onsites = onsites
+        self.parameters = parameters
         self.symmetry = builder.symmetry
         self.leads = finalized_leads
         self.lead_interfaces = lead_interfaces
         self.lead_paddings = lead_paddings
         self._init_discrete_symmetries(builder)
-
 
     def pos(self, i):
         return self.sites[i].pos
@@ -2179,12 +2192,21 @@ class InfiniteSystem(_FinalizedBuilderMixin, system.InfiniteSystem):
                 tail, head = sym.to_fd(tail, head)
             hoppings.append(cache(builder._get_edge(tail, head)))
 
+        # System parameters are the union of the parameters
+        # of onsites and hoppings.
+        # Here 'onsites' and 'hoppings' are pairs whos second element
+        # is a tuple of parameter names when matrix element is a function,
+        # and None otherwise.
+        parameters = frozenset(chain.from_iterable(
+            p for _, p in chain(onsites, hoppings) if p))
+
         self.graph = g
         self.sites = sites
         self.site_ranges = _site_ranges(sites)
         self.id_by_site = id_by_site
         self.hoppings = hoppings
         self.onsites = onsites
+        self.parameters = parameters
         self.symmetry = builder.symmetry
         self.cell_size = cell_size
         self._init_discrete_symmetries(builder)

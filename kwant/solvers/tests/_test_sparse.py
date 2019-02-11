@@ -22,6 +22,7 @@ sq = square = kwant.lattice.square()
 class LeadWithOnlySelfEnergy:
     def __init__(self, lead):
         self.lead = lead
+        self.parameters = frozenset()
 
     def selfenergy(self, energy, args=(), *, params=None):
         assert args == ()
