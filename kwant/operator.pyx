@@ -268,7 +268,7 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
             _onsite = _FunctionalOnsite(onsite, syst.sites)
         except AttributeError:
             _onsite = onsite
-    elif isinstance(onsite, collections.Mapping):
+    elif isinstance(onsite, collections.abc.Mapping):
         if not hasattr(syst, 'sites'):
             raise TypeError('Provide `onsite` as a value or a function for '
                             'systems that are not finalized Builders.')

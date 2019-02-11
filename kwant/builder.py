@@ -1945,7 +1945,7 @@ def _transfer_symmetry(syst, builder):
 
         syst._cons_law = operator(vals), operator(vecs)
 
-    elif isinstance(cons_law, collections.Mapping):
+    elif isinstance(cons_law, collections.abc.Mapping):
         vals = {family: (value if family.norbs == 1 else
                          ta.array(np.diag(np.linalg.eigvalsh(value))))
                 for family, value in cons_law.items()}
