@@ -2161,7 +2161,7 @@ def current(syst, current, relwidth=0.05, **kwargs):
         Relative width of the bumps used to smooth the field, as a fraction
         of the length of the longest side of the bounding box.
     **kwargs : various
-        Keyword args to be passed verbatim to `~kwant.plotter.streamplot`.
+        Keyword args to be passed verbatim to `kwant.plotter.streamplot`.
 
     Returns
     -------

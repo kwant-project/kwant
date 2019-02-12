@@ -239,9 +239,9 @@ class MUMPSContext:
         self.mumps_instance.set_assembled_matrix(a.shape[0], row, col, data)
         self.mumps_instance.icntl[7] = orderings[ordering]
         self.mumps_instance.job = 1
-        t1 = time.clock()
+        t1 = time.process_time()
         self.mumps_instance.call()
-        t2 = time.clock()
+        t2 = time.process_time()
         self.factored = False
 
         if self.mumps_instance.infog[1] < 0:
@@ -325,9 +325,9 @@ class MUMPSContext:
 
         done = False
         while not done:
-            t1 = time.clock()
+            t1 = time.process_time()
             self.mumps_instance.call()
-            t2 = time.clock()
+            t2 = time.process_time()
 
             # error -8, -9 (not enough allocated memory) is treated
             # specially, by increasing the memory relaxation parameter
@@ -492,9 +492,9 @@ def schur_complement(a, indices, ordering='auto', ooc=False, pivot_tol=0.01,
     mumps_instance.set_schur(schur_compl, indices)
 
     mumps_instance.job = 4   # job=4 -> 1 and 2 after each other
-    t1 = time.clock()
+    t1 = time.process_time()
     mumps_instance.call()
-    t2 = time.clock()
+    t2 = time.process_time()
 
     if not calc_stats:
         return schur_compl

@@ -27,7 +27,7 @@ __all__ = ['wraparound', 'plot_2d_bands']
 
 
 def _hashable(obj):
-    return isinstance(obj, collections.Hashable)
+    return isinstance(obj, collections.abc.Hashable)
 
 
 def _memoize(f):

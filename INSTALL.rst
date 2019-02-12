@@ -32,7 +32,11 @@ Building Kwant requires
  * `Python <https://www.python.org/>`_ 3.5 or above (Kwant 1.1 is the last
    version to support Python 2),
  * `NumPy <http://numpy.org/>`_ 1.11.0 or newer,
- * `SciPy <https://scipy.org/>`_ 0.17.0 or newer,
+ * `SciPy <https://www.scipy.org/>`_ 0.17.0 or newer,
+ * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
+   (For best performance we recommend the free `OpenBLAS
+   <http://www.openblas.net/>`_ or the nonfree `MKL
+   <https://software.intel.com/en-us/intel-mkl>`_.)
  * `Tinyarray <https://gitlab.kwant-project.org/kwant/tinyarray>`_ 1.2 or newer,
 a NumPy-like Python package optimized for very small arrays,
  * An environment which allows to compile Python extensions written in C and
@@ -170,7 +174,7 @@ are extracted form the diff file.
 The diff file may be modified directly.  Another possible way of working is to
 directly modify either the tutorial script or the figure generation script.
 Then ``make html`` will use the command line tool `wiggle
-<http://neil.brown.name/wiggle/>`_ to propagate the modifications accordingly.
+<https://github.com/neilbrown/wiggle>`_ to propagate the modifications accordingly.
 This will often just work, but may sometimes result in conflicts, in which case
 a message will be printed.  The conflicts then have to be resolved much like
 with a version control system.

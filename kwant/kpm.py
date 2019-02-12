@@ -30,7 +30,7 @@ __all__ = ['SpectralDensity', 'Correlator', 'conductivity',
 SAMPLING = 2 # number of sampling points to number of moments ratio
 
 class SpectralDensity:
-    """Calculate the spectral density of an operator.
+    r"""Calculate the spectral density of an operator.
 
     This class makes use of the kernel polynomial
     method (KPM), presented in [1]_, to obtain the spectral density
