@@ -1225,9 +1225,11 @@ def test_argument_passing():
     with raises(TypeError):
         inf_syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
 
-    # test that missing any parameters raises TypeError
+    # Missing parameters raises TypeError
     with raises(TypeError):
-        syst.hamiltonian(0, 0, params=dict(fake=10))
+        syst.hamiltonian(0, 0, params=dict(p1=2))
+    with raises(TypeError):
+        syst.hamiltonian_submatrix(params=dict(p1=2))
 
     # test that passing parameters without default values works, and that
     # passing parameters with default values fails
