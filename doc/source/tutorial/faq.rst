@@ -257,8 +257,8 @@ only get the neighbors *on that sublattice*:
 
 .. image:: /code/figure/faq_adjacent4.*
 
-Note in the above that there are *only* hoppings between the blue sites. This
-is an artifact of the visualisation: the red and green sites just happen to lie
+Note in the above that there are *only* hoppings between the red sites. This
+is an artifact of the visualisation: the blue and green sites just happen to lie
 in the path of the hoppings, but are not connected by them.
 
 
