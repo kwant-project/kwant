@@ -517,8 +517,6 @@ def test_uniform_magnetic_field(system_and_gauge, B):
     s = kwant.smatrix(syst, energy=0.6, params=params)
     t = s.submatrix(1, 0)
 
-    b = kwant.physics.Bands(syst.leads[0], params=params)
-
     assert t.shape > (0, 0)  # sanity check
     assert np.allclose(np.abs(t)**2, np.eye(*t.shape))
 
