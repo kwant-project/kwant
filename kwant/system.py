@@ -70,6 +70,20 @@ class System(metaclass=abc.ABCMeta):
         return DiscreteSymmetry()
 
 
+    def __str__(self):
+        items = [
+            # (format, extractor, skip if info not present)
+            ('{} sites', self.graph.num_nodes, False),
+            ('{} hoppings', self.graph.num_edges, False),
+            ('parameters: {}', tuple(self.parameters), True),
+        ]
+        # Skip some information when it's not present (parameters)
+        details = [fmt.format(info) for fmt, info, skip in items
+                   if (info or not skip)]
+        details = ', and '.join((', '.join(details[:-1]), details[-1]))
+        return '<{} with {}>'.format(self.__class__.__name__, details)
+
+
 # Add a C-implemented function as an unbound method to class System.
 System.hamiltonian_submatrix = _system.HamiltonianSubmatrix()
 
