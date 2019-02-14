@@ -31,6 +31,9 @@ class System(metaclass=abc.ABCMeta):
         range.  In addition, the final triple should have the form
         ``(len(graph.num_nodes), 0, tot_norbs)`` where ``tot_norbs`` is the
         total number of orbitals in the system.
+    parameters : frozenset of strings
+        The names of the parameters on which the system depends. This attribute
+        is provisional and may be changed in a future version of Kwant
 
     Notes
     -----
@@ -79,7 +82,11 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
     leads : sequence of leads
         Each lead has to provide a method ``selfenergy`` that has
         the same signature as `InfiniteSystem.selfenergy` (without the
-        ``self`` parameter). It may also provide ``modes`` that has the
+        ``self`` parameter), and must have property ``parameters``:
+        a collection of strings that name the system parameters (
+        though this requirement is provisional and may be removed in
+        a future version of Kwant).
+        It may also provide ``modes`` that has the
         same signature as `InfiniteSystem.modes` (without the ``self``
         parameter).
     lead_interfaces : sequence of sequences of integers
@@ -89,6 +96,10 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
         Each sub-sequence contains the indices of the system sites
         that belong to the lead, and therefore have the same onsite as the lead
         sites, and are connected by the same hoppings as the lead sites.
+    parameters : frozenset of strings
+        The names of the parameters on which the system depends. This does
+        not include the parameters for any leads. This attribute
+        is provisional and may be changed in a future version of Kwant
 
     Notes
     -----
@@ -326,6 +337,9 @@ class PrecalculatedLead:
             raise ValueError("No precalculated values provided.")
         self._modes = modes
         self._selfenergy = selfenergy
+        # Modes/Self-energy have already been evaluated, so there
+        # is no parametric dependence anymore
+        self.parameters = frozenset()
 
     def modes(self, energy=0, args=(), *, params=None):
         if self._modes is not None:

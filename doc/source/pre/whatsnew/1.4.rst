@@ -138,6 +138,38 @@ the scattering region and leads, one could do the following::
 
    kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
 
+System parameters can now be inspected
+--------------------------------------
+In modern Kwant the preferred way to pass arguments to your models
+is by *name*, using a dictionary and ``params``::
+
+  def onsite(site, magnetic_field, voltage):
+      return magnetic_field * sigma_z + voltage * sigma_0
+
+  def lead_onsite(site, lead_voltage):
+      return lead_voltage * sigma_0
+
+  syst = make_system(onsite)
+  syst.attach_lead(make_lead(lead_onsite))
+  syst = syst.finalized()
+
+  # naming the arguments makes things clear!
+  kwant.smatrix(syst, params=dict(magnetic_field=0.5, voltage=1,
+                                  lead_voltage=0.2))
+
+This is a much clearer and less error prone than passing arguments by
+*position* using ``args``, as was required in older versions of Kwant.
+In this version of Kwant we introduce the ``parameters`` attribute of
+*finalized systems*, which allows inspection of the names of the
+parameters that the system (and its leads) expects::
+
+  >>> syst.parameters
+  frozenset({'magnetic_field', 'voltage'})
+  >>> syst.leads[0].parameters
+  frozenset({'V_lead'})
+
+This is a provisional API that may be changed in a future version of Kwant.
+
 Interpolated density plots
 --------------------------
 A new function `~kwant.plotter.density` has been added that can be used to
