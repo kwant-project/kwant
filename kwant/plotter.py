@@ -27,6 +27,7 @@ from scipy import spatial, interpolate
 from math import cos, sin, pi, sqrt
 
 from . import system, builder, _common
+from ._common import deprecate_args
 
 
 __all__ = ['plot', 'map', 'bands', 'spectrum', 'current', 'density',
@@ -1348,6 +1349,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     return fig
 
 
+@deprecate_args
 def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
           fig_size=None, ax=None, *, params=None):
     """Plot band structure of a translationally invariant 1D system.
@@ -1358,7 +1360,7 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
         A system bands of which are to be plotted.
     args : tuple, defaults to empty
         Positional arguments to pass to the ``hamiltonian`` method.
-        Mutally exclusive with 'params'.
+        Deprecated in favor of 'params' (and mutually exclusive with it).
     momenta : int or 1D array-like
         Either a number of sampling points on the interval [-pi, pi], or an
         array of points at which the band structure has to be evaluated.

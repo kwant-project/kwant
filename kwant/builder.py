@@ -22,7 +22,7 @@ from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry
 from ._common import (ensure_isinstance, get_parameters, reraise_warnings,
-                      interleave)
+                      interleave, deprecate_args)
 
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
@@ -617,6 +617,7 @@ def _ensure_signature(func):
         return func
 
     # function conforming to old API: needs wrapping
+    @deprecate_args
     def wrapper(energy, args=(), *, params=None):
         return func(energy, args)
 
@@ -647,6 +648,7 @@ class SelfEnergyLead(Lead):
         """Trivial finalization: the object is returned itself."""
         return self
 
+    @deprecate_args
     def selfenergy(self, energy, args=(), *, params=None):
         return self.selfenergy_func(energy, args, params=params)
 
@@ -677,9 +679,11 @@ class ModesLead(Lead):
         """Trivial finalization: the object is returned itself."""
         return self
 
+    @deprecate_args
     def modes(self, energy, args=(), *, params=None):
         return self.modes_func(energy, args, params=params)
 
+    @deprecate_args
     def selfenergy(self, energy, args=(), *, params=None):
         stabilized = self.modes(energy, args, params=params)[1]
         return stabilized.selfenergy()
@@ -1894,6 +1898,7 @@ class _FinalizedBuilderMixin:
                 value = herm_conj(value)
         return value
 
+    @deprecate_args
     def discrete_symmetry(self, args=(), *, params=None):
         if self._cons_law is not None:
             eigvals, eigvecs = self._cons_law

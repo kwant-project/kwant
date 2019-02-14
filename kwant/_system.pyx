@@ -16,6 +16,7 @@ import types
 from .graph.core cimport CGraph, gintArraySlice
 from .graph.defs cimport gint
 from .graph.defs import gint_dtype
+from ._common import deprecate_args
 
 msg = ('Hopping from site {0} to site {1} does not match the '
        'dimensions of onsite Hamiltonians of these sites.')
@@ -253,6 +254,7 @@ def _check_parameters_match(expected_parameters, params):
         raise TypeError(''.join(msg))
 
 
+@deprecate_args
 @cython.binding(True)
 @cython.embedsignature(True)
 def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
