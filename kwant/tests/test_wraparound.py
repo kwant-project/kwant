@@ -41,12 +41,13 @@ def test_consistence_with_bands(kx=1.9, nkys=31):
         wa_keep_1 = wraparound(syst, keep=1).finalized()
         wa_keep_none = wraparound(syst).finalized()
 
-        bands = kwant.physics.Bands(wa_keep_1, (kx,))
+        bands = kwant.physics.Bands(wa_keep_1, params=dict(k_x=kx))
         energies_a = [bands(ky) for ky in kys]
 
         energies_b = []
         for ky in kys:
-            H = wa_keep_none.hamiltonian_submatrix((kx, ky), sparse=False)
+            params = dict(k_x=kx, k_y=ky)
+            H = wa_keep_none.hamiltonian_submatrix(params=params, sparse=False)
             evs = np.sort(np.linalg.eigvalsh(H).real)
             energies_b.append(evs)
 
@@ -63,10 +64,14 @@ def test_opposite_hoppings():
         syst[lat(-1, 0), lat(-1, -1)] = val
 
         fsyst = wraparound(syst).finalized()
-        np.testing.assert_almost_equal(fsyst.hamiltonian_submatrix([0]), 0)
+        params = dict(k_x=0)
+        np.testing.assert_almost_equal(
+            fsyst.hamiltonian_submatrix(params=params),
+            0)
 
 
 def test_value_types(k=(-1.1, 0.5), E=2, t=1):
+    k = dict(zip(('k_x', 'k_y', 'k_z'), k))
     sym_extents = [1, 2, 3]
     lattices = [kwant.lattice.honeycomb(), kwant.lattice.square()]
     lat_syms = [
@@ -75,7 +80,7 @@ def test_value_types(k=(-1.1, 0.5), E=2, t=1):
     ]
     for lat, sym in lat_syms:
         syst = wraparound(_simple_syst(lat, E, t, sym)).finalized()
-        H = syst.hamiltonian_submatrix(k, sparse=False)
+        H = syst.hamiltonian_submatrix(params=k, sparse=False)
         for E1, t1 in [(float(E), float(t)),
                        (np.array([[E]], float), np.array([[t]], float)),
                        (ta.array([[E]], float), ta.array([[t]], float))]:
@@ -84,7 +89,7 @@ def test_value_types(k=(-1.1, 0.5), E=2, t=1):
             for E2 in [E1, lambda a: E1]:
                 for t2 in [t1, lambda a, b: t1]:
                     syst = wraparound(_simple_syst(lat, E2, t2, sym)).finalized()
-                    H_alt = syst.hamiltonian_submatrix(k, sparse=False)
+                    H_alt = syst.hamiltonian_submatrix(params=k, sparse=False)
                     np.testing.assert_equal(H_alt, H)
             # test when Hamiltonian value functions take extra parameters and
             # have incompatible signatures (must be passed with 'params')
@@ -98,7 +103,7 @@ def test_value_types(k=(-1.1, 0.5), E=2, t=1):
                 lambda a, b, t, E: t,
                 lambda a, b, E, t: t,
             ]
-            params = dict(E=E1, t=t1, k_x=k[0], k_y=k[1])
+            params = dict(E=E1, t=t1, **k)
             for E2, t2 in itertools.product(onsites, hoppings):
                 syst = wraparound(_simple_syst(lat, E2, t2, sym)).finalized()
                 H_alt = syst.hamiltonian_submatrix(params=params, sparse=False)
@@ -275,15 +280,17 @@ def test_fd_mismatch():
 
     def spectrum(syst, keep):
         syst = wraparound(syst, keep=keep).finalized()
+        ks = ('k_x', 'k_y', 'k_z')
         if keep is None:
             def _(*args):
-                return np.linalg.eigvalsh(syst.hamiltonian_submatrix(args=args))
+                params = dict(zip(ks, args))
+                return np.linalg.eigvalsh(
+                    syst.hamiltonian_submatrix(params=params))
         else:
             def _(*args):
-                args = list(args)
-                kext = args.pop(keep)
-                kint = args
-                B = kwant.physics.Bands(syst, args=kint)
+                params = dict(zip(ks, args))
+                kext = params.pop(ks[keep])
+                B = kwant.physics.Bands(syst, params=params)
                 return B(kext)
         return _
 
@@ -348,7 +355,8 @@ def test_fd_mismatch():
     finitewrapped.fill(wrapped, shape, start=np.zeros(3));
 
     sysf = finitewrapped.finalized()
-    spectrum1 = [np.linalg.eigvalsh(sysf.hamiltonian_submatrix(args=(k, 0)))
+    spectrum1 = [np.linalg.eigvalsh(
+                    sysf.hamiltonian_submatrix(params=dict(k_x=k, k_y=0)))
                 for k in np.linspace(-np.pi, np.pi, 5)]
 
     # Second choice: doubled UC with third translation purely in z direction
@@ -367,7 +375,8 @@ def test_fd_mismatch():
     finitewrapped.fill(wrapped, shape, start=np.zeros(3));
 
     sysf = finitewrapped.finalized()
-    spectrum2 = [np.linalg.eigvalsh(sysf.hamiltonian_submatrix(args=(k, 0)))
+    spectrum2 = [np.linalg.eigvalsh(
+                    sysf.hamiltonian_submatrix(params=dict(k_x=k, k_y=0)))
                 for k in np.linspace(-np.pi, np.pi, 5)]
 
     assert np.allclose(spectrum1, spectrum2)

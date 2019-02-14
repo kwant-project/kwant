@@ -14,6 +14,7 @@ from random import Random
 
 import numpy as np
 import tinyarray as ta
+import pytest
 from pytest import raises, warns
 from numpy.testing import assert_almost_equal
 
@@ -1145,12 +1146,14 @@ def test_discrete_symmetries():
     syst[lat(1)] = np.identity(2)
     syst[lat2(1)] = 1
 
-    sym = syst.finalized().discrete_symmetry(args=[0])
+    params=dict(p=0)
+
+    sym = syst.finalized().discrete_symmetry(params=params)
     for proj, should_be in zip(sym.projectors, np.identity(3)):
         assert np.allclose(proj.toarray(), should_be.reshape((3, 1)))
     assert np.allclose(sym.time_reversal.toarray(), np.identity(3))
     syst.conservation_law = lambda site, p: cons_law[site.family]
-    sym = syst.finalized().discrete_symmetry(args=[0])
+    sym = syst.finalized().discrete_symmetry(params=params)
     for proj, should_be in zip(sym.projectors, np.identity(3)):
         assert np.allclose(proj.toarray(), should_be.reshape((-1, 1)))
 
@@ -1186,8 +1189,10 @@ def test_discrete_symmetries():
     assert np.allclose(proj.toarray(), [[1]])
 
 
+# We need to keep testing 'args', but we don't want to see
+# all the deprecation warnings in the test logs
+@pytest.mark.filterwarnings("ignore:.*'args' parameter")
 def test_argument_passing():
-
     chain = kwant.lattice.chain()
 
     # Test for passing parameters to hamiltonian matrix elements
