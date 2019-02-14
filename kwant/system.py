@@ -85,7 +85,7 @@ class System(metaclass=abc.ABCMeta):
 
 
 # Add a C-implemented function as an unbound method to class System.
-System.hamiltonian_submatrix = _system.HamiltonianSubmatrix()
+System.hamiltonian_submatrix = _system.hamiltonian_submatrix
 
 
 class FiniteSystem(System, metaclass=abc.ABCMeta):

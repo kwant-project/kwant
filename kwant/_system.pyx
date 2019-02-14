@@ -253,6 +253,7 @@ def _check_parameters_match(expected_parameters, params):
         raise TypeError(''.join(msg))
 
 
+@cython.binding(True)
 @cython.embedsignature(True)
 def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
                           sparse=False, return_norb=False, *, params=None):
@@ -363,13 +364,3 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
         mat = func(ham, args, params, self.graph, diag, from_sites,
                    n_by_to_site, to_norb, to_off, from_norb, from_off)
     return (mat, to_norb, from_norb) if return_norb else mat
-
-# workaround for Cython functions not having __get__ and
-# Python 3 getting rid of unbound methods
-cdef class HamiltonianSubmatrix:
-
-    def __get__(self, obj, objtype):
-        if obj is None:
-            return hamiltonian_submatrix
-        else:
-            return types.MethodType(hamiltonian_submatrix, obj)
