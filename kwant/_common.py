@@ -12,6 +12,7 @@ import numbers
 import inspect
 import warnings
 import importlib
+import functools
 from contextlib import contextmanager
 
 __all__ = ['KwantDeprecationWarning', 'UserCodeError']
@@ -39,6 +40,46 @@ class UserCodeError(Exception):
     user's function causes an error.
     """
     pass
+
+
+def deprecate_parameter(parameter_name, version=None, help=None,
+                        stacklevel=3):
+    """Trigger a deprecation warning if the wrapped function is called
+       with the provided parameter."""
+
+    message = ("The '{}' parameter has been deprecated since version {} -- {}"
+               .format(parameter_name, version, help))
+
+    def warn():
+        warnings.warn(message, KwantDeprecationWarning,
+                      stacklevel=stacklevel)
+
+    def wrapper(f=None):
+
+        # Instead of being used as a decorator, can be called with
+        # no arguments to just raise the warning.
+        if f is None:
+            warn()
+            return
+
+        sig = inspect.signature(f)
+
+        @functools.wraps(f)
+        def inner(*args, **kwargs):
+            # If the named argument is truthy
+            if sig.bind(*args, **kwargs).arguments.get(parameter_name):
+                warn()
+            return f(*args, **kwargs)
+
+        return inner
+
+    return wrapper
+
+
+# Deprecation for 'args' parameter; defined once to minimize boilerplate,
+# as this parameter is present all over Kwant.
+deprecate_args = deprecate_parameter('args', version=1.4, help=
+    "Instead, provide named parameters as a dictionary via 'params'.")
 
 
 def interleave(seq):
