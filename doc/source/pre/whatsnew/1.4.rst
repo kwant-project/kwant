@@ -288,7 +288,7 @@ and will emit a warning when this is detected.
 
 Sites from different families are plotted in different colors by default
 ------------------------------------------------------------------------
-Previously `kwant.plot` would plot all sites in black. Now sites from
+Previously `kwant.plotter.plot` would plot all sites in black. Now sites from
 different families are plotted in different colors, which improves the
 default plotting style. You can still customize the site coloring using
 the ``site_color`` parameter, as before.
