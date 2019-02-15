@@ -1017,7 +1017,7 @@ class magnetic_gauge:
             If True, estimate the magnetic flux through each hopping loop
             in the system by evaluating the magnetic field at a single
             position inside the loop and multiplying it by the area of the
-            loop. If False, then `~scipy.integrate.quad` is used to integrate
+            loop. If False, then ``scipy.integrate.quad`` is used to integrate
             the magnetic field. This parameter is only used when 'syst_field'
             or 'lead_fields' are callable.
 
