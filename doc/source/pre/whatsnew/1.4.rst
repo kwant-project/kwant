@@ -38,7 +38,8 @@ potentials at finite temperature::
 
   syst = make_system().finalized()
   sigma_xy = kwant.kpm.conductivity(syst, alpha='x', beta='y')
-  conductivities = [sigma_xy(mu=mu, temp=0.1) for mu in np.linspace(0, 4)]
+  conductivities = [sigma_xy(mu=mu, temperature=0.1)
+                    for mu in np.linspace(0, 4)]
 
 `kwant.physics.Bands` can optionally return eigenvectors and velocities
 -----------------------------------------------------------------------

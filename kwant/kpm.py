@@ -592,7 +592,7 @@ class Correlator:
         self._calculate_moments_matrix()
         self._build_integral_factor()
 
-    def __call__(self, mu=0, temp=0):
+    def __call__(self, mu=0, temperature=0):
         """Returns the linear response χ_{α β}(µ, T)
 
         Parameters
@@ -600,7 +600,7 @@ class Correlator:
         mu : float
             Chemical potential defined in the same units of energy as
             the Hamiltonian.
-        temp : float
+        temperature : float
             Temperature in units of energy, the same as defined in the
             Hamiltonian.
         """
@@ -608,7 +608,7 @@ class Correlator:
         e_rescaled = (e - self._b) / self._a
 
         # rescale the energy to compare with the chemical potential
-        distribution_array = fermi_distribution(e, mu, temp)
+        distribution_array = fermi_distribution(e, mu, temperature)
         integrand = np.divide(distribution_array, (1 - e_rescaled ** 2) ** 2)
         integrand = np.multiply(integrand, self._integral_factor)
         integral = simps(integrand, x=e_rescaled)
@@ -812,7 +812,7 @@ def conductivity(hamiltonian, alpha='x', beta='x', positions=None, **kwargs):
     conductivity at chemical potential 0 and temperature 0.01.
 
     >>> cond = kwant.kpm.conductivity(fsyst, alpha='x', beta='y')
-    >>> cond(mu=0, temp=0.01)
+    >>> cond(mu=0, temperature=0.01)
     """
 
     if positions is None and not isinstance(hamiltonian, system.System):
@@ -967,26 +967,26 @@ class LocalVectors:
 
 # ### Auxiliary functions
 
-def fermi_distribution(e, mu, temp):
+def fermi_distribution(energy, mu, temperature):
     """Returns the Fermi distribution f(e, µ, T) evaluated at 'e'.
 
     Parameters
     ----------
-    e : float or sequence of floats
+    energy : float or sequence of floats
         Energy array where the Fermi distribution is evaluated.
     mu : float
         Chemical potential defined in the same units of energy as
         the Hamiltonian.
-    temp : float
+    temperature : float
         Temperature in units of energy, the same as defined in the
         Hamiltonian.
     """
-    if temp < 0:
-        raise ValueError("'temp' must be non-negative")
-    elif temp == 0:
-        return np.array(np.less(e - mu, 0), dtype=float)
+    if temperature < 0:
+        raise ValueError("temperature must be non-negative")
+    elif temperature == 0:
+        return np.array(np.less(energy - mu, 0), dtype=float)
     else:
-        return 1 / (1 + np.exp((e - mu) / temp))
+        return 1 / (1 + np.exp((energy - mu) / temperature))
 
 def _from_where_to_orbs(syst, where):
     """Returns a list of slices of the orbitals in 'where'"""
