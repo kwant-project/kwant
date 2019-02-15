@@ -27,5 +27,6 @@ Computation of magnetic field gauge
 
 .. autosummary::
    :toctree: generated/
+   :template: autosummary/functor.rst
 
    magnetic_gauge

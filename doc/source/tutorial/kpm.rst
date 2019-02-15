@@ -340,7 +340,7 @@ vectors
 Note that the Kubo conductivity must be normalized with the area covered
 by the vectors. In this case, each local vector represents a site, and
 covers an area of half a unit cell, while the sum covers one unit cell.
-It is possible to use random vectors to get an average spectation
+It is possible to use random vectors to get an average expectation
 value of the conductivity over large parts of the system. In this
 case, the area that normalizes the result, is the area covered by
 the random vectors.

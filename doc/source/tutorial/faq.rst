@@ -423,7 +423,7 @@ the modes are sorted in the following way:
     + Positive velocity modes are ordered by *decreasing* momentum
 
 For more complicated systems and band structures this can lead to some
-possibly unintuitive orderings:
+unintuitive orderings:
 
 .. image:: /code/figure/faq_pm2.*
 
@@ -437,9 +437,9 @@ infinity" (*not* towards the system) which means that the incoming modes are
 those that have *negative* velocities.
 
 This means that for a lead attached on the left of a scattering region (with
-symmetry vector $(-1, 0)$, for example), the
-positive $k$ direction (when inspecting the lead's band structure) actually
-corresponds to the *negative* $x$ direction.
+symmetry vector :math:`(-1, 0)`, for example), the
+positive :math:`k` direction (when inspecting the lead's band structure) actually
+corresponds to the *negative* :math:`x` direction.
 
 
 How does Kwant order components of an individual wavefunction?

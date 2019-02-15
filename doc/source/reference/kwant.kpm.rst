@@ -4,4 +4,4 @@
 .. automodule:: kwant.kpm
    :members:
    :special-members:
-   :exclude-members: __weakref__
+   :exclude-members: __weakref__, __init__

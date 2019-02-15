@@ -161,8 +161,8 @@ energy eigenstates:
 .. image:: /code/figure/discretizer_gs.*
 
 Note in the above that we pass the spatially varying potential *function*
-to our system via a parameter called ``V``, because the symbol $V$
-was used in the intial, symbolic, definition of the Hamiltonian.
+to our system via a parameter called ``V``, because the symbol :math:`V`
+was used in the initial, symbolic, definition of the Hamiltonian.
 
 In addition, the function passed as ``V`` expects two input parameters ``x``
 and ``y``, the same as in the initial continuum Hamiltonian.

@@ -944,7 +944,7 @@ class magnetic_gauge:
 
     Parameters
     ----------
-    syst : kwant.builder.FiniteSystem or kwant.builder.InfiniteSystem
+    syst : `kwant.builder.FiniteSystem` or `kwant.builder.InfiniteSystem`
 
     Examples
     --------
@@ -1027,7 +1027,7 @@ class magnetic_gauge:
             The first callable computes the Peierls phase in the scattering
             region and the remaining callables compute the Peierls phases
             in each of the leads. Each callable takes a pair of
-            `~kwant.builder.Site`s 'a, b' and returns a unit complex
+            `~kwant.builder.Site` (a hopping) and returns a unit complex
             number (Peierls phase) that multiplies that hopping.
         """
         return self._peierls(syst_field, *lead_fields, tol=tol, average=False)

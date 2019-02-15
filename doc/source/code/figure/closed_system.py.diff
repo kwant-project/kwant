@@ -60,14 +60,9 @@
  #HIDDEN_BEGIN_yvri
  def plot_spectrum(syst, Bfields):
  
-     # In the following, we compute the spectrum of the quantum dot
-     # using dense matrix methods. This works in this toy example, as
-     # the system is tiny. In a real example, one would want to use
-     # sparse matrix methods
- 
      energies = []
      for B in Bfields:
-         # Obtain the Hamiltonian as a dense matrix
+         # Obtain the Hamiltonian as a sparse matrix
          ham_mat = syst.hamiltonian_submatrix(params=dict(B=B), sparse=True)
  
          # we only calculate the 15 lowest eigenvalues

@@ -83,7 +83,9 @@ Here is an example for extracting the symmetry group of a graphene system::
 
 ``kwant.qsymm`` also contains functionality for converting Qsymm models to Kwant Builders,
 and vice versa, and for working with continuum Hamiltonians (such as would be used with
-``kwant.continuum``)
+``kwant.continuum``).
+This integration requires separately installing Qsymm, which is available on the
+`Python Package Index <https://pypi.org/project/qsymm/>`_.
 
 Automatic Peierls phase calculation
 -----------------------------------
@@ -101,8 +103,7 @@ which calculates the Peierls phases for you::
       return -t * peierls(a, b)
 
   syst = make_system(hopping)
-  lead = make_lead(hopping)
-  lead.substituted(peierls='peierls_lead')
+  lead = make_lead(hopping).substituted(peierls='peierls_lead')
   syst.attach_lead(lead)
   syst = syst.finalized()
 
@@ -135,19 +136,19 @@ has a parameter ``V``, and one wishes to have different values for ``V`` in
 the scattering region and leads, one could do the following::
 
    syst = kwant.Builder()
-   syst.fill(model.substituted(V='V_dot', ...))
+   syst.fill(model.substituted(V='V_dot'), ...))
 
    lead = kwant.Builder()
    lead.fill(model.substituted(V='V_lead'), ...)
 
    syst.attach_lead(lead)
-   fsyst = syst.finalized()
+   syst = syst.finalized()
 
    kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
 
 Interpolated density plots
 --------------------------
-A new function, `~kwant.plotter.density`, has been added that can be used to
+A new function, `kwant.plotter.density`, has been added that can be used to
 visualize a density defined over the sites of a Kwant system. This convolves
 the "discrete" density (defined over the system sites) with a "bump" function
 in realspace. The output of `~kwant.plotter.density` can be more informative
@@ -166,7 +167,8 @@ but in an inconsistent way (e.g. a parameter 'phi' that is a superconducting
 phase in one value function, but a peierls phase in another). This leads
 to bugs that are confusing and hard to track down.
 
-Concretely, the above means that the following no longer works::
+For this reason value functions may no longer have default values for paramters.
+Concretely this means that the following no longer works::
 
   syst = kwant.Builder()
 
@@ -190,7 +192,7 @@ To deal with many parameters, the following idiom may be useful::
   ...
   smatrix = kwant.smatrix(syst, E, params=dict(defaults, d=4, e=5))
 
-Note that it allows to override defaults as well as to add additional
+Note that this allows to override defaults as well as to add additional
 parameters.
 
 System parameters can now be inspected
@@ -228,9 +230,9 @@ This is a provisional API that may be changed in a future version of Kwant.
 Passing system arguments via ``args`` is deprecated in favor of ``params``
 --------------------------------------------------------------------------
 It is now deprecated to pass arguments to systems by providing the
-``args`` parameter (in ``kwant.smatrix`` and elsewhere). This is
-error prone and requires that all value functions take the same
-formal parameters, even if they do not depend on all of them. The
+``args`` parameter (in ``kwant.smatrix`` and elsewhere). Passing arguments
+via ``args`` is error prone and requires that all value functions take the
+same formal parameters, even if they do not depend on all of them. The
 preferred way of passing parameters to Kwant systems is by passing
 a dictionary using ``params``::
 
@@ -244,7 +246,7 @@ a dictionary using ``params``::
   # Compare this to the deprecated 'args'
   kwant.smatrix(syst, args=(0.5, 0.2))
 
-The ability to provide ``args`` will be removed in a future Kwant version.
+Providing ``args`` will be removed in a future Kwant version.
 
 Finalized Builders keep track of which sites were added when attaching leads
 ----------------------------------------------------------------------------
@@ -261,8 +263,8 @@ that this option is not available in `~kwant.plotter.current`.  In order to use
 it, one has to call ``streamplot`` directly as shown in the docstring of
 ``current``.
 
-kwant.continuum.discretize can be used with rectangular lattices
-----------------------------------------------------------------
+`kwant.continuum.discretize` can be used with rectangular lattices
+------------------------------------------------------------------
 Previously the discretizer could only be used with lattices with the same
 lattice constant in all directions. Now it is possible to pass rectangular
 lattices to the discretizer::

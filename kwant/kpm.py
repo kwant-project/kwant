@@ -41,7 +41,7 @@ class SpectralDensity:
     .. math::
        ρ_A(E) = ρ(E) A(E),
 
-    where :math:`ρ(E) = \\sum_{k=0}^{D-1} δ(E-E_k)` is the density of
+    where :math:`ρ(E) = \sum_{k=0}^{D-1} δ(E-E_k)` is the density of
     states, and :math:`A(E)` is the expectation value of :math:`A` for
     all the eigenstates with energy :math:`E`.
 
@@ -253,11 +253,9 @@ class SpectralDensity:
 
         Returns
         -------
-        ``(energies, densities)`` if the ``energy`` parameter is not
-        provided, else ``densities``.
-
         energies : array of floats
             Drawn from the nodes of the highest Chebyshev polynomial.
+            Not returned if 'energy' was not provided
         densities : float or array of floats
             single ``float`` if the ``energy`` parameter is a single
             ``float``, else an array of ``float``.
@@ -593,7 +591,7 @@ class Correlator:
         self._build_integral_factor()
 
     def __call__(self, mu=0, temperature=0):
-        """Returns the linear response χ_{α β}(µ, T)
+        """Returns the linear response :math:`χ_{α β}(µ, T)`
 
         Parameters
         ----------

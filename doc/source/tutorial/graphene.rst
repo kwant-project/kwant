@@ -112,9 +112,6 @@ in the following piece of code:
     :start-after: #HIDDEN_BEGIN_zydk
     :end-before: #HIDDEN_END_zydk
 
-Here we use in contrast to the previous example a sparse matrix and
-the sparse linear algebra functionality of SciPy.
-
 The code for computing the band structure and the conductance is identical
 to the previous examples, and needs not be further explained here.
 

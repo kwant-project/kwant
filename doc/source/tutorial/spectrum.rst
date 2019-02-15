@@ -122,7 +122,7 @@ better for the special case of a square lattice.
 
 
 As our model breaks time reversal symmetry (because of the applied magnetic
-field) we can also see an intereting property of the eigenstates, namely
+field) we can also see an interesting property of the eigenstates, namely
 that they can have *non-zero* local current. We can calculate the local
 current due to a state by using `kwant.operator.Current` and plotting
 it using `kwant.plotter.current`:
