@@ -7,7 +7,52 @@ release of the 1.4 series
 <https://gitlab.kwant-project.org/kwant/kwant/compare/v1.4.0...latest-1.4>`_.
 
 
-Integration with Qsymm package
+Installation on Microsoft Windows is available via Conda
+--------------------------------------------------------
+Kwant is now packaged for the Conda package manager on Windows, and using
+Conda is the preferred method for installing Kwant on that platform.
+Please refer to the
+`installation section <https://kwant-project.org/install#microsoft-windows>`_
+of the Kwant website for details.
+Currently the MUMPS solver is not available for the Windows version of the
+Conda package; we hope to include MUMPS support in a later patch release.
+
+Minimum required versions for some dependencies have increased
+--------------------------------------------------------------
+Kwant now requires at least the following versions:
+
++ Python 3.5
++ numpy 0.11.0
++ scipy 0.17.0
++ matplotlib 1.5.1
+
+These versions (or newer) are available in the latest stable releases
+of Ubuntu and Debian GNU/Linux.
+
+Conductivity calculations using `kwant.kpm.conductivity`
+--------------------------------------------------------
+Kwant now has the ability to calculate conductivities using a combination of
+the Kernel Polynomial Method and the Kubo-Bastin relation.
+The following example calculates :math:`σ_{xy}` for various chemical
+potentials at finite temperature::
+
+  syst = make_system().finalized()
+  sigma_xy = kwant.kpm.conductivity(syst, alpha='x', beta='y')
+  conductivities = [sigma_xy(mu=mu, temp=0.1) for mu in np.linspace(0, 4)]
+
+`kwant.physics.Bands` can optionally return eigenvectors and velocities
+-----------------------------------------------------------------------
+`kwant.physics.Bands` now takes extra parameters that allow it to
+return the mode eigenvectors, and also the derivatives of the dispersion
+relation (up to second order) using the Hellman-Feynman relation::
+
+  syst = make_system().finalized()
+
+  bands = kwant.physics.Bands(syst)
+  (energies, velocities, vectors) = bands(k=0, derivative_order=1,
+                                          return_eigenvectors=True)
+
+Integration with Qsymm library
 ------------------------------
 Kwant now contains an integration with the Qsymm library for analysing
 model symmetries. This functionality is available under ``kwant.qsymm``.
@@ -75,6 +120,39 @@ which calculates the Peierls phases for you::
 Note that the API for this functionality is provisional, and may be
 revised in a future version of Kwant.
 
+System parameter substitution
+-----------------------------
+After the introduction of ``Builder.fill`` it has become possible to construct
+Kwant systems by first creating a "model" system with high symmetry and then
+filling a lower symmetry system with this model. Often, however, one wants
+to use different parameter values in different parts of a system. In
+previous versions of Kwant this was difficult to achieve.
+
+Builders now have a method ``substituted`` that makes it easy to substitute
+different names for parameters. For example if a builder ``model``
+has a parameter ``V``, and one wishes to have different values for ``V`` in
+the scattering region and leads, one could do the following::
+
+   syst = kwant.Builder()
+   syst.fill(model.substituted(V='V_dot', ...))
+
+   lead = kwant.Builder()
+   lead.fill(model.substituted(V='V_lead'), ...)
+
+   syst.attach_lead(lead)
+   fsyst = syst.finalized()
+
+   kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
+
+Interpolated density plots
+--------------------------
+A new function, `~kwant.plotter.density`, has been added that can be used to
+visualize a density defined over the sites of a Kwant system. This convolves
+the "discrete" density (defined over the system sites) with a "bump" function
+in realspace. The output of `~kwant.plotter.density` can be more informative
+that `~kwant.plotter.map` when plotting systems with many sites, where it is
+not important to see the individual contribution from each site.
+
 Value functions may no longer have default values for parameters
 ----------------------------------------------------------------
 Using value functions with default values for parameters can be
@@ -113,30 +191,6 @@ To deal with many parameters, the following idiom may be useful::
 
 Note that it allows to override defaults as well as to add additional
 parameters.
-
-System parameter substitution
------------------------------
-After the introduction of ``Builder.fill`` it has become possible to construct
-Kwant systems by first creating a "model" system with high symmetry and then
-filling a lower symmetry system with this model. Often, however, one wants
-to use different parameter values in different parts of a system. In
-previous versions of Kwant this was difficult to achieve.
-
-Builders now have a method ``substituted`` that makes it easy to substitute
-different names for parameters. For example if a builder ``model``
-has a parameter ``V``, and one wishes to have different values for ``V`` in
-the scattering region and leads, one could do the following::
-
-   syst = kwant.Builder()
-   syst.fill(model.substituted(V='V_dot', ...))
-
-   lead = kwant.Builder()
-   lead.fill(model.substituted(V='V_lead'), ...)
-
-   syst.attach_lead(lead)
-   fsyst = syst.finalized()
-
-   kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
 
 System parameters can now be inspected
 --------------------------------------
@@ -191,38 +245,6 @@ a dictionary using ``params``::
 
 The ability to provide ``args`` will be removed in a future Kwant version.
 
-Conductivity calculations using KPM
------------------------------------
-Kwant now has the ability to calculate conductivities using a combination of
-the Kernel Polynomial Method and the Kubo-Bastin relation in the `kwant.kpm`
-module. The following example calculates :math:`σ_{xy}` for various chemical
-potentials at finite temperature::
-
-  syst = make_system().finalized()
-  sigma_xy = kwant.kpm.conductivity(syst, alpha='x', beta='y')
-  conductivities = [sigma_xy(mu=mu, temp=0.1) for mu in np.linspace(0, 4)]
-
-`kwant.physics.Bands` can optionally return eigenvectors and velocities
------------------------------------------------------------------------
-`kwant.physics.Bands` now takes extra parameters that allow it to
-return the mode eigenvectors, and also the derivatives of the dispersion
-relation (up to second order) using the Hellman-Feynman relation::
-
-  syst = make_system().finalized()
-
-  bands = kwant.physics.Bands(syst)
-  (energies, velocities, vectors) = bands(k=0, derivative_order=1, return_eigenvectors=True)
-
-Installation on Microsoft Windows is available via Conda
---------------------------------------------------------
-Kwant is now packaged for the Conda package manager on Windows, and using
-Conda is the preferred method for installing Kwant on that platform.
-Please refer to the
-`installation section <https://kwant-project.org/install#microsoft-windows>`_
-of the Kwant website for details.
-Currently the MUMPS solver is not available for the Windows version of the
-Conda package; we hope to include MUMPS support in a later patch release.
-
 Finalized Builders keep track of which sites were added when attaching leads
 ----------------------------------------------------------------------------
 When attaching leads to an irregularly shaped scattering region, Kwant adds
@@ -231,33 +253,12 @@ the information of which sites were added was not inspectable after finalization
 Now the sites that were added from each lead are available in the ``lead_paddings``
 attribute. See the documentation for `~kwant.builder.FiniteSystem` for details.
 
-Interpolated density plots
---------------------------
-A new function `~kwant.plotter.density` has been added that can be used to
-visualize a density defined over the sites of a Kwant system. This convolves
-the "discrete" density (defined over the system sites) with a "bump" function
-in realspace. The output of `~kwant.plotter.density` can be more informative
-that `~kwant.plotter.map` when plotting systems with many sites, where it is
-not important to see the individual contribution from each site.
-
 Configurable maximum velocity in stream plots
 ---------------------------------------------
 The function `~kwant.plotter.streamplot` has got a new option ``vmax``.  Note
 that this option is not available in `~kwant.plotter.current`.  In order to use
 it, one has to call ``streamplot`` directly as shown in the docstring of
 ``current``.
-
-The minimum required versions for some dependencies have increased
-------------------------------------------------------------------
-Kwant now requires at least the following versions:
-
-+ Python 3.5
-+ numpy 0.11.0
-+ scipy 0.17.0
-+ matplotlib 1.5.1
-
-These versions (or newer) are available in the latest stable releases
-of Ubuntu and Debian GNU/Linux.
 
 kwant.continuum.discretize can be used with rectangular lattices
 ----------------------------------------------------------------
