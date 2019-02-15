@@ -59,7 +59,7 @@
      # Compute conductance
      data = []
      for welldepth in welldepths:
-         smatrix = kwant.smatrix(syst, energy, args=[-welldepth])
+         smatrix = kwant.smatrix(syst, energy, params=dict(pot=-welldepth))
          data.append(smatrix.transmission(1, 0))
  
 -    pyplot.figure()

@@ -6,6 +6,8 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+import pytest
+
 from  kwant.solvers.sparse import smatrix, greens_function, ldos, wave_function
 from . import _test_sparse
 
@@ -60,5 +62,9 @@ def test_ldos():
 def test_wavefunc_ldos_consistency():
     _test_sparse.test_wavefunc_ldos_consistency(wave_function, ldos)
 
+
+# We need to keep testing 'args', but we don't want to see
+# all the deprecation warnings in the test logs
+@pytest.mark.filterwarnings("ignore:.*'args' parameter")
 def test_arg_passing():
     _test_sparse.test_arg_passing(wave_function, ldos, smatrix)

@@ -14,6 +14,7 @@ import abc
 import warnings
 from copy import copy
 from . import _system
+from ._common  import deprecate_args
 
 
 class System(metaclass=abc.ABCMeta):
@@ -59,12 +60,20 @@ class System(metaclass=abc.ABCMeta):
         if ``i != j``, return the hopping between site ``i`` and ``j``.
 
         Hamiltonians may depend (optionally) on positional and
-        keyword arguments
+        keyword arguments.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
         """
         pass
 
+    @deprecate_args
     def discrete_symmetry(self, args, *, params=None):
-        """Return the discrete symmetry of the system."""
+        """Return the discrete symmetry of the system.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
+        """
         # Avoid the circular import.
         from .physics import DiscreteSymmetry
         return DiscreteSymmetry()
@@ -131,6 +140,7 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
 
     """
 
+    @deprecate_args
     def precalculate(self, energy=0, args=(), leads=None,
                      what='modes', *, params=None):
         """
@@ -147,7 +157,7 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
             evaluated.
         args : sequence
             Additional parameters required for calculating the Hamiltionians.
-            Mutually exclusive with 'params'.
+            Deprecated in favor of 'params' (and mutually exclusive with it).
         leads : sequence of integers or None
             Numbers of the leads to be precalculated. If ``None``, all are
             precalculated.
@@ -194,12 +204,16 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
         result.leads = new_leads
         return result
 
+    @deprecate_args
     def validate_symmetries(self, args=(), *, params=None):
         """Check that the Hamiltonian satisfies discrete symmetries.
 
         Applies `~kwant.physics.DiscreteSymmetry.validate` to the
         Hamiltonian, see its documentation for details on the return
         format.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
         """
         symmetries = self.discrete_symmetry(args=args, params=params)
         ham = self.hamiltonian_submatrix(args, sparse=True, params=params)
@@ -248,19 +262,30 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
     exchanged, as well as of site 3 and 4.
 
     """
+    @deprecate_args
     def cell_hamiltonian(self, args=(), sparse=False, *, params=None):
-        """Hamiltonian of a single cell of the infinite system."""
+        """Hamiltonian of a single cell of the infinite system.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
+        """
         cell_sites = range(self.cell_size)
         return self.hamiltonian_submatrix(args, cell_sites, cell_sites,
                                           sparse=sparse, params=params)
 
+    @deprecate_args
     def inter_cell_hopping(self, args=(), sparse=False, *, params=None):
-        """Hopping Hamiltonian between two cells of the infinite system."""
+        """Hopping Hamiltonian between two cells of the infinite system.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
+        """
         cell_sites = range(self.cell_size)
         interface_sites = range(self.cell_size, self.graph.num_nodes)
         return self.hamiltonian_submatrix(args, cell_sites, interface_sites,
                                           sparse=sparse, params=params)
 
+    @deprecate_args
     def modes(self, energy=0, args=(), *, params=None):
         """Return mode decomposition of the lead
 
@@ -272,6 +297,9 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         freedom on the first ``cell_sites`` sites of the system
         (recall that infinite systems store first the sites in the unit
         cell, then connected sites in the neighboring unit cell).
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
         """
         from . import physics   # Putting this here avoids a circular import.
         ham = self.cell_hamiltonian(args, params=params)
@@ -301,12 +329,16 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
             symmetries.particle_hole = symmetries.chiral = None
         return physics.modes(ham, hop, discrete_symmetry=symmetries)
 
+    @deprecate_args
     def selfenergy(self, energy=0, args=(), *, params=None):
         """Return self-energy of a lead.
 
         The returned matrix has the shape (s, s), where s is
         ``sum(len(self.hamiltonian(i, i)) for i in range(self.graph.num_nodes -
         self.cell_size))``.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
         """
         from . import physics   # Putting this here avoids a circular import.
         ham = self.cell_hamiltonian(args, params=params)
@@ -318,12 +350,16 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         return physics.selfenergy(ham,
                                   self.inter_cell_hopping(args, params=params))
 
+    @deprecate_args
     def validate_symmetries(self, args=(), *, params=None):
         """Check that the Hamiltonian satisfies discrete symmetries.
 
         Returns `~kwant.physics.DiscreteSymmetry.validate` applied
         to the onsite matrix and the hopping. See its documentation for
         details on the return format.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
         """
         symmetries = self.discrete_symmetry(args=args, params=params)
         ham = self.cell_hamiltonian(args=args, sparse=True, params=params)
@@ -355,6 +391,7 @@ class PrecalculatedLead:
         # is no parametric dependence anymore
         self.parameters = frozenset()
 
+    @deprecate_args
     def modes(self, energy=0, args=(), *, params=None):
         if self._modes is not None:
             return self._modes
@@ -363,6 +400,7 @@ class PrecalculatedLead:
                              "Consider using precalculate() with "
                              "what='modes' or what='all'")
 
+    @deprecate_args
     def selfenergy(self, energy=0, args=(), *, params=None):
         if self._selfenergy is not None:
             return self._selfenergy

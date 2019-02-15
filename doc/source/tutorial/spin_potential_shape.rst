@@ -184,10 +184,12 @@ Finally, we compute the transmission probability:
     :start-after: #HIDDEN_BEGIN_sqvr
     :end-before: #HIDDEN_END_sqvr
 
-``kwant.smatrix`` allows us to specify a list, `args`, that will be passed as
-additional arguments to the functions that provide the Hamiltonian matrix
-elements.  In this example we are able to solve the system for different depths
-of the potential well by passing the potential value. We obtain the result:
+``kwant.smatrix`` allows us to specify a dictionary, `params`, that contains
+the additional arguments required by the Hamiltonian matrix elements.
+In this example we are able to solve the system for different depths
+of the potential well by passing the potential value (remember above
+we defined our `onsite` function that takes a parameter named `pot`).
+We obtain the result:
 
 .. image:: /code/figure/quantum_well_result.*
 

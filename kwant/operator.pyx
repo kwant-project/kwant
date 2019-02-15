@@ -24,7 +24,7 @@ from .graph.core cimport EdgeIterator
 from .graph.defs cimport gint
 from .graph.defs import gint_dtype
 from .system import InfiniteSystem
-from ._common import UserCodeError, get_parameters
+from ._common import UserCodeError, get_parameters, deprecate_args
 
 
 ################ Generic Utility functions
@@ -499,7 +499,7 @@ cdef class _LocalOperator:
         args : tuple, optional
             The arguments to pass to the system. Used to evaluate
             the ``onsite`` elements and, possibly, the system Hamiltonian.
-            Mutually exclusive with 'params'.
+            Deprecated in favor of 'params' (and mutually exclusive with it).
         params : dict, optional
             Dictionary of parameter names and their values. Mutually exclusive
             with 'args'.
@@ -514,6 +514,11 @@ cdef class _LocalOperator:
             raise ValueError("Extra arguments are already bound to this "
                              "operator. You should call this operator "
                              "providing neither 'args' nor 'params'.")
+        if args:
+            # deprecate_args does not play nicely with methods of cdef classes,
+            # when used as a decorator, so we manually raise the
+            # deprecation warning here.
+            deprecate_args()
         if args and params:
             raise TypeError("'args' and 'params' are mutually exclusive.")
         if bra is None:
@@ -555,7 +560,8 @@ cdef class _LocalOperator:
             Wavefunctions defined over all the orbitals of the system.
         args : tuple
             The extra arguments to the Hamiltonian value functions and
-            the operator ``onsite`` function. Mutually exclusive with 'params'.
+            the operator ``onsite`` function.
+            Deprecated in favor of 'params' (and mutually exclusive with it).
         params : dict, optional
             Dictionary of parameter names and their values. Mutually exclusive
             with 'args'.
@@ -568,6 +574,11 @@ cdef class _LocalOperator:
             raise ValueError("Extra arguments are already bound to this "
                              "operator. You should call this operator "
                              "providing neither 'args' nor 'params'.")
+        if args:
+            # deprecate_args does not play nicely with methods of cdef classes,
+            # when used as a decorator, so we manually raise the
+            # deprecation warning here.
+            deprecate_args()
         if args and params:
             raise TypeError("'args' and 'params' are mutually exclusive.")
 
@@ -588,7 +599,15 @@ cdef class _LocalOperator:
 
         Returns a copy of this operator that does not need to be passed extra
         arguments when subsequently called or when using the ``act`` method.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead provide named parameters as a dictionary via 'params'.
         """
+        if args:
+            # deprecate_args does not play nicely with methods of cdef classes,
+            # when used as a decorator, so we manually raise the
+            # deprecation warning here.
+            deprecate_args()
         if args and params:
             raise TypeError("'args' and 'params' are mutually exclusive.")
         # generic creation of new instance
@@ -621,7 +640,8 @@ cdef class _LocalOperator:
             If `op` is `ACT` then `bra` is None.
         args : tuple
             The extra arguments to the Hamiltonian value functions and
-            the operator ``onsite`` function. Mutually exclusive with 'params'.
+            the operator ``onsite`` function.
+            Deprecated in favor of 'params' (and mutually exclusive with it).
         op : operation
             The operation to perform.
             `MAT_ELS`: calculate matrix elements between `bra` and `ket`
@@ -786,7 +806,11 @@ cdef class Density(_LocalOperator):
     @cython.cdivision(True)
     @cython.embedsignature
     def tocoo(self, args=(), *, params=None):
-        """Convert the operator to coordinate format sparse matrix."""
+        """Convert the operator to coordinate format sparse matrix.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead provide named parameters as a dictionary via 'params'.
+        """
         cdef int blk, blk_size, n_blocks, n, k = 0
         cdef int [:, :] offsets, shapes
         cdef int [:] row, col
@@ -794,6 +818,11 @@ cdef class Density(_LocalOperator):
            raise ValueError("Extra arguments are already bound to this "
                             "operator. You should call this operator "
                             "providing neither 'args' nor 'params'.")
+        if args:
+            # deprecate_args does not play nicely with methods of cdef classes,
+            # when used as a decorator, so we manually raise the
+            # deprecation warning here.
+            deprecate_args()
         if args and params:
             raise TypeError("'args' and 'params' are mutually exclusive.")
 
@@ -887,6 +916,9 @@ cdef class Current(_LocalOperator):
 
         Returns a copy of this operator that does not need to be passed extra
         arguments when subsequently called or when using the ``act`` method.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead provide named parameters as a dictionary via 'params'.
         """
         q = super().bind(args, params=params)
         q._bound_hamiltonian = self._eval_hamiltonian(args, params)
@@ -1012,6 +1044,9 @@ cdef class Source(_LocalOperator):
 
         Returns a copy of this operator that does not need to be passed extra
         arguments when subsequently called or when using the ``act`` method.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead provide named parameters as a dictionary via 'params'.
         """
         q = super().bind(args, params=params)
         q._bound_hamiltonian = self._eval_hamiltonian(args, params)

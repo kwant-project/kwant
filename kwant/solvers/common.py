@@ -14,7 +14,7 @@ import abc
 from  numbers import Integral
 import numpy as np
 import scipy.sparse as sp
-from .._common import ensure_isinstance
+from .._common import ensure_isinstance, deprecate_args
 from .. import system
 from functools import reduce
 
@@ -113,7 +113,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
             Excitation energy at which to solve the scattering problem.
         args : tuple, defaults to empty
             Positional arguments to pass to the ``hamiltonian`` method.
-            Mutually exclusive with 'params'.
+            Deprecated in favor of 'params' (and mutually exclusive with it).
         check_hermiticity : bool
             Check if Hamiltonian matrices are in fact Hermitian.
             Enables deduction of missing transmission coefficients.
@@ -296,6 +296,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
 
         return LinearSys(lhs, rhs, indices, num_orb), lead_info
 
+    @deprecate_args
     def smatrix(self, sys, energy=0, args=(),
                 out_leads=None, in_leads=None, check_hermiticity=True,
                 *, params=None):
@@ -313,7 +314,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
             Excitation energy at which to solve the scattering problem.
         args : tuple, defaults to empty
             Positional arguments to pass to the ``hamiltonian`` method.
-            Mutually exclusive with 'params'.
+            Deprecated in favor of 'params' (and mutually exclusive with it).
         out_leads : sequence of integers or ``None``
             Numbers of leads where current or wave function is extracted.  None
             is interpreted as all leads. Default is ``None`` and means "all
@@ -390,6 +391,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
 
         return SMatrix(data, lead_info, out_leads, in_leads, check_hermiticity)
 
+    @deprecate_args
     def greens_function(self, sys, energy=0, args=(),
                         out_leads=None, in_leads=None, check_hermiticity=True,
                         *, params=None):
@@ -407,7 +409,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
             Excitation energy at which to solve the scattering problem.
         args : tuple, defaults to empty
             Positional arguments to pass to the ``hamiltonian`` method.
-            Mutually exclusive with 'params'.
+            Deprecated in favor of 'params' (and mutually exclusive with it).
         out_leads : sequence of integers or ``None``
             Numbers of leads where current or wave function is extracted.  None
             is interpreted as all leads. Default is ``None`` and means "all
@@ -488,6 +490,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
         return GreensFunction(data, lead_info, out_leads, in_leads,
                               check_hermiticity)
 
+    @deprecate_args
     def ldos(self, sys, energy=0, args=(), check_hermiticity=True,
              *, params=None):
         """
@@ -504,8 +507,8 @@ class SparseSolver(metaclass=abc.ABCMeta):
             Excitation energy at which to solve the scattering problem.
         args : tuple of arguments, or empty tuple
             Positional arguments to pass to the function(s) which
-            evaluate the hamiltonian matrix elements.  Mutually exclusive
-            with 'params'.
+            evaluate the hamiltonian matrix elements.
+            Deprecated in favor of 'params' (and mutually exclusive with it).
         check_hermiticity : ``bool``
             Check if the Hamiltonian matrices are Hermitian.
         params : dict, optional
@@ -553,6 +556,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
 
         return ldos * (0.5 / np.pi)
 
+    @deprecate_args
     def wave_function(self, sys, energy=0, args=(), check_hermiticity=True,
                       *, params=None):
         r"""
@@ -568,8 +572,8 @@ class SparseSolver(metaclass=abc.ABCMeta):
             calculated.
         args : tuple of arguments, or empty tuple
             Positional arguments to pass to the function(s) which
-            evaluate the hamiltonian matrix elements. Mutually exclusive
-            with 'params'.
+            evaluate the hamiltonian matrix elements.
+            Deprecated in favor of 'params' (and mutually exclusive with it).
         check_hermiticity : ``bool``
             Check if the Hamiltonian matrices are Hermitian.
         params : dict, optional

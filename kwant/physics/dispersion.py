@@ -11,7 +11,7 @@
 import math
 import numpy as np
 from .. import system
-from .._common import ensure_isinstance
+from .._common import ensure_isinstance, deprecate_args
 
 __all__ = ['Bands']
 
@@ -27,7 +27,7 @@ class Bands:
         calculated.
     args : tuple, defaults to empty
         Positional arguments to pass to the ``hamiltonian`` method.
-        Mutually exclusive with 'params'.
+        Deprecated in favor or 'params' (and mutually exclusive with it).
     params : dict, optional
         Dictionary of parameter names and their values. Mutually exclusive
         with 'args'.
@@ -50,6 +50,7 @@ class Bands:
     """
     _crossover_size = 8
 
+    @deprecate_args
     def __init__(self, sys, args=(), *, params=None):
         syst = sys
         ensure_isinstance(syst, system.InfiniteSystem)

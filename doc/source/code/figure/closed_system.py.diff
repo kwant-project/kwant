@@ -68,7 +68,7 @@
      energies = []
      for B in Bfields:
          # Obtain the Hamiltonian as a dense matrix
-         ham_mat = syst.hamiltonian_submatrix(args=[B], sparse=True)
+         ham_mat = syst.hamiltonian_submatrix(params=dict(B=B), sparse=True)
  
          # we only calculate the 15 lowest eigenvalues
          ev = sla.eigsh(ham_mat.tocsc(), k=15, sigma=0,
@@ -105,7 +105,7 @@
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +
      # Calculate the wave functions in the system.
-     ham_mat = syst.hamiltonian_submatrix(sparse=True, args=[B])
+     ham_mat = syst.hamiltonian_submatrix(sparse=True, params=dict(B=B))
      evals, evecs = sorted_eigs(sla.eigsh(ham_mat.tocsc(), k=20, sigma=0))
  
      # Plot the probability density of the 10th eigenmode.
@@ -124,12 +124,12 @@
 +    size = (_defs.figwidth_in, _defs.figwidth_in)
 +
      # Calculate the wave functions in the system.
-     ham_mat = syst.hamiltonian_submatrix(sparse=True, args=[B])
+     ham_mat = syst.hamiltonian_submatrix(sparse=True, params=dict(B=B))
      evals, evecs = sorted_eigs(sla.eigsh(ham_mat.tocsc(), k=20, sigma=0))
  
      # Calculate and plot the local current of the 10th eigenmode.
      J = kwant.operator.Current(syst)
-     current = J(evecs[:, 9], args=[B])
+     current = J(evecs[:, 9], params=dict(B=B))
 -    kwant.plotter.current(syst, current, colorbar=False)
 +    for extension in ('pdf', 'png'):
 +        kwant.plotter.current(

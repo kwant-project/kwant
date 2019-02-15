@@ -143,7 +143,7 @@
      normalized_fluxes = [flux / (2 * pi) for flux in fluxes]
      data = []
      for flux in fluxes:
-         smatrix = kwant.smatrix(syst, energy, args=[flux])
+         smatrix = kwant.smatrix(syst, energy, params=dict(phi=flux))
          data.append(smatrix.transmission(1, 0))
  
 -    pyplot.figure()

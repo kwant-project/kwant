@@ -170,6 +170,27 @@ parameters that the system (and its leads) expects::
 
 This is a provisional API that may be changed in a future version of Kwant.
 
+Passing system arguments via ``args`` is deprecated in favor of ``params``
+--------------------------------------------------------------------------
+It is now deprecated to pass arguments to systems by providing the
+``args`` parameter (in ``kwant.smatrix`` and elsewhere). This is
+error prone and requires that all value functions take the same
+formal parameters, even if they do not depend on all of them. The
+preferred way of passing parameters to Kwant systems is by passing
+a dictionary using ``params``::
+
+  def onsite(site, magnetic_field, voltage):
+    return magnetic_field * sigma_z + voltage * sigma_0
+
+  syst = make_system(onsite).finalized()
+
+  kwant.smatrix(syst, params=dict(magnetic_field=0.5, voltage=0.2))
+
+  # Compare this to the deprecated 'args'
+  kwant.smatrix(syst, args=(0.5, 0.2))
+
+The ability to provide ``args`` will be removed in a future Kwant version.
+
 Interpolated density plots
 --------------------------
 A new function `~kwant.plotter.density` has been added that can be used to

@@ -156,22 +156,22 @@ def test_operator_construction():
         A(fsyst, sum=True).sum == True
 
 
-def _test(A, bra, ket=None, per_el_val=None, reduced_val=None, args=()):
+def _test(A, bra, ket=None, per_el_val=None, reduced_val=None, params=None):
     if per_el_val is not None:
-        val = A(bra, ket, args=args)
+        val = A(bra, ket, params=params)
         assert np.allclose(val, per_el_val)
         # with bound args
-        val = A.bind(args)(bra, ket)
+        val = A.bind(params=params)(bra, ket)
         assert np.allclose(val, per_el_val)
     # test that inner products give the same thing
     ket = bra if ket is None else ket
-    act_val = np.dot(bra.conj(), A.act(ket, args=args))
-    inner_val = np.sum(A(bra, ket, args=args))
+    act_val = np.dot(bra.conj(), A.act(ket, params=params))
+    inner_val = np.sum(A(bra, ket, params=params))
     # check also when sum is done internally by operator
     try:
         sum_reset = A.sum
         A.sum = True
-        sum_inner_val = A(bra, ket, args=args)
+        sum_inner_val = A(bra, ket, params=params)
         assert inner_val == sum_inner_val
     finally:
         A.sum = sum_reset
@@ -300,22 +300,22 @@ def test_opservables_spin():
     syst.attach_lead(lead)
     syst.attach_lead(lead.reversed())
     fsyst = syst.finalized()
-    args = (0.1,)
-    down, up = kwant.wave_function(fsyst, energy=1., args=args)(0)
+    params = dict(B=0.1)
+    down, up = kwant.wave_function(fsyst, energy=1., params=params)(0)
 
     x_hoppings = kwant.builder.HoppingKind((1,), lat)
     spin_current_z = ops.Current(fsyst, sigmaz, where=x_hoppings(syst))
-    _test(spin_current_z, up, args=args, per_el_val=1)
-    _test(spin_current_z, down, args=args, per_el_val=-1)
+    _test(spin_current_z, up, params=params, per_el_val=1)
+    _test(spin_current_z, down, params=params, per_el_val=-1)
 
     # calculate spin_x torque
     spin_torque_x = ops.Source(fsyst, sigmax, where=[lat(L//2)])
     i = fsyst.id_by_site[lat(L//2)]
     psi = up[2*i:2*(i+1)] + down[2*i:2*(i+1)]
-    H_ii = onsite(None, *args)
+    H_ii = onsite(None, **params)
     K = np.dot(H_ii, sigmax) - np.dot(sigmax, H_ii)
     expect = 1j * ft.reduce(np.dot, (psi.conj(), K, psi))
-    _test(spin_torque_x, up+down, args=args, reduced_val=expect)
+    _test(spin_torque_x, up+down, params=params, reduced_val=expect)
 
 
 def test_opservables_gauged():
@@ -397,17 +397,20 @@ def test_tocoo():
     # No accidental transpose.
     syst = kwant.Builder()
     lat2 = kwant.lattice.chain(norbs=2)
-    syst[lat2(0)] = lambda site, paramerer: np.eye(2)
+    syst[lat2(0)] = lambda site, p: np.eye(2)
     syst = syst.finalized()
     op = ops.Density(syst, [[1, 1], [0, 1]], check_hermiticity=False)
     assert np.all(op.tocoo().toarray() == [[1, 1], [0, 1]])
 
     op = ops.Density(syst, lambda site, p: [[1, 1], [0, 1]],
                      check_hermiticity=False)
-    op = op.bind(args=(1,))
+    op = op.bind(params=dict(p=1))
     raises(ValueError, op.tocoo, [1])
 
 
+# We need to keep testing 'args', but we don't want to see
+# all the deprecation warnings in the test logs
+@pytest.mark.filterwarnings("ignore:.*'args' parameter")
 @pytest.mark.parametrize("A", opservables)
 def test_arg_passing(A):
     lat1 = kwant.lattice.chain(norbs=1)
