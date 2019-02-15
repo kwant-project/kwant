@@ -160,9 +160,9 @@ energy eigenstates:
 
 .. image:: /code/figure/discretizer_gs.*
 
-Note in the above that we provided the function ``V`` to
-``syst.hamiltonian_submatrix`` using ``params=dict(V=potential)``, rather than
-via ``args``.
+Note in the above that we pass the spatially varying potential *function*
+to our system via a parameter called ``V``, because the symbol $V$
+was used in the intial, symbolic, definition of the Hamiltonian.
 
 In addition, the function passed as ``V`` expects two input parameters ``x``
 and ``y``, the same as in the initial continuum Hamiltonian.
