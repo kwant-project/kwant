@@ -191,6 +191,46 @@ a dictionary using ``params``::
 
 The ability to provide ``args`` will be removed in a future Kwant version.
 
+Conductivity calculations using KPM
+-----------------------------------
+Kwant now has the ability to calculate conductivities using a combination of
+the Kernel Polynomial Method and the Kubo-Bastin relation in the `kwant.kpm`
+module. The following example calculates :math:`σ_{xy}` for various chemical
+potentials at finite temperature::
+
+  syst = make_system().finalized()
+  sigma_xy = kwant.kpm.conductivity(syst, alpha='x', beta='y')
+  conductivities = [sigma_xy(mu=mu, temp=0.1) for mu in np.linspace(0, 4)]
+
+`kwant.physics.Bands` can optionally return eigenvectors and velocities
+-----------------------------------------------------------------------
+`kwant.physics.Bands` now takes extra parameters that allow it to
+return the mode eigenvectors, and also the derivatives of the dispersion
+relation (up to second order) using the Hellman-Feynman relation::
+
+  syst = make_system().finalized()
+
+  bands = kwant.physics.Bands(syst)
+  (energies, velocities, vectors) = bands(k=0, derivative_order=1, return_eigenvectors=True)
+
+Installation on Microsoft Windows is available via Conda
+--------------------------------------------------------
+Kwant is now packaged for the Conda package manager on Windows, and using
+Conda is the preferred method for installing Kwant on that platform.
+Please refer to the
+`installation section <https://kwant-project.org/install#microsoft-windows>`_
+of the Kwant website for details.
+Currently the MUMPS solver is not available for the Windows version of the
+Conda package; we hope to include MUMPS support in a later patch release.
+
+Finalized Builders keep track of which sites were added when attaching leads
+----------------------------------------------------------------------------
+When attaching leads to an irregularly shaped scattering region, Kwant adds
+sites in order to make the interface with the leads "smooth". Previously,
+the information of which sites were added was not inspectable after finalization.
+Now the sites that were added from each lead are available in the ``lead_paddings``
+attribute. See the documentation for `~kwant.builder.FiniteSystem` for details.
+
 Interpolated density plots
 --------------------------
 A new function `~kwant.plotter.density` has been added that can be used to
@@ -206,6 +246,18 @@ The function `~kwant.plotter.streamplot` has got a new option ``vmax``.  Note
 that this option is not available in `~kwant.plotter.current`.  In order to use
 it, one has to call ``streamplot`` directly as shown in the docstring of
 ``current``.
+
+The minimum required versions for some dependencies have increased
+------------------------------------------------------------------
+Kwant now requires at least the following versions:
+
++ Python 3.5
++ numpy 0.11.0
++ scipy 0.17.0
++ matplotlib 1.5.1
+
+These versions (or newer) are available in the latest stable releases
+of Ubuntu and Debian GNU/Linux.
 
 kwant.continuum.discretize can be used with rectangular lattices
 ----------------------------------------------------------------
@@ -231,3 +283,10 @@ data would appear near the bottom of the color scale, and all of the features
 would be washed out by the presence of the peak. Now `~kwant.plotter.map`
 employs a heuristic for setting the colorscale when there are outliers,
 and will emit a warning when this is detected.
+
+Sites from different families are plotted in different colors by default
+------------------------------------------------------------------------
+Previously `kwant.plot` would plot all sites in black. Now sites from
+different families are plotted in different colors, which improves the
+default plotting style. You can still customize the site coloring using
+the ``site_color`` parameter, as before.
