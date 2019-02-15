@@ -270,9 +270,8 @@ class sdist(sdist_orig):
     sub_commands = [('build', None)] + sdist_orig.sub_commands
 
     def run(self):
-        """
-        Create MANIFEST.in from git if possible, otherwise check that MANIFEST.in
-        is present.
+        """Create MANIFEST.in from git if possible, otherwise check that
+        MANIFEST.in is present.
 
         Right now (2015) generating MANIFEST.in seems to be the only way to
         include files in the source distribution that setuptools does not think
