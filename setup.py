@@ -562,6 +562,7 @@ def main():
         Operating System :: MacOS :: MacOS X
         Operating System :: Microsoft :: Windows"""
 
+    packages = find_packages('.')
     setup(name='kwant',
           version=version,
           author='C. W. Groth (CEA), M. Wimmer, '
@@ -573,7 +574,8 @@ def main():
           platforms=["Unix", "Linux", "Mac OS-X", "Windows"],
           url="http://kwant-project.org/",
           license="BSD",
-          packages=find_packages('.'),
+          packages=packages,
+          package_data={p: ['*.pxd', '*.h'] for p in packages},
           cmdclass={'build': build,
                     'sdist': sdist,
                     'build_ext': build_ext,
