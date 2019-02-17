@@ -335,10 +335,6 @@ cdef class BlockSparseMatrix:
         The matrix of each block, stored in row-major (C) order.
     """
 
-    cdef public gint[:, :] block_offsets, block_shapes
-    cdef public gint[:] data_offsets
-    cdef public complex[:] data
-
     @cython.embedsignature
     @cython.boundscheck(False)
     @cython.wraparound(False)
@@ -401,7 +397,8 @@ ctypedef enum operation:
 
 
 cdef class _LocalOperator:
-    """Base class for operators defined by an on-site matrix and the Hamiltonian.
+    """Base class for operators defined by an on-site matrix and the
+    Hamiltonian.
 
     This includes "true" local operators, as well as "currents" and "sources".
 
@@ -430,11 +427,6 @@ cdef class _LocalOperator:
         otherwise a vector will be returned (see
         `~kwant.operator._LocalOperator.__call__` for details).
     """
-
-    cdef public int check_hermiticity, sum
-    cdef public object syst, onsite, _onsite_param_names
-    cdef public gint[:, :]  where, _site_ranges
-    cdef public BlockSparseMatrix _bound_onsite, _bound_hamiltonian
 
     @cython.embedsignature
     def __init__(self, syst, onsite, where, *,
