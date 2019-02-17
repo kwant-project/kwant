@@ -9,9 +9,12 @@
 from collections import OrderedDict
 
 import numpy as np
-import sympy
 
-import qsymm
+from pytest import importorskip
+
+sympy = importorskip('sympy')
+
+qsymm = importorskip('qsymm')
 from qsymm.symmetry_finder import symmetries
 from qsymm.hamiltonian_generator import bloch_family, hamiltonian_from_family
 from qsymm.groups import (hexagonal, PointGroupElement, spin_matrices,
