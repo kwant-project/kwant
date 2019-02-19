@@ -409,7 +409,8 @@ def _get_builder_symmetries(builder):
 
 
 def find_builder_symmetries(builder, momenta=None, params=None,
-                            spatial_symmetries=True, prettify=True):
+                            spatial_symmetries=True, prettify=True,
+                            sparse=None):
     """Finds the symmetries of a Kwant system using qsymm.
 
     Parameters
@@ -430,6 +431,12 @@ def find_builder_symmetries(builder, momenta=None, params=None,
         Whether to carry out sparsification of the continuous symmetry
         generators, in general an arbitrary linear combination of the
         symmetry generators is returned.
+    sparse : bool, or None (default None)
+        Whether to use sparse linear algebra in the calculation.
+        Can give large performance gain in large systems.
+        If None, uses sparse or dense computation depending on
+        the size of the Hamiltonian.
+
 
     Returns
     -------
@@ -443,6 +450,10 @@ def find_builder_symmetries(builder, momenta=None, params=None,
     ham = builder_to_model(builder, momenta=momenta,
                            real_space=False, params=params)
 
+    # Use dense or sparse computation depending on Hamiltonian size
+    if sparse is None:
+        sparse = list(ham.values())[0].shape[0] > 20
+
     dim = len(np.array(builder.symmetry.periods))
 
     if spatial_symmetries:
@@ -455,5 +466,6 @@ def find_builder_symmetries(builder, momenta=None, params=None,
             qsymm.PointGroupElement(np.eye(dim), True, True, None),   # P
             qsymm.PointGroupElement(np.eye(dim), False, True, None)]  # C
     sg, cg = qsymm.symmetries(ham, candidates, prettify=prettify,
-                              continuous_rotations=False)
+                              continuous_rotations=False,
+                              sparse_linalg=sparse)
     return list(sg) + list(cg)

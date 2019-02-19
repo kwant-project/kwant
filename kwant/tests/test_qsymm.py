@@ -404,14 +404,27 @@ def test_find_builder_discrete_symmetries():
         bulk[lat(0, 0)] = h_ons
         bulk[kwant.builder.HoppingKind((1, 0), lat)] = h_hop
         bulk[kwant.builder.HoppingKind((0, 1), lat)] = h_hop
-        builder_symmetries = find_builder_symmetries(bulk, spatial_symmetries=True, prettify=True)
+
+        builder_symmetries_default = find_builder_symmetries(bulk, spatial_symmetries=True,
+                                                             prettify=True)
+        builder_symmetries_sparse = find_builder_symmetries(bulk, spatial_symmetries=True,
+                                                            prettify=True, sparse=True)
+        builder_symmetries_dense = find_builder_symmetries(bulk, spatial_symmetries=True,
+                                                            prettify=True, sparse=False)
+
+        assert len(builder_symmetries_default) == len(builder_symmetries_sparse)
+        assert len(builder_symmetries_default) == len(builder_symmetries_dense)
 
         # Equality of symmetries ignores unitary part
         fourfold_rotation = qsymm.PointGroupElement(np.array([[0, 1],[1, 0]]), False, False, None)
-        assert fourfold_rotation in builder_symmetries
+        assert fourfold_rotation in builder_symmetries_default
+        assert fourfold_rotation in builder_symmetries_sparse
+        assert fourfold_rotation in builder_symmetries_dense
         class_symmetries = class_dict[sym]
         for class_symmetry in class_symmetries:
-            assert sym_dict[class_symmetry] in builder_symmetries
+            assert sym_dict[class_symmetry] in builder_symmetries_default
+            assert sym_dict[class_symmetry] in builder_symmetries_sparse
+            assert sym_dict[class_symmetry] in builder_symmetries_dense
 
 
 def random_onsite_hop(n, rng=0):
