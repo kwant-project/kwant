@@ -1295,7 +1295,10 @@ def _plot_plotly(sys, num_lead_cells, unit,
         full_trace = list(itertools.chain.from_iterable([lead_edge_trace,
                                             lead_node_trace]))
         for trace in full_trace:
-            fig.add_trace(trace)
+            try:
+                fig.add_trace(trace)
+            except TypeError:
+                fig.data += [trace]
 
     return fig
 
