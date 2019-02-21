@@ -1782,9 +1782,6 @@ def _map_plotly(syst, img, colorbar, _max, _min,  vmin, vmax, overflow_pct,
     _min -= border
     _max += border
 
-    if cmap is None:
-        cmap = _p._colormaps.kwant_red
-
     # Note that we tell imshow to show the array created by mask_interpolate
     # faithfully and not to interpolate by itself another time.
     # image = ax.imshow(img.T, extent=(_min[0], _max[0], _min[1], _max[1]),
@@ -1844,7 +1841,7 @@ def _map_matplotlib(syst, img, colorbar, _max, _min,  vmin, vmax,
         fig = None
 
     if cmap is None:
-        cmap = _p._colormaps.kwant_red
+        cmap = _p.kwant_red_matplotlib
 
     # Note that we tell imshow to show the array created by mask_interpolate
     # faithfully and not to interpolate by itself another time.
