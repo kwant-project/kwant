@@ -316,7 +316,7 @@
      # construct the Haldane model
      lat, fsyst = make_syst_topo()
      # find 'A' and 'B' sites in the unit cell at the center of the disk
-     where = lambda s: np.linalg.norm(s.pos) < 3
+     where = lambda s: np.linalg.norm(s.pos) < 1
  
      # component 'xx'
      s_factory = kwant.kpm.LocalVectors(fsyst, where)
