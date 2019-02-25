@@ -114,7 +114,9 @@ Building the documentation requires 'sphinx' and a Latex installation.
 First build the HTML and PDF documentation::
 
     ./setup.py build
-    make -C doc realclean html latex SPHINXOPTS='-A website_deploy=True -n -W'
+    cd doc
+    make realclean
+    make html latex SPHINXOPTS='-A website_deploy=True -n -W'
     cd doc/build/latex
     make all-pdf
 
