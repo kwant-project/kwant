@@ -120,10 +120,15 @@ First build the HTML and PDF documentation::
     cd doc/build/latex
     make all-pdf
 
-Then create a zipped version of the HTML documentation and name the PDF consistently::
+Then create a zipped version of the HTML documentation and name the PDF
+consistently, storing them, for example, in the "dist" directory along with the
+source tarballs::
 
-    zip -r docs/build/kwant-doc-<version>.zip docs/build/docs/build/html
-    mv docs/build/latex/kwant.pdf docs/build/kwant-doc-<version>.pdf
+    ln -s `pwd`/doc/build/html /tmp/kwant-doc-<version>
+    (cd /tmp/; zip -r kwant-doc-<version>.zip kwant-doc-<version>)
+    mv /tmp/kwant-doc-<version>.zip dist
+
+    mv doc/build/latex/kwant.pdf dist/kwant-doc-<version>.pdf
 
 
 Clone the repository of the Kwant Debian package
@@ -181,7 +186,7 @@ pristine tarball.  The tool `gbp pq` manages these patches as a git branch
 that branch based on the patches in ``debian/patches``::
 
     gbp pq --force import
-    gbp checkout master
+    git checkout master
 
 Now it is time to import the new source code.  There are two options.  If, as
 recommended above, the tarball of the new version has not been made public yet,
@@ -509,8 +514,8 @@ Ask Christoph Groth if you need to be granted access.
 
 Upload the zipped HTML and PDF documentation::
 
-    scp doc/build/kwant-doc-<version>.zip kwant-project.org:webapps/downloads/doc
-    scp doc/build/kwant-doc-<version>.pdf kwant-project.org:webapps/downloads/doc
+    scp dist/kwant-doc-<version>.zip kwant-project.org:webapps/downloads/doc
+    scp dist/kwant-doc-<version>.pdf kwant-project.org:webapps/downloads/doc
 
 Point the symbolic links ``latest.zip`` and ``latest.pdf`` to these new files::
 
@@ -521,7 +526,7 @@ Then upload the HTML documentation for the main website::
 
     rsync -rlv --delete doc/build/html/* kwant-project.org:webapps/kwant/doc/<short-version>
 
-where in the above ``<short-version`` is just the major and minor version numbers.
+where in the above ``<short-version>`` is just the major and minor version numbers.
 
 Finally point the symbolic link ``<major-version>`` to ``<short-version>``::
 
