@@ -1167,7 +1167,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
         raise ValueError("The reference distance a is too small.")
 
     if len(coords) != len(values):
-        raise ValueError("The number of sites doesn't match the number of"
+        raise ValueError("The number of sites doesn't match the number of "
                          "provided values.")
 
     shape = (((cmax - cmin) / a + 1) * oversampling).round()
@@ -1943,9 +1943,9 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     min_linewidth : float
         Minimum width of lines before blending into the background color begins.
     density : float
-        Number of flow lines per point of the field.  The default value is
-        chosen to show two lines per default width of the interpolation bump of
-        `~kwant.plotter.interpolate_current`.
+        Number of flow lines per point of the field.  The default value
+        of 2/9 is chosen to show two lines per default width of the
+        interpolation bump of `~kwant.plotter.interpolate_current`.
     colorbar : bool
         Whether to show a colorbar if a colormap is used. Ignored if `ax` is
         provided.
