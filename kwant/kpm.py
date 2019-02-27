@@ -8,7 +8,7 @@
 # http://kwant-project.org/authors.
 import math
 from operator import add
-from collections import Iterable
+from collections.abc import Iterable
 from functools import reduce
 import numpy as np
 from numpy.polynomial.chebyshev import chebval
