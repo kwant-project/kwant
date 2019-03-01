@@ -784,13 +784,13 @@ def plot(sys, num_lead_cells=2, unit=None,
         - ``('p', nvert, angle)``: regular polygon with ``nvert`` vertices,
           rotated by ``angle``. ``angle`` is given in degrees, and ``angle=0``
           corresponds to one edge of the polygon pointing upward. The
-          radius of the inner circle is 1 unit.
-        - 'no symbol': no symbol is plotted.
+          radius of the inner circle is 1 unit. [Unsupported by plotly backend]
+        - 'no symbol': no symbol is plotted. [Unsupported by plotly backend]
         - 'S', `('P', nvert, angle)`: as the lower-case variants described
           above, but with an area equal to a circle of radius 1. (Makes
           the visual size of the symbol equal to the size of a circle with
-          radius 1).
-        - matplotlib.path.Path instance.
+          radius 1). [Unsupported by plotly backend]
+        - matplotlib.path.Path instance. [Unsupported by plotly backend]
 
         Instead of a single symbol, different symbols can be specified
         for different sites by passing a function that returns a valid
@@ -1113,9 +1113,16 @@ def _plot_plotly(sys, num_lead_cells, unit,
     for symbol, slc in symbol_slcs:
         size = site_size[slc] if _p.isarray(site_size) else site_size
         col = site_color[slc] if _p.isarray(site_color) else site_color
-        edgecol = (site_edgecolor[slc] if _p.isarray(site_edgecolor) else
-                   site_edgecolor)
-        lw = site_lw[slc] if _p.isarray(site_lw) else site_lw
+        if _p.isarray(site_edgecolor) or _p.isarray(site_lw):
+            raise RuntimeError("Plotly backend not currently support an array "
+                               "of linecolors or linewidths. Please restrict "
+                               "to only a constant (i.e. no function or array)"
+                               " site_edgecolor and site_lw property "
+                               "for the entire plot.")
+        else:
+            edgecol = site_edgecolor if not isinstance(site_edgecolor, tuple) \
+                           else _p.convert_colormap_mpl_plotly(site_edgecolor)
+            lw = site_lw
 
         if dim == 3:
             site_node_trace_elem = _p.plotly_graph_objs.Scatter3d(x=[], y=[],
@@ -1142,7 +1149,9 @@ def _plot_plotly(sys, num_lead_cells, unit,
         site_node_trace_elem.marker.colorscale = \
                                           _p.convert_cmap_list_mpl_plotly(cmap)
         site_node_trace_elem.marker.reversescale = False
-        site_node_trace_elem.marker.color = col
+        marker_color = col if not isinstance(col, tuple) \
+                           else _p.convert_colormap_mpl_plotly(col)
+        site_node_trace_elem.marker.color = marker_color
         site_node_trace_elem.marker.size = \
                                 _p.convert_site_size_mpl_plotly(size,
                                         defaults['plotly_site_size_reference'])
@@ -1171,7 +1180,12 @@ def _plot_plotly(sys, num_lead_cells, unit,
             site_edge_trace_elem.x += tuple([x0, x1, None])
             site_edge_trace_elem.y += tuple([y0, y1, None])
 
-
+    if _p.isarray(hop_color) or _p.isarray(hop_lw):
+        raise RuntimeError("Plotly backend not currently support an array "
+                               "of linecolors or linewidths. Please restrict "
+                               "to only a constant (i.e. no function or array)"
+                               " hop_color and hop_lw property "
+                               "for the entire plot.")
     site_edge_trace_elem.line.width = hop_lw
     site_edge_trace_elem.line.color = hop_color
     site_edge_trace_elem.hoverinfo = 'none'

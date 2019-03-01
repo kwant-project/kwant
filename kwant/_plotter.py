@@ -126,15 +126,20 @@ if plotly_available:
 
 
     def convert_symbol_mpl_plotly(mpl_symbol):
-        if isarray(mpl_symbol):
+        if isarray(mpl_symbol) or isinstance(mpl_symbol, tuple):
             converted_symbol = [converter_map.get(i) for i in mpl_symbol]
+            if None in converted_symbol:
+                raise RuntimeError('Input tuple \'{}\' not supported. '
+                                'Only the following characters '
+                                'are supported: {}'.format(
+                                    mpl_symbol, converter_map.keys()))
         else:
             converted_symbol = converter_map.get(mpl_symbol)
+            if converted_symbol == None:
+                raise RuntimeError('Input symbol \'{}\' not supported. '
+                                'Only the following are supported: {}'.format(
+                                    mpl_symbol, converter_map.keys()))
 
-        if converted_symbol == None:
-            raise RuntimeWarning('Input symbol \'{}\' not supported. '
-                            'Only the following are supported: {}'.format(
-                                mpl_symbol, converter_map.keys()))
         return converted_symbol
 
     def convert_symbol_mpl_plotly_3d(mpl_symbol):
