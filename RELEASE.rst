@@ -114,21 +114,23 @@ Building the documentation requires 'sphinx' and a Latex installation.
 First build the HTML and PDF documentation::
 
     ./setup.py build
-    cd doc
-    make realclean
-    make html latex SPHINXOPTS='-A website_deploy=True -n -W'
-    cd doc/build/latex
-    make all-pdf
+    make -C doc realclean
+    make -C doc html latex
+    make -C doc/build/latex all-pdf
 
 Then create a zipped version of the HTML documentation and name the PDF
 consistently, storing them, for example, in the "dist" directory along with the
 source tarballs::
 
-    ln -s `pwd`/doc/build/html /tmp/kwant-doc-<version>
-    (cd /tmp/; zip -r kwant-doc-<version>.zip kwant-doc-<version>)
-    mv /tmp/kwant-doc-<version>.zip dist
+    version=$(git describe | sed 's/^v//') # Assumes that we are on a tag.
+    ln -s `pwd`/doc/build/html /tmp/kwant-doc-$version
+    (cd /tmp/; zip -r kwant-doc-$version.zip kwant-doc-$version)
+    mv /tmp/kwant-doc-$version.zip dist
+    mv doc/build/latex/kwant.pdf dist/kwant-doc-$version.pdf
 
-    mv doc/build/latex/kwant.pdf dist/kwant-doc-<version>.pdf
+Finally, rebuild the documentation for the website (including the web analysis javascript code)::
+
+    make -C doc html SPHINXOPTS='-A website_deploy=True -n -W'
 
 
 Clone the repository of the Kwant Debian package
@@ -514,23 +516,20 @@ Ask Christoph Groth if you need to be granted access.
 
 Upload the zipped HTML and PDF documentation::
 
-    scp dist/kwant-doc-<version>.zip kwant-project.org:webapps/downloads/doc
-    scp dist/kwant-doc-<version>.pdf kwant-project.org:webapps/downloads/doc
+    scp dist/kwant-doc-<version>.{zip,pdf} kwant-project.org:webapps/downloads/doc
 
-Point the symbolic links ``latest.zip`` and ``latest.pdf`` to these new files::
-
-    ssh kwant-project.org "cd webapps/downloads/doc; ln -s kwant-doc-<version>.zip latest.zip"
-    ssh kwant-project.org "cd webapps/downloads/doc; ln -s kwant-doc-<version>.pdf latest.pdf"
-
-Then upload the HTML documentation for the main website::
+Upload the HTML documentation for the website::
 
     rsync -rlv --delete doc/build/html/* kwant-project.org:webapps/kwant/doc/<short-version>
 
 where in the above ``<short-version>`` is just the major and minor version numbers.
 
-Finally point the symbolic link ``<major-version>`` to ``<short-version>``::
+Finally, create symbolic links for the website::
 
-    ssh kwant-project.org "cd webapps/kwant/doc; ln -s <major> <short-version>"
+    ssh kwant-project.org
+    for e in zip pdf; do ln -sf kwant-doc-<version>.$e webapps/downloads/doc/latest.$e; done
+    ln -nsf <short-version> webapps/kwant/doc/<major>
+    exit
 
 
 Announce the release
