@@ -1,11 +1,9 @@
 What's new in Kwant 1.4
 =======================
 
-This article explains the user-visible changes in Kwant 1.4.0.
-See also the `full list of changes up to the most recent bugfix
-release of the 1.4 series
-<https://gitlab.kwant-project.org/kwant/kwant/compare/v1.4.0...latest-1.4>`_.
-
+This article explains the user-visible changes in Kwant 1.4.0.  Subsequently,
+the user-visible changes for each maintenance release of the 1.4.x series are
+listed (if there were any).
 
 Installation on Microsoft Windows is available via Conda
 --------------------------------------------------------
