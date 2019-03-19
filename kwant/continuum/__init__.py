@@ -15,6 +15,5 @@ except ImportError as error:
            "dependencies is not installed.")
     raise ImportError(msg) from error
 
-
 __all__ = ['discretize', 'discretize_symbolic', 'build_discretized',
            'sympify', 'lambdify', 'momentum_operators', 'position_operators']

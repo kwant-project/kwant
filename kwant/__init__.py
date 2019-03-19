@@ -29,22 +29,29 @@ except ImportError:
         raise
 
 from ._common import KwantDeprecationWarning, UserCodeError
-
 __all__.extend(['KwantDeprecationWarning', 'UserCodeError'])
 
-for module in ['system', 'builder', 'lattice', 'solvers', 'digest', 'rmt',
-               'operator', 'kpm', 'wraparound']:
-    exec('from . import {0}'.format(module))
-    __all__.append(module)
+# Pre-import most submodules.  (We make exceptions for submodules that have
+# special dependencies or where that would take too long.)
+from . import system
+from . import builder
+from . import lattice
+from . import solvers
+from . import digest
+from . import rmt
+from . import operator
+from . import kpm
+from . import wraparound
+__all__.extend(['system', 'builder', 'lattice', 'solvers', 'digest', 'rmt',
+                'operator', 'kpm', 'wraparound'])
 
 # Make selected functionality available directly in the root namespace.
-available = [('builder', ['Builder', 'HoppingKind']),
-             ('lattice', ['TranslationalSymmetry']),
-             ('solvers.default',
-              ['smatrix', 'greens_function', 'ldos', 'wave_function'])]
-for module, names in available:
-    exec('from .{0} import {1}'.format(module, ', '.join(names)))
-    __all__.extend(names)
+from .builder import Builder, HoppingKind
+__all__.extend(['Builder', 'HoppingKind'])
+from .lattice import TranslationalSymmetry
+__all__.extend(['TranslationalSymmetry'])
+from .solvers.default import smatrix, greens_function, ldos, wave_function
+__all__.extend(['smatrix', 'greens_function', 'ldos', 'wave_function'])
 
 # Importing plotter might not work, but this does not have to be a problem --
 # only no plotting will be available.
