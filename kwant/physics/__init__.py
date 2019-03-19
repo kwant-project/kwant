@@ -8,8 +8,14 @@
 """Physics-related algorithms"""
 
 # Merge the public interface of all submodules.
-__all__ = []
-for module in ['leads', 'dispersion', 'noise', 'symmetry', 'gauge']:
-    exec('from . import {0}'.format(module))
-    exec('from .{0} import *'.format(module))
-    exec('__all__.extend({0}.__all__)'.format(module))
+from .leads import *
+from .dispersion import *
+from .noise import *
+from .symmetry import *
+from .gauge import *
+
+__all__ = [leads.__all__
+           + dispersion.__all__
+           + noise.__all__
+           + symmetry.__all__
+           + gauge.__all__]
