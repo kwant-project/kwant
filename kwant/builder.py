@@ -1181,7 +1181,11 @@ class Builder:
             func(sh)
 
     def eradicate_dangling(self):
-        """Keep deleting dangling sites until none are left."""
+        """Keep deleting dangling sites until none are left.
+
+        Sites are considered as dangling when less than two hoppings
+        lead to them.
+        """
         sites = list(site for site in self.H
                      if self._out_degree(site) < 2)
         for site in sites:
@@ -1243,7 +1247,11 @@ class Builder:
                 yield (tail, head), value
 
     def dangling(self):
-        """Return an iterator over all dangling sites."""
+        """Return an iterator over all dangling sites.
+
+        Sites are considered as dangling when less than two hoppings
+        lead to them.
+        """
         for site in self.H:
             if self._out_degree(site) < 2:
                 yield site
