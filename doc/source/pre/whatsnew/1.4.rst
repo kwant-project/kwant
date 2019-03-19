@@ -16,6 +16,46 @@ reason, value functions may no longer accept ``*args`` or ``**kwargs``.
 If you are using such functions, we recommend that you replace them by named
 parameters.
 
+Value functions may no longer have default values for parameters
+----------------------------------------------------------------
+Using value functions with default values for parameters can be
+problematic, especially when re-using value functions between simulations.
+When parameters have default values it is easy to forget that such a
+parameter exists at all, because it is not necessary to provide them explicitly
+to functions that use the Kwant system. This means that other value functions
+might be introduced that also depend on the same parameter,
+but in an inconsistent way (e.g. a parameter 'phi' that is a superconducting
+phase in one value function, but a peierls phase in another). This leads
+to bugs that are confusing and hard to track down.
+
+For this reason value functions may no longer have default values for paramters.
+Concretely this means that the following no longer works::
+
+  syst = kwant.Builder()
+
+  # Parameter 't' has a default value of 1
+  def onsite(site, V, t=1):
+    return V = 2 * t
+
+  def hopping(site_a, site_b, t=1):
+    return -t
+
+  syst[...] = onsite
+  syst[...] = hopping
+
+  # Raises ValueError
+  syst = syst.finalized()
+
+As a solution, simply remove the default values and always provide ``t``.
+To deal with many parameters, the following idiom may be useful::
+
+  defaults = dict(a=0, b=1, c=2, d=3)
+  ...
+  smatrix = kwant.smatrix(syst, E, params=dict(defaults, d=4, e=5))
+
+Note that this allows to override defaults as well as to add additional
+parameters.
+
 Installation on Microsoft Windows is available via Conda
 --------------------------------------------------------
 Kwant is now packaged for the Conda package manager on Windows, and using
@@ -155,55 +195,6 @@ the scattering region and leads, one could do the following::
 
    kwant.smatrix(syst, params=dict(V_dot=0, V_lead=1))
 
-Interpolated density plots
---------------------------
-A new function, `kwant.plotter.density`, has been added that can be used to
-visualize a density defined over the sites of a Kwant system. This convolves
-the "discrete" density (defined over the system sites) with a "bump" function
-in realspace. The output of `~kwant.plotter.density` can be more informative
-that `~kwant.plotter.map` when plotting systems with many sites, where it is
-not important to see the individual contribution from each site.
-
-Value functions may no longer have default values for parameters
-----------------------------------------------------------------
-Using value functions with default values for parameters can be
-problematic, especially when re-using value functions between simulations.
-When parameters have default values it is easy to forget that such a
-parameter exists at all, because it is not necessary to provide them explicitly
-to functions that use the Kwant system. This means that other value functions
-might be introduced that also depend on the same parameter,
-but in an inconsistent way (e.g. a parameter 'phi' that is a superconducting
-phase in one value function, but a peierls phase in another). This leads
-to bugs that are confusing and hard to track down.
-
-For this reason value functions may no longer have default values for paramters.
-Concretely this means that the following no longer works::
-
-  syst = kwant.Builder()
-
-  # Parameter 't' has a default value of 1
-  def onsite(site, V, t=1):
-    return V = 2 * t
-
-  def hopping(site_a, site_b, t=1):
-    return -t
-
-  syst[...] = onsite
-  syst[...] = hopping
-
-  # Raises ValueError
-  syst = syst.finalized()
-
-As a solution, simply remove the default values and always provide ``t``.
-To deal with many parameters, the following idiom may be useful::
-
-  defaults = dict(a=0, b=1, c=2, d=3)
-  ...
-  smatrix = kwant.smatrix(syst, E, params=dict(defaults, d=4, e=5))
-
-Note that this allows to override defaults as well as to add additional
-parameters.
-
 System parameters can now be inspected
 --------------------------------------
 In modern Kwant the preferred way to pass arguments to your models
@@ -265,13 +256,6 @@ the information of which sites were added was not inspectable after finalization
 Now the sites that were added from each lead are available in the ``lead_paddings``
 attribute. See the documentation for `~kwant.builder.FiniteSystem` for details.
 
-Configurable maximum velocity in stream plots
----------------------------------------------
-The function `~kwant.plotter.streamplot` has got a new option ``vmax``.  Note
-that this option is not available in `~kwant.plotter.current`.  In order to use
-it, one has to call ``streamplot`` directly as shown in the docstring of
-``current``.
-
 `kwant.continuum.discretize` can be used with rectangular lattices
 ------------------------------------------------------------------
 Previously the discretizer could only be used with lattices with the same
@@ -285,6 +269,22 @@ lattices to the discretizer::
 
 This is useful when you need a finer discretization step in some spatial
 directions, and a coarser one in others.
+
+Interpolated density plots
+--------------------------
+A new function, `kwant.plotter.density`, has been added that can be used to
+visualize a density defined over the sites of a Kwant system. This convolves
+the "discrete" density (defined over the system sites) with a "bump" function
+in realspace. The output of `~kwant.plotter.density` can be more informative
+that `~kwant.plotter.map` when plotting systems with many sites, where it is
+not important to see the individual contribution from each site.
+
+Configurable maximum velocity in stream plots
+---------------------------------------------
+The function `~kwant.plotter.streamplot` has got a new option ``vmax``.  Note
+that this option is not available in `~kwant.plotter.current`.  In order to use
+it, one has to call ``streamplot`` directly as shown in the docstring of
+``current``.
 
 Improved heuristic for colorscale limits in `kwant.plotter.map`
 ---------------------------------------------------------------
@@ -303,3 +303,9 @@ Previously `kwant.plotter.plot` would plot all sites in black. Now sites from
 different families are plotted in different colors, which improves the
 default plotting style. You can still customize the site coloring using
 the ``site_color`` parameter, as before.
+
+Changes in Kwant 1.4.1
+----------------------
+- The list of user-visible changes was rearranged to emphasize
+  backwards-incompatible changes by moving them to the top of the list and
+  adding the entry `Value functions may no longer take unnamed arguments`_.
