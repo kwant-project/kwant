@@ -5,6 +5,17 @@ This article explains the user-visible changes in Kwant 1.4.0.  Subsequently,
 the user-visible changes for each maintenance release of the 1.4.x series are
 listed (if there were any).
 
+Value functions may no longer take unnamed arguments
+----------------------------------------------------
+The system parameter (``args`` and ``params``) handling of Kwant has been
+rewritten following the principle that each value function must take a clearly
+specified set of named parameters.  This allows to make the parameter handling
+less error-prone (as explained in the following section) and faster.  For this
+reason, value functions may no longer accept ``*args`` or ``**kwargs``.
+
+If you are using such functions, we recommend that you replace them by named
+parameters.
+
 Installation on Microsoft Windows is available via Conda
 --------------------------------------------------------
 Kwant is now packaged for the Conda package manager on Windows, and using
