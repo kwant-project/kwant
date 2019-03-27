@@ -341,3 +341,5 @@ Changes in Kwant 1.4.1
 - The list of user-visible changes was rearranged to emphasize
   backwards-incompatible changes by moving them to the top of the list and
   adding the entry `Value functions may no longer take unnamed arguments`_.
+- Kwant no longer requires the existence of a `parameters` attribute for
+  low-level systems.
