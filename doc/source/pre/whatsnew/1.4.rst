@@ -343,3 +343,5 @@ Changes in Kwant 1.4.1
   adding the entry `Value functions may no longer take unnamed arguments`_.
 - Kwant no longer requires the existence of a `parameters` attribute for
   low-level systems.
+- A note about an :ref:`whatsnew13-params-api-change` that ocurred in Kwant
+  1.3 was added.
