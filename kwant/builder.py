@@ -1868,6 +1868,9 @@ class _FinalizedBuilderMixin:
             if param_names is not None:  # 'value' is callable
                 site = self.symmetry.to_fd(self.sites[i])
                 if params:
+                    # See body of _value_params_pair_cache().
+                    if isinstance(param_names, Exception):
+                        raise param_names
                     args = map(params.__getitem__, param_names)
                 try:
                     value = value(site, *args)
@@ -1891,6 +1894,9 @@ class _FinalizedBuilderMixin:
                 sites = self.sites
                 site_i, site_j = self.symmetry.to_fd(sites[i], sites[j])
                 if params:
+                    # See body of _value_params_pair_cache().
+                    if isinstance(param_names, Exception):
+                        raise param_names
                     args = map(params.__getitem__, param_names)
                 try:
                     value = value(site_i, site_j, *args)
@@ -1940,7 +1946,18 @@ def _value_params_pair_cache(nstrip):
             if isinstance(value, _Substituted):
                 entry = value.func, value.params[nstrip:]
             elif callable(value):
-                entry = value, get_parameters(value)[nstrip:]
+                try:
+                    param_names = get_parameters(value)
+                except ValueError as ex:
+                    # The parameter names are determined and stored in advance
+                    # for future use.  This has failed, but it will only turn
+                    # into a problem if user code ever uses the 'params'
+                    # mechanism.  To maintain backwards compatibility, we catch
+                    # and store the exception so that it can be raised whenever
+                    # appropriate.
+                    entry = value, ex
+                else:
+                    entry = value, param_names[nstrip:]
             else:
                 # None means: value is not callable. (That's faster to check.)
                 entry = value, None
@@ -2036,13 +2053,23 @@ class FiniteSystem(_FinalizedBuilderMixin, system.FiniteSystem):
         hoppings = [cache(builder._get_edge(sites[tail], sites[head]))
                     for tail, head in g]
 
-        # System parameters are the union of the parameters
-        # of onsites and hoppings.
-        # Here 'onsites' and 'hoppings' are pairs whos second element
-        # is a tuple of parameter names when matrix element is a function,
-        # and None otherwise.
-        parameters = frozenset(chain.from_iterable(
-            p for _, p in chain(onsites, hoppings) if p))
+        # Compute the union of the parameters of onsites and hoppings.  Here,
+        # 'onsites' and 'hoppings' are pairs whose second element is one of
+        # three things:
+        #
+        # * a tuple of parameter names when the matrix element is a function,
+        # * 'None' when it is a constant,
+        # * an exception when the parameter names could not have been
+        #   determined (See body of _value_params_pair_cache()).
+        parameters = []
+        for _, names in chain(onsites, hoppings):
+            if isinstance(names, Exception):
+                parameters = None
+                break
+            if names:
+                parameters.extend(names)
+        else:
+            parameters = frozenset(parameters)
 
         self.graph = g
         self.sites = sites
@@ -2205,13 +2232,23 @@ class InfiniteSystem(_FinalizedBuilderMixin, system.InfiniteSystem):
                 tail, head = sym.to_fd(tail, head)
             hoppings.append(cache(builder._get_edge(tail, head)))
 
-        # System parameters are the union of the parameters
-        # of onsites and hoppings.
-        # Here 'onsites' and 'hoppings' are pairs whos second element
-        # is a tuple of parameter names when matrix element is a function,
-        # and None otherwise.
-        parameters = frozenset(chain.from_iterable(
-            p for _, p in chain(onsites, hoppings) if p))
+        # Compute the union of the parameters of onsites and hoppings.  Here,
+        # 'onsites' and 'hoppings' are pairs whose second element is one of
+        # three things:
+        #
+        # * a tuple of parameter names when the matrix element is a function,
+        # * 'None' when it is a constant,
+        # * an exception when the parameter names could not have been
+        #   determined (See body of _value_params_pair_cache()).
+        parameters = []
+        for _, names in chain(onsites, hoppings):
+            if isinstance(names, Exception):
+                parameters = None
+                break
+            if names:
+                parameters.extend(names)
+        else:
+            parameters = frozenset(parameters)
 
         self.graph = g
         self.sites = sites

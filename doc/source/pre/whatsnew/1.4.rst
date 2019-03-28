@@ -22,8 +22,7 @@ Summary: release highlights
 
 Backwards-incompatible changes:
 
-* `Value functions may no longer take unnamed arguments`_.
-* `Value functions may no longer have default values for parameters`_.
+* `Restrictions on value functions when named parameters are given`_
 
 .. _whatsnew14-magnetic:
 
@@ -261,31 +260,22 @@ lattices to the discretizer::
 This is useful when you need a finer discretization step in some spatial
 directions, and a coarser one in others.
 
-Value functions may no longer take unnamed arguments
-----------------------------------------------------
-The system parameter (``args`` and ``params``) handling of Kwant has been
-rewritten following the principle that each value function must take a clearly
-specified set of named parameters.  This allows to make the parameter handling
-less error-prone (as explained in the following section) and faster.  For this
-reason, value functions may no longer accept ``*args`` or ``**kwargs``.
+Restrictions on value functions when named parameters are given
+---------------------------------------------------------------
+New restrictions apply to how value functions may accept arguments, when named
+parameters are given through ``params``.  (Nothing changes when the now
+deprcated ``args`` mechanism is used).  The restrictions follow the principle
+that each value function must take a clearly specified set of named parameters.
+This allows to make the parameter handling less error-prone and faster.
 
-If you are using such functions, we recommend that you replace them by named
-parameters.
+In particular, when ``params`` is used, it is no longer possible for value
+functions to
+- take ``*args`` or ``**kwargs``,
+- take keyword-only parameters,
+- have default parameters for arguments.
 
-Value functions may no longer have default values for parameters
-----------------------------------------------------------------
-Using value functions with default values for parameters can be
-problematic, especially when re-using value functions between simulations.
-When parameters have default values it is easy to forget that such a
-parameter exists at all, because it is not necessary to provide them explicitly
-to functions that use the Kwant system. This means that other value functions
-might be introduced that also depend on the same parameter,
-but in an inconsistent way (e.g. a parameter 'phi' that is a superconducting
-phase in one value function, but a peierls phase in another). This leads
-to bugs that are confusing and hard to track down.
-
-For this reason value functions may no longer have default values for paramters.
-Concretely this means that the following no longer works::
+As an example, the following snippet no longer works because it uses default
+values::
 
   syst = kwant.Builder()
 
@@ -339,8 +329,11 @@ of Ubuntu and Debian GNU/Linux.
 Changes in Kwant 1.4.1
 ----------------------
 - The list of user-visible changes was rearranged to emphasize
-  backwards-incompatible changes by moving them to the top of the list and
-  adding the entry `Value functions may no longer take unnamed arguments`_.
+  backwards-incompatible changes by moving them to the top of the list.
+- Restrictions on value functions no longer apply when the old ``args``
+  mechanism is used, this restores most of the backwards compatibility with
+  previous Kwant versions: `Restrictions on value functions when named
+  parameters are given`_.
 - Kwant no longer requires the existence of a `parameters` attribute for
   low-level systems.
 - A note about an :ref:`whatsnew13-params-api-change` that ocurred in Kwant
