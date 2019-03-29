@@ -334,6 +334,10 @@ Changes in Kwant 1.4.1
   mechanism is used, this restores most of the backwards compatibility with
   previous Kwant versions: `Restrictions on value functions when named
   parameters are given`_.
+- The ``args`` parameter passing mechanism works again with
+  `~kwant.wraparound`-treated systems.  Some restriction continue to appply,
+  notably it is not possible to use ``wraparound`` with value functions that
+  take ``*args`` or ``*kwargs``.
 - Kwant no longer requires the existence of a `parameters` attribute for
   low-level systems.
 - A note about an :ref:`whatsnew13-params-api-change` that ocurred in Kwant
