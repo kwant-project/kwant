@@ -427,6 +427,34 @@ def test_find_builder_discrete_symmetries():
             assert sym_dict[class_symmetry] in builder_symmetries_dense
 
 
+def test_real_space_basis():
+    lat = kwant.lattice.honeycomb(norbs=[1, 1])
+    sym = kwant.TranslationalSymmetry(lat.vec((1, 0)), lat.vec((0, 1)))
+    bulk = kwant.Builder(sym)
+    bulk[[lat.a(0, 0), lat.b(0, 0)]] = 0
+    bulk[lat.neighbors()] = 1
+
+    # Including real space symmetries
+    symmetries = find_builder_symmetries(bulk)
+    hex_group_2D = hexagonal()
+    hex_group_2D = set(PointGroupElement(np.array(s.R).astype(float),
+                                         s.conjugate, s.antisymmetry, None)
+                for s in hex_group_2D)
+    assert len(symmetries) == len(hex_group_2D)
+    assert all([s1 in symmetries and s2 in hex_group_2D
+                for s1, s2 in zip(hex_group_2D, symmetries)])
+
+    # Only onsite discrete symmetries
+    symmetries = find_builder_symmetries(bulk, spatial_symmetries=False)
+    onsites = [PointGroupElement(np.eye(2), True, False, None),  # T
+               PointGroupElement(np.eye(2), True, True, None),   # P
+               PointGroupElement(np.eye(2), False, True, None),  # C
+               PointGroupElement(np.eye(2), False, False, None)] # I
+    assert len(symmetries) == len(onsites)
+    assert all([s1 in symmetries and s2 in onsites
+                for s1, s2 in zip(onsites, symmetries)])
+
+
 def random_onsite_hop(n, rng=0):
     rng = ensure_rng(rng)
     onsite = rng.randn(n, n) + 1j * rng.randn(n, n)
