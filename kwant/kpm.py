@@ -945,7 +945,7 @@ class LocalVectors:
         must be a list of integers with the indices where column vectors
         are nonzero.
     """
-    def __init__(self, syst, where, *args):
+    def __init__(self, syst, where=None, *args):
         self.tot_norbs, self.orbs = _normalize_orbs_where(syst, where)
         self._idx = 0
 
@@ -1006,7 +1006,11 @@ def _normalize_orbs_where(syst, where):
         tot_norbs = _get_tot_norbs(syst)
         orbs = _from_where_to_orbs(syst, where)
     else:
-        tot_norbs = csr_matrix(syst).shape[0]
+        try:
+            tot_norbs = csr_matrix(syst).shape[0]
+        except TypeError:
+            raise TypeError("'syst' is neither a matrix "
+                             "nor a Kwant system.")
         orbs = (range(tot_norbs) if where is None
                 else np.asarray(where, int))
     return tot_norbs, orbs
