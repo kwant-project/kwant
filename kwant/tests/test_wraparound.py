@@ -9,6 +9,7 @@
 import tempfile
 import itertools
 import numpy as np
+from numpy.testing import assert_equal
 import tinyarray as ta
 import pytest
 
@@ -380,3 +381,18 @@ def test_fd_mismatch():
                 for k in np.linspace(-np.pi, np.pi, 5)]
 
     assert np.allclose(spectrum1, spectrum2)
+
+
+# There seems no more specific way to only filter KwantDeprecationWarning.
+@pytest.mark.filterwarnings('ignore')
+def test_args_params_equivalence():
+    for lat in [kwant.lattice.square(), kwant.lattice.honeycomb(),
+                kwant.lattice.kagome()]:
+        syst = kwant.Builder(kwant.TranslationalSymmetry(*lat.prim_vecs))
+        syst[lat.shape((lambda pos: True), (0, 0))] = 1
+        syst[lat.neighbors(1)] = 0.1
+        syst[lat.neighbors(2)] = lambda a, b, param: 0.01
+        syst = wraparound(syst).finalized()
+        shs = syst.hamiltonian_submatrix
+        assert_equal(shs(args=["bla", 1, 2]),
+                     shs(params=dict(param="bla", k_x=1, k_y=2)))

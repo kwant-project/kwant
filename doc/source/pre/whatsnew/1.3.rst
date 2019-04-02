@@ -219,3 +219,10 @@ image in the fundamental domain.
 
 This change is documented here for completeness.  We expect that the vast
 majority of users of Kwant will not be affected by it.
+
+ .. _whatsnew13-params-api-change:
+
+API change that affects low-level systems
+-----------------------------------------
+The `~kwant.system.System.hamiltonian` method of low-level systems must now accept a
+`params` keyword parameter.

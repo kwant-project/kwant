@@ -165,26 +165,23 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
             params[name] = inspect.Parameter(
                 name, inspect.Parameter.POSITIONAL_ONLY)
 
-        # Add all the other parameters, except for the momenta.
+        # Add all the other parameters (except for the momenta).  Setup the
+        # 'selections'.
         selections = []
         for val in vals:
             if not callable(val):
                 selections.append(())
                 continue
             val_params = get_parameters(val)[num_sites:]
+            assert val_params[mnp:] == momenta
+            val_params = val_params[:mnp]
             selections.append((*site_params, *val_params))
             for p in val_params:
-                # Skip parameters that exist in previously added functions,
-                # and the momenta, which will be placed at the end.
-                if p in params or p in momenta:
+                # Skip parameters that exist in previously added functions.
+                if p in params:
                     continue
                 params[p] = inspect.Parameter(
                     p, inspect.Parameter.POSITIONAL_ONLY)
-
-        # Finally, add the momenta.
-        for k in momenta:
-            params[k] = inspect.Parameter(
-                k, inspect.Parameter.POSITIONAL_ONLY)
 
         # Sort values such that ones with the same arguments are bunched.
         # Prepare 'val_selection_pairs' that is used in the function 'f' above.
@@ -192,14 +189,20 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
         val_selection_pairs = []
         prev_selection = None
         argsort = sorted(range(len(selections)), key=selections.__getitem__)
+        momenta_sel = tuple(range(mnp, 0, 1))
         for i in argsort:
             selection = selections[i]
             if selection and selection != prev_selection:
                 prev_selection = selection = tuple(
-                    params_keys.index(s) for s in selection)
+                    params_keys.index(s) for s in selection) + momenta_sel
             else:
                 selection = ()
             val_selection_pairs.append((vals[i], selection))
+
+        # Finally, add the momenta.
+        for k in momenta:
+            params[k] = inspect.Parameter(
+                k, inspect.Parameter.POSITIONAL_ONLY)
 
         f.__signature__ = inspect.Signature(params.values())
         return f
@@ -220,7 +223,7 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
         sym = TranslationalSymmetry(*periods)
         momenta.pop(keep)
     momenta = tuple(momenta)
-    mnp = -len(sym.periods)      # Used by the bound functions above.
+    mnp = -len(momenta)         # Used by the bound functions above.
 
     # Store the names of the momentum parameters and the symmetry of the
     # old Builder (this will be needed for band structure plotting)

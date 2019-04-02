@@ -243,17 +243,6 @@ def make_dense_full(ham, args, params, CGraph gr, diag,
     return h_sub
 
 
-def _check_parameters_match(expected_parameters, params):
-    if params is None:
-        params = {}
-    missing = set(expected_parameters) - set(params)
-
-    if missing:
-        msg = ('System is missing required parameters: ',
-               ', '.join(map('"{}"'.format, missing)))
-        raise TypeError(''.join(msg))
-
-
 @deprecate_args
 @cython.binding(True)
 @cython.embedsignature(True)
@@ -300,9 +289,6 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
     ham = self.hamiltonian
     n = self.graph.num_nodes
     matrix = ta.matrix
-
-    if not args:  # Then perhaps parameters
-        _check_parameters_match(self.parameters, params)
 
     if from_sites is None:
         diag = n * [None]
