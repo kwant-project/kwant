@@ -11,7 +11,10 @@ Matrix structure of on-site and hopping elements
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`spin_orbit.py </code/download/spin_orbit.py>`
+    :jupyter-download:script:`spin_orbit`
+
+.. jupyter-kernel::
+    :id: spin_orbit
 
 We begin by extending the simple 2DEG-Hamiltonian by a Rashba spin-orbit
 coupling and a Zeeman splitting due to an external magnetic field:
@@ -42,24 +45,75 @@ use matrices in our program, we import the Tinyarray package.  (`NumPy
 <http://www.numpy.org/>`_ would work as well, but Tinyarray is much faster
 for small arrays.)
 
-.. literalinclude:: /code/include/spin_orbit.py
-    :start-after: #HIDDEN_BEGIN_xumz
-    :end-before: #HIDDEN_END_xumz
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.3.1. Matrix structure of on-site and hopping elements
+    # ================================================================
+    #
+    # Physics background
+    # ------------------
+    #  Gaps in quantum wires with spin-orbit coupling and Zeeman splititng,
+    #  as theoretically predicted in
+    #   http://prl.aps.org/abstract/PRL/v90/i25/e256601
+    #  and (supposedly) experimentally oberved in
+    #   http://www.nature.com/nphys/journal/v6/n5/abs/nphys1626.html
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - Numpy matrices as values in Builder
+
+    import kwant
+
+    # For plotting
+    from matplotlib import pyplot
+
+.. jupyter-execute::
+
+    # For matrix support
+    import tinyarray
 
 For convenience, we define the Pauli-matrices first (with :math:`\sigma_0` the
 unit matrix):
 
-.. literalinclude:: /code/include/spin_orbit.py
-    :start-after: #HIDDEN_BEGIN_hwbt
-    :end-before: #HIDDEN_END_hwbt
+.. jupyter-execute::
+
+    # define Pauli-matrices for convenience
+    sigma_0 = tinyarray.array([[1, 0], [0, 1]])
+    sigma_x = tinyarray.array([[0, 1], [1, 0]])
+    sigma_y = tinyarray.array([[0, -1j], [1j, 0]])
+    sigma_z = tinyarray.array([[1, 0], [0, -1]])
 
 Previously, we used numbers as the values of our matrix elements.
 However, `~kwant.builder.Builder` also accepts matrices as values, and
 we can simply write:
 
-.. literalinclude:: /code/include/spin_orbit.py
-    :start-after: #HIDDEN_BEGIN_uxrm
-    :end-before: #HIDDEN_END_uxrm
+.. jupyter-execute::
+    :hide-code:
+
+    # Start with an empty tight-binding system and a single square lattice.
+    # `a` is the lattice constant (by default set to 1 for simplicity).
+    lat = kwant.lattice.square()
+
+    syst = kwant.Builder()
+
+    t = 1.0
+    alpha = 0.5
+    e_z = 0.08
+    W, L = 10, 30
+
+
+.. jupyter-execute::
+
+    #### Define the scattering region. ####
+    syst[(lat(x, y) for x in range(L) for y in range(W))] = \
+        4 * t * sigma_0 + e_z * sigma_z
+    # hoppings in x-direction
+    syst[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
+        -t * sigma_0 + 1j * alpha * sigma_y / 2
+    # hoppings in y-directions
+    syst[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
+        -t * sigma_0 - 1j * alpha * sigma_x / 2
 
 Note that the Zeeman energy adds to the onsite term, whereas the Rashba
 spin-orbit term adds to the hoppings (due to the derivative operator).
@@ -85,14 +139,49 @@ when specifying `(1, 0)` it is not necessary to specify `(-1, 0)`),
 
 The leads also allow for a matrix structure,
 
-.. literalinclude:: /code/include/spin_orbit.py
-    :start-after: #HIDDEN_BEGIN_yliu
-    :end-before: #HIDDEN_END_yliu
+
+.. jupyter-execute::
+    :hide-code:
+
+    #### Define the left lead. ####
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+
+.. jupyter-execute::
+
+    lead[(lat(0, j) for j in range(W))] = 4 * t * sigma_0 + e_z * sigma_z
+    # hoppings in x-direction
+    lead[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
+        -t * sigma_0 + 1j * alpha * sigma_y / 2
+    # hoppings in y-directions
+    lead[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
+        -t * sigma_0 - 1j * alpha * sigma_x / 2
+
+.. jupyter-execute::
+    :hide-code:
+
+    #### Attach the leads and finalize the system. ####
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+    syst = syst.finalized()
 
 The remainder of the code is unchanged, and as a result we should obtain
 the following, clearly non-monotonic conductance steps:
 
-.. image:: /code/figure/spin_orbit_result.*
+.. jupyter-execute::
+    :hide-code:
+
+    # Compute conductance
+    energies=[0.01 * i - 0.3 for i in range(100)]
+    data = []
+    for energy in energies:
+        smatrix = kwant.smatrix(syst, energy)
+        data.append(smatrix.transmission(1, 0))
+
+    pyplot.figure()
+    pyplot.plot(energies, data)
+    pyplot.xlabel("energy [t]")
+    pyplot.ylabel("conductance [e^2/h]")
+    pyplot.show()
 
 .. specialnote:: Technical details
 
