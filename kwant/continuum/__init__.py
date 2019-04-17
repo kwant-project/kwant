@@ -10,10 +10,12 @@ try:
     from .discretizer import discretize, discretize_symbolic, build_discretized
     from ._common import sympify, lambdify
     from ._common import momentum_operators, position_operators
+    from .landau_levels import to_landau_basis, discretize_landau, LandauLattice
 except ImportError as error:
     msg = ("'kwant.continuum' is not available because one or more of its "
            "dependencies is not installed.")
     raise ImportError(msg) from error
 
 __all__ = ['discretize', 'discretize_symbolic', 'build_discretized',
+           'to_landau_basis', 'discretize_landau', 'LandauLattice',
            'sympify', 'lambdify', 'momentum_operators', 'position_operators']
