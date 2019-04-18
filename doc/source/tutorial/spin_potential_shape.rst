@@ -380,7 +380,35 @@ Nontrivial shapes
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`ab_ring.py </code/download/ab_ring.py>`
+    :jupyter-download:script:`ab_ring`
+
+.. jupyter-kernel::
+    :id: ab_ring
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.3.3. Nontrivial shapes
+    # =================================
+    #
+    # Physics background
+    # ------------------
+    #  Flux-dependent transmission through a quantum ring
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - More complex shapes with lattices
+    #  - Allows for discussion of subtleties of `attach_lead` (not in the
+    #    example, but in the tutorial main text)
+    #  - Modifcations of hoppings/sites after they have been added
+
+    from cmath import exp
+    from math import pi
+
+    import kwant
+
+    # For plotting
+    from matplotlib import pyplot
 
 Up to now, we only dealt with simple wire geometries. Now we turn to the case
 of a more complex geometry, namely transport through a quantum ring
@@ -400,9 +428,29 @@ First, define a boolean function defining the desired shape, i.e. a function
 that returns ``True`` whenever a point is inside the shape, and
 ``False`` otherwise:
 
-.. literalinclude:: /code/include/ab_ring.py
-    :start-after: #HIDDEN_BEGIN_eusz
-    :end-before: #HIDDEN_END_eusz
+.. jupyter-execute::
+    :hide-code:
+
+    a = 1
+    t = 1.0
+    W = 10
+    r1, r2 = 10, 20
+
+.. jupyter-execute::
+
+    # Start with an empty tight-binding system and a single square lattice.
+    # `a` is the lattice constant (by default set to 1 for simplicity).
+
+    lat = kwant.lattice.square(a)
+
+    syst = kwant.Builder()
+
+    #### Define the scattering region. ####
+    # Now, we aim for a more complex shape, namely a ring (or annulus)
+    def ring(pos):
+        (x, y) = pos
+        rsq = x ** 2 + y ** 2
+        return (r1 ** 2 < rsq < r2 ** 2)
 
 Note that this function takes a real-space position as argument (not a
 `~kwant.builder.Site`).
@@ -411,9 +459,11 @@ We can now simply add all of the lattice points inside this shape at
 once, using the function `~kwant.lattice.Square.shape`
 provided by the lattice:
 
-.. literalinclude:: /code/include/ab_ring.py
-    :start-after: #HIDDEN_BEGIN_lcak
-    :end-before: #HIDDEN_END_lcak
+.. jupyter-execute::
+
+    # and add the corresponding lattice points using the `shape`-function
+    syst[lat.shape(ring, (0, r1 + 1))] = 4 * t
+    syst[lat.neighbors()] = -t
 
 Here, ``lat.shape`` takes as a second parameter a (real-space) point that is
 inside the desired shape. The hoppings can still be added using
@@ -426,9 +476,30 @@ along the branch cut in the lower arm of the ring. For this we select
 all hoppings in x-direction that are of the form `(lat(1, j), lat(0, j))`
 with ``j<0``:
 
-.. literalinclude:: /code/include/ab_ring.py
-    :start-after: #HIDDEN_BEGIN_lvkt
-    :end-before: #HIDDEN_END_lvkt
+.. jupyter-execute::
+
+    # In order to introduce a flux through the ring, we introduce a phase on
+    # the hoppings on the line cut through one of the arms.  Since we want to
+    # change the flux without modifying the Builder instance repeatedly, we
+    # define the modified hoppings as a function that takes the flux as its
+    # parameter phi.
+    def hopping_phase(site1, site2, phi):
+        return -t * exp(1j * phi)
+
+    def crosses_branchcut(hop):
+        ix0, iy0 = hop[0].tag
+
+        # builder.HoppingKind with the argument (1, 0) below
+        # returns hoppings ordered as ((i+1, j), (i, j))
+        return iy0 < 0 and ix0 == 1  # ix1 == 0 then implied
+
+    # Modify only those hopings in x-direction that cross the branch cut
+    def hops_across_cut(syst):
+        for hop in kwant.builder.HoppingKind((1, 0), lat, lat)(syst):
+            if crosses_branchcut(hop):
+                yield hop
+
+    syst[hops_across_cut] = hopping_phase
 
 Here, `crosses_branchcut` is a boolean function that returns ``True`` for
 the desired hoppings. We then use again a generator (this time with
@@ -441,9 +512,19 @@ by the parameter `phi`.
 
 For the leads, we can also use the ``lat.shape``-functionality:
 
-.. literalinclude:: /code/include/ab_ring.py
-    :start-after: #HIDDEN_BEGIN_qwgr
-    :end-before: #HIDDEN_END_qwgr
+.. jupyter-execute::
+
+    #### Define the leads. ####
+    # left lead
+    sym_lead = kwant.TranslationalSymmetry((-a, 0))
+    lead = kwant.Builder(sym_lead)
+
+    def lead_shape(pos):
+        (x, y) = pos
+        return (-W / 2 < y < W / 2)
+
+    lead[lat.shape(lead_shape, (0, 0))] = 4 * t
+    lead[lat.neighbors()] = -t
 
 Here, the shape must be compatible with the translational symmetry
 of the lead ``sym_lead``. In particular, this means that it should extend to
@@ -452,9 +533,12 @@ no restriction on ``x`` in ``lead_shape``) [#]_.
 
 Attaching the leads is done as before:
 
-.. literalinclude:: /code/include/ab_ring.py
-    :start-after: #HIDDEN_BEGIN_skbz
-    :end-before: #HIDDEN_END_skbz
+.. jupyter-execute::
+    :hide-output:
+
+    #### Attach the leads ####
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
 
 In fact, attaching leads seems not so simple any more for the current
 structure with a scattering region very much different from the lead
@@ -471,12 +555,36 @@ the lead is attached:
 
 After the lead has been attached, the system should look like this:
 
-.. image:: /code/figure/ab_ring_syst.*
+.. jupyter-execute::
+    :hide-code:
+
+    kwant.plot(syst);
 
 The computation of the conductance goes in the same fashion as before.
 Finally you should get the following result:
 
-.. image:: /code/figure/ab_ring_result.*
+
+.. jupyter-execute::
+    :hide-code:
+
+    def plot_conductance(syst, energy, fluxes):
+        # compute conductance
+
+        normalized_fluxes = [flux / (2 * pi) for flux in fluxes]
+        data = []
+        for flux in fluxes:
+            smatrix = kwant.smatrix(syst, energy, params=dict(phi=flux))
+            data.append(smatrix.transmission(1, 0))
+
+        pyplot.figure()
+        pyplot.plot(normalized_fluxes, data)
+        pyplot.xlabel("flux [flux quantum]")
+        pyplot.ylabel("conductance [e^2/h]")
+        pyplot.show()
+
+    # We should see a conductance that is periodic with the flux quantum
+    plot_conductance(syst.finalized(), energy=0.15,
+                     fluxes=[0.01 * i * 3 * 2 * pi for i in range(100)])
 
 where one can observe the conductance oscillations with the
 period of one flux quantum.
@@ -492,7 +600,41 @@ period of one flux quantum.
     becomes more apparent if we attach the leads a bit further away
     from the central axis o the ring, as was done in this example:
 
-    .. image:: /code/figure/ab_ring_note1.*
+    .. jupyter-kernel::
+        :id: ab_ring_note1
+
+    .. jupyter-execute::
+        :hide-code:
+
+        import kwant
+        from matplotlib import pyplot
+
+        a = 1
+        t = 1.0
+        W = 10
+        r1, r2 = 10, 20
+
+        lat = kwant.lattice.square()
+        syst = kwant.Builder()
+        def ring(pos):
+            (x, y) = pos
+            rsq = x**2 + y**2
+            return ( r1**2 < rsq < r2**2)
+        syst[lat.shape(ring, (0, 11))] = 4 * t
+        syst[lat.neighbors()] = -t
+        sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
+        lead0 = kwant.Builder(sym_lead0)
+        def lead_shape(pos):
+            (x, y) = pos
+            return (-1 < x < 1) and ( 0.5 * W < y < 1.5 * W )
+        lead0[lat.shape(lead_shape, (0, W))] = 4 * t
+        lead0[lat.neighbors()] = -t
+        lead1 = lead0.reversed()
+        syst.attach_lead(lead0)
+        syst.attach_lead(lead1)
+
+        kwant.plot(syst);
+
 
   - Per default, `~kwant.builder.Builder.attach_lead` attaches
     the lead to the "outside" of the structure, by tracing the
@@ -507,7 +649,40 @@ period of one flux quantum.
     starts the trace-back in the middle of the ring, resulting
     in the lead being attached to the inner circle:
 
-    .. image:: /code/figure/ab_ring_note2.*
+    .. jupyter-kernel::
+        :id: ab_ring_note2
+
+    .. jupyter-execute::
+        :hide-code:
+
+        import kwant
+        from matplotlib import pyplot
+
+        a = 1
+        t = 1.0
+        W = 10
+        r1, r2 = 10, 20
+
+        lat = kwant.lattice.square(a)
+        syst = kwant.Builder()
+        def ring(pos):
+            (x, y) = pos
+            rsq = x**2 + y**2
+            return ( r1**2 < rsq < r2**2)
+        syst[lat.shape(ring, (0, 11))] = 4 * t
+        syst[lat.neighbors()] = -t
+        sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
+        lead0 = kwant.Builder(sym_lead0)
+        def lead_shape(pos):
+            (x, y) = pos
+            return (-1 < x < 1) and ( -W/2 < y < W/2  )
+        lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
+        lead0[lat.neighbors()] = -t
+        lead1 = lead0.reversed()
+        syst.attach_lead(lead0)
+        syst.attach_lead(lead1, lat(0, 0))
+
+        kwant.plot(syst);
 
     Note that here the lead is treated as if it would pass over
     the other arm of the ring, without intersecting it.
