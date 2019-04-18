@@ -218,7 +218,29 @@ Spatially dependent values through functions
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`quantum_well.py </code/download/quantum_well.py>`
+    :jupyter-download:script:`quantum_well`
+
+.. jupyter-kernel::
+    :id: quantum_well
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.3.2. Spatially dependent values through functions
+    # ============================================================
+    #
+    # Physics background
+    # ------------------
+    #  transmission through a quantum well
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - Functions as values in Builder
+
+    import kwant
+
+    # For plotting
+    from matplotlib import pyplot
 
 Up to now, all examples had position-independent matrix-elements
 (and thus translational invariance along the wire, which
@@ -237,22 +259,57 @@ changing the potential then implies the need to build up the system again.
 Instead, we use a python *function* to define the onsite energies. We
 define the potential profile of a quantum well as:
 
-.. literalinclude:: /code/include/quantum_well.py
-    :start-after: #HIDDEN_BEGIN_ehso
-    :end-before: #HIDDEN_END_ehso
+.. jupyter-execute::
+    :hide-code:
+
+    a = 1
+    t = 1.0
+    W, L, L_well = 10, 30, 10
+
+.. jupyter-execute::
+
+    # Start with an empty tight-binding system and a single square lattice.
+    # `a` is the lattice constant (by default set to 1 for simplicity).
+    lat = kwant.lattice.square(a)
+
+    syst = kwant.Builder()
+
+    #### Define the scattering region. ####
+    # Potential profile
+    def potential(site, pot):
+        (x, y) = site.pos
+        if (L - L_well) / 2 < x < (L + L_well) / 2:
+            return pot
+        else:
+            return 0
 
 This function takes two arguments: the first of type `~kwant.builder.Site`,
 from which you can get the real-space coordinates using ``site.pos``, and the
 value of the potential as the second.  Note that in `potential` we can access
-variables of the surrounding function: `L` and `L_well` are taken from the
-namespace of `make_system`.
+variables `L` and `L_well` that are defined globally.
 
 Kwant now allows us to pass a function as a value to
 `~kwant.builder.Builder`:
 
-.. literalinclude:: /code/include/quantum_well.py
-    :start-after: #HIDDEN_BEGIN_coid
-    :end-before: #HIDDEN_END_coid
+.. jupyter-execute::
+
+    def onsite(site, pot):
+        return 4 * t + potential(site, pot)
+
+    syst[(lat(x, y) for x in range(L) for y in range(W))] = onsite
+    syst[lat.neighbors()] = -t
+
+.. jupyter-execute::
+    :hide-code:
+
+    #### Define and attach the leads. ####
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
+    lead[(lat(0, j) for j in range(W))] = 4 * t
+    lead[lat.neighbors()] = -t
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+
+    syst = syst.finalized()
 
 For each lattice point, the corresponding site is then passed as the
 first argument to the function `onsite`. The values of any additional
@@ -269,9 +326,21 @@ of the lead -- this should be kept in mind.
 
 Finally, we compute the transmission probability:
 
-.. literalinclude:: /code/include/quantum_well.py
-    :start-after: #HIDDEN_BEGIN_sqvr
-    :end-before: #HIDDEN_END_sqvr
+.. jupyter-execute::
+
+    def plot_conductance(syst, energy, welldepths):
+
+        # Compute conductance
+        data = []
+        for welldepth in welldepths:
+            smatrix = kwant.smatrix(syst, energy, params=dict(pot=-welldepth))
+            data.append(smatrix.transmission(1, 0))
+
+        pyplot.figure()
+        pyplot.plot(welldepths, data)
+        pyplot.xlabel("well depth [t]")
+        pyplot.ylabel("conductance [e^2/h]")
+        pyplot.show()
 
 ``kwant.smatrix`` allows us to specify a dictionary, `params`, that contains
 the additional arguments required by the Hamiltonian matrix elements.
@@ -280,7 +349,11 @@ of the potential well by passing the potential value (remember above
 we defined our `onsite` function that takes a parameter named `pot`).
 We obtain the result:
 
-.. image:: /code/figure/quantum_well_result.*
+.. jupyter-execute::
+    :hide-code:
+
+    plot_conductance(syst, energy=0.2,
+                     welldepths=[0.01 * i for i in range(100)])
 
 Starting from no potential (well depth = 0), we observe the typical
 oscillatory transmission behavior through resonances in the quantum well.
