@@ -3,6 +3,10 @@ Making a Kwant release
 
 This document guides a contributor through creating a release of Kwant.
 
+Create a release issue
+######################
+
+Use the correct `issue template <gitlab.kwant-project.org/kwant/kwant/issues/new?issuable_template=release>`_, adjust it if necessary.
 
 Preflight checks
 ################
