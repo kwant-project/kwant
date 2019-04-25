@@ -62,13 +62,35 @@ Transport through a quantum wire
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`quantum_wire.py </code/download/quantum_wire.py>`
+    :jupyter-download:script:`quantum_wire`
 
 In order to use Kwant, we need to import it:
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_dwhx
-    :end-before: #HIDDEN_END_dwhx
+.. jupyter-kernel::
+    :id: quantum_wire
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.2.2. Transport through a quantum wire
+    # ================================================
+    #
+    # Physics background
+    # ------------------
+    #  Conductance of a quantum wire; subbands
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - Builder for setting up transport systems easily
+    #  - Making scattering region and leads
+    #  - Using the simple sparse solver for computing Landauer conductance
+
+    # For plotting
+    from matplotlib import pyplot
+
+.. jupyter-execute::
+
+    import kwant
 
 Enabling Kwant is as easy as this [#]_ !
 
@@ -76,9 +98,11 @@ The first step is now the definition of the system with scattering region and
 leads. For this we make use of the `~kwant.builder.Builder` type that allows to
 define a system in a convenient way. We need to create an instance of it:
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_goiq
-    :end-before: #HIDDEN_END_goiq
+.. jupyter-execute::
+
+    # First define the tight-binding system
+
+    syst = kwant.Builder()
 
 Observe that we just accessed `~kwant.builder.Builder` by the name
 ``kwant.Builder``.  We could have just as well written
@@ -92,9 +116,10 @@ Apart from `~kwant.builder.Builder` we also need to specify
 what kind of sites we want to add to the system. Here we work with
 a square lattice. For simplicity, we set the lattice constant to unity:
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_suwo
-    :end-before: #HIDDEN_END_suwo
+.. jupyter-execute::
+
+    a = 1
+    lat = kwant.lattice.square(a)
 
 Since we work with a square lattice, we label the points with two
 integer coordinates `(i, j)`. `~kwant.builder.Builder` then
@@ -111,9 +136,25 @@ needed in Builder (more about that in the technical details below).
 We now build a rectangular scattering region that is `W`
 lattice points wide and `L` lattice points long:
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_zfvr
-    :end-before: #HIDDEN_END_zfvr
+.. jupyter-execute::
+
+    t = 1.0
+    W, L = 10, 30
+
+    # Define the scattering region
+
+    for i in range(L):
+        for j in range(W):
+            # On-site Hamiltonian
+            syst[lat(i, j)] = 4 * t
+
+            # Hopping in y-direction
+            if j > 0:
+                syst[lat(i, j), lat(i, j - 1)] = -t
+
+            # Hopping in x-direction
+            if i > 0:
+                syst[lat(i, j), lat(i - 1, j)] = -t
 
 Observe how the above code corresponds directly to the terms of the discretized
 Hamiltonian:
@@ -140,9 +181,14 @@ Next, we define the leads. Leads are also constructed using
 `~kwant.builder.Builder`, but in this case, the
 system must have a translational symmetry:
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_xcmc
-    :end-before: #HIDDEN_END_xcmc
+.. jupyter-execute::
+
+     # Then, define and attach the leads:
+
+     # First the lead to the left
+     # (Note: TranslationalSymmetry takes a real-space vector)
+     sym_left_lead = kwant.TranslationalSymmetry((-a, 0))
+     left_lead = kwant.Builder(sym_left_lead)
 
 Here, the `~kwant.builder.Builder` takes a
 `~kwant.lattice.TranslationalSymmetry` as the optional parameter. Note that the
@@ -155,17 +201,22 @@ as the hoppings inside one unit cell and to the next unit cell of the lead.
 For a square lattice, and a lead in y-direction the unit cell is
 simply a vertical line of points:
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_ndez
-    :end-before: #HIDDEN_END_ndez
+.. jupyter-execute::
+
+    for j in range(W):
+        left_lead[lat(0, j)] = 4 * t
+        if j > 0:
+            left_lead[lat(0, j), lat(0, j - 1)] = -t
+        left_lead[lat(1, j), lat(0, j)] = -t
 
 Note that here it doesn't matter if you add the hoppings to the next or the
 previous unit cell -- the translational symmetry takes care of that.  The
 isolated, infinite is attached at the correct position using
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_fskr
-    :end-before: #HIDDEN_END_fskr
+.. jupyter-execute::
+    :hide-output:
+
+     syst.attach_lead(left_lead)
 
 This call returns the lead number which will be used to refer to the lead when
 computing transmissions (further down in this tutorial). More details about
@@ -175,9 +226,21 @@ We also want to add a lead on the right side. The only difference to
 the left lead is that the vector of the translational
 symmetry must point to the right, the remaining code is the same:
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_xhqc
-    :end-before: #HIDDEN_END_xhqc
+.. jupyter-execute::
+    :hide-output:
+
+    # Then the lead to the right
+
+    sym_right_lead = kwant.TranslationalSymmetry((a, 0))
+    right_lead = kwant.Builder(sym_right_lead)
+
+    for j in range(W):
+        right_lead[lat(0, j)] = 4 * t
+        if j > 0:
+            right_lead[lat(0, j), lat(0, j - 1)] = -t
+        right_lead[lat(1, j), lat(0, j)] = -t
+
+    syst.attach_lead(right_lead)
 
 Note that here we added points with x-coordinate 0, just as for the left lead.
 You might object that the right lead should be placed `L`
@@ -187,13 +250,9 @@ you do not need to worry about that.
 Now we have finished building our system! We plot it, to make sure we didn't
 make any mistakes:
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_wsgh
-    :end-before: #HIDDEN_END_wsgh
+.. jupyter-execute::
 
-This should bring up this picture:
-
-.. image:: /code/figure/quantum_wire_syst.*
+    kwant.plot(syst);
 
 The system is represented in the usual way for tight-binding systems:
 dots represent the lattice points `(i, j)`, and for every
@@ -203,16 +262,29 @@ fading color.
 
 In order to use our system for a transport calculation, we need to finalize it
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_dngj
-    :end-before: #HIDDEN_END_dngj
+.. jupyter-execute::
+
+     # Finalize the system
+     syst = syst.finalized()
 
 Having successfully created a system, we now can immediately start to compute
 its conductance as a function of energy:
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_buzn
-    :end-before: #HIDDEN_END_buzn
+.. jupyter-execute::
+
+    # Now that we have the system, we can compute conductance
+    energies = []
+    data = []
+    for ie in range(100):
+        energy = ie * 0.01
+
+        # compute the scattering matrix at a given energy
+        smatrix = kwant.smatrix(syst, energy)
+
+        # compute the transmission probability from lead 0 to
+        # lead 1
+        energies.append(energy)
+        data.append(smatrix.transmission(1, 0))
 
 We use ``kwant.smatrix`` which is a short name for
 `kwant.solvers.default.smatrix` of the default solver module
@@ -227,13 +299,15 @@ Finally we can use ``matplotlib`` to make a plot of the computed data
 (although writing to file and using an external viewer such as
 gnuplot or xmgrace is just as viable)
 
-.. literalinclude:: /code/include/quantum_wire.py
-    :start-after: #HIDDEN_BEGIN_lliv
-    :end-before: #HIDDEN_END_lliv
+.. jupyter-execute::
 
-This should yield the result
-
-.. image:: /code/figure/quantum_wire_result.*
+    # Use matplotlib to write output
+    # We should see conductance steps
+    pyplot.figure()
+    pyplot.plot(energies, data)
+    pyplot.xlabel("energy [t]")
+    pyplot.ylabel("conductance [e^2/h]")
+    pyplot.show()
 
 We see a conductance quantized in units of :math:`e^2/h`,
 increasing in steps as the energy is increased. The
@@ -333,7 +407,12 @@ Building the same system with less code
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`quantum_wire_revisited.py </code/download/quantum_wire_revisited.py>`
+    :jupyter-download:script:`quantum_wire_revisited`
+
+
+.. jupyter-kernel::
+    :id: quantum_wire_revisited
+
 
 Kwant allows for more than one way to build a system. The reason is that
 `~kwant.builder.Builder` is essentially just a container that can be filled in
@@ -347,19 +426,51 @@ the code into separate entities. In this example we therefore also aim at more
 structure.
 
 We begin the program collecting all imports in the beginning of the
-file and put the build-up of the system into a separate function
-`make_system`:
+file and defining the a square lattice and empty scattering region.
 
-.. literalinclude:: /code/include/quantum_wire_revisited.py
-    :start-after: #HIDDEN_BEGIN_xkzy
-    :end-before: #HIDDEN_END_xkzy
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.2.3. Building the same system with less code
+    # =======================================================
+    #
+    # Physics background
+    # ------------------
+    #  Conductance of a quantum wire; subbands
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - Using iterables and builder.HoppingKind for making systems
+    #  - introducing `reversed()` for the leads
+    #
+    # Note: Does the same as tutorial1a.py, but using other features of Kwant.
+
+.. jupyter-execute::
+
+    import kwant
+
+    # For plotting
+    from matplotlib import pyplot
+
+    a = 1
+    t = 1.0
+    W, L = 10, 30
+
+    # Start with an empty tight-binding system and a single square lattice.
+    # `a` is the lattice constant (by default set to 1 for simplicity).
+    lat = kwant.lattice.square(a)
+
+    syst = kwant.Builder()
+
 
 Previously, the scattering region was build using two ``for``-loops.
 Instead, we now write:
 
-.. literalinclude:: /code/include/quantum_wire_revisited.py
-    :start-after: #HIDDEN_BEGIN_vvjt
-    :end-before: #HIDDEN_END_vvjt
+
+.. jupyter-execute::
+
+    syst[(lat(x, y) for x in range(L) for y in range(W))] = 4 * t
+
 
 Here, all lattice points are added at once in the first line.  The
 construct ``((i, j) for i in range(L) for j in range(W))`` is a
@@ -375,9 +486,9 @@ hoppings. In this case, an iterable like for the lattice
 points becomes a bit cumbersome, and we use instead another
 feature of Kwant:
 
-.. literalinclude:: /code/include/quantum_wire_revisited.py
-    :start-after: #HIDDEN_BEGIN_nooi
-    :end-before: #HIDDEN_END_nooi
+.. jupyter-execute::
+
+    syst[lat.neighbors()] = -t
 
 In regular lattices, hoppings form large groups such that hoppings within a
 group can be transformed into one another by lattice translations. In order to
@@ -397,9 +508,11 @@ values for all the nth-nearest neighbors at once, one can similarly use
 
 The left lead is constructed in an analogous way:
 
-.. literalinclude:: /code/include/quantum_wire_revisited.py
-    :start-after: #HIDDEN_BEGIN_iepx
-    :end-before: #HIDDEN_END_iepx
+.. jupyter-execute::
+
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
+    lead[(lat(0, j) for j in range(W))] = 4 * t
+    lead[lat.neighbors()] = -t
 
 The previous example duplicated almost identical code for the left and
 the right lead.  The only difference was the direction of the translational
@@ -408,30 +521,59 @@ symmetry vector.  Here, we only construct the left lead, and use the method
 of a lead pointing in the opposite direction.  Both leads are attached as
 before and the finished system returned:
 
-.. literalinclude:: /code/include/quantum_wire_revisited.py
-    :start-after: #HIDDEN_BEGIN_yxot
-    :end-before: #HIDDEN_END_yxot
+.. jupyter-execute::
+    :hide-output:
+
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+
 
 The remainder of the script has been organized into two functions.  One for the
 plotting of the conductance.
 
-.. literalinclude:: /code/include/quantum_wire_revisited.py
-    :start-after: #HIDDEN_BEGIN_ayuk
-    :end-before: #HIDDEN_END_ayuk
+
+.. jupyter-execute::
+
+    def plot_conductance(syst, energies):
+        # Compute conductance
+        data = []
+        for energy in energies:
+            smatrix = kwant.smatrix(syst, energy)
+            data.append(smatrix.transmission(1, 0))
+
+        pyplot.figure()
+        pyplot.plot(energies, data)
+        pyplot.xlabel("energy [t]")
+        pyplot.ylabel("conductance [e^2/h]")
+        pyplot.show()
 
 And one ``main`` function.
 
-.. literalinclude:: /code/include/quantum_wire_revisited.py
-    :start-after: #HIDDEN_BEGIN_cjel
-    :end-before: #HIDDEN_END_cjel
+.. jupyter-execute::
+
+    def main():
+        # Check that the system looks as intended.
+        kwant.plot(syst)
+
+        # Finalize the system.
+        fsyst = syst.finalized()
+
+        # We should see conductance steps.
+        plot_conductance(fsyst, energies=[0.01 * i for i in range(100)])
+
 
 Finally, we use the following standard Python construct [#]_ to execute
 ``main`` if the program is used as a script (i.e. executed as
 ``python quantum_wire_revisited.py``):
 
-.. literalinclude:: /code/include/quantum_wire_revisited.py
-    :start-after: #HIDDEN_BEGIN_ypbj
-    :end-before: #HIDDEN_END_ypbj
+
+.. jupyter-execute::
+
+    # Call the main function if the script gets executed (as opposed to imported).
+    # See <http://docs.python.org/library/__main__.html>.
+    if __name__ == '__main__':
+        main()
+
 
 If the example, however, is imported inside Python using ``import
 quantum_wire_revisted as qw``, ``main`` is not executed automatically.
@@ -453,11 +595,9 @@ The result of the example should be identical to the previous one.
 
      For technical reasons it is not possible to add several points
      using a tuple of sites. Hence it is worth noting
-     a subtle detail in
+     a subtle detail in:
 
-     .. literalinclude:: /code/include/quantum_wire_revisited.py
-         :start-after: #HIDDEN_BEGIN_vvjt
-         :end-before: #HIDDEN_END_vvjt
+     >>> syst[(lat(x, y) for x in range(L) for y in range(W))] = 4 * t
 
      Note that ``(lat(x, y) for x in range(L) for y in range(W))`` is not
      a tuple, but a generator.
