@@ -3,7 +3,37 @@ Superconductors: orbital degrees of freedom, conservation laws and symmetries
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`superconductor.py </code/download/superconductor.py>`
+    :jupyter-download:script:`superconductor`
+
+.. jupyter-kernel::
+    :id: superconductor
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.6. "Superconductors": orbitals, conservation laws and symmetries
+    # ===========================================================================
+    #
+    # Physics background
+    # ------------------
+    # - conductance of a NS-junction (Andreev reflection, superconducting gap)
+    #
+    # Kwant features highlighted
+    # --------------------------
+    # - Implementing electron and hole ("orbital") degrees of freedom
+    #   using conservation laws.
+    # - Use of discrete symmetries to relate scattering states.
+
+    import kwant
+
+    from matplotlib import pyplot
+
+    import tinyarray
+    import numpy as np
+
+    tau_x = tinyarray.array([[0, 1], [1, 0]])
+    tau_y = tinyarray.array([[0, -1j], [1j, 0]])
+    tau_z = tinyarray.array([[1, 0], [0, -1]])
 
 This example deals with superconductivity on the level of the
 Bogoliubov-de Gennes (BdG) equation. In this framework, the Hamiltonian
@@ -58,9 +88,40 @@ for all Hamiltonian matrix elements, as we did
 previously in the :ref:`spin example <tutorial_spinorbit>`. We declare
 the square lattice and construct the scattering region with the following:
 
-.. literalinclude:: /code/include/superconductor.py
-    :start-after: #HIDDEN_BEGIN_nbvn
-    :end-before: #HIDDEN_END_nbvn
+.. jupyter-execute::
+    :hide-code:
+
+    a = 1
+    W, L = 10, 10
+    barrier = 1.5
+    barrierpos = (3, 4)
+    mu = 0.4
+    Delta = 0.1
+    Deltapos=4
+    t = 1.0
+
+.. jupyter-execute::
+
+    # Start with an empty tight-binding system. On each site, there
+    # are now electron and hole orbitals, so we must specify the
+    # number of orbitals per site. The orbital structure is the same
+    # as in the Hamiltonian.
+    lat = kwant.lattice.square(norbs=2)
+    syst = kwant.Builder()
+
+    #### Define the scattering region. ####
+    # The superconducting order parameter couples electron and hole orbitals
+    # on each site, and hence enters as an onsite potential.
+    # The pairing is only included beyond the point 'Deltapos' in the scattering region.
+    syst[(lat(x, y) for x in range(Deltapos) for y in range(W))] = (4 * t - mu) * tau_z
+    syst[(lat(x, y) for x in range(Deltapos, L) for y in range(W))] = (4 * t - mu) * tau_z + Delta * tau_x
+
+    # The tunnel barrier
+    syst[(lat(x, y) for x in range(barrierpos[0], barrierpos[1])
+         for y in range(W))] = (4 * t + barrier - mu) * tau_z
+
+    # Hoppings
+    syst[lat.neighbors()] = -t * tau_z
 
 Note the new argument ``norbs`` to `~kwant.lattice.square`. This is
 the number of orbitals per site in the discretized BdG Hamiltonian - of course,
@@ -80,9 +141,16 @@ of it). The next step towards computing conductance is to attach leads.
 Let's attach two leads: a normal one to the left end, and a superconducting
 one to the right end. Starting with the left lead, we have:
 
-.. literalinclude:: /code/include/superconductor.py
-    :start-after: #HIDDEN_BEGIN_ttth
-    :end-before: #HIDDEN_END_ttth
+.. jupyter-execute::
+
+    #### Define the leads. ####
+    # Left lead - normal, so the order parameter is zero.
+    sym_left = kwant.TranslationalSymmetry((-a, 0))
+    # Specify the conservation law used to treat electrons and holes separately.
+    # We only do this in the left lead, where the pairing is zero.
+    lead0 = kwant.Builder(sym_left, conservation_law=-tau_z, particle_hole=tau_y)
+    lead0[(lat(0, j) for j in range(W))] = (4 * t - mu) * tau_z
+    lead0[lat.neighbors()] = -t * tau_z
 
 Note the two new new arguments in `~kwant.builder.Builder`, ``conservation_law``
 and ``particle_hole``. For the purpose of computing conductance, ``conservation_law``
@@ -120,9 +188,19 @@ of ascending eigenvalues of the conservation law.
 In order to move on with the conductance calculation, let's attach the second
 lead to the right side of the scattering region:
 
-.. literalinclude:: /code/include/superconductor.py
-    :start-after: #HIDDEN_BEGIN_zuuw
-    :end-before: #HIDDEN_END_zuuw
+.. jupyter-execute::
+
+    # Right lead - superconducting, so the order parameter is included.
+    sym_right = kwant.TranslationalSymmetry((a, 0))
+    lead1 = kwant.Builder(sym_right)
+    lead1[(lat(0, j) for j in range(W))] = (4 * t - mu) * tau_z + Delta * tau_x
+    lead1[lat.neighbors()] = -t * tau_z
+
+    #### Attach the leads and finalize the system. ####
+    syst.attach_lead(lead0)
+    syst.attach_lead(lead1)
+
+    syst = syst.finalized()
 
 The second (right) lead is superconducting, such that the electron and hole
 blocks are coupled. Of course, this means that we can not separate them into
@@ -140,9 +218,23 @@ confused by the fact that it says ``transmission`` -- transmission
 into the same lead is reflection), and reflection from electrons to holes
 is ``smatrix.transmission((0, 1), (0, 0))``:
 
-.. literalinclude:: /code/include/superconductor.py
-    :start-after: #HIDDEN_BEGIN_jbjt
-    :end-before: #HIDDEN_END_jbjt
+.. jupyter-execute::
+
+    def plot_conductance(syst, energies):
+        # Compute conductance
+        data = []
+        for energy in energies:
+            smatrix = kwant.smatrix(syst, energy)
+            # Conductance is N - R_ee + R_he
+            data.append(smatrix.submatrix((0, 0), (0, 0)).shape[0] -
+                        smatrix.transmission((0, 0), (0, 0)) +
+                        smatrix.transmission((0, 1), (0, 0)))
+
+        pyplot.figure()
+        pyplot.plot(energies, data)
+        pyplot.xlabel("energy [t]")
+        pyplot.ylabel("conductance [e^2/h]")
+        pyplot.show()
 
 Note that ``smatrix.submatrix((0, 0), (0, 0))`` returns the block concerning
 reflection of electrons to electrons, and from its size we can extract the number of modes
@@ -150,7 +242,10 @@ reflection of electrons to electrons, and from its size we can extract the numbe
 
 For the default parameters, we obtain the following conductance:
 
-.. image:: /code/figure/superconductor_transport_result.*
+.. jupyter-execute::
+    :hide-code:
+
+    plot_conductance(syst, energies=[0.002 * i for i in range(-10, 100)])
 
 We a see a conductance that is proportional to the square of the tunneling
 probability within the gap, and proportional to the tunneling probability
@@ -176,13 +271,34 @@ the electron and hole blocks. The exception is of course at zero energy, in whic
 case particle-hole symmetry transforms between the electron and hole blocks, resulting
 in a symmetric scattering matrix. We can check the symmetry explicitly with
 
-.. literalinclude:: /code/include/superconductor.py
-    :start-after: #HIDDEN_BEGIN_pqmp
-    :end-before: #HIDDEN_END_pqmp
+.. jupyter-execute::
+
+    def check_PHS(syst):
+        # Scattering matrix
+        s = kwant.smatrix(syst, energy=0)
+        # Electron to electron block
+        s_ee = s.submatrix((0,0), (0,0))
+        # Hole to hole block
+        s_hh = s.submatrix((0,1), (0,1))
+        print('s_ee: \n', np.round(s_ee, 3))
+        print('s_hh: \n', np.round(s_hh[::-1, ::-1], 3))
+        print('s_ee - s_hh^*: \n',
+              np.round(s_ee - s_hh[::-1, ::-1].conj(), 3), '\n')
+        # Electron to hole block
+        s_he = s.submatrix((0,1), (0,0))
+        # Hole to electron block
+        s_eh = s.submatrix((0,0), (0,1))
+        print('s_he: \n', np.round(s_he, 3))
+        print('s_eh: \n', np.round(s_eh[::-1, ::-1], 3))
+        print('s_he + s_eh^*: \n',
+              np.round(s_he + s_eh[::-1, ::-1].conj(), 3))
 
 which yields the output
 
-.. literalinclude:: /code/figure/check_PHS_out.txt
+.. jupyter-execute::
+    :hide-code:
+
+    check_PHS(syst)
 
 Note that :math:`\mathcal{P}` flips the sign of momentum, and for the parameters
 we consider here, there are two electron and two hole modes active at zero energy.
