@@ -6,7 +6,29 @@ Band structure calculations
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`band_structure.py </code/download/band_structure.py>`
+    :jupyter-download:script:`band_structure`
+
+.. jupyter-kernel::
+    :id: band_structure
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.4.1. Band structure calculations
+    # ===========================================
+    #
+    # Physics background
+    # ------------------
+    #  band structure of a simple quantum wire in tight-binding approximation
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - Computing the band structure of a finalized lead.
+
+    import kwant
+
+    # For plotting
+    from matplotlib import pyplot
 
 When doing transport simulations, one also often needs to know the band
 structure of the leads, i.e. the energies of the propagating plane waves in the
@@ -19,9 +41,26 @@ tight-binding wire.
 Computing band structures in Kwant is easy. Just define a lead in the
 usual way:
 
-.. literalinclude:: /code/include/band_structure.py
-    :start-after: #HIDDEN_BEGIN_zxip
-    :end-before: #HIDDEN_END_zxip
+.. jupyter-execute::
+
+    def make_lead(a=1, t=1.0, W=10):
+        # Start with an empty lead with a single square lattice
+        lat = kwant.lattice.square(a)
+
+        sym_lead = kwant.TranslationalSymmetry((-a, 0))
+        lead = kwant.Builder(sym_lead)
+
+        # build up one unit cell of the lead, and add the hoppings
+        # to the next unit cell
+        for j in range(W):
+            lead[lat(0, j)] = 4 * t
+
+            if j > 0:
+                lead[lat(0, j), lat(0, j - 1)] = -t
+
+            lead[lat(1, j), lat(0, j)] = -t
+
+        return lead
 
 "Usual way" means defining a translational symmetry vector, as well
 as one unit cell of the lead, and the hoppings to neighboring
@@ -42,13 +81,24 @@ do something more profound with the dispersion relation these energies may be
 calculated directly using `~kwant.physics.Bands`. For now we just plot the
 bandstructure:
 
-.. literalinclude:: /code/include/band_structure.py
-    :start-after: #HIDDEN_BEGIN_pejz
-    :end-before: #HIDDEN_END_pejz
+.. jupyter-execute::
+
+    def main():
+        lead = make_lead().finalized()
+        kwant.plotter.bands(lead, show=False)
+        pyplot.xlabel("momentum [(lattice constant)^-1]")
+        pyplot.ylabel("energy [t]")
+        pyplot.show()
 
 This gives the result:
 
-.. image:: /code/figure/band_structure_result.*
+.. jupyter-execute::
+    :hide-code:
+
+    # Call the main function if the script gets executed (as opposed to imported).
+    # See <http://docs.python.org/library/__main__.html>.
+    if __name__ == '__main__':
+        main()
 
 where we observe the cosine-like dispersion of the square lattice. Close
 to ``k=0`` this agrees well with the quadratic dispersion this tight-binding
