@@ -111,7 +111,31 @@ Closed systems
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`closed_system.py </code/download/closed_system.py>`
+    :jupyter-download:script:`closed_system`
+
+.. jupyter-kernel::
+    :id: closed_system
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.4.2. Closed systems
+    # ==============================
+    #
+    # Physics background
+    # ------------------
+    #  Fock-darwin spectrum of a quantum dot (energy spectrum in
+    #  as a function of a magnetic field)
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - Use of `hamiltonian_submatrix` in order to obtain a Hamiltonian
+    #    matrix.
+
+    from cmath import exp
+    import numpy as np
+    from matplotlib import pyplot
+    import kwant
 
 Although Kwant is (currently) mainly aimed towards transport problems, it
 can also easily be used to compute properties of closed systems -- after
@@ -124,16 +148,49 @@ To compute the eigenenergies and eigenstates, we will make use of the sparse
 linear algebra functionality of `SciPy <https://www.scipy.org>`_, which
 interfaces the ARPACK package:
 
-.. literalinclude:: /code/include/closed_system.py
-    :start-after: #HIDDEN_BEGIN_tibv
-    :end-before: #HIDDEN_END_tibv
+
+.. jupyter-execute::
+
+    # For eigenvalue computation
+    import scipy.sparse.linalg as sla
 
 We set up the system using the `shape`-function as in
 :ref:`tutorial-abring`, but do not add any leads:
 
-.. literalinclude:: /code/include/closed_system.py
-    :start-after: #HIDDEN_BEGIN_qlyd
-    :end-before: #HIDDEN_END_qlyd
+.. jupyter-execute::
+    :hide-code:
+
+    a = 1
+    t = 1.0
+    r = 10
+
+.. jupyter-execute::
+
+    def make_system(a=1, t=1.0, r=10):
+
+        lat = kwant.lattice.square(a, norbs=1)
+
+        syst = kwant.Builder()
+
+        # Define the quantum dot
+        def circle(pos):
+            (x, y) = pos
+            rsq = x ** 2 + y ** 2
+            return rsq < r ** 2
+
+        def hopx(site1, site2, B):
+            # The magnetic field is controlled by the parameter B
+            y = site1.pos[1]
+            return -t * exp(-1j * B * y)
+
+        syst[lat.shape(circle, (0, 0))] = 4 * t
+        # hoppings in x-direction
+        syst[kwant.builder.HoppingKind((1, 0), lat, lat)] = hopx
+        # hoppings in y-directions
+        syst[kwant.builder.HoppingKind((0, 1), lat, lat)] = -t
+
+        # It's a closed system for a change, so no leads
+        return syst
 
 We add the magnetic field using a function and a global variable as we
 did in the two previous tutorial. (Here, the gauge is chosen such that
@@ -143,14 +200,40 @@ The spectrum can be obtained by diagonalizing the Hamiltonian of the
 system, which in turn can be obtained from the finalized
 system using `~kwant.system.System.hamiltonian_submatrix`:
 
-.. literalinclude:: /code/include/closed_system.py
-    :start-after: #HIDDEN_BEGIN_yvri
-    :end-before: #HIDDEN_END_yvri
+.. jupyter-execute::
+
+    def plot_spectrum(syst, Bfields):
+
+        energies = []
+        for B in Bfields:
+            # Obtain the Hamiltonian as a sparse matrix
+            ham_mat = syst.hamiltonian_submatrix(params=dict(B=B), sparse=True)
+
+            # we only calculate the 15 lowest eigenvalues
+            ev = sla.eigsh(ham_mat.tocsc(), k=15, sigma=0,
+                           return_eigenvectors=False)
+
+            energies.append(ev)
+
+        pyplot.figure()
+        pyplot.plot(Bfields, energies)
+        pyplot.xlabel("magnetic field [arbitrary units]")
+        pyplot.ylabel("energy [t]")
+        pyplot.show()
 
 Note that we use sparse linear algebra to efficiently calculate only a
 few lowest eigenvalues. Finally, we obtain the result:
 
-.. image:: /code/figure/closed_system_result.*
+.. jupyter-execute::
+    :hide-code:
+
+    syst = make_system()
+
+    syst = syst.finalized()
+
+    # We should observe energy levels that flow towards Landau
+    # level energies with increasing magnetic field.
+    plot_spectrum(syst, [iB * 0.002 for iB in range(100)])
 
 At zero magnetic field several energy levels are degenerate (since our
 quantum dot is rather symmetric). These degeneracies are split
@@ -160,11 +243,34 @@ Landau level energies at higher magnetic fields [#]_.
 The eigenvectors are obtained very similarly, and can be plotted directly
 using `~kwant.plotter.map`:
 
-.. literalinclude:: /code/include/closed_system.py
-    :start-after: #HIDDEN_BEGIN_wave
-    :end-before: #HIDDEN_END_wave
+.. jupyter-execute::
+    :hide-code:
 
-.. image:: /code/figure/closed_system_eigenvector.*
+    def sorted_eigs(ev):
+        evals, evecs = ev
+        evals, evecs = map(np.array, zip(*sorted(zip(evals, evecs.transpose()))))
+        return evals, evecs.transpose()
+
+.. jupyter-execute::
+
+    def plot_wave_function(syst, B=0.001):
+        # Calculate the wave functions in the system.
+        ham_mat = syst.hamiltonian_submatrix(sparse=True, params=dict(B=B))
+        evals, evecs = sorted_eigs(sla.eigsh(ham_mat.tocsc(), k=20, sigma=0))
+
+        # Plot the probability density of the 10th eigenmode.
+        kwant.plotter.map(syst, np.abs(evecs[:, 9])**2,
+                          colorbar=False, oversampling=1)
+
+.. jupyter-execute::
+    :hide-code:
+
+    syst = make_system(r=30)
+
+    # Plot an eigenmode of a circular dot. Here we create a larger system for
+    # better spatial resolution.
+    syst = make_system(r=30).finalized()
+    plot_wave_function(syst);
 
 The last two arguments to `~kwant.plotter.map` are optional.  The first prevents
 a colorbar from appearing.  The second, ``oversampling=1``, makes the image look
@@ -177,11 +283,22 @@ that they can have *non-zero* local current. We can calculate the local
 current due to a state by using `kwant.operator.Current` and plotting
 it using `kwant.plotter.current`:
 
-.. literalinclude:: /code/include/closed_system.py
-    :start-after: #HIDDEN_BEGIN_current
-    :end-before: #HIDDEN_END_current
+.. jupyter-execute::
 
-.. image:: /code/figure/closed_system_current.*
+    def plot_current(syst, B=0.001):
+        # Calculate the wave functions in the system.
+        ham_mat = syst.hamiltonian_submatrix(sparse=True, params=dict(B=B))
+        evals, evecs = sorted_eigs(sla.eigsh(ham_mat.tocsc(), k=20, sigma=0))
+
+        # Calculate and plot the local current of the 10th eigenmode.
+        J = kwant.operator.Current(syst)
+        current = J(evecs[:, 9], params=dict(B=B))
+        kwant.plotter.current(syst, current, colorbar=False)
+
+.. jupyter-execute::
+    :hide-code:
+
+    plot_current(syst);
 
 .. specialnote:: Technical details
 
