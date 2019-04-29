@@ -193,7 +193,28 @@ visible. The hoppings are also plotted in order to show the underlying lattice.
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`plot_zincblende.py </code/download/plot_zincblende.py>`
+    :jupyter-download:script:`plot_zincblende`
+
+.. jupyter-kernel::
+    :id: plot_zincblende
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.8.2. 3D example: zincblende structure
+    # ================================================
+    #
+    # Physical background
+    # -------------------
+    #  - 3D Bravais lattices
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - demonstrate different ways of plotting in 3D
+
+    from matplotlib import pyplot
+
+    import kwant
 
 Zincblende is a very common crystal structure of semiconductors. It is a
 face-centered cubic crystal with two inequivalent atoms in the unit cell
@@ -202,18 +223,29 @@ structure, but two equivalent atoms per unit cell).
 
 It is very easily generated in Kwant with `kwant.lattice.general`:
 
-.. literalinclude:: /code/include/plot_zincblende.py
-    :start-after: #HIDDEN_BEGIN_zincblende1
-    :end-before: #HIDDEN_END_zincblende1
+.. jupyter-execute::
+
+    lat = kwant.lattice.general([(0, 0.5, 0.5), (0.5, 0, 0.5), (0.5, 0.5, 0)],
+                                [(0, 0, 0), (0.25, 0.25, 0.25)])
+    a, b = lat.sublattices
 
 Note how we keep references to the two different sublattices for later use.
 
 A three-dimensional structure is created as easily as in two dimensions, by
 using the `~kwant.lattice.PolyatomicLattice.shape`-functionality:
 
-.. literalinclude:: /code/include/plot_zincblende.py
-    :start-after: #HIDDEN_BEGIN_zincblende2
-    :end-before: #HIDDEN_END_zincblende2
+.. jupyter-execute::
+
+    def make_cuboid(a=15, b=10, c=5):
+        def cuboid_shape(pos):
+            x, y, z = pos
+            return 0 <= x < a and 0 <= y < b and 0 <= z < c
+
+        syst = kwant.Builder()
+        syst[lat.shape(cuboid_shape, (0, 0, 0))] = None
+        syst[lat.neighbors()] = None
+
+        return syst
 
 We restrict ourselves here to a simple cuboid, and do not bother to add real
 values for onsite and hopping energies, but only the placeholder ``None`` (in a
@@ -222,13 +254,11 @@ real calculation, several atomic orbitals would have to be considered).
 `~kwant.plotter.plot` can plot 3D systems just as easily as its two-dimensional
 counterparts:
 
-.. literalinclude:: /code/include/plot_zincblende.py
-    :start-after: #HIDDEN_BEGIN_plot1
-    :end-before: #HIDDEN_END_plot1
+.. jupyter-execute::
 
-resulting in
+    syst = make_cuboid()
 
-.. image:: /code/figure/plot_zincblende_syst1.*
+    kwant.plot(syst);
 
 You might notice that the standard options for plotting are quite different in
 3D than in 2D. For example, by default hoppings are not printed, but sites are
@@ -250,14 +280,18 @@ Also for 3D it is possible to customize the plot. For example, we
 can explicitly plot the hoppings as lines, and color sites differently
 depending on the sublattice:
 
-.. literalinclude:: /code/include/plot_zincblende.py
-    :start-after: #HIDDEN_BEGIN_plot2
-    :end-before: #HIDDEN_END_plot2
+.. jupyter-execute::
+
+    syst = make_cuboid(a=1.5, b=1.5, c=1.5)
+
+    def family_colors(site):
+        return 'r' if site.family == a else 'g'
+
+    kwant.plot(syst, site_size=0.18, site_lw=0.01, hop_lw=0.05,
+               site_color=family_colors);
 
 which results in a 3D plot that allows to interactively (when plotted
-in a window) explore the crystal structure:
-
-.. image:: /code/figure/plot_zincblende_syst2.*
+in a window) explore the crystal structure.
 
 Hence, a few lines of code using Kwant allow to explore all the different
 crystal lattices out there!
