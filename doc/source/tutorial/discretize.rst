@@ -18,8 +18,29 @@ continuum models and for discretizing them into tight-binding models.
 
 .. seealso::
     The complete source code of this tutorial can be found in
-    :download:`discretize.py </code/download/discretize.py>`
+    :jupyter-download:script:`discretize`
 
+.. jupyter-kernel::
+    :id: discretize
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.9. Processing continuum Hamiltonians with discretize
+    # ===============================================================
+    #
+    # Physics background
+    # ------------------
+    #  - tight-binding approximation of continuous Hamiltonians
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - kwant.continuum.discretize
+
+    import matplotlib as mpl
+    from matplotlib import pyplot
+
+    import kwant
 
 .. _tutorial_discretizer_introduction:
 
@@ -55,9 +76,16 @@ Using `~kwant.continuum.discretize` to obtain a template
 ........................................................
 First we must explicitly import the `kwant.continuum` package:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_import
-    :end-before: #HIDDEN_END_import
+.. jupyter-execute::
+
+    import kwant.continuum
+
+.. jupyter-execute::
+    :hide-code:
+
+    import scipy.sparse.linalg
+    import scipy.linalg
+    import numpy as np
 
 The function `kwant.continuum.discretize` takes a symbolic Hamiltonian and
 turns it into a `~kwant.builder.Builder` instance with appropriate spatial
@@ -65,17 +93,16 @@ symmetry that serves as a template.
 (We will see how to use the template to build systems with a particular
 shape later).
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_symbolic_discretization
-    :end-before: #HIDDEN_END_symbolic_discretization
+.. jupyter-execute::
+
+    template = kwant.continuum.discretize('k_x * A(x) * k_x')
+    print(template)
 
 It is worth noting that ``discretize`` treats ``k_x`` and ``x`` as
 non-commuting operators, and so their order is preserved during the
 discretization process.
 
-The builder produced by ``discretize`` may be printed to show the source code of its onsite and hopping functions (this is a special feature of builders returned by ``discretize``):
-
-.. literalinclude:: /code/figure/discretizer_intro_verbose.txt
+Printing the Builder produced by ``discretize`` shows the source code of its onsite and hopping functions (this is a special feature of builders returned by ``discretize``).
 
 .. specialnote:: Technical details
 
@@ -139,26 +166,45 @@ where :math:`V(x, y)` is some arbitrary potential.
 First, use ``discretize`` to obtain a
 builder that we will use as a template:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_template
-    :end-before: #HIDDEN_END_template
+.. jupyter-execute::
+
+    hamiltonian = "k_x**2 + k_y**2 + V(x, y)"
+    template = kwant.continuum.discretize(hamiltonian)
+    print(template)
 
 We now use this system with the `~kwant.builder.Builder.fill`
 method of `~kwant.builder.Builder` to construct the system we
 want to investigate:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_fill
-    :end-before: #HIDDEN_END_fill
+.. jupyter-execute::
+
+    def stadium(site):
+        (x, y) = site.pos
+        x = max(abs(x) - 20, 0)
+        return x**2 + y**2 < 30**2
+
+    syst = kwant.Builder()
+    syst.fill(template, stadium, (0, 0));
+    syst = syst.finalized()
 
 After finalizing this system, we can plot one of the system's
 energy eigenstates:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_plot_eigenstate
-    :end-before: #HIDDEN_END_plot_eigenstate
+.. jupyter-execute::
 
-.. image:: /code/figure/discretizer_gs.*
+    def plot_eigenstate(syst, n=2, Vx=.0003, Vy=.0005):
+
+        def potential(x, y):
+            return Vx * x + Vy * y
+
+        ham = syst.hamiltonian_submatrix(params=dict(V=potential), sparse=True)
+        evecs = scipy.sparse.linalg.eigsh(ham, k=10, which='SM')[1]
+        kwant.plotter.map(syst, abs(evecs[:, n])**2, show=False)
+
+.. jupyter-execute::
+    :hide-code:
+
+    plot_eigenstate(syst)
 
 Note in the above that we pass the spatially varying potential *function*
 to our system via a parameter called ``V``, because the symbol :math:`V`
@@ -176,32 +222,95 @@ model [1]_ [2]_, one can provide matrix input to `~kwant.continuum.discretize`
 using ``identity`` and ``kron``. For example, the definition of the BHZ model can be
 written succinctly as:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_define_qsh
-    :end-before: #HIDDEN_END_define_qsh
+.. jupyter-execute::
+
+    hamiltonian = """
+       + C * identity(4) + M * kron(sigma_0, sigma_z)
+       - B * (k_x**2 + k_y**2) * kron(sigma_0, sigma_z)
+       - D * (k_x**2 + k_y**2) * kron(sigma_0, sigma_0)
+       + A * k_x * kron(sigma_z, sigma_x)
+       - A * k_y * kron(sigma_0, sigma_y)
+    """
+
+    a = 20
+
+    template = kwant.continuum.discretize(hamiltonian, grid=a)
 
 We can then make a ribbon out of this template system:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_define_qsh_build
-    :end-before: #HIDDEN_END_define_qsh_build
+.. jupyter-execute::
+
+    L, W = 2000, 1000
+
+    def shape(site):
+        (x, y) = site.pos
+        return (0 <= y < W and 0 <= x < L)
+
+    def lead_shape(site):
+        (x, y) = site.pos
+        return (0 <= y < W)
+
+    syst = kwant.Builder()
+    syst.fill(template, shape, (0, 0))
+
+    lead = kwant.Builder(kwant.TranslationalSymmetry([-a, 0]))
+    lead.fill(template, lead_shape, (0, 0))
+
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+
+    syst = syst.finalized()
 
 and plot its dispersion using `kwant.plotter.bands`:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_plot_qsh_band
-    :end-before: #HIDDEN_END_plot_qsh_band
+.. jupyter-execute::
 
-.. image:: /code/figure/discretizer_qsh_band.*
+    params = dict(A=3.65, B=-68.6, D=-51.1, M=-0.01, C=0)
+
+    kwant.plotter.bands(syst.leads[0], params=params,
+                        momenta=np.linspace(-0.3, 0.3, 201), show=False)
+
+    pyplot.grid()
+    pyplot.xlim(-.3, 0.3)
+    pyplot.ylim(-0.05, 0.05)
+    pyplot.xlabel('momentum [1/A]')
+    pyplot.ylabel('energy [eV]')
+    pyplot.show()
 
 In the above we see the edge states of the quantum spin Hall effect, which
 we can visualize using `kwant.plotter.map`:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_plot_qsh_wf
-    :end-before: #HIDDEN_END_plot_qsh_wf
+.. jupyter-execute::
 
-.. image:: /code/figure/discretizer_qsh_wf.*
+    # get scattering wave functions at E=0
+    wf = kwant.wave_function(syst, energy=0, params=params)
+
+    # prepare density operators
+    sigma_z = np.array([[1, 0], [0, -1]])
+    prob_density = kwant.operator.Density(syst, np.eye(4))
+    spin_density = kwant.operator.Density(syst, np.kron(sigma_z, np.eye(2)))
+
+    # calculate expectation values and plot them
+    wf_sqr = sum(prob_density(psi) for psi in wf(0))  # states from left lead
+    rho_sz = sum(spin_density(psi) for psi in wf(0))  # states from left lead
+
+    fig, (ax1, ax2) = pyplot.subplots(1, 2, sharey=True, figsize=(16, 4))
+    kwant.plotter.map(syst, wf_sqr, ax=ax1)
+    kwant.plotter.map(syst, rho_sz, ax=ax2)
+
+    ax = ax1
+    im = [obj for obj in ax.get_children()
+          if isinstance(obj, mpl.image.AxesImage)][0]
+    fig.colorbar(im, ax=ax)
+
+    ax = ax2
+    im = [obj for obj in ax.get_children()
+          if isinstance(obj, mpl.image.AxesImage)][0]
+    fig.colorbar(im, ax=ax)
+
+    ax1.set_title('Probability density')
+    ax2.set_title('Spin density')
+    pyplot.show()
 
 
 Limitations of discretization
@@ -238,29 +347,62 @@ example. Let us start from the continuum Hamiltonian
 We start by defining this model as a string and setting the value of the
 :math:`α` parameter:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_ls_def
-    :end-before: #HIDDEN_END_ls_def
+.. jupyter-execute::
+
+    hamiltonian = "k_x**2 * identity(2) + alpha * k_x * sigma_y"
+    params = dict(alpha=.5)
 
 Now we can use `kwant.continuum.lambdify` to obtain a function that computes
 :math:`H(k)`:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_ls_hk_cont
-    :end-before: #HIDDEN_END_ls_hk_cont
+.. jupyter-execute::
+
+    h_k = kwant.continuum.lambdify(hamiltonian, locals=params)
+    k_cont = np.linspace(-4, 4, 201)
+    e_cont = [scipy.linalg.eigvalsh(h_k(k_x=ki)) for ki in k_cont]
 
 We can also construct a discretized approximation using
 `kwant.continuum.discretize`, in a similar manner to previous examples:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_ls_hk_tb
-    :end-before: #HIDDEN_END_ls_hk_tb
+.. jupyter-execute::
+
+    def plot(ax, a=1):
+        template = kwant.continuum.discretize(hamiltonian, grid=a)
+        syst = kwant.wraparound.wraparound(template).finalized()
+
+        def h_k(k_x):
+            p = dict(k_x=k_x, **params)
+            return syst.hamiltonian_submatrix(params=p)
+
+        k_tb = np.linspace(-np.pi/a, np.pi/a, 201)
+        e_tb = [scipy.linalg.eigvalsh(h_k(k_x=a*ki)) for ki in k_tb]
+
+        ax.plot(k_cont, e_cont, 'r-')
+        ax.plot(k_tb, e_tb, 'k-')
+
+        ax.plot([], [], 'r-', label='continuum')
+        ax.plot([], [], 'k-', label='tight-binding')
+
+        ax.set_xlim(-4, 4)
+        ax.set_ylim(-1, 14)
+        ax.set_title('a={}'.format(a))
+
+        ax.set_xlabel('momentum [a.u.]')
+        ax.set_ylabel('energy [a.u.]')
+        ax.grid()
+        ax.legend()
 
 Below we can see the continuum and tight-binding dispersions for two
 different values of the discretization grid spacing :math:`a`:
 
-.. image:: /code/figure/discretizer_lattice_spacing.*
+.. jupyter-execute::
+    :hide-code:
 
+    _, (ax1, ax2) = pyplot.subplots(1, 2, sharey=True, figsize=(12, 4))
+
+    plot(ax1, a=1)
+    plot(ax2, a=.25)
+    pyplot.show()
 
 We clearly see that the smaller grid spacing is, the better we approximate
 the original continuous dispersion. It is also worth remembering that the
@@ -284,20 +426,26 @@ It is possible to use ``identity`` (for identity matrix), ``kron`` (for Kronecke
 expressions involving matrices. Matrices can also be provided explicitly using
 square ``[]`` brackets. For example, all following expressions are equivalent:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_subs_1
-    :end-before: #HIDDEN_END_subs_1
+.. jupyter-execute::
 
-.. literalinclude:: /code/figure/discretizer_subs_1.txt
+    sympify = kwant.continuum.sympify
+    subs = {'sx': [[0, 1], [1, 0]], 'sz': [[1, 0], [0, -1]]}
+
+    e = (
+        sympify('[[k_x**2, alpha * k_x], [k_x * alpha, -k_x**2]]'),
+        sympify('k_x**2 * sigma_z + alpha * k_x * sigma_x'),
+        sympify('k_x**2 * sz + alpha * k_x * sx', locals=subs),
+    )
+
+    print(e[0] == e[1] == e[2])
 
 We can use the ``locals`` keyword parameter to substitute expressions
 and numerical values:
 
-.. literalinclude:: /code/include/discretize.py
-    :start-after: #HIDDEN_BEGIN_subs_2
-    :end-before: #HIDDEN_END_subs_2
+.. jupyter-execute::
 
-.. literalinclude:: /code/figure/discretizer_subs_2.txt
+    subs = {'A': 'A(x) + B', 'V': 'V(x) + V_0', 'C': 5}
+    print(sympify('k_x * A * k_x + V + C', locals=subs))
 
 Symbolic expressions obtained in this way can be directly passed to all
 ``discretizer`` functions.
