@@ -239,6 +239,8 @@ build documentation:
     - build:latest
   stage: test
   script:
+    - pip install git+https://github.com/jupyter-widgets/jupyter-sphinx
+    - python -m ipykernel install --user --name kwant-latest
     - make -C doc realclean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
   artifacts:
     paths:
@@ -251,6 +253,8 @@ build PDF documentation:
     - build:latest
   stage: test
   script:
+    - pip install git+https://github.com/jupyter-widgets/jupyter-sphinx
+    - python -m ipykernel install --user --name kwant-latest
     - make -C doc latex SPHINXOPTS='-n -W'
     - cd doc/build/latex
     - make all-pdf
