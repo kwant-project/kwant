@@ -28,11 +28,40 @@ tight-binding band structures or construct systems with different/lower
 symmetry. For example in just a few lines we can construct a two-band model that exhibits
 a quantum anomalous spin Hall phase:
 
-.. literalinclude:: ../../code/include/plot_qahe.py
-    :start-after: HIDDEN_BEGIN_model
-    :end-before: HIDDEN_END_model
+.. jupyter-kernel::
+    :id: plot_qahe
 
-From: :download:`QAHE example script <../../code/download/plot_qahe.py>`
+.. jupyter-execute::
+    :hide-code:
+
+    # Comprehensive example: quantum anomalous Hall effect
+    # ====================================================
+    #
+    # Physics background
+    # ------------------
+    # + Quantum anomalous Hall effect
+    #
+    # Features highlighted
+    # --------------------
+    # + Use of `kwant.continuum` to discretize a continuum Hamiltonian
+    # + Use of `kwant.operator` to compute local current
+    # + Use of `kwant.plotter.current` to plot local current
+
+    import math
+    import matplotlib.pyplot
+    import kwant
+    import kwant.continuum
+
+.. jupyter-execute::
+
+    def make_model(a):
+        ham = ("alpha * (k_x * sigma_x - k_y * sigma_y)"
+               "+ (m + beta * kk) * sigma_z"
+               "+ (gamma * kk + U) * sigma_0")
+        subs = {"kk": "k_x**2 + k_y**2"}
+        return kwant.continuum.discretize(ham, locals=subs, grid=a)
+
+From: :jupyter-download:script:`plot_qahe`
 
 See the tutorial: :doc:`../../tutorial/discretize`
 
@@ -71,13 +100,47 @@ The example below shows edge states of a quantum anomalous Hall phase
 of the two-band model shown in the `above section
 <#tools-for-continuum-hamiltonians>`_:
 
-.. literalinclude:: ../../code/include/plot_qahe.py
-    :start-after: HIDDEN_BEGIN_current
-    :end-before: HIDDEN_END_current
+.. jupyter-execute::
+    :hide-code:
 
-.. image:: ../../code/figure/plot_qahe_current.*
+    def make_system(model, L):
+        def lead_shape(site):
+            x, y = site.pos / L
+            return abs(y) < 0.5
 
-From: :download:`QAHE example script <../../code/download/plot_qahe.py>`
+        # QPC shape: a rectangle with 2 gaussians
+        # etched out of the top and bottom edge.
+        def central_shape(site):
+            x, y = site.pos / L
+            return abs(x) < 3/5 and abs(y) < 0.5 - 0.4 * math.exp(-40 * x**2)
+
+        lead = kwant.Builder(kwant.TranslationalSymmetry(
+            model.lattice.vec((-1, 0))))
+        lead.fill(model, lead_shape, (0, 0))
+
+        syst = kwant.Builder()
+        syst.fill(model, central_shape, (0, 0))
+        syst.attach_lead(lead)
+        syst.attach_lead(lead.reversed())
+
+        return syst.finalized()
+
+    # Set up our model and system, and define the model parameters.
+    params = dict(alpha=0.365, beta=0.686, gamma=0.512, m=-0.01, U=0)
+    model = make_model(1)
+    syst = make_system(model, 70)
+
+    # Calculate the scattering states at energy 'm' coming from the left
+    # lead, and the associated particle current.
+    psi = kwant.wave_function(syst, energy=params['m'], params=params)(0)
+
+.. jupyter-execute::
+
+    J = kwant.operator.Current(syst).bind(params=params)
+    current = sum(J(p) for p in psi)
+    kwant.plotter.current(syst, current);
+
+From: :jupyter-download:script:`plot_qahe`
 
 Scattering states with discrete symmetries and conservation laws
 ----------------------------------------------------------------
