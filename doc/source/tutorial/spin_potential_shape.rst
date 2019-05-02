@@ -414,7 +414,7 @@ Up to now, we only dealt with simple wire geometries. Now we turn to the case
 of a more complex geometry, namely transport through a quantum ring
 that is pierced by a magnetic flux :math:`\Phi`:
 
-.. image:: /code/figure/ab_ring_sketch.*
+.. image:: /figure/ab_ring_sketch.*
 
 For a flux line, it is possible to choose a gauge such that a
 charged particle acquires a phase :math:`e\Phi/h` whenever it
@@ -551,7 +551,7 @@ back (going opposite to the direction of the translational vector)
 until it intersects the scattering region. At this intersection,
 the lead is attached:
 
-.. image:: /code/figure/ab_ring_sketch2.*
+.. image:: /figure/ab_ring_sketch2.*
 
 After the lead has been attached, the system should look like this:
 

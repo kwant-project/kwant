@@ -81,7 +81,7 @@ of freedom.
 Let us consider a system that consists of a normal lead on the left,
 a superconductor on the right, and a tunnel barrier in between:
 
-.. image:: /code/figure/superconductor_transport_sketch.*
+.. image:: /figure/superconductor_transport_sketch.*
 
 We implement the BdG Hamiltonian in Kwant using a 2x2 matrix structure
 for all Hamiltonian matrix elements, as we did
