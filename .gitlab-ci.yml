@@ -218,7 +218,7 @@ build documentation:
   script:
     - pip install git+https://github.com/jupyter-widgets/jupyter-sphinx
     - python -m ipykernel install --user --name kwant-latest
-    - make -C doc realclean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W -D jupyter_execute_default_kernel=kwant-latest' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
+    - make -C doc clean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W -D jupyter_execute_default_kernel=kwant-latest' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
   artifacts:
     paths:
       - doc/build/html/
