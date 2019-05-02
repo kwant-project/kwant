@@ -8,13 +8,7 @@
 /dist
 /doc/build
 /doc/source/reference/generated/
-/doc/source/code/include/*.py
-/doc/source/code/figure/*.png
-/doc/source/code/figure/*.pdf
-/doc/source/code/figure/.*_flag
-/doc/source/code/figure/[a-zA-Z]*.py
-/doc/source/code/figure/*.txt
-/doc/source/code/download/
+/doc/source/figure/*.pdf
 /build.conf
 /kwant.egg-info/
 /MANIFEST.in
