@@ -150,16 +150,6 @@ check for dependencies installed:
     reports:
       junit: tests.xml
 
-.coverage: &coverage
-  stage: test
-  script:
-    - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant --junitxml=tests.xml --durations=10
-  artifacts:
-    paths:
-      - htmlcov
-    reports:
-      junit: tests.xml
-
 
 test:stable:
   <<: *test
@@ -248,38 +238,7 @@ check for broken links in doc:
   allow_failure: true
 
 
-## Upload coverage reports and dev documentation
-
-upload coverage:
-  stage: deploy
-  only:
-    - schedules
-  dependencies:
-    - coverage:latest
-  environment:
-    name: coverage/$CI_BUILD_REF_NAME
-    url: https://kwant-project.org/coverage/$CI_BUILD_REF_SLUG
-    on_stop: remove_coverage
-  script:
-    - eval $(ssh-agent -s)
-    - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
-    - mv htmlcov $CI_BUILD_REF_SLUG
-    - rsync -rlv -e "$SSH_COMMAND" --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
-
-
-remove_coverage:
-  stage: deploy
-  only:
-    - branches@kwant/kwant
-  when: manual
-  environment:
-    name: coverage/$CI_BUILD_REF_NAME
-    action: stop
-  script:
-    - eval $(ssh-agent -s)
-    - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
-    - mkdir empty/
-    - rsync -rlv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
+## Upload dev documentation
 
 
 upload documentation to the test server:
