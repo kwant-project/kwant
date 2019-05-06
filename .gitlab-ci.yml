@@ -173,6 +173,16 @@ check for dependencies installed:
     reports:
       junit: tests.xml
 
+.coverage: &coverage
+  stage: test
+  script:
+    - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant --junitxml=tests.xml --durations=10
+  artifacts:
+    paths:
+      - htmlcov
+    reports:
+      junit: tests.xml
+
 
 test:stable:
   <<: *test
@@ -213,6 +223,14 @@ test:bleeding-edge:
     - schedules
   allow_failure: true
 
+coverage:latest
+  << *coverage
+  << *latest_env
+  dependencies:
+    - build:latest
+  only:
+    - schedules
+
 ## Documentation building
 
 build documentation:
@@ -251,7 +269,44 @@ check for broken links in doc:
   allow_failure: true
 
 
-## Upload dev documentation
+## Upload coverage reports and dev documentation
+
+upload coverage:
+  stage: deploy
+  only:
+    - schedules
+  dependencies:
+    - coverage:latest
+  environment:
+    name: coverage/$CI_BUILD_REF_NAME
+    url: https://kwant-project.org/coverage/$CI_BUILD_REF_SLUG
+    on_stop: remove_coverage
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+  script:
+    - mv htmlcov $CI_BUILD_REF_SLUG
+    - rsync -rlv -e "$IGNORE_HOSTKEY" --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
+  after_script:
+    - rm -rf ~/.ssh
+
+
+remove_coverage:
+  stage: deploy
+  only:
+    - branches@kwant/kwant
+  when: manual
+  environment:
+    name: coverage/$CI_BUILD_REF_NAME
+    action: stop
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+  script:
+    - mkdir empty/
+    - rsync -rlv -e "$IGNORE_HOSTKEY" --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
+  after_script:
+    - rm -rf ~/.ssh
 
 
 upload documentation to the test server:
