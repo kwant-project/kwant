@@ -223,9 +223,9 @@ test:bleeding-edge:
     - schedules
   allow_failure: true
 
-coverage:latest
-  << *coverage
-  << *latest_env
+coverage:latest:
+  <<: *coverage
+  <<: *latest_env
   dependencies:
     - build:latest
   only:
