@@ -13,7 +13,7 @@ Schrödinger equation
 .. math::
     H = \frac{-\hbar^2}{2m}(\partial_x^2 + \partial_y^2) + V(y)
 
-with a hard-wall confinement :math:`V(y)` in y-direction.
+with a hard-wall confinement :math:`V(y)` in the y-direction.
 
 To be able to implement the quantum wire with Kwant, the continuous Hamiltonian
 :math:`H` has to be discretized thus turning it into a tight-binding
@@ -94,7 +94,7 @@ In order to use Kwant, we need to import it:
 
 Enabling Kwant is as easy as this [#]_ !
 
-The first step is now the definition of the system with scattering region and
+The first step is now to define the system with scattering region and
 leads. For this we make use of the `~kwant.builder.Builder` type that allows to
 define a system in a convenient way. We need to create an instance of it:
 
@@ -519,7 +519,7 @@ the right lead.  The only difference was the direction of the translational
 symmetry vector.  Here, we only construct the left lead, and use the method
 `~kwant.builder.Builder.reversed` of `~kwant.builder.Builder` to obtain a copy
 of a lead pointing in the opposite direction.  Both leads are attached as
-before and the finished system returned:
+before:
 
 .. jupyter-execute::
     :hide-output:
@@ -527,61 +527,29 @@ before and the finished system returned:
     syst.attach_lead(lead)
     syst.attach_lead(lead.reversed())
 
-
-The remainder of the script has been organized into two functions.  One for the
-plotting of the conductance.
-
+The remainder of the script proceeds identically. We first finalize the system:
 
 .. jupyter-execute::
 
-    def plot_conductance(syst, energies):
-        # Compute conductance
-        data = []
-        for energy in energies:
-            smatrix = kwant.smatrix(syst, energy)
-            data.append(smatrix.transmission(1, 0))
+    syst = syst.finalized()
 
-        pyplot.figure()
-        pyplot.plot(energies, data)
-        pyplot.xlabel("energy [t]")
-        pyplot.ylabel("conductance [e^2/h]")
-        pyplot.show()
-
-And one ``main`` function.
+and then calculate the transmission and plot:
 
 .. jupyter-execute::
 
-    def main():
-        # Check that the system looks as intended.
-        kwant.plot(syst)
+    energies = []
+    data = []
+    for ie in range(100):
+        energy = ie * 0.01
+        smatrix = kwant.smatrix(syst, energy)
+        energies.append(energy)
+        data.append(smatrix.transmission(1, 0))
 
-        # Finalize the system.
-        fsyst = syst.finalized()
-
-        # We should see conductance steps.
-        plot_conductance(fsyst, energies=[0.01 * i for i in range(100)])
-
-
-Finally, we use the following standard Python construct [#]_ to execute
-``main`` if the program is used as a script (i.e. executed as
-``python quantum_wire_revisited.py``):
-
-
-.. jupyter-execute::
-
-    # Call the main function if the script gets executed (as opposed to imported).
-    # See <http://docs.python.org/library/__main__.html>.
-    if __name__ == '__main__':
-        main()
-
-
-If the example, however, is imported inside Python using ``import
-quantum_wire_revisted as qw``, ``main`` is not executed automatically.
-Instead, you can execute it manually using ``qw.main()``.  On the other
-hand, you also have access to the other functions, ``make_system`` and
-``plot_conductance``, and can thus play with the parameters.
-
-The result of the example should be identical to the previous one.
+    pyplot.figure()
+    pyplot.plot(energies, data)
+    pyplot.xlabel("energy [t]")
+    pyplot.ylabel("conductance [e^2/h]")
+    pyplot.show()
 
 .. specialnote:: Technical details
 
@@ -651,6 +619,127 @@ The result of the example should be identical to the previous one.
      (This is the deeper reason why several sites cannot be added as a tuple --
      it would be impossible to distinguish whether one would like to add two
      separate sites, or one hopping.
+
+
+Tips for organizing your simulation scripts
+...........................................
+
+.. seealso::
+    The complete source code of this example can be found in
+    :jupyter-download:script:`quantum_wire_organized`
+
+
+.. jupyter-kernel::
+    :id: quantum_wire_organized
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.2.4. Organizing a simulation script
+    # ==============================================
+    #
+    # Physics background
+    # ------------------
+    #  Conductance of a quantum wire; subbands
+    #
+    # Note: Does the same as quantum_write_revisited.py, but features
+    #       better code organization
+
+
+The above two examples illustrate some of the core features of Kwant, however
+the code was presented in a style which is good for exposition, but which is
+bad for making your code understandable and reusable. In this example we will
+lay out some best practices for writing your own simulation scripts.
+
+In the above examples we constructed a single Kwant system, using global variables
+for parameters such as the lattice constant and the length and width of the system.
+Instead, it is preferable to create a *function* that you can call, and which will
+return a Kwant ``Builder``:
+
+.. jupyter-execute::
+
+    from matplotlib import pyplot
+    import kwant
+
+    def make_system(L, W, a=1, t=1.0):
+        lat = kwant.lattice.square(a)
+
+        syst = kwant.Builder()
+        syst[(lat(i, j) for i in range(L) for j in range(W))] = 4 * t
+        syst[lat.neighbors()] = -t
+
+        lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
+        lead[(lat(0, j) for j in range(W))] = 4 * t
+        lead[lat.neighbors()] = -t
+
+        syst.attach_lead(lead)
+        syst.attach_lead(lead.reversed())
+
+        return syst
+
+
+By encapsulating system creation within ``make_system`` we *document* our code
+by telling readers that *this* is how we create a system, and that creating a system
+depends on *these* parameters (the length and width of the system, in this case, as well
+as the lattice constant and the value for the hopping parameter). By defining a function
+we also ensure that we can consistently create different systems (e.g. of different sizes)
+of the same type (rectangular slab).
+
+We similarly encapsulate the part of the script that does computation and plotting into
+a function ``plot_conductance``:
+
+.. jupyter-execute::
+
+    def plot_conductance(syst, energies):
+        # Compute conductance
+        data = []
+        for energy in energies:
+            smatrix = kwant.smatrix(syst, energy)
+            data.append(smatrix.transmission(1, 0))
+
+        pyplot.figure()
+        pyplot.plot(energies, data)
+        pyplot.xlabel("energy [t]")
+        pyplot.ylabel("conductance [e^2/h]")
+        pyplot.show()
+
+And the ``main`` function that glues together the components that we previously defined:
+
+.. jupyter-execute::
+
+    def main():
+        syst = make_system(W=10, L=30)
+
+        # Check that the system looks as intended.
+        kwant.plot(syst)
+
+        # Finalize the system.
+        fsyst = syst.finalized()
+
+        # We should see conductance steps.
+        plot_conductance(fsyst, energies=[0.01 * i for i in range(100)])
+
+
+Finally, we use the following standard Python construct [#]_ to execute
+``main`` if the program is used as a script (i.e. executed as
+``python quantum_wire_organized.py``):
+
+
+.. jupyter-execute::
+
+    # Call the main function if the script gets executed (as opposed to imported).
+    # See <http://docs.python.org/library/__main__.html>.
+    if __name__ == '__main__':
+        main()
+
+If the example, however, is imported inside Python using ``import
+quantum_wire_organized as qw``, ``main`` is not executed automatically.
+Instead, you can execute it manually using ``qw.main()``.  On the other
+hand, you also have access to the other functions, ``make_system`` and
+``plot_conductance``, and can thus play with the parameters.
+
+The result of this example should be identical to the previous one.
+
 
 .. rubric:: Footnotes
 
