@@ -1980,7 +1980,9 @@ class FiniteSystem(_FinalizedBuilderMixin, system.FiniteSystem):
         to the integer-labeled site ``i`` of the low-level system. The sites
         are ordered first by their family and then by their tag.
     id_by_site : dict
-        The inverse of ``sites``; maps from ``i`` to ``sites[i]``.
+        The inverse of ``sites``; maps high-level `~kwant.builder.Site`
+        instances to their integer label.
+        Satisfies ``id_by_site[sites[i]] == i``.
     """
 
     def __init__(self, builder):
@@ -2097,7 +2099,9 @@ class InfiniteSystem(_FinalizedBuilderMixin, system.InfiniteSystem):
         ``sites[i]`` is the `~kwant.builder.Site` instance that corresponds
         to the integer-labeled site ``i`` of the low-level system.
     id_by_site : dict
-        The inverse of ``sites``; maps from ``i`` to ``sites[i]``.
+        The inverse of ``sites``; maps high-level `~kwant.builder.Site`
+        instances to their integer label.
+        Satisfies ``id_by_site[sites[i]] == i``.
 
     Notes
     -----
