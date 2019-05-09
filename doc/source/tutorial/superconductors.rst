@@ -85,11 +85,10 @@ a superconductor on the right, and a tunnel barrier in between:
 
 We implement the BdG Hamiltonian in Kwant using a 2x2 matrix structure
 for all Hamiltonian matrix elements, as we did
-previously in the :ref:`spin example <tutorial_spinorbit>`. We declare
-the square lattice and construct the scattering region with the following:
+previously in the :ref:`spin example <tutorial_spinorbit>`.
+We start by declaring some parameters that will be used in the following code:
 
 .. jupyter-execute::
-    :hide-code:
 
     a = 1
     W, L = 10, 10
@@ -97,8 +96,10 @@ the square lattice and construct the scattering region with the following:
     barrierpos = (3, 4)
     mu = 0.4
     Delta = 0.1
-    Deltapos=4
+    Deltapos = 4
     t = 1.0
+
+and we declare the square lattice and construct the scattering region with the following:
 
 .. jupyter-execute::
 
