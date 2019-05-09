@@ -84,6 +84,15 @@ unit matrix):
     sigma_y = tinyarray.array([[0, -1j], [1j, 0]])
     sigma_z = tinyarray.array([[1, 0], [0, -1]])
 
+and we also define some other parameters useful for constructing our system:
+
+.. jupyter-execute::
+
+    t = 1.0
+    alpha = 0.5
+    e_z = 0.08
+    W, L = 10, 30
+
 Previously, we used numbers as the values of our matrix elements.
 However, `~kwant.builder.Builder` also accepts matrices as values, and
 we can simply write:
@@ -91,17 +100,8 @@ we can simply write:
 .. jupyter-execute::
     :hide-code:
 
-    # Start with an empty tight-binding system and a single square lattice.
-    # `a` is the lattice constant (by default set to 1 for simplicity).
     lat = kwant.lattice.square()
-
     syst = kwant.Builder()
-
-    t = 1.0
-    alpha = 0.5
-    e_z = 0.08
-    W, L = 10, 30
-
 
 .. jupyter-execute::
 
@@ -260,22 +260,9 @@ Instead, we use a python *function* to define the onsite energies. We
 define the potential profile of a quantum well as:
 
 .. jupyter-execute::
-    :hide-code:
 
-    a = 1
-    t = 1.0
     W, L, L_well = 10, 30, 10
 
-.. jupyter-execute::
-
-    # Start with an empty tight-binding system and a single square lattice.
-    # `a` is the lattice constant (by default set to 1 for simplicity).
-    lat = kwant.lattice.square(a)
-
-    syst = kwant.Builder()
-
-    #### Define the scattering region. ####
-    # Potential profile
     def potential(site, pot):
         (x, y) = site.pos
         if (L - L_well) / 2 < x < (L + L_well) / 2:
@@ -293,8 +280,14 @@ Kwant now allows us to pass a function as a value to
 
 .. jupyter-execute::
 
+    a = 1
+    t = 1.0
+
     def onsite(site, pot):
         return 4 * t + potential(site, pot)
+
+    lat = kwant.lattice.square(a)
+    syst = kwant.Builder()
 
     syst[(lat(x, y) for x in range(L) for y in range(W))] = onsite
     syst[lat.neighbors()] = -t
@@ -429,24 +422,9 @@ that returns ``True`` whenever a point is inside the shape, and
 ``False`` otherwise:
 
 .. jupyter-execute::
-    :hide-code:
 
-    a = 1
-    t = 1.0
-    W = 10
     r1, r2 = 10, 20
 
-.. jupyter-execute::
-
-    # Start with an empty tight-binding system and a single square lattice.
-    # `a` is the lattice constant (by default set to 1 for simplicity).
-
-    lat = kwant.lattice.square(a)
-
-    syst = kwant.Builder()
-
-    #### Define the scattering region. ####
-    # Now, we aim for a more complex shape, namely a ring (or annulus)
     def ring(pos):
         (x, y) = pos
         rsq = x ** 2 + y ** 2
@@ -461,7 +439,12 @@ provided by the lattice:
 
 .. jupyter-execute::
 
-    # and add the corresponding lattice points using the `shape`-function
+    a = 1
+    t = 1.0
+
+    lat = kwant.lattice.square(a)
+    syst = kwant.Builder()
+
     syst[lat.shape(ring, (0, r1 + 1))] = 4 * t
     syst[lat.neighbors()] = -t
 
@@ -515,9 +498,11 @@ For the leads, we can also use the ``lat.shape``-functionality:
 .. jupyter-execute::
 
     #### Define the leads. ####
-    # left lead
+    W = 10
+
     sym_lead = kwant.TranslationalSymmetry((-a, 0))
     lead = kwant.Builder(sym_lead)
+
 
     def lead_shape(pos):
         (x, y) = pos
