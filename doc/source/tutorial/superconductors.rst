@@ -35,6 +35,9 @@ Superconductors: orbital degrees of freedom, conservation laws and symmetries
     tau_y = tinyarray.array([[0, -1j], [1j, 0]])
     tau_z = tinyarray.array([[1, 0], [0, -1]])
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 This example deals with superconductivity on the level of the
 Bogoliubov-de Gennes (BdG) equation. In this framework, the Hamiltonian
 is given as

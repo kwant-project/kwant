@@ -30,6 +30,9 @@ Band structure calculations
     # For plotting
     from matplotlib import pyplot
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 When doing transport simulations, one also often needs to know the band
 structure of the leads, i.e. the energies of the propagating plane waves in the
 leads as a function of momentum. This band structure contains information about
@@ -136,6 +139,9 @@ Closed systems
     import numpy as np
     from matplotlib import pyplot
     import kwant
+
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
 
 Although Kwant is (currently) mainly aimed towards transport problems, it
 can also easily be used to compute properties of closed systems -- after

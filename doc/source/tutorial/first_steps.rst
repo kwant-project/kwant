@@ -88,6 +88,9 @@ In order to use Kwant, we need to import it:
     # For plotting
     from matplotlib import pyplot
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 .. jupyter-execute::
 
     import kwant
@@ -452,6 +455,11 @@ file and defining the a square lattice and empty scattering region.
     # For plotting
     from matplotlib import pyplot
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
+.. jupyter-execute::
+
     a = 1
     t = 1.0
     W, L = 10, 30
@@ -660,6 +668,11 @@ return a Kwant ``Builder``:
 
     from matplotlib import pyplot
     import kwant
+
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
+.. jupyter-execute::
 
     def make_system(L, W, a=1, t=1.0):
         lat = kwant.lattice.square(a)

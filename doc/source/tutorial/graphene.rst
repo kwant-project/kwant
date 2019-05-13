@@ -47,6 +47,9 @@ explicitly here to show how to define a new lattice:
 
     sin_30, cos_30 = (1 / 2, sqrt(3) / 2)
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 .. jupyter-execute::
 
     graphene = kwant.lattice.general([(1, 0), (sin_30, cos_30)],
