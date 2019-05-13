@@ -52,6 +52,9 @@ a quantum anomalous spin Hall phase:
     import kwant
     import kwant.continuum
 
+.. jupyter-execute:: ../../tutorial/boilerplate.py
+    :hide-code:
+
 .. jupyter-execute::
 
     def make_model(a):

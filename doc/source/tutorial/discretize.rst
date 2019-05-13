@@ -42,6 +42,9 @@ continuum models and for discretizing them into tight-binding models.
 
     import kwant
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 .. _tutorial_discretizer_introduction:
 
 Discretizing by hand

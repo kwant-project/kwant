@@ -35,6 +35,9 @@ these options can be used to achieve various very different objectives.
 
     import kwant
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 We begin by first considering a circular graphene quantum dot (similar to what
 has been used in parts of the tutorial :ref:`tutorial-graphene`.)  In contrast
 to previous examples, we will also use hoppings beyond next-nearest neighbors:
@@ -215,6 +218,9 @@ visible. The hoppings are also plotted in order to show the underlying lattice.
     from matplotlib import pyplot
 
     import kwant
+
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
 
 Zincblende is a very common crystal structure of semiconductors. It is a
 face-centered cubic crystal with two inequivalent atoms in the unit cell

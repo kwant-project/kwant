@@ -51,6 +51,9 @@ texture.
     # letters denote spinor indices
     sigma = np.rollaxis(np.array([sigma_x, sigma_y, sigma_z]), 1)
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 Introduction
 ------------
 Our starting point will be the following spinful tight-binding model on

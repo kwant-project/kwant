@@ -68,6 +68,9 @@ for small arrays.)
     # For plotting
     from matplotlib import pyplot
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 .. jupyter-execute::
 
     # For matrix support
@@ -242,6 +245,9 @@ Spatially dependent values through functions
     # For plotting
     from matplotlib import pyplot
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 Up to now, all examples had position-independent matrix-elements
 (and thus translational invariance along the wire, which
 was the origin of the conductance steps). Now, we consider the
@@ -402,6 +408,9 @@ Nontrivial shapes
 
     # For plotting
     from matplotlib import pyplot
+
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
 
 Up to now, we only dealt with simple wire geometries. Now we turn to the case
 of a more complex geometry, namely transport through a quantum ring
@@ -594,6 +603,12 @@ period of one flux quantum.
         import kwant
         from matplotlib import pyplot
 
+    .. jupyter-execute:: boilerplate.py
+        :hide-code:
+
+    .. jupyter-execute::
+        :hide-code:
+
         a = 1
         t = 1.0
         W = 10
@@ -642,6 +657,12 @@ period of one flux quantum.
 
         import kwant
         from matplotlib import pyplot
+
+    .. jupyter-execute:: boilerplate.py
+        :hide-code:
+
+    .. jupyter-execute::
+        :hide-code:
 
         a = 1
         t = 1.0

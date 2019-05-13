@@ -14,6 +14,9 @@ into Kwant's structure.
     import matplotlib
     from matplotlib import pyplot as plt
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 What is a system, and what is a builder?
 ========================================
 A Kwant system represents a particular tight-binding model. It contains a graph

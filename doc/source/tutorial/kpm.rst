@@ -39,6 +39,9 @@ KPM method `kwant.kpm`, that is based on the algorithms presented in Ref. [1]_.
     import scipy
     from matplotlib import pyplot
 
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
 Introduction
 ************
 
@@ -151,7 +154,7 @@ We start by importing kwant and defining our system.
 
     # Plot several density of states curves on the same axes.
     def plot_dos(labels_to_data):
-        pyplot.figure(figsize=(5,4))
+        pyplot.figure()
         for label, (x, y) in labels_to_data:
             pyplot.plot(x, y.real, label=label, linewidth=2)
         pyplot.legend(loc=2, framealpha=0.5)
@@ -162,7 +165,7 @@ We start by importing kwant and defining our system.
 
     # Plot fill density of states plus curves on the same axes.
     def plot_dos_and_curves(dos, labels_to_data):
-        pyplot.figure(figsize=(5,4))
+        pyplot.figure()
         pyplot.fill_between(dos[0], dos[1], label="DoS [a.u.]",
                          alpha=0.5, color='gray')
         for label, (x, y) in labels_to_data:
