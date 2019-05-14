@@ -144,9 +144,11 @@ Building the documentation
 
 To build the documentation, the `Sphinx documentation generator
 <http://www.sphinx-doc.org/en/stable/>`_ is required with ``numpydoc`` extension
-(version 0.5 or newer).  If PDF documentation is to be built, the tools
-from the `libRSVG <https://wiki.gnome.org/action/show/Projects/LibRsvg>`_ (Debian/Ubuntu package
-``librsvg2-bin``) are needed to convert SVG drawings into the PDF format.
+(version 0.5 or newer), as well as ``jupyter-sphinx`` (version 0.2 or newer).
+If PDF documentation is to be built, the tools
+from the `libRSVG <https://wiki.gnome.org/action/show/Projects/LibRsvg>`_
+(Debian/Ubuntu package ``librsvg2-bin``) are needed to convert SVG drawings
+into the PDF format.
 
 As a prerequisite for building the documentation, Kwant must have been built
 successfully using ``python3 setup.py build`` as described above (or Kwant must
@@ -159,25 +161,6 @@ Because of some quirks of how Sphinx works, it might be necessary to execute
 ``make clean`` between building HTML and PDF documentation.  If this is not
 done, Sphinx may mistakenly use PNG files for PDF output or other problems may
 appear.
-
-When ``make html`` is run, modified tutorial example scripts are executed to
-update any figures that might have changed.  The machinery behind this works as
-follows.  The canonical source for a tutorial script, say ``graphene.py`` is
-the file ``doc/source/images/graphene.py.diff``.  This diff file contains the
-information to recreate two versions of ``graphene.py``: a version that is
-presented in the documentation (``doc/source/tutorial/graphene.py``), and a
-version that is used to generate the figures for the documentation
-(``doc/source/images/graphene.py``).  Both versions are related but differ
-e.g. in the details of the plotting.  When ``make html`` is run, both versions
-are extracted form the diff file.
-
-The diff file may be modified directly.  Another possible way of working is to
-directly modify either the tutorial script or the figure generation script.
-Then ``make html`` will use the command line tool `wiggle
-<https://github.com/neilbrown/wiggle>`_ to propagate the modifications accordingly.
-This will often just work, but may sometimes result in conflicts, in which case
-a message will be printed.  The conflicts then have to be resolved much like
-with a version control system.
 
 ****************************
 Hints for specific platforms
