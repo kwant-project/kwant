@@ -239,7 +239,8 @@ build documentation:
     - build:latest
   stage: test
   script:
-    - pip install git+https://github.com/jupyter-widgets/jupyter-sphinx
+    - apt-get update && apt-get install -y librsvg2-bin  # for converting svgs to pdfs
+    - pip install git+https://github.com/jupyter-widgets/jupyter-sphinx sphinxcontrib-svg2pdfconverter
     - python -m ipykernel install --user --name kwant-latest
     - make -C doc clean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W -D jupyter_execute_default_kernel=kwant-latest' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
   artifacts:
@@ -253,7 +254,8 @@ build PDF documentation:
     - build:latest
   stage: test
   script:
-    - pip install git+https://github.com/jupyter-widgets/jupyter-sphinx
+    - apt-get update && apt-get install -y librsvg2-bin  # for converting svgs to pdfs
+    - pip install git+https://github.com/jupyter-widgets/jupyter-sphinx sphinxcontrib-svg2pdfconverter
     - python -m ipykernel install --user --name kwant-latest
     - make -C doc latex SPHINXOPTS='-n -W -D jupyter_execute_default_kernel=kwant-latest'
     - cd doc/build/latex
