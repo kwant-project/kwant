@@ -11,6 +11,7 @@ Discretizer
     discretize
     discretize_symbolic
     build_discretized
+    discretize_landau
 
 Symbolic helpers
 ----------------
@@ -19,3 +20,11 @@ Symbolic helpers
 
     sympify
     lambdify
+    to_landau_basis
+
+Other
+-----
+.. autosummary::
+    :toctree: generated/
+
+    LandauLattice
