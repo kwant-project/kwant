@@ -15,8 +15,15 @@ import sys
 import os
 import string
 from distutils.util import get_platform
-sys.path.insert(0, "../../build/lib.{0}-{1}.{2}".format(
-        get_platform(), *sys.version_info[:2]))
+
+package_path = os.path.abspath(
+    "../../build/lib.{0}-{1}.{2}"
+    .format(get_platform(), *sys.version_info[:2]))
+
+# Insert into sys.path so that we can import kwant here
+sys.path.insert(0, package_path)
+# Insert into PYTHONPATH so that jupyter-sphinx will pick it up
+os.environ['PYTHONPATH'] = ':'.join((package_path, os.environ.get('PYTHONPATH','')))
 
 import kwant
 import kwant.qsymm
@@ -31,7 +38,8 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
               'sphinx.ext.todo', 'sphinx.ext.mathjax', 'numpydoc',
-              'kwantdoc', 'sphinx.ext.linkcode']
+              'kwantdoc', 'sphinx.ext.linkcode', 'jupyter_sphinx.execute',
+              'sphinxcontrib.rsvgconverter']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['../templates']
@@ -238,7 +246,6 @@ autosummary_generate = True
 
 autoclass_content = "both"
 autodoc_default_flags = ['show-inheritance']
-
 
 # -- Teach Sphinx to document bound methods like functions ---------------------
 import types
