@@ -26,3 +26,6 @@ dependencies:
     - sphinx=1.7.4  # later versions seem to have problems
     - numpydoc
     - requests
+    - pip:
+        - sphinxcontrib-svg2pdfconverter
+        - git+https://github.com/jupyter-widgets/jupyter-sphinx

@@ -19,7 +19,3 @@ dependencies:
     - pytest-cov
     - pytest-flakes
     - pytest-pep8
-    # Documentation building
-    - sphinx=1.7.4  # later versions seem to have problems
-    - numpydoc
-    - requests
