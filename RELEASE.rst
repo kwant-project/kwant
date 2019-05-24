@@ -280,6 +280,14 @@ current Debian testing)::
     ARCH=i386 DIST=<dist> git-pbuilder update
     ARCH=amd64 DIST=<dist> git-pbuilder update
 
+Make sure that the working directory is completely clear::
+
+    git clean -id
+
+(Note that pytest has the nasty habit of creating a hidden ``.pytest_cache``
+directory which gitignores itself.  The above command will not delete this
+directory, but git-pbuilder will complain.)
+
 Now build the packages.  First the i386 package.  The option "--git-tag" tags
 and signs the tag if the build is successful.  In a second step, the package is
 built for amd64, but only the architecture-dependent files (not the
@@ -439,7 +447,7 @@ We will also use the following script (prepare_ppa_upload)::
     for release in $@; do
         cp /tmp/changelog.$$ debian/changelog
         DEBEMAIL=christoph.groth@cea.fr dch -b -v "$version~$release" -u low 'Ubuntu PPA upload'
-        sed -i -e "1,1 s/UNRELEASED/$release/" debian/changelog
+        sed -i -e "1,1 s/UNRELEASED/${release%[0-9]}/" debian/changelog
         debuild -S -sa
     done
 
