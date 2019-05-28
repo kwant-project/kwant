@@ -12,4 +12,5 @@ Tutorial: learning Kwant through examples
     plotting
     kpm
     discretize
+    magnetic_field
     faq
