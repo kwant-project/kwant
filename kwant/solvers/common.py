@@ -210,8 +210,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
                 iface_orbs = np.r_[tuple(slice(offsets[i], offsets[i + 1])
                                         for i in interface)]
 
-                n_lead_orbs = (svd_v.shape[0] if svd_v is not None
-                               else u_out.shape[0])
+                n_lead_orbs = svd_v.shape[0]
                 if n_lead_orbs != len(iface_orbs):
                     msg = ('Lead {0} has hopping with dimensions '
                            'incompatible with its interface dimension.')
@@ -221,25 +220,17 @@ class SparseSolver(metaclass=abc.ABCMeta):
                 transf = sp.csc_matrix((np.ones(len(iface_orbs)), coords),
                                        shape=(iface_orbs.size, lhs.shape[0]))
 
-                if svd_v is not None:
-                    v_sp = sp.csc_matrix(svd_v.T.conj()) * transf
-                    vdaguout_sp = (transf.T *
-                                   sp.csc_matrix(np.dot(svd_v, u_out)))
-                    lead_mat = - ulinv_out
-                else:
-                    v_sp = transf
-                    vdaguout_sp = transf.T * sp.csc_matrix(u_out)
-                    lead_mat = - ulinv_out
+                v_sp = sp.csc_matrix(svd_v.T.conj()) * transf
+                vdaguout_sp = (transf.T *
+                               sp.csc_matrix(np.dot(svd_v, u_out)))
+                lead_mat = - ulinv_out
 
                 lhs = sp.bmat([[lhs, vdaguout_sp], [v_sp, lead_mat]],
                               format=self.lhsformat)
 
                 if leadnum in in_leads and nprop > 0:
-                    if svd_v is not None:
-                        vdaguin_sp = transf.T * sp.csc_matrix(
-                            -np.dot(svd_v, u_in))
-                    else:
-                        vdaguin_sp = transf.T * sp.csc_matrix(-u_in)
+                    vdaguin_sp = transf.T * sp.csc_matrix(
+                        -np.dot(svd_v, u_in))
 
                     # defer formation of the real matrix until the proper
                     # system size is known

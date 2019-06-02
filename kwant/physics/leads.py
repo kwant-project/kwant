@@ -173,11 +173,11 @@ class StabilizedModes:
         Translation eigenvectors divided by the corresponding eigenvalues.
     nmodes : int
         Number of left-moving (or right-moving) modes.
-    sqrt_hop : numpy array or None
-        Part of the SVD of `h_hop`, or None if the latter is invertible.
+    sqrt_hop : numpy array
+        Part of the SVD of `h_hop`.
     """
 
-    def __init__(self, vecs, vecslmbdainv, nmodes, sqrt_hop=None):
+    def __init__(self, vecs, vecslmbdainv, nmodes, sqrt_hop):
         kwargs = locals()
         kwargs.pop('self')
         self.__dict__.update(kwargs)
