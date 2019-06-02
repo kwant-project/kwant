@@ -281,7 +281,7 @@ def test_modes_bearded_ribbon():
 def check_equivalence(h, t, n, sym='', particle_hole=None, chiral=None,
                       time_reversal=None):
     """Compare modes stabilization algorithms for a given Hamiltonian."""
-    u, s, vh = np.linalg.svd(t)
+    u, s, vh = la.svd(t)
     u, v = u * np.sqrt(s), vh.T.conj() * np.sqrt(s)
     prop_vecs = []
     evan_vecs = []

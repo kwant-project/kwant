@@ -35,11 +35,11 @@ ensure that the chosen gauge is consistent across the whole system
 directions). This release introduces `kwant.physics.magnetic_gauge`,
 which calculates the Peierls phases for you::
 
-  import numpy as np
-  import kwant
-
   def hopping(a, b, t, peierls):
       return -t * peierls(a, b)
+
+  def B_syst(pos):
+     return np.exp(-np.sum(pos * pos))
 
   syst = make_system(hopping)
   lead = make_lead(hopping).substituted(peierls='peierls_lead')
@@ -48,11 +48,7 @@ which calculates the Peierls phases for you::
 
   gauge = kwant.physics.magnetic_gauge(syst)
 
-  def B_syst(pos):
-     return np.exp(-np.sum(pos * pos))
-
   # B_syst in scattering region, 0 in lead.
-  # Ensure that the fields match at the system/lead interface!
   peierls_syst, peierls_lead = gauge(B_syst, 0)
 
   params = dict(t=1, peierls=peierls_syst, peierls_lead=peierls_lead)

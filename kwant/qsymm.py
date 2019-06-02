@@ -448,7 +448,7 @@ def find_builder_symmetries(builder, momenta=None, params=None,
         params = dict()
 
     ham = builder_to_model(builder, momenta=momenta,
-                           real_space=False, params=params)
+                           real_space=spatial_symmetries, params=params)
 
     # Use dense or sparse computation depending on Hamiltonian size
     if sparse is None:
