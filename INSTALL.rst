@@ -147,8 +147,9 @@ To build the documentation, the `Sphinx documentation generator
 (version 0.5 or newer), as well as ``jupyter-sphinx`` (version 0.2 or newer).
 If PDF documentation is to be built, the tools
 from the `libRSVG <https://wiki.gnome.org/action/show/Projects/LibRsvg>`_
-(Debian/Ubuntu package ``librsvg2-bin``) are needed to convert SVG drawings
-into the PDF format.
+(Debian/Ubuntu package ``librsvg2-bin``) and a Sphinx extension
+``sphinxcontrib-svg2pdfconverter`` are needed to convert SVG drawings into the
+PDF format.
 
 As a prerequisite for building the documentation, Kwant must have been built
 successfully using ``python3 setup.py build`` as described above (or Kwant must
