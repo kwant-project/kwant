@@ -911,7 +911,11 @@ def plot(sys, num_lead_cells=2, unit='nn',
             raise ValueError('Invalid value of unit argument.')
 
     # make all specs proper: either constant or lists/np.arrays:
-    def make_proper_site_spec(spec, fancy_indexing=False):
+    def make_proper_site_spec(spec_name,  spec, fancy_indexing=False):
+        if _p.isarray(spec) and isinstance(syst, builder.Builder):
+            raise TypeError('{} cannot be an array when plotting'
+                            ' a Builder; use a function instead.'
+                            .format(spec_name))
         if callable(spec):
             spec = [spec(i[0]) for i in sites if i[1] is None]
         if (fancy_indexing and _p.isarray(spec)
@@ -933,7 +937,8 @@ def plot(sys, num_lead_cells=2, unit='nn',
                 spec = np.asarray(spec, dtype='object')
         return spec
 
-    site_symbol = make_proper_site_spec(site_symbol)
+
+    site_symbol = make_proper_site_spec('site_symbol', site_symbol)
     if site_symbol is None: site_symbol = defaults['site_symbol'][dim]
     # separate different symbols (not done in 3D, the separation
     # would mess up sorting)
@@ -967,10 +972,10 @@ def plot(sys, num_lead_cells=2, unit='nn',
             # Unknown finalized system, no sites access.
             site_color = defaults['site_color'][dim]
 
-    site_size = make_proper_site_spec(site_size, fancy_indexing)
-    site_color = make_proper_site_spec(site_color, fancy_indexing)
-    site_edgecolor = make_proper_site_spec(site_edgecolor, fancy_indexing)
-    site_lw = make_proper_site_spec(site_lw, fancy_indexing)
+    site_size = make_proper_site_spec('site_size', site_size, fancy_indexing)
+    site_color = make_proper_site_spec('site_color', site_color, fancy_indexing)
+    site_edgecolor = make_proper_site_spec('site_edgecolor', site_edgecolor, fancy_indexing)
+    site_lw = make_proper_site_spec('site_lw', site_lw, fancy_indexing)
 
     hop_color = make_proper_hop_spec(hop_color)
     hop_lw = make_proper_hop_spec(hop_lw)
