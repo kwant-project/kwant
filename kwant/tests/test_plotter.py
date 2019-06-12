@@ -169,6 +169,21 @@ def test_plot_more_site_families_than_colors():
         plotter.plot(syst, file=out)
 
 
+@pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
+def test_plot_raises_on_bad_site_spec():
+    syst = kwant.Builder()
+    lat = kwant.lattice.square()
+    syst[(lat(i, j) for i in range(5) for j in range(5))] = None
+
+    # Cannot provide site_size as an array when syst is a Builder
+    with pytest.raises(TypeError):
+        plotter.plot(syst, site_size=[1] * 25)
+
+    # Cannot provide site_size as an array when syst is a Builder
+    with pytest.raises(TypeError):
+        plotter.plot(syst, site_symbol=['o'] * 25)
+
+
 def good_transform(pos):
     x, y = pos
     return y, x
