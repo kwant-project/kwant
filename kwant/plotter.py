@@ -735,17 +735,21 @@ def plot(sys, num_lead_cells=2, unit='nn',
         symbols specifications (only for kwant.system.FiniteSystem).
     site_size : number, function, array, or `None`
         Relative (linear) size of the site symbol.
+        An array may not be used when 'syst' is a kwant.Builder.
     site_color : ``matplotlib`` color description, function, array, or `None`
         A color used for plotting a site in the system. If a colormap is used,
         it should be a function returning single floats or a one-dimensional
         array of floats. By default sites are colored by their site family,
         using the current matplotlib color cycle.
+        An array of colors may not be used when 'syst' is a kwant.Builder.
     site_edgecolor : ``matplotlib`` color description, function, array, or `None`
         Color used for plotting the edges of the site symbols. Only
         valid matplotlib color descriptions are allowed (and no
         combination of floats and colormap as for site_color).
+        An array of colors may not be used when 'syst' is a kwant.Builder.
     site_lw : number, function, array, or `None`
         Linewidth of the site symbol edges.
+        An array may not be used when 'syst' is a kwant.Builder.
     hop_color : ``matplotlib`` color description or a function
         Same as `site_color`, but for hoppings.  A function is passed two sites
         in this case. (arrays are not allowed in this case).
