@@ -1,4 +1,4 @@
-@@ -1,219 +1,242 @@
+@@ -1,341 +1,367 @@
  # Tutorial 2.8. Calculating spectral density with the Kernel Polynomial Method
  # ============================================================================
  #
@@ -135,7 +135,7 @@
  #HIDDEN_BEGIN_kpm1
      fsyst = make_syst().finalized()
  
-     spectrum = kwant.kpm.SpectralDensity(fsyst)
+     spectrum = kwant.kpm.SpectralDensity(fsyst, rng=0)
  #HIDDEN_END_kpm1
  
  #HIDDEN_BEGIN_kpm2
@@ -157,7 +157,7 @@
  
  
  def dos_integrating_example(fsyst):
-     spectrum = kwant.kpm.SpectralDensity(fsyst)
+     spectrum = kwant.kpm.SpectralDensity(fsyst, rng=0)
  
  #HIDDEN_BEGIN_int1
 -    print('identity resolution:', spectrum.integrate())
@@ -178,7 +178,7 @@
  
  
  def increasing_accuracy_example(fsyst):
-     spectrum = kwant.kpm.SpectralDensity(fsyst)
+     spectrum = kwant.kpm.SpectralDensity(fsyst, rng=0)
      original_dos = spectrum()  # get unaltered DoS
  
  #HIDDEN_BEGIN_acc1
@@ -215,13 +215,13 @@
  #HIDDEN_BEGIN_op1
      # identity matrix
      matrix_op = scipy.sparse.eye(len(fsyst.sites))
-     matrix_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=matrix_op)
+     matrix_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=matrix_op, rng=0)
  #HIDDEN_END_op1
  
  #HIDDEN_BEGIN_op2
      # 'sum=True' means we sum over all the sites
      kwant_op = kwant.operator.Density(fsyst, sum=True)
-     operator_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=kwant_op)
+     operator_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=kwant_op, rng=0)
  #HIDDEN_END_op2
  
      plot_dos([
@@ -234,7 +234,7 @@
  #HIDDEN_BEGIN_op3
      # 'sum=False' is the default, but we include it explicitly here for clarity.
      kwant_op = kwant.operator.Density(fsyst, sum=False)
-     local_dos = kwant.kpm.SpectralDensity(fsyst, operator=kwant_op)
+     local_dos = kwant.kpm.SpectralDensity(fsyst, operator=kwant_op, rng=0)
  #HIDDEN_END_op3
  
  #HIDDEN_BEGIN_op4
@@ -264,7 +264,8 @@
      # 'num_vectors' can be unspecified when using 'LocalVectors'
      local_dos = kwant.kpm.SpectralDensity(fsyst, num_vectors=None,
                                            vector_factory=vector_factory,
-                                           mean=False)
+                                           mean=False,
+                                           rng=0)
      energies, densities = local_dos()
      plot_dos([
          ('A sublattice', (energies, densities[:, 0])),
@@ -277,7 +278,7 @@
  
  
  def vector_factory_example(fsyst):
-     spectrum = kwant.kpm.SpectralDensity(fsyst)
+     spectrum = kwant.kpm.SpectralDensity(fsyst, rng=0)
  #HIDDEN_BEGIN_fact1
      # construct a generator of vectors with n random elements -1 or +1.
      n = fsyst.hamiltonian_submatrix(sparse=True).shape[0]
@@ -286,7 +287,8 @@
             yield np.rint(np.random.random_sample(n)) * 2 - 1
  
      custom_factory = kwant.kpm.SpectralDensity(fsyst,
-                                                vector_factory=binary_vectors())
+                                                vector_factory=binary_vectors(),
+                                                rng=0)
  #HIDDEN_END_fact1
      plot_dos([
          ('default vector factory', spectrum()),
@@ -302,8 +304,8 @@
      def rho_alt(bra, ket):
          return np.vdot(bra, ket)
  
-     rho_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=rho)
-     rho_alt_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=rho_alt)
+     rho_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=rho, rng=0)
+     rho_alt_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=rho_alt, rng=0)
  #HIDDEN_END_blm
  
      plot_dos([
@@ -321,11 +323,13 @@
      # component 'xx'
      s_factory = kwant.kpm.LocalVectors(fsyst, where)
      cond_xx = kwant.kpm.conductivity(fsyst, alpha='x', beta='x', mean=True,
-                                      num_vectors=None, vector_factory=s_factory)
+                                      num_vectors=None, vector_factory=s_factory,
+                                      rng=0)
      # component 'xy'
      s_factory = kwant.kpm.LocalVectors(fsyst, where)
      cond_xy = kwant.kpm.conductivity(fsyst, alpha='x', beta='y', mean=True,
-                                      num_vectors=None, vector_factory=s_factory)
+                                      num_vectors=None, vector_factory=s_factory,
+                                      rng=0)
  
      energies = cond_xx.energies
      cond_array_xx = np.array([cond_xx(e, temperature=0.01) for e in energies])
@@ -339,7 +343,8 @@
      # ldos
      s_factory = kwant.kpm.LocalVectors(fsyst, where)
      spectrum = kwant.kpm.SpectralDensity(fsyst, num_vectors=None,
-                                          vector_factory=s_factory)
+                                          vector_factory=s_factory,
+                                          rng=0)
  
      plot_dos_and_curves(
      (spectrum.energies, spectrum.densities * 8),
