@@ -202,7 +202,7 @@ energy eigenstates:
 
         ham = syst.hamiltonian_submatrix(params=dict(V=potential), sparse=True)
         evecs = scipy.sparse.linalg.eigsh(ham, k=10, which='SM')[1]
-        kwant.plotter.map(syst, abs(evecs[:, n])**2, show=False)
+        kwant.plotter.density(syst, abs(evecs[:, n])**2, show=False)
 
 .. jupyter-execute::
     :hide-code:
@@ -281,7 +281,7 @@ and plot its dispersion using `kwant.plotter.bands`:
     pyplot.show()
 
 In the above we see the edge states of the quantum spin Hall effect, which
-we can visualize using `kwant.plotter.map`:
+we can visualize using `kwant.plotter.density`:
 
 .. jupyter-execute::
 
@@ -298,8 +298,8 @@ we can visualize using `kwant.plotter.map`:
     rho_sz = sum(spin_density(psi) for psi in wf(0))  # states from left lead
 
     fig, (ax1, ax2) = pyplot.subplots(1, 2, sharey=True, figsize=(16, 4))
-    kwant.plotter.map(syst, wf_sqr, ax=ax1)
-    kwant.plotter.map(syst, rho_sz, ax=ax2)
+    kwant.plotter.density(syst, wf_sqr, ax=ax1)
+    kwant.plotter.density(syst, rho_sz, ax=ax2)
 
     ax = ax1
     im = [obj for obj in ax.get_children()

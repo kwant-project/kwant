@@ -165,7 +165,7 @@ inside the scattering region. The z component is shown by the color scale:
     def plot_densities(syst, densities):
         fig, axes = plt.subplots(1, len(densities), figsize=(13, 10))
         for ax, (title, rho) in zip(axes, densities):
-            kwant.plotter.map(syst, rho, ax=ax, a=4)
+            kwant.plotter.density(syst, rho, ax=ax)
             ax.set_title(title)
         plt.show()
 

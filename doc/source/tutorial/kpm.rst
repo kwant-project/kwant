@@ -196,7 +196,7 @@ object that represents the density of states for this system.
 
     fsyst = make_syst().finalized()
 
-    spectrum = kwant.kpm.SpectralDensity(fsyst)
+    spectrum = kwant.kpm.SpectralDensity(fsyst, rng=0)
 
 The `~kwant.kpm.SpectralDensity` can then be called like a function to obtain a
 sequence of energies in the spectrum of the Hamiltonian, and the corresponding
@@ -319,7 +319,8 @@ and plot their respective local density of states.
     # 'num_vectors' can be unspecified when using 'LocalVectors'
     local_dos = kwant.kpm.SpectralDensity(fsyst_staggered, num_vectors=None,
                                           vector_factory=vector_factory,
-                                          mean=False)
+                                          mean=False,
+                                          rng=0)
     energies, densities = local_dos()
 
 .. jupyter-execute::
@@ -346,7 +347,7 @@ The simplest way to obtain a more accurate solution is to use the
 .. jupyter-execute::
     :hide-code:
 
-    spectrum = kwant.kpm.SpectralDensity(fsyst)
+    spectrum = kwant.kpm.SpectralDensity(fsyst, rng=0)
     original_dos = spectrum()
 
 .. jupyter-execute::
@@ -399,7 +400,7 @@ shape as the system Hamiltonian.
 
     # identity matrix
     matrix_op = scipy.sparse.eye(len(fsyst.sites))
-    matrix_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=matrix_op)
+    matrix_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=matrix_op, rng=0)
 
 Or, to do the same calculation using `kwant.operator.Density`:
 
@@ -407,7 +408,7 @@ Or, to do the same calculation using `kwant.operator.Density`:
 
     # 'sum=True' means we sum over all the sites
     kwant_op = kwant.operator.Density(fsyst, sum=True)
-    operator_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=kwant_op)
+    operator_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=kwant_op, rng=0)
 
 Spectral density with random vectors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -420,7 +421,7 @@ sum over all the sites of the system:
 
     # 'sum=False' is the default, but we include it explicitly here for clarity.
     kwant_op = kwant.operator.Density(fsyst, sum=False)
-    local_dos = kwant.kpm.SpectralDensity(fsyst, operator=kwant_op)
+    local_dos = kwant.kpm.SpectralDensity(fsyst, operator=kwant_op, rng=0)
 
 `~kwant.kpm.SpectralDensity` will properly handle this vector output,
 and will average the local density obtained with random vectors.
@@ -499,11 +500,13 @@ vectors
     # component 'xx'
     s_factory = kwant.kpm.LocalVectors(fsyst_topo, where)
     cond_xx = kwant.kpm.conductivity(fsyst_topo, alpha='x', beta='x', mean=True,
-                                     num_vectors=None, vector_factory=s_factory)
+                                     num_vectors=None, vector_factory=s_factory,
+                                     rng=0)
     # component 'xy'
     s_factory = kwant.kpm.LocalVectors(fsyst_topo, where)
     cond_xy = kwant.kpm.conductivity(fsyst_topo, alpha='x', beta='y', mean=True,
-                                     num_vectors=None, vector_factory=s_factory)
+                                     num_vectors=None, vector_factory=s_factory,
+                                     rng=0)
 
     energies = cond_xx.energies
     cond_array_xx = np.array([cond_xx(e, temperature=0.01) for e in energies])
@@ -528,7 +531,8 @@ the random vectors.
 
     s_factory = kwant.kpm.LocalVectors(fsyst_topo, where)
     spectrum = kwant.kpm.SpectralDensity(fsyst_topo, num_vectors=None,
-                                         vector_factory=s_factory)
+                                         vector_factory=s_factory,
+                                         rng=0)
 
     plot_dos_and_curves(
     (spectrum.energies, spectrum.densities * 8),
@@ -570,7 +574,8 @@ and which returns a vector in that Hilbert space:
            yield np.rint(np.random.random_sample(n)) * 2 - 1
 
     custom_factory = kwant.kpm.SpectralDensity(fsyst,
-                                               vector_factory=binary_vectors())
+                                               vector_factory=binary_vectors(),
+                                               rng=0)
 
 Aditionally, a `~kwant.kpm.LocalVectors` generator is also available, that
 returns local vectors that correspond to the sites passed. Note that
@@ -613,8 +618,8 @@ methods for computing the local density of states, one using
     def rho_alt(bra, ket):
         return np.vdot(bra, ket)
 
-    rho_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=rho)
-    rho_alt_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=rho_alt)
+    rho_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=rho, rng=0)
+    rho_alt_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=rho_alt, rng=0)
 
 __ operator_spectral_density_
 
