@@ -119,7 +119,7 @@
 +def plot_densities(syst, densities, fname=None):
 +    fig, axes = plt.subplots(1, len(densities), figsize=(7*len(densities), 7))
      for ax, (title, rho) in zip(axes, densities):
-         kwant.plotter.map(syst, rho, ax=ax, a=4)
+         kwant.plotter.density(syst, rho, ax=ax)
          ax.set_title(title)
 -    plt.show()
 +    if fname:
