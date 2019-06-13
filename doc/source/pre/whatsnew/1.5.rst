@@ -3,6 +3,30 @@ What's new in Kwant 1.5
 
 This article explains the user-visible changes in Kwant 1.5.0.
 
+Automatic addition of Peierls phase terms to Builders
+-----------------------------------------------------
+Kwant 1.4 introduced `kwant.physics.magnetic_gauge` for computing Peierls
+phases for arbitrary geometries and for systems with leads. Using this
+functionality requires that the system value functions are equipped to
+take the required Peierls phase parameters, which is not possible when
+you are not in direct control of the value functions (e.g. discretized
+systems). In Kwant 1.5 we have added the missing piece of functionality,
+`kwant.builder.add_peierls_phase`, which properly adds the Peierls phase
+parameters to a Builder's value functions::
+
+    syst = make_system()
+    lead = make_lead()
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+
+    fsyst, phase = kwant.builder.add_peierls_phase(syst)
+
+    def B_syst(pos):
+        return np.exp(-np.sum(pos * pos))
+
+    kwant.smatrix(fsyst, parameters=dict(t=-1, **phase(B_syst, 0, 0)))
+
+
 Improved tutorial building
 --------------------------
 Improving or adding to Kwant's tutorial is now much simpler. Now
