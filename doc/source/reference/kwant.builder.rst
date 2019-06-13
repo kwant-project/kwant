@@ -26,3 +26,10 @@ Abstract base classes
    SiteFamily
    Symmetry
    Lead
+
+Functions
+---------
+.. autosummary::
+   :toctree: generated/
+
+   add_peierls_phase
