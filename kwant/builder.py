@@ -1681,7 +1681,13 @@ class Builder:
 
         if hop_range > 1:
             # Automatically increase the period, potentially warn the user.
-            new_lead = Builder(sym.subgroup((hop_range,)))
+            new_lead = Builder(
+                sym.subgroup((hop_range,)),
+                conservation_law=lead_builder.conservation_law,
+                time_reversal=lead_builder.time_reversal,
+                particle_hole=lead_builder.particle_hole,
+                chiral=lead_builder.chiral,
+            )
             with reraise_warnings():
                 new_lead.fill(lead_builder, lambda site: True,
                               lead_builder.sites(), max_sites=float('inf'))
