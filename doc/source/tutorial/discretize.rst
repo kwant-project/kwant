@@ -217,6 +217,8 @@ In addition, the function passed as ``V`` expects two input parameters ``x``
 and ``y``, the same as in the initial continuum Hamiltonian.
 
 
+.. _discretize-bhz-model:
+
 Models with more structure: Bernevig-Hughes-Zhang
 .................................................
 
