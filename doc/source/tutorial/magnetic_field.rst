@@ -37,7 +37,7 @@ The eigenstates satisfy :math:`a^\dagger a | n \rangle = n | n \rangle` with the
 Landau level index :math:`n \geq 0`, and in coordinate representation are proportional to
 
 .. math::
-    
+
     \psi_n (x, y) = \left( \frac{\partial}{ \partial w} - \frac{w^*}{4 l_B^2} \right)
     w^n e^{-|w|^2/4l_B^2},
 
@@ -47,7 +47,7 @@ with :math:`w = x + i y`. The matrix elements of the ladder operators are
 
     \langle n | a | m \rangle = \sqrt{m}~\delta_{n, m-1}, \quad \quad
     \langle n | a^\dagger | m \rangle = \sqrt{m + 1}~\delta_{n, m+1}.
-    
+
 Truncating the basis to the first :math:`N` Landau levels allows us to approximate
 the Hamiltonian as a discrete, finite matrix.
 
@@ -56,16 +56,16 @@ We can now formulate the algorithm that Kwant uses to compute Landau levels.
     1. We take a generic continuum Hamiltonian, written in terms of the kinetic
     momentum :math:`\vec{k}`. The Hamiltonian must be translationally
     invariant along the directions perpendicular to the field direction.
-    
+
     2. We substitute the momenta perpendicular to the magnetic field with the ladder
     operators :math:`a` and :math:`a^\dagger`.
-    
+
     3. We construct a `kwant.builder.Builder` using a special lattice which includes
     the Landau level index :math:`n` as a degree of freedom on each site. The directions
     normal to the field direction are not included in the builder, because they are
     encoded in the Landau level index.
-    
-This procedure is automated with `kwant.continuum.discretize_landau`. 
+
+This procedure is automated with `kwant.continuum.discretize_landau`.
 
 As an example, let us take the Bernevig-Hughes-Zhang model that we first considered in the
 discretizer tutorial ":ref:`discretize-bhz-model`":
@@ -155,7 +155,7 @@ with the Landau levels shown as dashed lines.
     h = landau_syst.hamiltonian_submatrix(params=params)
     for ev in scipy.linalg.eigvals(h):
       ax.axhline(ev, linestyle='--')
-      
+
 The dispersion and the Landau levels diverge with increasing energy, because the real space
 discretization of the ribbon gives a worse approximation to the dispersion at higher energies.
 
