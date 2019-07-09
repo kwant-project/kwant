@@ -3,6 +3,14 @@ Adding magnetic field
 
 Computing Landau levels in a harmonic oscillator basis
 ......................................................
+
+.. seealso::
+    The complete source code of this example can be found in
+    :jupyter-download:script:`landau-levels`
+
+.. jupyter-kernel::
+    :id: landau-levels
+
 When electrons move in an external magnetic field, their motion perpendicular
 to the field direction is quantized into discrete Landau levels. Kwant implements
 an efficient scheme for computing the Landau levels of arbitrary continuum
