@@ -535,17 +535,17 @@ def test_hamiltonian_evaluation():
     def test_raising(fsyst, hop):
         a, b = hop
         # exceptions are converted to kwant.UserCodeError and we add our message
-        with raises(kwant.UserCodeError) as ctx:
+        with raises(kwant.UserCodeError) as exc_info:
             fsyst.hamiltonian(a, a)
         msg = 'Error occurred in user-supplied value function "onsite_raises"'
-        assert msg in ctx.exconly()
+        assert msg in str(exc_info.value)
 
         for hop in [(a, b), (b, a)]:
-            with raises(kwant.UserCodeError) as ctx:
+            with raises(kwant.UserCodeError) as exc_info:
                 fsyst.hamiltonian(*hop)
             msg = ('Error occurred in user-supplied '
                    'value function "hopping_raises"')
-            assert msg in ctx.exconly()
+            assert msg in str(exc_info.value)
 
     # test with finite system
     new_hop = (fam(-1, 0), fam(0, 0))
