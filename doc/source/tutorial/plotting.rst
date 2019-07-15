@@ -31,6 +31,9 @@ these options can be used to achieve various very different objectives.
     # --------------------------
     #  - demonstrate different ways of plotting
 
+    import warnings
+    warnings.simplefilter("ignore")
+
     from matplotlib import pyplot
 
     import kwant
