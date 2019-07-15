@@ -538,9 +538,9 @@ the random vectors.
     (spectrum.energies, spectrum.densities * 8),
     [
         (r'Longitudinal conductivity $\sigma_{xx} / 4$',
-         (energies, cond_array_xx / 4)),
+         (energies, cond_array_xx.real / 4)),
         (r'Hall conductivity $\sigma_{xy}$',
-         (energies, cond_array_xy))],
+         (energies, cond_array_xy.real))],
     )
 
 .. _advanced_topics:

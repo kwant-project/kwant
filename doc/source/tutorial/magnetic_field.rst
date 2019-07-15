@@ -161,7 +161,7 @@ with the Landau levels shown as dashed lines.
     kwant.plotter.bands(syst, ax=ax, params=params)
 
     h = landau_syst.hamiltonian_submatrix(params=params)
-    for ev in scipy.linalg.eigvals(h):
+    for ev in scipy.linalg.eigvalsh(h):
       ax.axhline(ev, linestyle='--')
 
 The dispersion and the Landau levels diverge with increasing energy, because the real space
