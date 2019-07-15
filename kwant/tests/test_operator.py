@@ -425,14 +425,14 @@ def test_arg_passing(A):
     # test missing params
     op = A(fsyst, onsite=lambda x, a, b: 1)
     params = dict(a=1)
-    with raises(TypeError) as exc:
+    with raises(TypeError):
         op(wf, params=params)
-    with raises(TypeError) as exc:
+    with raises(TypeError):
         op.act(wf, params=params)
-    with raises(TypeError) as exc:
+    with raises(TypeError):
         op.bind(params=params)
     if hasattr(op, 'tocoo'):
-        with raises(TypeError) as exc:
+        with raises(TypeError):
             op.tocoo(params=params)
 
 
@@ -445,19 +445,19 @@ def test_arg_passing(A):
     if has_tocoo:
         tocoo_should_be = op.tocoo(args=canonical_args).toarray()
 
-    with raises(TypeError) as exc:
+    with raises(TypeError) as exc_info:
         op(wf, args=canonical_args, params=params)
-    assert 'mutually exclusive' in str(exc)
-    with raises(TypeError) as exc:
+    assert 'mutually exclusive' in str(exc_info.value)
+    with raises(TypeError) as exc_info:
         op.act(wf, args=canonical_args, params=params)
-    assert 'mutually exclusive' in str(exc)
-    with raises(TypeError) as exc:
+    assert 'mutually exclusive' in str(exc_info.value)
+    with raises(TypeError) as exc_info:
         op.bind(args=canonical_args, params=params)
-    assert 'mutually exclusive' in str(exc)
+    assert 'mutually exclusive' in str(exc_info.value)
     if has_tocoo:
-        with raises(TypeError) as exc:
+        with raises(TypeError) as exc_info:
             op.tocoo(args=canonical_args, params=params)
-        assert 'mutually exclusive' in str(exc)
+        assert 'mutually exclusive' in str(exc_info.value)
 
     np.testing.assert_array_equal(
         call_should_be, op(wf, params=params))

@@ -219,6 +219,14 @@ class SpectralDensity:
                 num_vectors=num_vectors,
                 accumulate=accumulate_vectors)
         else:
+            if not isinstance(vector_factory, Iterable):
+                raise TypeError('vector_factory must be iterable')
+            try:
+                len(vector_factory)
+            except TypeError:
+                if num_vectors is None:
+                    raise ValueError('num_vectors must be provided if'
+                                     'vector_factory has no length.')
             self._vector_factory = _VectorFactory(
                 vector_factory,
                 num_vectors=num_vectors,

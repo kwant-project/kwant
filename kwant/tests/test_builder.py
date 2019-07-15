@@ -535,17 +535,17 @@ def test_hamiltonian_evaluation():
     def test_raising(fsyst, hop):
         a, b = hop
         # exceptions are converted to kwant.UserCodeError and we add our message
-        with raises(kwant.UserCodeError) as ctx:
+        with raises(kwant.UserCodeError) as exc_info:
             fsyst.hamiltonian(a, a)
         msg = 'Error occurred in user-supplied value function "onsite_raises"'
-        assert msg in ctx.exconly()
+        assert msg in str(exc_info.value)
 
         for hop in [(a, b), (b, a)]:
-            with raises(kwant.UserCodeError) as ctx:
+            with raises(kwant.UserCodeError) as exc_info:
                 fsyst.hamiltonian(*hop)
             msg = ('Error occurred in user-supplied '
                    'value function "hopping_raises"')
-            assert msg in ctx.exconly()
+            assert msg in str(exc_info.value)
 
     # test with finite system
     new_hop = (fam(-1, 0), fam(0, 0))
@@ -843,7 +843,7 @@ def test_fill_sticky():
 
 
 def test_attach_lead():
-    fam = builder.SimpleSiteFamily()
+    fam = builder.SimpleSiteFamily(norbs=1)
     fam_noncommensurate = builder.SimpleSiteFamily(name='other')
 
     syst = builder.Builder()
@@ -878,7 +878,12 @@ def test_attach_lead():
 
     # add some further-than-nearest-neighbor hoppings
     hop_range = 3
-    lead = builder.Builder(VerySimpleSymmetry(1))
+    lead = builder.Builder(
+        VerySimpleSymmetry(1),
+        conservation_law=np.eye(1),
+        time_reversal=np.eye(1),
+        particle_hole=np.eye(1),
+        chiral=np.eye(1))
     lead[fam(0)] = 1
     for i in range(1, hop_range + 1):
         lead[fam(0), fam(i)] = 1
@@ -886,6 +891,10 @@ def test_attach_lead():
     expanded_lead = syst.leads[-1].builder
     assert expanded_lead.symmetry.period == hop_range
     assert len(list(expanded_lead.sites())) == hop_range
+    assert expanded_lead.conservation_law is lead.conservation_law
+    assert expanded_lead.time_reversal is lead.time_reversal
+    assert expanded_lead.particle_hole is lead.particle_hole
+    assert expanded_lead.chiral is lead.chiral
 
     # check that we can actually finalize the system
     syst.finalized()
