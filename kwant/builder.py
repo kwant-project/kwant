@@ -13,6 +13,7 @@ import collections
 import copy
 from functools import total_ordering, wraps, update_wrapper
 from itertools import islice, chain
+import textwrap
 import inspect
 import tinyarray as ta
 import numpy as np
@@ -20,13 +21,14 @@ from scipy import sparse
 from . import system, graph, KwantDeprecationWarning, UserCodeError
 from .linalg import lll
 from .operator import Density
-from .physics import DiscreteSymmetry
+from .physics import DiscreteSymmetry, magnetic_gauge
 from ._common import (ensure_isinstance, get_parameters, reraise_warnings,
-                      interleave, deprecate_args)
+                      interleave, deprecate_args, memoize)
 
 
 __all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
-           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergyLead', 'ModesLead']
+           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergyLead', 'ModesLead',
+           'add_peierls_phase']
 
 
 ################ Sites and site families
@@ -1802,6 +1804,169 @@ class Builder:
     hamiltonian = hamiltonian_submatrix = modes = selfenergy = \
     inter_cell_hopping = cell_hamiltonian = precalculated = \
     _require_system
+
+
+def _add_peierls_phase(syst, peierls_parameter):
+
+    @memoize
+    def wrap_hopping(hop):
+        def f(*args):
+            a, b, *args, phi = args
+            return hop(a, b, *args) * phi(a, b)
+
+        params = ('_site0', '_site1')
+        if callable(hop):
+            params += get_parameters(hop)[2:]  # cut off both site parameters
+        params += (peierls_parameter,)
+
+        f.__signature__ = inspect.Signature(
+            inspect.Parameter(name, inspect.Parameter.POSITIONAL_ONLY)
+            for name in params)
+
+        return f
+
+    const_hoppings = {}
+
+    def const_hopping(a, b, phi):
+        return const_hoppings[a, b] * phi(a, b)
+
+    # fix the signature
+    params = ('_site0', '_site1', peierls_parameter)
+    const_hopping.__signature__ = inspect.Signature(
+            inspect.Parameter(name, inspect.Parameter.POSITIONAL_ONLY)
+            for name in params)
+
+    ret = Builder(
+        syst.symmetry,
+        # No time reversal, as magnetic fields break it
+        conservation_law=syst.conservation_law,
+        particle_hole=syst.particle_hole,
+        chiral=syst.chiral,
+    )
+    for i, lead in enumerate(syst.leads):
+        ret.leads.append(
+            BuilderLead(
+                _add_peierls_phase(
+                    lead.builder,
+                    peierls_parameter + '_lead{}'.format(i),
+                ),
+                lead.interface,
+                lead.padding,
+            )
+        )
+
+    for site, val in syst.site_value_pairs():
+        ret[site] = val
+
+    for hop, val in syst.hopping_value_pairs():
+        if callable(val):
+            ret[hop] = wrap_hopping(val)
+        else:
+            const_hoppings[hop] = val
+            ret[hop] = const_hopping
+
+    return ret
+
+
+def add_peierls_phase(syst, peierls_parameter='phi', fix_gauge=True):
+    """Add a Peierls phase parameter to a Builder.
+
+    Parameters
+    ----------
+    syst : kwant.Builder
+        The system to which to add a Peierls phase.
+    peierls_parameter : str
+        The name of the Peierls phase parameter to value functions.
+    fix_gauge : bool (default: True)
+        If True, fix the gauge of the system and return it also
+
+    Returns
+    -------
+    syst : kwant.builder.Finitesystem or kwant.builder.InfiniteSystem
+        A system where all hoppings are given by value functions
+        that have an additional parameter 'phi' that should be
+        the Peierls phase returned by `kwant.physics.magnetic_gauge`.
+        Any leads have similar parameters named 'phi_lead0',
+        'phi_lead1' etc.
+    gauge : callable
+        Only returned if 'fix_gauge' is True. Called with magnetic
+        field(s), and returns a parameter dictionary that can be
+        passed to the system as 'params' (see the example below).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import kwant
+    >>>
+    >>> syst = make_system()
+    >>> lead = make_lead()
+    >>> syst.attach_lead(lead)
+    >>> syst.attach_lead(lead.reversed())
+    >>>
+    >>> fsyst, phase = kwant.builder.add_peierls_phase(syst)
+    >>>
+    >>> def B_syst(pos):
+    >>>     return np.exp(-np.sum(pos * pos))
+    >>>
+    >>> kwant.smatrix(fsyst, parameters=dict(t=-1, **phase(B_syst, 0, 0)))
+    """
+
+    def wrap_gauge(gauge):
+        phase_names = [peierls_parameter]
+        phase_names += [peierls_parameter + '_lead{}'.format(i)
+                        for i in range(len(syst.leads))]
+
+        doc = textwrap.dedent("""\
+            Return the Peierls phase for a magnetic field configuration.
+
+            Parameters
+            ----------
+            syst_field : scalar, vector or callable
+                The magnetic field to apply to the scattering region.
+                If callable, takes a position and returns the
+                magnetic field at that position. Can be a scalar if
+                the system is 1D or 2D, otherwise must be a vector.
+                Magnetic field is expressed in units :math:`φ₀ / l²`,
+                where :math:`φ₀` is the magnetic flux quantum and
+                :math:`l` is the unit of length.
+            *lead_fields : scalar, vector or callable
+                The magnetic fields to apply to each of the leads, in
+                the same format as 'syst_field'. In addition, if a callable
+                is provided, then the magnetic field must have the symmetry
+                of the associated lead.
+            tol : float, default: 1E-8
+                The tolerance to which to calculate the flux through each
+                hopping loop in the system.
+            average : bool, default: False
+                If True, estimate the magnetic flux through each hopping loop
+                in the system by evaluating the magnetic field at a single
+                position inside the loop and multiplying it by the area of the
+                loop. If False, then ``scipy.integrate.quad`` is used to integrate
+                the magnetic field. This parameter is only used when 'syst_field'
+                or 'lead_fields' are callable.
+
+            Returns
+            -------
+            phases : dict of callables
+                To be passed directly as the parameters of a system wrapped with
+                'kwant.builder.add_peierls_phase'.
+            """)
+
+        @wraps(gauge)
+        def f(*args, **kwargs):
+            phases = gauge(*args, **kwargs)
+            return dict(zip(phase_names, phases))
+
+        f.__doc__ = doc
+
+        return f
+
+    ret = _add_peierls_phase(syst, peierls_parameter).finalized()
+
+    if fix_gauge:
+        return ret, wrap_gauge(magnetic_gauge(ret))
+    else:
+        return ret
 
 
 ################ Finalized systems
