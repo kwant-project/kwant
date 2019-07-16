@@ -11,6 +11,12 @@ these options can be used to achieve various very different objectives.
 ................................
 
 .. seealso::
+    You can execute the code examples live in your browser by
+    activating thebelab:
+
+    .. thebe-button:: Activate Thebelab
+
+.. seealso::
     The complete source code of this example can be found in
     :jupyter-download:script:`plot_graphene`
 
