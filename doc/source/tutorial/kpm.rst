@@ -16,6 +16,12 @@ spectral density of arbitrary operators.  Kwant has an implementation of the
 KPM method `kwant.kpm`, that is based on the algorithms presented in Ref. [1]_.
 
 .. seealso::
+    You can execute the code examples live in your browser by
+    activating thebelab:
+
+    .. thebe-button:: Activate Thebelab
+
+.. seealso::
     The complete source code of this example can be found in
     :jupyter-download:script:`kernel_polynomial_method`
 
