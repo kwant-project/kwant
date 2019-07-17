@@ -17,6 +17,12 @@ It is a collection of tools for working with
 continuum models and for discretizing them into tight-binding models.
 
 .. seealso::
+    You can execute the code examples live in your browser by
+    activating thebelab:
+
+    .. thebe-button:: Activate Thebelab
+
+.. seealso::
     The complete source code of this tutorial can be found in
     :jupyter-download:script:`discretize`
 
