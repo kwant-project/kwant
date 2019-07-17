@@ -13,6 +13,7 @@ import inspect
 import warnings
 import importlib
 import functools
+import collections
 from contextlib import contextmanager
 
 __all__ = ['KwantDeprecationWarning', 'UserCodeError']
@@ -191,3 +192,27 @@ class lazy_import:
         package = sys.modules[self.__package]
         setattr(package, self.__module, mod)
         return getattr(mod, name)
+
+
+def _hashable(obj):
+    return isinstance(obj, collections.abc.Hashable)
+
+
+def memoize(f):
+    """Decorator to memoize a function that works even with unhashable args.
+
+    This decorator will even work with functions whose args are not hashable.
+    The cache key is made up by the hashable arguments and the ids of the
+    non-hashable args.  It is up to the user to make sure that non-hashable
+    args do not change during the lifetime of the decorator.
+
+    This decorator will keep reevaluating functions that return None.
+    """
+    def lookup(*args):
+        key = tuple(arg if _hashable(arg) else id(arg) for arg in args)
+        result = cache.get(key)
+        if result is None:
+            cache[key] = result = f(*args)
+        return result
+    cache = {}
+    return lookup

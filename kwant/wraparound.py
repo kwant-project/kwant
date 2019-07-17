@@ -20,34 +20,10 @@ from . import builder, system, plotter
 from .linalg import lll
 from .builder import herm_conj, HermConjOfFunc
 from .lattice import TranslationalSymmetry
-from ._common import get_parameters
+from ._common import get_parameters, memoize
 
 
 __all__ = ['wraparound', 'plot_2d_bands']
-
-
-def _hashable(obj):
-    return isinstance(obj, collections.abc.Hashable)
-
-
-def _memoize(f):
-    """Decorator to memoize a function that works even with unhashable args.
-
-    This decorator will even work with functions whose args are not hashable.
-    The cache key is made up by the hashable arguments and the ids of the
-    non-hashable args.  It is up to the user to make sure that non-hashable
-    args do not change during the lifetime of the decorator.
-
-    This decorator will keep reevaluating functions that return None.
-    """
-    def lookup(*args):
-        key = tuple(arg if _hashable(arg) else id(arg) for arg in args)
-        result = cache.get(key)
-        if result is None:
-            cache[key] = result = f(*args)
-        return result
-    cache = {}
-    return lookup
 
 
 def _set_signature(func, params):
@@ -103,7 +79,7 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
     format. It will be deprecated in the 2.0 release of Kwant.
     """
 
-    @_memoize
+    @memoize
     def bind_site(val):
         def f(*args):
             a, *args = args
@@ -113,7 +89,7 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
         _set_signature(f, get_parameters(val) + momenta)
         return f
 
-    @_memoize
+    @memoize
     def bind_hopping_as_site(elem, val):
         def f(*args):
             a, *args = args
@@ -128,7 +104,7 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
         _set_signature(f, params + momenta)
         return f
 
-    @_memoize
+    @memoize
     def bind_hopping(elem, val):
         def f(*args):
             a, b, *args = args
@@ -142,7 +118,7 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
         _set_signature(f, params + momenta)
         return f
 
-    @_memoize
+    @memoize
     def bind_sum(num_sites, *vals):
         """Construct joint signature for all 'vals'."""
 

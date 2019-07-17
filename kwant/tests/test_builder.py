@@ -1416,3 +1416,28 @@ def test_finalization_preserves_padding():
     syst = syst.finalized()
     # The order is guaranteed because the paddings are sorted.
     assert [syst.sites[i] for i in syst.lead_paddings[0]] == padding[:-1]
+
+
+def test_add_peierls_phase():
+
+    lat = kwant.lattice.square()
+    syst = kwant.Builder()
+    syst[(lat(i, j) for i in range(5) for j in range(5))] = 4
+    syst[lat.neighbors()] = lambda a, b, t: -t
+
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+    lead[(lat(0, j) for j in range(5))] = 4
+    lead[lat.neighbors()] = -1
+
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+
+    syst, phase = builder.add_peierls_phase(syst)
+
+    assert isinstance(syst, builder.FiniteSystem)
+
+    params = phase(1, 0, 0)
+
+    assert all(p in params for p in ('phi', 'phi_lead0', 'phi_lead1'))
+
+    kwant.smatrix(syst, energy=0.1, params=dict(t=-1, **params))
