@@ -94,6 +94,10 @@ div.body pre {
     border: 1px solid #ac9;
 }
 
+div.body pre.CodeMirror-line {
+    border: unset;
+}
+
 div.body div.admonition, div.body div.impl-detail {
     border-radius: 3px;
 }
