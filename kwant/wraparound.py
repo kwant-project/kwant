@@ -362,9 +362,13 @@ def plot_2d_bands(syst, k_x=31, k_y=31, params=None,
     if not hasattr(syst, '_wrapped_symmetry'):
         raise TypeError("Expecting a system that was produced by "
                         "'kwant.wraparound.wraparound'.")
-    if not isinstance(syst, system.FiniteSystem):
+    if isinstance(syst, system.InfiniteSystem):
         msg = ("All symmetry directions must be wrapped around: specify "
                "'keep=None' when calling 'kwant.wraparound.wraparound'.")
+        raise TypeError(msg)
+    if isinstance(syst, builder.Builder):
+        msg = ("Expecting a finalized system: remember to finalize your "
+               "system with 'syst.finalized()'.")
         raise TypeError(msg)
 
     params = params or {}
