@@ -128,12 +128,35 @@ def test_operator_construction():
     fwhere = tuple(fsyst.id_by_site[s] for s in where)
     A = ops.Density(fsyst, where=where)
     assert np.all(np.asarray(A.where).reshape(-1) == fwhere)
+    # Test for passing integers as 'where'
+    A = ops.Density(fsyst, where=fwhere)
+    assert np.all(np.asarray(A.where).reshape(-1) == fwhere)
+    # Test passing invalid sites
+    with raises(ValueError):
+        ops.Density(fsyst, where=[lat(100)])
+    with raises(ValueError):
+        ops.Density(fsyst, where=[-1])
+    with raises(ValueError):
+        ops.Density(fsyst, where=[10000])
 
     where = [(lat(2, 2), lat(1, 2)), (lat(0, 0), lat(0, 1))]
     fwhere = np.asarray([(fsyst.id_by_site[a], fsyst.id_by_site[b])
               for a, b in where])
     A = ops.Current(fsyst, where=where)
     assert np.all(np.asarray(A.where) == fwhere)
+    # Test for passing integers as 'where'
+    A = ops.Current(fsyst, where=fwhere)
+    assert np.all(np.asarray(A.where) == fwhere)
+    # Test passing invalid hoppings
+    with raises(ValueError):
+        ops.Current(fsyst, where=[(lat(2, 2), lat(0, 0))])
+    with raises(ValueError):
+        ops.Current(fsyst, where=[(-1, 1)])
+    with raises(ValueError):
+        ops.Current(fsyst, where=[(len(fsyst.sites), 1)])
+    with raises(ValueError):
+        ops.Current(fsyst, where=[(fsyst.id_by_site[lat(2, 2)],
+                                   fsyst.id_by_site[lat(0, 0)])])
 
     # test construction with `where` given by a function
     tag_list = [(1, 0), (1, 1), (1, 2)]
@@ -304,7 +327,7 @@ def test_opservables_spin():
     down, up = kwant.wave_function(fsyst, energy=1., params=params)(0)
 
     x_hoppings = kwant.builder.HoppingKind((1,), lat)
-    spin_current_z = ops.Current(fsyst, sigmaz, where=x_hoppings(syst))
+    spin_current_z = ops.Current(fsyst, sigmaz, where=list(x_hoppings(syst)))
     _test(spin_current_z, up, params=params, per_el_val=1)
     _test(spin_current_z, down, params=params, per_el_val=-1)
 
@@ -366,12 +389,14 @@ def test_opservables_gauged():
                          (Us[i], sigmaz, Us[i].conjugate().transpose()))
 
     x_hoppings = kwant.builder.HoppingKind((1,), lat)
-    spin_current_gauge = ops.Current(fsyst, M_a, where=x_hoppings(syst))
+    spin_current_gauge = ops.Current(fsyst, M_a,
+                                     where=list(x_hoppings(syst)))
     _test(spin_current_gauge, up, per_el_val=1)
     _test(spin_current_gauge, down, per_el_val=-1)
     # check the reverse is also true
     minus_x_hoppings = kwant.builder.HoppingKind((-1,), lat)
-    spin_current_gauge = ops.Current(fsyst, M_a, where=minus_x_hoppings(syst))
+    spin_current_gauge = ops.Current(fsyst, M_a,
+                                     where=list(minus_x_hoppings(syst)))
     _test(spin_current_gauge, up, per_el_val=-1)
     _test(spin_current_gauge, down, per_el_val=1)
 
