@@ -95,6 +95,13 @@ def discretize_landau(hamiltonian, N, momenta=None, grid_spacing=1):
         'hamiltonian' discretized in a basis of Landau levels in the plane
         defined by 'momenta'. If a third coordinate is present in 'hamiltonian',
         then this also has a translational symmetry in that coordinate direction.
+        The builder has a parameter 'B' in addition to any other parameters
+        present in the provided 'hamiltonian'.
+
+    Notes
+    -----
+    The units of magnetic field are :math:`ϕ₀ / 2 π a²` with :math:`ϕ₀ = h/e`
+    the magnetic flux quantum and :math:`a` the unit length.
     """
 
     if N <= 0:
