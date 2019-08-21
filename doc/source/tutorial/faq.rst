@@ -68,7 +68,7 @@ For example let us create an empty tight binding system and add two sites:
 .. jupyter-execute::
 
     a = 1
-    lat = kwant.lattice.square(a)
+    lat = kwant.lattice.square(a, norbs=1)
     syst = kwant.Builder()
 
     syst[lat(1, 0)] = 4
@@ -165,9 +165,9 @@ the origins of the two lattices:
 
     # Two monatomic lattices
     primitive_vectors = [(1, 0), (0, 1)]
-    lat_a = kwant.lattice.Monatomic(primitive_vectors, offset=(0, 0))
-    lat_b = kwant.lattice.Monatomic(primitive_vectors, offset=(0.5, 0.5))
-    # lat1 is equivalent to kwant.lattice.square()
+    lat_a = kwant.lattice.Monatomic(primitive_vectors, offset=(0, 0), norbs=1)
+    lat_b = kwant.lattice.Monatomic(primitive_vectors, offset=(0.5, 0.5), norbs=1)
+    # lat1 is equivalent to kwant.lattice.square(norbs=1)
 
     syst = kwant.Builder()
 
@@ -182,7 +182,7 @@ two sites in the basis:
 .. jupyter-execute::
 
     # One polyatomic lattice containing two sublattices
-    lat = kwant.lattice.Polyatomic([(1, 0), (0, 1)], [(0, 0), (0.5, 0.5)])
+    lat = kwant.lattice.Polyatomic([(1, 0), (0, 1)], [(0, 0), (0.5, 0.5)], norbs=1)
     sub_a, sub_b = lat.sublattices
 
 The two sublattices ``sub_a`` and ``sub_b`` are nothing else than ``Monatomic``
@@ -204,7 +204,7 @@ In the following example we shall use a kagome lattice, which has three sublatti
 
 .. jupyter-execute::
 
-    lat = kwant.lattice.kagome()
+    lat = kwant.lattice.kagome(norbs=1)
     syst = kwant.Builder()
 
     a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
@@ -258,7 +258,7 @@ The following example shows how this can be used:
     # Create hopping between neighbors with HoppingKind
     a = 1
     syst = kwant.Builder()
-    lat = kwant.lattice.square(a)
+    lat = kwant.lattice.square(a, norbs=1)
     syst[ (lat(i, j) for i in range(5) for j in range(5)) ] = 4
 
     syst[kwant.builder.HoppingKind((1, 0), lat)] = -1
@@ -271,7 +271,7 @@ the sublattices when creating a ``HoppingKind``:
 .. jupyter-execute::
     :hide-code:
 
-    lat = kwant.lattice.kagome()
+    lat = kwant.lattice.kagome(norbs=1)
     syst = kwant.Builder()
 
     a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
@@ -323,7 +323,7 @@ that returns a list of ``HoppingKind`` instances that connect sites with their
 
     # Create hoppings with lat.neighbors()
     syst = kwant.Builder()
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst[(lat(i, j) for i in range(3) for j in range(3))] = 4
 
     syst[lat.neighbors()] = -1  # Equivalent to lat.neighbors(1)
@@ -344,7 +344,7 @@ sublattices:
 .. jupyter-execute::
 
     # Create the system
-    lat = kwant.lattice.kagome()
+    lat = kwant.lattice.kagome(norbs=1)
     syst = kwant.Builder()
     a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
 
@@ -382,7 +382,7 @@ region:
 
     # Define the lattice and the (empty) system
     a = 2
-    lat = kwant.lattice.cubic(a)
+    lat = kwant.lattice.cubic(a, norbs=1)
     syst = kwant.Builder()
 
     L = 10
@@ -424,7 +424,7 @@ We can access the sites of a ``Builder`` by using its `~kwant.builder.Builder.si
     :hide-code:
 
     builder = kwant.Builder()
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     builder[(lat(i, j) for i in range(3) for j in range(3))] = 4
 
 .. jupyter-execute::
@@ -472,7 +472,7 @@ First we construct the central system:
     L = 5
     W = 5
 
-    lat = kwant.lattice.honeycomb()
+    lat = kwant.lattice.honeycomb(norbs=1)
     subA, subB = lat.sublattices
 
     syst = kwant.Builder()
@@ -487,7 +487,7 @@ and the lead:
 .. jupyter-execute::
 
     # Create a lead
-    lat_lead = kwant.lattice.square()
+    lat_lead = kwant.lattice.square(norbs=1)
     sym_lead1 = kwant.TranslationalSymmetry((0, 1))
 
     lead1 = kwant.Builder(sym_lead1)
@@ -535,7 +535,7 @@ For example, say we want to create a simple model on a cubic lattice:
 .. jupyter-execute::
 
     # Create 3d model.
-    cubic = kwant.lattice.cubic()
+    cubic = kwant.lattice.cubic(norbs=1)
     sym_3d = kwant.TranslationalSymmetry([1, 0, 0], [0, 1, 0], [0, 0, 1])
     model = kwant.Builder(sym_3d)
     model[cubic(0, 0, 0)] = 4
@@ -587,7 +587,7 @@ system in a `~kwant.physics.PropagatingModes` object:
 
 .. jupyter-execute::
 
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
 
     lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
     lead[(lat(0, i) for i in range(3))] = 4

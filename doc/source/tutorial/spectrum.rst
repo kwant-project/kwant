@@ -54,7 +54,7 @@ usual way:
 
     def make_lead(a=1, t=1.0, W=10):
         # Start with an empty lead with a single square lattice
-        lat = kwant.lattice.square(a)
+        lat = kwant.lattice.square(a, norbs=1)
 
         sym_lead = kwant.TranslationalSymmetry((-a, 0))
         lead = kwant.Builder(sym_lead)
