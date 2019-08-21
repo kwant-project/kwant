@@ -37,7 +37,8 @@ def _simple_syst(lat, E=0, t=1+1j, sym=None):
 
 def test_consistence_with_bands(kx=1.9, nkys=31):
     kys = np.linspace(-np.pi, np.pi, nkys)
-    for lat in [kwant.lattice.honeycomb(), kwant.lattice.square()]:
+    for lat in [kwant.lattice.honeycomb(norbs=1),
+                kwant.lattice.square(norbs=1)]:
         syst = _simple_syst(lat)
         wa_keep_1 = wraparound(syst, keep=1).finalized()
         wa_keep_none = wraparound(syst).finalized()
@@ -56,7 +57,7 @@ def test_consistence_with_bands(kx=1.9, nkys=31):
 
 
 def test_opposite_hoppings():
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
 
     for val in [1j, lambda a, b: 1j]:
         syst = kwant.Builder(kwant.TranslationalSymmetry((1, 1)))
@@ -74,7 +75,8 @@ def test_opposite_hoppings():
 def test_value_types(k=(-1.1, 0.5), E=2, t=1):
     k = dict(zip(('k_x', 'k_y', 'k_z'), k))
     sym_extents = [1, 2, 3]
-    lattices = [kwant.lattice.honeycomb(), kwant.lattice.square()]
+    lattices = [kwant.lattice.honeycomb(norbs=1),
+                kwant.lattice.square(norbs=1)]
     lat_syms = [
         (lat, kwant.TranslationalSymmetry(lat.vec((n, 0)), lat.vec((0, n))))
         for n, lat in itertools.product(sym_extents, lattices)
@@ -112,7 +114,7 @@ def test_value_types(k=(-1.1, 0.5), E=2, t=1):
 
 
 def test_signatures():
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst = kwant.Builder(kwant.TranslationalSymmetry((-3, 0), (0, 1)))
     # onsites and hoppings that will be bound as sites
     syst[lat(-2, 0)] = 4
@@ -162,7 +164,7 @@ def test_signatures():
 
 
 def test_symmetry():
-    syst = _simple_syst(kwant.lattice.square())
+    syst = _simple_syst(kwant.lattice.square(norbs=1))
 
     matrices = [np.random.rand(2, 2) for i in range(4)]
     laws = (matrices, [(lambda a: m) for m in matrices])
@@ -190,10 +192,10 @@ def test_symmetry():
 
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_plot_2d_bands():
-    chain = kwant.lattice.chain()
-    square = kwant.lattice.square()
-    cube = kwant.lattice.general([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
-    hc = kwant.lattice.honeycomb()
+    chain = kwant.lattice.chain(norbs=1)
+    square = kwant.lattice.square(norbs=1)
+    cube = kwant.lattice.general([(1, 0, 0), (0, 1, 0), (0, 0, 1)], norbs=1)
+    hc = kwant.lattice.honeycomb(norbs=1)
 
     syst_1d = kwant.Builder(kwant.TranslationalSymmetry(*chain._prim_vecs))
     syst_1d[chain(0)] = 2
@@ -245,7 +247,7 @@ def test_fd_mismatch():
     # around in all directions, but could not be wrapped around when 'keep' is
     # provided.
     sqrt3 = np.sqrt(3)
-    lat = kwant.lattice.general([(sqrt3, 0), (-sqrt3/2, 1.5)])
+    lat = kwant.lattice.general([(sqrt3, 0), (-sqrt3/2, 1.5)], norbs=1)
     T = kwant.TranslationalSymmetry((sqrt3, 0), (0, 3))
 
     syst1 = kwant.Builder(T)
@@ -269,7 +271,8 @@ def test_fd_mismatch():
     ## Test that spectrum of non-trivial system (including above cases)
     ## is the same, regardless of the way in which it is wrapped around
     lat = kwant.lattice.general([(sqrt3, 0), (-sqrt3/2, 1.5)],
-                                [(sqrt3 / 2, 0.5), (0, 1)])
+                                [(sqrt3 / 2, 0.5), (0, 1)],
+                                norbs=1)
     a, b = lat.sublattices
     T = kwant.TranslationalSymmetry((3 * sqrt3, 0), (0, 3))
     syst = kwant.Builder(T)
@@ -302,7 +305,7 @@ def test_fd_mismatch():
     assert all(np.allclose(E, E[0]) for E in E_k)
 
     # Test square lattice with oblique unit cell
-    lat = kwant.lattice.general(np.eye(2))
+    lat = kwant.lattice.general(np.eye(2), norbs=1)
     translations = kwant.lattice.TranslationalSymmetry([2, 2], [0, 2])
     syst = kwant.Builder(symmetry=translations)
     syst[lat.shape(lambda site: True, [0, 0])] = 1
@@ -314,7 +317,7 @@ def test_fd_mismatch():
 
     # Test Rocksalt structure
     # cubic lattice that contains both sublattices
-    lat = kwant.lattice.general(np.eye(3))
+    lat = kwant.lattice.general(np.eye(3), norbs=1)
     # Builder with FCC translational symmetries.
     translations = kwant.lattice.TranslationalSymmetry([1, 1, 0], [1, 0, 1], [0, 1, 1])
     syst = kwant.Builder(symmetry=translations)
@@ -341,7 +344,7 @@ def test_fd_mismatch():
     def shape(site):
         return abs(site.tag[2]) < 4
 
-    lat = kwant.lattice.general(np.eye(3))
+    lat = kwant.lattice.general(np.eye(3), norbs=1)
     # First choice: primitive UC
     translations = kwant.lattice.TranslationalSymmetry([1, 1, 0], [1, -1, 0], [1, 0, 1])
     syst = kwant.Builder(symmetry=translations)

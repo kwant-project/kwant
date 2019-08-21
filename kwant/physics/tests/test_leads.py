@@ -267,7 +267,7 @@ def test_modes():
 
 def test_modes_bearded_ribbon():
     # Check if bearded graphene ribbons work.
-    lat = kwant.lattice.honeycomb()
+    lat = kwant.lattice.honeycomb(norbs=1)
     syst = kwant.Builder(kwant.TranslationalSymmetry((1, 0)))
     syst[lat.shape((lambda pos: -20 < pos[1] < 20),
                   (0, 0))] = 0.3
@@ -417,7 +417,7 @@ def test_zero_hopping():
 
 def make_clean_lead(W, E, t):
     syst = kwant.Builder(kwant.TranslationalSymmetry((1, 0)))
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst[(lat(0, j) for j in range(W))] = E
     syst[lat.neighbors()] = -t
     return syst.finalized()

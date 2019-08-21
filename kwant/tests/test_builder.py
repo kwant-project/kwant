@@ -28,7 +28,7 @@ def test_bad_keys():
     def setitem(key):
         syst[key] = None
 
-    fam = builder.SimpleSiteFamily()
+    fam = builder.SimpleSiteFamily(norbs=1)
     syst = builder.Builder()
 
     failures = [
@@ -97,9 +97,9 @@ def test_bad_keys():
 
 def test_site_families():
     syst = builder.Builder()
-    fam = builder.SimpleSiteFamily()
-    ofam = builder.SimpleSiteFamily()
-    yafam = builder.SimpleSiteFamily('another_name')
+    fam = builder.SimpleSiteFamily(norbs=1)
+    ofam = builder.SimpleSiteFamily(norbs=1)
+    yafam = builder.SimpleSiteFamily('another_name', norbs=1)
 
     syst[fam(0)] = 7
     assert syst[fam(0)] == 7
@@ -162,7 +162,7 @@ class VerySimpleSymmetry(builder.Symmetry):
 # made.
 def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
                                     unknown_hoppings, sym=None):
-    fam = builder.SimpleSiteFamily()
+    fam = builder.SimpleSiteFamily(norbs=1)
     syst = builder.Builder(sym)
     t, V = 1.0j, 0.0
     syst[sites] = V
@@ -212,7 +212,7 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
 
 def test_construction_and_indexing():
     # Without symmetry
-    fam = builder.SimpleSiteFamily()
+    fam = builder.SimpleSiteFamily(norbs=1)
     sites = [fam(0, 0), fam(0, 1), fam(1, 0)]
     hoppings = [(fam(0, 0), fam(0, 1)),
                 (fam(0, 1), fam(1, 0)),
@@ -256,7 +256,7 @@ def test_hermitian_conjugation(value):
             raise ValueError
 
     syst = builder.Builder()
-    fam = builder.SimpleSiteFamily()
+    fam = builder.SimpleSiteFamily(norbs=1)
     syst[fam(0)] = syst[fam(1)] = ta.identity(2)
 
     syst[fam(0), fam(1)] = f
@@ -277,7 +277,7 @@ def test_hermitian_conjugation(value):
 def test_value_equality_and_identity():
     m = ta.array([[1, 2], [3j, 4j]])
     syst = builder.Builder()
-    fam = builder.SimpleSiteFamily()
+    fam = builder.SimpleSiteFamily(norbs=1)
 
     syst[fam(0)] = m
     syst[fam(1)] = m
@@ -389,7 +389,7 @@ def test_finalization():
 
     # Build scattering region from blueprint and test it.
     syst = builder.Builder()
-    fam = kwant.lattice.general(ta.identity(2))
+    fam = kwant.lattice.general(ta.identity(2), norbs=1)
     for site, value in sr_sites.items():
         syst[fam(*site)] = value
     for hop, value in sr_hops.items():
@@ -499,8 +499,11 @@ def test_site_ranges():
         ranges = syst.finalized().site_ranges
         expected = [(0, lat.norbs, 0), (10, 0, 10 * lat.norbs)]
         assert ranges == expected
-        # poison system with a single site with no norbs defined
-        syst[kwant.lattice.chain()(0)] = 1
+        # poison system with a single site with no norbs defined.
+        # Also catch the deprecation warning.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            syst[kwant.lattice.chain(norbs=None)(0)] = 1
         ranges = syst.finalized().site_ranges
         assert ranges == None
 
@@ -517,7 +520,7 @@ def test_hamiltonian_evaluation():
     edges = [(0, 1), (0, 2), (0, 3), (1, 2)]
 
     syst = builder.Builder()
-    fam = builder.SimpleSiteFamily()
+    fam = builder.SimpleSiteFamily(norbs=1)
     sites = [fam(*tag) for tag in tags]
     syst[(fam(*tag) for tag in tags)] = f_onsite
     syst[((fam(*tags[i]), fam(*tags[j])) for (i, j) in edges)] = f_hopping
@@ -581,7 +584,7 @@ def test_dangling():
         #       / \
         #    3-0---2-4-5  6-7  8
         syst = builder.Builder()
-        fam = builder.SimpleSiteFamily()
+        fam = builder.SimpleSiteFamily(norbs=1)
         syst[(fam(i) for i in range(9))] = None
         syst[[(fam(0), fam(1)), (fam(1), fam(2)), (fam(2), fam(0))]] = None
         syst[[(fam(0), fam(3)), (fam(2), fam(4)), (fam(4), fam(5))]] = None
@@ -607,7 +610,7 @@ def test_dangling():
 
 
 def test_builder_with_symmetry():
-    g = kwant.lattice.general(ta.identity(3))
+    g = kwant.lattice.general(ta.identity(3), norbs=1)
     sym = kwant.TranslationalSymmetry((0, 0, 3), (0, 2, 0))
     syst = builder.Builder(sym)
 
@@ -653,7 +656,7 @@ def test_builder_with_symmetry():
 
 
 def test_fill():
-    g = kwant.lattice.square()
+    g = kwant.lattice.square(norbs=1)
     sym_x = kwant.TranslationalSymmetry((-1, 0))
     sym_xy = kwant.TranslationalSymmetry((-1, 0), (0, 1))
 
@@ -669,7 +672,7 @@ def test_fill():
                        lambda pos: True),
                       (builder.NoSymmetry(),
                        lambda pos: ta.dot(pos, pos) < 17)]:
-        cubic = kwant.lattice.general(ta.identity(3))
+        cubic = kwant.lattice.general(ta.identity(3), norbs=1)
 
         # Make a weird system.
         orig = kwant.Builder(sym)
@@ -780,7 +783,7 @@ def test_fill():
     assert sorted(target.hoppings()) == sorted(should_be_syst.hoppings())
 
     ## test that 'fill' respects the symmetry of the target builder
-    lat = kwant.lattice.chain(a=1)
+    lat = kwant.lattice.chain(a=1, norbs=1)
     template = builder.Builder(kwant.TranslationalSymmetry((-1,)))
     template[lat(0)] = 2
     template[lat.neighbors()] = -1
@@ -807,7 +810,7 @@ def test_fill():
         target.fill(template, lambda x: True, lat(0))
 
     # Test for warning when one of the starting sites is outside the template
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     template = builder.Builder(kwant.TranslationalSymmetry((-1, 0)))
     template[lat(0, 0)] = None
     template[lat.neighbors()] = None
@@ -822,7 +825,7 @@ def test_fill_sticky():
     separately.
     """
     # Generate model template.
-    lat = kwant.lattice.kagome()
+    lat = kwant.lattice.kagome(norbs=1)
     template = kwant.Builder(kwant.TranslationalSymmetry(
         lat.vec((1, 0)), lat.vec((0, 1))))
     for i, sl in enumerate(lat.sublattices):
@@ -855,7 +858,7 @@ def test_fill_sticky():
 
 def test_attach_lead():
     fam = builder.SimpleSiteFamily(norbs=1)
-    fam_noncommensurate = builder.SimpleSiteFamily(name='other')
+    fam_noncommensurate = builder.SimpleSiteFamily(name='other', norbs=1)
 
     syst = builder.Builder()
     syst[fam(1)] = 0
@@ -912,7 +915,7 @@ def test_attach_lead():
 
 
 def test_attach_lead_incomplete_unit_cell():
-    lat = kwant.lattice.chain()
+    lat = kwant.lattice.chain(norbs=1)
     syst = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((2,)))
     syst[lat(1)] = lead[lat(0)] = lead[lat(1)] = 0
@@ -923,7 +926,7 @@ def test_attach_lead_incomplete_unit_cell():
 def test_neighbors_not_in_single_domain():
     sr = builder.Builder()
     lead = builder.Builder(VerySimpleSymmetry(-1))
-    fam = builder.SimpleSiteFamily()
+    fam = builder.SimpleSiteFamily(norbs=1)
     sr[(fam(x, y) for x in range(3) for y in range(3) if x >= y)] = 0
     sr[builder.HoppingKind((1, 0), fam)] = 1
     sr[builder.HoppingKind((0, 1), fam)] = 1
@@ -946,7 +949,7 @@ def test_closest():
     rng = ensure_rng(10)
     for sym_dim in range(1, 4):
         for space_dim in range(sym_dim, 4):
-            lat = kwant.lattice.general(ta.identity(space_dim))
+            lat = kwant.lattice.general(ta.identity(space_dim), norbs=1)
 
             # Choose random periods.
             while True:
@@ -978,7 +981,7 @@ def test_closest():
 
 
 def test_update():
-    lat = builder.SimpleSiteFamily()
+    lat = builder.SimpleSiteFamily(norbs=1)
 
     syst = builder.Builder()
     syst[[lat(0,), lat(1,)]] = 1
@@ -1017,8 +1020,8 @@ def test_update():
 # ghgh    hhgh
 #
 def test_HoppingKind():
-    g = kwant.lattice.general(ta.identity(3), name='some_lattice')
-    h = kwant.lattice.general(ta.identity(3), name='another_lattice')
+    g = kwant.lattice.general(ta.identity(3), name='some_lattice', norbs=1)
+    h = kwant.lattice.general(ta.identity(3), name='another_lattice', norbs=1)
     sym = kwant.TranslationalSymmetry((0, 2, 0))
     syst = builder.Builder(sym)
     syst[((h if max(x, y, z) % 2 else g)(x, y, z)
@@ -1058,8 +1061,8 @@ def test_HoppingKind():
 
 
 def test_invalid_HoppingKind():
-    g = kwant.lattice.general(ta.identity(3))
-    h = kwant.lattice.general(np.identity(3)[:-1])  # 2D lattice in 3D
+    g = kwant.lattice.general(ta.identity(3), norbs=1)
+    h = kwant.lattice.general(np.identity(3)[:-1], norbs=1)  # 2D lattice in 3D
 
     delta = (1, 0, 0)
 
@@ -1073,7 +1076,7 @@ def test_invalid_HoppingKind():
 
 
 def test_ModesLead_and_SelfEnergyLead():
-    lat = builder.SimpleSiteFamily()
+    lat = builder.SimpleSiteFamily(norbs=1)
     hoppings = [builder.HoppingKind((1, 0), lat),
                 builder.HoppingKind((0, 1), lat)]
     rng = Random(123)
@@ -1150,7 +1153,7 @@ def test_ModesLead_and_SelfEnergyLead():
 
 
 def test_site_pickle():
-    site = kwant.lattice.square()(0, 0)
+    site = kwant.lattice.square(norbs=1)(0, 0)
     assert pickle.loads(pickle.dumps(site)) == site
 
 
@@ -1213,7 +1216,7 @@ def test_discrete_symmetries():
 # all the deprecation warnings in the test logs
 @pytest.mark.filterwarnings("ignore:.*'args' parameter")
 def test_argument_passing():
-    chain = kwant.lattice.chain()
+    chain = kwant.lattice.chain(norbs=1)
 
     # Test for passing parameters to hamiltonian matrix elements
     def onsite(site, p1, p2):
@@ -1347,7 +1350,7 @@ def test_subs():
         salt = str(b) + str(c)
         return kwant.digest.uniform(ta.array((sitea.tag, siteb.tag)), salt=salt)
 
-    lat = kwant.lattice.chain()
+    lat = kwant.lattice.chain(norbs=1)
 
     def make_system(sym=kwant.builder.NoSymmetry(), n=3):
         syst = kwant.Builder(sym)
@@ -1400,7 +1403,7 @@ def test_subs():
     assert lead.parameters == {'lead_a', 'lead_b', 'lead_c'}
 
 def test_attach_stores_padding():
-    lat = kwant.lattice.chain()
+    lat = kwant.lattice.chain(norbs=1)
     syst = kwant.Builder()
     syst[lat(0)] = 0
     lead = kwant.Builder(kwant.TranslationalSymmetry(lat.prim_vecs[0]))
@@ -1411,7 +1414,7 @@ def test_attach_stores_padding():
 
 
 def test_finalization_preserves_padding():
-    lat = kwant.lattice.chain()
+    lat = kwant.lattice.chain(norbs=1)
     syst = kwant.Builder()
     for i in range(10):
         syst[lat(i)] = 0
@@ -1431,7 +1434,7 @@ def test_finalization_preserves_padding():
 
 def test_add_peierls_phase():
 
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst = kwant.Builder()
     syst[(lat(i, j) for i in range(5) for j in range(5))] = 4
     syst[lat.neighbors()] = lambda a, b, t: -t
