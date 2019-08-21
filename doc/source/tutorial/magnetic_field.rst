@@ -37,7 +37,7 @@ operators with the substitution
 .. math::
 
     k_x = \frac{1}{\sqrt{2} l_B} (a + a^\dagger), \quad \quad
-    k_y = \frac{1}{\sqrt{2} l_B} (a - a^\dagger),
+    k_y = \frac{i}{\sqrt{2} l_B} (a - a^\dagger),
 
 with the magnetic length :math:`l_B = \sqrt{\hbar/eB}`. The ladder operators obey the
 commutation relation
