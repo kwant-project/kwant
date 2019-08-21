@@ -133,7 +133,7 @@ and we declare the square lattice and construct the scattering region with the f
     # Hoppings
     syst[lat.neighbors()] = -t * tau_z
 
-Note the new argument ``norbs`` to `~kwant.lattice.square`. This is
+Note the argument ``norbs`` to `~kwant.lattice.square`. This is
 the number of orbitals per site in the discretized BdG Hamiltonian - of course,
 ``norbs = 2``, since each site has one electron orbital and one hole orbital.
 It is necessary to specify ``norbs`` here, such that we may later separate the

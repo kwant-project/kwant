@@ -109,7 +109,7 @@ we can simply write:
 .. jupyter-execute::
     :hide-code:
 
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=2)
     syst = kwant.Builder()
 
 .. jupyter-execute::
@@ -124,6 +124,9 @@ we can simply write:
     syst[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
         -t * sigma_0 - 1j * alpha * sigma_x / 2
 
+Note that we specify ``norbs=2`` when creating the lattice, as each site
+has 2 degrees of freedom associated with it, giving us 2x2 matrices as
+onsite/hopping terms.
 Note that the Zeeman energy adds to the onsite term, whereas the Rashba
 spin-orbit term adds to the hoppings (due to the derivative operator).
 Furthermore, the hoppings in x and y-direction have a different matrix
@@ -298,7 +301,7 @@ Kwant now allows us to pass a function as a value to
     def onsite(site, pot):
         return 4 * t + potential(site, pot)
 
-    lat = kwant.lattice.square(a)
+    lat = kwant.lattice.square(a, norbs=1)
     syst = kwant.Builder()
 
     syst[(lat(x, y) for x in range(L) for y in range(W))] = onsite
@@ -457,7 +460,7 @@ provided by the lattice:
     a = 1
     t = 1.0
 
-    lat = kwant.lattice.square(a)
+    lat = kwant.lattice.square(a, norbs=1)
     syst = kwant.Builder()
 
     syst[lat.shape(ring, (0, r1 + 1))] = 4 * t
@@ -620,7 +623,7 @@ period of one flux quantum.
         W = 10
         r1, r2 = 10, 20
 
-        lat = kwant.lattice.square()
+        lat = kwant.lattice.square(norbs=1)
         syst = kwant.Builder()
         def ring(pos):
             (x, y) = pos
@@ -675,7 +678,7 @@ period of one flux quantum.
         W = 10
         r1, r2 = 10, 20
 
-        lat = kwant.lattice.square(a)
+        lat = kwant.lattice.square(a, norbs=1)
         syst = kwant.Builder()
         def ring(pos):
             (x, y) = pos
