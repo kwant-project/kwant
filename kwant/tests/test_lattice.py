@@ -237,6 +237,9 @@ def test_norbs():
     raises(ValueError, lattice.general, id_mat, norbs=1.5)
     raises(ValueError, lattice.general, id_mat, id_mat, norbs=1.5)
     raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1.5, 1.5])
+    # should raise ValueError if norbs is <= 0
+    raises(ValueError, lattice.general, id_mat, norbs=0)
+    raises(ValueError, lattice.general, id_mat, norbs=-1)
     # test that lattices with different norbs are compared `not equal`
     lat = lattice.general(id_mat, basis=id_mat, norbs=None)
     lat1 = lattice.general(id_mat, basis=id_mat, norbs=1)
