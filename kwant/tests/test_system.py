@@ -17,7 +17,7 @@ from kwant._common import ensure_rng
 
 def test_hamiltonian_submatrix():
     syst = kwant.Builder()
-    chain = kwant.lattice.chain()
+    chain = kwant.lattice.chain(norbs=1)
     for i in range(3):
         syst[chain(i)] = 0.5 * i
     for i in range(2):
@@ -87,7 +87,7 @@ def test_hamiltonian_submatrix():
 def test_pickling():
     syst = kwant.Builder()
     lead = kwant.Builder(symmetry=kwant.TranslationalSymmetry([1.]))
-    lat = kwant.lattice.chain()
+    lat = kwant.lattice.chain(norbs=1)
     syst[lat(0)] = syst[lat(1)] = 0
     syst[lat(0), lat(1)] = 1
     lead[lat(0)] = syst[lat(1)] = 0
