@@ -730,23 +730,25 @@ class Correlator:
         g_kernel[0] /= 2
         mu_kernel = np.outer(g_kernel, g_kernel) * self.moments_matrix
 
-        e = (self.energies - self._b) / self._a
+        e_scaled = (self.energies - self._b) / self._a
 
-        # arrays for faster calculation
-        sqrt_e = np.sqrt(1 - e ** 2)
-        arccos_e = np.arccos(e)
+        m_array = np.arange(n_moments)
+        def _integral_factor(e):
+            # arrays for faster calculation
+            sqrt_e = np.sqrt(1 - e ** 2)
+            arccos_e = np.arccos(e)
 
-        exp_n = np.exp(1j * np.outer(arccos_e, np.arange(n_moments)))
-        t_n = np.real(exp_n)
+            exp_n = np.exp(1j * arccos_e * m_array)
+            t_n = np.real(exp_n)
 
-        e_plus = (np.outer(e, np.ones(n_moments)) -
-                  1j * np.outer(sqrt_e, np.arange(n_moments)))
-        e_plus = e_plus * exp_n
+            e_plus = (e - 1j * sqrt_e * m_array)
+            e_plus = e_plus * exp_n
 
-        big_gamma = e_plus[:, None, :] * t_n[:, :, None]
-        big_gamma += big_gamma.conj().swapaxes(1, 2)
-
-        self._integral_factor = np.tensordot(mu_kernel, big_gamma.T)
+            big_gamma = e_plus[None, :] * t_n[:, None]
+            big_gamma += big_gamma.conj().T
+            return np.tensordot(mu_kernel, big_gamma.T)
+        self._integral_factor = np.array([_integral_factor(e)
+                                          for e in e_scaled]).T
 
 
 def conductivity(hamiltonian, alpha='x', beta='x', positions=None, **kwargs):
