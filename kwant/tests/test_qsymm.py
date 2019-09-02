@@ -317,9 +317,9 @@ def test_consistency_kwant():
     c0, c1 = sympy.symbols('c0 c1', real=True)
     kx = _commutative_momenta[0]
 
-    Ham = Model({c0 * e**(-I*kx): T}, momenta=[0])
+    Ham = Model({c0 * e**(-I*kx): T}, momenta=['k_x'])
     Ham += Ham.T().conj()
-    Ham += Model({c1: H}, momenta=[0])
+    Ham += Model({c1: H}, momenta=['k_x'])
 
     # Two superimposed atoms, same number of orbitals on each
     norbs = OrderedDict([('A', orbs), ('B', orbs)])
@@ -480,7 +480,8 @@ def test_find_cons_law():
     onsites = [symm for symm in builder_symmetries if
                isinstance(symm, qsymm.ContinuousGroupGenerator) and symm.R is None]
     mham = builder_to_model(syst)
-    assert not any([len(symm.apply(mham)) for symm in onsites])
+    assert all([symm.apply(mham).allclose(0, atol=1e-6) for symm in onsites])
+    
 
 def test_basis_ordering():
     symm_class = ['AI', 'D', 'AIII', 'BDI']
