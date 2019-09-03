@@ -15,8 +15,8 @@ import kwant
 from kwant._common import ensure_rng
 
 n = 5
-chain = kwant.lattice.chain(norbs=1)
-sq = square = kwant.lattice.square(norbs=1)
+chain = kwant.lattice.chain(norbs=n)
+sq = square = kwant.lattice.square(norbs=n)
 
 
 class LeadWithOnlySelfEnergy:
@@ -111,6 +111,8 @@ def test_one_lead(smatrix):
 # Test that a system with one lead with no propagating modes has a
 # 0x0 S-matrix.
 def test_smatrix_shape(smatrix):
+    chain = kwant.lattice.chain(norbs=1)
+
     system = kwant.Builder()
     lead0 = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     lead1 = kwant.Builder(kwant.TranslationalSymmetry((1,)))
@@ -264,6 +266,8 @@ def test_singular_graph_system(smatrix):
 # zero eigenvalues than the lead hopping matrix. Older version of the
 # sparse solver failed here.
 def test_tricky_singular_hopping(smatrix):
+    sq = kwant.lattice.square(norbs=1)
+
     system = kwant.Builder()
     lead = kwant.Builder(kwant.TranslationalSymmetry((4, 0)))
 
@@ -294,6 +298,7 @@ def test_tricky_singular_hopping(smatrix):
 # Test the consistency of transmission and conductance_matrix for a four-lead
 # system without time-reversal symmetry.
 def test_many_leads(*factories):
+    sq = kwant.lattice.square(norbs=1)
     E=2.1
     B=0.01
 
@@ -512,6 +517,7 @@ def test_arg_passing(wave_function, ldos, smatrix):
     def hopping(site1, site2, a, b):
         return b - a
 
+    square = kwant.lattice.square(norbs=1)
     W = 3
     L = 4
 
