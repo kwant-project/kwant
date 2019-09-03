@@ -481,7 +481,7 @@ def test_find_cons_law():
                isinstance(symm, qsymm.ContinuousGroupGenerator) and symm.R is None]
     mham = builder_to_model(syst)
     assert all([symm.apply(mham).allclose(0, atol=1e-6) for symm in onsites])
-    
+
 
 def test_basis_ordering():
     symm_class = ['AI', 'D', 'AIII', 'BDI']
