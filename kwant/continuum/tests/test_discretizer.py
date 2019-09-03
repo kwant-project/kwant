@@ -548,14 +548,14 @@ def test_grid(ham, grid_spacing, grid):
 
 
 @pytest.mark.parametrize('ham, grid_offset, offset, norbs', [
-    ('k_x', None, 0, None),
+    ('k_x', None, 0, 1),
     ('k_x', None, 0, 1),
     ('k_x * eye(2)', None, 0, 2),
-    ('k_x', (0,), 0, None),
-    ('k_x', (1,), 1, None),
-    ('k_x + k_y', None, (0, 0), None),
-    ('k_x + k_y', (0, 0), (0, 0), None),
-    ('k_x + k_y', (1, 2), (1, 2), None),
+    ('k_x', (0,), 0, 1),
+    ('k_x', (1,), 1, 1),
+    ('k_x + k_y', None, (0, 0), 1),
+    ('k_x + k_y', (0, 0), (0, 0), 1),
+    ('k_x + k_y', (1, 2), (1, 2), 1),
 ])
 def test_grid_input(ham, grid_offset, offset, norbs):
     # build appriopriate grid
@@ -579,7 +579,7 @@ def test_grid_input(ham, grid_offset, offset, norbs):
 
 def test_grid_offset_passed_to_functions():
     V = lambda x: x
-    grid = Monatomic([[1, ]], offset=[0.5, ])
+    grid = Monatomic([[1, ]], offset=[0.5, ], norbs=1)
     tb = discretize('V(x)', 'x', grid=grid)
     onsite = tb[tb.lattice(0)]
     bools = [np.allclose(onsite(tb.lattice(i), V), V(tb.lattice(i).pos))
@@ -588,11 +588,11 @@ def test_grid_offset_passed_to_functions():
 
 
 @pytest.mark.parametrize("ham, coords, grid", [
-    ("k_x", None, Monatomic([[1, 0]])),
-    ("k_x", 'xy', Monatomic([[1, 0]])),
+    ("k_x", None, Monatomic([[1, 0]], norbs=1)),
+    ("k_x", 'xy', Monatomic([[1, 0]], norbs=1)),
     ("k_x", None, Monatomic([[1, ]], norbs=2)),
     ("k_x * eye(2)", None, Monatomic([[1, ]], norbs=1)),
-    ("k_x+k_y", None, Monatomic([[1, 0], [1, 1]])),
+    ("k_x+k_y", None, Monatomic([[1, 0], [1, 1]], norbs=1)),
 ])
 def test_grid_constraints(ham, coords, grid):
     with pytest.raises(ValueError):
@@ -606,7 +606,7 @@ def test_check_symbol_names(name):
 
 
 def test_rectangular_grid():
-    lat = Monatomic([[1, 0], [0, 2]])
+    lat = Monatomic([[1, 0], [0, 2]], norbs=1)
 
     tb = discretize("V(x, y)", 'xy', grid=lat)
     assert np.allclose(tb[lat(0, 0)](lat(1, 0), lambda x, y: x), 1)

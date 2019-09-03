@@ -15,8 +15,8 @@ import kwant
 from kwant._common import ensure_rng
 
 n = 5
-chain = kwant.lattice.chain()
-sq = square = kwant.lattice.square()
+chain = kwant.lattice.chain(norbs=1)
+sq = square = kwant.lattice.square(norbs=1)
 
 
 class LeadWithOnlySelfEnergy:
@@ -428,7 +428,7 @@ def test_selfenergy_reflection(greens_function, smatrix):
 
 def test_very_singular_leads(smatrix):
     syst = kwant.Builder()
-    chain = kwant.lattice.chain()
+    chain = kwant.lattice.chain(norbs=2)
     left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
     right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
     syst[chain(0)] = left_lead[chain(0)] = right_lead[chain(0)] = np.identity(2)
@@ -443,7 +443,7 @@ def test_very_singular_leads(smatrix):
 
 def test_ldos(ldos):
     syst = kwant.Builder()
-    chain = kwant.lattice.chain()
+    chain = kwant.lattice.chain(norbs=1)
     lead = kwant.Builder(kwant.TranslationalSymmetry(chain.vec((1,))))
     syst[chain(0)] = syst[chain(1)] = lead[chain(0)] = 0
     syst[chain(0), chain(1)] = lead[chain(0), chain(1)] = 1

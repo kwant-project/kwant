@@ -137,7 +137,7 @@ a discretization in realspace.
 
 .. jupyter-execute::
 
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
 
     def peierls(to_site, from_site, B):

@@ -17,7 +17,7 @@ from math import pi, cos, sin
 
 def make_lead():
     syst = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst[[lat(0, 0), lat(0, 1)]] = 3
     syst[lat(0, 1), lat(0, 0)] = -1
     syst[((lat(1, y), lat(0, y)) for y in range(2))] = -1
@@ -35,7 +35,7 @@ def test_band_energies(N=5):
 
 def test_same_as_lead():
     syst = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
-    lat = kwant.lattice.chain()
+    lat = kwant.lattice.chain(norbs=1)
     syst[lat(0)] = 0
     syst[lat(0), lat(1)] = complex(cos(0.2), sin(0.2))
 
@@ -49,7 +49,7 @@ def test_same_as_lead():
 
 def test_raise_nonhermitian():
     syst = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
-    lat = kwant.lattice.chain()
+    lat = kwant.lattice.chain(norbs=1)
     syst[lat(0)] = 1j
     syst[lat(0), lat(1)] = complex(cos(0.2), sin(0.2))
     syst = syst.finalized()
@@ -58,7 +58,7 @@ def test_raise_nonhermitian():
 
 def test_band_velocities():
     syst = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst[lat(0, 0)] = 1
     syst[lat(0, 1)] = 3
     syst[lat(1, 0), lat(0, 0)] = -1
@@ -75,7 +75,7 @@ def test_band_velocities():
 
 def test_band_velocity_derivative():
     syst = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst[lat(0, 0)] = 1
     syst[lat(0, 1)] = 3
     syst[lat(1, 0), lat(0, 0)] = -1

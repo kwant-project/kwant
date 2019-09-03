@@ -65,7 +65,7 @@ def test_schur_complement_with_dense():
 def test_error_minus_9(r=10):
     """Test if MUMPSError -9 is properly caught by increasing memory"""
 
-    graphene = honeycomb()
+    graphene = honeycomb(norbs=1)
     a, b = graphene.sublattices
 
     def circle(pos):

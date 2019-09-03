@@ -91,7 +91,7 @@ def syst_2d(W=3, r1=3, r2=8):
 
 
 def syst_3d(W=3, r1=2, r2=4, a=1, t=1.0):
-    lat = kwant.lattice.general(((a, 0, 0), (0, a, 0), (0, 0, a)))
+    lat = kwant.lattice.general(((a, 0, 0), (0, a, 0), (0, 0, a)), norbs=1)
     syst = kwant.Builder()
 
     def ring(pos):
@@ -162,7 +162,8 @@ def test_plot_more_site_families_than_colors():
     # https://gitlab.kwant-project.org/kwant/kwant/issues/257
     ncolors = len(pyplot.rcParams['axes.prop_cycle'])
     syst = kwant.Builder()
-    lattices = [kwant.lattice.square(name=i) for i in range(ncolors + 1)]
+    lattices = [kwant.lattice.square(name=i, norbs=1)
+                for i in range(ncolors + 1)]
     for i, lat in enumerate(lattices):
         syst[lat(i, 0)] = None
     with tempfile.TemporaryFile('w+b') as out:
@@ -172,7 +173,7 @@ def test_plot_more_site_families_than_colors():
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_plot_raises_on_bad_site_spec():
     syst = kwant.Builder()
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst[(lat(i, j) for i in range(5) for j in range(5))] = None
 
     # Cannot provide site_size as an array when syst is a Builder
@@ -252,7 +253,7 @@ def test_spectrum():
     def ham_2d(a, b, c):
         return np.eye(2) * (a**2 + b**2 + c**2)
 
-    lat = kwant.lattice.chain()
+    lat = kwant.lattice.chain(norbs=1)
     syst = kwant.Builder()
     syst[(lat(i) for i in range(3))] = lambda site, a, b: a + b
     syst[lat.neighbors()] = lambda site1, site2, c: c
@@ -376,7 +377,7 @@ def _border_is_0(field):
 def _test_border_0(interpolator):
     ## Test that current is always identically zero at box boundaries
     syst = kwant.Builder()
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst[[lat(0, 0), lat(1, 0)]] = None
     syst[(lat(0, 0), lat(1, 0))] = None
     syst = syst.finalized()
@@ -503,7 +504,7 @@ def test_current_interpolation():
 
     ### Tests on a divergence-free current (closed system)
 
-    lat = kwant.lattice.general([(1, 0), (0.5, np.sqrt(3) / 2)])
+    lat = kwant.lattice.general([(1, 0), (0.5, np.sqrt(3) / 2)], norbs=1)
     syst = kwant.Builder()
     sites = [lat(0, 0), lat(1, 0), lat(0, 1), lat(2, 2)]
     syst[sites] = None

@@ -53,7 +53,7 @@ to previous examples, we will also use hoppings beyond next-nearest neighbors:
 
 .. jupyter-execute::
 
-    lat = kwant.lattice.honeycomb()
+    lat = kwant.lattice.honeycomb(norbs=1)
     a, b = lat.sublattices
 
     def make_system(r=8, t=-1, tp=-0.1):
@@ -241,7 +241,8 @@ It is very easily generated in Kwant with `kwant.lattice.general`:
 .. jupyter-execute::
 
     lat = kwant.lattice.general([(0, 0.5, 0.5), (0.5, 0, 0.5), (0.5, 0.5, 0)],
-                                [(0, 0, 0), (0.25, 0.25, 0.25)])
+                                [(0, 0, 0), (0.25, 0.25, 0.25)],
+                                norbs=1)
     a, b = lat.sublattices
 
 Note how we keep references to the two different sublattices for later use.

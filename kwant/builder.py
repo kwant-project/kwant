@@ -140,6 +140,10 @@ class SiteFamily(metaclass=abc.ABCMeta):
         self.canonical_repr = canonical_repr
         self.hash = hash(canonical_repr)
         self.name = name
+        if norbs is None:
+            warnings.warn("Not specfying norbs is deprecated. Always specify "
+                          "norbs when creating site families.",
+                          KwantDeprecationWarning, stacklevel=3)
         if norbs is not None:
             if int(norbs) != norbs or norbs <= 0:
                 raise ValueError('The norbs parameter must be an integer > 0.')
