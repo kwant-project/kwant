@@ -639,6 +639,8 @@ unintuitive orderings:
 .. jupyter-execute::
     :hide-code:
 
+    lat = kwant.lattice.square(norbs=2)
+
     s0 = np.eye(2)
     sz = np.array([[1, 0], [0, -1]])
 
