@@ -858,6 +858,10 @@ class Builder:
     amounts to creating a `Lead` object and appending it to the list of leads
     accessbile as the `~Builder.leads` attribute.
 
+    `conservation_law`, `time_reversal`, `particle_hole`, and `chiral`
+    affect the basis in which scattering modes derived from the builder
+    are expressed - see `~kwant.physics.DiscreteSymmetry` for details.
+
     .. warning::
 
         If functions are used to set values in a builder with a symmetry, then
