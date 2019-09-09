@@ -517,7 +517,7 @@ def maybe_add_numpy_include(exts):
 
 
 def main():
-    check_python_version((3, 5))
+    check_python_version((3, 6))
     check_versions()
 
     exts = collections.OrderedDict([
@@ -581,12 +581,12 @@ def main():
                     'build_ext': build_ext,
                     'test': test},
           ext_modules=exts,
-          install_requires=['numpy >= 1.11.0', 'scipy >= 0.17.0',
+          install_requires=['numpy >= 1.13.3', 'scipy >= 0.19.1',
                             'tinyarray >= 1.2'],
           extras_require={
               # The oldest versions between: Debian stable, Ubuntu LTS
-              'plotting': 'matplotlib >= 1.5.1',
-              'continuum': 'sympy >= 0.7.6',
+              'plotting': 'matplotlib >= 2.1.1',
+              'continuum': 'sympy >= 1.1.1',
               # qsymm is only packaged on PyPI
               'qsymm': 'qsymm >= 1.2.6',
           },

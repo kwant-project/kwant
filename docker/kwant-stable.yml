@@ -2,12 +2,13 @@ name: kwant-stable
 channels:
     - conda-forge
 dependencies:
-    - python=3.5
-    - numpy=1.11.0
-    - scipy=0.17  # No minor version because conda-forge has no 0.17.0
+    - python=3.6
+    - numpy=1.13.3
+    - scipy=0.19.1
     - tinyarray=1.2.0
-    - sympy=0.7.6
-    - matplotlib=1.5.1
+    - sympy=1.1.1
+    - matplotlib=2.1.1
+    - qsymm=1.2.6
     # Linear algebra libraraies
     - mumps
     - blas #=1.1 openblas
