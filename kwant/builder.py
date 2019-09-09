@@ -139,18 +139,43 @@ class Symmetry(metaclass=abc.ABCMeta):
     def which(self, site):
         """Calculate the domain of the site.
 
-        Return the group element whose action on a certain site from the
-        fundamental domain will result in the given ``site``.
+        Parameters
+        ----------
+        site : `~kwant.system.Site` or `~kwant.system.SiteArray`
+
+        Returns
+        -------
+        group_element : tuple or sequence of tuples
+            A single tuple if ``site`` is a Site, or a sequence of tuples if
+            ``site`` is a SiteArray.  The group element(s) whose action
+            on a certain site(s) from the fundamental domain will result
+            in the given ``site``.
         """
         pass
 
     @abc.abstractmethod
     def act(self, element, a, b=None):
-        """Act with a symmetry group element on a site or hopping."""
+        """Act with symmetry group element(s) on site(s) or hopping(s).
+
+        Parameters
+        ----------
+        element : tuple or sequence of tuples
+            Group element(s) with which to act on the provided site(s)
+            or hopping(s)
+        a, b : `~kwant.system.Site` or `~kwant.system.SiteArray`
+            If Site then ``element`` is a single tuple, if SiteArray then
+            ``element`` is a sequence of tuples. If only ``a`` is provided then
+            ``element`` acts on the site(s) of ``a``. If ``b`` is also provided
+            then ``element`` acts on the hopping(s) ``(a, b)``.
+        """
         pass
 
     def to_fd(self, a, b=None):
         """Map a site or hopping to the fundamental domain.
+
+        Parameters
+        ----------
+        a, b : `~kwant.system.Site` or `~kwant.system.SiteArray`
 
         If ``b`` is None, return a site equivalent to ``a`` within the
         fundamental domain.  Otherwise, return a hopping equivalent to ``(a,
@@ -161,11 +186,30 @@ class Symmetry(metaclass=abc.ABCMeta):
         return self.act(-self.which(a), a, b)
 
     def in_fd(self, site):
-        """Tell whether ``site`` lies within the fundamental domain."""
-        for d in self.which(site):
-            if d != 0:
-                return False
-        return True
+        """Tell whether ``site`` lies within the fundamental domain.
+
+        Parameters
+        ----------
+        site : `~kwant.system.Site` or `~kwant.system.SiteArray`
+
+        Returns
+        -------
+        in_fd : bool or sequence of bool
+            single bool if ``site`` is a Site, or a sequence of
+            bool if ``site`` is a SiteArray. In the latter case
+            we return whether each site in the SiteArray is in
+            the fundamental domain.
+        """
+        if isinstance(site, Site):
+            for d in self.which(site):
+                if d != 0:
+                    return False
+            return True
+        elif isinstance(site, SiteArray):
+            which = self.which(site)
+            return np.logical_and.reduce(which != 0, axis=1)
+        else:
+            raise TypeError("'site' must be a Site or SiteArray")
 
     @abc.abstractmethod
     def subgroup(self, *generators):

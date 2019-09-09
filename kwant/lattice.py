@@ -698,26 +698,48 @@ class TranslationalSymmetry(builder.Symmetry):
 
     def which(self, site):
         det_x_inv_m_part, det_m = self._get_site_family_data(site.family)[-2:]
-        result = ta.dot(det_x_inv_m_part, site.tag) // det_m
+        if isinstance(site, system.Site):
+            result = ta.dot(det_x_inv_m_part, site.tag) // det_m
+        elif isinstance(site, system.SiteArray):
+            result = np.dot(det_x_inv_m_part, site.tags.transpose()) // det_m
+        else:
+            raise TypeError("'site' must be a Site or a SiteArray")
+
         return -result if self.is_reversed else result
 
     def act(self, element, a, b=None):
-        element = ta.array(element)
-        if element.dtype is not int:
+        is_site = isinstance(a, system.Site)
+        # Tinyarray for small arrays (single site) else numpy
+        array_mod = ta if is_site else np
+        element = array_mod.array(element)
+        if not np.issubdtype(element.dtype, np.integer):
             raise ValueError("group element must be a tuple of integers")
+        if (len(element.shape) == 2 and is_site):
+            raise ValueError("must provide a single group element when "
+                             "acting on single sites.")
+        if (len(element.shape) == 1 and not is_site):
+            raise ValueError("must provide a sequence of group elements "
+                             "when acting on site arrays.")
         m_part = self._get_site_family_data(a.family)[0]
         try:
-            delta = ta.dot(m_part, element)
+            delta = array_mod.dot(m_part, element)
         except ValueError:
             msg = 'Expecting a {0}-tuple group element, but got `{1}` instead.'
             raise ValueError(msg.format(self.num_directions, element))
         if self.is_reversed:
             delta = -delta
         if b is None:
-            return builder.Site(a.family, a.tag + delta, True)
+            if is_site:
+                return system.Site(a.family, a.tag + delta, True)
+            else:
+                return system.SiteArray(a.family, a.tags + delta.transpose())
         elif b.family == a.family:
-            return (builder.Site(a.family, a.tag + delta, True),
-                    builder.Site(b.family, b.tag + delta, True))
+            if is_site:
+                return (system.Site(a.family, a.tag + delta, True),
+                        system.Site(b.family, b.tag + delta, True))
+            else:
+                return (system.SiteArray(a.family, a.tags + delta.transpose()),
+                        system.SiteArray(b.family, b.tags + delta.transpose()))
         else:
             m_part = self._get_site_family_data(b.family)[0]
             try:
@@ -728,8 +750,12 @@ class TranslationalSymmetry(builder.Symmetry):
                 raise ValueError(msg.format(self.num_directions, element))
             if self.is_reversed:
                 delta2 = -delta2
-            return (builder.Site(a.family, a.tag + delta, True),
-                    builder.Site(b.family, b.tag + delta2, True))
+            if is_site:
+                return (system.Site(a.family, a.tag + delta, True),
+                        system.Site(b.family, b.tag + delta2, True))
+            else:
+                return (system.SiteArray(a.family, a.tags + delta.transpose()),
+                        system.SiteArray(b.family, b.tags + delta2.transpose()))
 
     def reversed(self):
         """Return a reversed copy of the symmetry.
