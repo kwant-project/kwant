@@ -22,8 +22,8 @@ variables:
     name: gcr.io/kaniko-project/executor:debug-v0.16.0
     entrypoint: [""]
   before_script:
-    - mkdir -p /root/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /root/.docker/config.json
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
 build-env:ubuntu:
   <<: *build-env
