@@ -30,9 +30,6 @@ variables:
 
 build-env:ubuntu:
   <<: *build-env
-  only:
-    changes:
-      - docker/Dockerfile.ubuntu
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
@@ -41,9 +38,6 @@ build-env:ubuntu:
 
 build-env:debian:
   <<: *build-env
-  only:
-    changes:
-      - docker/Dockerfile.debian
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
@@ -52,10 +46,6 @@ build-env:debian:
 
 build-env:conda:
   <<: *build-env
-  only:
-    changes:
-      - docker/Dockerfile.conda
-      - docker/*.yml
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
@@ -64,10 +54,6 @@ build-env:conda:
 
 build-env:default:
   <<: *build-env
-  only:
-    changes:
-      - docker/Dockerfile.conda
-      - docker/*.yml
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
