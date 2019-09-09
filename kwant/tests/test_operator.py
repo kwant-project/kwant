@@ -120,12 +120,24 @@ def test_operator_construction():
     # test construction with dict `onsite`
     for A in opservables:
         B = A(fsyst, {lat: 1})
-        assert all(B.onsite(i) == 1 for i in range(N))
+        start_sites = [r[0] for r in fsyst.site_ranges]
+        for site_range, (start, stop) in enumerate(zip(start_sites, start_sites[1:])):
+            site_offsets = np.arange(stop - start)
+            should_be = np.ones(len(site_offsets), complex).reshape(-1, 1, 1)
+            vals = B.onsite(site_range, site_offsets)
+            assert np.all(vals == should_be)
 
     # test construction with a functional onsite
     for A in opservables:
         B = A(fsyst, lambda site: site.pos[0])  # x-position operator
-        assert all(B.onsite(i) == fsyst.sites[i].pos[0] for i in range(N))
+        start_sites = [r[0] for r in fsyst.site_ranges]
+        for site_range, (start, stop) in enumerate(zip(start_sites, start_sites[1:])):
+            site_offsets = np.arange(stop - start)
+            should_be = np.array([
+                fsyst.sites[i].pos[0] for i in range(start, stop)
+            ], complex).reshape(-1, 1, 1)
+            vals = B.onsite(site_range, site_offsets)
+            assert np.all(vals == should_be)
 
     # test construction with `where` given by a sequence
     where = [lat(2, 2), lat(1, 1)]
