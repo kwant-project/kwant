@@ -3,6 +3,40 @@ What's new in Kwant 1.5
 
 This article explains the user-visible changes in Kwant 1.5.0.
 
+
+Value functions may now be vectorized
+-------------------------------------
+It is now possible to define value functions that act on whole
+arrays of sites at a time.
+::
+
+    def onsite(sites):
+        r = sites.positions()
+        return np.exp(-np.linalg.norm(r, axis=1)**2)
+
+    def hopping(to_sites, from_sites):
+        dr = to_sites.positions() - from_sites.positions()
+        return 1 / np.linalg.norm(dr, axis=1)**2
+
+
+    lat = kwant.lattice.square(norbs=1)
+    syst = kwant.Builder(vectorize=True)
+    syst[(lat(i, j) for i in range(4) for j in range(10)] = onsite
+    syst[lat.neighbors()] = hopping
+    syst = syst.finalized()
+
+    syst.hamiltonian_submatrix()
+
+Notice that when creating the Builder we provide the ``vectorize=True`` flag,
+and that the value functions now take `~kwant.system.SiteArray` objects
+(which have a ``positions`` method, rather than a ``pos`` property as for
+`~kwant.system.Site`). We can now operate on the array of site positions
+using ``numpy``. Using vectorized value functions in this way can produce an
+order of magnitude speedup when evaluating system Hamiltonians (though this
+speedup may be masked by other parts of your computation e.g. calculating
+the scattering matrix).
+
+
 Deprecation of leaving 'norbs' unset for site families
 ------------------------------------------------------
 When constructing site families (e.g. lattices) it is now deprecated to
