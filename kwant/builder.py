@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -19,6 +19,7 @@ import tinyarray as ta
 import numpy as np
 from scipy import sparse
 from . import system, graph, KwantDeprecationWarning, UserCodeError
+from .system import Site, SiteFamily
 from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry, magnetic_gauge
@@ -26,182 +27,13 @@ from ._common import (ensure_isinstance, get_parameters, reraise_warnings,
                       interleave, deprecate_args, memoize)
 
 
-__all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
-           'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergyLead', 'ModesLead',
-           'add_peierls_phase']
+__all__ = ['Builder', 'SimpleSiteFamily', 'Symmetry', 'HoppingKind', 'Lead',
+           'BuilderLead', 'SelfEnergyLead', 'ModesLead', 'add_peierls_phase']
 
 
-################ Sites and site families
-
-class Site(tuple):
-    """A site, member of a `SiteFamily`.
-
-    Sites are the vertices of the graph which describes the tight binding
-    system in a `Builder`.
-
-    A site is uniquely identified by its family and its tag.
-
-    Parameters
-    ----------
-    family : an instance of `SiteFamily`
-        The 'type' of the site.
-    tag : a hashable python object
-        The unique identifier of the site within the site family, typically a
-        vector of integers.
-
-    Raises
-    ------
-    ValueError
-        If `tag` is not a proper tag for `family`.
-
-    Notes
-    -----
-    For convenience, ``family(*tag)`` can be used instead of ``Site(family,
-    tag)`` to create a site.
-
-    The parameters of the constructor (see above) are stored as instance
-    variables under the same names.  Given a site ``site``, common things to
-    query are thus ``site.family``, ``site.tag``, and ``site.pos``.
-    """
-    __slots__ = ()
-
-    family = property(operator.itemgetter(0),
-                      doc="The site family to which the site belongs.")
-    tag = property(operator.itemgetter(1), doc="The tag of the site.")
-
-
-    def __new__(cls, family, tag, _i_know_what_i_do=False):
-        if _i_know_what_i_do:
-            return tuple.__new__(cls, (family, tag))
-        try:
-            tag = family.normalize_tag(tag)
-        except (TypeError, ValueError) as e:
-            msg = 'Tag {0} is not allowed for site family {1}: {2}'
-            raise type(e)(msg.format(repr(tag), repr(family), e.args[0]))
-        return tuple.__new__(cls, (family, tag))
-
-    def __repr__(self):
-        return 'Site({0}, {1})'.format(repr(self.family), repr(self.tag))
-
-    def __str__(self):
-        sf = self.family
-        return '<Site {0} of {1}>'.format(self.tag, sf.name if sf.name else sf)
-
-    def __getnewargs__(self):
-        return (self.family, self.tag, True)
-
-    @property
-    def pos(self):
-        """Real space position of the site.
-
-        This relies on ``family`` having a ``pos`` method (see `SiteFamily`).
-        """
-        return self.family.pos(self.tag)
-
+################ Site families
 
 @total_ordering
-class SiteFamily(metaclass=abc.ABCMeta):
-    """Abstract base class for site families.
-
-    Site families are the 'type' of `Site` objects.  Within a family, individual
-    sites are uniquely identified by tags.  Valid tags must be hashable Python
-    objects, further details are up to the family.
-
-    Site families must be immutable and fully defined by their initial
-    arguments.  They must inherit from this abstract base class and call its
-    __init__ function providing it with two arguments: a canonical
-    representation and a name.  The canonical representation will be returned as
-    the objects representation and must uniquely identify the site family
-    instance.  The name is a string used to distinguish otherwise identical site
-    families.  It may be empty. ``norbs`` defines the number of orbitals
-    on sites associated with this site family; it may be `None`, in which case
-    the number of orbitals is not specified.
-
-
-    All site families must define the method `normalize_tag` which brings a tag
-    to the standard format for this site family.
-
-    Site families that are intended for use with plotting should also provide a
-    method `pos(tag)`, which returns a vector with real-space coordinates of the
-    site belonging to this family with a given tag.
-
-    If the ``norbs`` of a site family are provided, and sites of this family
-    are used to populate a `~kwant.builder.Builder`, then the associated
-    Hamiltonian values must have the correct shape. That is, if a site family
-    has ``norbs = 2``, then any on-site terms for sites belonging to this
-    family should be 2x2 matrices. Similarly, any hoppings to/from sites
-    belonging to this family must have a matrix structure where there are two
-    rows/columns. This condition applies equally to Hamiltonian values that
-    are given by functions. If this condition is not satisfied, an error will
-    be raised.
-    """
-
-    def __init__(self, canonical_repr, name, norbs):
-        self.canonical_repr = canonical_repr
-        self.hash = hash(canonical_repr)
-        self.name = name
-        if norbs is None:
-            warnings.warn("Not specfying norbs is deprecated. Always specify "
-                          "norbs when creating site families.",
-                          KwantDeprecationWarning, stacklevel=3)
-        if norbs is not None:
-            if int(norbs) != norbs or norbs <= 0:
-                raise ValueError('The norbs parameter must be an integer > 0.')
-            norbs = int(norbs)
-        self.norbs = norbs
-
-    def __repr__(self):
-        return self.canonical_repr
-
-    def __str__(self):
-        if self.name:
-            msg = '<{0} site family {1}{2}>'
-        else:
-            msg = '<unnamed {0} site family{2}>'
-        orbs = ' with {0} orbitals'.format(self.norbs) if self.norbs else ''
-        return msg.format(self.__class__.__name__, self.name, orbs)
-
-    def __hash__(self):
-        return self.hash
-
-    def __eq__(self, other):
-        try:
-            return self.canonical_repr == other.canonical_repr
-        except AttributeError:
-            return False
-
-    def __ne__(self, other):
-        try:
-            return self.canonical_repr != other.canonical_repr
-        except AttributeError:
-            return True
-
-    def __lt__(self, other):
-        # If this raises an AttributeError, we were trying
-        # to compare it to something non-comparable anyway.
-        return self.canonical_repr < other.canonical_repr
-
-    @abc.abstractmethod
-    def normalize_tag(self, tag):
-        """Return a normalized version of the tag.
-
-        Raises TypeError or ValueError if the tag is not acceptable.
-        """
-        pass
-
-    def __call__(self, *tag):
-        """
-        A convenience function.
-
-        This function allows to write fam(1, 2) instead of Site(fam, (1, 2)).
-        """
-        # Catch a likely and difficult to find mistake.
-        if tag and isinstance(tag[0], tuple):
-            raise ValueError('Use site_family(1, 2) instead of '
-                             'site_family((1, 2))!')
-        return Site(self, tag)
-
-
 class SimpleSiteFamily(SiteFamily):
     """A site family used as an example and for testing.
 
@@ -412,8 +244,8 @@ class HoppingKind(tuple):
     ----------
     delta : Sequence of integers
         The sequence is interpreted as a vector with integer elements.
-    family_a : `~kwant.builder.SiteFamily`
-    family_b : `~kwant.builder.SiteFamily` or ``None`` (default)
+    family_a : `~kwant.system.SiteFamily`
+    family_b : `~kwant.system.SiteFamily` or ``None`` (default)
         The default value means: use the same family as `family_a`.
 
     Notes
@@ -570,7 +402,7 @@ class BuilderLead(Lead):
         The tight-binding system of a lead. It has to possess appropriate
         symmetry, and it may not contain hoppings between further than
         neighboring images of the fundamental domain.
-    interface : sequence of `Site` instances
+    interface : sequence of `~kwant.system.Site` instances
         Sequence of sites in the scattering region to which the lead is
         attached.
 
@@ -578,9 +410,9 @@ class BuilderLead(Lead):
     ----------
     builder : `Builder`
         The tight-binding system of a lead.
-    interface : list of `Site` instances
+    interface : list of `~kwant.system.Site` instances
         A sorted list of interface sites.
-    padding : list of `Site` instances
+    padding : list of `~kwant.system.Site` instances
         A sorted list of sites that originate from the lead, have the same
         onsite Hamiltonian, and are connected by the same hoppings as the lead
         sites.
@@ -638,7 +470,7 @@ class SelfEnergyLead(Lead):
     selfenergy_func : function
         Has the same signature as `selfenergy` (without the ``self``
         parameter) and returns the self energy matrix for the interface sites.
-    interface : sequence of `Site` instances
+    interface : sequence of `~kwant.system.Site` instances
     parameters : sequence of strings
         The parameters on which the lead depends.
     """
@@ -669,7 +501,7 @@ class ModesLead(Lead):
         and returns the modes of the lead as a tuple of
         `~kwant.physics.PropagatingModes` and `~kwant.physics.StabilizedModes`.
     interface :
-        sequence of `Site` instances
+        sequence of `~kwant.system.Site` instances
     parameters : sequence of strings
         The parameters on which the lead depends.
     """
@@ -797,10 +629,11 @@ class Builder:
     This is one of the central types in Kwant.  It is used to construct tight
     binding systems in a flexible way.
 
-    The nodes of the graph are `Site` instances.  The edges, i.e. the hoppings,
-    are pairs (2-tuples) of sites.  Each node and each edge has a value
-    associated with it.  The values associated with nodes are interpreted as
-    on-site Hamiltonians, the ones associated with edges as hopping integrals.
+    The nodes of the graph are `~kwant.system.Site` instances.  The edges,
+    i.e. the hoppings, are pairs (2-tuples) of sites.  Each node and each
+    edge has a value associated with it.  The values associated with nodes
+    are interpreted as on-site Hamiltonians, the ones associated with edges
+    as hopping integrals.
 
     To make the graph accessible in a way that is natural within the Python
     language it is exposed as a *mapping* (much like a built-in Python
@@ -1452,7 +1285,7 @@ class Builder:
             A boolean function of site returning whether the site should be
             added to the target builder or not. The shape must be compatible
             with the symmetry of the target builder.
-        start : `Site` instance or iterable thereof or iterable of numbers
+        start : `~kwant.system.Site` or iterable thereof or iterable of numbers
             The site(s) at which the the flood-fill starts.  If start is an
             iterable of numbers, the starting site will be
             ``template.closest(start)``.
@@ -1462,7 +1295,7 @@ class Builder:
 
         Returns
         -------
-        added_sites : list of `Site` objects that were added to the system.
+        added_sites : list of `~kwant.system.Site` that were added to the system.
 
         Raises
         ------
@@ -1614,7 +1447,7 @@ class Builder:
         ----------
         lead_builder : `Builder` with 1D translational symmetry
             Builder of the lead which has to be attached.
-        origin : `Site`
+        origin : `~kwant.system.Site`
             The site which should belong to a domain where the lead should
             begin. It is used to attach a lead inside the system, e.g. to an
             inner radius of a ring.
@@ -1624,7 +1457,7 @@ class Builder:
 
         Returns
         -------
-        added_sites : list of `Site` objects that were added to the system.
+        added_sites : list of `~kwant.system.Site`
 
         Raises
         ------
@@ -2155,11 +1988,11 @@ class FiniteSystem(_FinalizedBuilderMixin, system.FiniteSystem):
     Attributes
     ----------
     sites : sequence
-        ``sites[i]`` is the `~kwant.builder.Site` instance that corresponds
+        ``sites[i]`` is the `~kwant.system.Site` instance that corresponds
         to the integer-labeled site ``i`` of the low-level system. The sites
         are ordered first by their family and then by their tag.
-    id_by_site : dict
-        The inverse of ``sites``; maps high-level `~kwant.builder.Site`
+    id_by_site : mapping
+        The inverse of ``sites``; maps high-level `~kwant.system.Site`
         instances to their integer label.
         Satisfies ``id_by_site[sites[i]] == i``.
     """
@@ -2275,10 +2108,10 @@ class InfiniteSystem(_FinalizedBuilderMixin, system.InfiniteSystem):
     Attributes
     ----------
     sites : sequence
-        ``sites[i]`` is the `~kwant.builder.Site` instance that corresponds
+        ``sites[i]`` is the `~kwant.system.Site` instance that corresponds
         to the integer-labeled site ``i`` of the low-level system.
-    id_by_site : dict
-        The inverse of ``sites``; maps high-level `~kwant.builder.Site`
+    id_by_site : mapping
+        The inverse of ``sites``; maps high-level `~kwant.system.Site`
         instances to their integer label.
         Satisfies ``id_by_site[sites[i]] == i``.
 

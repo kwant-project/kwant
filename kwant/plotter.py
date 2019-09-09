@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2011-2018 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -402,7 +402,7 @@ def sys_leads_sites(sys, num_lead_cells=2):
     Returns
     -------
     sites : list of (site, lead_number, copy_number) tuples
-        A site is a `~kwant.builder.Site` instance if the system is not finalized,
+        A site is a `~kwant.system.Site` instance if the system is not finalized,
         and an integer otherwise.  For system sites `lead_number` is `None` and
         `copy_number` is `0`, for leads both are integers.
     lead_cells : list of slices
@@ -528,7 +528,7 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
     Returns
     -------
     hoppings : list of (hopping, lead_number, copy_number) tuples
-        A site is a `~kwant.builder.Site` instance if the system is not finalized,
+        A site is a `~kwant.system.Site` instance if the system is not finalized,
         and an integer otherwise.  For system sites `lead_number` is `None` and
         `copy_number` is `0`, for leads both are integers.
     lead_cells : list of slices
@@ -812,7 +812,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
     - The meaning of "site" depends on whether the system to be plotted is a
       builder or a low level system.  For builders, a site is a
-      kwant.builder.Site object.  For low level systems, a site is an integer
+      kwant.system.Site object.  For low level systems, a site is an integer
       -- the site number.
 
     - color and symbol definitions may be tuples, but not lists or arrays.

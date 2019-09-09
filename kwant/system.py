@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -8,13 +8,196 @@
 
 """Low-level interface of systems"""
 
-__all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
+__all__ = [
+    'Site', 'SiteArray', 'SiteFamily',
+    'System', 'FiniteSystem', 'InfiniteSystem',
+]
 
 import abc
 import warnings
+import operator
 from copy import copy
+from collections import namedtuple
+from functools import total_ordering
+import numpy as np
 from . import _system
-from ._common  import deprecate_args
+from ._common  import deprecate_args, KwantDeprecationWarning
+
+
+
+################ Sites and Site families
+
+class Site(tuple):
+    """A site, member of a `SiteFamily`.
+
+    Sites are the vertices of the graph which describes the tight binding
+    system in a `Builder`.
+
+    A site is uniquely identified by its family and its tag.
+
+    Parameters
+    ----------
+    family : an instance of `SiteFamily`
+        The 'type' of the site.
+    tag : a hashable python object
+        The unique identifier of the site within the site family, typically a
+        vector of integers.
+
+    Raises
+    ------
+    ValueError
+        If `tag` is not a proper tag for `family`.
+
+    Notes
+    -----
+    For convenience, ``family(*tag)`` can be used instead of ``Site(family,
+    tag)`` to create a site.
+
+    The parameters of the constructor (see above) are stored as instance
+    variables under the same names.  Given a site ``site``, common things to
+    query are thus ``site.family``, ``site.tag``, and ``site.pos``.
+    """
+    __slots__ = ()
+
+    family = property(operator.itemgetter(0),
+                      doc="The site family to which the site belongs.")
+    tag = property(operator.itemgetter(1), doc="The tag of the site.")
+
+
+    def __new__(cls, family, tag, _i_know_what_i_do=False):
+        if _i_know_what_i_do:
+            return tuple.__new__(cls, (family, tag))
+        try:
+            tag = family.normalize_tag(tag)
+        except (TypeError, ValueError) as e:
+            msg = 'Tag {0} is not allowed for site family {1}: {2}'
+            raise type(e)(msg.format(repr(tag), repr(family), e.args[0]))
+        return tuple.__new__(cls, (family, tag))
+
+    def __repr__(self):
+        return 'Site({0}, {1})'.format(repr(self.family), repr(self.tag))
+
+    def __str__(self):
+        sf = self.family
+        return '<Site {0} of {1}>'.format(self.tag, sf.name if sf.name else sf)
+
+    def __getnewargs__(self):
+        return (self.family, self.tag, True)
+
+    @property
+    def pos(self):
+        """Real space position of the site.
+
+        This relies on ``family`` having a ``pos`` method (see `SiteFamily`).
+        """
+        return self.family.pos(self.tag)
+
+
+@total_ordering
+class SiteFamily(metaclass=abc.ABCMeta):
+    """Abstract base class for site families.
+
+    Site families are the 'type' of `Site` objects.  Within a family, individual
+    sites are uniquely identified by tags.  Valid tags must be hashable Python
+    objects, further details are up to the family.
+
+    Site families must be immutable and fully defined by their initial
+    arguments.  They must inherit from this abstract base class and call its
+    __init__ function providing it with two arguments: a canonical
+    representation and a name.  The canonical representation will be returned as
+    the objects representation and must uniquely identify the site family
+    instance.  The name is a string used to distinguish otherwise identical site
+    families.  It may be empty. ``norbs`` defines the number of orbitals
+    on sites associated with this site family; it may be `None`, in which case
+    the number of orbitals is not specified.
+
+
+    All site families must define the method `normalize_tag` which brings a tag
+    to the standard format for this site family.
+
+    Site families that are intended for use with plotting should also provide a
+    method `pos(tag)`, which returns a vector with real-space coordinates of the
+    site belonging to this family with a given tag.
+
+    If the ``norbs`` of a site family are provided, and sites of this family
+    are used to populate a `~kwant.builder.Builder`, then the associated
+    Hamiltonian values must have the correct shape. That is, if a site family
+    has ``norbs = 2``, then any on-site terms for sites belonging to this
+    family should be 2x2 matrices. Similarly, any hoppings to/from sites
+    belonging to this family must have a matrix structure where there are two
+    rows/columns. This condition applies equally to Hamiltonian values that
+    are given by functions. If this condition is not satisfied, an error will
+    be raised.
+    """
+
+    def __init__(self, canonical_repr, name, norbs):
+        self.canonical_repr = canonical_repr
+        self.hash = hash(canonical_repr)
+        self.name = name
+        if norbs is None:
+            warnings.warn("Not specfying norbs is deprecated. Always specify "
+                          "norbs when creating site families.",
+                          KwantDeprecationWarning, stacklevel=3)
+        if norbs is not None:
+            if int(norbs) != norbs or norbs <= 0:
+                raise ValueError('The norbs parameter must be an integer > 0.')
+            norbs = int(norbs)
+        self.norbs = norbs
+
+    def __repr__(self):
+        return self.canonical_repr
+
+    def __str__(self):
+        if self.name:
+            msg = '<{0} site family {1}{2}>'
+        else:
+            msg = '<unnamed {0} site family{2}>'
+        orbs = ' with {0} orbitals'.format(self.norbs) if self.norbs else ''
+        return msg.format(self.__class__.__name__, self.name, orbs)
+
+    def __hash__(self):
+        return self.hash
+
+    def __eq__(self, other):
+        try:
+            return self.canonical_repr == other.canonical_repr
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        try:
+            return self.canonical_repr != other.canonical_repr
+        except AttributeError:
+            return True
+
+    def __lt__(self, other):
+        # If this raises an AttributeError, we were trying
+        # to compare it to something non-comparable anyway.
+        return self.canonical_repr < other.canonical_repr
+
+    @abc.abstractmethod
+    def normalize_tag(self, tag):
+        """Return a normalized version of the tag.
+
+        Raises TypeError or ValueError if the tag is not acceptable.
+        """
+        pass
+
+    def __call__(self, *tag):
+        """
+        A convenience function.
+
+        This function allows to write fam(1, 2) instead of Site(fam, (1, 2)).
+        """
+        # Catch a likely and difficult to find mistake.
+        if tag and isinstance(tag[0], tuple):
+            raise ValueError('Use site_family(1, 2) instead of '
+                             'site_family((1, 2))!')
+        return Site(self, tag)
+
+
+
+################ Systems
 
 
 class System(metaclass=abc.ABCMeta):

@@ -19,7 +19,7 @@ from pytest import raises, warns
 from numpy.testing import assert_almost_equal
 
 import kwant
-from kwant import builder
+from kwant import builder, system
 from kwant._common import ensure_rng
 
 
@@ -421,12 +421,12 @@ def test_finalization():
 
     # Attach lead with improper interface.
     syst.leads[-1] = builder.BuilderLead(
-        lead, 2 * tuple(builder.Site(fam, n) for n in neighbors))
+        lead, 2 * tuple(system.Site(fam, n) for n in neighbors))
     raises(ValueError, syst.finalized)
 
     # Attach lead properly.
     syst.leads[-1] = builder.BuilderLead(
-        lead, (builder.Site(fam, n) for n in neighbors))
+        lead, (system.Site(fam, n) for n in neighbors))
     fsyst = syst.finalized()
     assert len(fsyst.lead_interfaces) == 1
     assert ([fsyst.sites[i].tag for i in fsyst.lead_interfaces[0]] ==
@@ -434,15 +434,15 @@ def test_finalization():
 
     # test that we cannot finalize a system with a badly sorted interface order
     raises(ValueError, builder.InfiniteSystem, lead,
-           [builder.Site(fam, n) for n in reversed(neighbors)])
+           [system.Site(fam, n) for n in reversed(neighbors)])
     # site ordering independent of whether interface was specified
-    flead_order = builder.InfiniteSystem(lead, [builder.Site(fam, n)
+    flead_order = builder.InfiniteSystem(lead, [system.Site(fam, n)
                                                 for n in neighbors])
     assert flead.sites == flead_order.sites
 
 
     syst.leads[-1] = builder.BuilderLead(
-        lead, (builder.Site(fam, n) for n in neighbors))
+        lead, (system.Site(fam, n) for n in neighbors))
     fsyst = syst.finalized()
     assert len(fsyst.lead_interfaces) == 1
     assert ([fsyst.sites[i].tag for i in fsyst.lead_interfaces[0]] ==

@@ -9,7 +9,6 @@ Types
    :toctree: generated/
 
    Builder
-   Site
    HoppingKind
    SimpleSiteFamily
    BuilderLead
@@ -23,7 +22,6 @@ Abstract base classes
 .. autosummary::
    :toctree: generated/
 
-   SiteFamily
    Symmetry
    Lead
 

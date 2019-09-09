@@ -13,7 +13,7 @@ from math import sqrt
 from itertools import product
 import numpy as np
 import tinyarray as ta
-from . import builder
+from . import builder, system
 from .linalg import lll
 from ._common import ensure_isinstance
 
@@ -70,7 +70,7 @@ class Polyatomic:
     A Bravais lattice with an arbitrary number of sites in the basis.
 
     Contains `Monatomic` sublattices.  Note that an instance of ``Polyatomic`` is
-    not itself a `~kwant.builder.SiteFamily`, only its sublattices are.
+    not itself a `~kwant.system.SiteFamily`, only its sublattices are.
 
     Parameters
     ----------
@@ -171,7 +171,7 @@ class Polyatomic:
         >>> syst[lat.neighbors()] = 1
         """
         def shape_sites(symmetry=None):
-            Site = builder.Site
+            Site = system.Site
 
             if symmetry is None:
                 symmetry = builder.NoSymmetry()
@@ -306,7 +306,7 @@ class Polyatomic:
         """
         # This algorithm is not designed to be fast and can be improved,
         # however there is no real need.
-        Site = builder.Site
+        Site = system.Site
         sls = self.sublattices
         shortest_hopping = sls[0].n_closest(
             sls[0].pos(([0] * sls[0].lattice_dim)), 2)[-1]
@@ -396,12 +396,12 @@ def short_array_str(array):
     return full[1 : -1]
 
 
-class Monatomic(builder.SiteFamily, Polyatomic):
+class Monatomic(system.SiteFamily, Polyatomic):
     """
     A Bravais lattice with a single site in the basis.
 
-    Instances of this class provide the `~kwant.builder.SiteFamily` interface.
-    Site tags (see `~kwant.builder.SiteFamily`) are sequences of integers and
+    Instances of this class provide the `~kwant.system.SiteFamily` interface.
+    Site tags (see `~kwant.system.SiteFamily`) are sequences of integers and
     describe the lattice coordinates of a site.
 
     ``Monatomic`` instances are used as site families on their own or as

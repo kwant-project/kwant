@@ -285,7 +285,7 @@ define the potential profile of a quantum well as:
         else:
             return 0
 
-This function takes two arguments: the first of type `~kwant.builder.Site`,
+This function takes two arguments: the first of type `~kwant.system.Site`,
 from which you can get the real-space coordinates using ``site.pos``, and the
 value of the potential as the second.  Note that in `potential` we can access
 variables `L` and `L_well` that are defined globally.
@@ -375,10 +375,10 @@ oscillatory transmission behavior through resonances in the quantum well.
 .. specialnote:: Technical details
 
   - Functions can also be used for hoppings. In this case, they take
-    two `~kwant.builder.Site`'s as arguments and then an arbitrary number
+    two `~kwant.system.Site`'s as arguments and then an arbitrary number
     of additional arguments.
 
-  - Apart from the real-space position `pos`, `~kwant.builder.Site` has also an
+  - Apart from the real-space position `pos`, `~kwant.system.Site` has also an
     attribute `tag` containing the lattice indices of the site.
 
 .. _tutorial-abring:
@@ -449,7 +449,7 @@ that returns ``True`` whenever a point is inside the shape, and
         return (r1 ** 2 < rsq < r2 ** 2)
 
 Note that this function takes a real-space position as argument (not a
-`~kwant.builder.Site`).
+`~kwant.system.Site`).
 
 We can now simply add all of the lattice points inside this shape at
 once, using the function `~kwant.lattice.Square.shape`

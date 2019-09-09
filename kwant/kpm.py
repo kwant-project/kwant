@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2011-2016 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -928,7 +928,7 @@ def RandomVectors(syst, where=None, rng=None):
     ----------
     syst : `~kwant.system.FiniteSystem` or matrix Hamiltonian
         If a system is passed, it should contain no leads.
-    where : sequence of `int` or `~kwant.builder.Site`, or callable, optional
+    where : sequence of `int` or `~kwant.system.Site`, or callable, optional
         Spatial range of the vectors produced. If ``syst`` is a
         `~kwant.system.FiniteSystem`, where behaves as in
         `~kwant.operator.Density`. If ``syst`` is a matrix, ``where``
@@ -950,7 +950,7 @@ class LocalVectors:
     ----------
     syst : `~kwant.system.FiniteSystem` or matrix Hamiltonian
         If a system is passed, it should contain no leads.
-    where : sequence of `int` or `~kwant.builder.Site`, or callable, optional
+    where : sequence of `int` or `~kwant.system.Site`, or callable, optional
         Spatial range of the vectors produced. If ``syst`` is a
         `~kwant.system.FiniteSystem`, where behaves as in
         `~kwant.operator.Density`. If ``syst`` is a matrix, ``where``

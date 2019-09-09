@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -20,7 +20,7 @@ from sympy.printing.lambdarepr import LambdaPrinter
 from sympy.printing.precedence import precedence
 from sympy.core.function import AppliedUndef
 
-from .. import builder, lattice
+from .. import builder, lattice, system
 from .. import KwantDeprecationWarning
 from .._common import reraise_warnings
 from ._common import (sympify, gcd, position_operators, momentum_operators,
@@ -63,7 +63,7 @@ class _DiscretizedBuilder(builder.Builder):
 
         for key, val in itertools.chain(self.site_value_pairs(),
                                         self.hopping_value_pairs()):
-            if isinstance(key, builder.Site):
+            if isinstance(key, system.Site):
                 result.append("# Onsite element:\n")
             else:
                 a, b = key

@@ -13,7 +13,6 @@ import cython
 from operator import itemgetter
 import functools as ft
 import collections
-import numbers
 
 import numpy as np
 import tinyarray as ta
@@ -25,7 +24,7 @@ from .graph.core cimport EdgeIterator
 from .graph.core import DisabledFeatureError, NodeDoesNotExistError
 from .graph.defs cimport gint
 from .graph.defs import gint_dtype
-from .system import InfiniteSystem
+from .system import InfiniteSystem, Site
 from ._common import UserCodeError, get_parameters, deprecate_args
 
 
@@ -179,8 +178,7 @@ def _normalize_site_where(syst, where):
             else:
                 where = [s for s in range(syst.graph.num_nodes) if where(s)]
     else:
-        # Cannot check for builder.Site due to circular imports
-        if not isinstance(where[0], numbers.Integral):
+        if isinstance(where[0], Site):
             try:
                 where = [syst.id_by_site[s] for s in where]
             except AttributeError:
@@ -223,8 +221,7 @@ def _normalize_hopping_where(syst, where):
         else:
             where = list(filter(lambda h: where(*h), syst.graph))
     else:
-        # Cannot check for builder.Site due to circular imports
-        if not isinstance(where[0][0], numbers.Integral):
+        if isinstance(where[0][0], Site):
             try:
                 where = list((syst.id_by_site[a], syst.id_by_site[b])
                                for a, b in where)
@@ -735,10 +732,10 @@ cdef class Density(_LocalOperator):
         maps from site families to square matrices. If a function is given it
         must take the same arguments as the onsite Hamiltonian functions of the
         system.
-    where : sequence of `int` or `~kwant.builder.Site`, or callable, optional
+    where : sequence of `int` or `~kwant.system.Site`, or callable, optional
         Where to evaluate the operator. If ``syst`` is not a finalized Builder,
         then this should be a sequence of integers. If a function is provided,
-        it should take a single `int` or `~kwant.builder.Site` (if ``syst`` is
+        it should take a single `int` or `~kwant.system.Site` (if ``syst`` is
         a finalized builder) and return True or False.  If not provided, the
         operator will be calculated over all sites in the system.
     check_hermiticity: bool
@@ -884,11 +881,11 @@ cdef class Current(_LocalOperator):
         matrices (scalars are allowed if the site family has 1 orbital per
         site). If a function is given it must take the same arguments as the
         onsite Hamiltonian functions of the system.
-    where : sequence of pairs of `int` or `~kwant.builder.Site`, or callable, optional
+    where : sequence of pairs of `int` or `~kwant.system.Site`, or callable, optional
         Where to evaluate the operator. If ``syst`` is not a finalized Builder,
         then this should be a sequence of pairs of integers. If a function is
         provided, it should take a pair of integers or a pair of
-        `~kwant.builder.Site` (if ``syst`` is a finalized builder) and return
+        `~kwant.system.Site` (if ``syst`` is a finalized builder) and return
         True or False.  If not provided, the operator will be calculated over
         all hoppings in the system.
     check_hermiticity : bool
@@ -1016,10 +1013,10 @@ cdef class Source(_LocalOperator):
         matrices (scalars are allowed if the site family has 1 orbital per
         site). If a function is given it must take the same arguments as the
         onsite Hamiltonian functions of the system.
-    where : sequence of `int` or `~kwant.builder.Site`, or callable, optional
+    where : sequence of `int` or `~kwant.system.Site`, or callable, optional
         Where to evaluate the operator. If ``syst`` is not a finalized Builder,
         then this should be a sequence of integers. If a function is provided,
-        it should take a single `int` or `~kwant.builder.Site` (if ``syst`` is
+        it should take a single `int` or `~kwant.system.Site` (if ``syst`` is
         a finalized builder) and return True or False.  If not provided, the
         operator will be calculated over all sites in the system.
     check_hermiticity : bool
