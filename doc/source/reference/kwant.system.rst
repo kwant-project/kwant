@@ -25,6 +25,7 @@ Sites
    :toctree: generated/
 
    Site
+   SiteArray
    SiteFamily
 
 Systems
