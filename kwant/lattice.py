@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -470,6 +470,13 @@ class Monatomic(system.SiteFamily, Polyatomic):
     def __str__(self):
         return self.cached_str
 
+    def normalize_tags(self, tags):
+        tags = np.asarray(tags, int)
+        tags.flags.writeable = False
+        if tags.shape[1] != self.lattice_dim:
+            raise ValueError("Dimensionality mismatch.")
+        return tags
+
     def normalize_tag(self, tag):
         tag = ta.array(tag, int)
         if len(tag) != self.lattice_dim:
@@ -494,6 +501,10 @@ class Monatomic(system.SiteFamily, Polyatomic):
         Find the lattice coordinates of the site closest to position ``pos``.
         """
         return ta.array(self.n_closest(pos)[0])
+
+    def positions(self, tags):
+        """Return the real-space positions of the sites with the given tags."""
+        return tags @ self._prim_vecs + self.offset
 
     def pos(self, tag):
         """Return the real-space position of the site with a given tag."""
