@@ -10,7 +10,8 @@
 
 __all__ = [
     'Site', 'SiteArray', 'SiteFamily',
-    'System', 'FiniteSystem', 'InfiniteSystem',
+    'System', 'VectorizedSystem', 'FiniteSystem', 'FiniteVectorizedSystem',
+    'InfiniteSystem', 'InfiniteVectorizedSystem',
 ]
 
 import abc
@@ -18,7 +19,7 @@ import warnings
 import operator
 from copy import copy
 from collections import namedtuple
-from functools import total_ordering
+from functools import total_ordering, lru_cache
 import numpy as np
 from . import _system
 from ._common  import deprecate_args, KwantDeprecationWarning
@@ -347,12 +348,100 @@ class System(metaclass=abc.ABCMeta):
         details = ', and '.join((', '.join(details[:-1]), details[-1]))
         return '<{} with {}>'.format(self.__class__.__name__, details)
 
-
-# Add a C-implemented function as an unbound method to class System.
-System.hamiltonian_submatrix = _system.hamiltonian_submatrix
+    hamiltonian_submatrix = _system.hamiltonian_submatrix
 
 
-class FiniteSystem(System, metaclass=abc.ABCMeta):
+Term = namedtuple(
+    "Term",
+    ["subgraph", "hermitian", "parameters"],
+)
+
+
+class VectorizedSystem(System, metaclass=abc.ABCMeta):
+    """Abstract general low-level system with support for vectorization.
+
+    Attributes
+    ----------
+    graph : kwant.graph.CGraph
+        The system graph.
+    subgraphs : sequence of tuples
+        Each subgraph has the form '((idx1, idx2), (offsets1, offsets2))'
+        where 'offsets1' and 'offsets2' index sites within the site arrays
+        indexed by 'idx1' and 'idx2'.
+    terms : sequence of tuples
+        Each tuple has the following structure:
+        (subgraph: int, hermitian: bool, parameters: List(str))
+        'subgraph' indexes 'subgraphs' and supplies the to/from sites of this
+        term. 'hermitian' is 'True' if the term needs its Hermitian
+        conjugate to be added when evaluating the Hamiltonian, and 'parameters'
+        contains a list of parameter names used when evaluating this term.
+    site_arrays : sequence of SiteArray
+        The sites of the system.
+    site_ranges : None or Nx3 integer array
+        Has 1 row per site array, plus one extra row.  Each row consists
+        of ``(first_site, norbs, orb_offset)``: the index of the first
+        site in the site array, the number of orbitals on each site in
+        the site array, and the offset of the first orbital of the first
+        site in the site array.  In addition, the final row has the form
+        ``(len(graph.num_nodes), 0, tot_norbs)`` where ``tot_norbs`` is the
+        total number of orbitals in the system.  ``None`` if any site array
+        in 'site_arrays' does not have 'norbs' specified. Note 'site_ranges'
+        is directly computable from 'site_arrays'.
+    parameters : frozenset of strings
+        The names of the parameters on which the system depends. This attribute
+        is provisional and may be changed in a future version of Kwant
+
+    Notes
+    -----
+    The sites of the system are indexed by integers ranging from 0 to
+    ``self.graph.num_nodes - 1``.
+
+    Optionally, a class derived from ``System`` can provide a method ``pos`` which
+    is assumed to return the real-space position of a site given its index.
+    """
+    @abc.abstractmethod
+    def hamiltonian_term(self, term_number, selector=slice(None),
+                         args=(), params=None):
+        """Return the Hamiltonians for hamiltonian term number k.
+
+        Parameters
+        ----------
+        term_number : int
+            The number of the term to evaluate.
+        selector : slice or sequence of int, default: slice(None)
+            The elements of the term to evaluate.
+        args : tuple
+            Positional arguments to the term. (Deprecated)
+        params : dict
+            Keyword parameters to the term
+
+        Returns
+        -------
+        hamiltonian : 3d complex array
+            Has shape ``(N, P, Q)`` where ``N`` is the number of matrix
+            elements in this term (or the number selected by 'selector'
+            if provided), ``P`` and ``Q`` are the number of orbitals in the
+            'to' and 'from' site arrays associated with this term.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
+        """
+    @property
+    @lru_cache(1)
+    def site_ranges(self):
+        site_offsets = np.cumsum([0] + [len(arr) for arr in self.site_arrays])
+        norbs = [arr.family.norbs for arr in self.site_arrays] + [0]
+        if any(norb is None for norb in norbs):
+            return None
+        orb_offsets = np.cumsum(
+            [0] + [len(arr) * arr.family.norbs for arr in self.site_arrays]
+        )
+        return np.array([site_offsets, norbs, orb_offsets]).transpose()
+
+    hamiltonian_submatrix = _system.vectorized_hamiltonian_submatrix
+
+
+class FiniteSystemMixin(metaclass=abc.ABCMeta):
     """Abstract finite low-level system, possibly with leads.
 
     Attributes
@@ -475,7 +564,15 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
         return symmetries.validate(ham)
 
 
-class InfiniteSystem(System, metaclass=abc.ABCMeta):
+class FiniteSystem(System, FiniteSystemMixin, metaclass=abc.ABCMeta):
+    pass
+
+
+class FiniteVectorizedSystem(VectorizedSystem, FiniteSystemMixin, metaclass=abc.ABCMeta):
+    pass
+
+
+class InfiniteSystemMixin(metaclass=abc.ABCMeta):
     """Abstract infinite low-level system.
 
     An infinite system consists of an infinite series of identical cells.
@@ -516,30 +613,10 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
     infinite system.  The other scheme has the numbers of site 0 and 1
     exchanged, as well as of site 3 and 4.
 
+    Sites in the fundamental domain cell must belong to a different site array
+    than the sites in the previous cell. In the above example this means that
+    sites '(0, 1, 2)' and '(3, 4)' must belong to different site arrays.
     """
-    @deprecate_args
-    def cell_hamiltonian(self, args=(), sparse=False, *, params=None):
-        """Hamiltonian of a single cell of the infinite system.
-
-        Providing positional arguments via 'args' is deprecated,
-        instead, provide named parameters as a dictionary via 'params'.
-        """
-        cell_sites = range(self.cell_size)
-        return self.hamiltonian_submatrix(args, cell_sites, cell_sites,
-                                          sparse=sparse, params=params)
-
-    @deprecate_args
-    def inter_cell_hopping(self, args=(), sparse=False, *, params=None):
-        """Hopping Hamiltonian between two cells of the infinite system.
-
-        Providing positional arguments via 'args' is deprecated,
-        instead, provide named parameters as a dictionary via 'params'.
-        """
-        cell_sites = range(self.cell_size)
-        interface_sites = range(self.cell_size, self.graph.num_nodes)
-        return self.hamiltonian_submatrix(args, cell_sites, interface_sites,
-                                          sparse=sparse, params=params)
-
     @deprecate_args
     def modes(self, energy=0, args=(), *, params=None):
         """Return mode decomposition of the lead
@@ -621,6 +698,37 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         hop = self.inter_cell_hopping(args=args, sparse=True, params=params)
         broken = set(symmetries.validate(ham) + symmetries.validate(hop))
         return list(broken)
+
+
+class InfiniteSystem(System, InfiniteSystemMixin, metaclass=abc.ABCMeta):
+
+    @deprecate_args
+    def cell_hamiltonian(self, args=(), sparse=False, *, params=None):
+        """Hamiltonian of a single cell of the infinite system.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
+        """
+        cell_sites = range(self.cell_size)
+        return self.hamiltonian_submatrix(args, cell_sites, cell_sites,
+                                          sparse=sparse, params=params)
+
+    @deprecate_args
+    def inter_cell_hopping(self, args=(), sparse=False, *, params=None):
+        """Hopping Hamiltonian between two cells of the infinite system.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
+        """
+        cell_sites = range(self.cell_size)
+        interface_sites = range(self.cell_size, self.graph.num_nodes)
+        return self.hamiltonian_submatrix(args, cell_sites, interface_sites,
+                                          sparse=sparse, params=params)
+
+
+class InfiniteVectorizedSystem(VectorizedSystem, InfiniteSystemMixin, metaclass=abc.ABCMeta):
+    cell_hamiltonian = _system.vectorized_cell_hamiltonian
+    inter_cell_hopping = _system.vectorized_inter_cell_hopping
 
 
 class PrecalculatedLead:

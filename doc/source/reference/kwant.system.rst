@@ -29,11 +29,22 @@ Sites
    SiteFamily
 
 Systems
---------
+-------
 .. autosummary::
    :toctree: generated/
 
    System
+   VectorizedSystem
    InfiniteSystem
+   InfiniteVectorizedSystem
    FiniteSystem
+   FiniteVectorizedSystem
    PrecalculatedLead
+
+Mixin Classes
+-------------
+.. autosummary::
+   :toctree: generated/
+
+   FiniteSystemMixin
+   InfiniteSystemMixin
