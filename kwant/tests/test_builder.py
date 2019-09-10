@@ -1275,7 +1275,7 @@ def test_argument_passing():
 
     # Some common, some different args for value functions
     def onsite2(site, a, b):
-        return site.pos + a + b
+        return site.pos[0] + a + b
 
     def hopping2(site1, site2, a, c, b):
         return a + b + c

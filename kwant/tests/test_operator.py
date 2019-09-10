@@ -445,7 +445,7 @@ def test_arg_passing(A):
     lat1 = kwant.lattice.chain(norbs=1)
 
     syst = kwant.Builder()
-    syst[lat1(0)] = syst[lat1(1)] = lambda s0, a, b: s0.pos + a + b
+    syst[lat1(0)] = syst[lat1(1)] = lambda s0, a, b: s0.pos[0] + a + b
     syst[lat1.neighbors()] = lambda s0, s1, a, b: a - b
     fsyst = syst.finalized()
 
