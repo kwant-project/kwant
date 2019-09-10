@@ -13,6 +13,7 @@ import cython
 from operator import itemgetter
 import functools as ft
 import collections
+import warnings
 
 import numpy as np
 import tinyarray as ta
@@ -25,7 +26,9 @@ from .graph.core import DisabledFeatureError, NodeDoesNotExistError
 from .graph.defs cimport gint
 from .graph.defs import gint_dtype
 from .system import is_infinite, Site
-from ._common import UserCodeError, get_parameters, deprecate_args
+from ._common import (
+    UserCodeError, KwantDeprecationWarning, get_parameters, deprecate_args
+)
 
 
 ################ Generic Utility functions
@@ -699,7 +702,11 @@ cdef class _LocalOperator:
             return mat
 
         offsets, norbs = _get_all_orbs(self.where, self._site_ranges)
-        return  BlockSparseMatrix(self.where, offsets, norbs, get_ham)
+        # TODO: update operators to use 'hamiltonian_term' rather than
+        #       'hamiltonian'.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=KwantDeprecationWarning)
+            return  BlockSparseMatrix(self.where, offsets, norbs, get_ham)
 
     def __getstate__(self):
         return (

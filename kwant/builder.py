@@ -2048,6 +2048,13 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
         't' (< 0) then the associated hopping is stored in term '-t - 1'.
     """
     def hamiltonian(self, i, j, *args, params=None):
+        warnings.warn(
+            "Querying individual matrix elements with 'hamiltonian' is "
+            "deprecated, and now takes O(log N) time where N is the number "
+            "of matrix elements per hamiltonian term. Query many matrix "
+            "elements at once using 'hamiltonian_term'.",
+            KwantDeprecationWarning
+        )
         site_offsets = np.cumsum([0] + [len(s) for s in self.site_arrays])
         if i == j:
             which_term = self._onsite_term_by_site_id[i]

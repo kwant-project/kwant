@@ -20,7 +20,7 @@ from numpy.testing import assert_almost_equal
 
 import kwant
 from kwant import builder, system
-from kwant._common import ensure_rng
+from kwant._common import ensure_rng, KwantDeprecationWarning
 
 
 def test_bad_keys():
@@ -590,12 +590,16 @@ def test_hamiltonian_evaluation(vectorize):
     for i in range(len(tags)):
         site = fsyst.sites[i]
         assert site in sites
-        assert fsyst.hamiltonian(i, i) == f_onsite(site)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            assert fsyst.hamiltonian(i, i) == f_onsite(site)
 
     for t, h in fsyst.graph:
         tsite = fsyst.sites[t]
         hsite = fsyst.sites[h]
-        assert fsyst.hamiltonian(t, h) == f_hopping(tsite, hsite)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            assert fsyst.hamiltonian(t, h) == f_hopping(tsite, hsite)
 
     # test when user-function raises errors
     def onsite_raises(site):
@@ -608,13 +612,18 @@ def test_hamiltonian_evaluation(vectorize):
         a, b = hop
         # exceptions are converted to kwant.UserCodeError and we add our message
         with raises(kwant.UserCodeError) as exc_info:
-            fsyst.hamiltonian(a, a)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+                fsyst.hamiltonian(a, a)
         msg = 'Error occurred in user-supplied value function "onsite_raises"'
         assert msg in str(exc_info.value)
 
         for hop in [(a, b), (b, a)]:
             with raises(kwant.UserCodeError) as exc_info:
-                fsyst.hamiltonian(*hop)
+                with warnings.catch_warnings():
+                    # Ignore deprecation warnings for 'hamiltonian'
+                    warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+                    fsyst.hamiltonian(*hop)
             msg = ('Error occurred in user-supplied '
                    'value function "hopping_raises"')
             assert msg in str(exc_info.value)
@@ -682,14 +691,18 @@ def test_vectorized_hamiltonian_evaluation():
     for i in range(len(tags)):
         site = fsyst_vectorized.sites[i]
         assert site in sites
-        assert (
-            fsyst_vectorized.hamiltonian(i, i)
-            == fsyst_simple.hamiltonian(i, i))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            assert (
+                fsyst_vectorized.hamiltonian(i, i)
+                == fsyst_simple.hamiltonian(i, i))
 
     for t, h in fsyst_vectorized.graph:
-        assert (
-            fsyst_vectorized.hamiltonian(t, h)
-            == fsyst_simple.hamiltonian(t, h))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            assert (
+                fsyst_vectorized.hamiltonian(t, h)
+                == fsyst_simple.hamiltonian(t, h))
 
     # Test infinite system, including hoppings that go both ways into
     # the next cell
@@ -1419,15 +1432,25 @@ def test_argument_passing(vectorize):
 
     # test that mixing 'args' and 'params' raises TypeError
     with raises(TypeError):
-        syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
+
     with raises(TypeError):
-        inf_syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            inf_syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
 
     # Missing parameters raises TypeError
     with raises(TypeError):
-        syst.hamiltonian(0, 0, params=dict(p1=2))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            syst.hamiltonian(0, 0, params=dict(p1=2))
+
     with raises(TypeError):
-        syst.hamiltonian_submatrix(params=dict(p1=2))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            syst.hamiltonian_submatrix(params=dict(p1=2))
 
     # test that passing parameters without default values works, and that
     # passing parameters with default values fails
