@@ -778,6 +778,8 @@ def conductivity(hamiltonian, alpha='x', beta='x', positions=None, **kwargs):
 
     Parameters
     ----------
+    hamiltonian : `~kwant.system.FiniteSystem` or matrix Hamiltonian
+        If a system is passed, it should contain no leads.
     alpha, beta : str, or operators
         If ``hamiltonian`` is a kwant system, or if the ``positions``
         are provided, ``alpha`` and ``beta`` can be the directions of the
