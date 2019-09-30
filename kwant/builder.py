@@ -14,12 +14,14 @@ import copy
 from functools import total_ordering, wraps, update_wrapper
 from itertools import islice, chain
 import textwrap
+import bisect
+import numbers
 import inspect
 import tinyarray as ta
 import numpy as np
 from scipy import sparse
 from . import system, graph, KwantDeprecationWarning, UserCodeError
-from .system import Site, SiteFamily
+from .system import Site, SiteArray, SiteFamily
 from .linalg import lll
 from .operator import Density
 from .physics import DiscreteSymmetry, magnetic_gauge
@@ -483,7 +485,10 @@ class BuilderLead(Lead):
 
         The order of interface sites is kept during finalization.
         """
-        return InfiniteSystem(self.builder, self.interface)
+        if self.builder.vectorize:
+            return InfiniteVectorizedSystem(self.builder, self.interface)
+        else:
+            return InfiniteSystem(self.builder, self.interface)
 
 
 def _ensure_signature(func):
@@ -704,6 +709,14 @@ class Builder:
     chiral : 2D array, dictionary, function or `None`
         The unitary part of the onsite chiral symmetry operator.
         Same format as that of `conservation_law`.
+    vectorize : bool, default: False
+        If True then the finalized Builder will evaluate its Hamiltonian in
+        a vectorized manner. This requires that all value functions take
+        `~kwant.system.SiteArray` as first/second parameter rather than
+        `~kwant.system.Site`, and return an array of values. The returned
+        array must have the same length as the provided SiteArray(s), and
+        may contain either scalars (i.e. a vector of values) or matrices
+        (i.e. a 3d array of values).
 
     Notes
     -----
@@ -782,7 +795,7 @@ class Builder:
     """
 
     def __init__(self, symmetry=None, *, conservation_law=None, time_reversal=None,
-                 particle_hole=None, chiral=None):
+                 particle_hole=None, chiral=None, vectorize=False):
         if symmetry is None:
             symmetry = NoSymmetry()
         else:
@@ -792,6 +805,7 @@ class Builder:
         self.time_reversal = time_reversal
         self.particle_hole = particle_hole
         self.chiral = chiral
+        self.vectorize = vectorize
         self.leads = []
         self.H = {}
 
@@ -875,6 +889,7 @@ class Builder:
         result.time_reversal = self.time_reversal
         result.particle_hole = self.particle_hole
         result.chiral = self.chiral
+        result.vectorize = self.vectorize
         result.leads = self.leads
         result.H = self.H
         return result
@@ -1554,6 +1569,13 @@ class Builder:
         if add_cells < 0 or int(add_cells) != add_cells:
             raise ValueError('add_cells must be an integer >= 0.')
 
+        if self.vectorize != lead_builder.vectorize:
+            raise ValueError(
+                "Sites of the lead were added to the scattering "
+                "region, but only one of these systems is vectorized. "
+                "Vectorize both systems to allow attaching leads."
+            )
+
         sym = lead_builder.symmetry
         H = lead_builder.H
 
@@ -1574,6 +1596,7 @@ class Builder:
                 time_reversal=lead_builder.time_reversal,
                 particle_hole=lead_builder.particle_hole,
                 chiral=lead_builder.chiral,
+                vectorize=lead_builder.vectorize,
             )
             with reraise_warnings():
                 new_lead.fill(lead_builder, lambda site: True,
@@ -1670,9 +1693,15 @@ class Builder:
         `Symmetry` can be finalized.
         """
         if self.symmetry.num_directions == 0:
-            return FiniteSystem(self)
+            if self.vectorize:
+                return FiniteVectorizedSystem(self)
+            else:
+                return FiniteSystem(self)
         elif self.symmetry.num_directions == 1:
-            return InfiniteSystem(self)
+            if self.vectorize:
+                return InfiniteVectorizedSystem(self)
+            else:
+                return InfiniteSystem(self)
         else:
             raise ValueError('Currently, only builders without or with a 1D '
                              'translational symmetry can be finalized.')
@@ -1996,6 +2025,125 @@ class _FinalizedBuilderMixin:
         return self.sites[i].pos
 
 
+class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
+    """Common functionality for all vectorized finalized builders
+
+    Attributes
+    ----------
+    _term_values : sequence
+        Each item is either an array of values (if 'param_names is None')
+        or a vectorized value function (in which case 'param_names' is a
+        sequence of strings: the extra parameters to the value function).
+    _onsite_term_by_site_id : sequence of int
+        Maps site (integer) to the term that evaluates the associated
+        onsite matrix element.
+    _hopping_term_by_edge_id : sequence of int
+        Maps edge id in the graph to the term that evaluates the associated
+        hopping matrix element. If negative, then the associated hopping is
+        the Hermitian conjugate of another hopping; if the number stored is
+        't' (< 0) then the associated hopping is stored in term '-t - 1'.
+    """
+    def hamiltonian(self, i, j, *args, params=None):
+        site_offsets = np.cumsum([0] + [len(s) for s in self.site_arrays])
+        if i == j:
+            which_term = self._onsite_term_by_site_id[i]
+            (w, _), (off, _) = self.subgraphs[self.terms[which_term].subgraph]
+            i_off = i - site_offsets[w]
+            selector = np.searchsorted(off, i_off)
+            onsite = self.hamiltonian_term(
+                which_term, [selector], args, params=params)
+            return onsite[0]
+        else:
+            edge_id = self.graph.first_edge_id(i, j)
+            which_term = self._hopping_term_by_edge_id[edge_id]
+            herm_conj = which_term < 0
+            if herm_conj:
+                which_term = -which_term - 1
+            term = self.terms[which_term]
+            # To search for hopping (i, j) in hopping_terms, we need
+            # to treat hopping_terms as a record array of integer pairs
+            dtype = np.dtype([('f0', int), ('f1', int)])
+            # For hermitian conjugate terms search through the
+            # *other* term's hoppings because those are sorted.
+
+            (to_w, from_w), hoppings = self.subgraphs[term.subgraph]
+            hoppings = hoppings.transpose()  # to get array-of-pairs
+            if herm_conj:
+                hop = (j - site_offsets[to_w], i - site_offsets[from_w])
+            else:
+                hop = (i - site_offsets[to_w], j - site_offsets[from_w])
+            hop = np.array(hop, dtype=dtype)
+            hoppings = hoppings.view(dtype).reshape(-1)
+            selector = np.recarray.searchsorted(hoppings, hop)
+            h = self.hamiltonian_term(
+                    which_term, [selector], args, params=params)
+            h = h[0]
+            if herm_conj:
+                h = h.conjugate().transpose()
+            return h
+
+    def hamiltonian_term(self, term_number, selector=slice(None),
+                         args=(), params=None):
+        if args and params:
+            raise TypeError("'args' and 'params' are mutually exclusive.")
+
+        term = self.terms[term_number]
+        val = self._term_values[term_number]
+
+        if not callable(val):
+            return val[selector]
+
+        # Construct site arrays to pass to the vectorized value function.
+        subgraph = self.subgraphs[self.terms[term_number].subgraph]
+        (to_which, from_which), (to_off, from_off) = subgraph
+        is_onsite = to_off is from_off
+        to_off = to_off[selector]
+        from_off = from_off[selector]
+        assert len(to_off) == len(from_off)
+
+        to_family = self.site_arrays[to_which].family
+        to_tags = self.site_arrays[to_which].tags
+        to_site_array = SiteArray(to_family, to_tags[to_off])
+        if not is_onsite:
+            from_family = self.site_arrays[from_which].family
+            from_tags = self.site_arrays[from_which].tags
+            from_site_array = SiteArray(from_family, from_tags[from_off])
+
+        # Construct args from params
+        if params:
+            # There was a problem extracting parameter names from the value
+            # function (probably an illegal signature) and we are using
+            # keyword parameters.
+            if self._term_errors[term_number] is not None:
+                raise self._term_errors[term_number]
+            try:
+                args = [params[p] for p in term.parameters]
+            except KeyError:
+                missing = [p for p in term.parameters if p not in params]
+                msg = ('System is missing required arguments: ',
+                       ', '.join(map('"{}"'.format, missing)))
+                raise TypeError(''.join(msg))
+
+        if is_onsite:
+            try:
+                ham = val(to_site_array, *args)
+            except Exception as exc:
+                _raise_user_error(exc, val)
+        else:
+            try:
+                ham = val(
+                        *self.symmetry.to_fd(
+                            to_site_array,
+                            from_site_array),
+                        *args)
+            except Exception as exc:
+                _raise_user_error(exc, val)
+
+        ham = _normalize_term_value(ham, len(to_site_array))
+
+        return ham
+
+
 # The same (value, parameters) pair will be used for many sites/hoppings,
 # so we cache it to avoid wasting extra memory.
 def _value_params_pair_cache(nstrip):
@@ -2149,6 +2297,411 @@ class FiniteSystem(_FinalizedBuilderMixin, system.FiniteSystem):
         self.id_by_site = id_by_site
         self.hoppings = hoppings
         self.onsites = onsites
+        self.parameters = parameters
+        self.symmetry = builder.symmetry
+        self.leads = finalized_leads
+        self.lead_interfaces = lead_interfaces
+        self.lead_paddings = lead_paddings
+        self._init_discrete_symmetries(builder)
+
+
+def _make_site_arrays(sites):
+    tags_by_family = {}
+    for family, tag in sites:  # Sites are tuples
+        tags_by_family.setdefault(family, []).append(tag)
+    site_arrays = []
+    for family, tags in sorted(tags_by_family.items()):
+        site_arrays.append(SiteArray(family, sorted(tags)))
+    return site_arrays
+
+
+# Wrapper for accessing sites by their sequential number from a
+# list of SiteArrays.
+class _Sites:
+
+    def __init__(self, site_arrays):
+        self._site_arrays = site_arrays
+        lengths = [0] + [len(arr.tags) for arr in site_arrays]
+        self._start_idxs = np.cumsum(lengths)[:-1]
+
+    def __len__(self):
+        return sum(len(arr.tags) for arr in self._site_arrays)
+
+    def __getitem__(self, idx):
+        if not isinstance(idx, numbers.Integral):
+            raise TypeError("Only individual sites may be indexed")
+        if idx < 0 or idx >= len(self):
+            raise IndexError(idx)
+
+        which = bisect.bisect(self._start_idxs, idx) - 1
+        arr = self._site_arrays[which]
+        start = self._start_idxs[which]
+        fam = arr.family
+        tag = arr.tags[idx - start]
+        return Site(fam, tag)
+
+    def __iter__(self):
+        for arr in self._site_arrays:
+            for tag in arr.tags:
+                yield Site(arr.family, tag)
+
+
+# Wrapper for accessing the sequential number of a site, given
+# Site object, from a list of SiteArrays.
+class _IdBySite:
+
+    def __init__(self, site_arrays):
+        self._site_arrays = site_arrays
+        lengths = [0] + [len(arr.tags) for arr in site_arrays]
+        self._start_idxs = np.cumsum(lengths)[:-1]
+
+    def __len__(self):
+        return sum(len(arr.tags) for arr in self._site_arrays)
+
+    def __getitem__(self, site):
+        # treat tags as 1D sequence by defining custom dtype
+        tag_dtype = np.asarray(site.tag).dtype
+        dtype = np.dtype([('f{}'.format(i), tag_dtype)
+                          for i in range(len(site.tag))])
+        site_tag = np.asarray(site.tag).view(dtype)[0]
+        # This slightly convoluted logic is necessary because there
+        # may be >1 site_array with the same family for InfiniteSystems.
+        for start, arr in zip(self._start_idxs, self._site_arrays):
+            if arr.family != site.family:
+                continue
+            tags = arr.tags.view(dtype).reshape(-1)
+            idx_in_fam = np.recarray.searchsorted(tags, site_tag)
+            if idx_in_fam >= len(tags) or tags[idx_in_fam] != site_tag:
+                continue
+            return start + idx_in_fam
+
+        raise KeyError(site)
+
+
+def _normalize_term_value(value, expected_n_values):
+    try:
+        value = np.asarray(value, dtype=complex)
+    except TypeError:
+        raise ValueError(
+            "Matrix elements declared with incompatible shapes."
+        ) from None
+    # Upgrade to vector of matrices
+    if len(value.shape) == 1:
+        value = value[:, np.newaxis, np.newaxis]
+    if len(value.shape) != 3:
+        msg = (
+            "Vectorized value functions must return an array of"
+            "scalars or an array of matrices."
+        )
+        raise ValueError(msg)
+    if value.shape[0] != expected_n_values:
+        raise ValueError("Value functions must return a single value per "
+                         "onsite/hopping.")
+    return value
+
+
+def _sort_term(term, value):
+    term = np.asarray(term)
+
+    if not callable(value):
+        value = _normalize_term_value(value, len(term))
+        # Ensure that values still correspond to the correct
+        # sites in 'term' once the latter has been sorted.
+        value = value[term.argsort()]
+
+    term.sort()
+
+    return term, value
+
+
+def _sort_hopping_term(term, value):
+    term = np.asarray(term)
+    # We want to sort the hopping terms in the same way
+    # as tuples (i, j), so we need to use a record array.
+    dtype = np.dtype([('f0', term.dtype), ('f1', term.dtype)])
+    term_prime = term.view(dtype=dtype).reshape(-1)
+    # _normalize_term will sort 'term' in-place via 'term_prime'
+    _, value = _sort_term(term_prime, value)
+
+    return term, value
+
+
+def _make_onsite_terms(builder, sites, site_offsets, term_offset):
+    # Construct onsite terms.
+    #
+    # onsite_subgraphs
+    #   Will contain tuples of the form described in
+    #   kwant.system.VectorizedSystem.subgraphs, but during construction
+    #   contains lists of the sites associated with each onsite term.
+    #
+    # onsite_term_values
+    #   Contains a callable or array of constant values for each term.
+    #
+    # onsite_terms
+    #   Constructed after the main loop. Contains a kwant.system.Term
+    #   tuple for each onsite term.
+    #
+    # _onsite_term_by_site_id
+    #   Maps the site ID to the number of the term that the site is
+    #   a part of.
+    #   lists the number of the
+    #   Hamiltonian term associated with each site/hopping. For
+    #   Hermitian conjugate hoppings "-term - 1" is stored instead.
+
+    onsite_subgraphs = []
+    onsite_term_values = []
+    onsite_term_parameters = []
+    # We just use the cache to handle non/callables and exceptions
+    cache = _value_params_pair_cache(1)
+    # maps onsite key -> onsite term number
+    onsite_to_term_nr = collections.OrderedDict()
+    _onsite_term_by_site_id = []
+    for site_id, site in enumerate(sites):
+        val = builder.H[builder.symmetry.to_fd(site)][1]
+        const_val = not callable(val)
+        which_site_array = bisect.bisect(site_offsets, site_id) - 1
+        # "key" uniquely identifies an onsite term.
+        if const_val:
+            key = (None, which_site_array)
+        else:
+            key = (id(val), which_site_array)
+        if key not in onsite_to_term_nr:
+            # Start a new term
+            onsite_to_term_nr[key] = len(onsite_subgraphs)
+            onsite_subgraphs.append([])
+            if const_val:
+                onsite_term_values.append([])
+                onsite_term_parameters.append(None)
+            else:
+                val, params = cache(val)
+                onsite_term_values.append(val)
+                onsite_term_parameters.append(params)
+        onsite_subgraphs[onsite_to_term_nr[key]].append(site_id)
+        _onsite_term_by_site_id.append(onsite_to_term_nr[key])
+        if const_val:
+            vals = onsite_term_values[onsite_to_term_nr[key]]
+            vals.append(val)
+    # Sort the sites in each term, and normalize any constant
+    # values to arrays of the correct dtype and shape.
+    onsite_subgraphs, onsite_term_values = zip(*(
+        _sort_term(term, value)
+        for term, value in
+        zip(onsite_subgraphs, onsite_term_values)))
+    # Store site array index and site offsets rather than sites themselves
+    tmp = []
+    for (_, which), s in zip(onsite_to_term_nr, onsite_subgraphs):
+        s = s - site_offsets[which]
+        tmp.append(((which, which), (s, s)))
+    onsite_subgraphs = tmp
+    # onsite_term_errors[i] contains an exception if the corresponding
+    # term has a value function with an illegal signature. We only raise
+    # the exception if we actually try to evaluate the offending term
+    # (to maintain backwards compatibility).
+    onsite_term_errors = [
+        err if isinstance(err, Exception) else None
+        for err in onsite_term_parameters
+    ]
+    onsite_terms = [
+        system.Term(
+            subgraph=term_offset + i,
+            hermitian=False,
+            parameters=(
+                params if not isinstance(params, Exception) else None
+            ),
+        )
+        for i, params in enumerate(onsite_term_parameters)
+    ]
+    _onsite_term_by_site_id = np.array(_onsite_term_by_site_id)
+
+    return (onsite_subgraphs, onsite_terms, onsite_term_values,
+            onsite_term_parameters, onsite_term_errors, _onsite_term_by_site_id)
+
+
+def _make_hopping_terms(builder, graph, sites, site_offsets, cell_size, term_offset):
+    # Construct the hopping terms
+    #
+    # The logic is the same as for the onsite terms, with the following
+    # differences.
+    #
+    # _hopping_term_by_edge_id
+    #   Maps hopping edge IDs to the number of the term that the hopping
+    #   is a part of. For Hermitian conjugate hoppings "-term_number -1"
+    #   is stored instead.
+
+    hopping_subgraphs = []
+    hopping_term_values = []
+    hopping_term_parameters = []
+    # We just use the cache to handle non/callables and exceptions
+    cache = _value_params_pair_cache(2)
+    # maps hopping key -> hopping term number
+    hopping_to_term_nr = collections.OrderedDict()
+    _hopping_term_by_edge_id = []
+    for tail, head in graph:
+        tail_site, head_site = sites[tail], sites[head]
+        if tail >= cell_size:
+            # The tail belongs to the previous domain.  Find the
+            # corresponding hopping with the tail in the fund. domain.
+            tail_site, head_site = builder.symmetry.to_fd(tail_site, head_site)
+        val = builder._get_edge(tail_site, head_site)
+        herm_conj = val is Other
+        if herm_conj:
+            val = builder._get_edge(*builder.symmetry.to_fd(head_site, tail_site))
+        const_val = not callable(val)
+
+        tail_site_array = bisect.bisect(site_offsets, tail) - 1
+        head_site_array = bisect.bisect(site_offsets, head) - 1
+        # "key" uniquely identifies a hopping term.
+        if const_val:
+            key = (None, tail_site_array, head_site_array)
+        else:
+            key = (id(val), tail_site_array, head_site_array)
+        if herm_conj:
+            key = (key[0], head_site_array, tail_site_array)
+
+        if key not in hopping_to_term_nr:
+            # start a new term
+            hopping_to_term_nr[key] = len(hopping_subgraphs)
+            hopping_subgraphs.append([])
+            if const_val:
+                hopping_term_values.append([])
+                hopping_term_parameters.append(None)
+            else:
+                val, params = cache(val)
+                hopping_term_values.append(val)
+                hopping_term_parameters.append(params)
+
+        if herm_conj:
+            # Hopping terms come after all onsite terms, so we need
+            # to offset the term ID by that many
+            term_id = -term_offset - hopping_to_term_nr[key] - 1
+            _hopping_term_by_edge_id.append(term_id)
+        else:
+            # Hopping terms come after all onsite terms, so we need
+            # to offset the term ID by that many
+            term_id = term_offset + hopping_to_term_nr[key]
+            _hopping_term_by_edge_id.append(term_id)
+            hopping_subgraphs[hopping_to_term_nr[key]].append((tail, head))
+            if const_val:
+                vals = hopping_term_values[hopping_to_term_nr[key]]
+                vals.append(val)
+    # Sort the hoppings in each term, and normalize any constant
+    # values to arrays of the correct dtype and shape.
+    if hopping_subgraphs:
+        hopping_subgraphs, hopping_term_values = zip(*(
+            _sort_hopping_term(term, value)
+            for term, value in
+            zip(hopping_subgraphs, hopping_term_values)))
+    # Store site array index and site offsets rather than sites themselves
+    tmp = []
+    for (_, tail_which, head_which), h in zip(hopping_to_term_nr,
+                                              hopping_subgraphs):
+        start = (site_offsets[tail_which], site_offsets[head_which])
+        # Transpose to get a pair of arrays rather than array of pairs
+        # We use the fact that the underlying array is stored in
+        # array-of-pairs order to search through it in 'hamiltonian'.
+        tmp.append(((tail_which, head_which), (h - start).transpose()))
+    hopping_subgraphs = tmp
+    # hopping_term_errors[i] contains an exception if the corresponding
+    # term has a value function with an illegal signature. We only raise
+    # the exception if this becomes a problem (to maintain backwards
+    # compatibility)
+    hopping_term_errors = [
+        err if isinstance(err, Exception) else None
+        for err in hopping_term_parameters
+    ]
+    hopping_terms = [
+        system.Term(
+            subgraph=term_offset + i,
+            hermitian=True,  # Builders are always Hermitian
+            parameters=(
+                params if not isinstance(params, Exception) else None
+            ),
+        )
+        for i, params in enumerate(hopping_term_parameters)
+    ]
+    _hopping_term_by_edge_id = np.array(_hopping_term_by_edge_id)
+
+    return (hopping_subgraphs, hopping_terms, hopping_term_values,
+            hopping_term_parameters, hopping_term_errors,
+            _hopping_term_by_edge_id)
+
+
+class FiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.FiniteVectorizedSystem):
+    """Finalized `Builder` with leads.
+
+    Usable as input for the solvers in `kwant.solvers`.
+
+    Attributes
+    ----------
+    site_arrays : sequence of `~kwant.system.SiteArray`
+        The sites of the system.
+    sites : sequence
+        ``sites[i]`` is the `~kwant.system.Site` instance that corresponds
+        to the integer-labeled site ``i`` of the low-level system. The sites
+        are ordered first by their family and then by their tag.
+    id_by_site : mapping
+        The inverse of ``sites``; maps high-level `~kwant.system.Site`
+        instances to their integer label.
+        Satisfies ``id_by_site[sites[i]] == i``.
+    """
+
+    def __init__(self, builder):
+        assert builder.symmetry.num_directions == 0
+        assert builder.vectorize
+
+        sites = sorted(builder.H)
+        id_by_site = {site: site_id for site_id, site in enumerate(sites)}
+
+        if not all(s.family.norbs for s in sites):
+            raise ValueError("All sites must belong to families with norbs "
+                             "specified for vectorized Builders. Specify "
+                             "norbs when creating site families.")
+
+        graph = _make_graph(builder.H, id_by_site)
+
+        finalized_leads, lead_interfaces, lead_paddings =\
+            _finalize_leads(builder.leads, id_by_site)
+
+        del id_by_site  # cleanup due to large size
+
+        site_arrays = _make_site_arrays(builder.H)
+        # We need this to efficiently find which array a given
+        # site belongs to
+        site_offsets = np.cumsum([0] + [len(arr) for arr in site_arrays])
+
+        (onsite_subgraphs, onsite_terms, onsite_term_values,
+         onsite_term_parameters, onsite_term_errors, _onsite_term_by_site_id) =\
+            _make_onsite_terms(builder, sites, site_offsets, term_offset=0)
+
+        (hopping_subgraphs, hopping_terms, hopping_term_values,
+         hopping_term_parameters, hopping_term_errors,
+         _hopping_term_by_edge_id) =\
+            _make_hopping_terms(builder, graph, sites, site_offsets,
+                                len(sites), term_offset=len(onsite_terms))
+
+        # Construct the combined onsite/hopping term datastructures
+        subgraphs = tuple(onsite_subgraphs) + tuple(hopping_subgraphs)
+        terms = tuple(onsite_terms) + tuple(hopping_terms)
+        term_values = tuple(onsite_term_values) + tuple(hopping_term_values)
+        term_errors = tuple(onsite_term_errors) + tuple(hopping_term_errors)
+
+        # Construct system parameters
+        parameters = set()
+        for params in chain(onsite_term_parameters, hopping_term_parameters):
+            if params is not None:
+                parameters.update(params)
+        parameters = frozenset(parameters)
+
+        self.site_arrays = site_arrays
+        self.sites = _Sites(self.site_arrays)
+        self.id_by_site = _IdBySite(self.site_arrays)
+        self.graph = graph
+        self.subgraphs = subgraphs
+        self.terms = terms
+        self._term_values = term_values
+        self._term_errors = term_errors
+        self._hopping_term_by_edge_id = _hopping_term_by_edge_id
+        self._onsite_term_by_site_id = _onsite_term_by_site_id
         self.parameters = parameters
         self.symmetry = builder.symmetry
         self.leads = finalized_leads
@@ -2341,6 +2894,126 @@ class InfiniteSystem(_FinalizedBuilderMixin, system.InfiniteSystem):
         self.id_by_site = id_by_site
         self.hoppings = hoppings
         self.onsites = onsites
+        self.parameters = parameters
+        self.symmetry = builder.symmetry
+        self.cell_size = cell_size
+        self._init_discrete_symmetries(builder)
+
+    def hamiltonian(self, i, j, *args, params=None):
+        cs = self.cell_size
+        if i == j >= cs:
+            i -= cs
+            j -= cs
+        return super().hamiltonian(i, j, *args, params=params)
+
+
+class InfiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.InfiniteVectorizedSystem):
+    """Finalized infinite system, extracted from a `Builder`.
+
+    Attributes
+    ----------
+    site_arrays : sequence of `~kwant.system.SiteArray`
+        The sites of the system.
+    sites : sequence
+        ``sites[i]`` is the `~kwant.system.Site` instance that corresponds
+        to the integer-labeled site ``i`` of the low-level system.
+    id_by_site : mapping
+        The inverse of ``sites``; maps high-level `~kwant.system.Site`
+        instances to their integer label.
+        Satisfies ``id_by_site[sites[i]] == i``.
+
+    Notes
+    -----
+    In infinite systems ``sites`` and ``site_arrays`` consists of 3 parts:
+    sites in the fundamental domain (FD) with hoppings to neighboring cells,
+    sites in the FD with no hoppings to neighboring cells, and sites in FD+1
+    attached to the FD by hoppings. Each of these three subsequences is
+    individually sorted.
+    """
+
+    def __init__(self, builder, interface_order=None):
+        """
+        Finalize a builder instance which has to have exactly a single
+        symmetry direction.
+
+        If interface_order is not set, the order of the interface sites in the
+        finalized system will be arbitrary.  If interface_order is set to a
+        sequence of interface sites, this order will be kept.
+        """
+        sym = builder.symmetry
+        assert sym.num_directions == 1
+        assert builder.vectorize
+
+        lsites_with, lsites_without, interface =\
+            _make_lead_sites(builder, interface_order)
+        cell_size = len(lsites_with) + len(lsites_without)
+
+
+        sites = lsites_with + lsites_without + interface
+        id_by_site = {}
+        for site_id, site in enumerate(sites):
+            id_by_site[site] = site_id
+        # these are needed for constructing hoppings
+        lsites_with = frozenset(lsites_with)
+        lsites_without = frozenset(lsites_without)
+        interface = frozenset(interface)
+
+        if not all(s.family.norbs for s in sites):
+            raise ValueError("All sites must belong to families with norbs "
+                             "specified for vectorized Builders. Specify "
+                             "norbs when creating site families.")
+
+        graph = _make_lead_graph(builder, sites, id_by_site, cell_size)
+
+        del id_by_site  # cleanup due to large size
+
+        # In order to conform to the kwant.system.InfiniteVectorizedSystem
+        # interface we need to put the sites that connect to the previous
+        # cell *first*, then the sites that do not couple to the previous
+        # cell, then the sites in the previous cell. Because sites in
+        # a SiteArray are sorted by tag this means that the sites in these
+        # 3 different sets need to be in different SiteArrays.
+        site_arrays = (
+            _make_site_arrays(lsites_with)
+            + _make_site_arrays(lsites_without)
+            + _make_site_arrays(interface)
+        )
+
+        site_offsets = np.cumsum([0] + [len(arr) for arr in site_arrays])
+
+        (onsite_subgraphs, onsite_terms, onsite_term_values,
+         onsite_term_parameters, onsite_term_errors, _onsite_term_by_site_id) =\
+            _make_onsite_terms(builder, sites, site_offsets, term_offset=0)
+
+        (hopping_subgraphs, hopping_terms, hopping_term_values,
+         hopping_term_parameters, hopping_term_errors,
+         _hopping_term_by_edge_id) =\
+            _make_hopping_terms(builder, graph, sites, site_offsets,
+                                cell_size, term_offset=len(onsite_terms))
+
+        # Construct the combined onsite/hopping term datastructures
+        subgraphs = tuple(onsite_subgraphs) + tuple(hopping_subgraphs)
+        terms = tuple(onsite_terms) + tuple(hopping_terms)
+        term_values = tuple(onsite_term_values) + tuple(hopping_term_values)
+        term_errors = tuple(onsite_term_errors) + tuple(hopping_term_errors)
+
+        # Construct system parameters
+        parameters = set()
+        for params in chain(onsite_term_parameters, hopping_term_parameters):
+            if params is not None:
+                parameters.update(params)
+        parameters = frozenset(parameters)
+
+        self.site_arrays = site_arrays
+        self.sites = _Sites(self.site_arrays)
+        self.id_by_site = _IdBySite(self.site_arrays)
+        self.graph = graph
+        self.subgraphs = subgraphs
+        self.terms = terms
+        self._term_values = term_values
+        self._term_errors = term_errors
+        self._hopping_term_by_edge_id = _hopping_term_by_edge_id
+        self._onsite_term_by_site_id = _onsite_term_by_site_id
         self.parameters = parameters
         self.symmetry = builder.symmetry
         self.cell_size = cell_size

@@ -16,6 +16,8 @@ Types
    ModesLead
    FiniteSystem
    InfiniteSystem
+   FiniteVectorizedSystem
+   InfiniteVectorizedSystem
 
 Abstract base classes
 ---------------------
@@ -31,3 +33,11 @@ Functions
    :toctree: generated/
 
    add_peierls_phase
+
+Mixin Classes
+-------------
+.. autosummary::
+   :toctree: generated/
+
+   _FinalizedBuilderMixin
+   _VectorizedFinalizedBuilderMixin
