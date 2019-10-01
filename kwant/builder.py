@@ -1875,6 +1875,10 @@ def add_peierls_phase(syst, peierls_parameter='phi', fix_gauge=True):
 
         return f
 
+    if syst.vectorize:
+        raise TypeError("'add_peierls_phase' does not work with "
+                        "vectorized Builders")
+
     ret = _add_peierls_phase(syst, peierls_parameter).finalized()
 
     if fix_gauge:
