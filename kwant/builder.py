@@ -3025,3 +3025,16 @@ class InfiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.Infinite
             i -= cs
             j -= cs
         return super().hamiltonian(i, j, *args, params=params)
+
+
+def is_finite_system(syst):
+    return isinstance(syst, (FiniteSystem, FiniteVectorizedSystem))
+
+
+def is_infinite_system(syst):
+    return isinstance(syst, (FiniteSystem, FiniteVectorizedSystem))
+
+
+def is_system(syst):
+    return isinstance(syst, (FiniteSystem, FiniteVectorizedSystem,
+                             InfiniteSystem, InfiniteVectorizedSystem))

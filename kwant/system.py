@@ -572,6 +572,10 @@ class FiniteVectorizedSystem(VectorizedSystem, FiniteSystemMixin, metaclass=abc.
     pass
 
 
+def is_finite(syst):
+    return isinstance(syst, (FiniteSystem, FiniteVectorizedSystem))
+
+
 class InfiniteSystemMixin(metaclass=abc.ABCMeta):
     """Abstract infinite low-level system.
 
@@ -729,6 +733,10 @@ class InfiniteSystem(System, InfiniteSystemMixin, metaclass=abc.ABCMeta):
 class InfiniteVectorizedSystem(VectorizedSystem, InfiniteSystemMixin, metaclass=abc.ABCMeta):
     cell_hamiltonian = _system.vectorized_cell_hamiltonian
     inter_cell_hopping = _system.vectorized_inter_cell_hopping
+
+
+def is_infinite(syst):
+    return isinstance(syst, (InfiniteSystem, InfiniteVectorizedSystem))
 
 
 class PrecalculatedLead:

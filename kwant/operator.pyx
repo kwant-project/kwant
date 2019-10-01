@@ -24,7 +24,7 @@ from .graph.core cimport EdgeIterator
 from .graph.core import DisabledFeatureError, NodeDoesNotExistError
 from .graph.defs cimport gint
 from .graph.defs import gint_dtype
-from .system import InfiniteSystem, Site
+from .system import is_infinite, Site
 from ._common import UserCodeError, get_parameters, deprecate_args
 
 
@@ -149,7 +149,7 @@ def _get_all_orbs(gint[:, :] where, gint[:, :] site_ranges):
 
 def _get_tot_norbs(syst):
     cdef gint _unused, tot_norbs
-    is_infinite_system = isinstance(syst, InfiniteSystem)
+    is_infinite_system = is_infinite(syst)
     n_sites = syst.cell_size if is_infinite_system else syst.graph.num_nodes
     _get_orbs(np.asarray(syst.site_ranges, dtype=gint_dtype),
               n_sites, &tot_norbs, &_unused)
@@ -165,7 +165,7 @@ def _normalize_site_where(syst, where):
     otherwise it should contain integers.
     """
     if where is None:
-        if isinstance(syst, InfiniteSystem):
+        if is_infinite(syst):
             where = list(range(syst.cell_size))
         else:
             where = list(range(syst.graph.num_nodes))
@@ -173,7 +173,7 @@ def _normalize_site_where(syst, where):
         try:
             where = [syst.id_by_site[s] for s in filter(where, syst.sites)]
         except AttributeError:
-            if isinstance(syst, InfiniteSystem):
+            if is_infinite(syst):
                 where = [s for s in range(syst.cell_size) if where(s)]
             else:
                 where = [s for s in range(syst.graph.num_nodes) if where(s)]
@@ -187,7 +187,7 @@ def _normalize_site_where(syst, where):
 
     where = np.asarray(where, dtype=gint_dtype).reshape(-1, 1)
 
-    if isinstance(syst, InfiniteSystem) and np.any(where >= syst.cell_size):
+    if is_infinite(syst) and np.any(where >= syst.cell_size):
         raise ValueError('Only sites in the fundamental domain may be '
                          'specified using `where`.')
     if np.any(np.logical_or(where < 0, where >= syst.graph.num_nodes)):
@@ -208,7 +208,7 @@ def _normalize_hopping_where(syst, where):
     if where is None:
         # we cannot extract the hoppings in the same order as they are in the
         # graph while simultaneously excluding all inter-cell hoppings
-        if isinstance(syst, InfiniteSystem):
+        if is_infinite(syst):
             raise ValueError('`where` must be provided when calculating '
                              'current in an InfiniteSystem.')
         where = list(syst.graph)
@@ -241,7 +241,7 @@ def _normalize_hopping_where(syst, where):
 
     where = np.asarray(where, dtype=gint_dtype)
 
-    if isinstance(syst, InfiniteSystem) and np.any(where > syst.cell_size):
+    if is_infinite(syst) and np.any(where > syst.cell_size):
         raise ValueError('Only intra-cell hoppings may be specified '
                          'using `where`.')
 
