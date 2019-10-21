@@ -218,6 +218,8 @@ latex_documents = [
 
 latex_engine = 'xelatex'
 
+latex_use_xindy = False
+
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
 #latex_logo = None
