@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2011-2018 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -27,6 +27,10 @@ try:
 except NameError:
     is_ipython_kernel = False
 
+global mpl_available
+global plotly_available
+mpl_available = False
+plotly_available = False
 
 try:
     import matplotlib
@@ -53,10 +57,9 @@ try:
         from matplotlib.cm import get_cmap
 
 except ImportError:
-    warnings.warn("matplotlib is not available, if other backends are "
+    warnings.warn("matplotlib is not available, if other engines are "
                   "unavailable, only iterator-providing functions will work",
                   RuntimeWarning)
-    mpl_available = False
 
 
 try:
@@ -71,20 +74,24 @@ try:
     kwant_red_plotly = [(level, 'rgb({},{},{})'.format(*rgb))
                         for level, rgb in zip(_cmap_levels, _cmap_plotly)]
 except ImportError:
-    warnings.warn("plotly is not available, if other backends are unavailable,"
+    warnings.warn("plotly is not available, if other engines are unavailable,"
                   " only iterator-providing functions will work",
                   RuntimeWarning)
-    plotly_available = False
 
+Engines = []
 
-class Backends(Enum):
-    matplotlib = 0
-    plotly = 1
+if plotly_available:
+    Engines.append("plotly")
+    engine = "plotly"
 
-backend = Backends.matplotlib
+if mpl_available:
+    Engines.append("matplotlib")
+    engine = "matplotlib"
 
 if not ((mpl_available) or (plotly_available)):
-    backend = None
+    engine = None
+
+Engines = frozenset(Engines)
 
 
 # Collections that allow for symbols and linewiths to be given in data space
@@ -102,6 +109,8 @@ def nparray_if_array(var):
 
 if plotly_available:
 
+    # The converter_map and converter_map_3d converts the common marker symbols
+    # of matplotlib to the symbols of plotly
     converter_map = {
         "o": 0,
         "v": 6,
@@ -125,43 +134,43 @@ if plotly_available:
         "d": "diamond",
     }
 
+    def error_string(symbol_input, supported):
+        return 'Input symbol/s \'{}\' not supported. Only the following characters are supported: {}'.format(symbol_input, supported)
+
 
     def convert_symbol_mpl_plotly(mpl_symbol):
-        if isarray(mpl_symbol) or isinstance(mpl_symbol, tuple):
-            converted_symbol = [converter_map.get(i) for i in mpl_symbol]
-            if None in converted_symbol:
-                raise RuntimeError('Input tuple \'{}\' not supported. '
-                                'Only the following characters '
-                                'are supported: {}'.format(
-                                    mpl_symbol, converter_map.keys()))
+        if isarray(mpl_symbol):
+            try:
+                converted_symbol = [converter_map.get(i) for i in mpl_symbol]
+            except KeyError:
+                raise RuntimeError( error_string(mpl_symbol, list(converter_map)) )
         else:
-            converted_symbol = converter_map.get(mpl_symbol)
-            if converted_symbol == None:
-                raise RuntimeError('Input symbol \'{}\' not supported. '
-                                'Only the following are supported: {}'.format(
-                                    mpl_symbol, converter_map.keys()))
-
+            try:
+                converted_symbol = converter_map.get(mpl_symbol)
+            except KeyError:
+                raise RuntimeError( error_string(mpl_symbol, list(converter_map)) )
         return converted_symbol
 
-    def convert_symbol_mpl_plotly_3d(mpl_symbol):
-        if isarray(mpl_symbol) or isinstance(mpl_symbol, tuple):
-            converted_symbol = [converter_map_3d.get(i) for i in mpl_symbol]
-            if None in converted_symbol:
-                raise RuntimeError('Input tuple \'{}\' not supported. '
-                                'Only the following characters '
-                                'are supported: {}'.format(
-                                    mpl_symbol, converter_map_3d.keys()))
-        else:
-            converted_symbol = converter_map_3d.get(mpl_symbol)
-            if converted_symbol == None:
-                raise RuntimeError('Input symbol \'{}\' not supported. '
-                                'Only the following are supported: {}'.format(
-                                    mpl_symbol, converter_map_3d.keys()))
 
+    def convert_symbol_mpl_plotly_3d(mpl_symbol):
+        if isarray(mpl_symbol):
+            try:
+                converted_symbol = [converter_map_3d.get(i) for i in mpl_symbol]
+            except KeyError:
+                raise RuntimeError( error_string(mpl_symbol, list(converter_map_3d)) )
+        else:
+            try:
+                converted_symbol = converter_map_3d.get(mpl_symbol)
+            except KeyError:
+                raise RuntimeError( error_string(mpl_symbol, list(converter_map_3d)) )
         return converted_symbol
 
 
     def convert_site_size_mpl_plotly(mpl_site_size, plotly_ref_px):
+        # The conversion is such that we assume matplotlib's marker size is in
+        # square points (https://matplotlib.org/devdocs/api/_as_gen/matplotlib.pyplot.scatter.html)
+        # and we need to convert the points to pixels for plotly.
+        # Hence, 1 pixel = (96.0)/(72.0) point
         return np.sqrt(mpl_site_size)*(96.0/72.0)*plotly_ref_px
 
 

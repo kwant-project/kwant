@@ -30,7 +30,7 @@ from . import system, builder, _common
 from ._common import deprecate_args
 
 
-__all__ = ['set_backend',
+__all__ = ['set_engine', 'get_engine',
            'plot', 'map', 'bands', 'spectrum', 'current', 'density',
            'interpolate_current', 'interpolate_density',
            'streamplot', 'scalarplot',
@@ -42,52 +42,48 @@ __all__ = ['set_backend',
 _p = _common.lazy_import('_plotter')
 
 
-def set_backend(backend):
-    """Set the plotting backend to use.
+def set_engine(engine):
+    """Set the plotting engine to use.
 
     Parameters
     ----------
-    backend : str
+    engine : str
         Options are: 'matplotlib', 'plotly'.
     """
 
     if ((_p.mpl_available) or (_p.plotly_available)):
         try:
-            _p.backend = _p.Backends[backend]
-        except KeyError:
-            list_available_backends = []
-            if (_p.mpl_available):
-                list_available_backends.append('matplotlib')
-            if (_p.plotly_available):
-                list_available_backends.append('plotly')
-            error_message = "Tried to set an unknown backend \'{}\'.".format(
-                                                                       backend)
-            error_message += " Supported backends are {}".format(
-                                                       list_available_backends)
+            assert(engine in _p.Engines)
+            _p.engine = engine
+        except:
+            error_message = "Tried to set an unknown engine \'{}\'.".format(
+                                                                       engine)
+            error_message += " Supported engines are {}".format(
+                                                       [e for e in _p.Engines])
             raise RuntimeError(error_message)
     else:
         warnings.warn("Tried to set \'{}\' but is not "
-                      "available.".format(backend), RuntimeWarning)
+                      "available.".format(engine), RuntimeWarning)
 
-    if (_p.is_ipython_kernel):
-        if ((_p.backend == _p.Backends.plotly) and
-            (not _p.init_notebook_mode_set)):
+    if ((_p.engine == "plotly") and
+        (not _p.init_notebook_mode_set)):
+        if (_p.is_ipython_kernel):
             _p.init_notebook_mode_set = True
             _p.plotly_module.init_notebook_mode(connected=True)
 
 
-def get_backend():
-    return _p.backend
+def get_engine():
+    return _p.engine
 
 
 def _check_incompatible_args_plotly(dpi, fig_size, ax):
-    assert(get_backend() == _p.Backends.plotly)
+    assert(_p.engine == "plotly")
     if(dpi or fig_size or ax):
         raise RuntimeError(
-            "Plotly backend does not support setting 'dpi', 'fig_size' "
+            "Plotly engine does not support setting 'dpi', 'fig_size' "
             "or 'ax', either leave these parameters unspecified, or "
-            "select the matplotlib backend with"
-            "'kwant.plotter.select_backend(\"matplotlib\")'")
+            "select the matplotlib engine with"
+            "'kwant.plotter.set_engine(\"matplotlib\")'")
 
 
 def _sample_array(array, n_samples, rng=None):
@@ -155,7 +151,7 @@ def _maybe_output_fig(fig, file=None, show=True):
     if fig is None:
         return
 
-    if get_backend() == _p.Backends.matplotlib:
+    if _p.engine == "matplotlib":
         if file is not None:
             fig.canvas.print_figure(file, dpi=fig.dpi)
         elif show:
@@ -163,14 +159,14 @@ def _maybe_output_fig(fig, file=None, show=True):
             # and we can import it safely without additional warnings.
             from matplotlib import pyplot
             pyplot.show()
-    elif get_backend() == _p.Backends.plotly:
+    elif _p.engine == "plotly":
         if file is not None:
             _p.plotly_module.plot(fig, show_link=False, filename=file, auto_open=False)
         if show:
             if (_p.is_ipython_kernel):
                 _p.plotly_module.iplot(fig)
             else:
-                raise RuntimeError('show flag using the plotly backend can '
+                raise RuntimeError('show flag using the plotly engine can '
                                    'only be True if and only if called from a '
                                    'jupyter/ipython environment.')
 
@@ -725,6 +721,9 @@ def sys_leads_hopping_pos(sys, hop_lead_nr):
 
 # Useful plot functions (to be extended).
 # The default plotly symbol size is a 6 px
+# The keys of 2, and 3 represent the dimension of the system.
+# e.g. the default for site_size for kwant system of dim=2 is 0.25, and
+# dim=3 is 0.5
 defaults = {'site_symbol': {2: 'o', 3: 'o'},
             'site_size': {2: 0.25, 3: 0.5},
             'plotly_site_size_reference': 6,
@@ -733,9 +732,7 @@ defaults = {'site_symbol': {2: 'o', 3: 'o'},
             'site_lw': {2: 0, 3: 0.1},
             'hop_color': {2: 'black', 3: 'black'},
             'hop_lw': {2: 0.1, 3: 0},
-            'lead_color': {2: 'red', 3: 'red'},
-            'unit': {_p.Backends.plotly: 'pt',
-                     _p.Backends.matplotlib: 'nn'}}
+            'lead_color': {2: 'red', 3: 'red'}}
 
 
 def plot(sys, num_lead_cells=2, unit=None,
@@ -784,13 +781,13 @@ def plot(sys, num_lead_cells=2, unit=None,
         - ``('p', nvert, angle)``: regular polygon with ``nvert`` vertices,
           rotated by ``angle``. ``angle`` is given in degrees, and ``angle=0``
           corresponds to one edge of the polygon pointing upward. The
-          radius of the inner circle is 1 unit. [Unsupported by plotly backend]
-        - 'no symbol': no symbol is plotted. [Unsupported by plotly backend]
+          radius of the inner circle is 1 unit. [Unsupported by plotly engine]
+        - 'no symbol': no symbol is plotted. [Unsupported by plotly engine]
         - 'S', `('P', nvert, angle)`: as the lower-case variants described
           above, but with an area equal to a circle of radius 1. (Makes
           the visual size of the symbol equal to the size of a circle with
-          radius 1). [Unsupported by plotly backend]
-        - matplotlib.path.Path instance. [Unsupported by plotly backend]
+          radius 1). [Unsupported by plotly engine]
+        - matplotlib.path.Path instance. [Unsupported by plotly engine]
 
         Instead of a single symbol, different symbols can be specified
         for different sites by passing a function that returns a valid
@@ -892,9 +889,7 @@ def plot(sys, num_lead_cells=2, unit=None,
     """
 
     # Provide default unit if user did not specify
-    if unit == None:
-        unit = defaults['unit'][get_backend()]
-    if get_backend() == _p.Backends.matplotlib:
+    if _p.engine == "matplotlib":
         fig = _plot_matplotlib(sys, num_lead_cells, unit,
                         site_symbol, site_size,
                         site_color, site_edgecolor, site_lw,
@@ -904,7 +899,7 @@ def plot(sys, num_lead_cells=2, unit=None,
                         lead_hop_lw, pos_transform,
                         cmap, colorbar, file,
                         show, dpi, fig_size, ax)
-    elif get_backend() == _p.Backends.plotly:
+    elif _p.engine == "plotly":
         _check_incompatible_args_plotly(dpi, fig_size, ax)
         fig = _plot_plotly(sys, num_lead_cells, unit,
                         site_symbol, site_size,
@@ -915,8 +910,10 @@ def plot(sys, num_lead_cells=2, unit=None,
                         lead_hop_lw, pos_transform,
                         cmap, colorbar, file,
                         show)
+    elif _p.engine == None:
+        raise RuntimeError("Cannot use plot() without a plotting lib installed")
     else:
-        raise RuntimeError("Backend not supported by plot().")
+        raise RuntimeError("plot() does not support engine '{}'".format(_p.engine))
 
     _maybe_output_fig(fig, file=file, show=show)
 
@@ -947,7 +944,7 @@ def _check_length(name, loc):
         pass
 
 # make all specs proper: either constant or lists/np.arrays:
-def _make_proper_site_spec(spec_name,  spec, fancy_indexing=False):
+def _make_proper_site_spec(spec_name,  spec, syst, sites, fancy_indexing=False):
     if _p.isarray(spec) and isinstance(syst, builder.Builder):
         raise TypeError('{} cannot be an array when plotting'
                         ' a Builder; use a function instead.'
@@ -962,7 +959,7 @@ def _make_proper_site_spec(spec_name,  spec, fancy_indexing=False):
             spec = np.asarray(spec, dtype='object')
     return spec
 
-def _make_proper_hop_spec(spec, fancy_indexing=False):
+def _make_proper_hop_spec(spec, hops, fancy_indexing=False):
     if callable(spec):
         spec = [spec(*i[0]) for i in hops if i[1] is None]
     if (fancy_indexing and _p.isarray(spec)
@@ -983,9 +980,8 @@ def _plot_plotly(sys, num_lead_cells, unit,
          cmap, colorbar, file,
          show, fig=None):
 
-    if not _p.plotly_available:
-        raise RuntimeError("plotly was not found, but is required "
-                           "for plot()")
+    if unit == None:
+        unit = 'pt'
 
     syst = sys  # for naming consistency inside function bodies
     # Generate data.
@@ -1016,10 +1012,10 @@ def _plot_plotly(sys, num_lead_cells, unit,
 
     # Determine the reference length.
     if unit != 'pt':
-        raise RuntimeError('Plotly backend currently only supports '
+        raise RuntimeError('Plotly engine currently only supports '
                          'the pt symbol size unit')
 
-    site_symbol = _make_proper_site_spec('site_symbol', site_symbol, sites)
+    site_symbol = _make_proper_site_spec('site_symbol', site_symbol, syst, sites)
     if site_symbol is None: site_symbol = defaults['site_symbol'][dim]
     # separate different symbols (not done in 3D, the separation
     # would mess up sorting)
@@ -1053,11 +1049,11 @@ def _plot_plotly(sys, num_lead_cells, unit,
             # Unknown finalized system, no sites access.
             site_color = defaults['site_color'][dim]
 
-    site_size = _make_proper_site_spec('site_size',site_size, sites, fancy_indexing)
-    site_color = _make_proper_site_spec('site_color',site_color, sites, fancy_indexing)
-    site_edgecolor = _make_proper_site_spec('site_edgecolor',site_edgecolor, sites,
+    site_size = _make_proper_site_spec('site_size',site_size, syst, sites, fancy_indexing)
+    site_color = _make_proper_site_spec('site_color',site_color, syst, sites, fancy_indexing)
+    site_edgecolor = _make_proper_site_spec('site_edgecolor',site_edgecolor, syst, sites,
                                             fancy_indexing)
-    site_lw = _make_proper_site_spec('site_lw',site_lw, sites, fancy_indexing)
+    site_lw = _make_proper_site_spec('site_lw',site_lw, syst, sites, fancy_indexing)
 
     hop_color = _make_proper_hop_spec(hop_color, hops)
     hop_lw = _make_proper_hop_spec(hop_lw, hops)
@@ -1113,11 +1109,14 @@ def _plot_plotly(sys, num_lead_cells, unit,
     for symbol, slc in symbol_slcs:
         site_symbol_plotly = _p.convert_symbol_mpl_plotly(symbol)
         if site_symbol_plotly == -1:
+            # The kwant documentation supports no symbol as a string argument for site_symbol
+            # If it evaluates to -1, then the user has specified "no symbol" as the input.
+            # https://kwant-project.org/doc/1/reference/generated/kwant.plotter.plot
             continue
         size = site_size[slc] if _p.isarray(site_size) else site_size
         col = site_color[slc] if _p.isarray(site_color) else site_color
         if _p.isarray(site_edgecolor) or _p.isarray(site_lw):
-            raise RuntimeError("Plotly backend not currently support an array "
+            raise RuntimeError("Plotly engine not currently support an array "
                                "of linecolors or linewidths. Please restrict "
                                "to only a constant (i.e. no function or array)"
                                " site_edgecolor and site_lw property "
@@ -1128,21 +1127,14 @@ def _plot_plotly(sys, num_lead_cells, unit,
             lw = site_lw
 
         if dim == 3:
-            site_node_trace_elem = _p.plotly_graph_objs.Scatter3d(x=[], y=[],
-                                                                  z=[])
-            for i in range(len(sites_pos[slc])):
-                x, y, z = sites_pos[slc][i]
-                site_node_trace_elem.x += tuple([x])
-                site_node_trace_elem.y += tuple([y])
-                site_node_trace_elem.z += tuple([z])
+            x, y, z = sites_pos[slc].transpose()
+            site_node_trace_elem = _p.plotly_graph_objs.Scatter3d(x=x, y=y,
+                                                                  z=z)
             site_node_trace_elem.marker.symbol = _p.convert_symbol_mpl_plotly_3d(
                                                                         symbol)
         else:
-            site_node_trace_elem = _p.plotly_graph_objs.Scatter(x=[], y=[])
-            for i in range(len(sites_pos[slc])):
-                x, y = sites_pos[slc][i]
-                site_node_trace_elem.x += tuple([x])
-                site_node_trace_elem.y += tuple([y])
+            x, y = sites_pos[slc].transpose()
+            site_node_trace_elem = _p.plotly_graph_objs.Scatter(x=x, y=y)
             site_node_trace_elem.marker.symbol = _p.convert_symbol_mpl_plotly(
                                                                         symbol)
 
@@ -1169,23 +1161,25 @@ def _plot_plotly(sys, num_lead_cells, unit,
     end, start = end_pos[: n_syst_hops], start_pos[: n_syst_hops]
 
     if dim == 3:
-        site_edge_trace_elem = _p.plotly_graph_objs.Scatter3d(x=[], y=[], z=[])
-        for i in range(len(end)):
-            x0, y0, z0 = end[i]
-            x1, y1, z1 = start[i]
-            site_edge_trace_elem.x += tuple([x0, x1, None])
-            site_edge_trace_elem.y += tuple([y0, y1, None])
-            site_edge_trace_elem.z += tuple([z0, z1, None])
+        x0, y0, z0 = end.transpose()
+        x1, y1, z1 = start.transpose()
+        nones = [None] * len(x0)
+        site_edge_trace_elem = _p.plotly_graph_objs.Scatter3d(
+                                    x=np.array([x0, x1, nones]).transpose().flatten(),
+                                    y=np.array([y0, y1, nones]).transpose().flatten(),
+                                    z=np.array([z0, z1, nones]).transpose().flatten()
+                                )
     else:
-        site_edge_trace_elem = _p.plotly_graph_objs.Scatter(x=[], y=[])
-        for i in range(len(end)):
-            x0, y0 = end[i]
-            x1, y1 = start[i]
-            site_edge_trace_elem.x += tuple([x0, x1, None])
-            site_edge_trace_elem.y += tuple([y0, y1, None])
+        x0, y0 = end.transpose()
+        x1, y1 = start.transpose()
+        nones = [None] * len(x0)
+        site_edge_trace_elem = _p.plotly_graph_objs.Scatter(
+                                    x=np.array([x0, x1, nones]).transpose().flatten(),
+                                    y=np.array([y0, y1, nones]).transpose().flatten()
+                                )
 
     if _p.isarray(hop_color) or _p.isarray(hop_lw):
-        raise RuntimeError("Plotly backend not currently support an array "
+        raise RuntimeError("Plotly engine not currently support an array "
                                "of linecolors or linewidths. Please restrict "
                                "to only a constant (i.e. no function or array)"
                                " hop_color and hop_lw property "
@@ -1204,23 +1198,22 @@ def _plot_plotly(sys, num_lead_cells, unit,
         lead_site_colors = np.array([i[2] for i in sites[sites_slc]],
                                     dtype=float)
         if dim == 3:
-            lead_node_trace_elem = _p.plotly_graph_objs.Scatter3d(x=[], y=[],
-                                                                  z=[])
-            for i in range(len(sites_pos[sites_slc])):
-                x, y, z = sites_pos[sites_slc][i]
-                lead_node_trace_elem.x += tuple([x])
-                lead_node_trace_elem.y += tuple([y])
-                lead_node_trace_elem.z += tuple([z])
+
+            x, y, z = sites_pos[sites_slc].transpose()
+            lead_node_trace_elem = _p.plotly_graph_objs.Scatter3d(x=x, y=y,
+                                                                  z=z)
             lead_node_trace_elem.marker.symbol = \
                               _p.convert_symbol_mpl_plotly_3d(lead_site_symbol)
         else:
-            lead_node_trace_elem = _p.plotly_graph_objs.Scatter(x=[], y=[])
-            for i in range(len(sites_pos[sites_slc])):
-                x, y = sites_pos[sites_slc][i]
-                lead_node_trace_elem.x += tuple([x])
-                lead_node_trace_elem.y += tuple([y])
-            lead_node_trace_elem.marker.symbol = \
-                                 _p.convert_symbol_mpl_plotly(lead_site_symbol)
+            x, y = sites_pos[sites_slc].transpose()
+            lead_node_trace_elem = _p.plotly_graph_objs.Scatter(x=x, y=y)
+            lead_site_symbol_plotly = _p.convert_symbol_mpl_plotly(lead_site_symbol)
+            if lead_site_symbol_plotly == -1:
+                # The kwant documentation supports no symbol as a string argument for site_symbol
+                # If it evaluates to -1, then the user has specified "no symbol" as the input.
+                # https://kwant-project.org/doc/1/reference/generated/kwant.plotter.plot
+                continue
+            lead_node_trace_elem.marker.symbol = lead_site_symbol_plotly
 
         lead_node_trace_elem.mode = 'markers'
         lead_node_trace_elem.hoverinfo = 'none'
@@ -1236,7 +1229,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
                                         defaults['plotly_site_size_reference'])
 
         if _p.isarray(lead_site_lw) or _p.isarray(lead_site_edgecolor):
-            raise RuntimeError("Plotly backend not currently support an array "
+            raise RuntimeError("Plotly engine not currently support an array "
                                "of linecolors or linewidths. Please restrict "
                                "to only a constant (i.e. no function or array) "
                                "lead_site_lw and lead_site_edgecolor property "
@@ -1252,22 +1245,23 @@ def _plot_plotly(sys, num_lead_cells, unit,
         end, start = end_pos[hops_slc], start_pos[hops_slc]
 
         if dim == 3:
-            lead_edge_trace_elem = _p.plotly_graph_objs.Scatter3d(x=[], y=[],
-                                                                  z=[])
-            for i in range(len(end)):
-                x0, y0, z0 = end[i]
-                x1, y1, z1 = start[i]
-                lead_edge_trace_elem.x += tuple([x0, x1, None])
-                lead_edge_trace_elem.y += tuple([y0, y1, None])
-                lead_edge_trace_elem.z += tuple([z0, z1, None])
+            x0, y0, z0 = end.transpose()
+            x1, y1, z1 = start.transpose()
+            nones = [None] * len(x0)
+            lead_edge_trace_elem = _p.plotly_graph_objs.Scatter3d(
+                                        x=np.array([x0, x1, nones]).transpose().flatten(),
+                                        y=np.array([y0, y1, nones]).transpose().flatten(),
+                                        z=np.array([z0, z1, nones]).transpose().flatten()
+                                    )
 
         else:
-            lead_edge_trace_elem = _p.plotly_graph_objs.Scatter(x=[], y=[])
-            for i in range(len(end)):
-                x0, y0 = end[i]
-                x1, y1 = start[i]
-                lead_edge_trace_elem.x += tuple([x0, x1, None])
-                lead_edge_trace_elem.y += tuple([y0, y1, None])
+            x0, y0 = end.transpose()
+            x1, y1 = start.transpose()
+            nones = [None] * len(x0)
+            lead_edge_trace_elem = _p.plotly_graph_objs.Scatter(
+                                        x=np.array([x0, x1, nones]).transpose().flatten(),
+                                        y=np.array([y0, y1, nones]).transpose().flatten()
+                                    )
 
         lead_edge_trace_elem.line.width = lead_hop_lw
         lead_edge_trace_elem.line.color = _p.convert_colormap_mpl_plotly(
@@ -1313,9 +1307,8 @@ def _plot_matplotlib(sys, num_lead_cells, unit,
          cmap, colorbar, file,
          show, dpi, fig_size, ax):
 
-    if not _p.mpl_available:
-        raise RuntimeError("matplotlib was not found, but is required "
-                           "for plot()")
+    if unit == None:
+        unit = 'nn'
 
     syst = sys  # for naming consistency inside function bodies
     # Generate data.
@@ -1376,7 +1369,7 @@ def _plot_matplotlib(sys, num_lead_cells, unit,
         except:
             raise ValueError('Invalid value of unit argument.')
 
-    site_symbol = _make_proper_site_spec('site_symbol', site_symbol)
+    site_symbol = _make_proper_site_spec('site_symbol', site_symbol, syst, sites)
     if site_symbol is None: site_symbol = defaults['site_symbol'][dim]
     # separate different symbols (not done in 3D, the separation
     # would mess up sorting)
@@ -1410,10 +1403,10 @@ def _plot_matplotlib(sys, num_lead_cells, unit,
             # Unknown finalized system, no sites access.
             site_color = defaults['site_color'][dim]
 
-    site_size = _make_proper_site_spec('site_size', site_size, fancy_indexing)
-    site_color = _make_proper_site_spec('site_color', site_color, fancy_indexing)
-    site_edgecolor = _make_proper_site_spec('site_edgecolor', site_edgecolor, fancy_indexing)
-    site_lw = _make_proper_site_spec('site_lw', site_lw, fancy_indexing)
+    site_size = _make_proper_site_spec('site_size', site_size, syst, sites, fancy_indexing)
+    site_color = _make_proper_site_spec('site_color', site_color, syst, sites, fancy_indexing)
+    site_edgecolor = _make_proper_site_spec('site_edgecolor', site_edgecolor, syst, sites, fancy_indexing)
+    site_lw = _make_proper_site_spec('site_lw', site_lw, syst, sites, fancy_indexing)
 
     hop_color = _make_proper_hop_spec(hop_color, hops)
     hop_lw = _make_proper_hop_spec(hop_lw, hops)
@@ -1629,9 +1622,12 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
 
     masked_result_array = np.ma.masked_array(img, mask)
 
-    if get_backend() != _p.Backends.matplotlib:
-        result_array = masked_result_array.filled(np.NaN)
-    else:
+    try:
+        if _p.engine != "matplotlib":
+            result_array = masked_result_array.filled(np.NaN)
+        else:
+            result_array = masked_result_array
+    except AttributeError:
         result_array = masked_result_array
 
     return result_array, img, cmin, cmax
@@ -1740,7 +1736,10 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
 
     # Calculate the min/max bounds for the colormap.
     # User-provided values take precedence.
-    unmasked_data = img[~img.mask].data.flatten()
+    if _p.engine != "matplotlib":
+        unmasked_data = img.ravel()
+    else:
+        unmasked_data = img[~img.mask].data.flatten()
     unmasked_data = unmasked_data[~np.isnan(unmasked_data)]
     new_vmin, new_vmax = percentile_bound(unmasked_data, vmin, vmax)
     overflow_pct = 100 * np.sum(unmasked_data > new_vmax) / len(unmasked_data)
@@ -1759,16 +1758,18 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         warnings.warn(''.join(msg), RuntimeWarning, stacklevel=2)
     vmin, vmax = new_vmin, new_vmax
 
-    if get_backend() == _p.Backends.matplotlib:
+    if _p.engine == "matplotlib":
         fig = _map_matplotlib(syst, img, colorbar, _max, _min,  vmin, vmax,
                         overflow_pct, underflow_pct, cmap, num_lead_cells,
                         background, dpi, fig_size, ax, file)
-    elif get_backend() == _p.Backends.plotly:
+    elif _p.engine == "plotly":
         fig = _map_plotly(syst, img, colorbar, _max, _min,  vmin, vmax,
                           overflow_pct, underflow_pct, cmap, num_lead_cells,
                           background)
+    elif _p.engine == None:
+        raise RuntimeError("Cannot use map() without a plotting lib installed")
     else:
-        raise RuntimeError('Backend not supported by map().')
+        raise RuntimeError("map() does not support engine '{}'".format(_p.engine))
 
     _maybe_output_fig(fig, file=file, show=show)
 
@@ -1781,15 +1782,6 @@ def _map_plotly(syst, img, colorbar, _max, _min,  vmin, vmax, overflow_pct,
     border = 0.5 * (_max - _min) / (np.asarray(img.shape) - 1)
     _min -= border
     _max += border
-
-    # Note that we tell imshow to show the array created by mask_interpolate
-    # faithfully and not to interpolate by itself another time.
-    # image = ax.imshow(img.T, extent=(_min[0], _max[0], _min[1], _max[1]),
-    #                   origin='lower', interpolation='none', cmap=cmap,
-    #                   vmin=vmin, vmax=vmax)
-    if not _p.plotly_available:
-        raise RuntimeError("plotly was not found, but is required "
-                           "for _map_plotly()")
 
     if cmap is None:
         cmap = _p.kwant_red_plotly
@@ -1804,15 +1796,13 @@ def _map_plotly(syst, img, colorbar, _max, _min,  vmin, vmax, overflow_pct,
     contour_object.colorscale = _p.convert_cmap_list_mpl_plotly(cmap)
     contour_object.zmax = vmax
     contour_object.zmin = vmin
-    contour_object.showlegend = False
     contour_object.hoverinfo = 'none'
 
     contour_object.showscale = colorbar
 
     fig = _p.plotly_graph_objs.Figure(data=[contour_object])
     fig.layout.plot_bgcolor = background
-    # fig.layout.width = 720
-    # fig.layout.height = fig.layout.width
+    fig.layout.showlegend = False
 
     if num_lead_cells:
         fig = _plot_plotly(syst, num_lead_cells, site_symbol='no symbol',
@@ -1886,28 +1876,28 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
         array of points at which the band structure has to be evaluated.
     file : string or file object or `None`
         The output file.  If `None`, output will be shown instead. If plotly is
-        selected as the backend, the filename has to end with a html extension.
+        selected as the engine, the filename has to end with a html extension.
     show : bool
-        For matplotlib backend, whether ``matplotlib.pyplot.show()`` is to be
+        For matplotlib engine, whether ``matplotlib.pyplot.show()`` is to be
         called, and the output is to be shown immediately.
-        For the plotly backend, a call to ``iplot(fig)`` is made if
+        For the plotly engine, a call to ``iplot(fig)`` is made if
         show is True.
-        Defaults to `True` for both backends.
+        Defaults to `True` for both engines.
     dpi : float
         Number of pixels per inch.  If not set the ``matplotlib`` default is
         used.
-        Only for matplotlib backend. If the plotly backend is selected and
+        Only for matplotlib engine. If the plotly engine is selected and
         this argument is not None, then a RuntimeError will be triggered.
     fig_size : tuple
         Figure size `(width, height)` in inches.  If not set, the default
         ``matplotlib`` value is used.
-        Only for matplotlib backend. If the plotly backend is selected and
+        Only for matplotlib engine. If the plotly engine is selected and
         this argument is not None, then a RuntimeError will be triggered.
     ax : ``matplotlib.axes.Axes`` instance or `None`
         If `ax` is not `None`, no new figure is created, but the plot is done
         within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
         and `fig_size` are ignored.
-        Only for matplotlib backend. If the plotly backend is selected and
+        Only for matplotlib engine. If the plotly engine is selected and
         this argument is not None, then a RuntimeError will be triggered.
     params : dict, optional
         Dictionary of parameter names and their values. Mutually exclusive
@@ -1923,18 +1913,11 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
     See `~kwant.physics.Bands` for the calculation of dispersion without plotting.
     """
 
-    if not _p.mpl_available and (get_backend() == _p.Backends.matplotlib):
-        raise RuntimeError("matplotlib was not found, but is required "
-                           "for bands() by the selected backend")
-
-    if not _p.plotly_available and (get_backend() == _p.Backends.plotly):
-        raise RuntimeError("plotly was not found, but is required "
-                           "for bands() by the selected backend")
-
     syst = sys  # for naming consistency inside function bodies
 
-    if get_backend() == _p.Backends.plotly:
-        _check_incompatible_args_plotly(dpi, fig_size, ax)
+    if _p.plotly_available:
+        if _p.engine == "plotly":
+            _check_incompatible_args_plotly(dpi, fig_size, ax)
 
     _common.ensure_isinstance(syst, system.InfiniteSystem)
 
@@ -1967,7 +1950,7 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
     """Plot the spectrum of a Hamiltonian as a function of 1 or 2 parameters.
 
     This function requires either matplotlib or plotly to be installed.
-    The default backend uses matplotlib for plotting.
+    The default engine uses matplotlib for plotting.
 
     Parameters
     ----------
@@ -1989,28 +1972,28 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         values.
     file : string or file object or `None`
         The output file.  If `None`, output will be shown instead. If plotly is
-        selected as the backend, the filename has to end with a html extension.
+        selected as the engine, the filename has to end with a html extension.
     show : bool
-        For matplotlib backend, whether ``matplotlib.pyplot.show()`` is to be
+        For matplotlib engine, whether ``matplotlib.pyplot.show()`` is to be
         called, and the output is to be shown immediately.
-        For the plotly backend, a call to ``iplot(fig)`` is made if
+        For the plotly engine, a call to ``iplot(fig)`` is made if
         show is True.
-        Defaults to `True` for both backends.
+        Defaults to `True` for both engines.
     dpi : float
         Number of pixels per inch.  If not set the ``matplotlib`` default is
         used.
-        Only for matplotlib backend. If the plotly backend is selected and
+        Only for matplotlib engine. If the plotly engine is selected and
         this argument is not None, then a RuntimeError will be triggered.
     fig_size : tuple
         Figure size `(width, height)` in inches.  If not set, the default
         ``matplotlib`` value is used.
-        Only for matplotlib backend. If the plotly backend is selected and
+        Only for matplotlib engine. If the plotly engine is selected and
         this argument is not None, then a RuntimeError will be triggered.
     ax : ``matplotlib.axes.Axes`` instance or `None`
         If `ax` is not `None`, no new figure is created, but the plot is done
         within the existing Axes `ax`. in this case, `file`, `show`, `dpi`
         and `fig_size` are ignored.
-        Only for matplotlib backend. If the plotly backend is selected and
+        Only for matplotlib engine. If the plotly engine is selected and
         this argument is not None, then a RuntimeError will be triggered.
 
     Returns
@@ -2020,14 +2003,16 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
 
     params = params or dict()
 
-    if get_backend() == _p.Backends.matplotlib:
+    if _p.engine == "matplotlib":
         return _spectrum_matplotlib(syst, x, y, params, mask, file,
                                     show, dpi, fig_size, ax)
-    elif get_backend() == _p.Backends.plotly:
+    elif _p.engine == "plotly":
         _check_incompatible_args_plotly(dpi, fig_size, ax)
         return _spectrum_plotly(syst, x, y, params, mask, file, show)
+    elif _p.engine == None:
+        raise RuntimeError("Cannot use spectrum() without a plotting lib installed")
     else:
-        raise RuntimeError("Backend not supported by spectrum().")
+        raise RuntimeError("spectrum() does not support engine '{}'".format(_p.engine))
 
 
 def _generate_spectrum(syst, params, mask, x, y):
@@ -2087,7 +2072,7 @@ def _generate_spectrum(syst, params, mask, x, y):
 def _spectrum_plotly(syst, x, y=None, params=None, mask=None,
                      file=None, show=True):
     """Plot the spectrum of a Hamiltonian as a function of 1 or 2 parameters
-    using the plotly backend.
+    using the plotly engine.
 
     Parameters
     ----------
@@ -2097,10 +2082,6 @@ def _spectrum_plotly(syst, x, y=None, params=None, mask=None,
     -------
     fig : plotly Figure / dict
     """
-
-    if not _p.plotly_available:
-        raise RuntimeError("plotly was not found, but is required for using"
-                           "the spectrum() plotly backend")
 
     spectrum, planar, array_values, keys = _generate_spectrum(syst, params,
                                                               mask, x, y)
@@ -2141,7 +2122,7 @@ def _spectrum_plotly(syst, x, y=None, params=None, mask=None,
 def _spectrum_matplotlib(syst, x, y=None, params=None, mask=None, file=None,
                          show=True, dpi=None, fig_size=None, ax=None):
     """Plot the spectrum of a Hamiltonian as a function of 1 or 2 parameters
-    using the matplotlib backend.
+    using the matplotlib engine.
 
     Parameters
     ----------
@@ -2153,9 +2134,6 @@ def _spectrum_matplotlib(syst, x, y=None, params=None, mask=None, file=None,
         A figure with the output if `ax` is not set, else None.
     """
 
-    if not _p.mpl_available:
-        raise RuntimeError("matplotlib was not found, but is required for"
-                           "using the spectrum() matplotlib backend")
     if y is not None and not _p.has3d:
         raise RuntimeError("Installed matplotlib does not support 3d plotting")
 
@@ -2579,6 +2557,31 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
                colorbar=True, file=None,
                show=True, dpi=None, fig_size=None, ax=None,
                vmax=None):
+    if _p.engine == "matplotlib":
+        fig = _streamplot_matplotlib(field, box, cmap, bgcolor, linecolor,
+               max_linewidth, min_linewidth, density, colorbar, file,
+               show, dpi, fig_size, ax, vmax)
+    elif _p.engine == "plotly":
+        _check_incompatible_args_plotly(dpi, fig_size, ax)
+        fig = _streamplot_plotly(field, box, cmap, bgcolor, linecolor,
+                               max_linewidth, min_linewidth, density,
+                               colorbar, file, show, vmax)
+    elif _p.engine == None:
+        raise RuntimeError("Cannot use streamplot() without a plotting lib installed")
+    else:
+        raise RuntimeError("streamplot() does not support engine '{}'".format(_p.engine))
+    _maybe_output_fig(fig, file=file, show=show)
+
+
+def _streamplot_plotly(field, box, cmap, bgcolor, linecolor,
+                               max_linewidth, min_linewidth, density,
+                               colorbar, file, show, vmax):
+    raise RuntimeError("Streamplot() for plotly engine not implemented yet due to bug from plotly")
+
+
+def _streamplot_matplotlib(field, box, cmap, bgcolor, linecolor,
+               max_linewidth, min_linewidth, density, colorbar, file,
+               show, dpi, fig_size, ax, vmax):
     """Draw streamlines of a flow field in Kwant style
 
     Solid colored streamlines are drawn, superimposed on a color plot of
@@ -2587,7 +2590,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     would be thinner than `min_linewidth` are blended in a perceptually
     correct way into the background color in order to create the
     illusion of arbitrarily thin lines.  (This is done because some plot
-    backends like PDF do not support lines of arbitrarily thin width.)
+    engines like PDF do not support lines of arbitrarily thin width.)
 
     Internally, this routine uses matplotlib's streamplot.
 
@@ -2640,9 +2643,6 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     fig : matplotlib figure
         A figure with the output if `ax` is not set, else None.
     """
-    if not _p.mpl_available:
-        raise RuntimeError("matplotlib was not found, but is required "
-                           "for current()")
 
     # Matplotlib's "density" is in units of 30 streamlines...
     density *= 1 / 30 * ta.array(field.shape[:2], int)
@@ -2768,14 +2768,18 @@ def scalarplot(field, box,
     if vmax is None:
         vmax = np.max(field)
 
-    if get_backend() == _p.Backends.matplotlib:
+    if _p.engine == "matplotlib":
         fig = _scalarplot_matplotlib(field, box, cmap, colorbar,
                                      file, show, dpi, fig_size, ax,
                                      vmin, vmax, background)
-    elif get_backend() == _p.Backends.plotly:
+    elif _p.engine == "plotly":
         _check_incompatible_args_plotly(dpi, fig_size, ax)
         fig = _scalarplot_plotly(field, box, cmap, colorbar, file,
                                  show, vmin, vmax, background)
+    elif _p.engine == None:
+        raise RuntimeError("Cannot use scalarplot() without a plotting lib installed")
+    else:
+        raise RuntimeError("scalarplot() does not support engine '{}'".format(_p.engine))
     _maybe_output_fig(fig, file=file, show=show)
 
     return fig
@@ -2783,9 +2787,6 @@ def scalarplot(field, box,
 
 def _scalarplot_plotly(field, box, cmap, colorbar, file,
                        show, vmin, vmax, background):
-    if not _p.plotly_available:
-        raise RuntimeError("plotly was not found, but is required "
-                           "for scalarplot()")
 
     if cmap is None:
         cmap = _p.kwant_red_plotly
@@ -2809,9 +2810,6 @@ def _scalarplot_plotly(field, box, cmap, colorbar, file,
 
 def _scalarplot_matplotlib(field, box, cmap, colorbar, file, show, dpi,
                            fig_size, ax, vmin, vmax, background):
-    if not _p.mpl_available:
-        raise RuntimeError("matplotlib was not found, but is required "
-                           "for scalarplot()")
 
     if cmap is None:
         cmap = _p.kwant_red_matplotlib
