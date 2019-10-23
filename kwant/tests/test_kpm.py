@@ -80,6 +80,13 @@ def test_conductivity():
         cond = kwant.kpm.conductivity(syst, alpha=alpha, beta=beta,
                                         positions=None, **kpm_params)
 
+    # test when 'norbs' not provided
+    n = lat.norbs
+    lat.norbs = None
+    cond = kwant.kpm.conductivity(syst, alpha=alpha, beta=beta,
+                                  positions=None, **kpm_params)
+    lat.norbs = n
+
     # test system or hamiltonian, no positions, but velocity operators
     cond_xx = kwant.kpm.conductivity(syst, alpha='x', beta='x',
                                      positions=None, **kpm_params)
