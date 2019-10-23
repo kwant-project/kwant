@@ -37,7 +37,7 @@ _names = ['Time reversal', 'Particle-hole', 'Chiral']
 _signs = [1, -1, -1]
 
 class DiscreteSymmetry:
-    """A collection of discrete symmetries and conservation laws.
+    r"""A collection of discrete symmetries and conservation laws.
 
     Parameters
     ----------
