@@ -366,8 +366,8 @@ def test_consistency_kwant():
                      np.exp(1j*k)*model_kwant_hop.T.conj()) # As in kwant.Bands
     h_model = Ham.lambdify()
     wsyst = kwant.wraparound.wraparound(model_syst).finalized()
-    for _ in range(20):
-        k = (np.random.rand() - 0.5)*2*np.pi
+    ks = np.linspace(-np.pi, np.pi, 21)
+    for k in ks:
         assert allclose(h_model_kwant(k), h_model(coeffs[0], coeffs[1], k))
         params['k_x'] = k
         h_wrap = wsyst.hamiltonian_submatrix(params=params)
