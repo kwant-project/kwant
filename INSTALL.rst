@@ -45,7 +45,7 @@ a NumPy-like Python package optimized for very small arrays,
 The following software is highly recommended though not strictly required:
  * `matplotlib <http://matplotlib.org/>`_ 1.5.1 or newer, for the module `kwant.plotter` and the tutorial,
  * `SymPy <http://sympy.org/>`_ 0.7.6 or newer, for the subpackage `kwant.continuum`.
- * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.2.4 or newer, for the subpackage `kwant.qsymm`.
+ * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.2.6 or newer, for the subpackage `kwant.qsymm`.
  * `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
    that will in many cases speed up Kwant several times and reduce the memory
    footprint.  (Kwant uses only the sequential, single core version
