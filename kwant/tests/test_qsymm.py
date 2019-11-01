@@ -286,7 +286,7 @@ def test_inverse_transform():
     # Convert it back
     ham2 = builder_to_model(syst)
     # Check that it's the same as the original
-    assert fam == ham2
+    assert fam.allclose(ham2)
 
     # Check that the Hamiltonians are identical at random points in the Brillouin zone
     sysw = kwant.wraparound.wraparound(syst).finalized()
@@ -378,8 +378,8 @@ def test_consistency_kwant():
     Ham1 = builder_to_model(model_syst, momenta=Ham.momenta)
     # From the pure Kwant builder
     Ham2 = builder_to_model(kwant_syst, momenta=Ham.momenta)
-    assert Ham == Ham1
-    assert Ham == Ham2
+    assert Ham.allclose(Ham1)
+    assert Ham.allclose(Ham2)
 
 
 def test_find_builder_discrete_symmetries():
