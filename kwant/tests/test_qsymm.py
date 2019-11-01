@@ -19,7 +19,7 @@ from qsymm.symmetry_finder import symmetries
 from qsymm.hamiltonian_generator import bloch_family, hamiltonian_from_family
 from qsymm.groups import (hexagonal, PointGroupElement, spin_matrices,
                           spin_rotation, ContinuousGroupGenerator)
-from qsymm.model import Model, e, I, _commutative_momenta
+from qsymm.model import Model, BlochModel, BlochCoeff
 from qsymm.linalg import allclose
 
 import kwant
@@ -277,14 +277,14 @@ def test_inverse_transform():
     # Hopping to a neighbouring atom one primitive lattice vector away
     hopping_vectors = [('A', 'A', [1, 0])]
     # Make family
-    family = bloch_family(hopping_vectors, symmetries, norbs)
+    family = bloch_family(hopping_vectors, symmetries, norbs, bloch_model=True)
     fam = hamiltonian_from_family(family, tosympy=False)
     # Atomic coordinates within the unit cell
     atom_coords = [(0, 0)]
     lat_vecs = [(1, 0), (0, 1)]
     syst = model_to_builder(fam, norbs, lat_vecs, atom_coords)
     # Convert it back
-    ham2 = builder_to_model(syst).tomodel(nsimplify=True)
+    ham2 = builder_to_model(syst)
     # Check that it's the same as the original
     assert fam == ham2
 
@@ -315,11 +315,10 @@ def test_consistency_kwant():
 
     # Make the 1D Model manually using only qsymm features.
     c0, c1 = sympy.symbols('c0 c1', real=True)
-    kx = _commutative_momenta[0]
 
-    Ham = Model({c0 * e**(-I*kx): T}, momenta=['k_x'])
+    Ham = BlochModel({BlochCoeff(np.array([-1]), c0): T}, momenta=['k_x'])
     Ham += Ham.T().conj()
-    Ham += Model({c1: H}, momenta=['k_x'])
+    Ham += BlochModel({BlochCoeff(np.array([0]), c1): H}, momenta=['k_x'])
 
     # Two superimposed atoms, same number of orbitals on each
     norbs = OrderedDict([('A', orbs), ('B', orbs)])
@@ -376,9 +375,9 @@ def test_consistency_kwant():
 
     # Get the model back from the builder
     # From the Kwant builder based on original Model
-    Ham1 = builder_to_model(model_syst, momenta=Ham.momenta).tomodel(nsimplify=True)
+    Ham1 = builder_to_model(model_syst, momenta=Ham.momenta)
     # From the pure Kwant builder
-    Ham2 = builder_to_model(kwant_syst, momenta=Ham.momenta).tomodel(nsimplify=True)
+    Ham2 = builder_to_model(kwant_syst, momenta=Ham.momenta)
     assert Ham == Ham1
     assert Ham == Ham2
 
