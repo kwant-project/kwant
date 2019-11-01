@@ -41,7 +41,7 @@ def test_honeycomb():
     syst[lat.neighbors(1)] = -1
 
     H = builder_to_model(syst)
-    sg, cs = symmetries(H, hexagonal(sympy_R=False), prettify=True)
+    sg, cs = symmetries(H, hexagonal(sympy_R=False))
     assert len(sg) == 24
     assert len(cs) == 0
 
@@ -52,7 +52,7 @@ def test_honeycomb():
     syst[lat.neighbors(1)] = lambda site1, site2, t: t
 
     H = builder_to_model(syst)
-    sg, cs = symmetries(H, hexagonal(sympy_R=False), prettify=True)
+    sg, cs = symmetries(H, hexagonal(sympy_R=False))
     assert len(sg) == 12
     assert len(cs) == 0
 
@@ -93,7 +93,7 @@ def test_higher_dim():
     syst[lat(0, 0, 0), lat(1, 0, -1)] = -1
 
     H = builder_to_model(syst)
-    sg, cs = symmetries(H, prettify=True)
+    sg, cs = symmetries(H)
     assert len(sg) == 2
     assert len(cs) == 5
 
@@ -107,7 +107,7 @@ def test_higher_dim():
     syst[lat(0, 0, 0), lat(1, 0, -1)] = -1
 
     H = builder_to_model(syst)
-    sg, cs = symmetries(H, hexagonal(sympy_R=False), prettify=True)
+    sg, cs = symmetries(H, hexagonal(sympy_R=False))
     assert len(sg) == 24
     assert len(cs) == 0
 
@@ -405,12 +405,15 @@ def test_find_builder_discrete_symmetries():
         bulk[kwant.builder.HoppingKind((1, 0), lat)] = h_hop
         bulk[kwant.builder.HoppingKind((0, 1), lat)] = h_hop
 
+        # We need to specify 'prettify=True' here to ensure that we do not end up with
+        # an overcomplete set of symmetries. In some badly conditioned cases sparse=True
+        # or sparse=False may affect how many symmetries are found.
         builder_symmetries_default = find_builder_symmetries(bulk, spatial_symmetries=True,
                                                              prettify=True)
         builder_symmetries_sparse = find_builder_symmetries(bulk, spatial_symmetries=True,
                                                             prettify=True, sparse=True)
         builder_symmetries_dense = find_builder_symmetries(bulk, spatial_symmetries=True,
-                                                            prettify=True, sparse=False)
+                                                           prettify=True, sparse=False)
 
         assert len(builder_symmetries_default) == len(builder_symmetries_sparse)
         assert len(builder_symmetries_default) == len(builder_symmetries_dense)
@@ -476,7 +479,7 @@ def test_find_cons_law():
     syst[lat(1)] = np.kron(sy, ons)
     syst[lat(1), lat(0)] = np.kron(sy, hop)
 
-    builder_symmetries = find_builder_symmetries(syst, spatial_symmetries=False, prettify=True)
+    builder_symmetries = find_builder_symmetries(syst, spatial_symmetries=False)
     onsites = [symm for symm in builder_symmetries if
                isinstance(symm, qsymm.ContinuousGroupGenerator) and symm.R is None]
     mham = builder_to_model(syst)
@@ -508,8 +511,7 @@ def test_basis_ordering():
 
         # Find the symmetries of the square
         builder_symmetries = find_builder_symmetries(square,
-                                                     spatial_symmetries=False,
-                                                     prettify=True)
+                                                     spatial_symmetries=False)
         # Finalize the square, extract Hamiltonian
         fsquare = square.finalized()
         ham = fsquare.hamiltonian_submatrix()
