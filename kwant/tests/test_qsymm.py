@@ -138,8 +138,8 @@ def test_graphene_to_kwant():
     syst_from_family = model_to_builder(family, norbs, lat_vecs, atom_coords, coeffs=None)
     # Generate using a single Model object
     g = sympy.Symbol('g', real=True)
-    ham = hamiltonian_from_family(family, coeffs=[g])
-    ham = Model(hamiltonian=ham, momenta=family[0].momenta)
+    # tosympy=False to return a BlochModel
+    ham = hamiltonian_from_family(family, coeffs=[g], tosympy=False)
     syst_from_model = model_to_builder(ham, norbs, lat_vecs, atom_coords)
 
     # Make the graphene Hamiltonian using kwant only
@@ -186,8 +186,8 @@ def test_graphene_to_kwant():
     family = family + onsites
     syst_from_family = model_to_builder(family, norbs, lat_vecs, atom_coords, coeffs=None)
     gs = list(sympy.symbols('g0:%d'%3, real=True))
-    ham = hamiltonian_from_family(family, coeffs=gs)
-    ham = Model(hamiltonian=ham, momenta=family[0].momenta)
+    # tosympy=False to return a BlochModel
+    ham = hamiltonian_from_family(family, coeffs=gs, tosympy=False)
     syst_from_model = model_to_builder(ham, norbs, lat_vecs, atom_coords)
 
     def onsite_A(site, c1):
