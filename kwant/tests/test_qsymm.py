@@ -137,7 +137,7 @@ def test_graphene_to_kwant():
     family = bloch_family(hopping_vectors, symmetries, norbs)
     syst_from_family = model_to_builder(family, norbs, lat_vecs, atom_coords, coeffs=None)
     # Generate using a single Model object
-    g = sympy.Symbol('g', real=True)
+    g = sympy.Symbol('g')
     # tosympy=False to return a BlochModel
     ham = hamiltonian_from_family(family, coeffs=[g], tosympy=False)
     syst_from_model = model_to_builder(ham, norbs, lat_vecs, atom_coords)
@@ -185,7 +185,7 @@ def test_graphene_to_kwant():
                Model({one: np.array([[0, 0], [0, 1]])}, momenta=family[0].momenta)]
     family = family + onsites
     syst_from_family = model_to_builder(family, norbs, lat_vecs, atom_coords, coeffs=None)
-    gs = list(sympy.symbols('g0:%d'%3, real=True))
+    gs = list(sympy.symbols('g0:3'))
     # tosympy=False to return a BlochModel
     ham = hamiltonian_from_family(family, coeffs=gs, tosympy=False)
     syst_from_model = model_to_builder(ham, norbs, lat_vecs, atom_coords)
@@ -314,7 +314,7 @@ def test_consistency_kwant():
     H += H.T.conj()
 
     # Make the 1D Model manually using only qsymm features.
-    c0, c1 = sympy.symbols('c0 c1', real=True)
+    c0, c1 = sympy.symbols('c0 c1')
 
     Ham = BlochModel({BlochCoeff(np.array([-1]), c0): T}, momenta=['k_x'])
     Ham += Ham.T().conj()
