@@ -29,10 +29,10 @@ Prerequisites
 =============
 
 Building Kwant requires
- * `Python <https://www.python.org/>`_ 3.5 or above (Kwant 1.1 is the last
+ * `Python <https://www.python.org/>`_ 3.6 or above (Kwant 1.1 is the last
    version to support Python 2),
- * `NumPy <http://numpy.org/>`_ 1.11.0 or newer,
- * `SciPy <https://www.scipy.org/>`_ 0.17.0 or newer,
+ * `NumPy <http://numpy.org/>`_ 1.13.3 or newer,
+ * `SciPy <https://www.scipy.org/>`_ 0.19.1 or newer,
  * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
    <http://www.openblas.net/>`_ or the nonfree `MKL
@@ -43,19 +43,19 @@ a NumPy-like Python package optimized for very small arrays,
    C++.
 
 The following software is highly recommended though not strictly required:
- * `matplotlib <http://matplotlib.org/>`_ 1.5.1 or newer, for the module `kwant.plotter` and the tutorial,
- * `SymPy <http://sympy.org/>`_ 0.7.6 or newer, for the subpackage `kwant.continuum`.
+ * `matplotlib <http://matplotlib.org/>`_ 2.1.1 or newer, for the module `kwant.plotter` and the tutorial,
+ * `SymPy <http://sympy.org/>`_ 1.1.1 or newer, for the subpackage `kwant.continuum`.
  * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.2.6 or newer, for the subpackage `kwant.qsymm`.
  * `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
    that will in many cases speed up Kwant several times and reduce the memory
    footprint.  (Kwant uses only the sequential, single core version
    of MUMPS.  The advantages due to MUMPS as used by Kwant are thus independent
    of the number of CPU cores of the machine on which Kwant runs.)
- * The `py.test testing framework <http://pytest.org/>`_ 2.8 or newer for running the
+ * The `py.test testing framework <http://pytest.org/>`_ 3.3.2 or newer for running the
    tests included with Kwant.
 
 In addition, to build a copy of Kwant that has been checked-out directly from
-version control, you will also need `Cython <http://cython.org/>`_ 0.22 or
+version control, you will also need `Cython <http://cython.org/>`_ 0.26.1 or
 newer.  You do not need Cython to build Kwant that has been unpacked from a
 source .tar.gz-file.
 
