@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -8,13 +8,269 @@
 
 """Low-level interface of systems"""
 
-__all__ = ['System', 'FiniteSystem', 'InfiniteSystem']
+__all__ = [
+    'Site', 'SiteArray', 'SiteFamily',
+    'System', 'VectorizedSystem', 'FiniteSystem', 'FiniteVectorizedSystem',
+    'InfiniteSystem', 'InfiniteVectorizedSystem',
+]
 
 import abc
 import warnings
+import operator
 from copy import copy
+from collections import namedtuple
+from functools import total_ordering, lru_cache
+import numpy as np
 from . import _system
-from ._common  import deprecate_args
+from ._common  import deprecate_args, KwantDeprecationWarning
+
+
+
+################ Sites and Site families
+
+class Site(tuple):
+    """A site, member of a `SiteFamily`.
+
+    Sites are the vertices of the graph which describes the tight binding
+    system in a `Builder`.
+
+    A site is uniquely identified by its family and its tag.
+
+    Parameters
+    ----------
+    family : an instance of `SiteFamily`
+        The 'type' of the site.
+    tag : a hashable python object
+        The unique identifier of the site within the site family, typically a
+        vector of integers.
+
+    Raises
+    ------
+    ValueError
+        If `tag` is not a proper tag for `family`.
+
+    Notes
+    -----
+    For convenience, ``family(*tag)`` can be used instead of ``Site(family,
+    tag)`` to create a site.
+
+    The parameters of the constructor (see above) are stored as instance
+    variables under the same names.  Given a site ``site``, common things to
+    query are thus ``site.family``, ``site.tag``, and ``site.pos``.
+    """
+    __slots__ = ()
+
+    family = property(operator.itemgetter(0),
+                      doc="The site family to which the site belongs.")
+    tag = property(operator.itemgetter(1), doc="The tag of the site.")
+
+
+    def __new__(cls, family, tag, _i_know_what_i_do=False):
+        if _i_know_what_i_do:
+            return tuple.__new__(cls, (family, tag))
+        try:
+            tag = family.normalize_tag(tag)
+        except (TypeError, ValueError) as e:
+            msg = 'Tag {0} is not allowed for site family {1}: {2}'
+            raise type(e)(msg.format(repr(tag), repr(family), e.args[0]))
+        return tuple.__new__(cls, (family, tag))
+
+    def __repr__(self):
+        return 'Site({0}, {1})'.format(repr(self.family), repr(self.tag))
+
+    def __str__(self):
+        sf = self.family
+        return '<Site {0} of {1}>'.format(self.tag, sf.name if sf.name else sf)
+
+    def __getnewargs__(self):
+        return (self.family, self.tag, True)
+
+    @property
+    def pos(self):
+        """Real space position of the site.
+
+        This relies on ``family`` having a ``pos`` method (see `SiteFamily`).
+        """
+        return self.family.pos(self.tag)
+
+
+class SiteArray:
+    """An array of sites, members of a `SiteFamily`.
+
+    Parameters
+    ----------
+    family : an instance of `SiteFamily`
+        The 'type' of the sites.
+    tags : a sequence of python objects
+        Sequence of unique identifiers of the sites within the
+        site array family, typically vectors of integers.
+
+    Raises
+    ------
+    ValueError
+        If `tags` are not proper tags for `family`.
+
+    See Also
+    --------
+    kwant.system.Site
+    """
+
+    def __init__(self, family, tags):
+        self.family = family
+        try:
+            tags = family.normalize_tags(tags)
+        except (TypeError, ValueError) as e:
+            msg = 'Tags {0} are not allowed for site family {1}: {2}'
+            raise type(e)(msg.format(repr(tags), repr(family), e.args[0]))
+        self.tags = tags
+
+    def __repr__(self):
+        return 'SiteArray({0}, {1})'.format(repr(self.family), repr(self.tags))
+
+    def __str__(self):
+        sf = self.family
+        return ('<SiteArray {0} of {1}>'
+                .format(self.tags, sf.name if sf.name else sf))
+
+    def __len__(self):
+        return len(self.tags)
+
+    def __eq__(self, other):
+        if not isinstance(other, SiteArray):
+            raise NotImplementedError()
+        return self.family == other.family and np.all(self.tags == other.tags)
+
+    def positions(self):
+        """Real space position of the site.
+
+        This relies on ``family`` having a ``pos`` method (see `SiteFamily`).
+        """
+        return self.family.positions(self.tags)
+
+
+@total_ordering
+class SiteFamily:
+    """Abstract base class for site families.
+
+    Site families are the 'type' of `Site` objects.  Within a family, individual
+    sites are uniquely identified by tags.  Valid tags must be hashable Python
+    objects, further details are up to the family.
+
+    Site families must be immutable and fully defined by their initial
+    arguments.  They must inherit from this abstract base class and call its
+    __init__ function providing it with two arguments: a canonical
+    representation and a name.  The canonical representation will be returned as
+    the objects representation and must uniquely identify the site family
+    instance.  The name is a string used to distinguish otherwise identical site
+    families.  It may be empty. ``norbs`` defines the number of orbitals
+    on sites associated with this site family; it may be `None`, in which case
+    the number of orbitals is not specified.
+
+
+    All site families must define either 'normalize_tag' or 'normalize_tags',
+    which brings a tag (or, in the latter case, a sequence of tags) to the
+    standard format for this site family.
+
+    Site families may also implement methods ``pos(tag)`` and
+    ``positions(tags)``, which return a vector of realspace coordinates or an
+    array of vectors of realspace coordinates of the site(s) belonging to this
+    family with the given tag(s). These methods are used in plotting routines.
+    ``positions(tags)`` should return an array with shape ``(N, M)`` where
+    ``N`` is the length of ``tags``, and ``M`` is the realspace dimension.
+
+    If the ``norbs`` of a site family are provided, and sites of this family
+    are used to populate a `~kwant.builder.Builder`, then the associated
+    Hamiltonian values must have the correct shape. That is, if a site family
+    has ``norbs = 2``, then any on-site terms for sites belonging to this
+    family should be 2x2 matrices. Similarly, any hoppings to/from sites
+    belonging to this family must have a matrix structure where there are two
+    rows/columns. This condition applies equally to Hamiltonian values that
+    are given by functions. If this condition is not satisfied, an error will
+    be raised.
+    """
+
+    def __init__(self, canonical_repr, name, norbs):
+        self.canonical_repr = canonical_repr
+        self.hash = hash(canonical_repr)
+        self.name = name
+        if norbs is None:
+            warnings.warn("Not specfying norbs is deprecated. Always specify "
+                          "norbs when creating site families.",
+                          KwantDeprecationWarning, stacklevel=3)
+        if norbs is not None:
+            if int(norbs) != norbs or norbs <= 0:
+                raise ValueError('The norbs parameter must be an integer > 0.')
+            norbs = int(norbs)
+        self.norbs = norbs
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if (cls.normalize_tag is SiteFamily.normalize_tag
+            and cls.normalize_tags is SiteFamily.normalize_tags):
+            raise TypeError("Must redefine either 'normalize_tag' or "
+                            "'normalize_tags'")
+
+    def __repr__(self):
+        return self.canonical_repr
+
+    def __str__(self):
+        if self.name:
+            msg = '<{0} site family {1}{2}>'
+        else:
+            msg = '<unnamed {0} site family{2}>'
+        orbs = ' with {0} orbitals'.format(self.norbs) if self.norbs else ''
+        return msg.format(self.__class__.__name__, self.name, orbs)
+
+    def __hash__(self):
+        return self.hash
+
+    def __eq__(self, other):
+        try:
+            return self.canonical_repr == other.canonical_repr
+        except AttributeError:
+            return False
+
+    def __ne__(self, other):
+        try:
+            return self.canonical_repr != other.canonical_repr
+        except AttributeError:
+            return True
+
+    def __lt__(self, other):
+        # If this raises an AttributeError, we were trying
+        # to compare it to something non-comparable anyway.
+        return self.canonical_repr < other.canonical_repr
+
+    def normalize_tag(self, tag):
+        """Return a normalized version of the tag.
+
+        Raises TypeError or ValueError if the tag is not acceptable.
+        """
+        tag, = self.normalize_tags([tag])
+        return tag
+
+    def normalize_tags(self, tags):
+        """Return a normalized version of the tags.
+
+        Raises TypeError or ValueError if the tags are not acceptable.
+        """
+        return np.array([self.normalize_tag(tag) for tag in tags])
+
+    def __call__(self, *tag):
+        """
+        A convenience function.
+
+        This function allows to write fam(1, 2) instead of Site(fam, (1, 2)).
+        """
+        # Catch a likely and difficult to find mistake.
+        if tag and isinstance(tag[0], tuple):
+            raise ValueError('Use site_family(1, 2) instead of '
+                             'site_family((1, 2))!')
+        return Site(self, tag)
+
+
+
+################ Systems
 
 
 class System(metaclass=abc.ABCMeta):
@@ -92,12 +348,100 @@ class System(metaclass=abc.ABCMeta):
         details = ', and '.join((', '.join(details[:-1]), details[-1]))
         return '<{} with {}>'.format(self.__class__.__name__, details)
 
-
-# Add a C-implemented function as an unbound method to class System.
-System.hamiltonian_submatrix = _system.hamiltonian_submatrix
+    hamiltonian_submatrix = _system.hamiltonian_submatrix
 
 
-class FiniteSystem(System, metaclass=abc.ABCMeta):
+Term = namedtuple(
+    "Term",
+    ["subgraph", "hermitian", "parameters"],
+)
+
+
+class VectorizedSystem(System, metaclass=abc.ABCMeta):
+    """Abstract general low-level system with support for vectorization.
+
+    Attributes
+    ----------
+    graph : kwant.graph.CGraph
+        The system graph.
+    subgraphs : sequence of tuples
+        Each subgraph has the form '((idx1, idx2), (offsets1, offsets2))'
+        where 'offsets1' and 'offsets2' index sites within the site arrays
+        indexed by 'idx1' and 'idx2'.
+    terms : sequence of tuples
+        Each tuple has the following structure:
+        (subgraph: int, hermitian: bool, parameters: List(str))
+        'subgraph' indexes 'subgraphs' and supplies the to/from sites of this
+        term. 'hermitian' is 'True' if the term needs its Hermitian
+        conjugate to be added when evaluating the Hamiltonian, and 'parameters'
+        contains a list of parameter names used when evaluating this term.
+    site_arrays : sequence of SiteArray
+        The sites of the system.
+    site_ranges : None or Nx3 integer array
+        Has 1 row per site array, plus one extra row.  Each row consists
+        of ``(first_site, norbs, orb_offset)``: the index of the first
+        site in the site array, the number of orbitals on each site in
+        the site array, and the offset of the first orbital of the first
+        site in the site array.  In addition, the final row has the form
+        ``(len(graph.num_nodes), 0, tot_norbs)`` where ``tot_norbs`` is the
+        total number of orbitals in the system.  ``None`` if any site array
+        in 'site_arrays' does not have 'norbs' specified. Note 'site_ranges'
+        is directly computable from 'site_arrays'.
+    parameters : frozenset of strings
+        The names of the parameters on which the system depends. This attribute
+        is provisional and may be changed in a future version of Kwant
+
+    Notes
+    -----
+    The sites of the system are indexed by integers ranging from 0 to
+    ``self.graph.num_nodes - 1``.
+
+    Optionally, a class derived from ``System`` can provide a method ``pos`` which
+    is assumed to return the real-space position of a site given its index.
+    """
+    @abc.abstractmethod
+    def hamiltonian_term(self, term_number, selector=slice(None),
+                         args=(), params=None):
+        """Return the Hamiltonians for hamiltonian term number k.
+
+        Parameters
+        ----------
+        term_number : int
+            The number of the term to evaluate.
+        selector : slice or sequence of int, default: slice(None)
+            The elements of the term to evaluate.
+        args : tuple
+            Positional arguments to the term. (Deprecated)
+        params : dict
+            Keyword parameters to the term
+
+        Returns
+        -------
+        hamiltonian : 3d complex array
+            Has shape ``(N, P, Q)`` where ``N`` is the number of matrix
+            elements in this term (or the number selected by 'selector'
+            if provided), ``P`` and ``Q`` are the number of orbitals in the
+            'to' and 'from' site arrays associated with this term.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
+        """
+    @property
+    @lru_cache(1)
+    def site_ranges(self):
+        site_offsets = np.cumsum([0] + [len(arr) for arr in self.site_arrays])
+        norbs = [arr.family.norbs for arr in self.site_arrays] + [0]
+        if any(norb is None for norb in norbs):
+            return None
+        orb_offsets = np.cumsum(
+            [0] + [len(arr) * arr.family.norbs for arr in self.site_arrays]
+        )
+        return np.array([site_offsets, norbs, orb_offsets]).transpose()
+
+    hamiltonian_submatrix = _system.vectorized_hamiltonian_submatrix
+
+
+class FiniteSystemMixin(metaclass=abc.ABCMeta):
     """Abstract finite low-level system, possibly with leads.
 
     Attributes
@@ -220,7 +564,19 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
         return symmetries.validate(ham)
 
 
-class InfiniteSystem(System, metaclass=abc.ABCMeta):
+class FiniteSystem(System, FiniteSystemMixin, metaclass=abc.ABCMeta):
+    pass
+
+
+class FiniteVectorizedSystem(VectorizedSystem, FiniteSystemMixin, metaclass=abc.ABCMeta):
+    pass
+
+
+def is_finite(syst):
+    return isinstance(syst, (FiniteSystem, FiniteVectorizedSystem))
+
+
+class InfiniteSystemMixin(metaclass=abc.ABCMeta):
     """Abstract infinite low-level system.
 
     An infinite system consists of an infinite series of identical cells.
@@ -261,30 +617,10 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
     infinite system.  The other scheme has the numbers of site 0 and 1
     exchanged, as well as of site 3 and 4.
 
+    Sites in the fundamental domain cell must belong to a different site array
+    than the sites in the previous cell. In the above example this means that
+    sites '(0, 1, 2)' and '(3, 4)' must belong to different site arrays.
     """
-    @deprecate_args
-    def cell_hamiltonian(self, args=(), sparse=False, *, params=None):
-        """Hamiltonian of a single cell of the infinite system.
-
-        Providing positional arguments via 'args' is deprecated,
-        instead, provide named parameters as a dictionary via 'params'.
-        """
-        cell_sites = range(self.cell_size)
-        return self.hamiltonian_submatrix(args, cell_sites, cell_sites,
-                                          sparse=sparse, params=params)
-
-    @deprecate_args
-    def inter_cell_hopping(self, args=(), sparse=False, *, params=None):
-        """Hopping Hamiltonian between two cells of the infinite system.
-
-        Providing positional arguments via 'args' is deprecated,
-        instead, provide named parameters as a dictionary via 'params'.
-        """
-        cell_sites = range(self.cell_size)
-        interface_sites = range(self.cell_size, self.graph.num_nodes)
-        return self.hamiltonian_submatrix(args, cell_sites, interface_sites,
-                                          sparse=sparse, params=params)
-
     @deprecate_args
     def modes(self, energy=0, args=(), *, params=None):
         """Return mode decomposition of the lead
@@ -366,6 +702,41 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         hop = self.inter_cell_hopping(args=args, sparse=True, params=params)
         broken = set(symmetries.validate(ham) + symmetries.validate(hop))
         return list(broken)
+
+
+class InfiniteSystem(System, InfiniteSystemMixin, metaclass=abc.ABCMeta):
+
+    @deprecate_args
+    def cell_hamiltonian(self, args=(), sparse=False, *, params=None):
+        """Hamiltonian of a single cell of the infinite system.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
+        """
+        cell_sites = range(self.cell_size)
+        return self.hamiltonian_submatrix(args, cell_sites, cell_sites,
+                                          sparse=sparse, params=params)
+
+    @deprecate_args
+    def inter_cell_hopping(self, args=(), sparse=False, *, params=None):
+        """Hopping Hamiltonian between two cells of the infinite system.
+
+        Providing positional arguments via 'args' is deprecated,
+        instead, provide named parameters as a dictionary via 'params'.
+        """
+        cell_sites = range(self.cell_size)
+        interface_sites = range(self.cell_size, self.graph.num_nodes)
+        return self.hamiltonian_submatrix(args, cell_sites, interface_sites,
+                                          sparse=sparse, params=params)
+
+
+class InfiniteVectorizedSystem(VectorizedSystem, InfiniteSystemMixin, metaclass=abc.ABCMeta):
+    cell_hamiltonian = _system.vectorized_cell_hamiltonian
+    inter_cell_hopping = _system.vectorized_inter_cell_hopping
+
+
+def is_infinite(syst):
+    return isinstance(syst, (InfiniteSystem, InfiniteVectorizedSystem))
 
 
 class PrecalculatedLead:

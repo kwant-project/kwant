@@ -1,4 +1,4 @@
-# Copyright 2011-2016 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -8,6 +8,7 @@
 
 import pickle
 import copy
+import pytest
 from pytest import raises
 import numpy as np
 from scipy import sparse
@@ -15,9 +16,11 @@ import kwant
 from kwant._common import ensure_rng
 
 
-def test_hamiltonian_submatrix():
-    syst = kwant.Builder()
+@pytest.mark.parametrize("vectorize", [False, True])
+def test_hamiltonian_submatrix(vectorize):
+    syst = kwant.Builder(vectorize=vectorize)
     chain = kwant.lattice.chain(norbs=1)
+    chain2 = kwant.lattice.chain(norbs=2)
     for i in range(3):
         syst[chain(i)] = 0.5 * i
     for i in range(2):
@@ -27,7 +30,11 @@ def test_hamiltonian_submatrix():
     mat = syst2.hamiltonian_submatrix()
     assert mat.shape == (3, 3)
     # Sorting is required due to unknown compression order of builder.
-    perm = np.argsort([os[0] for os in syst2.onsites])
+    if vectorize:
+        _, (site_offsets, _) = syst2.subgraphs[0]
+    else:
+        site_offsets = [os[0] for os in syst2.onsites]
+    perm = np.argsort(site_offsets)
     mat_should_be = np.array([[0, 1j, 0], [-1j, 0.5, 2j], [0, -2j, 1]])
 
     mat = mat[perm, :]
@@ -41,19 +48,12 @@ def test_hamiltonian_submatrix():
     mat = mat[:, perm]
     np.testing.assert_array_equal(mat, mat_should_be)
 
-    mat = syst2.hamiltonian_submatrix((), perm[[0, 1]], perm[[2]])
-    np.testing.assert_array_equal(mat, mat_should_be[:2, 2:3])
-
-    mat = syst2.hamiltonian_submatrix((), perm[[0, 1]], perm[[2]], sparse=True)
-    mat = mat.toarray()
-    np.testing.assert_array_equal(mat, mat_should_be[:2, 2:3])
-
     # Test for correct treatment of matrix input.
-    syst = kwant.Builder()
-    syst[chain(0)] = np.array([[0, 1j], [-1j, 0]])
+    syst = kwant.Builder(vectorize=vectorize)
+    syst[chain2(0)] = np.array([[0, 1j], [-1j, 0]])
     syst[chain(1)] = np.array([[1]])
     syst[chain(2)] = np.array([[2]])
-    syst[chain(1), chain(0)] = np.array([[1, 2j]])
+    syst[chain(1), chain2(0)] = np.array([[1, 2j]])
     syst[chain(2), chain(1)] = np.array([[3j]])
     syst2 = syst.finalized()
     mat_dense = syst2.hamiltonian_submatrix()
@@ -62,9 +62,10 @@ def test_hamiltonian_submatrix():
 
     # Test precalculation of modes.
     rng = ensure_rng(5)
-    lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
-    lead[chain(0)] = np.zeros((2, 2))
-    lead[chain(0), chain(1)] = rng.randn(2, 2)
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)),
+                         vectorize=vectorize)
+    lead[chain2(0)] = np.zeros((2, 2))
+    lead[chain2(0), chain2(1)] = rng.randn(2, 2)
     syst.attach_lead(lead)
     syst2 = syst.finalized()
     smatrix = kwant.smatrix(syst2, .1).data
@@ -74,19 +75,26 @@ def test_hamiltonian_submatrix():
     raises(ValueError, kwant.solvers.default.greens_function, syst3, 0.2)
 
     # Test for shape errors.
-    syst[chain(0), chain(2)] = np.array([[1, 2]])
+    syst[chain2(0), chain(2)] = np.array([[1, 2]])
     syst2 = syst.finalized()
     raises(ValueError, syst2.hamiltonian_submatrix)
     raises(ValueError, syst2.hamiltonian_submatrix, sparse=True)
-    syst[chain(0), chain(2)] = 1
+    syst[chain2(0), chain(2)] = 1
     syst2 = syst.finalized()
     raises(ValueError, syst2.hamiltonian_submatrix)
     raises(ValueError, syst2.hamiltonian_submatrix, sparse=True)
+    if vectorize:  # non-vectorized systems don't check this at finalization
+        # Add another hopping of the same type but with a different
+        # (and still incompatible) shape.
+        syst[chain2(0), chain(1)] = np.array([[1, 2]])
+        raises(ValueError, syst.finalized)
 
 
-def test_pickling():
-    syst = kwant.Builder()
-    lead = kwant.Builder(symmetry=kwant.TranslationalSymmetry([1.]))
+@pytest.mark.parametrize("vectorize", [False, True])
+def test_pickling(vectorize):
+    syst = kwant.Builder(vectorize=vectorize)
+    lead = kwant.Builder(symmetry=kwant.TranslationalSymmetry([1.]),
+                         vectorize=vectorize)
     lat = kwant.lattice.chain(norbs=1)
     syst[lat(0)] = syst[lat(1)] = 0
     syst[lat(0), lat(1)] = 1

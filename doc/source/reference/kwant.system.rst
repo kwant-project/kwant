@@ -19,10 +19,32 @@ In practice, very often Kwant systems are finalized
 `kwant.builder.FiniteSystem` or `kwant.builder.InfiniteSystem`) and offer some
 additional attributes.
 
+Sites
+-----
+.. autosummary::
+   :toctree: generated/
+
+   Site
+   SiteArray
+   SiteFamily
+
+Systems
+-------
 .. autosummary::
    :toctree: generated/
 
    System
+   VectorizedSystem
    InfiniteSystem
+   InfiniteVectorizedSystem
    FiniteSystem
+   FiniteVectorizedSystem
    PrecalculatedLead
+
+Mixin Classes
+-------------
+.. autosummary::
+   :toctree: generated/
+
+   FiniteSystemMixin
+   InfiniteSystemMixin

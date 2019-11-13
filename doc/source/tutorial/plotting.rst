@@ -105,7 +105,7 @@ the start end end site of hopping as arguments:
     kwant.plot(syst, site_lw=0.1, site_color=family_color, hop_lw=hopping_lw);
 
 Note that since we are using an unfinalized Builder, a ``site`` is really an
-instance of `~kwant.builder.Site`. With these adjustments we arrive at a plot
+instance of `~kwant.system.Site`. With these adjustments we arrive at a plot
 that carries the same information, but is much easier to interpret.
 
 Apart from plotting the *system* itself, `~kwant.plotter.plot` can also be used
@@ -175,7 +175,7 @@ this is interpreted as the radius of the inner circle).
 
 Finally, note that since we are dealing with a finalized system now, a site `i`
 is represented by an integer. In order to obtain the original
-`~kwant.builder.Site`, ``syst.sites[i]`` can be used.
+`~kwant.system.Site`, ``syst.sites[i]`` can be used.
 
 The way how data is presented of course influences what features of the data
 are best visible in a given plot. With `~kwant.plotter.plot` one can easily go

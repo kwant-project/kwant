@@ -13,7 +13,7 @@ import cython
 from operator import itemgetter
 import functools as ft
 import collections
-import numbers
+import warnings
 
 import numpy as np
 import tinyarray as ta
@@ -25,8 +25,10 @@ from .graph.core cimport EdgeIterator
 from .graph.core import DisabledFeatureError, NodeDoesNotExistError
 from .graph.defs cimport gint
 from .graph.defs import gint_dtype
-from .system import InfiniteSystem
-from ._common import UserCodeError, get_parameters, deprecate_args
+from .system import is_infinite, Site
+from ._common import (
+    UserCodeError, KwantDeprecationWarning, get_parameters, deprecate_args
+)
 
 
 ################ Generic Utility functions
@@ -150,7 +152,7 @@ def _get_all_orbs(gint[:, :] where, gint[:, :] site_ranges):
 
 def _get_tot_norbs(syst):
     cdef gint _unused, tot_norbs
-    is_infinite_system = isinstance(syst, InfiniteSystem)
+    is_infinite_system = is_infinite(syst)
     n_sites = syst.cell_size if is_infinite_system else syst.graph.num_nodes
     _get_orbs(np.asarray(syst.site_ranges, dtype=gint_dtype),
               n_sites, &tot_norbs, &_unused)
@@ -166,7 +168,7 @@ def _normalize_site_where(syst, where):
     otherwise it should contain integers.
     """
     if where is None:
-        if isinstance(syst, InfiniteSystem):
+        if is_infinite(syst):
             where = list(range(syst.cell_size))
         else:
             where = list(range(syst.graph.num_nodes))
@@ -174,13 +176,12 @@ def _normalize_site_where(syst, where):
         try:
             where = [syst.id_by_site[s] for s in filter(where, syst.sites)]
         except AttributeError:
-            if isinstance(syst, InfiniteSystem):
+            if is_infinite(syst):
                 where = [s for s in range(syst.cell_size) if where(s)]
             else:
                 where = [s for s in range(syst.graph.num_nodes) if where(s)]
     else:
-        # Cannot check for builder.Site due to circular imports
-        if not isinstance(where[0], numbers.Integral):
+        if isinstance(where[0], Site):
             try:
                 where = [syst.id_by_site[s] for s in where]
             except AttributeError:
@@ -189,7 +190,7 @@ def _normalize_site_where(syst, where):
 
     where = np.asarray(where, dtype=gint_dtype).reshape(-1, 1)
 
-    if isinstance(syst, InfiniteSystem) and np.any(where >= syst.cell_size):
+    if is_infinite(syst) and np.any(where >= syst.cell_size):
         raise ValueError('Only sites in the fundamental domain may be '
                          'specified using `where`.')
     if np.any(np.logical_or(where < 0, where >= syst.graph.num_nodes)):
@@ -210,7 +211,7 @@ def _normalize_hopping_where(syst, where):
     if where is None:
         # we cannot extract the hoppings in the same order as they are in the
         # graph while simultaneously excluding all inter-cell hoppings
-        if isinstance(syst, InfiniteSystem):
+        if is_infinite(syst):
             raise ValueError('`where` must be provided when calculating '
                              'current in an InfiniteSystem.')
         where = list(syst.graph)
@@ -223,8 +224,7 @@ def _normalize_hopping_where(syst, where):
         else:
             where = list(filter(lambda h: where(*h), syst.graph))
     else:
-        # Cannot check for builder.Site due to circular imports
-        if not isinstance(where[0][0], numbers.Integral):
+        if isinstance(where[0][0], Site):
             try:
                 where = list((syst.id_by_site[a], syst.id_by_site[b])
                                for a, b in where)
@@ -244,7 +244,7 @@ def _normalize_hopping_where(syst, where):
 
     where = np.asarray(where, dtype=gint_dtype)
 
-    if isinstance(syst, InfiniteSystem) and np.any(where > syst.cell_size):
+    if is_infinite(syst) and np.any(where > syst.cell_size):
         raise ValueError('Only intra-cell hoppings may be specified '
                          'using `where`.')
 
@@ -702,7 +702,11 @@ cdef class _LocalOperator:
             return mat
 
         offsets, norbs = _get_all_orbs(self.where, self._site_ranges)
-        return  BlockSparseMatrix(self.where, offsets, norbs, get_ham)
+        # TODO: update operators to use 'hamiltonian_term' rather than
+        #       'hamiltonian'.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=KwantDeprecationWarning)
+            return  BlockSparseMatrix(self.where, offsets, norbs, get_ham)
 
     def __getstate__(self):
         return (
@@ -735,10 +739,10 @@ cdef class Density(_LocalOperator):
         maps from site families to square matrices. If a function is given it
         must take the same arguments as the onsite Hamiltonian functions of the
         system.
-    where : sequence of `int` or `~kwant.builder.Site`, or callable, optional
+    where : sequence of `int` or `~kwant.system.Site`, or callable, optional
         Where to evaluate the operator. If ``syst`` is not a finalized Builder,
         then this should be a sequence of integers. If a function is provided,
-        it should take a single `int` or `~kwant.builder.Site` (if ``syst`` is
+        it should take a single `int` or `~kwant.system.Site` (if ``syst`` is
         a finalized builder) and return True or False.  If not provided, the
         operator will be calculated over all sites in the system.
     check_hermiticity: bool
@@ -884,11 +888,11 @@ cdef class Current(_LocalOperator):
         matrices (scalars are allowed if the site family has 1 orbital per
         site). If a function is given it must take the same arguments as the
         onsite Hamiltonian functions of the system.
-    where : sequence of pairs of `int` or `~kwant.builder.Site`, or callable, optional
+    where : sequence of pairs of `int` or `~kwant.system.Site`, or callable, optional
         Where to evaluate the operator. If ``syst`` is not a finalized Builder,
         then this should be a sequence of pairs of integers. If a function is
         provided, it should take a pair of integers or a pair of
-        `~kwant.builder.Site` (if ``syst`` is a finalized builder) and return
+        `~kwant.system.Site` (if ``syst`` is a finalized builder) and return
         True or False.  If not provided, the operator will be calculated over
         all hoppings in the system.
     check_hermiticity : bool
@@ -1016,10 +1020,10 @@ cdef class Source(_LocalOperator):
         matrices (scalars are allowed if the site family has 1 orbital per
         site). If a function is given it must take the same arguments as the
         onsite Hamiltonian functions of the system.
-    where : sequence of `int` or `~kwant.builder.Site`, or callable, optional
+    where : sequence of `int` or `~kwant.system.Site`, or callable, optional
         Where to evaluate the operator. If ``syst`` is not a finalized Builder,
         then this should be a sequence of integers. If a function is provided,
-        it should take a single `int` or `~kwant.builder.Site` (if ``syst`` is
+        it should take a single `int` or `~kwant.system.Site` (if ``syst`` is
         a finalized builder) and return True or False.  If not provided, the
         operator will be calculated over all sites in the system.
     check_hermiticity : bool

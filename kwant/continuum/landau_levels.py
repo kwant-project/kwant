@@ -176,7 +176,7 @@ class LandauLattice(kwant.lattice.Monatomic):
     """
     A `~kwant.lattice.Monatomic` lattice with a Landau level index per site.
 
-    Site tags (see `~kwant.builder.SiteFamily`) are pairs of integers, where
+    Site tags (see `~kwant.system.SiteFamily`) are pairs of integers, where
     the first integer describes the real space position and the second the
     Landau level index.
 

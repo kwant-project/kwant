@@ -1,4 +1,4 @@
-# Copyright 2011-2018 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -303,7 +303,7 @@ def _loops_in_infinite(syst):
     extended_sites : callable : int -> Site
         Given a site index in the extended system consisting of
         two unit cells, returns the associated high-level
-        `kwant.builder.Site`.
+        `kwant.system.Site`.
     """
     assert isinstance(syst, system.InfiniteSystem)
     _check_infinite_syst(syst)
@@ -375,7 +375,7 @@ def _loops_in_composite(syst):
         -1 if the site is part of the reduced scattering region (see notes).
     extended_sites : callable : int -> Site
         Given a site index in the extended scattering region (see notes),
-        returns the associated high-level `kwant.builder.Site`.
+        returns the associated high-level `kwant.system.Site`.
 
     Notes
     -----
@@ -401,7 +401,7 @@ def _loops_in_composite(syst):
     # Get distance matrix for the extended scattering region,
     # a function that maps sites to their lead patches (-1 for sites
     # in the reduced scattering region), and a function that maps sites
-    # to high-level 'kwant.builder.Site' objects.
+    # to high-level 'kwant.system.Site' objects.
     distance_matrix, which_patch, extended_sites =\
         _extended_scattering_region(syst)
 
@@ -439,7 +439,7 @@ def _extended_scattering_region(syst):
         -1 if the site is part of the reduced scattering region.
     extended_sites : callable : int -> Site
         Given a site index in the extended scattering region, returns
-        the associated high-level `kwant.builder.Site`.
+        the associated high-level `kwant.system.Site`.
 
     Notes
     -----
@@ -1027,7 +1027,7 @@ class magnetic_gauge:
             The first callable computes the Peierls phase in the scattering
             region and the remaining callables compute the Peierls phases
             in each of the leads. Each callable takes a pair of
-            `~kwant.builder.Site` (a hopping) and returns a unit complex
+            `~kwant.system.Site` (a hopping) and returns a unit complex
             number (Peierls phase) that multiplies that hopping.
         """
         return self._peierls(syst_field, *lead_fields, tol=tol, average=False)

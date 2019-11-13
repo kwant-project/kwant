@@ -1,4 +1,4 @@
-# Copyright 2011-2018 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -19,8 +19,8 @@ from pytest import raises, warns
 from numpy.testing import assert_almost_equal
 
 import kwant
-from kwant import builder
-from kwant._common import ensure_rng
+from kwant import builder, system
+from kwant._common import ensure_rng, KwantDeprecationWarning
 
 
 def test_bad_keys():
@@ -290,12 +290,28 @@ def random_hopping_integral(rng):
 
 
 def check_onsite(fsyst, sites, subset=False, check_values=True):
+    vectorized = isinstance(fsyst, (system.FiniteVectorizedSystem, system.InfiniteVectorizedSystem))
+
+    if vectorized:
+        site_offsets = np.cumsum([0] + [len(s) for s in fsyst.site_arrays])
+
     freq = {}
     for node in range(fsyst.graph.num_nodes):
         site = fsyst.sites[node].tag
         freq[site] = freq.get(site, 0) + 1
         if check_values and site in sites:
-            assert fsyst.onsites[node][0] is sites[site]
+            if vectorized:
+                term = fsyst._onsite_term_by_site_id[node]
+                value = fsyst._term_values[term]
+                if callable(value):
+                    assert value is sites[site]
+                else:
+                    (w, _), (off, _) = fsyst.subgraphs[fsyst.terms[term].subgraph]
+                    node_off = node - site_offsets[w]
+                    selector = np.searchsorted(off, node_off)
+                    assert np.allclose(value[selector], sites[site])
+            else:
+                assert fsyst.onsites[node][0] is sites[site]
     if not subset:
         # Check that all sites of `fsyst` are in `sites`.
         for site in freq.keys():
@@ -306,24 +322,50 @@ def check_onsite(fsyst, sites, subset=False, check_values=True):
 
 
 def check_hoppings(fsyst, hops):
+    vectorized = isinstance(fsyst, (system.FiniteVectorizedSystem, system.InfiniteVectorizedSystem))
+
+    if vectorized:
+        site_offsets = np.cumsum([0] + [len(s) for s in fsyst.site_arrays])
+
     assert fsyst.graph.num_edges == 2 * len(hops)
     for edge_id, edge in enumerate(fsyst.graph):
-        tail, head = edge
-        tail = fsyst.sites[tail].tag
-        head = fsyst.sites[head].tag
-        value = fsyst.hoppings[edge_id][0]
-        if value is builder.Other:
-            assert (head, tail) in hops
+        i, j = edge
+        tail = fsyst.sites[i].tag
+        head = fsyst.sites[j].tag
+
+        if vectorized:
+            term = fsyst._hopping_term_by_edge_id[edge_id]
+            if term < 0:  # Hermitian conjugate
+                assert (head, tail) in hops
+            else:
+                value = fsyst._term_values[term]
+                assert (tail, head) in hops
+                if callable(value):
+                    assert value is hops[tail, head]
+                else:
+                    dtype = np.dtype([('f0', int), ('f1', int)])
+                    subgraph = fsyst.terms[term].subgraph
+                    (to_w, from_w), hoppings = fsyst.subgraphs[subgraph]
+                    hop = (i - site_offsets[to_w], j - site_offsets[from_w])
+                    hop = np.array(hop, dtype=dtype)
+                    hoppings = hoppings.transpose().view(dtype).reshape(-1)
+                    selector = np.recarray.searchsorted(hoppings, hop)
+                    assert np.allclose(value[selector], hops[tail, head])
         else:
-            assert (tail, head) in hops
-            assert value is hops[tail, head]
+            value = fsyst.hoppings[edge_id][0]
+            if value is builder.Other:
+                assert (head, tail) in hops
+            else:
+                assert (tail, head) in hops
+                assert value is hops[tail, head]
 
 def check_id_by_site(fsyst):
     for i, site in enumerate(fsyst.sites):
         assert fsyst.id_by_site[site] == i
 
 
-def test_finalization():
+@pytest.mark.parametrize("vectorize", [False, True])
+def test_finalization(vectorize):
     """Test the finalization of finite and infinite systems.
 
     In order to exactly verify the finalization, low-level features of the
@@ -377,7 +419,7 @@ def test_finalization():
     neighbors = sorted(neighbors)
 
     # Build scattering region from blueprint and test it.
-    syst = builder.Builder()
+    syst = builder.Builder(vectorize=vectorize)
     fam = kwant.lattice.general(ta.identity(2), norbs=1)
     for site, value in sr_sites.items():
         syst[fam(*site)] = value
@@ -388,7 +430,7 @@ def test_finalization():
     check_onsite(fsyst, sr_sites)
     check_hoppings(fsyst, sr_hops)
     # check that sites are sorted
-    assert fsyst.sites == tuple(sorted(fam(*site) for site in sr_sites))
+    assert tuple(fsyst.sites) == tuple(sorted(fam(*site) for site in sr_sites))
 
     # Build lead from blueprint and test it.
     lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)))
@@ -421,12 +463,12 @@ def test_finalization():
 
     # Attach lead with improper interface.
     syst.leads[-1] = builder.BuilderLead(
-        lead, 2 * tuple(builder.Site(fam, n) for n in neighbors))
+        lead, 2 * tuple(system.Site(fam, n) for n in neighbors))
     raises(ValueError, syst.finalized)
 
     # Attach lead properly.
     syst.leads[-1] = builder.BuilderLead(
-        lead, (builder.Site(fam, n) for n in neighbors))
+        lead, (system.Site(fam, n) for n in neighbors))
     fsyst = syst.finalized()
     assert len(fsyst.lead_interfaces) == 1
     assert ([fsyst.sites[i].tag for i in fsyst.lead_interfaces[0]] ==
@@ -434,15 +476,15 @@ def test_finalization():
 
     # test that we cannot finalize a system with a badly sorted interface order
     raises(ValueError, builder.InfiniteSystem, lead,
-           [builder.Site(fam, n) for n in reversed(neighbors)])
+           [system.Site(fam, n) for n in reversed(neighbors)])
     # site ordering independent of whether interface was specified
-    flead_order = builder.InfiniteSystem(lead, [builder.Site(fam, n)
+    flead_order = builder.InfiniteSystem(lead, [system.Site(fam, n)
                                                 for n in neighbors])
-    assert flead.sites == flead_order.sites
+    assert tuple(flead.sites) == tuple(flead_order.sites)
 
 
     syst.leads[-1] = builder.BuilderLead(
-        lead, (builder.Site(fam, n) for n in neighbors))
+        lead, (system.Site(fam, n) for n in neighbors))
     fsyst = syst.finalized()
     assert len(fsyst.lead_interfaces) == 1
     assert ([fsyst.sites[i].tag for i in fsyst.lead_interfaces[0]] ==
@@ -457,47 +499,62 @@ def test_finalization():
     raises(ValueError, lead.finalized)
 
 
-def test_site_ranges():
+def _make_system_from_sites(sites, vectorize):
+    syst = builder.Builder(vectorize=vectorize)
+    for s in sites:
+        norbs = s.family.norbs
+        if norbs:
+            syst[s] = np.eye(s.family.norbs)
+        else:
+            syst[s] = None
+    return syst.finalized()
+
+
+@pytest.mark.parametrize("vectorize", [False, True])
+def test_site_ranges(vectorize):
     lat1a = kwant.lattice.chain(norbs=1, name='a')
     lat1b = kwant.lattice.chain(norbs=1, name='b')
     lat2 = kwant.lattice.chain(norbs=2)
-    site_ranges = builder._site_ranges
 
     # simple case -- single site family
     for lat in (lat1a, lat2):
         sites = list(map(lat, range(10)))
-        ranges = site_ranges(sites)
+        syst = _make_system_from_sites(sites, vectorize)
+        ranges = syst.site_ranges
         expected = [(0, lat.norbs, 0), (10, 0, 10 * lat.norbs)]
-        assert ranges == expected
+        assert np.array_equal(ranges, expected)
 
     # pair of site families
-    sites = it.chain(map(lat1a, range(4)), map(lat1b, range(6)),
-                     map(lat1a, range(4)))
-    expected = [(0, 1, 0), (4, 1, 4), (10, 1, 10), (14, 0, 14)]
-    assert expected == site_ranges(tuple(sites))
+    sites = it.chain(map(lat1a, range(4)), map(lat1b, range(6)))
+    syst = _make_system_from_sites(sites, vectorize)
+    expected = [(0, 1, 0), (4, 1, 4), (10, 0, 10)]
+    assert np.array_equal(expected, syst.site_ranges)
     sites = it.chain(map(lat2, range(4)), map(lat1a, range(6)),
                      map(lat1b, range(4)))
+    syst = _make_system_from_sites(sites, vectorize)
     expected = [(0, 2, 0), (4, 1, 4*2), (10, 1, 4*2+6), (14, 0, 4*2+10)]
-    assert expected == site_ranges(tuple(sites))
+    assert np.array_equal(expected, syst.site_ranges)
 
     # test with an actual builder
     for lat in (lat1a, lat2):
         sites = list(map(lat, range(10)))
-        syst = kwant.Builder()
+        syst = kwant.Builder(vectorize=vectorize)
         syst[sites] = np.eye(lat.norbs)
         ranges = syst.finalized().site_ranges
         expected = [(0, lat.norbs, 0), (10, 0, 10 * lat.norbs)]
-        assert ranges == expected
-        # poison system with a single site with no norbs defined.
-        # Also catch the deprecation warning.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            syst[kwant.lattice.chain(norbs=None)(0)] = 1
-        ranges = syst.finalized().site_ranges
-        assert ranges == None
+        assert np.array_equal(ranges, expected)
+        if not vectorize:  # vectorized systems *must* have all norbs
+            # poison system with a single site with no norbs defined.
+            # Also catch the deprecation warning.
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                syst[kwant.lattice.chain(norbs=None)(0)] = 1
+            ranges = syst.finalized().site_ranges
+            assert ranges is None
 
 
-def test_hamiltonian_evaluation():
+@pytest.mark.parametrize("vectorize", [False, True])
+def test_hamiltonian_evaluation(vectorize):
     def f_onsite(site):
         return site.tag[0]
 
@@ -505,14 +562,26 @@ def test_hamiltonian_evaluation():
         a, b = a.tag, b.tag
         return complex(a[0] + b[0], a[1] - b[1])
 
+    def f_onsite_vectorized(sites):
+        return sites.tags[:, 0]
+
+    def f_hopping_vectorized(a, b):
+        a, b = a.tags, b.tags
+        return a[:, 0] + b[:, 0] + 1j * (a[:, 1] - b[:, 1])
+
     tags = [(0, 0), (1, 1), (2, 2), (3, 3)]
     edges = [(0, 1), (0, 2), (0, 3), (1, 2)]
 
-    syst = builder.Builder()
+    syst = builder.Builder(vectorize=vectorize)
     fam = builder.SimpleSiteFamily(norbs=1)
     sites = [fam(*tag) for tag in tags]
-    syst[(fam(*tag) for tag in tags)] = f_onsite
-    syst[((fam(*tags[i]), fam(*tags[j])) for (i, j) in edges)] = f_hopping
+    hoppings = [(sites[i], sites[j]) for i, j in edges]
+    if vectorize:
+        syst[sites] = f_onsite_vectorized
+        syst[hoppings] = f_hopping_vectorized
+    else:
+        syst[sites] = f_onsite
+        syst[hoppings] = f_hopping
     fsyst = syst.finalized()
 
     assert fsyst.graph.num_nodes == len(tags)
@@ -521,12 +590,16 @@ def test_hamiltonian_evaluation():
     for i in range(len(tags)):
         site = fsyst.sites[i]
         assert site in sites
-        assert fsyst.hamiltonian(i, i) == syst[site](site)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            assert fsyst.hamiltonian(i, i) == f_onsite(site)
 
     for t, h in fsyst.graph:
         tsite = fsyst.sites[t]
         hsite = fsyst.sites[h]
-        assert fsyst.hamiltonian(t, h) == syst[tsite, hsite](tsite, hsite)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            assert fsyst.hamiltonian(t, h) == f_hopping(tsite, hsite)
 
     # test when user-function raises errors
     def onsite_raises(site):
@@ -539,13 +612,18 @@ def test_hamiltonian_evaluation():
         a, b = hop
         # exceptions are converted to kwant.UserCodeError and we add our message
         with raises(kwant.UserCodeError) as exc_info:
-            fsyst.hamiltonian(a, a)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+                fsyst.hamiltonian(a, a)
         msg = 'Error occurred in user-supplied value function "onsite_raises"'
         assert msg in str(exc_info.value)
 
         for hop in [(a, b), (b, a)]:
             with raises(kwant.UserCodeError) as exc_info:
-                fsyst.hamiltonian(*hop)
+                with warnings.catch_warnings():
+                    # Ignore deprecation warnings for 'hamiltonian'
+                    warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+                    fsyst.hamiltonian(*hop)
             msg = ('Error occurred in user-supplied '
                    'value function "hopping_raises"')
             assert msg in str(exc_info.value)
@@ -555,7 +633,7 @@ def test_hamiltonian_evaluation():
     syst[new_hop[0]] = onsite_raises
     syst[new_hop] = hopping_raises
     fsyst = syst.finalized()
-    hop = tuple(map(fsyst.sites.index, new_hop))
+    hop = tuple(map(fsyst.id_by_site.__getitem__, new_hop))
     test_raising(fsyst, hop)
 
     # test with infinite system
@@ -563,8 +641,116 @@ def test_hamiltonian_evaluation():
     for k, v in it.chain(syst.site_value_pairs(), syst.hopping_value_pairs()):
         inf_syst[k] = v
     inf_fsyst = inf_syst.finalized()
-    hop = tuple(map(inf_fsyst.sites.index, new_hop))
+    hop = tuple(map(inf_fsyst.id_by_site.__getitem__, new_hop))
     test_raising(inf_fsyst, hop)
+
+
+def test_vectorized_hamiltonian_evaluation():
+
+    def onsite(site):
+        return site.tag[0]
+
+    def vectorized_onsite(sites):
+        return sites.tags[:, 0]
+
+    def hopping(to_site, from_site):
+        a, b = to_site.tag, from_site.tag
+        return a[0] + b[0] + 1j * (a[1] - b[1])
+
+    def vectorized_hopping(to_sites, from_sites):
+        a, b = to_sites.tags, from_sites.tags
+        return a[:, 0] + b[:, 0] + 1j * (a[:, 1] - b[:, 1])
+
+    tags = [(0, 0), (1, 1), (2, 2), (3, 3)]
+    edges = [(0, 1), (0, 2), (0, 3), (1, 2)]
+
+    fam = builder.SimpleSiteFamily(norbs=1)
+    sites = [fam(*tag) for tag in tags]
+    hops = [(fam(*tags[i]), fam(*tags[j])) for (i, j) in edges]
+
+    syst_simple = builder.Builder(vectorize=False)
+    syst_simple[sites] = onsite
+    syst_simple[hops] = hopping
+    fsyst_simple = syst_simple.finalized()
+
+    syst_vectorized = builder.Builder(vectorize=True)
+    syst_vectorized[sites] = vectorized_onsite
+    syst_vectorized[hops] = vectorized_hopping
+    fsyst_vectorized = syst_vectorized.finalized()
+
+    assert fsyst_vectorized.graph.num_nodes == len(tags)
+    assert fsyst_vectorized.graph.num_edges == 2 * len(edges)
+    assert len(fsyst_vectorized.site_arrays) == 1
+    assert fsyst_vectorized.site_arrays[0] == system.SiteArray(fam, tags)
+
+    assert np.allclose(
+        fsyst_simple.hamiltonian_submatrix(),
+        fsyst_vectorized.hamiltonian_submatrix(),
+    )
+
+    for i in range(len(tags)):
+        site = fsyst_vectorized.sites[i]
+        assert site in sites
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            assert (
+                fsyst_vectorized.hamiltonian(i, i)
+                == fsyst_simple.hamiltonian(i, i))
+
+    for t, h in fsyst_vectorized.graph:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            assert (
+                fsyst_vectorized.hamiltonian(t, h)
+                == fsyst_simple.hamiltonian(t, h))
+
+    # Test infinite system, including hoppings that go both ways into
+    # the next cell
+    lat = kwant.lattice.square(norbs=1)
+
+    syst_vectorized = builder.Builder(kwant.TranslationalSymmetry((-1, 0)),
+                                      vectorize=True)
+    syst_vectorized[lat(0, 0)] = 4
+    syst_vectorized[lat(0, 1)] = 5
+    syst_vectorized[lat(0, 2)] = vectorized_onsite
+    syst_vectorized[(lat(1, 0), lat(0, 0))] = 1j
+    syst_vectorized[(lat(2, 1), lat(1, 1))] = vectorized_hopping
+    fsyst_vectorized = syst_vectorized.finalized()
+
+    syst_simple = builder.Builder(kwant.TranslationalSymmetry((-1, 0)),
+                                      vectorize=False)
+    syst_simple[lat(0, 0)] = 4
+    syst_simple[lat(0, 1)] = 5
+    syst_simple[lat(0, 2)] = onsite
+    syst_simple[(lat(1, 0), lat(0, 0))] = 1j
+    syst_simple[(lat(2, 1), lat(1, 1))] = hopping
+    fsyst_simple = syst_simple.finalized()
+
+    assert np.allclose(
+        fsyst_vectorized.hamiltonian_submatrix(),
+        fsyst_simple.hamiltonian_submatrix(),
+    )
+    assert np.allclose(
+        fsyst_vectorized.cell_hamiltonian(),
+        fsyst_simple.cell_hamiltonian(),
+    )
+    assert np.allclose(
+        fsyst_vectorized.inter_cell_hopping(),
+        fsyst_simple.inter_cell_hopping(),
+    )
+
+
+def test_vectorized_requires_norbs():
+
+    # Catch deprecation warning for lack of norbs
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        fam = builder.SimpleSiteFamily()
+
+    syst = builder.Builder(vectorize=True)
+    syst[fam(0, 0)] = 1
+
+    raises(ValueError, syst.finalized)
 
 
 def test_dangling():
@@ -1204,15 +1390,22 @@ def test_discrete_symmetries():
 # We need to keep testing 'args', but we don't want to see
 # all the deprecation warnings in the test logs
 @pytest.mark.filterwarnings("ignore:.*'args' parameter")
-def test_argument_passing():
+@pytest.mark.parametrize("vectorize", [False, True])
+def test_argument_passing(vectorize):
     chain = kwant.lattice.chain(norbs=1)
 
     # Test for passing parameters to hamiltonian matrix elements
     def onsite(site, p1, p2):
-        return p1 + p2
+        if vectorize:
+            return (p1 + p2) * np.ones(len(site))
+        else:
+            return p1 + p2
 
     def hopping(site1, site2, p1, p2):
-        return p1 - p2
+        if vectorize:
+            return (p1 - p2) * np.ones(len(site1))
+        else:
+            return p1 - p2
 
     def gen_fill_syst(onsite, hopping, syst):
         syst[(chain(i) for i in range(3))] = onsite
@@ -1221,8 +1414,9 @@ def test_argument_passing():
 
     fill_syst = ft.partial(gen_fill_syst, onsite, hopping)
 
-    syst = fill_syst(kwant.Builder())
-    inf_syst = fill_syst(kwant.Builder(kwant.TranslationalSymmetry((-3,))))
+    syst = fill_syst(kwant.Builder(vectorize=vectorize))
+    inf_syst = fill_syst(kwant.Builder(kwant.TranslationalSymmetry((-3,)),
+                                       vectorize=vectorize))
 
     tests = (
         syst.hamiltonian_submatrix,
@@ -1238,28 +1432,34 @@ def test_argument_passing():
 
     # test that mixing 'args' and 'params' raises TypeError
     with raises(TypeError):
-        syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
+
     with raises(TypeError):
-        inf_syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            inf_syst.hamiltonian(0, 0, *(2, 1), params=dict(p1=2, p2=1))
 
     # Missing parameters raises TypeError
     with raises(TypeError):
-        syst.hamiltonian(0, 0, params=dict(p1=2))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            syst.hamiltonian(0, 0, params=dict(p1=2))
+
     with raises(TypeError):
-        syst.hamiltonian_submatrix(params=dict(p1=2))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=KwantDeprecationWarning)
+            syst.hamiltonian_submatrix(params=dict(p1=2))
 
     # test that passing parameters without default values works, and that
     # passing parameters with default values fails
-    def onsite(site, p1, p2):
-        return p1 + p2
-
-    def hopping(site, site2, p1, p2):
-        return p1 - p2
 
     fill_syst = ft.partial(gen_fill_syst, onsite, hopping)
 
-    syst = fill_syst(kwant.Builder())
-    inf_syst = fill_syst(kwant.Builder(kwant.TranslationalSymmetry((-3,))))
+    syst = fill_syst(kwant.Builder(vectorize=vectorize))
+    inf_syst = fill_syst(kwant.Builder(kwant.TranslationalSymmetry((-3,)),
+                                       vectorize=vectorize))
 
     tests = (
         syst.hamiltonian_submatrix,
@@ -1275,12 +1475,18 @@ def test_argument_passing():
 
     # Some common, some different args for value functions
     def onsite2(site, a, b):
-        return site.pos + a + b
+        if vectorize:
+            return site.positions()[:, 0] + a + b
+        else:
+            return site.pos[0] + a + b
 
     def hopping2(site1, site2, a, c, b):
-        return a + b + c
+        if vectorize:
+            return (a + b + c) * np.ones(len(site1))
+        else:
+            return a + b + c
 
-    syst = kwant.Builder()
+    syst = kwant.Builder(vectorize=vectorize)
     syst[(chain(i) for i in range(3))] = onsite2
     syst[((chain(i), chain(i + 1)) for i in range(2))] = hopping2
     fsyst = syst.finalized()
@@ -1390,6 +1596,7 @@ def test_subs():
     lead = lead.substituted(a='lead_a', b='lead_b', c='lead_c')
     lead = lead.finalized()
     assert lead.parameters == {'lead_a', 'lead_b', 'lead_c'}
+
 
 def test_attach_stores_padding():
     lat = kwant.lattice.chain(norbs=1)

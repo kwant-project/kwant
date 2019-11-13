@@ -1,4 +1,4 @@
-# Copyright 2011-2013 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -12,11 +12,15 @@ import numpy as np
 from scipy import sparse as sp
 from itertools import chain
 import types
+import bisect
 
 from .graph.core cimport CGraph, gintArraySlice
 from .graph.defs cimport gint
 from .graph.defs import gint_dtype
 from ._common import deprecate_args
+
+
+### Non-vectorized methods
 
 msg = ('Hopping from site {0} to site {1} does not match the '
        'dimensions of onsite Hamiltonians of these sites.')
@@ -352,3 +356,383 @@ def hamiltonian_submatrix(self, args=(), to_sites=None, from_sites=None,
         mat = func(ham, args, params, self.graph, diag, from_sites,
                    n_by_to_site, to_norb, to_off, from_norb, from_off)
     return (mat, to_norb, from_norb) if return_norb else mat
+
+
+### Vectorized methods
+
+
+_shape_error_msg = (
+    "The following hoppings have matrix elements of incompatible shape "
+    "with other matrix elements: {}"
+)
+
+
+@cython.boundscheck(False)
+def _vectorized_make_sparse(subgraphs, hams, long [:] norbs, long [:] orb_offsets,
+                 long [:] site_offsets, shape=None):
+    ndata = sum(h.shape[0] * h.shape[1] * h.shape[2] for h in hams)
+
+    cdef long [:] rows_view, cols_view
+    cdef complex [:] data_view
+
+    rows = np.empty((ndata,), dtype=long)
+    cols = np.empty((ndata,), dtype=long)
+    data = np.empty((ndata,), dtype=complex)
+    rows_view = rows
+    cols_view = cols
+    data_view = data
+
+    cdef long i, j, k, m, N, M, P, to_off, from_off,\
+              ta, fa, to_norbs, from_norbs
+    cdef long [:] ts_offs, fs_offs
+    cdef complex [:, :, :] h
+
+    m = 0
+    # This outer loop zip() is pure Python, but that's ok, as it
+    # has very few entries and the inner loops are fully vectorized
+    for ((ta, fa), (ts_offs, fs_offs)), h in zip(subgraphs, hams):
+        N = h.shape[0]
+        M = h.shape[1]
+        P = h.shape[2]
+
+        if norbs[ta] != M or norbs[fa] != P:
+            to_sites = site_offsets[ta] + np.array(ts_offs)
+            from_sites = site_offsets[fa] + np.array(fs_offs)
+            hops = np.array([to_sites, from_sites]).transpose()
+            raise ValueError(_shape_error_msg.format(hops))
+
+        for i in range(N):
+            to_off = orb_offsets[ta] + norbs[ta] * ts_offs[i]
+            from_off = orb_offsets[fa] + norbs[fa] * fs_offs[i]
+            for j in range(M):
+                for k in range(P):
+                    rows_view[m] = to_off + j
+                    cols_view[m] = from_off + k
+                    data_view[m] = h[i, j, k]
+                    m += 1
+
+    if shape is None:
+        shape = (orb_offsets[-1], orb_offsets[-1])
+
+    return sp.coo_matrix((data, (rows, cols)), shape=shape)
+
+
+@cython.boundscheck(False)
+def _vectorized_make_dense(subgraphs, hams, long [:] norbs, long [:] orb_offsets,
+                long [:] site_offsets, shape=None):
+    if shape is None:
+        shape = (orb_offsets[-1], orb_offsets[-1])
+    mat = np.zeros(shape, dtype=complex)
+    cdef complex [:, :] mat_view
+    mat_view = mat
+
+    cdef long i, j, k, N, M, P, to_off, from_off,\
+              ta, fa, to_norbs, from_norbs
+    cdef long [:] ts_offs, fs_offs
+    cdef complex [:, :, :] h
+
+    # This outer loop zip() is pure Python, but that's ok, as it
+    # has very few entries and the inner loops are fully vectorized
+    for ((ta, fa), (ts_offs, fs_offs)), h in zip(subgraphs, hams):
+        N = h.shape[0]
+        M = h.shape[1]
+        P = h.shape[2]
+
+        if norbs[ta] != M or norbs[fa] != P:
+            to_sites = site_offsets[ta] + np.array(ts_offs)
+            from_sites = site_offsets[fa] + np.array(fs_offs)
+            hops = np.array([to_sites, from_sites]).transpose()
+            raise ValueError(_shape_error_msg.format(hops))
+
+        for i in range(N):
+            to_off = orb_offsets[ta] + norbs[ta] * ts_offs[i]
+            from_off = orb_offsets[fa] + norbs[fa] * fs_offs[i]
+            for j in range(M):
+                for k in range(P):
+                    mat_view[to_off + j, from_off + k] = h[i, j, k]
+    return mat
+
+
+def _count_norbs(syst, site_offsets, hams, args=(), params=None):
+    """Return the norbs and orbital offset of each site family in 'syst'
+
+    Parameters
+    ----------
+    syst : `kwant.system.System`
+    site_offsets : sequence of int
+        Contains the index of the first site for each site array
+        in 'syst.site_arrays'.
+    hams : sequence of arrays or 'None'
+        The Hamiltonian for each term in 'syst.terms'. 'None'
+        if the corresponding term has not been evaluated.
+    args, params : positional and keyword arguments to the system Hamiltonian
+    """
+    site_ranges = syst.site_ranges
+    if site_ranges is None:
+        # NOTE: Remove this branch once we can rely on
+        #       site families storing the norb information.
+
+        site_arrays = syst.site_arrays
+        family_norbs = {s.family: None for s in site_arrays}
+
+        # Compute the norbs per site family using already evaluated
+        # Hamiltonian terms where possible
+        for ham, t in zip(hams, syst.terms):
+            (to_w, from_w), _ = syst.subgraphs[t.subgraph]
+            if ham is not None:
+                family_norbs[site_arrays[to_w].family] = ham.shape[1]
+                family_norbs[site_arrays[from_w].family] = ham.shape[2]
+
+        # Evaluate Hamiltonian terms where we do not already have them
+        for n, t in enumerate(syst.terms):
+            (to_w, from_w), _ = syst.subgraphs[t.subgraph]
+            to_fam = site_arrays[to_w].family
+            from_fam = site_arrays[from_w].family
+            if family_norbs[to_fam] is None or family_norbs[from_fam] is None:
+                ham = syst.hamiltonian_term(n, args=args, params=params)
+                family_norbs[to_fam] = ham.shape[1]
+                family_norbs[from_fam] = ham.shape[2]
+
+        # This case is technically allowed by the format (some sites present
+        # but no hamiltonian terms that touch them) but is very unlikely.
+        if any(norbs is None for norbs in family_norbs.values()):
+            raise ValueError("Cannot determine the number of orbitals for "
+                             "some site families.")
+
+        orb_offset = 0
+        site_ranges = []
+        for start, site_array in zip(site_offsets, syst.site_arrays):
+            norbs = family_norbs[site_array.family]
+            site_ranges.append((start, norbs, orb_offset))
+            orb_offset += len(site_array) * norbs
+        site_ranges.append((site_offsets[-1], 0, orb_offset))
+        site_ranges = np.array(site_ranges)
+
+    _, norbs, orb_offsets = site_ranges.transpose()
+    # The final (extra) element in orb_offsets is the total number of orbitals
+    assert len(orb_offsets) == len(syst.site_arrays) + 1
+
+    return norbs, orb_offsets
+
+
+def _expand_norbs(compressed_norbs, site_offsets):
+    "Return norbs per site, given norbs per site array."
+    norbs = np.empty(site_offsets[-1], int)
+    for start, stop, norb in zip(site_offsets, site_offsets[1:],
+                                  compressed_norbs):
+        norbs[start:stop] = norb
+    return norbs
+
+
+def _reverse_subgraph(subgraph):
+    (to_sa, from_sa), (to_off, from_off) = subgraph
+    return ((from_sa, to_sa), (from_off, to_off))
+
+
+@deprecate_args
+@cython.binding(True)
+def vectorized_hamiltonian_submatrix(self, args=(), sparse=False,
+                                     return_norb=False, *, params=None):
+    """Return The system Hamiltonian.
+
+    Parameters
+    ----------
+    args : tuple, defaults to empty
+        Positional arguments to pass to ``hamiltonian_term``. Mutually
+        exclusive with 'params'.
+    sparse : bool
+        Whether to return a sparse or a dense matrix. Defaults to ``False``.
+    return_norb : bool
+        Whether to return arrays of numbers of orbitals.  Defaults to ``False``.
+    params : dict, optional
+        Dictionary of parameter names and their values. Mutually exclusive
+        with 'args'.
+
+    Returns
+    -------
+    hamiltonian_part : numpy.ndarray or scipy.sparse.coo_matrix
+       The Hamiltonian of the system.
+    norb : array of integers
+        Numbers of orbitals on each site. Only returned when ``return_norb``
+        is true.
+
+    Notes
+    -----
+    Providing positional arguments via 'args' is deprecated,
+    instead, provide named parameters as a dictionary via 'params'.
+    """
+
+    site_offsets = np.cumsum([0] + [len(arr) for arr in self.site_arrays])
+
+    subgraphs = [
+        self.subgraphs[t.subgraph]
+        for t in self.terms
+    ]
+    # Add Hermitian conjugates
+    subgraphs += [
+        _reverse_subgraph(self.subgraphs[t.subgraph])
+        for t in self.terms
+        if t.hermitian
+    ]
+
+    hams = [
+        self.hamiltonian_term(n, args=args, params=params)
+        for n, _ in enumerate(self.terms)
+    ]
+    # Add Hermitian conjugates
+    hams += [
+        ham.conjugate().transpose(0, 2, 1)
+        for ham, t in zip(hams, self.terms)
+        if t.hermitian
+    ]
+
+    norbs, orb_offsets = _count_norbs(self, site_offsets, hams,
+                                      args=args, params=params)
+
+    func = _vectorized_make_sparse if sparse else _vectorized_make_dense
+    mat = func(subgraphs, hams, norbs, orb_offsets, site_offsets)
+
+    if return_norb:
+        return (mat, _expand_norbs(norbs, site_offsets))
+    else:
+        return mat
+
+
+@deprecate_args
+@cython.binding(True)
+def vectorized_cell_hamiltonian(self, args=(), sparse=False, *, params=None):
+    """Hamiltonian of a single cell of the infinite system.
+
+    Providing positional arguments via 'args' is deprecated,
+    instead, provide named parameters as a dictionary via 'params'.
+    """
+
+    site_offsets = np.cumsum([0] + [len(arr) for arr in self.site_arrays])
+    # Site array where next cell starts
+    next_cell = bisect.bisect(site_offsets, self.cell_size) - 1
+
+    def inside_cell(term):
+        (to_which, from_which), _= self.subgraphs[term.subgraph]
+        return to_which < next_cell and from_which < next_cell
+
+    cell_terms = [
+        n for n, t in enumerate(self.terms)
+        if inside_cell(t)
+    ]
+
+    subgraphs = [
+        self.subgraphs[self.terms[n].subgraph]
+        for n in cell_terms
+    ]
+    # Add Hermitian conjugates
+    subgraphs += [
+        _reverse_subgraph(self.subgraphs[self.terms[n].subgraph])
+        for n in cell_terms
+        if self.terms[n].hermitian
+    ]
+
+    hams = [
+        self.hamiltonian_term(n, args=args, params=params)
+        for n in cell_terms
+    ]
+    # Add Hermitian conjugates
+    hams += [
+        ham.conjugate().transpose(0, 2, 1)
+        for ham, n in zip(hams, cell_terms)
+        if self.terms[n].hermitian
+    ]
+
+    # _count_norbs requires passing hamiltonians for all terms, or 'None'
+    # if it has not been evaluated
+    all_hams = [None] * len(self.terms)
+    for n, ham in zip(cell_terms, hams):
+        all_hams[n] = ham
+    norbs, orb_offsets = _count_norbs(self, site_offsets, all_hams,
+                                      args=args, params=params)
+
+    shape = (orb_offsets[next_cell], orb_offsets[next_cell])
+    func = _vectorized_make_sparse if sparse else _vectorized_make_dense
+    mat = func(subgraphs, hams, norbs, orb_offsets, site_offsets, shape=shape)
+
+    return mat
+
+
+@deprecate_args
+@cython.binding(True)
+def vectorized_inter_cell_hopping(self, args=(), sparse=False, *, params=None):
+    """Hopping Hamiltonian between two cells of the infinite system.
+
+    Providing positional arguments via 'args' is deprecated,
+    instead, provide named parameters as a dictionary via 'params'.
+    """
+
+    # Take advantage of the fact that there are distinct entries in
+    # onsite_terms for sites inside the unit cell, and distinct entries
+    # in onsite_terms for hoppings between the unit cell sites and
+    # interface sites. This way we only need to check the first entry
+    # in onsite/hopping_terms
+
+    site_offsets = np.cumsum([0] + [len(arr) for arr in self.site_arrays])
+    # Site array where next cell starts
+    next_cell = bisect.bisect(site_offsets, self.cell_size) - 1
+
+    inter_cell_hopping_terms = [
+        n for n, t in enumerate(self.terms)
+        # *from* site is in interface
+        if (self.subgraphs[t.subgraph][0][1] >= next_cell
+            and self.subgraphs[t.subgraph][0][0] < next_cell)
+    ]
+    reversed_inter_cell_hopping_terms = [
+        n for n, t in enumerate(self.terms)
+        # *to* site is in interface
+        if (self.subgraphs[t.subgraph][0][0] >= next_cell
+            and self.subgraphs[t.subgraph][0][1] < next_cell)
+    ]
+
+    # Evaluate inter-cell hoppings only
+    inter_cell_hams = [
+        self.hamiltonian_term(n, args=args, params=params)
+        for n in inter_cell_hopping_terms
+    ]
+    reversed_inter_cell_hams = [
+        self.hamiltonian_term(n, args=args, params=params)
+            .conjugate().transpose(0, 2, 1)
+        for n in reversed_inter_cell_hopping_terms
+    ]
+
+    hams = inter_cell_hams + reversed_inter_cell_hams
+
+    subgraphs = [
+        self.subgraphs[self.terms[n].subgraph]
+        for n in inter_cell_hopping_terms
+    ]
+    subgraphs += [
+        _reverse_subgraph(self.subgraphs[self.terms[n].subgraph])
+        for n in reversed_inter_cell_hopping_terms
+    ]
+
+    # All the 'from' sites are in the previous domain, but to build a
+    # matrix we need to get the equivalent sites in the fundamental domain.
+    # We set the 'from' site array to the one from the fundamental domain.
+    subgraphs = [
+        ((to_sa, from_sa - next_cell), (to_off, from_off))
+        for (to_sa, from_sa), (to_off, from_off) in subgraphs
+    ]
+
+    # _count_norbs requires passing hamiltonians for all terms, or 'None'
+    # if it has not been evaluated
+    all_hams = [None] * len(self.terms)
+    for n, ham in zip(inter_cell_hopping_terms, inter_cell_hams):
+        all_hams[n] = ham
+    for n, ham in zip(reversed_inter_cell_hopping_terms,
+                      reversed_inter_cell_hams):
+        # Transpose to get back correct shape wrt. original term
+        all_hams[n] = ham.transpose(0, 2, 1)
+    norbs, orb_offsets = _count_norbs(self, site_offsets, all_hams,
+                                      args=args, params=params)
+
+    shape = (orb_offsets[next_cell],
+             orb_offsets[len(self.site_arrays) - next_cell])
+    func = _vectorized_make_sparse if sparse else _vectorized_make_dense
+    mat = func(subgraphs, hams, norbs, orb_offsets, site_offsets, shape=shape)
+    return mat

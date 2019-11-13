@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2011-2018 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -402,7 +402,7 @@ def sys_leads_sites(sys, num_lead_cells=2):
     Returns
     -------
     sites : list of (site, lead_number, copy_number) tuples
-        A site is a `~kwant.builder.Site` instance if the system is not finalized,
+        A site is a `~kwant.system.Site` instance if the system is not finalized,
         and an integer otherwise.  For system sites `lead_number` is `None` and
         `copy_number` is `0`, for leads both are integers.
     lead_cells : list of slices
@@ -427,7 +427,7 @@ def sys_leads_sites(sys, num_lead_cells=2):
                               lead.builder.sites() for i in
                               range(num_lead_cells)))
             lead_cells.append(slice(start, len(sites)))
-    elif isinstance(syst, system.FiniteSystem):
+    elif system.is_finite(syst):
         sites = [(i, None, 0) for i in range(syst.graph.num_nodes)]
         for leadnr, lead in enumerate(syst.leads):
             start = len(sites)
@@ -528,7 +528,7 @@ def sys_leads_hoppings(sys, num_lead_cells=2):
     Returns
     -------
     hoppings : list of (hopping, lead_number, copy_number) tuples
-        A site is a `~kwant.builder.Site` instance if the system is not finalized,
+        A site is a `~kwant.system.Site` instance if the system is not finalized,
         and an integer otherwise.  For system sites `lead_number` is `None` and
         `copy_number` is `0`, for leads both are integers.
     lead_cells : list of slices
@@ -812,7 +812,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
     - The meaning of "site" depends on whether the system to be plotted is a
       builder or a low level system.  For builders, a site is a
-      kwant.builder.Site object.  For low level systems, a site is an integer
+      kwant.system.Site object.  For low level systems, a site is an integer
       -- the site number.
 
     - color and symbol definitions may be tuples, but not lists or arrays.
@@ -961,7 +961,7 @@ def plot(sys, num_lead_cells=2, unit='nn',
 
     if site_color is None:
         cycle = _color_cycle()
-        if isinstance(syst, (builder.FiniteSystem, builder.InfiniteSystem)):
+        if builder.is_system(syst):
             # Skipping the leads for brevity.
             families = sorted({site.family for site in syst.sites})
             color_mapping = dict(zip(families, cycle))
@@ -1291,7 +1291,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
     if callable(value):
         value = [value(site[0]) for site in sites]
     else:
-        if not isinstance(syst, system.FiniteSystem):
+        if not system.is_finite(syst):
             raise ValueError('List of values is only allowed as input '
                              'for finalized systems.')
     value = np.array(value)
@@ -1407,7 +1407,7 @@ def bands(sys, args=(), momenta=65, file=None, show=True, dpi=None,
                            "for bands()")
 
     syst = sys  # for naming consistency inside function bodies
-    _common.ensure_isinstance(syst, system.InfiniteSystem)
+    _common.ensure_isinstance(syst, (system.InfiniteSystem, system.InfiniteVectorizedSystem))
 
     momenta = np.array(momenta)
     if momenta.ndim != 1:
@@ -1483,7 +1483,7 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
     if y is not None and not _p.has3d:
         raise RuntimeError("Installed matplotlib does not support 3d plotting")
 
-    if isinstance(syst, system.FiniteSystem):
+    if system.is_finite(syst):
         def ham(**kwargs):
             return syst.hamiltonian_submatrix(params=kwargs, sparse=False)
     elif callable(syst):
@@ -1751,7 +1751,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
         the extents of `field`: ((x0, x1), (y0, y1), ...)
 
     """
-    if not isinstance(syst, builder.FiniteSystem):
+    if not builder.is_finite_system(syst):
         raise TypeError("The system needs to be finalized.")
 
     if len(current) != syst.graph.num_edges:
@@ -1844,7 +1844,7 @@ def interpolate_density(syst, density, relwidth=None, abswidth=None, n=9,
         the extents of ``field``: ((x0, x1), (y0, y1), ...)
 
     """
-    if not isinstance(syst, builder.FiniteSystem):
+    if not builder.is_finite_system(syst):
         raise TypeError("The system needs to be finalized.")
 
     if len(density) != len(syst.sites):

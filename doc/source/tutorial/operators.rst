@@ -438,7 +438,7 @@ the `~kwant.operator.Current`, instead of a constant matrix:
     # evaluate the operator
     m_current = J_m(psi, params=dict(r0=25, delta=10))
 
-The function must take a `~kwant.builder.Site` as its first parameter,
+The function must take a `~kwant.system.Site` as its first parameter,
 and may optionally take other parameters (i.e. it must have the same
 signature as a Hamiltonian onsite function), and must return the square
 matrix that defines the operator we wish to calculate.
@@ -529,8 +529,8 @@ We see that the probability current is conserved across the scattering region,
 but the z-projected spin current is not due to the fact that the Hamiltonian
 does not commute with :math:`σ_z` everywhere in the scattering region.
 
-.. note:: ``where`` can also be provided as a sequence of `~kwant.builder.Site`
-          or a sequence of hoppings (i.e. pairs of `~kwant.builder.Site`),
+.. note:: ``where`` can also be provided as a sequence of `~kwant.system.Site`
+          or a sequence of hoppings (i.e. pairs of `~kwant.system.Site`),
           rather than a function.
 
 

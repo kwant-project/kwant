@@ -183,6 +183,9 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
         f.__signature__ = inspect.Signature(params.values())
         return f
 
+    if builder.vectorize:
+        raise TypeError("'wraparound' does not work with vectorized Builders.")
+
     try:
         momenta = ['k_{}'.format(coordinate_names[i])
                    for i in range(len(builder.symmetry.periods))]

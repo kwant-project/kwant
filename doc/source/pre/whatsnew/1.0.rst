@@ -39,7 +39,7 @@ now it suffices to write ::
     syst[lat.neighbors()] = t
 
 This is possible because `~kwant.builder.Builder` now accepts *functions* as
-keys in addition to `~kwant.builder.Site` objects and tuples of them
+keys in addition to `~kwant.system.Site` objects and tuples of them
 (hoppings).  These functions are expected to yield either sites or hoppings,
 when given a builder instance as the sole argument. The use of such keys is to
 implement sets of sites or hoppings that depend on what is already present in

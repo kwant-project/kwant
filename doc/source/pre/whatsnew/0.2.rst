@@ -42,7 +42,7 @@ description check `~kwant.plotter.plot` documentation.
 
 The behavior of `~kwant.plotter.plot` with low level systems has changed.
 Arguments of plot which are functions are given site numbers in place of
-`~kwant.builder.Site` objects when plotting a low level system.  This
+`~kwant.system.Site` objects when plotting a low level system.  This
 provides an easy way to make the appearance of lines and symbols depend on
 computation results.
 

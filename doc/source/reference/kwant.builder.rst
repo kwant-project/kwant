@@ -9,7 +9,6 @@ Types
    :toctree: generated/
 
    Builder
-   Site
    HoppingKind
    SimpleSiteFamily
    BuilderLead
@@ -17,13 +16,14 @@ Types
    ModesLead
    FiniteSystem
    InfiniteSystem
+   FiniteVectorizedSystem
+   InfiniteVectorizedSystem
 
 Abstract base classes
 ---------------------
 .. autosummary::
    :toctree: generated/
 
-   SiteFamily
    Symmetry
    Lead
 
@@ -33,3 +33,11 @@ Functions
    :toctree: generated/
 
    add_peierls_phase
+
+Mixin Classes
+-------------
+.. autosummary::
+   :toctree: generated/
+
+   _FinalizedBuilderMixin
+   _VectorizedFinalizedBuilderMixin
