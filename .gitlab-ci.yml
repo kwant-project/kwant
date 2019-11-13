@@ -89,24 +89,18 @@ build-env:default:
   before_script:
     - source deactivate
     - source activate kwant-latest
-    - pip install qsymm
 
 .bleeding-edge-env: &bleeding_edge_env
   before_script:
     - source deactivate
     - conda env update -f /kwant-latest.yml
     - source activate kwant-latest
-    - pip install qsymm
 
 .ubuntu-env: &ubuntu_env
   image: gitlab.kwant-project.org:5005/kwant/kwant/ubuntu
-  before_script:
-    - pip3 install qsymm
 
 .debian-env: &debian_env
   image: gitlab.kwant-project.org:5005/kwant/kwant/debian
-  before_script:
-    - pip3 install qsymm
 
 ## Build Jobs
 

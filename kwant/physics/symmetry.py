@@ -37,7 +37,7 @@ _names = ['Time reversal', 'Particle-hole', 'Chiral']
 _signs = [1, -1, -1]
 
 class DiscreteSymmetry:
-    """A collection of discrete symmetries and conservation laws.
+    r"""A collection of discrete symmetries and conservation laws.
 
     Parameters
     ----------
@@ -52,22 +52,46 @@ class DiscreteSymmetry:
 
     Notes
     -----
-    Whenever one or more discrete symmetry is declared in conjunction with a
-    conservation law, the symmetry operators and projectors must be declared
-    in canonical form. This means that each block of the Hamiltonian is
-    transformed either to itself by a discrete symmetry or to a single
-    other block.
 
-    More formally, consider a discrete symmetry S. The symmetry projection
-    that maps from block i to block j of the Hamiltonian with projectors
-    :math:`P_i` and :math:`P_j` is :math:`S_{ji} = P_j^+ S P_i`.
-    If :math:`S_{ji}` is nonzero, a symmetry relation exists between
-    blocks i and j. Canonical form means that for each j, the block
-    :math:`S_{ji}` is nonzero at most for one i, while all other blocks vanish.
+    When computing scattering modes, the representation of the
+    modes is chosen to reflect declared discrete symmetries and
+    conservation laws.
 
-    If the operators are not in canonical form, they can be made so by
-    further splitting the Hamiltonian into smaller blocks, i.e. by adding
-    more projectors.
+    `projectors` block diagonalize the Hamiltonian, and modes are computed
+    separately in each block. The ordering of blocks is the same as of
+    `projectors`. If `conservation_law` is declared in
+    `~kwant.builder.Builder`, `projectors` is computed as the projectors
+    onto its orthogonal eigensubspaces. The projectors are stored in the
+    order of ascending eigenvalues of `conservation_law`.
+
+    Symmetrization using discrete symmetries varies depending on whether
+    a conservation law/projectors are declared. Consider the case with no
+    conservation law declared. With `time_reversal` declared, the outgoing
+    modes are chosen as the time-reversed partners of the incoming modes,
+    i.e. :math:`\psi_{out}(-k) = T \psi_{in}(k)` with k the momentum.
+    `chiral` also relates incoming and outgoing modes, such that
+    :math:`\psi_{out}(k) = C \psi_{in}(k)`. `particle_hole` gives symmetric
+    incoming and outgoing modes separately, such that
+    :math:`\psi_{in/out}(-k) = P \psi_{in/out}(k)`, except when k=-k, at
+    k = 0 or :math:`\pi`. In this case, each mode is chosen as an eigenstate
+    :math:`P \psi = \psi` if :math:`P^2=1`. If :math:`P^2=-1`, we
+    symmetrize the modes by generating pairs of orthogonal modes
+    :math:`\psi` and :math:`P\psi`. Because `chiral` and `particle_hole`
+    flip the sign of energy, they only apply at zero energy.
+
+    Discrete symmetries can be combined with a conservation law if they
+    leave each block invariant or transform it to another block. With S
+    a discrete symmetry and :math:`P_i` and :math:`P_j` projectors onto
+    blocks i and j of the Hamiltonian, :math:`S_{ji} = P_j^+ S P_i` is the
+    symmetry projection that maps from block i to block j.
+    :math:`S_{ji} = P_j^+ S P_i` must for each j be nonzero for exactly
+    one i. If S leaves block i invariant, the modes within block i are
+    symmetrized using the nonzero projection :math:`S_{ii}`, like in the
+    case without a conservation law. If S transforms between blocks i and
+    j, the modes of the block with the larger index are obtained by
+    transforming the modes of the block with the lower index. Thus, with
+    :math:`\psi_i` and :math:`\psi_j` the modes of blocks i and j, we have
+    :math:`\psi_j = S_{ji} \psi_i`.
     """
     def __init__(self, projectors=None, time_reversal=None, particle_hole=None,
                  chiral=None):

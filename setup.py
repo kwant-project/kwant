@@ -588,7 +588,7 @@ def main():
               'plotting': 'matplotlib >= 1.5.1',
               'continuum': 'sympy >= 0.7.6',
               # qsymm is only packaged on PyPI
-              'qsymm': 'qsymm >= 1.1.2',
+              'qsymm': 'qsymm >= 1.2.6',
           },
           classifiers=[c.strip() for c in classifiers.split('\n')])
 

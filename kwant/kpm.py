@@ -780,6 +780,8 @@ def conductivity(hamiltonian, alpha='x', beta='x', positions=None, **kwargs):
 
     Parameters
     ----------
+    hamiltonian : `~kwant.system.FiniteSystem` or matrix Hamiltonian
+        If a system is passed, it should contain no leads.
     alpha, beta : str, or operators
         If ``hamiltonian`` is a kwant system, or if the ``positions``
         are provided, ``alpha`` and ``beta`` can be the directions of the
@@ -1051,10 +1053,11 @@ def _velocity(hamiltonian, params, op_type, positions):
     elif isinstance(op_type, str):
         direction = directions[op_type]
         if isinstance(hamiltonian, system.System):
-            operator = hamiltonian.hamiltonian_submatrix(params=params,
-                                                         sparse=True)
-            positions = np.array([site.pos for site in hamiltonian.sites
-                                  for iorb in range(site.family.norbs)])
+            operator, norbs, norbs = hamiltonian.hamiltonian_submatrix(
+                params=params, sparse=True, return_norb=True
+            )
+            positions = np.vstack([[hamiltonian.pos(i)] * norb
+                                   for i, norb in enumerate(norbs)])
         elif positions is not None:
             operator = coo_matrix(hamiltonian, copy=True)
         displacements = positions[operator.col] - positions[operator.row]

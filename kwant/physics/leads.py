@@ -130,11 +130,10 @@ class PropagatingModes:
     momentum and velocity, an arbitrary orthonormal basis in the subspace of
     these modes is chosen.
 
-    If a conservation law is specified to block diagonalize the Hamiltonian
-    to N blocks, then `block_nmodes[i]` is the number of left or right moving
-    propagating modes in conservation law block `i`. The ordering of blocks
-    is the same as the ordering of the projectors used to block diagonalize
-    the Hamiltonian.
+    If a conservation law is specified to block diagonalize the Hamiltonian,
+    then `block_nmodes[i]` is the number of left or right moving propagating
+    modes in conservation law block `i`. The ordering of blocks is the same as
+    the ordering of the projectors used to block diagonalize the Hamiltonian.
     """
     def __init__(self, wave_functions, velocities, momenta):
         kwargs = locals()
@@ -1045,6 +1044,10 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *,
 
     Propagating modes with the same momentum are orthogonalized. All the
     propagating modes are normalized by current.
+
+    `projectors`, `time_reversal`, `particle_hole`, and `chiral` affect the
+    basis in which the scattering modes are expressed - see
+    `~kwant.physics.DiscreteSymmetry` for details.
 
     This function uses the most stable and efficient algorithm for calculating
     the mode decomposition that the Kwant authors are aware about. Its details

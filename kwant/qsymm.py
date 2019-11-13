@@ -68,8 +68,8 @@ def builder_to_model(syst, momenta=None, real_space=True,
     is used in finalized kwant systems.
     """
     def term_to_model(d, par, matrix):
-        if np.allclose(matrix, 0):
-            result = BlochModel({})
+        if allclose(matrix, 0):
+            result = BlochModel({}, shape=matrix.shape, format=np.ndarray)
         else:
             result = BlochModel({BlochCoeff(d, qsymm.sympify(par)): matrix},
                                 momenta=momenta)
@@ -323,8 +323,8 @@ def model_to_builder(model, norbs, lat_vecs, atom_coords, *, coeffs=None):
 
     # Keep track of the hoppings and onsites by storing those
     # which have already been set.
-    hopping_dict = defaultdict(dict)
-    onsites_dict = defaultdict(dict)
+    hopping_dict = defaultdict(lambda: 0)
+    onsites_dict = defaultdict(lambda: 0)
 
     # Iterate over all terms in the model.
     for key, hop_mat in model.items():

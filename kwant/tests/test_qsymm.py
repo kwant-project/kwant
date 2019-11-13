@@ -19,7 +19,7 @@ from qsymm.symmetry_finder import symmetries
 from qsymm.hamiltonian_generator import bloch_family, hamiltonian_from_family
 from qsymm.groups import (hexagonal, PointGroupElement, spin_matrices,
                           spin_rotation, ContinuousGroupGenerator)
-from qsymm.model import Model, e, I, _commutative_momenta
+from qsymm.model import Model, BlochModel, BlochCoeff
 from qsymm.linalg import allclose
 
 import kwant
@@ -41,7 +41,7 @@ def test_honeycomb():
     syst[lat.neighbors(1)] = -1
 
     H = builder_to_model(syst)
-    sg, cs = symmetries(H, hexagonal(sympy_R=False), prettify=True)
+    sg, cs = symmetries(H, hexagonal(sympy_R=False))
     assert len(sg) == 24
     assert len(cs) == 0
 
@@ -52,7 +52,7 @@ def test_honeycomb():
     syst[lat.neighbors(1)] = lambda site1, site2, t: t
 
     H = builder_to_model(syst)
-    sg, cs = symmetries(H, hexagonal(sympy_R=False), prettify=True)
+    sg, cs = symmetries(H, hexagonal(sympy_R=False))
     assert len(sg) == 12
     assert len(cs) == 0
 
@@ -93,7 +93,7 @@ def test_higher_dim():
     syst[lat(0, 0, 0), lat(1, 0, -1)] = -1
 
     H = builder_to_model(syst)
-    sg, cs = symmetries(H, prettify=True)
+    sg, cs = symmetries(H)
     assert len(sg) == 2
     assert len(cs) == 5
 
@@ -107,7 +107,7 @@ def test_higher_dim():
     syst[lat(0, 0, 0), lat(1, 0, -1)] = -1
 
     H = builder_to_model(syst)
-    sg, cs = symmetries(H, hexagonal(sympy_R=False), prettify=True)
+    sg, cs = symmetries(H, hexagonal(sympy_R=False))
     assert len(sg) == 24
     assert len(cs) == 0
 
@@ -137,9 +137,9 @@ def test_graphene_to_kwant():
     family = bloch_family(hopping_vectors, symmetries, norbs)
     syst_from_family = model_to_builder(family, norbs, lat_vecs, atom_coords, coeffs=None)
     # Generate using a single Model object
-    g = sympy.Symbol('g', real=True)
-    ham = hamiltonian_from_family(family, coeffs=[g])
-    ham = Model(hamiltonian=ham, momenta=family[0].momenta)
+    g = sympy.Symbol('g')
+    # tosympy=False to return a BlochModel
+    ham = hamiltonian_from_family(family, coeffs=[g], tosympy=False)
     syst_from_model = model_to_builder(ham, norbs, lat_vecs, atom_coords)
 
     # Make the graphene Hamiltonian using kwant only
@@ -185,9 +185,9 @@ def test_graphene_to_kwant():
                Model({one: np.array([[0, 0], [0, 1]])}, momenta=family[0].momenta)]
     family = family + onsites
     syst_from_family = model_to_builder(family, norbs, lat_vecs, atom_coords, coeffs=None)
-    gs = list(sympy.symbols('g0:%d'%3, real=True))
-    ham = hamiltonian_from_family(family, coeffs=gs)
-    ham = Model(hamiltonian=ham, momenta=family[0].momenta)
+    gs = list(sympy.symbols('g0:3'))
+    # tosympy=False to return a BlochModel
+    ham = hamiltonian_from_family(family, coeffs=gs, tosympy=False)
     syst_from_model = model_to_builder(ham, norbs, lat_vecs, atom_coords)
 
     def onsite_A(site, c1):
@@ -277,16 +277,16 @@ def test_inverse_transform():
     # Hopping to a neighbouring atom one primitive lattice vector away
     hopping_vectors = [('A', 'A', [1, 0])]
     # Make family
-    family = bloch_family(hopping_vectors, symmetries, norbs)
+    family = bloch_family(hopping_vectors, symmetries, norbs, bloch_model=True)
     fam = hamiltonian_from_family(family, tosympy=False)
     # Atomic coordinates within the unit cell
     atom_coords = [(0, 0)]
     lat_vecs = [(1, 0), (0, 1)]
     syst = model_to_builder(fam, norbs, lat_vecs, atom_coords)
     # Convert it back
-    ham2 = builder_to_model(syst).tomodel(nsimplify=True)
+    ham2 = builder_to_model(syst)
     # Check that it's the same as the original
-    assert fam == ham2
+    assert fam.allclose(ham2)
 
     # Check that the Hamiltonians are identical at random points in the Brillouin zone
     sysw = kwant.wraparound.wraparound(syst).finalized()
@@ -314,12 +314,11 @@ def test_consistency_kwant():
     H += H.T.conj()
 
     # Make the 1D Model manually using only qsymm features.
-    c0, c1 = sympy.symbols('c0 c1', real=True)
-    kx = _commutative_momenta[0]
+    c0, c1 = sympy.symbols('c0 c1')
 
-    Ham = Model({c0 * e**(-I*kx): T}, momenta=['k_x'])
+    Ham = BlochModel({BlochCoeff(np.array([-1]), c0): T}, momenta=['k_x'])
     Ham += Ham.T().conj()
-    Ham += Model({c1: H}, momenta=['k_x'])
+    Ham += BlochModel({BlochCoeff(np.array([0]), c1): H}, momenta=['k_x'])
 
     # Two superimposed atoms, same number of orbitals on each
     norbs = OrderedDict([('A', orbs), ('B', orbs)])
@@ -367,8 +366,8 @@ def test_consistency_kwant():
                      np.exp(1j*k)*model_kwant_hop.T.conj()) # As in kwant.Bands
     h_model = Ham.lambdify()
     wsyst = kwant.wraparound.wraparound(model_syst).finalized()
-    for _ in range(20):
-        k = (np.random.rand() - 0.5)*2*np.pi
+    ks = np.linspace(-np.pi, np.pi, 21)
+    for k in ks:
         assert allclose(h_model_kwant(k), h_model(coeffs[0], coeffs[1], k))
         params['k_x'] = k
         h_wrap = wsyst.hamiltonian_submatrix(params=params)
@@ -376,11 +375,11 @@ def test_consistency_kwant():
 
     # Get the model back from the builder
     # From the Kwant builder based on original Model
-    Ham1 = builder_to_model(model_syst, momenta=Ham.momenta).tomodel(nsimplify=True)
+    Ham1 = builder_to_model(model_syst, momenta=Ham.momenta)
     # From the pure Kwant builder
-    Ham2 = builder_to_model(kwant_syst, momenta=Ham.momenta).tomodel(nsimplify=True)
-    assert Ham == Ham1
-    assert Ham == Ham2
+    Ham2 = builder_to_model(kwant_syst, momenta=Ham.momenta)
+    assert Ham.allclose(Ham1)
+    assert Ham.allclose(Ham2)
 
 
 def test_find_builder_discrete_symmetries():
@@ -405,12 +404,15 @@ def test_find_builder_discrete_symmetries():
         bulk[kwant.builder.HoppingKind((1, 0), lat)] = h_hop
         bulk[kwant.builder.HoppingKind((0, 1), lat)] = h_hop
 
+        # We need to specify 'prettify=True' here to ensure that we do not end up with
+        # an overcomplete set of symmetries. In some badly conditioned cases sparse=True
+        # or sparse=False may affect how many symmetries are found.
         builder_symmetries_default = find_builder_symmetries(bulk, spatial_symmetries=True,
                                                              prettify=True)
         builder_symmetries_sparse = find_builder_symmetries(bulk, spatial_symmetries=True,
                                                             prettify=True, sparse=True)
         builder_symmetries_dense = find_builder_symmetries(bulk, spatial_symmetries=True,
-                                                            prettify=True, sparse=False)
+                                                           prettify=True, sparse=False)
 
         assert len(builder_symmetries_default) == len(builder_symmetries_sparse)
         assert len(builder_symmetries_default) == len(builder_symmetries_dense)
@@ -476,7 +478,7 @@ def test_find_cons_law():
     syst[lat(1)] = np.kron(sy, ons)
     syst[lat(1), lat(0)] = np.kron(sy, hop)
 
-    builder_symmetries = find_builder_symmetries(syst, spatial_symmetries=False, prettify=True)
+    builder_symmetries = find_builder_symmetries(syst, spatial_symmetries=False)
     onsites = [symm for symm in builder_symmetries if
                isinstance(symm, qsymm.ContinuousGroupGenerator) and symm.R is None]
     mham = builder_to_model(syst)
@@ -508,8 +510,7 @@ def test_basis_ordering():
 
         # Find the symmetries of the square
         builder_symmetries = find_builder_symmetries(square,
-                                                     spatial_symmetries=False,
-                                                     prettify=True)
+                                                     spatial_symmetries=False)
         # Finalize the square, extract Hamiltonian
         fsquare = square.finalized()
         ham = fsquare.hamiltonian_submatrix()
