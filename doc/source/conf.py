@@ -270,8 +270,13 @@ def setup(app):
     app.add_autodocumenter(BoundMethodDocumenter)
 
 
-# IOP times out on check but the link verified and correct.
-linkcheck_ignore = [r'https://iopscience.iop.org/1367-2630/16/6/063065/article']
+# By default linkcheck only tries once, but experience has shown us that this test is
+# very non-specific for detecting dead links. Trying a few times should significantly
+# lower the probability of false positives.
+linkcheck_retries = 5
+# Some websites (particularly IoP) take a long time to respond. The combination of
+# this timeout and the retries should make this check sufficiently specific.
+linkcheck_timeout = 10
 
 nitpick_ignore = [('py:class', 'Warning'), ('py:class', 'Exception'),
                   ('py:class', 'object'), ('py:class', 'tuple'),
