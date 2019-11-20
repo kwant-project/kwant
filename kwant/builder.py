@@ -1,4 +1,3 @@
-
 # Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
@@ -1985,7 +1984,8 @@ def add_peierls_phase(syst, peierls_parameter='phi', fix_gauge=True):
         @wraps(gauge)
         def f(*args, **kwargs):
             phases = gauge(*args, **kwargs)
-            if not isinstance(phases, tuple):
+            # When there are no leads 'gauge' returns a single callable
+            if not syst.leads:
                 phases = (phases,)
             return dict(zip(phase_names, phases))
 
