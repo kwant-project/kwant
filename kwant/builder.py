@@ -1869,6 +1869,9 @@ def add_peierls_phase(syst, peierls_parameter='phi', fix_gauge=True):
         @wraps(gauge)
         def f(*args, **kwargs):
             phases = gauge(*args, **kwargs)
+            # When there are no leads 'gauge' returns a single callable
+            if not syst.leads:
+                phases = (phases,)
             return dict(zip(phase_names, phases))
 
         f.__doc__ = doc
