@@ -376,16 +376,16 @@ class VectorizedSystem(System, metaclass=abc.ABCMeta):
         conjugate to be added when evaluating the Hamiltonian, and 'parameters'
         contains a list of parameter names used when evaluating this term.
     site_arrays : sequence of SiteArray
-        The sites of the system.
-    site_ranges : None or Nx3 integer array
+        The sites of the system. The family of each site array must have
+        ``norbs`` specified.
+    site_ranges : Nx3 integer array
         Has 1 row per site array, plus one extra row.  Each row consists
         of ``(first_site, norbs, orb_offset)``: the index of the first
         site in the site array, the number of orbitals on each site in
         the site array, and the offset of the first orbital of the first
         site in the site array.  In addition, the final row has the form
         ``(len(graph.num_nodes), 0, tot_norbs)`` where ``tot_norbs`` is the
-        total number of orbitals in the system.  ``None`` if any site array
-        in 'site_arrays' does not have 'norbs' specified. Note 'site_ranges'
+        total number of orbitals in the system. Note 'site_ranges'
         is directly computable from 'site_arrays'.
     parameters : frozenset of strings
         The names of the parameters on which the system depends. This attribute
