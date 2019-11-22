@@ -10,7 +10,7 @@ The principal developers of Kwant are
 * `Michael Wimmer <https://michaelwimmer.org>`_ (TU Delft)
 * `Anton Akhmerov <http://antonakhmerov.org>`_ (TU Delft)
 * `Xavier Waintal <http://inac.cea.fr/Pisp/xavier.waintal>`_ (CEA Grenoble)
-* `Joseph Weston <http://josephweston.org>`_ (TU Delft)
+* `Joseph Weston <https://joseph.weston.cloud>`_ (TU Delft)
 
 Contributors to Kwant include
 
