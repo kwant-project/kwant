@@ -431,8 +431,6 @@ class VectorizedSystem(System, metaclass=abc.ABCMeta):
     def site_ranges(self):
         site_offsets = np.cumsum([0] + [len(arr) for arr in self.site_arrays])
         norbs = [arr.family.norbs for arr in self.site_arrays] + [0]
-        if any(norb is None for norb in norbs):
-            return None
         orb_offsets = np.cumsum(
             [0] + [len(arr) * arr.family.norbs for arr in self.site_arrays]
         )
