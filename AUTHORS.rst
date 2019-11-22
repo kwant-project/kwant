@@ -15,9 +15,11 @@ The principal developers of Kwant are
 Contributors to Kwant include
 
 * Jörg Behrmann (FU Berlin)
+* Pierre Carmier (CEA Grenoble)
 * Paul Clisson (CEA Grenoble)
 * Mathieu Istas (CEA Grenoble)
 * Daniel Jaschke (CEA Grenoble)
+* Thomas Kloss (CEA Grenoble)
 * Bas Nijholt (TU Delft)
 * Michał Nowak (TU Delft)
 * Viacheslav Ostroukh (Leiden University)
@@ -27,8 +29,6 @@ Contributors to Kwant include
 * Rafał Skolasiński (TU Delft)
 * Adrien Sorgniard (CEA Grenoble)
 * Dániel Varjas (TU Delft)
-* Thomas Kloss (CEA Grenoble)
-* Pierre Carmier (CEA Grenoble)
 
 We thank Christoph Gohlke for the creation of installers for Microsoft Windows.
 
