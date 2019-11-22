@@ -17,6 +17,7 @@ Contributors to Kwant include
 * Jörg Behrmann (FU Berlin)
 * Pierre Carmier (CEA Grenoble)
 * Paul Clisson (CEA Grenoble)
+* `Dennis Heffels <mailto:d.heffels@fz-juelich.de>`_ (FZJ PGI-9)
 * Mathieu Istas (CEA Grenoble)
 * Daniel Jaschke (CEA Grenoble)
 * Thomas Kloss (CEA Grenoble)
