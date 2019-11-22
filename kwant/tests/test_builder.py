@@ -740,15 +740,19 @@ def test_vectorized_hamiltonian_evaluation():
     )
 
 
-def test_vectorized_requires_norbs():
+@pytest.mark.parametrize("sym", [
+    builder.NoSymmetry(),
+    kwant.TranslationalSymmetry([-1]),
+])
+def test_vectorized_requires_norbs(sym):
 
     # Catch deprecation warning for lack of norbs
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        fam = builder.SimpleSiteFamily()
+        lat = kwant.lattice.chain()
 
-    syst = builder.Builder(vectorize=True)
-    syst[fam(0, 0)] = 1
+    syst = builder.Builder(sym, vectorize=True)
+    syst[lat(0)] = 1
 
     raises(ValueError, syst.finalized)
 
