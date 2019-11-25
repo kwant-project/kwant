@@ -544,12 +544,6 @@ cdef class _LocalOperator:
         elif ket.shape != (tot_norbs,):
             raise ValueError('ket vector is incorrect shape')
 
-        where = np.asarray(self.where)
-        where.setflags(write=False)
-        if self.where.shape[1] == 1:
-            # if `where` just contains sites, then we want a strictly 1D array
-            where = where.reshape(-1)
-
         result = np.zeros((self.where.shape[0],), dtype=complex)
         self._operate(out_data=result, bra=bra, ket=ket, args=args,
                       params=params, op=MAT_ELS)
