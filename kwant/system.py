@@ -12,6 +12,7 @@ __all__ = [
     'Site', 'SiteArray', 'SiteFamily',
     'System', 'VectorizedSystem', 'FiniteSystem', 'FiniteVectorizedSystem',
     'InfiniteSystem', 'InfiniteVectorizedSystem',
+    'is_finite', 'is_infinite', 'is_vectorized',
 ]
 
 import abc
@@ -735,6 +736,10 @@ class InfiniteVectorizedSystem(VectorizedSystem, InfiniteSystemMixin, metaclass=
 
 def is_infinite(syst):
     return isinstance(syst, (InfiniteSystem, InfiniteVectorizedSystem))
+
+
+def is_vectorized(syst):
+    return isinstance(syst, (FiniteVectorizedSystem, InfiniteVectorizedSystem))
 
 
 class PrecalculatedLead:
