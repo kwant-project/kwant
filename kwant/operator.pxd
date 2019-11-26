@@ -4,17 +4,24 @@ from .graph.defs import gint_dtype
 
 cdef gint _bisect(gint[:] a, gint x)
 
-cdef int _is_herm_conj(complex[:, :] a, complex[:, :] b,
-                       double atol=*, double rtol=*) except -1
+cdef int _is_hermitian(
+    complex[:, :] a, double atol=*, double rtol=*
+) except -1
+
+cdef int _is_hermitian_3d(
+    complex[:, :, :] a, double atol=*, double rtol=*
+) except -1
 
 cdef _select(gint[:, :] arr, gint[:] indexes)
 
 cdef int _check_onsite(complex[:, :] M, gint norbs,
                        int check_hermiticity) except -1
 
-cdef int _check_ham(complex[:, :] H, ham, args, params,
-                    gint a, gint a_norbs, gint b, gint b_norbs,
-                    int check_hermiticity) except -1
+cdef int _check_onsites(complex[:, :, :] M, gint norbs,
+                        int check_hermiticity) except -1
+
+cdef int _check_hams(complex[:, :, :] H, gint to_norbs, gint from_norbs,
+                     int check_hermiticity) except -1
 
 cdef void _get_orbs(gint[:, :] site_ranges, gint site,
                     gint *start_orb, gint *norbs)
