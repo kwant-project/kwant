@@ -4,8 +4,8 @@ What's new in Kwant 1.5
 This article explains the user-visible changes in Kwant 1.5.0.
 
 
-Value functions may now be vectorized
--------------------------------------
+Kwant supports vectorized value functions
+-----------------------------------------
 It is now possible to define value functions that act on whole
 arrays of sites at a time.
 ::
@@ -35,6 +35,19 @@ using ``numpy``. Using vectorized value functions in this way can produce an
 order of magnitude speedup when evaluating system Hamiltonians (though this
 speedup may be masked by other parts of your computation e.g. calculating
 the scattering matrix).
+
+Similarly, the ``onsite`` passed to an operator may now be vectorized in the same
+way, as long as the system passed to the operator is also vectorized:
+::
+
+    def x_onsite(sites):
+        x, _ = sites.positions().transpose()
+        return x
+
+    x_position = kwant.operator.Density(syst, x_onsite)
+
+    psi = kwant.wave_function(syst, energy=0.1)(0)[0]
+    x_position(psi)
 
 
 Deprecation of leaving 'norbs' unset for site families
