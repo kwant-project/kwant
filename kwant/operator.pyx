@@ -10,7 +10,6 @@
 __all__ = ['Density', 'Current', 'Source']
 
 import cython
-from operator import itemgetter
 import functools as ft
 import collections
 import warnings
@@ -306,7 +305,7 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
             # bottleneck, then we can add a code path for scalar onsites
             max_norbs = max(norbs for (_, norbs, _) in syst.site_ranges)
             _onsite = _onsite[0, 0] * ta.identity(max_norbs, complex)
-        elif len(set(map(itemgetter(1), syst.site_ranges[:-1]))) == 1:
+        elif len(set(norbs for _, norbs, _ in syst.site_ranges[:-1])) == 1:
             # we have the same number of orbitals everywhere
             norbs = syst.site_ranges[0][1]
             if _onsite.shape[0] != norbs:
