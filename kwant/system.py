@@ -9,7 +9,7 @@
 """Low-level interface of systems"""
 
 __all__ = [
-    'Site', 'SiteArray', 'SiteFamily',
+    'Site', 'SiteArray', 'SiteFamily', 'Symmetry', 'NoSymmetry',
     'System', 'VectorizedSystem', 'FiniteSystem', 'FiniteVectorizedSystem',
     'InfiniteSystem', 'InfiniteVectorizedSystem',
     'is_finite', 'is_infinite', 'is_vectorized',
@@ -22,6 +22,7 @@ from copy import copy
 from collections import namedtuple
 from functools import total_ordering, lru_cache
 import numpy as np
+import tinyarray as ta
 from . import _system
 from ._common  import deprecate_args, KwantDeprecationWarning
 
@@ -269,6 +270,180 @@ class SiteFamily:
                              'site_family((1, 2))!')
         return Site(self, tag)
 
+
+################ Symmetries
+
+class Symmetry(metaclass=abc.ABCMeta):
+    """Abstract base class for spatial symmetries.
+
+    Many physical systems possess a discrete spatial symmetry, which results in
+    special properties of these systems.  This class is the standard way to
+    describe discrete spatial symmetries in Kwant.  An instance of this class
+    can be passed to a `Builder` instance at its creation.  The most important
+    kind of symmetry is translational symmetry, used to define scattering
+    leads.
+
+    Each symmetry has a fundamental domain -- a set of sites and hoppings,
+    generating all the possible sites and hoppings upon action of symmetry
+    group elements.  A class derived from `Symmetry` has to implement mapping
+    of any site or hopping into the fundamental domain, applying a symmetry
+    group element to a site or a hopping, and a method `which` to determine the
+    group element bringing some site from the fundamental domain to the
+    requested one.  Additionally, it has to have a property `num_directions`
+    returning the number of independent symmetry group generators (number of
+    elementary periods for translational symmetry).
+
+    A ``ValueError`` must be raised by the symmetry class whenever a symmetry
+    is used together with sites whose site family is not compatible with it.  A
+    typical example of this is when the vector defining a translational
+    symmetry is not a lattice vector.
+
+    The type of the domain objects as handled by the methods of this class is
+    not specified.  The only requirement is that it must support the unary
+    minus operation.  The reference implementation of `to_fd()` is hence
+    `self.act(-self.which(a), a, b)`.
+    """
+
+    @abc.abstractproperty
+    def num_directions(self):
+        """Number of elementary periods of the symmetry."""
+        pass
+
+    @abc.abstractmethod
+    def which(self, site):
+        """Calculate the domain of the site.
+
+        Parameters
+        ----------
+        site : `~kwant.system.Site` or `~kwant.system.SiteArray`
+
+        Returns
+        -------
+        group_element : tuple or sequence of tuples
+            A single tuple if ``site`` is a Site, or a sequence of tuples if
+            ``site`` is a SiteArray.  The group element(s) whose action
+            on a certain site(s) from the fundamental domain will result
+            in the given ``site``.
+        """
+        pass
+
+    @abc.abstractmethod
+    def act(self, element, a, b=None):
+        """Act with symmetry group element(s) on site(s) or hopping(s).
+
+        Parameters
+        ----------
+        element : tuple or sequence of tuples
+            Group element(s) with which to act on the provided site(s)
+            or hopping(s)
+        a, b : `~kwant.system.Site` or `~kwant.system.SiteArray`
+            If Site then ``element`` is a single tuple, if SiteArray then
+            ``element`` is a single tuple or a sequence of tuples.
+            If only ``a`` is provided then ``element`` acts on the site(s)
+            of ``a``. If ``b`` is also provided then ``element`` acts
+            on the hopping(s) ``(a, b)``.
+        """
+        pass
+
+    def to_fd(self, a, b=None):
+        """Map a site or hopping to the fundamental domain.
+
+        Parameters
+        ----------
+        a, b : `~kwant.system.Site` or `~kwant.system.SiteArray`
+
+        If ``b`` is None, return a site equivalent to ``a`` within the
+        fundamental domain.  Otherwise, return a hopping equivalent to ``(a,
+        b)`` but where the first element belongs to the fundamental domain.
+
+        Equivalent to `self.act(-self.which(a), a, b)`.
+        """
+        return self.act(-self.which(a), a, b)
+
+    def in_fd(self, site):
+        """Tell whether ``site`` lies within the fundamental domain.
+
+        Parameters
+        ----------
+        site : `~kwant.system.Site` or `~kwant.system.SiteArray`
+
+        Returns
+        -------
+        in_fd : bool or sequence of bool
+            single bool if ``site`` is a Site, or a sequence of
+            bool if ``site`` is a SiteArray. In the latter case
+            we return whether each site in the SiteArray is in
+            the fundamental domain.
+        """
+        if isinstance(site, Site):
+            for d in self.which(site):
+                if d != 0:
+                    return False
+            return True
+        elif isinstance(site, SiteArray):
+            which = self.which(site)
+            return np.logical_and.reduce(which != 0, axis=1)
+        else:
+            raise TypeError("'site' must be a Site or SiteArray")
+
+    @abc.abstractmethod
+    def subgroup(self, *generators):
+        """Return the subgroup generated by a sequence of group elements."""
+        pass
+
+    @abc.abstractmethod
+    def has_subgroup(self, other):
+        """Test whether `self` has the subgroup `other`...
+
+        or, in other words, whether `other` is a subgroup of `self`.  The
+        reason why this is the abstract method (and not `is_subgroup`) is that
+        in general it's not possible for a subgroup to know its supergroups.
+
+        """
+        pass
+
+
+class NoSymmetry(Symmetry):
+    """A symmetry with a trivial symmetry group."""
+
+    def __eq__(self, other):
+        return isinstance(other, NoSymmetry)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __repr__(self):
+        return 'NoSymmetry()'
+
+    @property
+    def num_directions(self):
+        return 0
+
+    periods = ()
+
+    _empty_array = ta.array((), int)
+
+    def which(self, site):
+        return self._empty_array
+
+    def act(self, element, a, b=None):
+        if element:
+            raise ValueError('`element` must be empty for NoSymmetry.')
+        return a if b is None else (a, b)
+
+    def to_fd(self, a, b=None):
+        return a if b is None else (a, b)
+
+    def in_fd(self, site):
+        return True
+
+    def subgroup(self, *generators):
+        if any(generators):
+            raise ValueError('Generators must be empty for NoSymmetry.')
+        return NoSymmetry(generators)
+
+    def has_subgroup(self, other):
+        return isinstance(other, NoSymmetry)
 
 
 ################ Systems

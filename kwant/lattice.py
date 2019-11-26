@@ -514,7 +514,7 @@ class Monatomic(system.SiteFamily, Polyatomic):
 # The following class is designed such that it should avoid floating
 # point precision issues.
 
-class TranslationalSymmetry(builder.Symmetry):
+class TranslationalSymmetry(system.Symmetry):
     """A translational symmetry defined in real space.
 
     An alias exists for this common name: ``kwant.TranslationalSymmetry``.
