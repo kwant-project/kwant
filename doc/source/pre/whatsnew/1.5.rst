@@ -89,3 +89,23 @@ in the direction of the magnetic field::
     template = kwant.continuum.discretize_landau("k_x**2 + k_y**2 + k_z**2 + V(z)", N)
     syst = kwant.Builder()
     syst.fill(template, stack, (0,))
+
+
+Minimum required versions for some dependencies have increased
+--------------------------------------------------------------
+Kwant now requires at least the following versions:
+
++ Python 3.6
++ numpy 0.13.3
++ scipy 0.19.1
+
+The kwant extensions (plotting, continuum and qsymm) now require at
+least the following versions:
+
++ matplotlib 2.1.1
++ sympy 1.1.1
++ qsymm 1.2.6
+
+These versions (or newer) are available in the latest stable releases
+of Ubuntu and Debian GNU/Linux, with the exception of qsymm, which is
+available on PyPI or Conda forge.
