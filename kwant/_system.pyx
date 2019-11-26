@@ -453,68 +453,6 @@ def _vectorized_make_dense(subgraphs, hams, long [:] norbs, long [:] orb_offsets
     return mat
 
 
-def _count_norbs(syst, site_offsets, hams, args=(), params=None):
-    """Return the norbs and orbital offset of each site family in 'syst'
-
-    Parameters
-    ----------
-    syst : `kwant.system.System`
-    site_offsets : sequence of int
-        Contains the index of the first site for each site array
-        in 'syst.site_arrays'.
-    hams : sequence of arrays or 'None'
-        The Hamiltonian for each term in 'syst.terms'. 'None'
-        if the corresponding term has not been evaluated.
-    args, params : positional and keyword arguments to the system Hamiltonian
-    """
-    site_ranges = syst.site_ranges
-    if site_ranges is None:
-        # NOTE: Remove this branch once we can rely on
-        #       site families storing the norb information.
-
-        site_arrays = syst.site_arrays
-        family_norbs = {s.family: None for s in site_arrays}
-
-        # Compute the norbs per site family using already evaluated
-        # Hamiltonian terms where possible
-        for ham, t in zip(hams, syst.terms):
-            (to_w, from_w), _ = syst.subgraphs[t.subgraph]
-            if ham is not None:
-                family_norbs[site_arrays[to_w].family] = ham.shape[1]
-                family_norbs[site_arrays[from_w].family] = ham.shape[2]
-
-        # Evaluate Hamiltonian terms where we do not already have them
-        for n, t in enumerate(syst.terms):
-            (to_w, from_w), _ = syst.subgraphs[t.subgraph]
-            to_fam = site_arrays[to_w].family
-            from_fam = site_arrays[from_w].family
-            if family_norbs[to_fam] is None or family_norbs[from_fam] is None:
-                ham = syst.hamiltonian_term(n, args=args, params=params)
-                family_norbs[to_fam] = ham.shape[1]
-                family_norbs[from_fam] = ham.shape[2]
-
-        # This case is technically allowed by the format (some sites present
-        # but no hamiltonian terms that touch them) but is very unlikely.
-        if any(norbs is None for norbs in family_norbs.values()):
-            raise ValueError("Cannot determine the number of orbitals for "
-                             "some site families.")
-
-        orb_offset = 0
-        site_ranges = []
-        for start, site_array in zip(site_offsets, syst.site_arrays):
-            norbs = family_norbs[site_array.family]
-            site_ranges.append((start, norbs, orb_offset))
-            orb_offset += len(site_array) * norbs
-        site_ranges.append((site_offsets[-1], 0, orb_offset))
-        site_ranges = np.array(site_ranges)
-
-    _, norbs, orb_offsets = site_ranges.transpose()
-    # The final (extra) element in orb_offsets is the total number of orbitals
-    assert len(orb_offsets) == len(syst.site_arrays) + 1
-
-    return norbs, orb_offsets
-
-
 def _expand_norbs(compressed_norbs, site_offsets):
     "Return norbs per site, given norbs per site array."
     norbs = np.empty(site_offsets[-1], int)
@@ -586,8 +524,7 @@ def vectorized_hamiltonian_submatrix(self, args=(), sparse=False,
         if t.hermitian
     ]
 
-    norbs, orb_offsets = _count_norbs(self, site_offsets, hams,
-                                      args=args, params=params)
+    _, norbs, orb_offsets = self.site_ranges.transpose()
 
     func = _vectorized_make_sparse if sparse else _vectorized_make_dense
     mat = func(subgraphs, hams, norbs, orb_offsets, site_offsets)
@@ -642,13 +579,7 @@ def vectorized_cell_hamiltonian(self, args=(), sparse=False, *, params=None):
         if self.terms[n].hermitian
     ]
 
-    # _count_norbs requires passing hamiltonians for all terms, or 'None'
-    # if it has not been evaluated
-    all_hams = [None] * len(self.terms)
-    for n, ham in zip(cell_terms, hams):
-        all_hams[n] = ham
-    norbs, orb_offsets = _count_norbs(self, site_offsets, all_hams,
-                                      args=args, params=params)
+    _, norbs, orb_offsets = self.site_ranges.transpose()
 
     shape = (orb_offsets[next_cell], orb_offsets[next_cell])
     func = _vectorized_make_sparse if sparse else _vectorized_make_dense
@@ -719,17 +650,7 @@ def vectorized_inter_cell_hopping(self, args=(), sparse=False, *, params=None):
         for (to_sa, from_sa), (to_off, from_off) in subgraphs
     ]
 
-    # _count_norbs requires passing hamiltonians for all terms, or 'None'
-    # if it has not been evaluated
-    all_hams = [None] * len(self.terms)
-    for n, ham in zip(inter_cell_hopping_terms, inter_cell_hams):
-        all_hams[n] = ham
-    for n, ham in zip(reversed_inter_cell_hopping_terms,
-                      reversed_inter_cell_hams):
-        # Transpose to get back correct shape wrt. original term
-        all_hams[n] = ham.transpose(0, 2, 1)
-    norbs, orb_offsets = _count_norbs(self, site_offsets, all_hams,
-                                      args=args, params=params)
+    _, norbs, orb_offsets = self.site_ranges.transpose()
 
     shape = (orb_offsets[next_cell],
              orb_offsets[len(self.site_arrays) - next_cell])
