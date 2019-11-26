@@ -529,7 +529,7 @@ class System(metaclass=abc.ABCMeta):
 
 Term = namedtuple(
     "Term",
-    ["subgraph", "hermitian", "parameters"],
+    ["subgraph", "symmetry_element", "hermitian", "parameters"],
 )
 
 
@@ -538,6 +538,8 @@ class VectorizedSystem(System, metaclass=abc.ABCMeta):
 
     Attributes
     ----------
+    symmetry : kwant.system.Symmetry
+        The symmetry of the system.
     graph : kwant.graph.CGraph
         The system graph.
     subgraphs : sequence of tuples
@@ -546,9 +548,11 @@ class VectorizedSystem(System, metaclass=abc.ABCMeta):
         indexed by 'idx1' and 'idx2'.
     terms : sequence of tuples
         Each tuple has the following structure:
-        (subgraph: int, hermitian: bool, parameters: List(str))
+        (subgraph: int, symmetry_element: tuple, hermitian: bool, parameters: List(str))
         'subgraph' indexes 'subgraphs' and supplies the to/from sites of this
-        term. 'hermitian' is 'True' if the term needs its Hermitian
+        term. 'symmetry_element' is the symmetry group element that should be
+        applied to the 'to-sites' of this term.
+        'hermitian' is 'True' if the term needs its Hermitian
         conjugate to be added when evaluating the Hamiltonian, and 'parameters'
         contains a list of parameter names used when evaluating this term.
     site_arrays : sequence of SiteArray
