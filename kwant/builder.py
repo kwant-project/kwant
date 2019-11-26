@@ -482,7 +482,7 @@ class Builder:
 
     Parameters
     ----------
-    symmetry : `Symmetry` or `None`
+    symmetry : `~kwant.system.Symmetry` or `None`
         The spatial symmetry of the system.
     conservation_law : 2D array, dictionary, function, or `None`
         An onsite operator with integer eigenvalues that commutes with the
@@ -531,8 +531,8 @@ class Builder:
     that if ``builder[a, b]`` has been set, there is no need to set
     ``builder[b, a]``.
 
-    Builder instances can be made to automatically respect a `Symmetry` that is
-    passed to them during creation.  The behavior of builders with a symmetry
+    Builder instances can be made to automatically respect a `~kwant.system.Symmetry`
+    that is passed to them during creation.  The behavior of builders with a symmetry
     is slightly more sophisticated: all keys are mapped to the fundamental
     domain of the symmetry before storing them.  This may produce confusing
     results when neighbors of a site are queried.
@@ -1481,7 +1481,7 @@ class Builder:
         system to be returned.
 
         Currently, only Builder instances without or with a 1D translational
-        `Symmetry` can be finalized.
+        `~kwant.system.Symmetry` can be finalized.
         """
         if self.symmetry.num_directions == 0:
             if self.vectorize:

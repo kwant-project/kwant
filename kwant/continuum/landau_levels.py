@@ -18,6 +18,7 @@ import sympy
 
 import kwant.lattice
 import kwant.builder
+import kwant.system
 
 import kwant.continuum
 import kwant.continuum._common
@@ -144,7 +145,7 @@ def discretize_landau(hamiltonian, N, momenta=None, grid_spacing=1):
     if _has_coordinate(normal_coordinate, hamiltonian):
         sym = kwant.lattice.TranslationalSymmetry([grid_spacing, 0])
     else:
-        sym = kwant.builder.NoSymmetry()
+        sym = kwant.system.NoSymmetry()
     lat = LandauLattice(grid_spacing, norbs=norbs)
     syst = kwant.Builder(sym)
 

@@ -153,7 +153,7 @@ def test_site_families():
     assert fam1 < fam2  # string '1' is lexicographically less than '2'
 
 
-class VerySimpleSymmetry(builder.Symmetry):
+class VerySimpleSymmetry(system.Symmetry):
     def __init__(self, period):
         self.period = period
 
@@ -162,7 +162,7 @@ class VerySimpleSymmetry(builder.Symmetry):
         return 1
 
     def has_subgroup(self, other):
-        if isinstance(other, builder.NoSymmetry):
+        if isinstance(other, system.NoSymmetry):
             return True
         elif isinstance(other, VerySimpleSymmetry):
             return not other.period % self.period
@@ -809,7 +809,7 @@ def test_vectorized_value_normalization():
 
 
 @pytest.mark.parametrize("sym", [
-    builder.NoSymmetry(),
+    system.NoSymmetry(),
     kwant.TranslationalSymmetry([-1]),
 ])
 def test_vectorized_requires_norbs(sym):
@@ -918,7 +918,7 @@ def test_fill():
     ## Test that copying a builder by "fill" preserves everything.
     for sym, func in [(kwant.TranslationalSymmetry(*np.diag([3, 4, 5])),
                        lambda pos: True),
-                      (builder.NoSymmetry(),
+                      (system.NoSymmetry(),
                        lambda pos: ta.dot(pos, pos) < 17)]:
         cubic = kwant.lattice.general(ta.identity(3), norbs=1)
 
@@ -1639,7 +1639,7 @@ def test_subs():
 
     lat = kwant.lattice.chain(norbs=1)
 
-    def make_system(sym=kwant.builder.NoSymmetry(), n=3):
+    def make_system(sym=system.NoSymmetry(), n=3):
         syst = kwant.Builder(sym)
         syst[(lat(i) for i in range(n))] = onsite
         syst[lat.neighbors()] = hopping

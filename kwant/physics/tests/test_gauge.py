@@ -6,7 +6,8 @@ import pytest
 
 import kwant
 from ... import lattice
-from ...builder import HoppingKind, Builder, NoSymmetry, Site
+from ...builder import HoppingKind, Builder, Site
+from ...system import NoSymmetry
 from .. import gauge
 
 

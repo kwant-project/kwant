@@ -153,7 +153,7 @@ class Polyatomic:
         algorithm finds and yields all the lattice sites inside the specified
         shape starting from the specified position.
 
-        A `~kwant.builder.Symmetry` or `~kwant.builder.Builder` may be passed as
+        A `~kwant.system.Symmetry` or `~kwant.builder.Builder` may be passed as
         sole argument when calling the function returned by this method.  This
         will restrict the flood-fill to the fundamental domain of the symmetry
         (or the builder's symmetry).  Note that unless the shape function has
@@ -174,8 +174,8 @@ class Polyatomic:
             Site = system.Site
 
             if symmetry is None:
-                symmetry = builder.NoSymmetry()
-            elif not isinstance(symmetry, builder.Symmetry):
+                symmetry = system.NoSymmetry()
+            elif not isinstance(symmetry, system.Symmetry):
                 symmetry = symmetry.symmetry
 
             def fd_site(lat, tag):
@@ -259,7 +259,7 @@ class Polyatomic:
         center = ta.array(center, float)
 
         def wire_sites(sym):
-            if not isinstance(sym, builder.Symmetry):
+            if not isinstance(sym, system.Symmetry):
                 sym = sym.symmetry
             if not isinstance(sym, TranslationalSymmetry):
                 raise ValueError('wire shape only works with '
@@ -568,7 +568,7 @@ class TranslationalSymmetry(system.Symmetry):
         return TranslationalSymmetry(*ta.dot(generators, self.periods))
 
     def has_subgroup(self, other):
-        if isinstance(other, builder.NoSymmetry):
+        if isinstance(other, system.NoSymmetry):
             return True
         elif not isinstance(other, TranslationalSymmetry):
             raise ValueError("Unknown symmetry type.")
