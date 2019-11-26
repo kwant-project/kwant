@@ -11,7 +11,6 @@ Types
    Builder
    Site
    HoppingKind
-   SimpleSiteFamily
    BuilderLead
    SelfEnergyLead
    ModesLead

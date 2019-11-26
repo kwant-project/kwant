@@ -23,12 +23,43 @@ from kwant import builder
 from kwant._common import ensure_rng
 
 
+@ft.total_ordering
+class SimpleSiteFamily(builder.SiteFamily):
+    """A site family used as an example and for testing.
+
+    A family of sites tagged by any python objects where object satisfied
+    condition ``object == eval(repr(object))``.
+
+    It exists to provide a basic site family that can be used for testing the
+    builder module without other dependencies.  It can be also used to tag
+    sites with non-numeric objects like strings should this every be useful.
+
+    Due to its low storage efficiency for numbers it is not recommended to use
+    `SimpleSiteFamily` when `kwant.lattice.Monatomic` would also work.
+    """
+
+    def __init__(self, name=None, norbs=None):
+        canonical_repr = '{0}({1}, {2})'.format(self.__class__, repr(name),
+                                                repr(norbs))
+        super().__init__(canonical_repr, name, norbs)
+
+    def normalize_tag(self, tag):
+        tag = tuple(tag)
+        try:
+            if eval(repr(tag)) != tag:
+                raise RuntimeError()
+        except:
+            raise TypeError('It must be possible to recreate the tag from '
+                            'its representation.')
+        return tag
+
+
 def test_bad_keys():
 
     def setitem(key):
         syst[key] = None
 
-    fam = builder.SimpleSiteFamily(norbs=1)
+    fam = SimpleSiteFamily(norbs=1)
     syst = builder.Builder()
 
     failures = [
@@ -97,9 +128,9 @@ def test_bad_keys():
 
 def test_site_families():
     syst = builder.Builder()
-    fam = builder.SimpleSiteFamily(norbs=1)
-    ofam = builder.SimpleSiteFamily(norbs=1)
-    yafam = builder.SimpleSiteFamily('another_name', norbs=1)
+    fam = SimpleSiteFamily(norbs=1)
+    ofam = SimpleSiteFamily(norbs=1)
+    yafam = SimpleSiteFamily('another_name', norbs=1)
 
     syst[fam(0)] = 7
     assert syst[fam(0)] == 7
@@ -117,8 +148,8 @@ def test_site_families():
     assert fam != 'a'
 
     # test site families sorting
-    fam1 = builder.SimpleSiteFamily(norbs=1)
-    fam2 = builder.SimpleSiteFamily(norbs=2)
+    fam1 = SimpleSiteFamily(norbs=1)
+    fam2 = SimpleSiteFamily(norbs=2)
     assert fam1 < fam2  # string '1' is lexicographically less than '2'
 
 
@@ -162,7 +193,7 @@ class VerySimpleSymmetry(builder.Symmetry):
 # made.
 def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
                                     unknown_hoppings, sym=None):
-    fam = builder.SimpleSiteFamily(norbs=1)
+    fam = SimpleSiteFamily(norbs=1)
     syst = builder.Builder(sym)
     t, V = 1.0j, 0.0
     syst[sites] = V
@@ -212,7 +243,7 @@ def check_construction_and_indexing(sites, sites_fd, hoppings, hoppings_fd,
 
 def test_construction_and_indexing():
     # Without symmetry
-    fam = builder.SimpleSiteFamily(norbs=1)
+    fam = SimpleSiteFamily(norbs=1)
     sites = [fam(0, 0), fam(0, 1), fam(1, 0)]
     hoppings = [(fam(0, 0), fam(0, 1)),
                 (fam(0, 1), fam(1, 0)),
@@ -256,7 +287,7 @@ def test_hermitian_conjugation(value):
             raise ValueError
 
     syst = builder.Builder()
-    fam = builder.SimpleSiteFamily(norbs=1)
+    fam = SimpleSiteFamily(norbs=1)
     syst[fam(0)] = syst[fam(1)] = ta.identity(2)
 
     syst[fam(0), fam(1)] = f
@@ -277,7 +308,7 @@ def test_hermitian_conjugation(value):
 def test_value_equality_and_identity():
     m = ta.array([[1, 2], [3j, 4j]])
     syst = builder.Builder()
-    fam = builder.SimpleSiteFamily(norbs=1)
+    fam = SimpleSiteFamily(norbs=1)
 
     syst[fam(0)] = m
     syst[fam(1)] = m
@@ -520,7 +551,7 @@ def test_hamiltonian_evaluation():
     edges = [(0, 1), (0, 2), (0, 3), (1, 2)]
 
     syst = builder.Builder()
-    fam = builder.SimpleSiteFamily(norbs=1)
+    fam = SimpleSiteFamily(norbs=1)
     sites = [fam(*tag) for tag in tags]
     syst[(fam(*tag) for tag in tags)] = f_onsite
     syst[((fam(*tags[i]), fam(*tags[j])) for (i, j) in edges)] = f_hopping
@@ -584,7 +615,7 @@ def test_dangling():
         #       / \
         #    3-0---2-4-5  6-7  8
         syst = builder.Builder()
-        fam = builder.SimpleSiteFamily(norbs=1)
+        fam = SimpleSiteFamily(norbs=1)
         syst[(fam(i) for i in range(9))] = None
         syst[[(fam(0), fam(1)), (fam(1), fam(2)), (fam(2), fam(0))]] = None
         syst[[(fam(0), fam(3)), (fam(2), fam(4)), (fam(4), fam(5))]] = None
@@ -857,8 +888,8 @@ def test_fill_sticky():
 
 
 def test_attach_lead():
-    fam = builder.SimpleSiteFamily(norbs=1)
-    fam_noncommensurate = builder.SimpleSiteFamily(name='other', norbs=1)
+    fam = SimpleSiteFamily(norbs=1)
+    fam_noncommensurate = SimpleSiteFamily(name='other', norbs=1)
 
     syst = builder.Builder()
     syst[fam(1)] = 0
@@ -926,7 +957,7 @@ def test_attach_lead_incomplete_unit_cell():
 def test_neighbors_not_in_single_domain():
     sr = builder.Builder()
     lead = builder.Builder(VerySimpleSymmetry(-1))
-    fam = builder.SimpleSiteFamily(norbs=1)
+    fam = SimpleSiteFamily(norbs=1)
     sr[(fam(x, y) for x in range(3) for y in range(3) if x >= y)] = 0
     sr[builder.HoppingKind((1, 0), fam)] = 1
     sr[builder.HoppingKind((0, 1), fam)] = 1
@@ -981,7 +1012,7 @@ def test_closest():
 
 
 def test_update():
-    lat = builder.SimpleSiteFamily(norbs=1)
+    lat = SimpleSiteFamily(norbs=1)
 
     syst = builder.Builder()
     syst[[lat(0,), lat(1,)]] = 1
@@ -1076,7 +1107,7 @@ def test_invalid_HoppingKind():
 
 
 def test_ModesLead_and_SelfEnergyLead():
-    lat = builder.SimpleSiteFamily(norbs=1)
+    lat = SimpleSiteFamily(norbs=1)
     hoppings = [builder.HoppingKind((1, 0), lat),
                 builder.HoppingKind((0, 1), lat)]
     rng = Random(123)
@@ -1158,9 +1189,9 @@ def test_site_pickle():
 
 
 def test_discrete_symmetries():
-    lat = builder.SimpleSiteFamily(name='ccc', norbs=2)
-    lat2 = builder.SimpleSiteFamily(name='bla', norbs=1)
-    lat3 = builder.SimpleSiteFamily(name='dd', norbs=4)
+    lat = SimpleSiteFamily(name='ccc', norbs=2)
+    lat2 = SimpleSiteFamily(name='bla', norbs=1)
+    lat3 = SimpleSiteFamily(name='dd', norbs=4)
 
     cons_law = {lat: np.diag([1, 2]), lat2: 0}
     syst = builder.Builder(conservation_law=cons_law,

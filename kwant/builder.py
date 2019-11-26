@@ -27,7 +27,7 @@ from ._common import (ensure_isinstance, get_parameters, reraise_warnings,
                       interleave, deprecate_args, memoize)
 
 
-__all__ = ['Builder', 'Site', 'SiteFamily', 'SimpleSiteFamily', 'Symmetry',
+__all__ = ['Builder', 'Site', 'SiteFamily', 'Symmetry',
            'HoppingKind', 'Lead', 'BuilderLead', 'SelfEnergyLead', 'ModesLead',
            'add_peierls_phase']
 
@@ -201,36 +201,6 @@ class SiteFamily(metaclass=abc.ABCMeta):
             raise ValueError('Use site_family(1, 2) instead of '
                              'site_family((1, 2))!')
         return Site(self, tag)
-
-
-class SimpleSiteFamily(SiteFamily):
-    """A site family used as an example and for testing.
-
-    A family of sites tagged by any python objects where object satisfied
-    condition ``object == eval(repr(object))``.
-
-    It exists to provide a basic site family that can be used for testing the
-    builder module without other dependencies.  It can be also used to tag
-    sites with non-numeric objects like strings should this every be useful.
-
-    Due to its low storage efficiency for numbers it is not recommended to use
-    `SimpleSiteFamily` when `kwant.lattice.Monatomic` would also work.
-    """
-
-    def __init__(self, name=None, norbs=None):
-        canonical_repr = '{0}({1}, {2})'.format(self.__class__, repr(name),
-                                                repr(norbs))
-        super().__init__(canonical_repr, name, norbs)
-
-    def normalize_tag(self, tag):
-        tag = tuple(tag)
-        try:
-            if eval(repr(tag)) != tag:
-                raise RuntimeError()
-        except:
-            raise TypeError('It must be possible to recreate the tag from '
-                            'its representation.')
-        return tag
 
 
 def validate_hopping(hopping):
