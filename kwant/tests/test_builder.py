@@ -752,7 +752,8 @@ def test_vectorized_requires_norbs(sym):
         lat = kwant.lattice.chain()
 
     syst = builder.Builder(sym, vectorize=True)
-    syst[lat(0)] = 1
+    syst[lat(0)] = syst[lat(1)] = 2
+    syst[lat(1), lat(0)] = -1
 
     raises(ValueError, syst.finalized)
 
