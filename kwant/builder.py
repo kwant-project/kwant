@@ -2087,10 +2087,12 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
         to_family = self.site_arrays[to_which].family
         to_tags = self.site_arrays[to_which].tags
         to_site_array = SiteArray(to_family, to_tags[to_off])
+        site_arrays = (to_site_array,)
         if not is_onsite:
             from_family = self.site_arrays[from_which].family
             from_tags = self.site_arrays[from_which].tags
             from_site_array = SiteArray(from_family, from_tags[from_off])
+            site_arrays = self.symmetry.to_fd(to_site_array, from_site_array)
 
         # Construct args from params
         if params:
@@ -2107,20 +2109,10 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
                        ', '.join(map('"{}"'.format, missing)))
                 raise TypeError(''.join(msg))
 
-        if is_onsite:
-            try:
-                ham = val(to_site_array, *args)
-            except Exception as exc:
-                _raise_user_error(exc, val)
-        else:
-            try:
-                ham = val(
-                        *self.symmetry.to_fd(
-                            to_site_array,
-                            from_site_array),
-                        *args)
-            except Exception as exc:
-                _raise_user_error(exc, val)
+        try:
+            ham = val(*site_arrays, *args)
+        except Exception as exc:
+            _raise_user_error(exc, val)
 
         expected_shape = (
             len(to_site_array),
