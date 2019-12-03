@@ -760,6 +760,13 @@ class InfiniteVectorizedSystem(VectorizedSystem, InfiniteSystemMixin, metaclass=
     cell_hamiltonian = _system.vectorized_cell_hamiltonian
     inter_cell_hopping = _system.vectorized_inter_cell_hopping
 
+    def hamiltonian_submatrix(self, args=(), sparse=False,
+                              return_norb=False, *, params=None):
+        raise ValueError(
+            "'hamiltonian_submatrix' is not meaningful for infinite"
+            "systems. Use 'cell_hamiltonian' or 'inter_cell_hopping."
+        )
+
 
 def is_infinite(syst):
     return isinstance(syst, (InfiniteSystem, InfiniteVectorizedSystem))

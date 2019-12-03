@@ -759,10 +759,6 @@ def test_vectorized_hamiltonian_evaluation():
     fsyst_simple = syst_simple.finalized()
 
     assert np.allclose(
-        fsyst_vectorized.hamiltonian_submatrix(),
-        fsyst_simple.hamiltonian_submatrix(),
-    )
-    assert np.allclose(
         fsyst_vectorized.cell_hamiltonian(),
         fsyst_simple.cell_hamiltonian(),
     )
