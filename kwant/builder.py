@@ -2852,8 +2852,12 @@ class InfiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.Infinite
         parameters = frozenset(parameters)
 
         self.site_arrays = site_arrays
-        self.sites = _Sites(self.site_arrays)
-        self.id_by_site = _IdBySite(self.site_arrays)
+        # 'sites' and 'id_by_site' have to be backwards compatible with the
+        # unvectorized interface, so we have to be able to index the interface
+        # sites in the previous unit cell also
+        _extended_site_arrays = self.site_arrays + _make_site_arrays(interface)
+        self.sites = _Sites(_extended_site_arrays)
+        self.id_by_site = _IdBySite(_extended_site_arrays)
         self.graph = graph
         self.subgraphs = subgraphs
         self.terms = terms
