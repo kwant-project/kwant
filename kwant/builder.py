@@ -2025,7 +2025,7 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
             "elements at once using 'hamiltonian_term'.",
             KwantDeprecationWarning
         )
-        site_offsets = np.cumsum([0] + [len(s) for s in self.site_arrays])
+        site_offsets, _, _ = self.site_ranges.transpose()
         if i == j:
             which_term = self._onsite_term_by_site_id[i]
             (w, _), (off, _) = self.subgraphs[self.terms[which_term].subgraph]

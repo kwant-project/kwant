@@ -321,10 +321,10 @@ def random_hopping_integral(rng):
 
 
 def check_onsite(fsyst, sites, subset=False, check_values=True):
-    vectorized = isinstance(fsyst, (system.FiniteVectorizedSystem, system.InfiniteVectorizedSystem))
+    vectorized = system.is_vectorized(fsyst)
 
     if vectorized:
-        site_offsets = np.cumsum([0] + [len(s) for s in fsyst.site_arrays])
+        site_offsets, _, _ = fsyst.site_ranges.transpose()
 
     freq = {}
     for node in range(fsyst.graph.num_nodes):
@@ -353,10 +353,10 @@ def check_onsite(fsyst, sites, subset=False, check_values=True):
 
 
 def check_hoppings(fsyst, hops):
-    vectorized = isinstance(fsyst, (system.FiniteVectorizedSystem, system.InfiniteVectorizedSystem))
+    vectorized = system.is_vectorized(fsyst)
 
     if vectorized:
-        site_offsets = np.cumsum([0] + [len(s) for s in fsyst.site_arrays])
+        site_offsets, _, _ = fsyst.site_ranges.transpose()
 
     assert fsyst.graph.num_edges == 2 * len(hops)
     for edge_id, edge in enumerate(fsyst.graph):
