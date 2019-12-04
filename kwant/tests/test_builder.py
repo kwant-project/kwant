@@ -464,7 +464,8 @@ def test_finalization(vectorize):
     assert tuple(fsyst.sites) == tuple(sorted(fam(*site) for site in sr_sites))
 
     # Build lead from blueprint and test it.
-    lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)))
+    lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)),
+                           vectorize=vectorize)
     for site, value in lead_sites.items():
         shift = rng.randrange(-5, 6) * size
         site = site[0] + shift, site[1]
