@@ -1915,8 +1915,11 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
         if not is_onsite:
             from_family = self.site_arrays[from_which].family
             from_tags = self.site_arrays[from_which].tags
-            from_site_array = SiteArray(from_family, from_tags[from_off])
-            site_arrays = self.symmetry.to_fd(to_site_array, from_site_array)
+            from_site_array = self.symmetry.act(
+                term.symmetry_element,
+                SiteArray(from_family, from_tags[from_off])
+            )
+            site_arrays = (to_site_array, from_site_array)
 
         # Construct args from params
         if params:
@@ -2301,9 +2304,15 @@ def _make_onsite_terms(builder, sites, site_arrays, term_offset):
         err if isinstance(err, Exception) else None
         for err in onsite_term_parameters
     ]
+
+    # We store sites in the fundamental domain, so the symmetry element
+    # is the same for all onsite terms; it's just the identity.
+    identity = ta.array([0] * builder.symmetry.num_directions)
+
     onsite_terms = [
         system.Term(
             subgraph=term_offset + i,
+            symmetry_element=identity,
             hermitian=False,
             parameters=(
                 params if not isinstance(params, Exception) else None
@@ -2327,6 +2336,11 @@ def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offs
     #   Maps hopping edge IDs to the number of the term that the hopping
     #   is a part of. For Hermitian conjugate hoppings "-term_number -1"
     #   is stored instead.
+    #
+    # NOTE: 'graph' contains site indices >= cell_size, however 'sites'
+    #       and 'site_arrays' only contain information about the sites
+    #       in the fundamental domain.
+    sym = builder.symmetry
 
     site_offsets = np.cumsum([0] + [len(sa) for sa in site_arrays])
 
@@ -2339,11 +2353,27 @@ def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offs
     hopping_to_term_nr = collections.OrderedDict()
     _hopping_term_by_edge_id = []
     for tail, head in graph:
-        tail_site, head_site = sites[tail], sites[head]
-        if tail >= cell_size:
-            # The tail belongs to the previous domain.  Find the
-            # corresponding hopping with the tail in the fund. domain.
-            tail_site, head_site = builder.symmetry.to_fd(tail_site, head_site)
+        # map 'tail' and 'head' so that they are both in the FD, and
+        # assign the symmetry element to apply to 'sites[head]'
+        # to make the actual hopping. Here we assume that the symmetry
+        # may only be NoSymmetry or 1D TranslationalSymmetry.
+        if isinstance(sym, NoSymmetry):
+            tail_site = sites[tail]
+            head_site = sites[head]
+            sym_el = ta.array([])
+        else:
+            if tail < cell_size and head < cell_size:
+                sym_el = ta.array([0])
+            elif head >= cell_size:
+                assert tail < cell_size
+                head = head - cell_size
+                sym_el = ta.array([-1])
+            else:
+                tail = tail - cell_size
+                sym_el = ta.array([1])
+            tail_site = sites[tail]
+            head_site = sym.act(sym_el, sites[head])
+
         val = builder._get_edge(tail_site, head_site)
         herm_conj = val is Other
         if herm_conj:
@@ -2354,11 +2384,11 @@ def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offs
         head_site_array = bisect.bisect(site_offsets, head) - 1
         # "key" uniquely identifies a hopping term.
         if const_val:
-            key = (None, tail_site_array, head_site_array)
+            key = (None, sym_el, tail_site_array, head_site_array)
         else:
-            key = (id(val), tail_site_array, head_site_array)
+            key = (id(val), sym_el, tail_site_array, head_site_array)
         if herm_conj:
-            key = (key[0], head_site_array, tail_site_array)
+            key = (key[0], -sym_el, head_site_array, tail_site_array)
 
         if key not in hopping_to_term_nr:
             # start a new term
@@ -2400,7 +2430,7 @@ def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offs
                         site_arrays[from_sa].family.norbs,
                     ),
                 )
-            for (_, to_sa, from_sa), val in
+            for (_, _, to_sa, from_sa), val in
             zip(hopping_to_term_nr.keys(), hopping_term_values)
         ]
         # Sort the hoppings in each term, and also sort the values
@@ -2411,7 +2441,7 @@ def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offs
             zip(hopping_subgraphs, hopping_term_values)))
     # Store site array index and site offsets rather than sites themselves
     tmp = []
-    for (_, tail_which, head_which), h in zip(hopping_to_term_nr,
+    for (_, _, tail_which, head_which), h in zip(hopping_to_term_nr,
                                               hopping_subgraphs):
         start = (site_offsets[tail_which], site_offsets[head_which])
         # Transpose to get a pair of arrays rather than array of pairs
@@ -2429,15 +2459,20 @@ def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offs
         err if isinstance(err, Exception) else None
         for err in hopping_term_parameters
     ]
+    term_symmetry_elements = [
+        sym_el for (_, sym_el, *_) in hopping_to_term_nr.keys()
+    ]
     hopping_terms = [
         system.Term(
             subgraph=term_offset + i,
+            symmetry_element=sym_el,
             hermitian=True,  # Builders are always Hermitian
             parameters=(
                 params if not isinstance(params, Exception) else None
             ),
         )
-        for i, params in enumerate(hopping_term_parameters)
+        for i, (sym_el, params) in
+        enumerate(zip(term_symmetry_elements, hopping_term_parameters))
     ]
     _hopping_term_by_edge_id = np.array(_hopping_term_by_edge_id)
 
@@ -2764,7 +2799,8 @@ class InfiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.Infinite
         cell_size = len(lsites_with) + len(lsites_without)
 
 
-        sites = lsites_with + lsites_without + interface
+        fd_sites = lsites_with + lsites_without
+        sites = fd_sites + interface
         id_by_site = {}
         for site_id, site in enumerate(sites):
             id_by_site[site] = site_id
@@ -2783,24 +2819,23 @@ class InfiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.Infinite
         del id_by_site  # cleanup due to large size
 
         # In order to conform to the kwant.system.InfiniteVectorizedSystem
-        # interface we need to put the sites that connect to the previous
-        # cell *first*, then the sites that do not couple to the previous
-        # cell, then the sites in the previous cell. Because sites in
-        # a SiteArray are sorted by tag this means that the sites in these
-        # 3 different sets need to be in different SiteArrays.
+        # interface we need to put the interface sites (which have hoppings
+        # to the next unit cell) before non-interface sites.
+        # Note that we do not *store* the interface sites of the previous
+        # unit cell, but we still need to *handle* site indices >= cell_size
+        # because those are used e.g. in the graph.
         site_arrays = (
             _make_site_arrays(lsites_with)
             + _make_site_arrays(lsites_without)
-            + _make_site_arrays(interface)
         )
 
         (onsite_subgraphs, onsite_terms, onsite_term_values,
          onsite_term_errors, _onsite_term_by_site_id) =\
-            _make_onsite_terms(builder, sites, site_arrays, term_offset=0)
+            _make_onsite_terms(builder, fd_sites, site_arrays, term_offset=0)
 
         (hopping_subgraphs, hopping_terms, hopping_term_values,
          hopping_term_errors, _hopping_term_by_edge_id) =\
-            _make_hopping_terms(builder, graph, sites, site_arrays,
+            _make_hopping_terms(builder, graph, fd_sites, site_arrays,
                                 cell_size, term_offset=len(onsite_terms))
 
         # Construct the combined onsite/hopping term datastructures
