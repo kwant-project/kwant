@@ -133,9 +133,10 @@ class Symmetry(metaclass=abc.ABCMeta):
             or hopping(s)
         a, b : `~kwant.system.Site` or `~kwant.system.SiteArray`
             If Site then ``element`` is a single tuple, if SiteArray then
-            ``element`` is a sequence of tuples. If only ``a`` is provided then
-            ``element`` acts on the site(s) of ``a``. If ``b`` is also provided
-            then ``element`` acts on the hopping(s) ``(a, b)``.
+            ``element`` is a single tuple or a sequence of tuples.
+            If only ``a`` is provided then ``element`` acts on the site(s)
+            of ``a``. If ``b`` is also provided then ``element`` acts
+            on the hopping(s) ``(a, b)``.
         """
         pass
 

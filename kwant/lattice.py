@@ -718,8 +718,9 @@ class TranslationalSymmetry(builder.Symmetry):
             raise ValueError("must provide a single group element when "
                              "acting on single sites.")
         if (len(element.shape) == 1 and not is_site):
-            raise ValueError("must provide a sequence of group elements "
-                             "when acting on site arrays.")
+            # We can act on a whole SiteArray with a single group element
+            # using numpy broadcasting.
+            element = element.reshape(1, -1)
         m_part = self._get_site_family_data(a.family)[0]
         try:
             delta = array_mod.dot(m_part, element)
