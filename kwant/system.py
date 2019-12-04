@@ -576,50 +576,7 @@ def is_finite(syst):
 
 
 class InfiniteSystemMixin(metaclass=abc.ABCMeta):
-    """Abstract infinite low-level system.
 
-    An infinite system consists of an infinite series of identical cells.
-    Adjacent cells are connected by identical inter-cell hoppings.
-
-    Attributes
-    ----------
-    cell_size : integer
-        The number of sites in a single cell of the system.
-
-    Notes
-    -----
-    The system graph of an infinite systems contains a single cell, as well as
-    the part of the previous cell which is connected to it.  The first
-    `cell_size` sites form one complete single cell.  The remaining ``N`` sites
-    of the graph (``N`` equals ``graph.num_nodes - cell_size``) belong to the
-    previous cell.  They are included so that hoppings between cells can be
-    represented.  The N sites of the previous cell correspond to the first
-    ``N`` sites of the fully included cell.  When an ``InfiniteSystem`` is used
-    as a lead, ``N`` acts also as the number of interface sites to which it
-    must be connected.
-
-    The drawing shows three cells of an infinite system.  Each cell consists
-    of three sites.  Numbers denote sites which are included into the system
-    graph.  Stars denote sites which are not included.  Hoppings are included
-    in the graph if and only if they occur between two sites which are part of
-    the graph::
-
-            * 2 *
-        ... | | | ...
-            * 0 3
-            |/|/|
-            *-1-4
-
-        <-- order of cells
-
-    The numbering of sites in the drawing is one of the two valid ones for that
-    infinite system.  The other scheme has the numbers of site 0 and 1
-    exchanged, as well as of site 3 and 4.
-
-    Sites in the fundamental domain cell must belong to a different site array
-    than the sites in the previous cell. In the above example this means that
-    sites '(0, 1, 2)' and '(3, 4)' must belong to different site arrays.
-    """
     @deprecate_args
     def modes(self, energy=0, args=(), *, params=None):
         """Return mode decomposition of the lead
@@ -704,6 +661,46 @@ class InfiniteSystemMixin(metaclass=abc.ABCMeta):
 
 
 class InfiniteSystem(System, InfiniteSystemMixin, metaclass=abc.ABCMeta):
+    """Abstract infinite low-level system.
+
+    An infinite system consists of an infinite series of identical cells.
+    Adjacent cells are connected by identical inter-cell hoppings.
+
+    Attributes
+    ----------
+    cell_size : integer
+        The number of sites in a single cell of the system.
+
+    Notes
+    -----
+    The system graph of an infinite systems contains a single cell, as well as
+    the part of the previous cell which is connected to it.  The first
+    `cell_size` sites form one complete single cell.  The remaining ``N`` sites
+    of the graph (``N`` equals ``graph.num_nodes - cell_size``) belong to the
+    previous cell.  They are included so that hoppings between cells can be
+    represented.  The N sites of the previous cell correspond to the first
+    ``N`` sites of the fully included cell.  When an ``InfiniteSystem`` is used
+    as a lead, ``N`` acts also as the number of interface sites to which it
+    must be connected.
+
+    The drawing shows three cells of an infinite system.  Each cell consists
+    of three sites.  Numbers denote sites which are included into the system
+    graph.  Stars denote sites which are not included.  Hoppings are included
+    in the graph if and only if they occur between two sites which are part of
+    the graph::
+
+            * 2 *
+        ... | | | ...
+            * 0 3
+            |/|/|
+            *-1-4
+
+        <-- order of cells
+
+    The numbering of sites in the drawing is one of the two valid ones for that
+    infinite system.  The other scheme has the numbers of site 0 and 1
+    exchanged, as well as of site 3 and 4.
+    """
 
     @deprecate_args
     def cell_hamiltonian(self, args=(), sparse=False, *, params=None):
@@ -730,6 +727,36 @@ class InfiniteSystem(System, InfiniteSystemMixin, metaclass=abc.ABCMeta):
 
 
 class InfiniteVectorizedSystem(VectorizedSystem, InfiniteSystemMixin, metaclass=abc.ABCMeta):
+    """Abstract vectorized infinite low-level system.
+
+    An infinite system consists of an infinite series of identical cells.
+    Adjacent cells are connected by identical inter-cell hoppings.
+
+    Attributes
+    ----------
+    cell_size : integer
+        The number of sites in a single cell of the system.
+
+    Notes
+    -----
+    Unlike `~kwant.system.InfiniteSystem`, vectorized infinite systems do
+    not explicitly store the sites in the previous unit cell; only the
+    sites in the fundamental domain are stored. Nevertheless, the
+    SiteArrays of `~kwant.system.InfiniteVectorizedSystem` are ordered
+    in an analogous way, in order to facilitate the representation of
+    inter-cell hoppings. The ordering is as follows. The *interface sites*
+    of a unit cell are the sites that have hoppings to the *next* unit cell
+    (along the symmetry direction). Interface sites are always in different
+    SiteArrays than non-interface sites, i.e. the sites in a given SiteArray
+    are either all interface sites, or all non-interface sites.
+    The SiteArrays consisting of interface sites always appear *before* the
+    SiteArrays consisting of non-interface sites in ``self.site_arrays``.
+    This is backwards compatible with `kwant.system.InfiniteSystem`.
+
+    For backwards compatibility, `~kwant.system.InfiniteVectorizedSystem`
+    maintains a ``graph``, that includes nodes for the sites
+    in the previous unit cell.
+    """
     cell_hamiltonian = _system.vectorized_cell_hamiltonian
     inter_cell_hopping = _system.vectorized_inter_cell_hopping
 
