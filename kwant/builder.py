@@ -1860,6 +1860,15 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
             return onsite[0]
         else:
             edge_id = self.graph.first_edge_id(i, j)
+            # Map sites in previous cell to fundamental domain; vectorized
+            # infinite systems only store sites in the FD. We already know
+            # that this hopping is between unit cells because this is encoded
+            # in the edge_id and term id.
+            # Using 'is_infinite' is a bit of a hack, but 'hamiltonian' is
+            # deprecated anyway, and refactoring everything to avoid this check
+            # is not worth it.
+            if system.is_infinite(self):
+                i, j = i % self.cell_size, j % self.cell_size
             which_term = self._hopping_term_by_edge_id[edge_id]
             herm_conj = which_term < 0
             if herm_conj:

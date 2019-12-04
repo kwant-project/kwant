@@ -366,6 +366,12 @@ def check_hoppings(fsyst, hops):
 
         if vectorized:
             term = fsyst._hopping_term_by_edge_id[edge_id]
+            # Map sites in previous cell to fundamental domain; vectorized
+            # infinite systems only store sites in the FD. We already know
+            # that this hopping is between unit cells because this is encoded
+            # in the edge_id and term id.
+            if system.is_infinite(fsyst):
+                i, j = i % fsyst.cell_size, j % fsyst.cell_size
             if term < 0:  # Hermitian conjugate
                 assert (head, tail) in hops
             else:
