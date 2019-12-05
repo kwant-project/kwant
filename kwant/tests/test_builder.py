@@ -1547,6 +1547,25 @@ def test_argument_passing(vectorize):
         expected_hamiltonian(**params)
     )
 
+@pytest.mark.parametrize("vectorize", [False, True])
+def test_invalid_value_functions(vectorize):
+
+    invalid_value_functions = [
+        lambda _, *args: 1,  # uses *args
+        lambda _, **kwargs: 1,  # uses **kwargs
+        lambda _, d=10: 1,  # has default arguments
+        lambda _, *, d: 1  # has keyword-only parameters
+    ]
+
+    lat = kwant.lattice.chain(norbs=1)
+
+    for f in invalid_value_functions:
+        syst = builder.Builder(vectorize=vectorize)
+        syst[lat(0)] = f
+        syst = syst.finalized()
+        with pytest.raises(ValueError):
+            syst.hamiltonian_submatrix(params=dict(d=1))
+
 
 def test_parameter_substitution():
 
