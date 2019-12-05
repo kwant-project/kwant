@@ -2509,7 +2509,7 @@ def _make_onsite_terms(builder, sites, site_offsets, term_offset):
     _onsite_term_by_site_id = np.array(_onsite_term_by_site_id)
 
     return (onsite_subgraphs, onsite_terms, onsite_term_values,
-            onsite_term_parameters, onsite_term_errors, _onsite_term_by_site_id)
+            onsite_term_errors, _onsite_term_by_site_id)
 
 
 def _make_hopping_terms(builder, graph, sites, site_offsets, cell_size, term_offset):
@@ -2619,8 +2619,7 @@ def _make_hopping_terms(builder, graph, sites, site_offsets, cell_size, term_off
     _hopping_term_by_edge_id = np.array(_hopping_term_by_edge_id)
 
     return (hopping_subgraphs, hopping_terms, hopping_term_values,
-            hopping_term_parameters, hopping_term_errors,
-            _hopping_term_by_edge_id)
+            hopping_term_errors, _hopping_term_by_edge_id)
 
 
 class FiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.FiniteVectorizedSystem):
@@ -2667,12 +2666,11 @@ class FiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.FiniteVect
         site_offsets = np.cumsum([0] + [len(arr) for arr in site_arrays])
 
         (onsite_subgraphs, onsite_terms, onsite_term_values,
-         onsite_term_parameters, onsite_term_errors, _onsite_term_by_site_id) =\
+         onsite_term_errors, _onsite_term_by_site_id) =\
             _make_onsite_terms(builder, sites, site_offsets, term_offset=0)
 
         (hopping_subgraphs, hopping_terms, hopping_term_values,
-         hopping_term_parameters, hopping_term_errors,
-         _hopping_term_by_edge_id) =\
+         hopping_term_errors, _hopping_term_by_edge_id) =\
             _make_hopping_terms(builder, graph, sites, site_offsets,
                                 len(sites), term_offset=len(onsite_terms))
 
@@ -2684,9 +2682,9 @@ class FiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.FiniteVect
 
         # Construct system parameters
         parameters = set()
-        for params in chain(onsite_term_parameters, hopping_term_parameters):
-            if params is not None:
-                parameters.update(params)
+        for term in terms:
+            if term.parameters is not None:
+                parameters.update(term.parameters)
         parameters = frozenset(parameters)
 
         self.site_arrays = site_arrays
@@ -2979,12 +2977,11 @@ class InfiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.Infinite
         site_offsets = np.cumsum([0] + [len(arr) for arr in site_arrays])
 
         (onsite_subgraphs, onsite_terms, onsite_term_values,
-         onsite_term_parameters, onsite_term_errors, _onsite_term_by_site_id) =\
+         onsite_term_errors, _onsite_term_by_site_id) =\
             _make_onsite_terms(builder, sites, site_offsets, term_offset=0)
 
         (hopping_subgraphs, hopping_terms, hopping_term_values,
-         hopping_term_parameters, hopping_term_errors,
-         _hopping_term_by_edge_id) =\
+         hopping_term_errors, _hopping_term_by_edge_id) =\
             _make_hopping_terms(builder, graph, sites, site_offsets,
                                 cell_size, term_offset=len(onsite_terms))
 
@@ -2996,9 +2993,9 @@ class InfiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.Infinite
 
         # Construct system parameters
         parameters = set()
-        for params in chain(onsite_term_parameters, hopping_term_parameters):
-            if params is not None:
-                parameters.update(params)
+        for term in terms:
+            if term.parameters is not None:
+                parameters.update(term.parameters)
         parameters = frozenset(parameters)
 
         self.site_arrays = site_arrays
