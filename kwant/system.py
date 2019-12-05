@@ -756,9 +756,13 @@ def _normalize_matrix_blocks(matrix_blocks, expected_length):
         raise ValueError(
             "Matrix elements declared with incompatible shapes."
         ) from None
-    # Upgrade to vector of matrices
-    if len(matrix_blocks.shape) == 1:
-        matrix_blocks = matrix_blocks[:, np.newaxis, np.newaxis]
+    if len(matrix_blocks.shape) == 0:  # scalar → broadcast to vector of 1x1 matrices
+        matrix_blocks = np.tile(matrix_blocks, (expected_length, 1, 1))
+    elif len(matrix_blocks.shape) == 1:  # vector → interpret as vector of 1x1 matrices
+        matrix_blocks = matrix_blocks.reshape(-1, 1, 1)
+    elif len(matrix_blocks.shape) == 2:  # matrix → broadcast to vector of matrices
+        matrix_blocks = np.tile(matrix_blocks, (expected_length, 1, 1))
+
     if len(matrix_blocks.shape) != 3:
         msg = (
             "Vectorized value functions must return an array of"
