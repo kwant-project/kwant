@@ -180,7 +180,11 @@ def sympify(expr, locals=None):
                 "identifiers and may not be keywords".format(repr(k)))
 
     # sympify values of locals before updating it with extra_ns
-    locals = {k: sympify(v) for k, v in locals.items()}
+    # Cast numpy array values in locals to sympy matrices to make sure they have
+    # correct format
+    locals = {k: (sympy.Matrix(v) if isinstance(v, np.ndarray) else sympify(v))
+              for k, v in locals.items()}
+
     for k, v in extra_ns.items():
         locals.setdefault(k, v)
     try:
