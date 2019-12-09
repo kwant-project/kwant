@@ -2100,6 +2100,8 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
                          args=(), params=None):
         if args and params:
             raise TypeError("'args' and 'params' are mutually exclusive.")
+        if term_number < 0:
+            raise ValueError("term numbers must be non-negative")
 
         term = self.terms[term_number]
         val = self._term_values[term_number]
