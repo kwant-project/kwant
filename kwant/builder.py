@@ -2485,6 +2485,7 @@ def _make_onsite_terms(builder, sites, site_offsets, term_offset):
     tmp = []
     for (_, which), s in zip(onsite_to_term_nr, onsite_subgraphs):
         s = s - site_offsets[which]
+        s.flags.writeable = False
         tmp.append(((which, which), (s, s)))
     onsite_subgraphs = tmp
     # onsite_term_errors[i] contains an exception if the corresponding
@@ -2593,7 +2594,9 @@ def _make_hopping_terms(builder, graph, sites, site_offsets, cell_size, term_off
         # Transpose to get a pair of arrays rather than array of pairs
         # We use the fact that the underlying array is stored in
         # array-of-pairs order to search through it in 'hamiltonian'.
-        tmp.append(((tail_which, head_which), (h - start).transpose()))
+        pairs = (h - start).transpose()
+        pairs.flags.writeable = False
+        tmp.append(((tail_which, head_which), pairs))
     hopping_subgraphs = tmp
     # hopping_term_errors[i] contains an exception if the corresponding
     # term has a value function with an illegal signature. We only raise
