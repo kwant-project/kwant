@@ -12,6 +12,7 @@ __all__ = [
     'Site', 'SiteArray', 'SiteFamily',
     'System', 'VectorizedSystem', 'FiniteSystem', 'FiniteVectorizedSystem',
     'InfiniteSystem', 'InfiniteVectorizedSystem',
+    'is_finite', 'is_infinite', 'is_vectorized',
 ]
 
 import abc
@@ -735,6 +736,40 @@ class InfiniteVectorizedSystem(VectorizedSystem, InfiniteSystemMixin, metaclass=
 
 def is_infinite(syst):
     return isinstance(syst, (InfiniteSystem, InfiniteVectorizedSystem))
+
+
+def is_vectorized(syst):
+    return isinstance(syst, (FiniteVectorizedSystem, InfiniteVectorizedSystem))
+
+
+def _normalize_matrix_blocks(matrix_blocks, expected_length):
+    """Normalize a sequence of matrices into a single 3D numpy array
+
+    Parameters
+    ----------
+    matrix_blocks : sequence of complex array-like
+    expected_length : int
+    """
+    try:
+        matrix_blocks = np.asarray(matrix_blocks, dtype=complex)
+    except TypeError:
+        raise ValueError(
+            "Matrix elements declared with incompatible shapes."
+        ) from None
+    # Upgrade to vector of matrices
+    if len(matrix_blocks.shape) == 1:
+        matrix_blocks = matrix_blocks[:, np.newaxis, np.newaxis]
+    if len(matrix_blocks.shape) != 3:
+        msg = (
+            "Vectorized value functions must return an array of"
+            "scalars or an array of matrices."
+        )
+        raise ValueError(msg)
+    if matrix_blocks.shape[0] != expected_length:
+        raise ValueError("Value functions must return a single value per "
+                         "onsite/hopping.")
+    return matrix_blocks
+
 
 
 class PrecalculatedLead:

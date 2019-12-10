@@ -2153,7 +2153,7 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
             except Exception as exc:
                 _raise_user_error(exc, val)
 
-        ham = _normalize_term_value(ham, len(to_site_array))
+        ham = system._normalize_matrix_blocks(ham, len(to_site_array))
 
         return ham
 
@@ -2392,33 +2392,11 @@ class _IdBySite:
         raise KeyError(site)
 
 
-def _normalize_term_value(value, expected_n_values):
-    try:
-        value = np.asarray(value, dtype=complex)
-    except TypeError:
-        raise ValueError(
-            "Matrix elements declared with incompatible shapes."
-        ) from None
-    # Upgrade to vector of matrices
-    if len(value.shape) == 1:
-        value = value[:, np.newaxis, np.newaxis]
-    if len(value.shape) != 3:
-        msg = (
-            "Vectorized value functions must return an array of"
-            "scalars or an array of matrices."
-        )
-        raise ValueError(msg)
-    if value.shape[0] != expected_n_values:
-        raise ValueError("Value functions must return a single value per "
-                         "onsite/hopping.")
-    return value
-
-
 def _sort_term(term, value):
     term = np.asarray(term)
 
     if not callable(value):
-        value = _normalize_term_value(value, len(term))
+        value = system._normalize_matrix_blocks(value, len(term))
         # Ensure that values still correspond to the correct
         # sites in 'term' once the latter has been sorted.
         value = value[term.argsort()]

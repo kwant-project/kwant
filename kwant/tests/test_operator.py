@@ -120,12 +120,24 @@ def test_operator_construction():
     # test construction with dict `onsite`
     for A in opservables:
         B = A(fsyst, {lat: 1})
-        assert all(B.onsite(i) == 1 for i in range(N))
+        start_sites = [r[0] for r in fsyst.site_ranges]
+        for site_range, (start, stop) in enumerate(zip(start_sites, start_sites[1:])):
+            site_offsets = np.arange(stop - start)
+            should_be = np.ones(len(site_offsets), complex).reshape(-1, 1, 1)
+            vals = B.onsite(site_range, site_offsets)
+            assert np.all(vals == should_be)
 
     # test construction with a functional onsite
     for A in opservables:
         B = A(fsyst, lambda site: site.pos[0])  # x-position operator
-        assert all(B.onsite(i) == fsyst.sites[i].pos[0] for i in range(N))
+        start_sites = [r[0] for r in fsyst.site_ranges]
+        for site_range, (start, stop) in enumerate(zip(start_sites, start_sites[1:])):
+            site_offsets = np.arange(stop - start)
+            should_be = np.array([
+                fsyst.sites[i].pos[0] for i in range(start, stop)
+            ], complex).reshape(-1, 1, 1)
+            vals = B.onsite(site_range, site_offsets)
+            assert np.all(vals == should_be)
 
     # test construction with `where` given by a sequence
     where = [lat(2, 2), lat(1, 1)]
@@ -538,8 +550,22 @@ def random_onsite(i):
     return (2 + kwant.digest.uniform(i.tag)) * sigmaz
 
 
+def vectorized_random_onsite(sites):
+    t = (np.array([kwant.digest.uniform(tag) for tag in sites.tags])
+         .reshape(-1, 1, 1))
+    return (2 + t) * sigmaz
+
+
 def random_hopping(i, j):
     return (-1 + kwant.digest.uniform(i.tag + j.tag)) * sigmay
+
+
+def vectorized_random_hopping(sites_a, sites_b):
+    t = np.array([
+            kwant.digest.uniform(tag_a + tag_b)
+            for tag_a, tag_b in zip(sites_a.tags, sites_b.tags)
+        ]).reshape(-1, 1, 1)
+    return (-1 + t) * sigmay
 
 
 def f_sigmay(i):
@@ -575,3 +601,56 @@ def test_pickling(A):
     for op in ops:
         loaded_op = pickle.loads(pickle.dumps(op))
         assert np.all(op(wf) == loaded_op(wf))
+
+
+@pytest.mark.parametrize("A", opservables)
+def test_vectorization(A):
+    # We need to test non/vectorized systems with non/vectorized operators
+
+    def onsite(site):
+        t = kwant.digest.uniform(site.tag)
+        return t * sigmay + (1 - t) * sigmaz
+
+    def vectorized_onsite(sites):
+        t = np.array([kwant.digest.uniform(tag) for tag in sites.tags])
+        t = t.reshape(-1, 1, 1)
+        return t * sigmay + (1 - t) * sigmaz
+
+    lat = kwant.lattice.square(norbs=2)
+
+    # non-vectorized system
+    syst = kwant.Builder(vectorize=False)
+    syst[(lat(i, j) for i in range(5) for j in range(5))] = random_onsite
+    syst[lat.neighbors()] = random_hopping
+    fsyst = syst.finalized()
+
+    # vectorized system
+    vsyst = kwant.Builder(vectorize=True)
+    vsyst[(lat(i, j) for i in range(5) for j in range(5))] = vectorized_random_onsite
+    vsyst[lat.neighbors()] = vectorized_random_hopping
+    vfsyst = vsyst.finalized()
+
+    wf = np.random.rand(2 * len(fsyst.sites))
+
+    # vectorized and non-vectorized operators
+    op = A(fsyst, onsite)
+    vectorized_op = A(vfsyst, vectorized_onsite)
+
+    np.testing.assert_array_equal(op(wf), vectorized_op(wf))
+
+    # System is vectorized, and onsite is not *and* is incompatible
+    # because it uses 'site.tag', which does not exist for SiteArrays.
+    bad_operator = A(vfsyst, onsite)
+
+    with pytest.raises(kwant._common.UserCodeError) as excinfo:
+        bad_operator(wf)
+    assert "did you remember to vectorize" in str(excinfo.value).lower()
+
+    # Infinite vectorized systems are incompatible with operators for now.
+    visyst = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)), vectorize=True)
+    visyst[(lat(0, j) for j in range(5))] = sigmaz
+    visyst[lat.neighbors()] = sigmax
+    vifsyst = visyst.finalized()
+
+    with pytest.raises(TypeError):
+        A(vifsyst, vectorized_onsite, where=[(lat(1, 0), lat(0, 0))])
