@@ -454,6 +454,11 @@ cdef class _LocalOperator:
                              'Declare the number of orbitals using the '
                              '`norbs` keyword argument when constructing '
                              'the site families (lattices).')
+        # TODO: Update this when it becomes clear how ND systems will be
+        #       implemented.
+        if is_vectorized(syst) and is_infinite(syst):
+            raise TypeError('Vectorized infinite systems cannot yet be '
+                            'used with operators.')
 
         self.syst = syst
         self.onsite, self._onsite_param_names = _normalize_onsite(

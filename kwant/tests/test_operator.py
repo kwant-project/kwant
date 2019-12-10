@@ -633,3 +633,12 @@ def test_vectorization(A):
     with pytest.raises(kwant._common.UserCodeError) as excinfo:
         bad_operator(wf)
     assert "did you remember to vectorize" in str(excinfo.value).lower()
+
+    # Infinite vectorized systems are incompatible with operators for now.
+    visyst = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)), vectorize=True)
+    visyst[(lat(0, j) for j in range(5))] = sigmaz
+    visyst[lat.neighbors()] = sigmax
+    vifsyst = visyst.finalized()
+
+    with pytest.raises(TypeError):
+        A(vifsyst, vectorized_onsite, where=[(lat(1, 0), lat(0, 0))])
