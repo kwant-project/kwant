@@ -7,6 +7,8 @@ cdef gint _bisect(gint[:] a, gint x)
 cdef int _is_herm_conj(complex[:, :] a, complex[:, :] b,
                        double atol=*, double rtol=*) except -1
 
+cdef _select(gint[:, :] arr, gint[:] indexes)
+
 cdef int _check_onsite(complex[:, :] M, gint norbs,
                        int check_hermiticity) except -1
 
@@ -28,7 +30,7 @@ cdef class BlockSparseMatrix:
 
 cdef class _LocalOperator:
     cdef public int check_hermiticity, sum
-    cdef public object syst, onsite, _onsite_param_names
+    cdef public object syst, onsite, _onsite_param_names, _terms
     cdef public gint[:, :]  where, _site_ranges
     cdef public BlockSparseMatrix _bound_onsite, _bound_hamiltonian
 

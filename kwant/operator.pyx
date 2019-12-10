@@ -1,4 +1,4 @@
-# Copyright 2011-2017 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -10,6 +10,7 @@
 __all__ = ['Density', 'Current', 'Source']
 
 import cython
+import itertools
 import functools as ft
 import collections
 import warnings
@@ -24,7 +25,9 @@ from .graph.core cimport EdgeIterator
 from .graph.core import DisabledFeatureError, NodeDoesNotExistError
 from .graph.defs cimport gint
 from .graph.defs import gint_dtype
-from .system import is_infinite, Site
+from .system import (
+    is_infinite, is_vectorized, Site, SiteArray, _normalize_matrix_blocks
+)
 from ._common import (
     UserCodeError, KwantDeprecationWarning, get_parameters, deprecate_args
 )
@@ -74,6 +77,20 @@ cdef int _is_herm_conj(complex[:, :] a, complex[:, :] b,
                 return False
     return True
 
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef _select(gint[:, :] arr, gint[:] indexes):
+    ret = np.empty((indexes.shape[0], arr.shape[1]), dtype=gint_dtype)
+    cdef gint[:, :] ret_view = ret
+    cdef gint i, j
+
+    for i in range(indexes.shape[0]):
+        for j in range(arr.shape[1]):
+            ret_view[i, j] = arr[indexes[i], j]
+
+    return ret
 
 ################ Helper functions
 
@@ -250,23 +267,78 @@ def _normalize_hopping_where(syst, where):
     return where
 
 
-## These two classes are here to avoid using closures, as these will
+## These four classes are here to avoid using closures, as these will
 ## break pickle support. These are only used inside '_normalize_onsite'.
+
+def _raise_user_error(exc, func, vectorized):
+    msg = [
+        'Error occurred in user-supplied onsite function "{0}".',
+        'Did you remember to vectorize "{0}"?' if vectorized else '',
+        'See the upper part of the above backtrace for more information.',
+    ]
+    msg = '\n'.join(line for line in msg if line).format(func.__name__)
+    raise UserCodeError(msg) from exc
+
 
 class _FunctionalOnsite:
 
-    def __init__(self, onsite, sites):
+    def __init__(self, onsite, sites, site_ranges):
         self.onsite = onsite
         self.sites = sites
+        self.site_ranges = site_ranges
 
-    def __call__(self, site_id, *args):
-        return self.onsite(self.sites[site_id], *args)
+    def __call__(self, site_range, site_offsets, *args):
+        sites = self.sites
+        offset = self.site_ranges[site_range][0]
+        try:
+            ret = [self.onsite(sites[offset + i], *args) for i in site_offsets]
+        except Exception as exc:
+            _raise_user_error(exc, self.onsite, vectorized=False)
+        return _normalize_matrix_blocks(ret, len(site_offsets))
 
 
-class _DictOnsite(_FunctionalOnsite):
+class _VectorizedFunctionalOnsite:
 
-    def __call__(self, site_id, *args):
-        return self.onsite[self.sites[site_id].family]
+    def __init__(self, onsite, site_arrays):
+        self.onsite = onsite
+        self.site_arrays = site_arrays
+
+    def __call__(self, site_range, site_offsets, *args):
+        site_array = self.site_arrays[site_range]
+        tags = site_array.tags[site_offsets]
+        sites = SiteArray(site_array.family, tags)
+        try:
+            ret = self.onsite(sites, *args)
+        except Exception as exc:
+            _raise_user_error(exc, self.onsite, vectorized=True)
+        return _normalize_matrix_blocks(ret, len(site_offsets))
+
+
+class _FunctionalOnsiteNoTransform:
+
+    def __init__(self, onsite, site_ranges):
+        self.onsite = onsite
+        self.site_ranges = site_ranges
+
+    def __call__(self, site_range, site_offsets, *args):
+        site_ids = self.site_ranges[site_range][0] + site_offsets
+        try:
+            ret = [self.onsite(id, *args) for id in site_ids]
+        except Exception as exc:
+            _raise_user_error(exc, self.onsite, vectorized=False)
+        return _normalize_matrix_blocks(ret, len(site_offsets))
+
+
+class _DictOnsite:
+
+    def __init__(self, onsite, range_family_map):
+        self.onsite = onsite
+        self.range_family_map = range_family_map
+
+    def __call__(self, site_range, site_offsets, *args):
+        fam = self.range_family_map[site_range]
+        ret = [self.onsite[fam]] * len(site_offsets)
+        return _normalize_matrix_blocks(ret, len(site_offsets))
 
 
 def _normalize_onsite(syst, onsite, check_hermiticity):
@@ -280,21 +352,29 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
     if callable(onsite):
         # make 'onsite' compatible with hamiltonian value functions
         param_names = get_parameters(onsite)[1:]
-        try:
-            _onsite = _FunctionalOnsite(onsite, syst.sites)
-        except AttributeError:
-            _onsite = onsite
-    elif isinstance(onsite, collections.abc.Mapping):
-        if not hasattr(syst, 'sites'):
-            raise TypeError('Provide `onsite` as a value or a function for '
-                            'systems that are not finalized Builders.')
+        if is_vectorized(syst):
+            _onsite = _VectorizedFunctionalOnsite(onsite, syst.site_arrays)
+        elif hasattr(syst, "sites"):  # probably a non-vectorized finalized Builder
+            _onsite = _FunctionalOnsite(onsite, syst.sites, syst.site_ranges)
+        else:  # generic old-style system, therefore *not* vectorized.
+            _onsite = _FunctionalOnsiteNoTransform(onsite, syst.site_ranges)
 
+    elif isinstance(onsite, collections.abc.Mapping):
         # onsites known; immediately check for correct shape and hermiticity
         for fam, _onsite in onsite.items():
             _onsite = ta.matrix(_onsite, complex)
             _check_onsite(_onsite, fam.norbs, check_hermiticity)
 
-        _onsite = _DictOnsite(onsite, syst.sites)
+        if is_vectorized(syst):
+            range_family_map = [arr.family for arr in syst.site_arrays]
+        elif not hasattr(syst, 'sites'):
+            raise TypeError('Provide `onsite` as a value or a function for '
+                            'systems that are not finalized Builders.')
+        else:
+            # The last entry in 'site_ranges' is just an end marker, so we remove it
+            range_family_map = [syst.sites[r[0]].family for r in syst.site_ranges[:-1]]
+        _onsite = _DictOnsite(onsite, range_family_map)
+
     else:
         # single onsite; immediately check for correct shape and hermiticity
         _onsite = ta.matrix(onsite, complex)
@@ -320,6 +400,101 @@ def _normalize_onsite(syst, onsite, check_hermiticity):
     return _onsite, param_names
 
 
+def _make_onsite_or_hopping_terms(site_ranges, where):
+
+    terms = dict()
+
+    cdef gint[:] site_offsets_ = np.asarray(site_ranges, dtype=gint_dtype)[:, 0]
+    cdef gint i
+
+    if where.shape[1] == 1:  # onsite
+        for i in range(where.shape[0]):
+            a = _bisect(site_offsets_, where[i, 0]) - 1
+            terms.setdefault((a, a), []).append(i)
+    else:  # hopping
+        for i in range(where.shape[0]):
+            a = _bisect(site_offsets_, where[i, 0]) - 1
+            b = _bisect(site_offsets_, where[i, 1]) - 1
+            terms.setdefault((a, b), []).append(i)
+    return [(a, None, b) for a, b in terms.items()]
+
+
+def _vectorized_make_onsite_terms(syst, where):
+    assert is_vectorized(syst)
+    assert where.shape[1] == 1
+    site_offsets = [r[0] for r in syst.site_ranges]
+
+    terms = {}
+    term_by_id = syst._onsite_term_by_site_id
+    for i in range(where.shape[0]):
+        w = where[i, 0]
+        terms.setdefault(term_by_id[w], []).append(i)
+
+    ret = []
+    for term_id, which in terms.items():
+        term = syst.terms[term_id]
+        ((term_sa, _), (term_sites, _)) = syst.subgraphs[term.subgraph]
+        term_sites += site_offsets[term_sa]
+        which = np.asarray(which, dtype=gint_dtype)
+        sites = _select(where, which).reshape(-1)
+        selector = np.searchsorted(term_sites, sites)
+        ret.append((term_id, selector, which))
+
+    return ret
+
+
+def _vectorized_make_hopping_terms(syst, where):
+    assert is_vectorized(syst)
+    assert where.shape[1] == 2
+    site_offsets = [r[0] for r in syst.site_ranges]
+
+    terms = {}
+    term_by_id = syst._hopping_term_by_edge_id
+    for i in range(where.shape[0]):
+        a, b = where[i, 0], where[i, 1]
+        edge = syst.graph.first_edge_id(a, b)
+        terms.setdefault(term_by_id[edge], []).append(i)
+
+    ret = []
+    dtype = np.dtype([('f0', int), ('f1', int)])
+    for term_id, which in terms.items():
+        herm_conj = term_id < 0
+        if herm_conj:
+            real_term_id = -term_id - 1
+        else:
+            real_term_id = term_id
+        which = np.asarray(which, dtype=gint_dtype)
+        # Select out the hoppings and reverse them if we are
+        # dealing with Hermitian conjugate hoppings
+        hops = _select(where, which)
+        if herm_conj:
+            hops = hops[:, ::-1]
+        # Force contiguous array to handle herm conj case also.
+        # Needs to be contiguous to cast to compound dtype
+        hops = np.ascontiguousarray(hops, dtype=int)
+        hops = hops.view(dtype).reshape(-1)
+        term = syst.terms[real_term_id]
+        # Get array of pairs
+        ((to_sa, from_sa), term_hoppings) = syst.subgraphs[term.subgraph]
+        term_hoppings = term_hoppings.transpose() + (site_offsets[to_sa], site_offsets[from_sa])
+        term_hoppings = term_hoppings.view(dtype).reshape(-1)
+
+        selector = np.recarray.searchsorted(term_hoppings, hops)
+
+        ret.append((term_id, selector, which))
+
+    return ret
+
+
+def _make_matrix_elements(evaluate_term, terms):
+        matrix_elements = []
+        for (term_id, term_selector, which) in terms:
+            which = np.asarray(which, dtype=gint_dtype)
+            data = evaluate_term(term_id, term_selector, which)
+            matrix_elements.append((which, data))
+        return matrix_elements
+
+
 cdef class BlockSparseMatrix:
     """A sparse matrix stored as dense blocks.
 
@@ -334,11 +509,10 @@ cdef class BlockSparseMatrix:
         in the sparse matrix: ``(row_offset, col_offset)``.
     block_shapes : gint[:, :]
         ``Nx2`` array: the shapes of each block, ``(n_rows, n_cols)``.
-    f : callable
-        evaluates matrix blocks. Has signature ``(a, n_rows, b, n_cols)``
-        where all the arguments are integers and
-        ``a`` and ``b`` are the contents of ``where``. This function
-        must return a matrix of shape ``(n_rows, n_cols)``.
+    matrix_elements : sequence of pairs (where_indices, data)
+        'data' is a 3D complex array; a vector of matrices.
+        'where_indices' is a 1D array of indices for 'where';
+        'data[i]' should be placed at 'where[where_indices[i]]'.
 
     Attributes
     ----------
@@ -357,7 +531,7 @@ cdef class BlockSparseMatrix:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def __init__(self, gint[:, :] where, gint[:, :] block_offsets,
-                  gint[:, :] block_shapes, f):
+                  gint[:, :] block_shapes, matrix_elements):
         if (block_offsets.shape[0] != where.shape[0] or
             block_shapes.shape[0] != where.shape[0]):
             raise ValueError('Arrays should be the same length along '
@@ -372,20 +546,19 @@ cdef class BlockSparseMatrix:
             data_size += block_shapes[w, 0] * block_shapes[w, 1]
         ### Populate data array
         self.data = np.empty((data_size,), dtype=complex)
-        cdef complex[:, :] mat
-        cdef gint i, j, off, a, b, a_norbs, b_norbs
-        for w in range(where.shape[0]):
-            off = self.data_offsets[w]
-            a_norbs = self.block_shapes[w, 0]
-            b_norbs = self.block_shapes[w, 1]
-            a = where[w, 0]
-            b = a if where.shape[1] == 1 else where[w, 1]
-            # call the function that gives the matrix
-            mat = f(a, a_norbs, b, b_norbs)
-            # Copy data
-            for i in range(a_norbs):
-                for j in range(b_norbs):
-                    self.data[off + i * b_norbs + j] = mat[i, j]
+        cdef complex[:, :, :] data
+        cdef gint[:] where_indexes
+        cdef gint i, j, k, off, a, b, a_norbs, b_norbs
+        for where_indexes, data in matrix_elements:
+            for i in range(where_indexes.shape[0]):
+                w = where_indexes[i]
+                off = self.data_offsets[w]
+                a_norbs = self.block_shapes[w, 0]
+                b_norbs = self.block_shapes[w, 1]
+                # Copy data
+                for j in range(a_norbs):
+                    for k in range(b_norbs):
+                        self.data[off + j * b_norbs + k] = data[i, j, k]
 
     cdef complex* get(self, gint block_idx):
         return  <complex*> &self.data[0] + self.data_offsets[block_idx]
@@ -469,6 +642,40 @@ cdef class _LocalOperator:
         self.where = where
         self._bound_onsite = None
         self._bound_hamiltonian = None
+
+        # Here we pre-compute the datastructures that will enable us to evaluate
+        # the Hamiltonian and onsite functions in a vectorized way. Essentially
+        # we group the sites/hoppings in 'where' by what term of 'syst' they are
+        # in (for vectorized systems), or by the site family(s) (for
+        # non-vectorized systems). If the system is vectorized we store a list
+        # of triples:
+        #
+        #   (term_id, term_selector, which)
+        #
+        # otherwise
+        #
+        #   ((to_site_range, from_site_range), None, which)
+        #
+        # Where:
+        #
+        # 'term_id' → integer: term index, may be negative (indicates herm. conj.)
+        # 'term_selector' → 1D integer array: selects which elements from the
+        #                   subgraph of term number 'term_id' should be evaluated.
+        # 'which' → 1D integer array: selects which elements of 'where' this
+        #           vectorized evaluation corresponds to.
+        # 'to/from_site_range' → integer: the site ranges that the elements of
+        #                        'where' indexed by 'which' correspond to.
+        #
+        # Note that all sites/hoppings indicated by 'which' belong to the *same*
+        # pair of site families by construction. This is what allows for
+        # vectorized evaluation.
+        if is_vectorized(syst):
+            if self.where.shape[1] == 1:
+                self._terms = _vectorized_make_onsite_terms(syst, where)
+            else:
+                self._terms = _vectorized_make_hopping_terms(syst, where)
+        else:
+            self._terms = _make_onsite_or_hopping_terms(self._site_ranges, where)
 
     @cython.embedsignature
     def __call__(self, bra, ket=None, args=(), *, params=None):
@@ -665,9 +872,10 @@ cdef class _LocalOperator:
         """Evaluate the onsite matrices on all elements of `where`"""
         assert callable(self.onsite)
         assert not (args and params)
-        matrix = ta.matrix
-        onsite = self.onsite
         check_hermiticity = self.check_hermiticity
+        syst = self.syst
+
+        _is_vectorized = is_vectorized(syst)
 
         if params:
             try:
@@ -679,38 +887,80 @@ cdef class _LocalOperator:
                        ', '.join(map('"{}"'.format, missing)))
                 raise TypeError(''.join(msg))
 
-        def get_onsite(a, a_norbs, b, b_norbs):
-            mat = matrix(onsite(a, *args), complex)
-            _check_onsite(mat, a_norbs, check_hermiticity)
-            return mat
+        # Evaluate many onsites at once. See _LocalOperator.__init__
+        # for an explanation the parameters.
+        def eval_onsite(term_id, term_selector, which):
+            if _is_vectorized:
+                if term_id >= 0:
+                    (sr, _), _ = syst.subgraphs[syst.terms[term_id].subgraph]
+                else:
+                    (_, sr), _ = syst.subgraphs[syst.terms[-term_id - 1].subgraph]
+            else:
+                sr, _ = term_id
+            start_site, norbs, _ = self.syst.site_ranges[sr]
+            # All sites selected by 'which' are part of the same site family.
+            site_offsets = _select(self.where, which)[:, 0] - start_site
+            data = self.onsite(sr, site_offsets, *args)
+            return data
 
+        matrix_elements = _make_matrix_elements(eval_onsite, self._terms)
         offsets, norbs = _get_all_orbs(self.where, self._site_ranges)
-        return  BlockSparseMatrix(self.where, offsets, norbs, get_onsite)
+        return  BlockSparseMatrix(self.where, offsets, norbs, matrix_elements)
+
 
     cdef BlockSparseMatrix _eval_hamiltonian(self, args, params):
         """Evaluate the Hamiltonian on all elements of `where`."""
-        matrix = ta.matrix
-        hamiltonian = self.syst.hamiltonian
+
+        where = self.where
+        syst = self.syst
+        is_onsite = self.where.shape[1] == 1
         check_hermiticity = self.check_hermiticity
 
-        def get_ham(a, a_norbs, b, b_norbs):
-            mat = matrix(hamiltonian(a, b, *args, params=params), complex)
-            _check_ham(mat, hamiltonian, args, params,
-                       a, a_norbs, b, b_norbs, check_hermiticity)
-            return mat
+        if is_vectorized(self.syst):
 
-        offsets, norbs = _get_all_orbs(self.where, self._site_ranges)
-        # TODO: update operators to use 'hamiltonian_term' rather than
-        #       'hamiltonian'.
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=KwantDeprecationWarning)
-            return  BlockSparseMatrix(self.where, offsets, norbs, get_ham)
+            # Evaluate many Hamiltonian elements at once.
+            # See _LocalOperator.__init__ for an explanation the parameters.
+            def eval_hamiltonian(term_id, term_selector, which):
+                herm_conj = term_id < 0
+                assert not is_onsite or (is_onsite and not herm_conj)  # onsite terms are never hermitian conjugate
+                if herm_conj:
+                    term_id = -term_id - 1
+                data = syst.hamiltonian_term(term_id, term_selector,
+                                             args=args, params=params)
+                if herm_conj:
+                    data = data.conjugate().transpose(0, 2, 1)
+
+                return data
+
+        else:
+
+            # Evaluate many Hamiltonian elements at once.
+            # See _LocalOperator.__init__ for an explanation the parameters.
+            def eval_hamiltonian(term_id, term_selector, which):
+                if is_onsite:
+                    data = [
+                        syst.hamiltonian(where[i, 0], where[i, 0], *args, params=params)
+                        for i in which
+                    ]
+                else:
+                    data = [
+                        syst.hamiltonian(where[i, 0], where[i, 1], *args, params=params)
+                        for i in which
+                    ]
+                data = _normalize_matrix_blocks(data, len(which))
+
+                return data
+
+        matrix_elements = _make_matrix_elements(eval_hamiltonian, self._terms)
+        offsets, norbs = _get_all_orbs(where, self._site_ranges)
+        return  BlockSparseMatrix(where, offsets, norbs, matrix_elements)
 
     def __getstate__(self):
         return (
             (self.check_hermiticity, self.sum),
             (self.syst, self.onsite, self._onsite_param_names),
             tuple(map(np.asarray, (self.where, self._site_ranges))),
+            (self._terms,),
             (self._bound_onsite, self._bound_hamiltonian),
         )
 
@@ -718,6 +968,7 @@ cdef class _LocalOperator:
         ((self.check_hermiticity, self.sum),
          (self.syst, self.onsite, self._onsite_param_names),
          (self.where, self._site_ranges),
+         (self._terms,),
          (self._bound_onsite, self._bound_hamiltonian),
         ) = state
 
