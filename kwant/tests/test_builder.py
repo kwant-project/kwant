@@ -740,6 +740,46 @@ def test_vectorized_hamiltonian_evaluation():
     )
 
 
+def test_vectorized_value_normalization():
+    # Here we test whether all legal shapes for values for vectorized Builders
+    # are accepted:
+    # + single scalars are interpreted as 1x1 matrices, and broadcast into an
+    #   (N, 1, 1) array
+    # + single (n, m) matrices are broadcast into an (N, n, m) array
+    # + a shape (N,) array is interpreted as an (N, 1, 1) array
+
+    sz = np.array([[1, 0], [0, -1]])
+
+    scalars = [
+        2,
+        lambda s: 2,
+        lambda s: [2] * len(s)
+    ]
+    matrices = [
+        sz,
+        lambda s: sz,
+        lambda s: [sz] * len(s)
+    ]
+    inter_lattice_matrices =[
+        [[1, 0]],
+        lambda a, b: [[1, 0]],
+        lambda a, b: [[[1, 0]]] * len(a)
+    ]
+
+    lat_a = kwant.lattice.chain(norbs=1)
+    lat_b = kwant.lattice.chain(norbs=2)
+
+    hams = []
+    for s, m, v in it.product(scalars, matrices, inter_lattice_matrices):
+        syst = builder.Builder(vectorize=True)
+        syst[map(lat_a, range(10))] = s
+        syst[map(lat_b, range(10))] = m
+        syst[((lat_a(i), lat_b(i)) for i in range(10))] = v
+        h = syst.finalized().hamiltonian_submatrix()
+        hams.append(h)
+    assert np.all(hams == hams[0])
+
+
 @pytest.mark.parametrize("sym", [
     builder.NoSymmetry(),
     kwant.TranslationalSymmetry([-1]),

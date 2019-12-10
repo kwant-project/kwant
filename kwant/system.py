@@ -742,33 +742,37 @@ def is_vectorized(syst):
     return isinstance(syst, (FiniteVectorizedSystem, InfiniteVectorizedSystem))
 
 
-def _normalize_matrix_blocks(matrix_blocks, expected_length):
+def _normalize_matrix_blocks(blocks, expected_length):
     """Normalize a sequence of matrices into a single 3D numpy array
 
     Parameters
     ----------
-    matrix_blocks : sequence of complex array-like
+    blocks : sequence of complex array-like
     expected_length : int
     """
     try:
-        matrix_blocks = np.asarray(matrix_blocks, dtype=complex)
+        blocks = np.asarray(blocks, dtype=complex)
     except TypeError:
         raise ValueError(
             "Matrix elements declared with incompatible shapes."
         ) from None
-    # Upgrade to vector of matrices
-    if len(matrix_blocks.shape) == 1:
-        matrix_blocks = matrix_blocks[:, np.newaxis, np.newaxis]
-    if len(matrix_blocks.shape) != 3:
+    if len(blocks.shape) == 0:  # scalar → broadcast to vector of 1x1 matrices
+        blocks = np.tile(blocks, (expected_length, 1, 1))
+    elif len(blocks.shape) == 1:  # vector → interpret as vector of 1x1 matrices
+        blocks = blocks.reshape(-1, 1, 1)
+    elif len(blocks.shape) == 2:  # matrix → broadcast to vector of matrices
+        blocks = np.tile(blocks, (expected_length, 1, 1))
+
+    if len(blocks.shape) != 3:
         msg = (
             "Vectorized value functions must return an array of"
             "scalars or an array of matrices."
         )
         raise ValueError(msg)
-    if matrix_blocks.shape[0] != expected_length:
+    if blocks.shape[0] != expected_length:
         raise ValueError("Value functions must return a single value per "
                          "onsite/hopping.")
-    return matrix_blocks
+    return blocks
 
 
 
