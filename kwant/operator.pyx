@@ -471,8 +471,8 @@ def _vectorized_make_onsite_terms(syst, where):
     ret = []
     for term_id, which in terms.items():
         term = syst.terms[term_id]
-        ((term_sa, _), (term_sites, _)) = syst.subgraphs[term.subgraph]
-        term_sites += site_offsets[term_sa]
+        ((term_sa, _), (term_site_offsets, _)) = syst.subgraphs[term.subgraph]
+        term_sites = site_offsets[term_sa] + term_site_offsets
         which = np.asarray(which, dtype=gint_dtype)
         sites = _select(where, which).reshape(-1)
         selector = np.searchsorted(term_sites, sites)

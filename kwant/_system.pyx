@@ -384,7 +384,7 @@ def _vectorized_make_sparse(subgraphs, hams, long [:] norbs, long [:] orb_offset
 
     cdef long i, j, k, m, N, M, P, to_off, from_off,\
               ta, fa, to_norbs, from_norbs
-    cdef long [:] ts_offs, fs_offs
+    cdef const long [:] ts_offs, fs_offs
     cdef complex [:, :, :] h
 
     m = 0
@@ -428,7 +428,7 @@ def _vectorized_make_dense(subgraphs, hams, long [:] norbs, long [:] orb_offsets
 
     cdef long i, j, k, N, M, P, to_off, from_off,\
               ta, fa, to_norbs, from_norbs
-    cdef long [:] ts_offs, fs_offs
+    cdef const long [:] ts_offs, fs_offs
     cdef complex [:, :, :] h
 
     # This outer loop zip() is pure Python, but that's ok, as it
