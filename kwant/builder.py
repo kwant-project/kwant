@@ -2365,7 +2365,6 @@ def _sort_term(term, value):
     term = np.asarray(term)
 
     if not callable(value):
-        value = system._normalize_matrix_blocks(value, len(term))
         # Ensure that values still correspond to the correct
         # sites in 'term' once the latter has been sorted.
         value = value[term.argsort()]
@@ -2444,8 +2443,14 @@ def _make_onsite_terms(builder, sites, site_arrays, term_offset):
         if const_val:
             vals = onsite_term_values[onsite_to_term_nr[key]]
             vals.append(val)
-    # Sort the sites in each term, and normalize any constant
-    # values to arrays of the correct dtype and shape.
+    # Normalize any constant values and check that the shapes are consistent.
+    onsite_term_values = [
+        val if callable(val)
+        else system._normalize_matrix_blocks(val, len(val))
+        for val in onsite_term_values
+    ]
+    # Sort the sites in each term, and also sort the values
+    # in the same way if they are a constant (as opposed to a callable).
     onsite_subgraphs, onsite_term_values = zip(*(
         _sort_term(term, value)
         for term, value in
@@ -2550,9 +2555,16 @@ def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offs
             if const_val:
                 vals = hopping_term_values[hopping_to_term_nr[key]]
                 vals.append(val)
-    # Sort the hoppings in each term, and normalize any constant
-    # values to arrays of the correct dtype and shape.
+
     if hopping_subgraphs:
+        # Normalize any constant values and check that the shapes are consistent.
+        hopping_term_values = [
+            val if callable(val)
+            else system._normalize_matrix_blocks(val, len(val))
+            for val in hopping_term_values
+        ]
+        # Sort the hoppings in each term, and also sort the values
+        # in the same way if they are a constant (as opposed to a callable).
         hopping_subgraphs, hopping_term_values = zip(*(
             _sort_hopping_term(term, value)
             for term, value in
