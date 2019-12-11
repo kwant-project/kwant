@@ -174,12 +174,17 @@ if plotly_available:
 
 
     def convert_cmap_list_mpl_plotly(mpl_cmap_name, N=255):
-        cmap_mpl = matplotlib.cm.get_cmap(mpl_cmap_name)
-        cmap_mpl_arr = matplotlib.colors.makeMappingArray(N, cmap_mpl)
-        level = np.linspace(0, 1, N)
-        cmap_plotly_linear = [(level, convert_colormap_mpl_plotly(cmap_mpl))
-                                for level, cmap_mpl in zip(level,
-                                                            cmap_mpl_arr)]
+        if isinstance(mpl_cmap_name, str):
+            cmap_mpl = matplotlib.cm.get_cmap(mpl_cmap_name)
+            cmap_mpl_arr = matplotlib.colors.makeMappingArray(N, cmap_mpl)
+            level = np.linspace(0, 1, N)
+            cmap_plotly_linear = [(level, convert_colormap_mpl_plotly(cmap_mpl))
+                                    for level, cmap_mpl in zip(level,
+                                                                cmap_mpl_arr)]
+        else:
+            assert(isinstance(mpl_cmap_name, list))
+            # Do not do any conversion if it's already a list
+            cmap_plotly_linear = mpl_cmap_name
         return cmap_plotly_linear
 
 
