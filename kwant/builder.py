@@ -2122,7 +2122,12 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
             except Exception as exc:
                 _raise_user_error(exc, val)
 
-        ham = system._normalize_matrix_blocks(ham, len(to_site_array))
+        expected_shape = (
+            len(to_site_array),
+            to_family.norbs,
+            from_family.norbs if not is_onsite else to_family.norbs,
+        )
+        ham = system._normalize_matrix_blocks(ham, expected_shape)
 
         return ham
 
@@ -2446,8 +2451,17 @@ def _make_onsite_terms(builder, sites, site_arrays, term_offset):
     # Normalize any constant values and check that the shapes are consistent.
     onsite_term_values = [
         val if callable(val)
-        else system._normalize_matrix_blocks(val, len(val))
-        for val in onsite_term_values
+        else
+            system._normalize_matrix_blocks(
+                val,
+                (
+                    len(val),
+                    site_arrays[sa].family.norbs,
+                    site_arrays[sa].family.norbs,
+                ),
+            )
+        for (_, sa), val in
+        zip(onsite_to_term_nr.keys(), onsite_term_values)
     ]
     # Sort the sites in each term, and also sort the values
     # in the same way if they are a constant (as opposed to a callable).
@@ -2560,8 +2574,17 @@ def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offs
         # Normalize any constant values and check that the shapes are consistent.
         hopping_term_values = [
             val if callable(val)
-            else system._normalize_matrix_blocks(val, len(val))
-            for val in hopping_term_values
+            else
+                system._normalize_matrix_blocks(
+                    val,
+                    (
+                        len(val),
+                        site_arrays[to_sa].family.norbs,
+                        site_arrays[from_sa].family.norbs,
+                    ),
+                )
+            for (_, to_sa, from_sa), val in
+            zip(hopping_to_term_nr.keys(), hopping_term_values)
         ]
         # Sort the hoppings in each term, and also sort the values
         # in the same way if they are a constant (as opposed to a callable).
