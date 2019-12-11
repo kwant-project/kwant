@@ -1612,6 +1612,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
                  range(len(cmin)))
     grid = tuple(np.ogrid[dims])
     img = interpolate.griddata(coords, values, grid, method)
+    img = img.astype(np.float_)
     mask = np.mgrid[dims].reshape(len(cmin), -1).T
     # The numerical values in the following line are optimized for the common
     # case of a square lattice:
@@ -1793,7 +1794,8 @@ def _map_plotly(syst, img, colorbar, _max, _min,  vmin, vmax, overflow_pct,
     contour_object.y = np.linspace(_min[1],_max[1],img.shape[1])
     contour_object.zsmooth = False
     contour_object.connectgaps = False
-    contour_object.colorscale = _p.convert_cmap_list_mpl_plotly(cmap)
+    cmap = _p.convert_cmap_list_mpl_plotly(cmap)
+    contour_object.colorscale = cmap
     contour_object.zmax = vmax
     contour_object.zmin = vmin
     contour_object.hoverinfo = 'none'
