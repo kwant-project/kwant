@@ -292,6 +292,29 @@ arbitrarily, allowing for a good inspection of the geometry from all sides.
     does not properly honor the corresponding arguments. By resizing the plot
     window however one can manually adjust the aspect ratio.
 
+If you also have plotly installed, you can now use the plotly engine for all
+the plotting functions within Kwant (except streamplots). The way you would do
+it is simple, just set the plotter engine to ``plotly`` and then call the
+plotting function as you would do with some minor changes (See note below). For
+example, from the previous plot, you would need to just do this:
+
+.. jupyter-execute::
+
+    kwant.plotter.set_engine('plotly') # Set to plotly engine
+
+    kwant.plot(syst)
+
+    kwant.plotter.get_engine() # Get the current engine
+
+    kwant.plotter.set_engine('matplotlib') # Set to matplotlib engine
+
+.. note::
+
+    By default, the engine would be set to matplotlib if both matplotlib and
+    plotly are installed, and if either are installed, then, the default would
+    be the one available in your system. Certain attributes such as dpi or
+    fig_size or ax are not supported.
+
 Also for 3D it is possible to customize the plot. For example, we
 can explicitly plot the hoppings as lines, and color sites differently
 depending on the sublattice:
