@@ -2127,7 +2127,8 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
             to_family.norbs,
             from_family.norbs if not is_onsite else to_family.norbs,
         )
-        ham = system._normalize_matrix_blocks(ham, expected_shape)
+        ham = system._normalize_matrix_blocks(ham, expected_shape,
+                                              calling_function=val)
 
         return ham
 

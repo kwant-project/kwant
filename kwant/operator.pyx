@@ -334,7 +334,8 @@ class _FunctionalOnsite:
             _raise_user_error(exc, self.onsite, vectorized=False)
 
         expected_shape = (len(site_offsets), norbs, norbs)
-        return _normalize_matrix_blocks(ret, expected_shape)
+        return _normalize_matrix_blocks(ret, expected_shape,
+                                        calling_function=self.onsite)
 
 
 class _VectorizedFunctionalOnsite:
@@ -353,7 +354,8 @@ class _VectorizedFunctionalOnsite:
             _raise_user_error(exc, self.onsite, vectorized=True)
 
         expected_shape = (len(sites), sites.family.norbs, sites.family.norbs)
-        return _normalize_matrix_blocks(ret, expected_shape)
+        return _normalize_matrix_blocks(ret, expected_shape,
+                                        calling_function=self.onsite)
 
 
 class _FunctionalOnsiteNoTransform:
@@ -371,7 +373,8 @@ class _FunctionalOnsiteNoTransform:
             _raise_user_error(exc, self.onsite, vectorized=False)
 
         expected_shape = (len(site_offsets), norbs, norbs)
-        return _normalize_matrix_blocks(ret, expected_shape)
+        return _normalize_matrix_blocks(ret, expected_shape,
+                                        calling_function=self.onsite)
 
 
 class _DictOnsite:

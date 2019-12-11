@@ -742,13 +742,16 @@ def is_vectorized(syst):
     return isinstance(syst, (FiniteVectorizedSystem, InfiniteVectorizedSystem))
 
 
-def _normalize_matrix_blocks(blocks, expected_shape):
+def _normalize_matrix_blocks(blocks, expected_shape, *, calling_function=None):
     """Normalize a sequence of matrices into a single 3D numpy array
 
     Parameters
     ----------
     blocks : sequence of complex array-like
     expected_shape : (int, int, int)
+    calling_function : callable (optional)
+        The function that produced 'blocks'. If provided, used to give
+        a more helpful error message if 'blocks' is not of the correct shape.
     """
     try:
         blocks = np.asarray(blocks, dtype=complex)
@@ -766,9 +769,11 @@ def _normalize_matrix_blocks(blocks, expected_shape):
     if blocks.shape != expected_shape:
         msg = (
             "Expected values of shape {}, but received values of shape {}"
-            .format(expected_shape, blocks.shape)
+                .format(expected_shape, blocks.shape),
+            "when evaluating {}".format(calling_function.__name__)
+                if callable(calling_function) else "",
         )
-        raise ValueError(msg)
+        raise ValueError(" ".join(msg))
 
     return blocks
 
