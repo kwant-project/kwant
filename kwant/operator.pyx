@@ -327,12 +327,15 @@ class _FunctionalOnsite:
 
     def __call__(self, site_range, site_offsets, *args):
         sites = self.sites
-        offset = self.site_ranges[site_range][0]
+        offset, norbs, _ = self.site_ranges[site_range]
         try:
             ret = [self.onsite(sites[offset + i], *args) for i in site_offsets]
         except Exception as exc:
             _raise_user_error(exc, self.onsite, vectorized=False)
-        return _normalize_matrix_blocks(ret, len(site_offsets))
+
+        expected_shape = (len(site_offsets), norbs, norbs)
+        return _normalize_matrix_blocks(ret, expected_shape,
+                                        calling_function=self.onsite)
 
 
 class _VectorizedFunctionalOnsite:
@@ -349,7 +352,10 @@ class _VectorizedFunctionalOnsite:
             ret = self.onsite(sites, *args)
         except Exception as exc:
             _raise_user_error(exc, self.onsite, vectorized=True)
-        return _normalize_matrix_blocks(ret, len(site_offsets))
+
+        expected_shape = (len(sites), sites.family.norbs, sites.family.norbs)
+        return _normalize_matrix_blocks(ret, expected_shape,
+                                        calling_function=self.onsite)
 
 
 class _FunctionalOnsiteNoTransform:
@@ -359,12 +365,16 @@ class _FunctionalOnsiteNoTransform:
         self.site_ranges = site_ranges
 
     def __call__(self, site_range, site_offsets, *args):
-        site_ids = self.site_ranges[site_range][0] + site_offsets
+        offset, norbs, _ = self.site_ranges[site_range]
+        site_ids = offset + site_offsets
         try:
             ret = [self.onsite(id, *args) for id in site_ids]
         except Exception as exc:
             _raise_user_error(exc, self.onsite, vectorized=False)
-        return _normalize_matrix_blocks(ret, len(site_offsets))
+
+        expected_shape = (len(site_offsets), norbs, norbs)
+        return _normalize_matrix_blocks(ret, expected_shape,
+                                        calling_function=self.onsite)
 
 
 class _DictOnsite:
@@ -376,7 +386,9 @@ class _DictOnsite:
     def __call__(self, site_range, site_offsets, *args):
         fam = self.range_family_map[site_range]
         ret = [self.onsite[fam]] * len(site_offsets)
-        return _normalize_matrix_blocks(ret, len(site_offsets))
+
+        expected_shape = (len(site_offsets), fam.norbs, fam.norbs)
+        return _normalize_matrix_blocks(ret, expected_shape)
 
 
 def _normalize_onsite(syst, onsite, check_hermiticity):
@@ -993,11 +1005,13 @@ cdef class _LocalOperator:
                         syst.hamiltonian(where[i, 0], where[i, 1], *args, params=params)
                         for i in which
                     ]
-                data = _normalize_matrix_blocks(data, len(which))
-                # Checks for data consistency
+
                 (to_sr, from_sr) = term_id
-                to_norbs = syst.site_ranges[to_sr][1]
-                from_norbs = syst.site_ranges[from_sr][1]
+                to_norbs, from_norbs = syst.site_ranges[to_sr][1], syst.site_ranges[from_sr][1]
+                expected_shape = (len(which), to_norbs, from_norbs)
+                data = _normalize_matrix_blocks(data, expected_shape)
+                # Checks for data consistency
+
                 _check_hams(data, to_norbs, from_norbs, is_onsite and check_hermiticity)
 
                 return data

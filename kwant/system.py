@@ -742,13 +742,16 @@ def is_vectorized(syst):
     return isinstance(syst, (FiniteVectorizedSystem, InfiniteVectorizedSystem))
 
 
-def _normalize_matrix_blocks(blocks, expected_length):
+def _normalize_matrix_blocks(blocks, expected_shape, *, calling_function=None):
     """Normalize a sequence of matrices into a single 3D numpy array
 
     Parameters
     ----------
     blocks : sequence of complex array-like
-    expected_length : int
+    expected_shape : (int, int, int)
+    calling_function : callable (optional)
+        The function that produced 'blocks'. If provided, used to give
+        a more helpful error message if 'blocks' is not of the correct shape.
     """
     try:
         blocks = np.asarray(blocks, dtype=complex)
@@ -756,22 +759,28 @@ def _normalize_matrix_blocks(blocks, expected_length):
         raise ValueError(
             "Matrix elements declared with incompatible shapes."
         ) from None
+    original_shape = blocks.shape
+    was_broadcast = True  # Did the shape get broadcasted to a more general one?
     if len(blocks.shape) == 0:  # scalar → broadcast to vector of 1x1 matrices
-        blocks = np.tile(blocks, (expected_length, 1, 1))
+        blocks = np.tile(blocks, (expected_shape[0], 1, 1))
     elif len(blocks.shape) == 1:  # vector → interpret as vector of 1x1 matrices
         blocks = blocks.reshape(-1, 1, 1)
     elif len(blocks.shape) == 2:  # matrix → broadcast to vector of matrices
-        blocks = np.tile(blocks, (expected_length, 1, 1))
+        blocks = np.tile(blocks, (expected_shape[0], 1, 1))
+    else:
+        was_broadcast = False
 
-    if len(blocks.shape) != 3:
+    if blocks.shape != expected_shape:
         msg = (
-            "Vectorized value functions must return an array of"
-            "scalars or an array of matrices."
+            "Expected values of shape {}, but received values of shape {}"
+                .format(expected_shape, blocks.shape),
+            "(broadcasted from shape {})".format(original_shape)
+                if was_broadcast else "",
+            "when evaluating {}".format(calling_function.__name__)
+                if callable(calling_function) else "",
         )
-        raise ValueError(msg)
-    if blocks.shape[0] != expected_length:
-        raise ValueError("Value functions must return a single value per "
-                         "onsite/hopping.")
+        raise ValueError(" ".join(msg))
+
     return blocks
 
 

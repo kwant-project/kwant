@@ -2122,7 +2122,13 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
             except Exception as exc:
                 _raise_user_error(exc, val)
 
-        ham = system._normalize_matrix_blocks(ham, len(to_site_array))
+        expected_shape = (
+            len(to_site_array),
+            to_family.norbs,
+            from_family.norbs if not is_onsite else to_family.norbs,
+        )
+        ham = system._normalize_matrix_blocks(ham, expected_shape,
+                                              calling_function=val)
 
         return ham
 
@@ -2365,7 +2371,6 @@ def _sort_term(term, value):
     term = np.asarray(term)
 
     if not callable(value):
-        value = system._normalize_matrix_blocks(value, len(term))
         # Ensure that values still correspond to the correct
         # sites in 'term' once the latter has been sorted.
         value = value[term.argsort()]
@@ -2387,7 +2392,7 @@ def _sort_hopping_term(term, value):
     return term, value
 
 
-def _make_onsite_terms(builder, sites, site_offsets, term_offset):
+def _make_onsite_terms(builder, sites, site_arrays, term_offset):
     # Construct onsite terms.
     #
     # onsite_subgraphs
@@ -2408,6 +2413,8 @@ def _make_onsite_terms(builder, sites, site_offsets, term_offset):
     #   lists the number of the
     #   Hamiltonian term associated with each site/hopping. For
     #   Hermitian conjugate hoppings "-term - 1" is stored instead.
+
+    site_offsets = np.cumsum([0] + [len(sa) for sa in site_arrays])
 
     onsite_subgraphs = []
     onsite_term_values = []
@@ -2442,8 +2449,23 @@ def _make_onsite_terms(builder, sites, site_offsets, term_offset):
         if const_val:
             vals = onsite_term_values[onsite_to_term_nr[key]]
             vals.append(val)
-    # Sort the sites in each term, and normalize any constant
-    # values to arrays of the correct dtype and shape.
+    # Normalize any constant values and check that the shapes are consistent.
+    onsite_term_values = [
+        val if callable(val)
+        else
+            system._normalize_matrix_blocks(
+                val,
+                (
+                    len(val),
+                    site_arrays[sa].family.norbs,
+                    site_arrays[sa].family.norbs,
+                ),
+            )
+        for (_, sa), val in
+        zip(onsite_to_term_nr.keys(), onsite_term_values)
+    ]
+    # Sort the sites in each term, and also sort the values
+    # in the same way if they are a constant (as opposed to a callable).
     onsite_subgraphs, onsite_term_values = zip(*(
         _sort_term(term, value)
         for term, value in
@@ -2479,7 +2501,7 @@ def _make_onsite_terms(builder, sites, site_offsets, term_offset):
             onsite_term_errors, _onsite_term_by_site_id)
 
 
-def _make_hopping_terms(builder, graph, sites, site_offsets, cell_size, term_offset):
+def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offset):
     # Construct the hopping terms
     #
     # The logic is the same as for the onsite terms, with the following
@@ -2489,6 +2511,8 @@ def _make_hopping_terms(builder, graph, sites, site_offsets, cell_size, term_off
     #   Maps hopping edge IDs to the number of the term that the hopping
     #   is a part of. For Hermitian conjugate hoppings "-term_number -1"
     #   is stored instead.
+
+    site_offsets = np.cumsum([0] + [len(sa) for sa in site_arrays])
 
     hopping_subgraphs = []
     hopping_term_values = []
@@ -2546,9 +2570,25 @@ def _make_hopping_terms(builder, graph, sites, site_offsets, cell_size, term_off
             if const_val:
                 vals = hopping_term_values[hopping_to_term_nr[key]]
                 vals.append(val)
-    # Sort the hoppings in each term, and normalize any constant
-    # values to arrays of the correct dtype and shape.
+
     if hopping_subgraphs:
+        # Normalize any constant values and check that the shapes are consistent.
+        hopping_term_values = [
+            val if callable(val)
+            else
+                system._normalize_matrix_blocks(
+                    val,
+                    (
+                        len(val),
+                        site_arrays[to_sa].family.norbs,
+                        site_arrays[from_sa].family.norbs,
+                    ),
+                )
+            for (_, to_sa, from_sa), val in
+            zip(hopping_to_term_nr.keys(), hopping_term_values)
+        ]
+        # Sort the hoppings in each term, and also sort the values
+        # in the same way if they are a constant (as opposed to a callable).
         hopping_subgraphs, hopping_term_values = zip(*(
             _sort_hopping_term(term, value)
             for term, value in
@@ -2628,17 +2668,14 @@ class FiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.FiniteVect
         del id_by_site  # cleanup due to large size
 
         site_arrays = _make_site_arrays(builder.H)
-        # We need this to efficiently find which array a given
-        # site belongs to
-        site_offsets = np.cumsum([0] + [len(arr) for arr in site_arrays])
 
         (onsite_subgraphs, onsite_terms, onsite_term_values,
          onsite_term_errors, _onsite_term_by_site_id) =\
-            _make_onsite_terms(builder, sites, site_offsets, term_offset=0)
+            _make_onsite_terms(builder, sites, site_arrays, term_offset=0)
 
         (hopping_subgraphs, hopping_terms, hopping_term_values,
          hopping_term_errors, _hopping_term_by_edge_id) =\
-            _make_hopping_terms(builder, graph, sites, site_offsets,
+            _make_hopping_terms(builder, graph, sites, site_arrays,
                                 len(sites), term_offset=len(onsite_terms))
 
         # Construct the combined onsite/hopping term datastructures
@@ -2941,15 +2978,13 @@ class InfiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.Infinite
             + _make_site_arrays(interface)
         )
 
-        site_offsets = np.cumsum([0] + [len(arr) for arr in site_arrays])
-
         (onsite_subgraphs, onsite_terms, onsite_term_values,
          onsite_term_errors, _onsite_term_by_site_id) =\
-            _make_onsite_terms(builder, sites, site_offsets, term_offset=0)
+            _make_onsite_terms(builder, sites, site_arrays, term_offset=0)
 
         (hopping_subgraphs, hopping_terms, hopping_term_values,
          hopping_term_errors, _hopping_term_by_edge_id) =\
-            _make_hopping_terms(builder, graph, sites, site_offsets,
+            _make_hopping_terms(builder, graph, sites, site_arrays,
                                 cell_size, term_offset=len(onsite_terms))
 
         # Construct the combined onsite/hopping term datastructures

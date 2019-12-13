@@ -75,19 +75,18 @@ def test_hamiltonian_submatrix(vectorize):
     raises(ValueError, kwant.solvers.default.greens_function, syst3, 0.2)
 
     # Test for shape errors.
-    syst[chain2(0), chain(2)] = np.array([[1, 2]])
-    syst2 = syst.finalized()
-    raises(ValueError, syst2.hamiltonian_submatrix)
-    raises(ValueError, syst2.hamiltonian_submatrix, sparse=True)
-    syst[chain2(0), chain(2)] = 1
-    syst2 = syst.finalized()
-    raises(ValueError, syst2.hamiltonian_submatrix)
-    raises(ValueError, syst2.hamiltonian_submatrix, sparse=True)
-    if vectorize:  # non-vectorized systems don't check this at finalization
-        # Add another hopping of the same type but with a different
-        # (and still incompatible) shape.
-        syst[chain2(0), chain(1)] = np.array([[1, 2]])
-        raises(ValueError, syst.finalized)
+    badly_shaped_hoppings = [
+        1,
+        [[1, 2]],  # shape (1, 2) instead of (2, 1)
+        lambda a, b: 1,
+        lambda a, b: [[1, 2]],
+    ]
+    for hopping in badly_shaped_hoppings:
+        syst[chain2(0), chain(2)] = hopping
+        with raises(ValueError):
+            syst.finalized().hamiltonian_submatrix(sparse=False)
+        with raises(ValueError):
+            syst.finalized().hamiltonian_submatrix(sparse=True)
 
 
 @pytest.mark.parametrize("vectorize", [False, True])
