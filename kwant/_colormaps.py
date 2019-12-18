@@ -7,8 +7,6 @@
 # http://kwant-project.org/authors.
 
 import numpy as np
-from matplotlib.colors import ListedColormap
-
 
 kr_data = [[ 0.98916316, 0.98474381, 0.99210697],
            [ 0.98723538, 0.98138853, 0.98740721],
@@ -271,4 +269,4 @@ kr_data = [[ 0.98916316, 0.98474381, 0.99210697],
 kr_data = np.array(kr_data)
 kr_data = np.clip(kr_data / kr_data[0], 0, 1)
 
-kwant_red = ListedColormap(kr_data, name="kwant red")
+kwant_red = kr_data
