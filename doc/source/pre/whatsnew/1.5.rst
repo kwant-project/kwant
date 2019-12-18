@@ -65,6 +65,33 @@ rather than::
     kwant.lattice.square()
 
 
+Plotly for plots
+----------------
+Kwant can now use the `Plotly <https://plot.ly/>`_ library when plotting,
+though matplotlib is still used by default. Using plotly empowers Kwant
+to produce high-quality interactive plots, as well as true 3D support:
+
+.. jupyter-execute::
+    :hide-code:
+
+    import kwant
+    import kwant.plotter
+
+.. jupyter-execute::
+
+    lat = kwant.lattice.cubic(norbs=1)
+    syst = kwant.Builder()
+
+    def disk(r):
+        x, y, z = r
+        return -2 <= z < 2 and 10**2 < x**2 + y**2 < 20**2
+
+    syst[lat.shape(disk, (15, 0, 0))] = 4
+
+    kwant.plotter.set_engine("plotly")
+    kwant.plot(syst);
+
+
 Automatic addition of Peierls phase terms to Builders
 -----------------------------------------------------
 Kwant 1.4 introduced `kwant.physics.magnetic_gauge` for computing Peierls
