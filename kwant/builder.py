@@ -2078,8 +2078,8 @@ class FiniteSystem(_FinalizedBuilderMixin, system.FiniteSystem):
 
         graph = _make_graph(builder.H, id_by_site)
 
-        finalized_leads, lead_interfaces, lead_paddings =\
-            _finalize_leads(builder.leads, id_by_site)
+        finalized_leads, lead_interfaces, lead_paddings = _finalize_leads(
+            builder.leads, id_by_site)
 
         # Because many onsites/hoppings share the same (value, parameter)
         # pairs, we keep them in a cache so that we only store a given pair
@@ -2451,7 +2451,7 @@ def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offs
     # Store site array index and site offsets rather than sites themselves
     tmp = []
     for (_, _, tail_which, head_which), h in zip(hopping_to_term_nr,
-                                              hopping_subgraphs):
+                                                 hopping_subgraphs):
         start = (site_offsets[tail_which], site_offsets[head_which])
         # Transpose to get a pair of arrays rather than array of pairs
         # We use the fact that the underlying array is stored in
@@ -2522,21 +2522,21 @@ class FiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.FiniteVect
 
         graph = _make_graph(builder.H, id_by_site)
 
-        finalized_leads, lead_interfaces, lead_paddings =\
-            _finalize_leads(builder.leads, id_by_site)
+        finalized_leads, lead_interfaces, lead_paddings = _finalize_leads(
+            builder.leads, id_by_site)
 
         del id_by_site  # cleanup due to large size
 
         site_arrays = _make_site_arrays(builder.H)
 
         (onsite_subgraphs, onsite_terms, onsite_term_values,
-         onsite_term_errors, _onsite_term_by_site_id) =\
-            _make_onsite_terms(builder, sites, site_arrays, term_offset=0)
+         onsite_term_errors, _onsite_term_by_site_id) = _make_onsite_terms(
+             builder, sites, site_arrays, term_offset=0)
 
         (hopping_subgraphs, hopping_terms, hopping_term_values,
-         hopping_term_errors, _hopping_term_by_edge_id) =\
-            _make_hopping_terms(builder, graph, sites, site_arrays,
-                                len(sites), term_offset=len(onsite_terms))
+         hopping_term_errors, _hopping_term_by_edge_id) = _make_hopping_terms(
+             builder, graph, sites, site_arrays, len(sites),
+             term_offset=len(onsite_terms))
 
         # Construct the combined onsite/hopping term datastructures
         subgraphs = tuple(onsite_subgraphs) + tuple(hopping_subgraphs)
@@ -2694,8 +2694,8 @@ class InfiniteSystem(_FinalizedBuilderMixin, system.InfiniteSystem):
         sym = builder.symmetry
         assert sym.num_directions == 1
 
-        lsites_with, lsites_without, interface =\
-            _make_lead_sites(builder, interface_order)
+        lsites_with, lsites_without, interface = _make_lead_sites(
+            builder, interface_order)
         cell_size = len(lsites_with) + len(lsites_without)
 
         # we previously sorted the interface, so don't sort it again
@@ -2803,8 +2803,8 @@ class InfiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.Infinite
         assert sym.num_directions == 1
         assert builder.vectorize
 
-        lsites_with, lsites_without, interface =\
-            _make_lead_sites(builder, interface_order)
+        lsites_with, lsites_without, interface = _make_lead_sites(
+            builder, interface_order)
         cell_size = len(lsites_with) + len(lsites_without)
 
 
@@ -2839,13 +2839,13 @@ class InfiniteVectorizedSystem(_VectorizedFinalizedBuilderMixin, system.Infinite
         )
 
         (onsite_subgraphs, onsite_terms, onsite_term_values,
-         onsite_term_errors, _onsite_term_by_site_id) =\
-            _make_onsite_terms(builder, fd_sites, site_arrays, term_offset=0)
+         onsite_term_errors, _onsite_term_by_site_id) = _make_onsite_terms(
+             builder, fd_sites, site_arrays, term_offset=0)
 
         (hopping_subgraphs, hopping_terms, hopping_term_values,
-         hopping_term_errors, _hopping_term_by_edge_id) =\
-            _make_hopping_terms(builder, graph, fd_sites, site_arrays,
-                                cell_size, term_offset=len(onsite_terms))
+         hopping_term_errors, _hopping_term_by_edge_id) = _make_hopping_terms(
+             builder, graph, fd_sites, site_arrays, cell_size,
+             term_offset=len(onsite_terms))
 
         # Construct the combined onsite/hopping term datastructures
         subgraphs = tuple(onsite_subgraphs) + tuple(hopping_subgraphs)
