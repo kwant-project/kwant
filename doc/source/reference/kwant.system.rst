@@ -28,6 +28,14 @@ Sites
    SiteArray
    SiteFamily
 
+Symmetries
+----------
+.. autosummary::
+   :toctree: generated/
+
+    Symmetry
+    NoSymmetry
+
 Systems
 -------
 .. autosummary::

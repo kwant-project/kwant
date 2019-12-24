@@ -153,7 +153,7 @@ def test_site_families():
     assert fam1 < fam2  # string '1' is lexicographically less than '2'
 
 
-class VerySimpleSymmetry(builder.Symmetry):
+class VerySimpleSymmetry(system.Symmetry):
     def __init__(self, period):
         self.period = period
 
@@ -162,7 +162,7 @@ class VerySimpleSymmetry(builder.Symmetry):
         return 1
 
     def has_subgroup(self, other):
-        if isinstance(other, builder.NoSymmetry):
+        if isinstance(other, system.NoSymmetry):
             return True
         elif isinstance(other, VerySimpleSymmetry):
             return not other.period % self.period
@@ -321,10 +321,10 @@ def random_hopping_integral(rng):
 
 
 def check_onsite(fsyst, sites, subset=False, check_values=True):
-    vectorized = isinstance(fsyst, (system.FiniteVectorizedSystem, system.InfiniteVectorizedSystem))
+    vectorized = system.is_vectorized(fsyst)
 
     if vectorized:
-        site_offsets = np.cumsum([0] + [len(s) for s in fsyst.site_arrays])
+        site_offsets, _, _ = fsyst.site_ranges.transpose()
 
     freq = {}
     for node in range(fsyst.graph.num_nodes):
@@ -353,10 +353,10 @@ def check_onsite(fsyst, sites, subset=False, check_values=True):
 
 
 def check_hoppings(fsyst, hops):
-    vectorized = isinstance(fsyst, (system.FiniteVectorizedSystem, system.InfiniteVectorizedSystem))
+    vectorized = system.is_vectorized(fsyst)
 
     if vectorized:
-        site_offsets = np.cumsum([0] + [len(s) for s in fsyst.site_arrays])
+        site_offsets, _, _ = fsyst.site_ranges.transpose()
 
     assert fsyst.graph.num_edges == 2 * len(hops)
     for edge_id, edge in enumerate(fsyst.graph):
@@ -366,6 +366,12 @@ def check_hoppings(fsyst, hops):
 
         if vectorized:
             term = fsyst._hopping_term_by_edge_id[edge_id]
+            # Map sites in previous cell to fundamental domain; vectorized
+            # infinite systems only store sites in the FD. We already know
+            # that this hopping is between unit cells because this is encoded
+            # in the edge_id and term id.
+            if system.is_infinite(fsyst):
+                i, j = i % fsyst.cell_size, j % fsyst.cell_size
             if term < 0:  # Hermitian conjugate
                 assert (head, tail) in hops
             else:
@@ -464,7 +470,8 @@ def test_finalization(vectorize):
     assert tuple(fsyst.sites) == tuple(sorted(fam(*site) for site in sr_sites))
 
     # Build lead from blueprint and test it.
-    lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)))
+    lead = builder.Builder(kwant.TranslationalSymmetry((size, 0)),
+                           vectorize=vectorize)
     for site, value in lead_sites.items():
         shift = rng.randrange(-5, 6) * size
         site = site[0] + shift, site[1]
@@ -758,10 +765,6 @@ def test_vectorized_hamiltonian_evaluation():
     fsyst_simple = syst_simple.finalized()
 
     assert np.allclose(
-        fsyst_vectorized.hamiltonian_submatrix(),
-        fsyst_simple.hamiltonian_submatrix(),
-    )
-    assert np.allclose(
         fsyst_vectorized.cell_hamiltonian(),
         fsyst_simple.cell_hamiltonian(),
     )
@@ -812,7 +815,7 @@ def test_vectorized_value_normalization():
 
 
 @pytest.mark.parametrize("sym", [
-    builder.NoSymmetry(),
+    system.NoSymmetry(),
     kwant.TranslationalSymmetry([-1]),
 ])
 def test_vectorized_requires_norbs(sym):
@@ -921,7 +924,7 @@ def test_fill():
     ## Test that copying a builder by "fill" preserves everything.
     for sym, func in [(kwant.TranslationalSymmetry(*np.diag([3, 4, 5])),
                        lambda pos: True),
-                      (builder.NoSymmetry(),
+                      (system.NoSymmetry(),
                        lambda pos: ta.dot(pos, pos) < 17)]:
         cubic = kwant.lattice.general(ta.identity(3), norbs=1)
 
@@ -1642,7 +1645,7 @@ def test_subs():
 
     lat = kwant.lattice.chain(norbs=1)
 
-    def make_system(sym=kwant.builder.NoSymmetry(), n=3):
+    def make_system(sym=system.NoSymmetry(), n=3):
         syst = kwant.Builder(sym)
         syst[(lat(i) for i in range(n))] = onsite
         syst[lat.neighbors()] = hopping

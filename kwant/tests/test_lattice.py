@@ -11,7 +11,7 @@ from math import sqrt
 import numpy as np
 import tinyarray as ta
 from pytest import raises
-from kwant import lattice, builder
+from kwant import lattice, builder, system
 from kwant._common import ensure_rng
 import pytest
 
@@ -285,7 +285,7 @@ def test_symmetry_has_subgroup():
     ## test whether actual subgroups are detected as such
     vecs = rng.randn(3, 3)
     sym1 = lattice.TranslationalSymmetry(*vecs)
-    ns = builder.NoSymmetry()
+    ns = system.NoSymmetry()
     assert ns.has_subgroup(ns)
     assert sym1.has_subgroup(sym1)
     assert sym1.has_subgroup(ns)

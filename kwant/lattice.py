@@ -153,7 +153,7 @@ class Polyatomic:
         algorithm finds and yields all the lattice sites inside the specified
         shape starting from the specified position.
 
-        A `~kwant.builder.Symmetry` or `~kwant.builder.Builder` may be passed as
+        A `~kwant.system.Symmetry` or `~kwant.builder.Builder` may be passed as
         sole argument when calling the function returned by this method.  This
         will restrict the flood-fill to the fundamental domain of the symmetry
         (or the builder's symmetry).  Note that unless the shape function has
@@ -174,8 +174,8 @@ class Polyatomic:
             Site = system.Site
 
             if symmetry is None:
-                symmetry = builder.NoSymmetry()
-            elif not isinstance(symmetry, builder.Symmetry):
+                symmetry = system.NoSymmetry()
+            elif not isinstance(symmetry, system.Symmetry):
                 symmetry = symmetry.symmetry
 
             def fd_site(lat, tag):
@@ -259,7 +259,7 @@ class Polyatomic:
         center = ta.array(center, float)
 
         def wire_sites(sym):
-            if not isinstance(sym, builder.Symmetry):
+            if not isinstance(sym, system.Symmetry):
                 sym = sym.symmetry
             if not isinstance(sym, TranslationalSymmetry):
                 raise ValueError('wire shape only works with '
@@ -514,7 +514,7 @@ class Monatomic(system.SiteFamily, Polyatomic):
 # The following class is designed such that it should avoid floating
 # point precision issues.
 
-class TranslationalSymmetry(builder.Symmetry):
+class TranslationalSymmetry(system.Symmetry):
     """A translational symmetry defined in real space.
 
     An alias exists for this common name: ``kwant.TranslationalSymmetry``.
@@ -568,7 +568,7 @@ class TranslationalSymmetry(builder.Symmetry):
         return TranslationalSymmetry(*ta.dot(generators, self.periods))
 
     def has_subgroup(self, other):
-        if isinstance(other, builder.NoSymmetry):
+        if isinstance(other, system.NoSymmetry):
             return True
         elif not isinstance(other, TranslationalSymmetry):
             raise ValueError("Unknown symmetry type.")
@@ -718,8 +718,9 @@ class TranslationalSymmetry(builder.Symmetry):
             raise ValueError("must provide a single group element when "
                              "acting on single sites.")
         if (len(element.shape) == 1 and not is_site):
-            raise ValueError("must provide a sequence of group elements "
-                             "when acting on site arrays.")
+            # We can act on a whole SiteArray with a single group element
+            # using numpy broadcasting.
+            element = element.reshape(1, -1)
         m_part = self._get_site_family_data(a.family)[0]
         try:
             delta = array_mod.dot(m_part, element)

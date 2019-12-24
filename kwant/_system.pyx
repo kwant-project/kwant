@@ -548,13 +548,12 @@ def vectorized_cell_hamiltonian(self, args=(), sparse=False, *, params=None):
     # Site array where next cell starts
     next_cell = bisect.bisect(site_offsets, self.cell_size) - 1
 
-    def inside_cell(term):
-        (to_which, from_which), _= self.subgraphs[term.subgraph]
-        return to_which < next_cell and from_which < next_cell
+    def inside_fd(term):
+        return all(s == 0 for s in term.symmetry_element)
 
     cell_terms = [
         n for n, t in enumerate(self.terms)
-        if inside_cell(t)
+        if inside_fd(t)
     ]
 
     subgraphs = [
@@ -593,34 +592,38 @@ def vectorized_cell_hamiltonian(self, args=(), sparse=False, *, params=None):
 def vectorized_inter_cell_hopping(self, args=(), sparse=False, *, params=None):
     """Hopping Hamiltonian between two cells of the infinite system.
 
+    This method returns a complex matrix that represents the hopping from
+    the *interface sites* of unit cell ``n - 1`` to *all* the sites of
+    unit cell ``n``. It is therefore generally a *rectangular* matrix of
+    shape ``(N_uc, N_iface)`` where ``N_uc`` is the number of orbitals
+    in the unit cell, and ``N_iface`` is the number of orbitals on the
+    *interface* sites (i.e. the sites with hoppings *to* the next unit cell).
+
     Providing positional arguments via 'args' is deprecated,
     instead, provide named parameters as a dictionary via 'params'.
     """
 
-    # Take advantage of the fact that there are distinct entries in
-    # onsite_terms for sites inside the unit cell, and distinct entries
-    # in onsite_terms for hoppings between the unit cell sites and
-    # interface sites. This way we only need to check the first entry
-    # in onsite/hopping_terms
-
     site_offsets = np.cumsum([0] + [len(arr) for arr in self.site_arrays])
-    # Site array where next cell starts
-    next_cell = bisect.bisect(site_offsets, self.cell_size) - 1
 
+    # This method is only meaningful for systems with a 1D translational
+    # symmetry, and we use this fact in several places
+    assert all(len(t.symmetry_element) == 1 for t in self.terms)
+
+    # Symmetry element -1 means hoppings *from* the *previous*
+    # unit cell. These are directly the hoppings we wish to return.
     inter_cell_hopping_terms = [
         n for n, t in enumerate(self.terms)
-        # *from* site is in interface
-        if (self.subgraphs[t.subgraph][0][1] >= next_cell
-            and self.subgraphs[t.subgraph][0][0] < next_cell)
+        if t.symmetry_element[0] == -1
     ]
+    # Symmetry element +1 means hoppings *from* the *next* unit cell.
+    # These are related by translational symmetry to hoppings *to*
+    # the *previous* unit cell. We therefore need the *reverse*
+    # (and conjugate) of these hoppings.
     reversed_inter_cell_hopping_terms = [
         n for n, t in enumerate(self.terms)
-        # *to* site is in interface
-        if (self.subgraphs[t.subgraph][0][0] >= next_cell
-            and self.subgraphs[t.subgraph][0][1] < next_cell)
+        if t.symmetry_element[0] == +1
     ]
 
-    # Evaluate inter-cell hoppings only
     inter_cell_hams = [
         self.hamiltonian_term(n, args=args, params=params)
         for n in inter_cell_hopping_terms
@@ -642,18 +645,21 @@ def vectorized_inter_cell_hopping(self, args=(), sparse=False, *, params=None):
         for n in reversed_inter_cell_hopping_terms
     ]
 
-    # All the 'from' sites are in the previous domain, but to build a
-    # matrix we need to get the equivalent sites in the fundamental domain.
-    # We set the 'from' site array to the one from the fundamental domain.
-    subgraphs = [
-        ((to_sa, from_sa - next_cell), (to_off, from_off))
-        for (to_sa, from_sa), (to_off, from_off) in subgraphs
-    ]
-
     _, norbs, orb_offsets = self.site_ranges.transpose()
 
-    shape = (orb_offsets[next_cell],
-             orb_offsets[len(self.site_arrays) - next_cell])
+    # SiteArrays containing interface sites appear before SiteArrays
+    # containing non-interface sites, so the max of the site array
+    # indices that appear in the 'from' site arrays of the inter-cell
+    # hoppings allows us to get the number of interface orbitals.
+    last_iface_site_array = max(
+        from_site_array for (_, from_site_array), _ in subgraphs
+    )
+    iface_norbs = orb_offsets[last_iface_site_array + 1]
+    fd_norbs = orb_offsets[-1]
+
+    # TODO: return a square matrix when we no longer need to maintain
+    #       backwards compatibility with unvectorized systems.
+    shape = (fd_norbs, iface_norbs)
     func = _vectorized_make_sparse if sparse else _vectorized_make_dense
     mat = func(subgraphs, hams, norbs, orb_offsets, site_offsets, shape=shape)
     return mat

@@ -23,7 +23,6 @@ Abstract base classes
 .. autosummary::
    :toctree: generated/
 
-   Symmetry
    Lead
 
 Functions

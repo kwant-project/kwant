@@ -13,8 +13,8 @@ import sympy
 import pytest
 import itertools
 
-import kwant.builder
 import kwant.lattice
+import kwant.system
 
 from .._common import position_operators, momentum_operators, sympify
 from ..landau_levels import (
@@ -118,7 +118,7 @@ def test_discretize_landau():
     # test a basic Hamiltonian with no normal coordinate dependence
     syst = discretize_landau("k_x**2 + k_y**2", N=n_levels)
     lat = LandauLattice(1, norbs=1)
-    assert isinstance(syst.symmetry, kwant.builder.NoSymmetry)
+    assert isinstance(syst.symmetry, kwant.system.NoSymmetry)
     syst = syst.finalized()
     assert set(syst.sites) == {lat(0, j) for j in range(n_levels)}
     assert np.allclose(
