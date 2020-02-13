@@ -53,7 +53,8 @@ class Bands:
     @deprecate_args
     def __init__(self, sys, args=(), *, params=None):
         syst = sys
-        ensure_isinstance(syst, system.InfiniteSystem)
+        ensure_isinstance(syst, (system.InfiniteSystem,
+                                 system.InfiniteVectorizedSystem))
         self.ham = syst.cell_hamiltonian(args, params=params)
         if not np.allclose(self.ham, self.ham.T.conj()):
             raise ValueError('The cell Hamiltonian is not Hermitian.')
