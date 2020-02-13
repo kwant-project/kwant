@@ -53,13 +53,13 @@ def set_engine(engine):
 
     if ((_p.mpl_available) or (_p.plotly_available)):
         try:
-            assert(engine in _p.Engines)
+            assert(engine in _p.engines)
             _p.engine = engine
         except:
             error_message = "Tried to set an unknown engine \'{}\'.".format(
                                                                        engine)
             error_message += " Supported engines are {}".format(
-                                                       [e for e in _p.Engines])
+                                                       [e for e in _p.engines])
             raise RuntimeError(error_message)
     else:
         warnings.warn("Tried to set \'{}\' but is not "

@@ -35,8 +35,7 @@ try:
 except ImportError:
     matplotlib_backend_chosen = False
 
-from kwant import plotter
-from kwant import _plotter  # for mpl_available
+from kwant import plotter, _plotter
 
 
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
@@ -207,8 +206,7 @@ def test_plotly_plot():
         plot(syst3d, file=out_filename, pos_transform=lambda pos: pos[:2], show=False)
 
 
-@pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
-@pytest.mark.parametrize("engine", ["plotly", "matplotlib"])
+@pytest.mark.parametrize("engine", _plotter.engines)
 def test_plot_more_site_families_than_colors(engine):
     # test against regression reported in
     # https://gitlab.kwant-project.org/kwant/kwant/issues/257
@@ -226,8 +224,7 @@ def test_plot_more_site_families_than_colors(engine):
         plotter.plot(syst, file=out_filename, show=False)
 
 
-@pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
-@pytest.mark.parametrize("engine", ["plotly", "matplotlib"])
+@pytest.mark.parametrize("engine", _plotter.engines)
 def test_plot_raises_on_bad_site_spec(engine):
     syst = kwant.Builder()
     lat = kwant.lattice.square(norbs=1)
@@ -251,8 +248,7 @@ def bad_transform(pos):
     x, y = pos
     return x, y, 0
 
-@pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
-@pytest.mark.parametrize("engine", ["plotly", "matplotlib"])
+@pytest.mark.parametrize("engine", _plotter.engines)
 def test_map(engine):
     plotter.set_engine(engine)
     syst = syst_2d()
@@ -291,8 +287,7 @@ def test_mask_interpolate():
                       coords, np.ones(2 * len(coords)))
 
 
-@pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
-@pytest.mark.parametrize("engine", ["plotly", "matplotlib"])
+@pytest.mark.parametrize("engine", _plotter.engines)
 def test_bands(engine):
 
     plotter.set_engine(engine)
@@ -313,8 +308,7 @@ def test_bands(engine):
 
 
 
-@pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
-@pytest.mark.parametrize("engine", ["plotly", "matplotlib"])
+@pytest.mark.parametrize("engine", _plotter.engines)
 def test_spectrum(engine):
 
     plotter.set_engine(engine)
