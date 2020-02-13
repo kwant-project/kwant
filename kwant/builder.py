@@ -1913,21 +1913,21 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
                 h = h.conjugate().transpose()
             return h
 
-    def hamiltonian_term(self, term_number, selector=slice(None),
+    def hamiltonian_term(self, index, selector=slice(None),
                          args=(), params=None):
         if args and params:
             raise TypeError("'args' and 'params' are mutually exclusive.")
-        if term_number < 0:
-            raise ValueError("term numbers must be non-negative")
+        if index < 0:
+            raise ValueError("term indices must be non-negative")
 
-        term = self.terms[term_number]
-        val = self._term_values[term_number]
+        term = self.terms[index]
+        val = self._term_values[index]
 
         if not callable(val):
             return val[selector]
 
         # Construct site arrays to pass to the vectorized value function.
-        subgraph = self.subgraphs[self.terms[term_number].subgraph]
+        subgraph = self.subgraphs[self.terms[index].subgraph]
         (to_which, from_which), (to_off, from_off) = subgraph
         is_onsite = to_off is from_off
         to_off = to_off[selector]
@@ -1952,8 +1952,8 @@ class _VectorizedFinalizedBuilderMixin(_FinalizedBuilderMixin):
             # There was a problem extracting parameter names from the value
             # function (probably an illegal signature) and we are using
             # keyword parameters.
-            if self._term_errors[term_number] is not None:
-                raise self._term_errors[term_number]
+            if self._term_errors[index] is not None:
+                raise self._term_errors[index]
             try:
                 args = [params[p] for p in term.parameters]
             except KeyError:
@@ -2253,9 +2253,9 @@ def _make_onsite_terms(builder, sites, site_arrays, term_offset):
     #   tuple for each onsite term.
     #
     # _onsite_term_by_site_id
-    #   Maps the site ID to the number of the term that the site is
+    #   Maps the site ID to the index of the term that the site is
     #   a part of.
-    #   lists the number of the
+    #   lists the index of the
     #   Hamiltonian term associated with each site/hopping. For
     #   Hermitian conjugate hoppings "-term - 1" is stored instead.
 
@@ -2359,8 +2359,8 @@ def _make_hopping_terms(builder, graph, sites, site_arrays, cell_size, term_offs
     # differences.
     #
     # _hopping_term_by_edge_id
-    #   Maps hopping edge IDs to the number of the term that the hopping
-    #   is a part of. For Hermitian conjugate hoppings "-term_number -1"
+    #   Maps hopping edge IDs to the index of the term that the hopping
+    #   is a part of. For Hermitian conjugate hoppings "-term_index -1"
     #   is stored instead.
     #
     # NOTE: 'graph' contains site indices >= cell_size, however 'sites'

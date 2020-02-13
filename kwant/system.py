@@ -586,14 +586,14 @@ class VectorizedSystem(System, metaclass=abc.ABCMeta):
     is assumed to return the real-space position of a site given its index.
     """
     @abc.abstractmethod
-    def hamiltonian_term(self, term_number, selector=slice(None),
+    def hamiltonian_term(self, index, selector=slice(None),
                          args=(), params=None):
         """Return the Hamiltonians for hamiltonian term number k.
 
         Parameters
         ----------
-        term_number : int
-            The number of the term to evaluate.
+        index : int
+            The index of the term to evaluate.
         selector : slice or sequence of int, default: slice(None)
             The elements of the term to evaluate.
         args : tuple
@@ -687,7 +687,7 @@ class FiniteSystemMixin(metaclass=abc.ABCMeta):
             Additional parameters required for calculating the Hamiltionians.
             Deprecated in favor of 'params' (and mutually exclusive with it).
         leads : sequence of integers or None
-            Numbers of the leads to be precalculated. If ``None``, all are
+            Indices of the leads to be precalculated. If ``None``, all are
             precalculated.
         what : 'modes', 'selfenergy', 'all'
             The quantitity to precompute. 'all' will compute both
