@@ -71,20 +71,18 @@ except ImportError:
                   " only iterator-providing functions will work",
                   RuntimeWarning)
 
-Engines = []
+engines = []
+engine = None
 
 if plotly_available:
-    Engines.append("plotly")
+    engines.append("plotly")
     engine = "plotly"
 
 if mpl_available:
-    Engines.append("matplotlib")
+    engines.append("matplotlib")
     engine = "matplotlib"
 
-if not ((mpl_available) or (plotly_available)):
-    engine = None
-
-Engines = frozenset(Engines)
+engines = frozenset(engines)
 
 
 # Collections that allow for symbols and linewiths to be given in data space
