@@ -101,11 +101,15 @@ def interleave(seq):
     return zip(iseq, iseq)
 
 
-def ensure_isinstance(obj, typ, msg=None):
-    if isinstance(obj, typ):
+def ensure_isinstance(obj, class_or_tuple, msg=None):
+    if isinstance(obj, class_or_tuple):
         return
     if msg is None:
-        msg = "Expecting an instance of {}.".format(typ.__name__)
+        if isinstance(class_or_tuple, tuple):
+            names = ", or ".join(t.__name__ for t in class_or_tuple)
+        else:
+            names = class_or_tuple.__name__
+        msg = "Expecting an instance of {}.".format(names)
     raise TypeError(msg)
 
 def ensure_rng(rng=None):
