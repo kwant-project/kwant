@@ -19,7 +19,7 @@ import abc
 import warnings
 import operator
 from copy import copy
-from collections import namedtuple
+import collections
 from functools import total_ordering, lru_cache
 import numpy as np
 import tinyarray as ta
@@ -96,7 +96,7 @@ class Site(tuple):
         return self.family.pos(self.tag)
 
 
-class SiteArray:
+class SiteArray(collections.abc.Sequence):
     """An array of sites, members of a `SiteFamily`.
 
     Parameters
@@ -136,6 +136,12 @@ class SiteArray:
 
     def __len__(self):
         return len(self.tags)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return SiteArray(self.family, self.tags[key])
+        else:
+            return Site(self.family, self.tags[key])
 
     def __eq__(self, other):
         if not isinstance(other, SiteArray):
@@ -527,7 +533,7 @@ class System(metaclass=abc.ABCMeta):
     hamiltonian_submatrix = _system.hamiltonian_submatrix
 
 
-Term = namedtuple(
+Term = collections.namedtuple(
     "Term",
     ["subgraph", "symmetry_element", "hermitian", "parameters"],
 )
