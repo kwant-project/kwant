@@ -1,4 +1,4 @@
-# Copyright 2011-2019 Kwant authors.
+# Copyright 2011-2020 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -479,8 +479,9 @@ class System(metaclass=abc.ABCMeta):
     The sites of the system are indexed by integers ranging from 0 to
     ``self.graph.num_nodes - 1``.
 
-    Optionally, a class derived from ``System`` can provide a method ``pos`` which
-    is assumed to return the real-space position of a site given its index.
+    Optionally, a class derived from ``System`` can provide a method
+    ``pos`` which is assumed to return the real-space position of a site
+    given its index.
 
     Due to the ordering semantics of sequences, and the fact that a given
     ``first_site`` can only appear *at most once* in ``site_ranges``,
@@ -566,7 +567,8 @@ class VectorizedSystem(System, metaclass=abc.ABCMeta):
         indexed by 'idx1' and 'idx2'.
     terms : sequence of tuples
         Each tuple has the following structure:
-        (subgraph: int, symmetry_element: tuple, hermitian: bool, parameters: List(str))
+        (subgraph: int, symmetry_element: tuple, hermitian: bool,
+         parameters: List(str))
         'subgraph' indexes 'subgraphs' and supplies the to/from sites of this
         term. 'symmetry_element' is the symmetry group element that should be
         applied to the 'to-sites' of this term.
@@ -582,8 +584,9 @@ class VectorizedSystem(System, metaclass=abc.ABCMeta):
     The sites of the system are indexed by integers ranging from 0 to
     ``self.graph.num_nodes - 1``.
 
-    Optionally, a class derived from ``System`` can provide a method ``pos`` which
-    is assumed to return the real-space position of a site given its index.
+    Optionally, a class derived from ``System`` can provide a method
+    ``pos`` which is assumed to return the real-space position of a site
+    given its index.
     """
     @abc.abstractmethod
     def hamiltonian_term(self, index, selector=slice(None),
@@ -657,15 +660,15 @@ class FiniteSystemMixin(metaclass=abc.ABCMeta):
     The length of ``leads`` must be equal to the length of ``lead_interfaces``
     and ``lead_paddings``.
 
-    For lead ``n``, the method leads[n].selfenergy must return a square matrix
-    whose size is ``sum(len(self.hamiltonian(site, site)) for site in
-    self.lead_interfaces[n])``. The output of ``leads[n].modes`` has to be a
-    tuple of `~kwant.physics.PropagatingModes`, `~kwant.physics.StabilizedModes`.
+    For lead ``n``, the method leads[n].selfenergy must return a square
+    matrix whose size is ``sum(len(self.hamiltonian(site, site)) for
+    site in self.lead_interfaces[n])``. The output of ``leads[n].modes``
+    has to be a tuple of `~kwant.physics.PropagatingModes`,
+    `~kwant.physics.StabilizedModes`.
 
     Often, the elements of `leads` will be instances of `InfiniteSystem`.  If
     this is the case for lead ``n``, the sites ``lead_interfaces[n]`` match
     the first ``len(lead_interfaces[n])`` sites of the InfiniteSystem.
-
     """
 
     @deprecate_args
@@ -752,7 +755,8 @@ class FiniteSystem(System, FiniteSystemMixin, metaclass=abc.ABCMeta):
     pass
 
 
-class FiniteVectorizedSystem(VectorizedSystem, FiniteSystemMixin, metaclass=abc.ABCMeta):
+class FiniteVectorizedSystem(VectorizedSystem, FiniteSystemMixin,
+                             metaclass=abc.ABCMeta):
     pass
 
 
@@ -911,7 +915,8 @@ class InfiniteSystem(System, InfiniteSystemMixin, metaclass=abc.ABCMeta):
                                           sparse=sparse, params=params)
 
 
-class InfiniteVectorizedSystem(VectorizedSystem, InfiniteSystemMixin, metaclass=abc.ABCMeta):
+class InfiniteVectorizedSystem(VectorizedSystem, InfiniteSystemMixin,
+                               metaclass=abc.ABCMeta):
     """Abstract vectorized infinite low-level system.
 
     An infinite system consists of an infinite series of identical cells.
