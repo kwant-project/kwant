@@ -126,7 +126,6 @@ def plotter_file_suffix(engine):
 
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_matplotlib_plot():
-
     plotter.set_engine('matplotlib')
     plot = plotter.plot
     syst2d = syst_2d()
@@ -173,7 +172,6 @@ def test_matplotlib_plot():
 
 @pytest.mark.skipif(not _plotter.plotly_available, reason="Plotly unavailable.")
 def test_plotly_plot():
-
     plotter.set_engine('plotly')
     plot = plotter.plot
     syst2d = syst_2d()
@@ -618,6 +616,7 @@ def test_current_interpolation():
 
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_current():
+    plotter.set_engine('matplotlib')
     syst = syst_2d().finalized()
     J = kwant.operator.Current(syst)
     current = J(kwant.wave_function(syst, energy=1)(1)[0])
