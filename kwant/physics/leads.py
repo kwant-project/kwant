@@ -194,8 +194,11 @@ class StabilizedModes:
             there is a propagating mode, `Sigma` will definitely be complex.)
         """
         v = self.sqrt_hop
-        vecs = self.vecs[:, self.nmodes:]
-        vecslmbdainv = self.vecslmbdainv[:, self.nmodes:]
+        # Only include the *outgoing* modes (propagating + evanescent),
+        # meaning this is the *retarded* self-energy.
+        outgoing = slice(self.nmodes, None)
+        vecs = self.vecs[:, outgoing]
+        vecslmbdainv = self.vecslmbdainv[:, outgoing]
         return dot(v, dot(vecs, la.solve(vecslmbdainv, v.T.conj())))
 
 
