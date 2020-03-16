@@ -11,7 +11,8 @@ dependencies:
     - qsymm
     - plotly
     # Linear algebra libraraies
-    - mumps
+    - mumps-seq
+    - mumps-include
     - blas #=1.1 openblas
     - openblas #=0.2.20
     # Build toolchain
