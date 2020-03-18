@@ -19,7 +19,7 @@ variables:
   stage: build-env
   when: manual
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: gcr.io/kaniko-project/executor:debug-v0.16.0
     entrypoint: [""]
   artifacts:
     untracked: true
