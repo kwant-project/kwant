@@ -381,18 +381,13 @@ def search_mumps():
     libmumps-scotch-dev and the MUMPS binaries in the conda-forge channel."""
     lib_sets = [
         # Debian
-        ['zmumps_scotch', 'mumps_common_scotch', 'mpiseq_scotch'],
+        ['zmumps_scotch', 'mumps_common_scotch', 'mpiseq_scotch',
+         'pord', 'gfortran'],
         # Conda (via conda-forge).
-        # TODO: remove dependency libs (scotch, metis...) when conda-forge
-        # packaged mumps/scotch are built as properly linked shared libs
-        # 'openblas' provides Lapack and BLAS symbols
-        ['zmumps', 'mumps_common', 'metis', 'esmumps', 'scotch',
-         'scotcherr', 'mpiseq', 'openblas'],
+        ['zmumps_seq', 'mumps_common_seq'],
     ]
-    common_libs = ['pord', 'gfortran']
-
     for libs in lib_sets:
-        found_libs = search_libs(libs + common_libs)
+        found_libs = search_libs(libs)
         if found_libs:
             return found_libs
     return []
