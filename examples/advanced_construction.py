@@ -47,7 +47,7 @@ def make_system(R):
 
 def main():
     syst = make_system(100)
-    print(kwant.smatrix(syst, 1.1, [0.1]).transmission(0, 1))
+    print(kwant.smatrix(syst, 1.1, params=dict(B=0.1)).transmission(0, 1))
 
 
 if __name__ == '__main__':

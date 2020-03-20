@@ -16,7 +16,9 @@ class Lead:
         self.t = t
         self.potential = potential
 
-    def selfenergy(self, fermi_energy, args=()):
+    def selfenergy(self, fermi_energy, args=(), params=None):
+        assert not args
+        assert params is None
         return square_selfenergy(self.width, self.t,
                                  self.potential + fermi_energy)
 
@@ -73,8 +75,10 @@ class System(kwant.system.FiniteSystem):
         self.leads = [Lead(shape[1], hopping, lead_potentials[i])
                       for i in range(2)]
 
-    def hamiltonian(self, i, j):
+    def hamiltonian(self, i, j, *args, params=None):
         """Return an submatrix of the tight-binding Hamiltonian."""
+        assert not args
+        assert params is None
         if i == j:
             # An on-site Hamiltonian has been requested.
             result = 4 * self.t + self.pot(self.pos_from_nodeid(i))
