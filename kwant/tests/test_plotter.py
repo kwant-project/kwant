@@ -218,7 +218,6 @@ def test_plot_more_site_families_than_colors(engine):
     plotter.set_engine(engine)
     with tempfile.NamedTemporaryFile('w+b', suffix=plotter_file_suffix(engine)) as out:
         out_filename = out.name
-        print(out)
         plotter.plot(syst, file=out_filename, show=False)
 
 
