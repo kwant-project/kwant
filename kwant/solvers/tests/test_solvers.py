@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Kwant authors.
+# Copyright 2011-2020 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -6,13 +6,83 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-
+from itertools import chain
 from math import cos, sin
 import numpy as np
+import pytest
 from pytest import raises
 from numpy.testing import assert_almost_equal
+
 import kwant
 from kwant._common import ensure_rng
+
+import kwant.solvers.sparse
+try:
+    import kwant.solvers.mumps
+except ImportError:
+    no_mumps = True
+else:
+    no_mumps = False
+
+mumps_solver_options = [
+    {},
+    {'nrhs': 1},
+    {'nrhs': 10},
+    {'nrhs': 1, 'ordering': 'amd'},
+    {'nrhs': 10, 'sparse_rhs': True},
+    {'nrhs': 2, 'ordering': 'amd', 'sparse_rhs': True},
+]
+
+sparse_solver_options = [
+    {},
+]
+
+solvers = list(chain(
+    [("mumps", opts) for opts in mumps_solver_options],
+    [("sparse", opts) for opts in sparse_solver_options],
+))
+
+
+def solver_id(s):
+    solver_name, opts = s
+    args = ", ".join(f"{k}={repr(v)}" for k, v in opts.items())
+    return f"{solver_name}({args})"
+
+
+@pytest.fixture(scope="function", params=solvers, ids=map(solver_id, solvers))
+def solver(request):
+    solver_name, solver_opts = request.param
+    if solver_name == "mumps" and no_mumps:
+        pytest.skip("MUMPS not installed")
+    solver = getattr(kwant.solvers, solver_name).Solver()
+    # The sparse solver does not have "options" or "reset_options".
+    if solver_name != "sparse":
+        solver.options(**solver_opts)
+    return solver
+
+
+# These fixtures are repetitive, but doing this programatically is cryptic
+# and we're not going to add any more (unless we add new methods to Solvers)
+
+@pytest.fixture
+def smatrix(solver):
+    return solver.smatrix
+
+
+@pytest.fixture
+def greens_function(solver):
+    return solver.greens_function
+
+
+@pytest.fixture
+def wave_function(solver):
+    return solver.wave_function
+
+
+@pytest.fixture
+def ldos(solver):
+    return solver.ldos
+
 
 n = 5
 chain = kwant.lattice.chain(norbs=n)
@@ -297,7 +367,8 @@ def test_tricky_singular_hopping(smatrix):
 
 # Test the consistency of transmission and conductance_matrix for a four-lead
 # system without time-reversal symmetry.
-def test_many_leads(*factories):
+def test_many_leads(smatrix, greens_function):
+    factories = (greens_function, smatrix)
     sq = kwant.lattice.square(norbs=1)
     E=2.1
     B=0.01
@@ -322,7 +393,7 @@ def test_many_leads(*factories):
     syst = syst.finalized()
 
     r4 = list(range(4))
-    br = factories[0](syst, E, out_leads=r4, in_leads=r4)
+    br = greens_function(syst, E, out_leads=r4, in_leads=r4)
     trans = np.array([[br._transmission(i, j) for j in r4] for i in r4])
     cmat = br.conductance_matrix()
     assert_almost_equal(cmat.sum(axis=0), [0] * 4)
@@ -509,6 +580,9 @@ def test_wavefunc_ldos_consistency(wave_function, ldos):
     raises(NotImplementedError, check, syst)
 
 
+# We need to keep testing 'args', but we don't want to see
+# all the deprecation warnings in the test logs
+@pytest.mark.filterwarnings("ignore:.*'args' parameter")
 def test_arg_passing(wave_function, ldos, smatrix):
 
     def onsite(site, a, b):
