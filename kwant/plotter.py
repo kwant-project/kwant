@@ -1123,7 +1123,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
                                "for the entire plot.")
         else:
             edgecol = site_edgecolor if not isinstance(site_edgecolor, tuple) \
-                           else _p.convert_colormap_mpl_plotly(site_edgecolor)
+                           else _p.convert_colormap_mpl_plotly(*site_edgecolor)
             lw = site_lw
 
         if dim == 3:
@@ -1145,7 +1145,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
                                           _p.convert_cmap_list_mpl_plotly(cmap)
         site_node_trace_elem.marker.reversescale = False
         marker_color = col if not isinstance(col, tuple) \
-                           else _p.convert_colormap_mpl_plotly(col)
+                           else _p.convert_colormap_mpl_plotly(*col)
         site_node_trace_elem.marker.color = marker_color
         site_node_trace_elem.marker.size = \
                                 _p.convert_site_size_mpl_plotly(size,
@@ -1264,8 +1264,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
                                     )
 
         lead_edge_trace_elem.line.width = lead_hop_lw
-        lead_edge_trace_elem.line.color = _p.convert_colormap_mpl_plotly(
-                                                        lead_color)
+        lead_edge_trace_elem.line.color = _p.convert_colormap_mpl_plotly(*lead_color)
         lead_edge_trace_elem.hoverinfo = 'none'
         lead_edge_trace_elem.mode = 'lines'
         lead_edge_trace_elem.showlegend = False
