@@ -30,5 +30,6 @@ dependencies:
     - numpydoc
     - requests
     - jupyter_sphinx
+    - pip
     - pip:
         - sphinxcontrib-svg2pdfconverter
