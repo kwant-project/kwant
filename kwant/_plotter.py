@@ -173,9 +173,8 @@ if plotly_available:
 
 
     def convert_colormap_mpl_plotly(mpl_rgba):
-        _cmap_plotly = 255 * np.array(mpl_rgba)
-        return 'rgba({},{},{},{})'.format(*_cmap_plotly[0:-1],
-                                          _cmap_plotly[-1]/255)
+        r, g, b, a = mpl_rgba
+        return f"rgba({255*r},{255*g},{255*b},{a})"
 
 
     def convert_cmap_list_mpl_plotly(mpl_cmap_name, N=255):
