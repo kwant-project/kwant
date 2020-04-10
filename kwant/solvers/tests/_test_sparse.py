@@ -367,7 +367,8 @@ def test_tricky_singular_hopping(smatrix):
 
 # Test the consistency of transmission and conductance_matrix for a four-lead
 # system without time-reversal symmetry.
-def test_many_leads(*factories):
+def test_many_leads(smatrix, greens_function):
+    factories = (greens_function, smatrix)
     sq = kwant.lattice.square(norbs=1)
     E=2.1
     B=0.01
@@ -392,7 +393,7 @@ def test_many_leads(*factories):
     syst = syst.finalized()
 
     r4 = list(range(4))
-    br = factories[0](syst, E, out_leads=r4, in_leads=r4)
+    br = greens_function(syst, E, out_leads=r4, in_leads=r4)
     trans = np.array([[br._transmission(i, j) for j in r4] for i in r4])
     cmat = br.conductance_matrix()
     assert_almost_equal(cmat.sum(axis=0), [0] * 4)
