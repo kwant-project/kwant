@@ -25,6 +25,8 @@ from distutils.command.build import build as build_orig
 from setuptools.command.sdist import sdist as sdist_orig
 from setuptools.command.build_ext import build_ext as build_ext_orig
 from setuptools.command.test import test as test_orig
+from distutils.ccompiler import new_compiler
+from distutils.sysconfig import customize_compiler
 
 
 STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
@@ -361,7 +363,11 @@ def long_description():
 
 
 def search_libs(libs):
-    cmd = ['gcc']
+    # This gives us a compiler with the same flags as will be used to
+    # compile the extensions.
+    cc = new_compiler("c")
+    customize_compiler(cc)
+    cmd = cc.linker_so
     cmd.extend(['-l' + lib for lib in libs])
     cmd.extend(['-o/dev/null', '-xc', '-'])
     try:
