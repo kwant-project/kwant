@@ -517,6 +517,16 @@ def maybe_add_numpy_include(exts):
     return exts
 
 
+def add_sys_includes_and_libs(exts):
+    # If the shell has not been set up correctly then the include and library paths
+    # are not necessarily set correctly, which will cause problems when compiling
+    # the Mumps extension (cannot find include files or libs)
+    for ext in exts.values():
+        ext.setdefault('include_dirs', []).append(os.path.join(sys.prefix, 'include'))
+        ext.setdefault('library_dirs', []).append(os.path.join(sys.prefix, 'lib'))
+    return exts
+
+
 def main():
     check_python_version((3, 6))
     check_versions()
@@ -549,6 +559,7 @@ def main():
     exts = configure_extensions(exts, aliases, build_summary)
     exts = configure_special_extensions(exts, build_summary)
     exts = maybe_add_numpy_include(exts)
+    exts = add_sys_includes_and_libs(exts)
     exts = maybe_cythonize(exts)
 
     classifiers = """\
