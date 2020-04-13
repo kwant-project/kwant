@@ -576,7 +576,7 @@ def main():
                     'build_ext': build_ext,
                     'test': test},
           ext_modules=exts,
-          python_requires='>3.6',
+          python_requires='>=3.6',
           install_requires=['numpy >= 1.13.3', 'scipy >= 0.19.1',
                             'tinyarray >= 1.2'],
           extras_require={
