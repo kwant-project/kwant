@@ -359,6 +359,15 @@ class SparseSolver(metaclass=abc.ABCMeta):
         if len(in_leads) == 0 or len(out_leads) == 0:
             raise ValueError("No output is requested.")
 
+        for direction, leads in [("in", in_leads), ("out", out_leads)]:
+            for lead in leads:
+                if system.is_selfenergy_lead(syst.leads[lead]):
+                    raise ValueError(
+                        f"lead {lead} is only defined by a self-energy, "
+                        "so we cannot calculate scattering matrix elements for it. "
+                        f"Specify '{direction}_leads' without '{lead}'."
+                    )
+
         linsys, lead_info = self._make_linear_sys(syst, in_leads, energy, args,
                                                   check_hermiticity, False,
                                                   params=params)
