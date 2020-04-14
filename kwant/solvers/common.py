@@ -139,8 +139,8 @@ class SparseSolver(metaclass=abc.ABCMeta):
 
         lead_info : list of objects
             Contains one entry for each lead.  If `realspace=False`, this is an
-            instance of `~kwant.physics.PropagatingModes` with a corresponding
-            format, otherwise the lead self-energy matrix.
+            instance of `~kwant.physics.PropagatingModes` for all leads that
+            have modes, otherwise the lead self-energy matrix.
 
         Notes
         -----
@@ -188,6 +188,31 @@ class SparseSolver(metaclass=abc.ABCMeta):
         for leadnum, interface in enumerate(syst.lead_interfaces):
             lead = syst.leads[leadnum]
             if not realspace:
+                if system.is_selfenergy_lead(lead):
+                    # We make equivalent checks to this in 'smatrix',
+                    # 'greens_function' and 'wave_function' (where we
+                    # can give more informative error messages).
+                    # Putting this check here again is just a sanity check,
+                    assert leadnum not in in_leads
+                    sigma = np.asarray(lead.selfenergy(energy, args, params=params))
+                    rhs.append(None)
+                    lead_info.append(sigma)
+                    indices.append(None)
+                    # add selfenergy to the LHS
+                    coords = np.r_[tuple(slice(offsets[i], offsets[i + 1])
+                                   for i in interface)]
+                    if sigma.shape != 2 * coords.shape:
+                        raise ValueError(
+                           f"Self-energy dimension for lead {leadnum} "
+                           "does not match the total number of orbitals "
+                           "of the sites for which it is defined."
+                        )
+                    y, x = np.meshgrid(coords, coords)
+                    sig_sparse = splhsmat((sigma.flat, [x.flat, y.flat]),
+                                          lhs.shape)
+                    lhs = lhs + sig_sparse
+                    continue
+
                 prop, stab = lead.modes(energy, args, params=params)
                 lead_info.append(prop)
                 u = stab.vecs
