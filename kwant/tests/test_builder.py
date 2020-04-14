@@ -411,7 +411,7 @@ def test_finalization(vectorize):
     """
     def set_sites(dest):
         while len(dest) < n_sites:
-            site = rng.randrange(size), rng.randrange(size)
+            site = ta.array([rng.randrange(size), rng.randrange(size)])
             if site not in dest:
                 dest[site] = random_onsite_hamiltonian(rng)
 
@@ -447,7 +447,7 @@ def test_finalization(vectorize):
             a = rng.choice(lead_sites_list)
             b = rng.choice(possible_neighbors)
             neighbors.add(b)
-            b = b[0] - size, b[1]
+            b = ta.array([b[0] - size, b[1]])
             if rng.randrange(2):
                 a, b = b, a
             if (a, b) not in lead_hops and (b, a) not in lead_hops:
@@ -489,7 +489,7 @@ def test_finalization(vectorize):
         lead[fam(*a), fam(*b)] = value
     flead = lead.finalized()
     all_sites = list(lead_sites)
-    all_sites.extend((x - size, y) for (x, y) in neighbors)
+    all_sites.extend(ta.array([x - size, y]) for (x, y) in neighbors)
     check_id_by_site(fsyst)
     check_onsite(flead, all_sites, check_values=False)
     check_onsite(flead, lead_sites, subset=True)

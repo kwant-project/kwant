@@ -462,7 +462,7 @@ class System(metaclass=abc.ABCMeta):
         the first site in the range, the number of orbitals on each site in the
         range, and the offset of the first orbital of the first site in the
         range.  In addition, the final triple should have the form
-        ``(len(graph.num_nodes), 0, tot_norbs)`` where ``tot_norbs`` is the
+        ``(graph.num_nodes, 0, tot_norbs)`` where ``tot_norbs`` is the
         total number of orbitals in the system.
     parameters : frozenset of strings
         The names of the parameters on which the system depends. This attribute
