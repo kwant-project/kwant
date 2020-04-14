@@ -955,6 +955,10 @@ def is_vectorized(syst):
     return isinstance(syst, (FiniteVectorizedSystem, InfiniteVectorizedSystem))
 
 
+def is_selfenergy_lead(lead):
+    return hasattr(lead, "selfenergy") and not hasattr(lead, "modes")
+
+
 def _normalize_matrix_blocks(blocks, expected_shape, *, calling_function=None):
     """Normalize a sequence of matrices into a single 3D numpy array
 
