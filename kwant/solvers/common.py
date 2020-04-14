@@ -15,7 +15,7 @@ from  numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 from .._common import ensure_isinstance, deprecate_args
-from .. import system
+from .. import system, physics
 from functools import reduce
 
 # Until v0.13.0, scipy.sparse did not support making block matrices out of
@@ -802,6 +802,8 @@ class SMatrix(BlockResult):
         matrix.
     lead_info : list of data
         a list containing `kwant.physics.PropagatingModes` for each lead.
+        If a lead is a selfenergy lead, then the corresponding entry
+        in lead_info is a selfenergy.
     out_leads, in_leads : sequence of integers
         indices of the leads where current is extracted (out) or injected
         (in). Only those are listed for which SMatrix contains the
@@ -810,7 +812,22 @@ class SMatrix(BlockResult):
 
     def __init__(self, data, lead_info, out_leads, in_leads,
                  current_conserving=False):
-        sizes = [len(i.momenta) // 2 for i in lead_info]
+        # An equivalent condition to this is checked in 'Solver.smatrix',
+        # but we add it here again as a sanity check. If 'lead_info' is not
+        # a 'PropagatingModes' that means that the corresponding lead is a
+        # selfenergy lead. Scattering matrix elements to/from a selfenergy lead
+        # are not defined.
+        assert not any(
+            not isinstance(info, physics.PropagatingModes)
+            and leadnum in (out_leads + in_leads)
+            for leadnum, info in enumerate(lead_info)
+        )
+
+        # 'getattr' in order to handle self-energy leads, for which
+        # 'info' is just a matrix (so no 'momenta').
+        sizes = [
+            len(getattr(info, "momenta", [])) // 2 for info in lead_info
+        ]
         super().__init__(data, lead_info, out_leads, in_leads,
                                       sizes, current_conserving)
         # in_offsets marks beginnings and ends of blocks in the scattering
