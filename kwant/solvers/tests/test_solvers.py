@@ -461,6 +461,42 @@ def test_selfenergy(twolead_builder, greens_function, smatrix):
     raises(ValueError, check_fsyst, fsyst.precalculate(what='modes'))
 
 
+def test_selfenergy_lead(
+    twolead_builder, smatrix, greens_function, wave_function, ldos
+):
+    fsyst = twolead_builder.finalized()
+    fsyst_se = twolead_builder.finalized()
+    fsyst_se.leads[0] = LeadWithOnlySelfEnergy(fsyst.leads[0])
+
+    # We cannot ask for the smatrix between selfenergy leads
+    assert pytest.raises(ValueError, smatrix, fsyst_se)
+    assert pytest.raises(ValueError, smatrix, fsyst_se, in_leads=[0])
+    assert pytest.raises(ValueError, smatrix, fsyst_se, out_leads=[0])
+
+    # The subblocks of the smatrix between leads that have modes
+    # *should* be the same.
+    kwargs = dict(energy=0, in_leads=[1], out_leads=[1])
+    assert_almost_equal(
+        smatrix(fsyst_se, **kwargs).data,
+        smatrix(fsyst, **kwargs).data,
+    )
+
+    psi_se = wave_function(fsyst_se, energy=0)
+    psi = wave_function(fsyst, energy=0)
+
+    # Scattering wavefunctions originating in the non-selfenergy
+    # lead should be identical.
+    assert_almost_equal(psi_se(1), psi(1))
+    # We cannot define scattering wavefunctions originating from
+    # a selfenergy lead.
+    assert pytest.raises(ValueError, psi_se, 0)
+
+    # We could in principle calculate the ldos using a mixed
+    # approach where some leads are specified by selfenergies
+    # and others by modes, but this is not done for now.
+    assert pytest.raises(NotImplementedError, ldos, fsyst_se, energy=0)
+
+
 def test_selfenergy_reflection(twolead_builder, greens_function, smatrix):
     system = twolead_builder
     fsyst = system.finalized()
