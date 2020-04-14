@@ -25,6 +25,8 @@ from distutils.command.build import build as build_orig
 from setuptools.command.sdist import sdist as sdist_orig
 from setuptools.command.build_ext import build_ext as build_ext_orig
 from setuptools.command.test import test as test_orig
+from distutils.ccompiler import new_compiler
+from distutils.sysconfig import customize_compiler
 
 
 STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
@@ -361,7 +363,11 @@ def long_description():
 
 
 def search_libs(libs):
-    cmd = ['gcc']
+    # This gives us a compiler with the same flags as will be used to
+    # compile the extensions.
+    cc = new_compiler("c")
+    customize_compiler(cc)
+    cmd = cc.linker_so
     cmd.extend(['-l' + lib for lib in libs])
     cmd.extend(['-o/dev/null', '-xc', '-'])
     try:
@@ -511,6 +517,16 @@ def maybe_add_numpy_include(exts):
     return exts
 
 
+def add_sys_includes_and_libs(exts):
+    # If the shell has not been set up correctly then the include and library paths
+    # are not necessarily set correctly, which will cause problems when compiling
+    # the Mumps extension (cannot find include files or libs)
+    for ext in exts.values():
+        ext.setdefault('include_dirs', []).append(os.path.join(sys.prefix, 'include'))
+        ext.setdefault('library_dirs', []).append(os.path.join(sys.prefix, 'lib'))
+    return exts
+
+
 def main():
     check_python_version((3, 6))
     check_versions()
@@ -543,6 +559,7 @@ def main():
     exts = configure_extensions(exts, aliases, build_summary)
     exts = configure_special_extensions(exts, build_summary)
     exts = maybe_add_numpy_include(exts)
+    exts = add_sys_includes_and_libs(exts)
     exts = maybe_cythonize(exts)
 
     classifiers = """\
@@ -576,7 +593,7 @@ def main():
                     'build_ext': build_ext,
                     'test': test},
           ext_modules=exts,
-          python_requires='>3.6',
+          python_requires='>=3.6',
           install_requires=['numpy >= 1.13.3', 'scipy >= 0.19.1',
                             'tinyarray >= 1.2'],
           extras_require={
