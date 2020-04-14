@@ -84,6 +84,28 @@ def ldos(solver):
     return solver.ldos
 
 
+# 'scope="function"' means that mutating the returned Builder
+# inside tests is won't affect other tests.
+@pytest.fixture(scope="function")
+def twolead_builder():
+    rng = ensure_rng(4)
+    system = kwant.Builder()
+    left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
+    right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
+    for b, site in [(system, chain(0)), (system, chain(1)),
+                    (left_lead, chain(0)), (right_lead, chain(0))]:
+        h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
+        h += h.conjugate().transpose()
+        b[site] = h
+    for b, hopp in [(system, (chain(0), chain(1))),
+                    (left_lead, (chain(0), chain(1))),
+                    (right_lead, (chain(0), chain(1)))]:
+        b[hopp] = (10 * rng.random_sample((n, n)) +
+                   1j * rng.random_sample((n, n)))
+    system.attach_lead(left_lead)
+    system.attach_lead(right_lead)
+    return system
+
 n = 5
 chain = kwant.lattice.chain(norbs=n)
 sq = square = kwant.lattice.square(norbs=n)
@@ -111,24 +133,8 @@ def assert_modes_equal(modes1, modes2):
 # Test output sanity: that an error is raised if no output is requested,
 # and that solving for a subblock of a scattering matrix is the same as taking
 # a subblock of the full scattering matrix.
-def test_output(smatrix):
-    rng = ensure_rng(3)
-    system = kwant.Builder()
-    left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
-    right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
-    for b, site in [(system, chain(0)), (system, chain(1)),
-                    (left_lead, chain(0)), (right_lead, chain(0))]:
-        h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
-        h += h.conjugate().transpose()
-        b[site] = h
-    for b, hopp in [(system, (chain(0), chain(1))),
-                    (left_lead, (chain(0), chain(1))),
-                    (right_lead, (chain(0), chain(1)))]:
-        b[hopp] = (10 * rng.random_sample((n, n)) +
-                   1j * rng.random_sample((n, n)))
-    system.attach_lead(left_lead)
-    system.attach_lead(right_lead)
-    fsyst = system.finalized()
+def test_output(twolead_builder, smatrix):
+    fsyst = twolead_builder.finalized()
 
     result1 = smatrix(fsyst)
     s, modes1 = result1.data, result1.lead_info
@@ -425,25 +431,9 @@ def test_many_leads(smatrix, greens_function):
 
 # Test equivalence between self-energy and scattering matrix representations.
 # Also check that transmission works.
-def test_selfenergy(greens_function, smatrix):
-    rng = ensure_rng(4)
-    system = kwant.Builder()
-    left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
-    right_lead = kwant.Builder(kwant.TranslationalSymmetry((1,)))
-    for b, site in [(system, chain(0)), (system, chain(1)),
-                 (left_lead, chain(0)), (right_lead, chain(0))]:
-        h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
-        h += h.conjugate().transpose()
-        b[site] = h
-    for b, hopp in [(system, (chain(0), chain(1))),
-                    (left_lead, (chain(0), chain(1))),
-                    (right_lead, (chain(0), chain(1)))]:
-        b[hopp] = (10 * rng.random_sample((n, n)) +
-                   1j * rng.random_sample((n, n)))
-    system.attach_lead(left_lead)
-    system.attach_lead(right_lead)
-    fsyst = system.finalized()
-
+def test_selfenergy(twolead_builder, greens_function, smatrix):
+    system = twolead_builder
+    fsyst = twolead_builder.finalized()
     t = smatrix(fsyst, 0, (), [1], [0]).data
     eig_should_be = np.linalg.eigvals(t * t.conjugate().transpose())
     n_eig = len(eig_should_be)
@@ -471,20 +461,8 @@ def test_selfenergy(greens_function, smatrix):
     raises(ValueError, check_fsyst, fsyst.precalculate(what='modes'))
 
 
-def test_selfenergy_reflection(greens_function, smatrix):
-    rng = ensure_rng(4)
-    system = kwant.Builder()
-    left_lead = kwant.Builder(kwant.TranslationalSymmetry((-1,)))
-    for b, site in [(system, chain(0)), (system, chain(1)),
-                 (left_lead, chain(0))]:
-        h = rng.random_sample((n, n)) + 1j * rng.random_sample((n, n))
-        h += h.conjugate().transpose()
-        b[site] = h
-    for b, hopp in [(system, (chain(0), chain(1))),
-                    (left_lead, (chain(0), chain(1)))]:
-        b[hopp] = (10 * rng.random_sample((n, n)) +
-                   1j * rng.random_sample((n, n)))
-    system.attach_lead(left_lead)
+def test_selfenergy_reflection(twolead_builder, greens_function, smatrix):
+    system = twolead_builder
     fsyst = system.finalized()
 
     t = smatrix(fsyst, 0, (), [0], [0])
