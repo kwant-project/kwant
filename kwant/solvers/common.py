@@ -211,57 +211,56 @@ class SparseSolver(metaclass=abc.ABCMeta):
                     sig_sparse = splhsmat((sigma.flat, [x.flat, y.flat]),
                                           lhs.shape)
                     lhs = lhs + sig_sparse
-                    continue
-
-                prop, stab = lead.modes(energy, args, params=params)
-                lead_info.append(prop)
-                u = stab.vecs
-                ulinv = stab.vecslmbdainv
-                nprop = stab.nmodes
-                svd_v = stab.sqrt_hop
-
-                if len(u) == 0:
-                    rhs.append(None)
-                    continue
-
-                indices.append(np.arange(lhs.shape[0], lhs.shape[0] + nprop))
-
-                u_out, ulinv_out = u[:, nprop:], ulinv[:, nprop:]
-                u_in, ulinv_in = u[:, :nprop], ulinv[:, :nprop]
-
-                # Construct a matrix of 1's that translates the
-                # inter-cell hopping to a proper hopping
-                # from the system to the lead.
-                iface_orbs = np.r_[tuple(slice(offsets[i], offsets[i + 1])
-                                        for i in interface)]
-
-                n_lead_orbs = svd_v.shape[0]
-                if n_lead_orbs != len(iface_orbs):
-                    msg = ('Lead {0} has hopping with dimensions '
-                           'incompatible with its interface dimension.')
-                    raise ValueError(msg.format(leadnum))
-
-                coords = np.r_[[np.arange(len(iface_orbs))], [iface_orbs]]
-                transf = sp.csc_matrix((np.ones(len(iface_orbs)), coords),
-                                       shape=(iface_orbs.size, lhs.shape[0]))
-
-                v_sp = sp.csc_matrix(svd_v.T.conj()) * transf
-                vdaguout_sp = (transf.T *
-                               sp.csc_matrix(np.dot(svd_v, u_out)))
-                lead_mat = - ulinv_out
-
-                lhs = sp.bmat([[lhs, vdaguout_sp], [v_sp, lead_mat]],
-                              format=self.lhsformat)
-
-                if leadnum in in_leads and nprop > 0:
-                    vdaguin_sp = transf.T * sp.csc_matrix(
-                        -np.dot(svd_v, u_in))
-
-                    # defer formation of the real matrix until the proper
-                    # system size is known
-                    rhs.append((vdaguin_sp, ulinv_in))
                 else:
-                    rhs.append(None)
+                    prop, stab = lead.modes(energy, args, params=params)
+                    lead_info.append(prop)
+                    u = stab.vecs
+                    ulinv = stab.vecslmbdainv
+                    nprop = stab.nmodes
+                    svd_v = stab.sqrt_hop
+
+                    if len(u) == 0:
+                        rhs.append(None)
+                        continue
+
+                    indices.append(np.arange(lhs.shape[0], lhs.shape[0] + nprop))
+
+                    u_out, ulinv_out = u[:, nprop:], ulinv[:, nprop:]
+                    u_in, ulinv_in = u[:, :nprop], ulinv[:, :nprop]
+
+                    # Construct a matrix of 1's that translates the
+                    # inter-cell hopping to a proper hopping
+                    # from the system to the lead.
+                    iface_orbs = np.r_[tuple(slice(offsets[i], offsets[i + 1])
+                                            for i in interface)]
+
+                    n_lead_orbs = svd_v.shape[0]
+                    if n_lead_orbs != len(iface_orbs):
+                        msg = ('Lead {0} has hopping with dimensions '
+                               'incompatible with its interface dimension.')
+                        raise ValueError(msg.format(leadnum))
+
+                    coords = np.r_[[np.arange(len(iface_orbs))], [iface_orbs]]
+                    transf = sp.csc_matrix((np.ones(len(iface_orbs)), coords),
+                                           shape=(iface_orbs.size, lhs.shape[0]))
+
+                    v_sp = sp.csc_matrix(svd_v.T.conj()) * transf
+                    vdaguout_sp = (transf.T *
+                                   sp.csc_matrix(np.dot(svd_v, u_out)))
+                    lead_mat = - ulinv_out
+
+                    lhs = sp.bmat([[lhs, vdaguout_sp], [v_sp, lead_mat]],
+                                  format=self.lhsformat)
+
+                    if leadnum in in_leads and nprop > 0:
+                        vdaguin_sp = transf.T * sp.csc_matrix(
+                            -np.dot(svd_v, u_in))
+
+                        # defer formation of the real matrix until the proper
+                        # system size is known
+                        rhs.append((vdaguin_sp, ulinv_in))
+                    else:
+                        rhs.append(None)
             else:
                 sigma = np.asarray(lead.selfenergy(energy, args, params=params))
                 lead_info.append(sigma)
