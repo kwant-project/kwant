@@ -637,21 +637,27 @@ class WaveFunction:
     def __init__(self, solver, sys, energy, args, check_hermiticity, params):
         syst = sys  # ensure consistent naming across function bodies
         ensure_isinstance(syst, system.System)
-        for lead in syst.leads:
-            if not hasattr(lead, 'modes'):
-                # TODO: figure out what to do with self-energies.
-                msg = ('Wave functions for leads with only self-energy'
-                       ' are not available yet.')
-                raise NotImplementedError(msg)
-        linsys = solver._make_linear_sys(syst, range(len(syst.leads)), energy,
+
+        modes_leads = [
+            i for i, l in enumerate(syst.leads)
+            if not system.is_selfenergy_lead(l)
+        ]
+
+        linsys = solver._make_linear_sys(syst, modes_leads, energy,
                                          args, check_hermiticity,
                                          params=params)[0]
+        self.modes_leads = modes_leads
         self.solve = solver._solve_linear_sys
         self.rhs = linsys.rhs
         self.factorized_h = solver._factorized(linsys.lhs)
         self.num_orb = linsys.num_orb
 
     def __call__(self, lead):
+        if lead not in self.modes_leads:
+            msg = ('Scattering wave functions for leads with only '
+                   'self-energy are undefined.')
+            raise ValueError(msg)
+
         result = self.solve(self.factorized_h, self.rhs[lead],
                             slice(self.num_orb))
         return result.transpose()

@@ -591,7 +591,7 @@ def test_wavefunc_ldos_consistency(wave_function, ldos):
         check(fsyst)
     raises(ValueError, check, syst.precalculate(what='selfenergy'))
     syst.leads[0] = LeadWithOnlySelfEnergy(syst.leads[0])
-    raises(NotImplementedError, check, syst)
+    raises(ValueError, check, syst)
 
 
 # We need to keep testing 'args', but we don't want to see
