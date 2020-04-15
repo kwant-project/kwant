@@ -552,7 +552,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
                                       "is not implemented yet.")
 
         for lead in syst.leads:
-            if not hasattr(lead, 'modes') and hasattr(lead, 'selfenergy'):
+            if system.is_selfenergy_lead(lead):
                 # TODO: fix this
                 raise NotImplementedError("ldos for leads with only "
                                           "self-energy is not implemented yet.")
