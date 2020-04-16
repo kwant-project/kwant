@@ -341,4 +341,8 @@ Changes in Kwant 1.4.1
 
 Changes in Kwant 1.4.2
 ----------------------
-- Minor bugfixes of the KPM module and qsymm integration.
+- Due to bugs in the Qsymm library that required modifying its API, the
+  version of Qsymm that Kwant depends on had to be increased from 1.1.2 to
+  1.2.6.  SInce Qsymm is an optional dependency of Kwant, this
+  backwards-incompatible change only affects Kwant users who use it.
+- Minor bugs were fixed in the KPM module.
