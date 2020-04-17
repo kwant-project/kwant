@@ -222,6 +222,8 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
     ret.particle_hole = None
     ret.time_reversal = None
 
+    ret.vectorize = builder.vectorize
+
     sites = {}
     hops = collections.defaultdict(list)
 
