@@ -305,3 +305,28 @@ def test_symmetry_has_subgroup():
     # generators are not integer sequences
     with raises(ValueError):
         sym1.subgroup(*rng.rand(1, 3))
+
+
+def test_act_sites_array():
+    lat = lattice.square(norbs=1)
+
+    tags = [(i, j) for i in range(4) for j in range(5)]
+    sites = [lat(*tag) for tag in tags]
+    site_array = builder.SiteArray(lat, tags=tags)
+
+    for trans_symm in ([(1, 0)], [(1, 0), (0, 1)]):
+        symm = lattice.TranslationalSymmetry(*trans_symm)
+        element = [np.random.randint(5, 10)
+                   for _ in range(len(trans_symm))]
+        trans_sites = [symm.act(element, site) for site in sites]
+
+        # these two sites array should be the equal
+        trans_sites_array = builder._make_site_arrays(trans_sites)
+        new_site_array = symm.act(element, site_array)
+
+        trans_tags_dict = {sa.family.name: sa.tags
+                           for sa in trans_sites_array}
+        new_tags_dict = {sa.family.name: sa.tags
+                         for sa in [new_site_array]}
+        for name in trans_tags_dict:
+            assert np.all(trans_tags_dict[name] == new_tags_dict[name])
