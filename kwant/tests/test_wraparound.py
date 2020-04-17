@@ -23,13 +23,13 @@ if _plotter.mpl_available:
     from matplotlib import pyplot  # pragma: no flakes
 
 
-def _simple_syst(lat, E=0, t=1+1j, sym=None):
+def _simple_syst(lat, E=0, t=1+1j, sym=None, vectorize=False):
     """Create a builder for a simple infinite system."""
     if not sym:
         sym = kwant.TranslationalSymmetry(lat.vec((1, 0)), lat.vec((0, 1)))
     # Build system with 2d periodic BCs. This system cannot be finalized in
     # Kwant <= 1.2.
-    syst = kwant.Builder(sym)
+    syst = kwant.Builder(sym, vectorize=vectorize)
     syst[lat.shape(lambda p: True, (0, 0))] = E
     syst[lat.neighbors(1)] = t
     return syst
@@ -189,6 +189,18 @@ def test_symmetry():
             else:
                 assert np.all(orig == new)
 
+
+def test_vectorize():
+    params = dict(k_x=0, k_y=0)
+
+    syst = _simple_syst(kwant.lattice.square(norbs=1))
+    syst_vec = _simple_syst(kwant.lattice.square(norbs=1), vectorize=True)
+
+    for keep in (None, 0, 1):
+        wrapped = wraparound(syst).finalized()
+        vectorized = wraparound(syst_vec).finalized()
+        assert np.allclose(wrapped.hamiltonian_submatrix(params=params),
+                           vectorized.hamiltonian_submatrix(params=params))
 
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_plot_2d_bands():
