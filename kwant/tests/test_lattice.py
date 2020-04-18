@@ -314,10 +314,10 @@ def test_act_sites_array():
     sites = [lat(*tag) for tag in tags]
     site_array = builder.SiteArray(lat, tags=tags)
 
-    for trans_symm in ([(1, 0)], [(1, 0), (0, 1)]):
-        symm = lattice.TranslationalSymmetry(*trans_symm)
+    for vectors in ([(1, 0)], [(1, 0), (0, 1)]):
+        symm = lattice.TranslationalSymmetry(*vectors)
         element = [np.random.randint(5, 10)
-                   for _ in range(len(trans_symm))]
+                   for _ in range(len(vectors))]
         trans_sites = [symm.act(element, site) for site in sites]
 
         # these two sites array should be the equal
