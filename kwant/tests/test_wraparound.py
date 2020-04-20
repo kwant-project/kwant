@@ -193,14 +193,27 @@ def test_symmetry():
 def test_vectorize():
     params = dict(k_x=0, k_y=0)
 
-    syst = _simple_syst(kwant.lattice.square(norbs=1))
-    syst_vec = _simple_syst(kwant.lattice.square(norbs=1), vectorize=True)
+    square = kwant.lattice.square(norbs=1)
+    syst = _simple_syst(square)
+    syst_vec = _simple_syst(square, vectorize=True)
 
-    for keep in (None, 0, 1):
-        wrapped = wraparound(syst).finalized()
-        vectorized = wraparound(syst_vec).finalized()
-        assert np.allclose(wrapped.hamiltonian_submatrix(params=params),
-                           vectorized.hamiltonian_submatrix(params=params))
+    # test FiniteVectorizedSystem
+    keep = None
+
+    wrapped = wraparound(syst, keep=keep).finalized()
+    vectorized = wraparound(syst_vec, keep=keep).finalized()
+    assert np.allclose(wrapped.hamiltonian_submatrix(params=params),
+                       vectorized.hamiltonian_submatrix(params=params))
+
+    # test InfiniteVectorizedSystem
+    for keep in (0, 1):
+        wrapped = wraparound(syst, keep=keep).finalized()
+        vectorized = wraparound(syst_vec, keep=keep).finalized()
+        assert np.allclose(wrapped.cell_hamiltonian(params=params),
+                           vectorized.cell_hamiltonian(params=params))
+        assert np.allclose(wrapped.inter_cell_hopping(params=params),
+                           vectorized.inter_cell_hopping(params=params))
+
 
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_plot_2d_bands():
