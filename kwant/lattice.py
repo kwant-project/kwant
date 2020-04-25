@@ -720,7 +720,7 @@ class TranslationalSymmetry(system.Symmetry):
         if (len(element.shape) == 1 and not is_site):
             # We can act on a whole SiteArray with a single group element
             # using numpy broadcasting.
-            element = element.reshape(1, -1)
+            element = element.reshape(-1, 1)
         m_part = self._get_site_family_data(a.family)[0]
         try:
             delta = array_mod.dot(m_part, element)
