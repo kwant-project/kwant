@@ -215,6 +215,59 @@ def test_vectorize():
                            vectorized.inter_cell_hopping(params=params))
 
 
+def test_wrap_vectorize_value_functions():
+    def onsite_simple(site, arg1):
+        return arg1
+
+    def onsite_vec(sa, arg1):
+        num_sites = len(sa.tags)
+        return np.repeat([arg1], repeats=num_sites, axis=0)
+
+    def hopping_simple(site1, site2, arg2):
+        return arg2
+
+    def hopping_vec(sa1, sa2, arg2):
+        num_sites = len(sa1.tags)
+        return np.repeat([arg2], repeats=num_sites, axis=0)
+
+    for norbs in [1, 2]:
+        lat = kwant.lattice.chain(norbs=norbs)
+        lat_shape = lat.shape(lambda x: True, [0] * lat.dim)
+
+        params = {'arg1': np.diag(np.random.rand(norbs)),
+                  'arg2': (np.random.rand(norbs, norbs)
+                           + 1j * np.random.rand(norbs, norbs)),
+                  'k_x': 0}
+
+        for num_sites in [1, 2, 3]:
+            symm = kwant.TranslationalSymmetry(lat.vec([num_sites]))
+
+            builder = kwant.Builder(symmetry=symm, vectorize=False)
+            builder_vec_simple = kwant.Builder(symmetry=symm, vectorize=True)
+            builder_vec = kwant.Builder(symmetry=symm, vectorize=True)
+
+            builder[lat_shape] = onsite_simple
+            builder[lat.neighbors()] = hopping_simple
+
+            builder_vec_simple[lat_shape] = onsite_simple
+            builder_vec_simple[lat.neighbors()] = hopping_simple
+
+            builder_vec[lat_shape] = onsite_vec
+            builder_vec[lat.neighbors()] = hopping_vec
+
+            wrapped = wraparound(builder).finalized()
+            vectorized_simple = wraparound(builder_vec_simple).finalized()
+            vectorized = wraparound(builder_vec).finalized()
+
+            ham = wrapped.hamiltonian_submatrix(params=params)
+            ham_vec_simple = vectorized_simple.hamiltonian_submatrix(
+                params=params)
+            ham_vec = vectorized.hamiltonian_submatrix(params=params)
+
+            assert (ham == ham_vec).all()
+            assert (ham_vec_simple == ham_vec).all()
+
+
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
 def test_plot_2d_bands():
     chain = kwant.lattice.chain(norbs=1)
