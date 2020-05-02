@@ -215,6 +215,47 @@ def test_vectorize():
                            vectorized.inter_cell_hopping(params=params))
 
 
+def test_minimal_terms():
+    def onsite(site, arg1):
+        return arg1
+
+    def hopping(site1, site2, arg2):
+        return len(site1) * arg2
+
+    def make_bloch(symm, lat, vectorize=True):
+        syst = kwant.Builder(symmetry=symm, vectorize=vectorize)
+        syst[lat.shape(lambda x: True, [0] * lat.dim)] = onsite
+        syst[lat.neighbors()] = hopping
+        return wraparound(syst).finalized()
+
+    for dim in [1, 2, 3]:
+        prim_vecs = np.eye(dim)
+        lat = kwant.lattice.general(prim_vecs, norbs=1)
+
+        num_onsites = 1
+        num_hoppings = 1
+        num_wrapped_hoppings = dim
+
+        for size in range(1, 5):
+            symm = kwant.TranslationalSymmetry(*(size * prim_vecs))
+            fsyst = make_bloch(symm, lat)
+
+            if size == 1:
+                assert len(fsyst.terms) == 1  # only one onsite wrapped around
+
+            if size == 2:
+                # number of wrapped onsites equals number of distinct boundary
+                # surfaces times the number of hoppings across the surface
+                num_wrapped_onsites = dim * size ** (dim - 1)
+                expected_terms = (num_onsites + num_wrapped_onsites)
+                assert len(fsyst.terms) == expected_terms
+
+            if size > 2:
+                expected_terms = (num_onsites + num_hoppings
+                                  + num_wrapped_hoppings)
+                assert len(fsyst.terms) == expected_terms
+
+
 def test_wrap_vectorize_value_functions():
     def onsite_simple(site, arg1):
         return arg1
