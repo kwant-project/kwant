@@ -40,6 +40,10 @@ def _set_signature(func, params):
               for name in params]
     func.__signature__ = inspect.Signature(params)
 
+@memoize
+def _callable_herm_conj(val):
+    """Keep the same id for every 'val'."""
+    return HermConjOfFunc(val)
 
 ## This wrapper is needed so that finalized systems that
 ## have been wrapped can be queried for their symmetry, which
@@ -268,8 +272,7 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
             if (b_wa_r, a_r) in hops:
                 assert (a, b_wa) not in hops
                 if callable(val):
-                    assert not isinstance(val, HermConjOfFunc)
-                    val = HermConjOfFunc(val)
+                    val = _callable_herm_conj(val)
                 else:
                     val = herm_conj(val)
 
