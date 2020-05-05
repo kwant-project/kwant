@@ -34,6 +34,17 @@ def _simple_syst(lat, E=0, t=1+1j, sym=None, vectorize=False):
     syst[lat.neighbors(1)] = t
     return syst
 
+def _onsite(site, arg1):
+    return arg1
+
+def _hopping(site1, site2, arg2):
+    return len(site1) * arg2
+
+def _make_bloch(symm, lat, vectorize=True):
+    syst = kwant.Builder(symmetry=symm, vectorize=vectorize)
+    syst[lat.shape(lambda x: True, [0] * lat.dim)] = _onsite
+    syst[lat.neighbors()] = _hopping
+    return wraparound(syst).finalized()
 
 def test_consistence_with_bands(kx=1.9, nkys=31):
     kys = np.linspace(-np.pi, np.pi, nkys)
@@ -216,44 +227,62 @@ def test_vectorize():
 
 
 def test_minimal_terms():
-    def onsite(site, arg1):
-        return arg1
-
-    def hopping(site1, site2, arg2):
-        return len(site1) * arg2
-
-    def make_bloch(symm, lat, vectorize=True):
-        syst = kwant.Builder(symmetry=symm, vectorize=vectorize)
-        syst[lat.shape(lambda x: True, [0] * lat.dim)] = onsite
-        syst[lat.neighbors()] = hopping
-        return wraparound(syst).finalized()
-
     for dim in [1, 2, 3]:
         prim_vecs = np.eye(dim)
         lat = kwant.lattice.general(prim_vecs, norbs=1)
 
         num_onsites = 1
         num_hoppings = 1
-        num_wrapped_hoppings = dim
+        num_bind_hop = dim
+        num_bind_sum_hop = 2 ** (dim - 1) + dim - 1
+
+        num_terms_wrapped_onsites = num_onsites + num_bind_sum_hop
+        num_terms_wrapped_hoppings = (num_onsites + num_hoppings
+                                      + num_bind_hop)
 
         for size in range(1, 5):
             symm = kwant.TranslationalSymmetry(*(size * prim_vecs))
-            fsyst = make_bloch(symm, lat)
+            fsyst = _make_bloch(symm, lat)
 
             if size == 1:
-                assert len(fsyst.terms) == 1  # only one onsite wrapped around
-
+                assert len(fsyst.terms) == num_onsites  # onsite wrapped around
             if size == 2:
-                # number of wrapped onsites equals number of distinct boundary
-                # surfaces times the number of hoppings across the surface
-                num_wrapped_onsites = dim * size ** (dim - 1)
-                expected_terms = (num_onsites + num_wrapped_onsites)
-                assert len(fsyst.terms) == expected_terms
-
+                assert len(fsyst.terms) == num_terms_wrapped_onsites
             if size > 2:
-                expected_terms = (num_onsites + num_hoppings
-                                  + num_wrapped_hoppings)
-                assert len(fsyst.terms) == expected_terms
+                assert len(fsyst.terms) == num_terms_wrapped_hoppings
+
+
+def test_minimal_terms_long_boundary():
+    for dim in [2, 3]:
+        prim_vecs = np.eye(dim)
+        lat = kwant.lattice.general(prim_vecs, norbs=1)
+
+        num_onsites = 1
+        num_hoppings = 1
+        num_bind_hoppings = 1
+        num_bind_sum_onsite = 1
+
+        for size_short in [1, 2]:
+            for size_long in range(size_short + 1, 6):
+
+                size = [size_long] + [size_short] * (dim-1)
+                num_bind_sum_hop = size_short ** (dim-1)
+
+                symm = kwant.TranslationalSymmetry(*(size * prim_vecs))
+                fsyst = _make_bloch(symm, lat)
+
+                if size_short == 1:
+                    if size_long == 2:
+                        assert len(fsyst.terms) == (
+                            num_bind_sum_onsite + num_bind_sum_hop)
+                    else:
+                        assert len(fsyst.terms) == (
+                            num_bind_sum_onsite + num_bind_sum_hop
+                            + num_hoppings)
+                else:
+                    assert len(fsyst.terms) == (
+                        num_onsites + num_hoppings + num_bind_hoppings
+                        + num_bind_sum_hop)
 
 
 def test_wrap_vectorize_value_functions():
