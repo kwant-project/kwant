@@ -174,8 +174,15 @@ def herm_conj(value):
     """
     if hasattr(value, 'conjugate'):
         value = value.conjugate()
-        if hasattr(value, 'transpose'):
-            value = value.transpose()
+        if hasattr(value, 'shape'):
+            if len(value.shape) > 2:
+                is_ta = isinstance(value, (
+                    ta.ndarray_int, ta.ndarray_float, ta.ndarray_complex))
+                value = np.swapaxes(value, -1, -2)
+                if is_ta:
+                    value = ta.array(value)
+            else:
+                value = value.transpose()
     return value
 
 

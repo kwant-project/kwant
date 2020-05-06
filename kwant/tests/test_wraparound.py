@@ -23,17 +23,28 @@ if _plotter.mpl_available:
     from matplotlib import pyplot  # pragma: no flakes
 
 
-def _simple_syst(lat, E=0, t=1+1j, sym=None):
+def _simple_syst(lat, E=0, t=1+1j, sym=None, vectorize=False):
     """Create a builder for a simple infinite system."""
     if not sym:
         sym = kwant.TranslationalSymmetry(lat.vec((1, 0)), lat.vec((0, 1)))
     # Build system with 2d periodic BCs. This system cannot be finalized in
     # Kwant <= 1.2.
-    syst = kwant.Builder(sym)
+    syst = kwant.Builder(sym, vectorize=vectorize)
     syst[lat.shape(lambda p: True, (0, 0))] = E
     syst[lat.neighbors(1)] = t
     return syst
 
+def _onsite(site, arg1):
+    return arg1
+
+def _hopping(site1, site2, arg2):
+    return len(site1) * arg2
+
+def _make_bloch(symm, lat, vectorize=True):
+    syst = kwant.Builder(symmetry=symm, vectorize=vectorize)
+    syst[lat.shape(lambda x: True, [0] * lat.dim)] = _onsite
+    syst[lat.neighbors()] = _hopping
+    return wraparound(syst).finalized()
 
 def test_consistence_with_bands(kx=1.9, nkys=31):
     kys = np.linspace(-np.pi, np.pi, nkys)
@@ -188,6 +199,104 @@ def test_symmetry():
                 assert np.all(orig(None) == new(None, None, None))
             else:
                 assert np.all(orig == new)
+
+
+def test_vectorize():
+    params = dict(k_x=0, k_y=0)
+
+    square = kwant.lattice.square(norbs=1)
+    syst = _simple_syst(square)
+    syst_vec = _simple_syst(square, vectorize=True)
+
+    # test FiniteVectorizedSystem
+    keep = None
+
+    wrapped = wraparound(syst, keep=keep).finalized()
+    vectorized = wraparound(syst_vec, keep=keep).finalized()
+    assert np.allclose(wrapped.hamiltonian_submatrix(params=params),
+                       vectorized.hamiltonian_submatrix(params=params))
+
+    # test InfiniteVectorizedSystem
+    for keep in (0, 1):
+        wrapped = wraparound(syst, keep=keep).finalized()
+        vectorized = wraparound(syst_vec, keep=keep).finalized()
+        assert np.allclose(wrapped.cell_hamiltonian(params=params),
+                           vectorized.cell_hamiltonian(params=params))
+        assert np.allclose(wrapped.inter_cell_hopping(params=params),
+                           vectorized.inter_cell_hopping(params=params))
+
+
+def test_minimal_terms():
+    for dim in [1, 2, 3]:
+        prim_vecs = np.eye(dim)
+        lat = kwant.lattice.general(prim_vecs, norbs=1)
+
+        for size_short in range(1, 4):
+            for size_long in range(1, 6):
+
+                size = [size_long] + [size_short] * (dim-1)
+                symm = kwant.TranslationalSymmetry(*(size * prim_vecs))
+                fsyst = _make_bloch(symm, lat)
+
+                if dim == 1:
+                    assert len(fsyst.terms) <= 3
+                if dim == 2:
+                    assert len(fsyst.terms) <= 5
+                if dim == 3:
+                    assert len(fsyst.terms) <= 7
+
+
+def test_wrap_vectorize_value_functions():
+    def onsite_simple(site, arg1):
+        return arg1
+
+    def onsite_vec(sa, arg1):
+        num_sites = len(sa.tags)
+        return np.repeat([arg1], repeats=num_sites, axis=0)
+
+    def hopping_simple(site1, site2, arg2):
+        return arg2
+
+    def hopping_vec(sa1, sa2, arg2):
+        num_sites = len(sa1.tags)
+        return np.repeat([arg2], repeats=num_sites, axis=0)
+
+    for norbs in [1, 2]:
+        lat = kwant.lattice.chain(norbs=norbs)
+        lat_shape = lat.shape(lambda x: True, [0] * lat.dim)
+
+        params = {'arg1': np.diag(np.random.rand(norbs)),
+                  'arg2': (np.random.rand(norbs, norbs)
+                           + 1j * np.random.rand(norbs, norbs)),
+                  'k_x': 0}
+
+        for num_sites in [1, 2, 3]:
+            symm = kwant.TranslationalSymmetry(lat.vec([num_sites]))
+
+            builder = kwant.Builder(symmetry=symm, vectorize=False)
+            builder_vec_simple = kwant.Builder(symmetry=symm, vectorize=True)
+            builder_vec = kwant.Builder(symmetry=symm, vectorize=True)
+
+            builder[lat_shape] = onsite_simple
+            builder[lat.neighbors()] = hopping_simple
+
+            builder_vec_simple[lat_shape] = onsite_simple
+            builder_vec_simple[lat.neighbors()] = hopping_simple
+
+            builder_vec[lat_shape] = onsite_vec
+            builder_vec[lat.neighbors()] = hopping_vec
+
+            wrapped = wraparound(builder).finalized()
+            vectorized_simple = wraparound(builder_vec_simple).finalized()
+            vectorized = wraparound(builder_vec).finalized()
+
+            ham = wrapped.hamiltonian_submatrix(params=params)
+            ham_vec_simple = vectorized_simple.hamiltonian_submatrix(
+                params=params)
+            ham_vec = vectorized.hamiltonian_submatrix(params=params)
+
+            assert (ham == ham_vec).all()
+            assert (ham_vec_simple == ham_vec).all()
 
 
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")

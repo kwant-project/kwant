@@ -40,6 +40,10 @@ def _set_signature(func, params):
               for name in params]
     func.__signature__ = inspect.Signature(params)
 
+@memoize
+def _callable_herm_conj(val):
+    """Keep the same id for every 'val'."""
+    return HermConjOfFunc(val)
 
 ## This wrapper is needed so that finalized systems that
 ## have been wrapped can be queried for their symmetry, which
@@ -183,9 +187,6 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
         f.__signature__ = inspect.Signature(params.values())
         return f
 
-    if builder.vectorize:
-        raise TypeError("'wraparound' does not work with vectorized Builders.")
-
     try:
         momenta = ['k_{}'.format(coordinate_names[i])
                    for i in range(len(builder.symmetry.periods))]
@@ -225,6 +226,8 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
     ret.particle_hole = None
     ret.time_reversal = None
 
+    ret.vectorize = builder.vectorize
+
     sites = {}
     hops = collections.defaultdict(list)
 
@@ -235,7 +238,7 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
         # Move the sites to the FD of the remaining symmetry, this guarantees that
         # every site in the new system is an image of an original FD site translated
         # purely by the remaining symmetry.
-        sites[ret.symmetry.to_fd(site)] = [bind_site(val) if callable(val) else val]
+        sites[ret.symmetry.to_fd(site)] = [val]  # a list to append wrapped hoppings
 
     for hop, val in builder.hopping_value_pairs():
         a, b = hop
@@ -259,8 +262,8 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
             sites[a].append(bind_hopping_as_site(b_dom, val))
         else:
             # The hopping remains a hopping.
-            if any(b_dom) or callable(val):
-                # The hopping got wrapped-around or is a function.
+            if any(b_dom):
+                # The hopping got wrapped-around.
                 val = bind_hopping(b_dom, val)
 
             # Make sure that there is only one entry for each hopping
@@ -269,23 +272,35 @@ def wraparound(builder, keep=None, *, coordinate_names='xyz'):
             if (b_wa_r, a_r) in hops:
                 assert (a, b_wa) not in hops
                 if callable(val):
-                    assert not isinstance(val, HermConjOfFunc)
-                    val = HermConjOfFunc(val)
+                    val = _callable_herm_conj(val)
                 else:
                     val = herm_conj(val)
 
-                hops[b_wa_r, a_r].append(val)
+                hops[b_wa_r, a_r].append((val, b_dom))
             else:
-                hops[a, b_wa].append(val)
+                hops[a, b_wa].append((val, b_dom))
 
     # Copy stuff into result builder, converting lists of more than one element
     # into summing functions.
     for site, vals in sites.items():
-        ret[site] = vals[0] if len(vals) == 1 else bind_sum(1, *vals)
+        if len(vals) == 1:
+            # no need to bind onsites without extra wrapped hoppings
+            ret[site] = vals[0]
+        else:
+            val = vals[0]
+            vals[0] = bind_site(val) if callable(val) else val
+            ret[site] = bind_sum(1, *vals)
 
-    for hop, vals in hops.items():
-        ret[hop] = vals[0] if len(vals) == 1 else bind_sum(2, *vals)
-
+    for hop, vals_doms in hops.items():
+        if len(vals_doms) == 1:
+            # no need to bind hoppings that are not already bound
+            val, b_dom = vals_doms[0]
+            ret[hop] = val
+        else:
+            new_vals = [bind_hopping(b_dom, val) if callable(val)
+                        and not any(b_dom)  # skip hoppings already bound
+                        else val for val, b_dom in vals_doms]
+            ret[hop] = bind_sum(2, *new_vals)
     return ret
 
 
