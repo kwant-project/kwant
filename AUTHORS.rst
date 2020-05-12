@@ -9,8 +9,8 @@ The principal developers of Kwant are
 * `Christoph Groth <mailto:christoph.groth@cea.fr>`_ (CEA Grenoble)
 * `Michael Wimmer <https://michaelwimmer.org>`_ (TU Delft)
 * `Anton Akhmerov <http://antonakhmerov.org>`_ (TU Delft)
-* `Xavier Waintal <http://inac.cea.fr/Pisp/xavier.waintal>`_ (CEA Grenoble)
-* `Joseph Weston <http://josephweston.org>`_ (TU Delft)
+* `Xavier Waintal <http://www.pheliqs.fr/en/Pages/Portrait/Xavier-Waintal.aspx>`_ (CEA Grenoble)
+* `Joseph Weston <http://joseph.weston.cloud>`_ (TU Delft)
 
 Contributors to Kwant include
 
