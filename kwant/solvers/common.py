@@ -15,7 +15,7 @@ from  numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 from .._common import ensure_isinstance, deprecate_args
-from .. import system
+from .. import system, physics
 from functools import reduce
 
 # Until v0.13.0, scipy.sparse did not support making block matrices out of
@@ -139,8 +139,8 @@ class SparseSolver(metaclass=abc.ABCMeta):
 
         lead_info : list of objects
             Contains one entry for each lead.  If `realspace=False`, this is an
-            instance of `~kwant.physics.PropagatingModes` with a corresponding
-            format, otherwise the lead self-energy matrix.
+            instance of `~kwant.physics.PropagatingModes` for all leads that
+            have modes, otherwise the lead self-energy matrix.
 
         Notes
         -----
@@ -188,55 +188,79 @@ class SparseSolver(metaclass=abc.ABCMeta):
         for leadnum, interface in enumerate(syst.lead_interfaces):
             lead = syst.leads[leadnum]
             if not realspace:
-                prop, stab = lead.modes(energy, args, params=params)
-                lead_info.append(prop)
-                u = stab.vecs
-                ulinv = stab.vecslmbdainv
-                nprop = stab.nmodes
-                svd_v = stab.sqrt_hop
-
-                if len(u) == 0:
+                if system.is_selfenergy_lead(lead):
+                    # We make equivalent checks to this in 'smatrix',
+                    # 'greens_function' and 'wave_function' (where we
+                    # can give more informative error messages).
+                    # Putting this check here again is just a sanity check,
+                    assert leadnum not in in_leads
+                    sigma = np.asarray(lead.selfenergy(energy, args, params=params))
                     rhs.append(None)
-                    continue
-
-                indices.append(np.arange(lhs.shape[0], lhs.shape[0] + nprop))
-
-                u_out, ulinv_out = u[:, nprop:], ulinv[:, nprop:]
-                u_in, ulinv_in = u[:, :nprop], ulinv[:, :nprop]
-
-                # Construct a matrix of 1's that translates the
-                # inter-cell hopping to a proper hopping
-                # from the system to the lead.
-                iface_orbs = np.r_[tuple(slice(offsets[i], offsets[i + 1])
-                                        for i in interface)]
-
-                n_lead_orbs = svd_v.shape[0]
-                if n_lead_orbs != len(iface_orbs):
-                    msg = ('Lead {0} has hopping with dimensions '
-                           'incompatible with its interface dimension.')
-                    raise ValueError(msg.format(leadnum))
-
-                coords = np.r_[[np.arange(len(iface_orbs))], [iface_orbs]]
-                transf = sp.csc_matrix((np.ones(len(iface_orbs)), coords),
-                                       shape=(iface_orbs.size, lhs.shape[0]))
-
-                v_sp = sp.csc_matrix(svd_v.T.conj()) * transf
-                vdaguout_sp = (transf.T *
-                               sp.csc_matrix(np.dot(svd_v, u_out)))
-                lead_mat = - ulinv_out
-
-                lhs = sp.bmat([[lhs, vdaguout_sp], [v_sp, lead_mat]],
-                              format=self.lhsformat)
-
-                if leadnum in in_leads and nprop > 0:
-                    vdaguin_sp = transf.T * sp.csc_matrix(
-                        -np.dot(svd_v, u_in))
-
-                    # defer formation of the real matrix until the proper
-                    # system size is known
-                    rhs.append((vdaguin_sp, ulinv_in))
+                    lead_info.append(sigma)
+                    indices.append(None)
+                    # add selfenergy to the LHS
+                    coords = np.r_[tuple(slice(offsets[i], offsets[i + 1])
+                                   for i in interface)]
+                    if sigma.shape != 2 * coords.shape:
+                        raise ValueError(
+                           f"Self-energy dimension for lead {leadnum} "
+                           "does not match the total number of orbitals "
+                           "of the sites for which it is defined."
+                        )
+                    y, x = np.meshgrid(coords, coords)
+                    sig_sparse = splhsmat((sigma.flat, [x.flat, y.flat]),
+                                          lhs.shape)
+                    lhs = lhs + sig_sparse
                 else:
-                    rhs.append(None)
+                    prop, stab = lead.modes(energy, args, params=params)
+                    lead_info.append(prop)
+                    u = stab.vecs
+                    ulinv = stab.vecslmbdainv
+                    nprop = stab.nmodes
+                    svd_v = stab.sqrt_hop
+
+                    if len(u) == 0:
+                        rhs.append(None)
+                        continue
+
+                    indices.append(np.arange(lhs.shape[0], lhs.shape[0] + nprop))
+
+                    u_out, ulinv_out = u[:, nprop:], ulinv[:, nprop:]
+                    u_in, ulinv_in = u[:, :nprop], ulinv[:, :nprop]
+
+                    # Construct a matrix of 1's that translates the
+                    # inter-cell hopping to a proper hopping
+                    # from the system to the lead.
+                    iface_orbs = np.r_[tuple(slice(offsets[i], offsets[i + 1])
+                                            for i in interface)]
+
+                    n_lead_orbs = svd_v.shape[0]
+                    if n_lead_orbs != len(iface_orbs):
+                        msg = ('Lead {0} has hopping with dimensions '
+                               'incompatible with its interface dimension.')
+                        raise ValueError(msg.format(leadnum))
+
+                    coords = np.r_[[np.arange(len(iface_orbs))], [iface_orbs]]
+                    transf = sp.csc_matrix((np.ones(len(iface_orbs)), coords),
+                                           shape=(iface_orbs.size, lhs.shape[0]))
+
+                    v_sp = sp.csc_matrix(svd_v.T.conj()) * transf
+                    vdaguout_sp = (transf.T *
+                                   sp.csc_matrix(np.dot(svd_v, u_out)))
+                    lead_mat = - ulinv_out
+
+                    lhs = sp.bmat([[lhs, vdaguout_sp], [v_sp, lead_mat]],
+                                  format=self.lhsformat)
+
+                    if leadnum in in_leads and nprop > 0:
+                        vdaguin_sp = transf.T * sp.csc_matrix(
+                            -np.dot(svd_v, u_in))
+
+                        # defer formation of the real matrix until the proper
+                        # system size is known
+                        rhs.append((vdaguin_sp, ulinv_in))
+                    else:
+                        rhs.append(None)
             else:
                 sigma = np.asarray(lead.selfenergy(energy, args, params=params))
                 lead_info.append(sigma)
@@ -358,6 +382,15 @@ class SparseSolver(metaclass=abc.ABCMeta):
                              "with unique entries.")
         if len(in_leads) == 0 or len(out_leads) == 0:
             raise ValueError("No output is requested.")
+
+        for direction, leads in [("in", in_leads), ("out", out_leads)]:
+            for lead in leads:
+                if system.is_selfenergy_lead(syst.leads[lead]):
+                    raise ValueError(
+                        f"lead {lead} is only defined by a self-energy, "
+                        "so we cannot calculate scattering matrix elements for it. "
+                        f"Specify '{direction}_leads' without '{lead}'."
+                    )
 
         linsys, lead_info = self._make_linear_sys(syst, in_leads, energy, args,
                                                   check_hermiticity, False,
@@ -519,7 +552,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
                                       "is not implemented yet.")
 
         for lead in syst.leads:
-            if not hasattr(lead, 'modes') and hasattr(lead, 'selfenergy'):
+            if system.is_selfenergy_lead(lead):
                 # TODO: fix this
                 raise NotImplementedError("ldos for leads with only "
                                           "self-energy is not implemented yet.")
@@ -604,21 +637,27 @@ class WaveFunction:
     def __init__(self, solver, sys, energy, args, check_hermiticity, params):
         syst = sys  # ensure consistent naming across function bodies
         ensure_isinstance(syst, system.System)
-        for lead in syst.leads:
-            if not hasattr(lead, 'modes'):
-                # TODO: figure out what to do with self-energies.
-                msg = ('Wave functions for leads with only self-energy'
-                       ' are not available yet.')
-                raise NotImplementedError(msg)
-        linsys = solver._make_linear_sys(syst, range(len(syst.leads)), energy,
+
+        modes_leads = [
+            i for i, l in enumerate(syst.leads)
+            if not system.is_selfenergy_lead(l)
+        ]
+
+        linsys = solver._make_linear_sys(syst, modes_leads, energy,
                                          args, check_hermiticity,
                                          params=params)[0]
+        self.modes_leads = modes_leads
         self.solve = solver._solve_linear_sys
         self.rhs = linsys.rhs
         self.factorized_h = solver._factorized(linsys.lhs)
         self.num_orb = linsys.num_orb
 
     def __call__(self, lead):
+        if lead not in self.modes_leads:
+            msg = ('Scattering wave functions for leads with only '
+                   'self-energy are undefined.')
+            raise ValueError(msg)
+
         result = self.solve(self.factorized_h, self.rhs[lead],
                             slice(self.num_orb))
         return result.transpose()
@@ -769,6 +808,8 @@ class SMatrix(BlockResult):
         matrix.
     lead_info : list of data
         a list containing `kwant.physics.PropagatingModes` for each lead.
+        If a lead is a selfenergy lead, then the corresponding entry
+        in lead_info is a selfenergy.
     out_leads, in_leads : sequence of integers
         indices of the leads where current is extracted (out) or injected
         (in). Only those are listed for which SMatrix contains the
@@ -777,7 +818,22 @@ class SMatrix(BlockResult):
 
     def __init__(self, data, lead_info, out_leads, in_leads,
                  current_conserving=False):
-        sizes = [len(i.momenta) // 2 for i in lead_info]
+        # An equivalent condition to this is checked in 'Solver.smatrix',
+        # but we add it here again as a sanity check. If 'lead_info' is not
+        # a 'PropagatingModes' that means that the corresponding lead is a
+        # selfenergy lead. Scattering matrix elements to/from a selfenergy lead
+        # are not defined.
+        assert not any(
+            not isinstance(info, physics.PropagatingModes)
+            and leadnum in (out_leads + in_leads)
+            for leadnum, info in enumerate(lead_info)
+        )
+
+        # 'getattr' in order to handle self-energy leads, for which
+        # 'info' is just a matrix (so no 'momenta').
+        sizes = [
+            len(getattr(info, "momenta", [])) // 2 for info in lead_info
+        ]
         super().__init__(data, lead_info, out_leads, in_leads,
                                       sizes, current_conserving)
         # in_offsets marks beginnings and ends of blocks in the scattering
