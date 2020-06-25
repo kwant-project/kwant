@@ -862,6 +862,19 @@ def test_dangling():
     assert (sorted(site.tag for site in syst0.sites()) ==
             sorted(site.tag for site in syst1.sites()))
 
+def test_dangling_with_symmetry():
+    length = 3
+    symm = kwant.TranslationalSymmetry((length, 0))
+    lat = kwant.lattice.square(norbs=1)
+    syst = kwant.Builder(symmetry=symm)
+    for x in range(length):
+        syst[lat(x, 0)] = 0
+        syst[lat(x, 1)] = 0
+    syst[lat.neighbors()] = -1
+    # remove neighbors of site at (lenght-1, 0), dangling across symm
+    del syst[lat(length - 2, 0)]
+    del syst[lat(length - 1, 1)]
+    syst.eradicate_dangling()
 
 def test_builder_with_symmetry():
     g = kwant.lattice.general(ta.identity(3), norbs=1)
