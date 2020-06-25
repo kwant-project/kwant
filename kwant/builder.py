@@ -898,12 +898,12 @@ class Builder:
                 if neighbors:
                     assert len(neighbors) == 1
                     neighbor = neighbors[0]
+                    # test if neighbor in fundamental domain
                     if neighbor in self.H:
                         self._del_edge(neighbor, site)
                         if self._out_degree(neighbor) > 1:
                             neighbor = False
                     else:
-                        assert not self.symmetry.in_fd(neighbor)
                         self._del_edge(*tfd(neighbor, site))
                         if self._out_degree(tfd(neighbor)) > 1:
                             neighbor = False
