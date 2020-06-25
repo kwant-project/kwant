@@ -1186,32 +1186,32 @@ class Builder:
         Sites are considered as dangling when less than two hoppings
         lead to them.
         """
-        to_fd = self.symmetry.to_fd
         sites = list(site for site in self.H
                      if self._out_degree(site) < 2)
 
         for site in sites:
+            # We could have deleted the site already if there was e.g. an
+            # isolated hopping.
             if site not in self.H:
                 continue
-            while site:
-                if site not in self.H:
-                    site = to_fd(site)
+
+            while self._out_degree(site) < 2:
                 neighbors = tuple(self._out_neighbors(site))
-                if neighbors:
-                    assert len(neighbors) == 1
-                    neighbor = neighbors[0]
-                    # test if neighbor in fundamental domain
-                    if neighbor in self.H:
-                        self._del_edge(neighbor, site)
-                        if self._out_degree(neighbor) > 1:
-                            neighbor = False
-                    else:
-                        self._del_edge(*to_fd(neighbor, site))
-                        if self._out_degree(to_fd(neighbor)) > 1:
-                            neighbor = False
+                if not neighbors:
+                    del self.H[site]
+                    break
+
+                (neighbor,) = neighbors
+                if neighbor in self.H:
+                    # neighbor is in the fundamental domain
+                    edge = (neighbor, site)
                 else:
-                    neighbor = False
+                    edge = self.symmetry.to_fd(neighbor, site)
+                    neighbor = self.symmetry.to_fd(neighbor)
+                self._del_edge(*edge)
+
                 del self.H[site]
+                # Neighbor could become dangling now.
                 site = neighbor
 
     def __iter__(self):
