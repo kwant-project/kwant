@@ -886,7 +886,7 @@ class Builder:
         Sites are considered as dangling when less than two hoppings
         lead to them.
         """
-        tfd = self.symmetry.to_fd
+        to_fd = self.symmetry.to_fd
         sites = list(site for site in self.H
                      if self._out_degree(site) < 2)
 
@@ -894,6 +894,8 @@ class Builder:
             if site not in self.H:
                 continue
             while site:
+                if site not in self.H:
+                    site = to_fd(site)
                 neighbors = tuple(self._out_neighbors(site))
                 if neighbors:
                     assert len(neighbors) == 1
@@ -904,8 +906,8 @@ class Builder:
                         if self._out_degree(neighbor) > 1:
                             neighbor = False
                     else:
-                        self._del_edge(*tfd(neighbor, site))
-                        if self._out_degree(tfd(neighbor)) > 1:
+                        self._del_edge(*to_fd(neighbor, site))
+                        if self._out_degree(to_fd(neighbor)) > 1:
                             neighbor = False
                 else:
                     neighbor = False
