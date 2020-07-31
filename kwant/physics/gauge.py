@@ -959,7 +959,7 @@ class magnetic_gauge:
     >>>
     >>> syst = make_system(hopping)
     >>> lead = make_lead(hopping)
-    >>> lead.substituted(peierls='peierls_lead')
+    >>> lead = lead.substituted(peierls='peierls_lead')
     >>> syst.attach_lead(lead)
     >>> syst = syst.finalized()
     >>>
