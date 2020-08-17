@@ -533,10 +533,7 @@ class TranslationalSymmetry(builder.Symmetry):
     def __init__(self, *periods):
         self.periods = ta.array(periods)
         if self.periods.ndim != 2:
-            # TODO: remove the second part of the following message once
-            # everybody got used to it.
-            msg = ("TranslationalSymmetry takes 1d sequences as parameters.\n"
-                   "See What's new in Kwant 0.2 in the documentation.")
+            msg = ("TranslationalSymmetry takes 1d sequences as parameters.")
             raise ValueError(msg)
         if np.linalg.matrix_rank(periods) < len(periods):
             raise ValueError("Translational symmetry periods must be "

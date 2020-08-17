@@ -36,7 +36,7 @@ extra_ns.update({'kron': sympy.physics.quantum.TensorProduct,
 extra_ns.update({'sigma_{}'.format(c): p for c, p in zip('0xyz', pauli)})
 
 
-# workaroud for https://github.com/sympy/sympy/issues/12060
+# TODO: remove this once https://github.com/sympy/sympy/issues/12060 is fixed
 del extra_ns['I']
 del extra_ns['pi']
 

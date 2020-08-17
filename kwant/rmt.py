@@ -134,8 +134,7 @@ def gaussian(n, sym='A', v=1., rng=None):
         h = randn(n, n) + 1j * randn(n, n)
 
     # Ensure Hermiticity.
-    # TODO: write this as h += h.T.conj() once we rely on numpy >= 1.13.0
-    h = h + h.T.conj()
+    h += h.T.conj()
 
     # Ensure Chiral symmetry.
     if c(sym):

@@ -329,7 +329,7 @@ def build_discretized(tb_hamiltonian, coords, *, grid=None, locals=None,
     is_diagonal = lambda m: np.allclose(m, np.diag(np.diagonal(m)))
     if not (lat.prim_vecs.shape[0] == grid_dim and
             is_diagonal(lat.prim_vecs)):
-        raise ValueError('"grid" is expected to by an orthogonal lattice '
+        raise ValueError('"grid" has to be an orthogonal lattice '
                          'of dimension matching number of "coords".')
 
     if (lat.norbs is not None) and (lat.norbs != norbs):
