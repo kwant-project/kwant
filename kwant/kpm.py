@@ -326,8 +326,7 @@ class SpectralDensity:
 
         if energy_resolution:
             if energy_resolution <= 0:
-                raise ValueError("'energy_resolution' must be positive"
-                                 .format(energy_resolution))
+                raise ValueError("'energy_resolution' must be positive")
             # factor of 1.6 comes from the fact that we use the
             # Jackson kernel when calculating the FFT, which has
             # maximal slope π/2. Rounding to 1.6 ensures that the
@@ -1099,7 +1098,7 @@ def jackson_kernel(moments):
     <https://arxiv.org/abs/cond-mat/0504627>`_.
     """
 
-    n_moments, *extra_shape = moments.shape
+    n_moments = len(moments)
     m = np.arange(n_moments)
     kernel_array = ((n_moments - m + 1) *
                     np.cos(np.pi * m/(n_moments + 1)) +
@@ -1121,7 +1120,7 @@ def lorentz_kernel(moments, l=4):
     The additional parameter ``l`` controls the decay of the kernel.
     """
 
-    n_moments, *extra_shape = moments.shape
+    n_moments = len(moments)
 
     m = np.arange(n_moments)
     kernel_array = np.sinh(l * (1 - m / n_moments)) / np.sinh(l)
