@@ -593,16 +593,16 @@ def main():
                     'build_ext': build_ext,
                     'test': test},
           ext_modules=exts,
-          python_requires='>=3.6',
-          install_requires=['numpy >= 1.13.3', 'scipy >= 0.19.1',
+          python_requires='>=3.7',
+          # The oldest versions between: Debian stable, Ubuntu LTS
+          install_requires=['numpy >= 1.16.2', 'scipy >= 1.1.0',
                             'tinyarray >= 1.2'],
           extras_require={
-              # The oldest versions between: Debian stable, Ubuntu LTS
-              'plotting': ['matplotlib >= 2.1.1',
-                           'plotly >= 2.2.2'],
-              'continuum': 'sympy >= 1.1.1',
+              'plotting': ['matplotlib >= 3.0.2',
+                           'plotly >= 3.6.1'],
+              'continuum': 'sympy >= 1.3.0',
               # qsymm is only packaged on PyPI
-              'qsymm': 'qsymm >= 1.2.6',
+              'qsymm': 'qsymm >= 1.3.0',
           },
           classifiers=[c.strip() for c in classifiers.split('\n')])
 

@@ -29,10 +29,9 @@ Prerequisites
 =============
 
 Building Kwant requires
- * `Python <https://www.python.org/>`_ 3.6 or above (Kwant 1.1 is the last
-   version to support Python 2),
- * `NumPy <https://numpy.org/>`_ 1.13.3 or newer,
- * `SciPy <https://www.scipy.org/>`_ 0.19.1 or newer,
+ * `Python <https://www.python.org/>`_ 3.7 or above,
+ * `NumPy <https://numpy.org/>`_ 1.16.2 or newer,
+ * `SciPy <https://www.scipy.org/>`_ 1.1.0 or newer,
  * `LAPACK <https://netlib.org/lapack/>`_ and `BLAS <https://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
    <https://www.openblas.net/>`_ or the nonfree `MKL
@@ -43,9 +42,10 @@ a NumPy-like Python package optimized for very small arrays,
    C++.
 
 The following software is highly recommended though not strictly required:
- * `matplotlib <https://matplotlib.org/>`_ 2.1.1 or newer, for the module `kwant.plotter` and the tutorial,
- * `SymPy <https://sympy.org/>`_ 1.1.1 or newer, for the subpackage `kwant.continuum`.
- * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.2.6 or newer, for the subpackage `kwant.qsymm`.
+ * `matplotlib <https://matplotlib.org/>`_ 3.0.2 or newer, for the module `kwant.plotter` and the tutorial,
+ * `plotly <https://plotly.com/>`_ 3.6.1 or newer, for the module `kwant.plotter` and the tutorial,
+ * `SymPy <https://sympy.org/>`_ 1.3.0 or newer, for the subpackage `kwant.continuum`.
+ * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.3.0 or newer, for the subpackage `kwant.qsymm`.
  * `MUMPS <https://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
    that will in many cases speed up Kwant several times and reduce the memory
    footprint.  (Kwant uses only the sequential, single core version
