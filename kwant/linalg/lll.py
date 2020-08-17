@@ -101,8 +101,7 @@ def lll(basis, c=1.34):
             if abs(u[i+1, i]) > 0.5:
                 ll_reduce(i+1)
             i = max(i-1, 0)
-    # TODO: change to rcond=None once we depend on numpy >= 1.14.
-    coefs = np.linalg.lstsq(vecs_orig.T, vecs.T, rcond=-1)[0]
+    coefs = np.linalg.lstsq(vecs_orig.T, vecs.T, rcond=None)[0]
     if not np.allclose(np.round(coefs), coefs, atol=1e-6):
         raise RuntimeError('LLL algorithm instability.')
     if not is_c_reduced(vecs, c):

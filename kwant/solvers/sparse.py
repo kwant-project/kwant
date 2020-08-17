@@ -15,16 +15,7 @@ from . import common
 # Note: previous code would have failed if UMFPACK was provided by scikit
 import scipy.sparse.linalg.dsolve.linsolve as linsolve
 
-# check if we are actually using UMFPACK or rather SuperLU
-# TODO: remove the try (only using the except clause) once we depend on
-# scipy >= 0.14.0.
-try:
-    uses_umfpack = linsolve.isUmfpack
-except AttributeError:
-    uses_umfpack = linsolve.useUmfpack
-
-if uses_umfpack:
-    umfpack = linsolve.umfpack
+uses_umfpack = linsolve.useUmfpack
 
 if uses_umfpack:
     def factorized(A, piv_tol=1.0, sym_piv_tol=1.0):
@@ -51,6 +42,7 @@ if uses_umfpack:
         x1 = solve(rhs1) # Uses the LU factors.
         x2 = solve(rhs2) # Uses again the LU factors.
         """
+        umfpack = linsolve.umfpack
 
         if not sp.isspmatrix_csc(A):
             A = sp.csc_matrix(A)

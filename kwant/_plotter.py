@@ -269,11 +269,11 @@ if mpl_available:
 
         phi = np.linspace(0, pi, 21)
         xyz = np.c_[np.cos(phi), np.sin(phi), 0 * phi].T.reshape(-1, 1, 21)
-        # TODO: use np.block once we depend on numpy >= 1.13.
-        unit_sphere = np.vstack([
-            np.hstack([xyz[0], xyz[2]]),
-            np.hstack([xyz[1], xyz[0]]),
-            np.hstack([xyz[2], xyz[1]]),
+
+        unit_sphere = np.block([
+            [xyz[0], xyz[2]],
+            [xyz[1], xyz[0]],
+            [xyz[2], xyz[1]],
         ])
 
         def projected_length(ax, length):
