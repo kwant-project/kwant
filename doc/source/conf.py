@@ -38,7 +38,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
               'sphinx.ext.todo', 'sphinx.ext.mathjax', 'numpydoc',
-              'kwantdoc', 'sphinx.ext.linkcode', 'jupyter_sphinx.execute',
+              'kwantdoc', 'sphinx.ext.linkcode', 'jupyter_sphinx',
               'sphinxcontrib.rsvgconverter']
 
 # Add any paths that contain templates here, relative to this directory.

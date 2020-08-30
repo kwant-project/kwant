@@ -841,12 +841,10 @@ class SMatrix(BlockResult):
                 block_offsets.append(block_offset)
         # Symmetry block offsets for all leads - or None if lead does not have
         # blocks.
-        self.block_offsets = block_offsets
+        block_offsets = np.array(block_offsets, dtype=object)
         # Pick out symmetry block offsets for in and out leads
-        self.in_block_offsets = \
-                np.array(self.block_offsets)[list(self.in_leads)]
-        self.out_block_offsets = \
-                np.array(self.block_offsets)[list(self.out_leads)]
+        self._in_block_offsets = block_offsets[list(self.in_leads)]
+        self._out_block_offsets = block_offsets[list(self.out_leads)]
         # Block j of in lead i starts at in_block_offsets[i][j]
 
     def out_block_coords(self, lead_out):
@@ -860,9 +858,9 @@ class SMatrix(BlockResult):
             lead_ind, block_ind = lead_out
             lead_ind = self.out_leads.index(lead_ind)
             return slice(self.out_offsets[lead_ind] +
-                         self.out_block_offsets[lead_ind][block_ind],
+                         self._out_block_offsets[lead_ind][block_ind],
                          self.out_offsets[lead_ind] +
-                         self.out_block_offsets[lead_ind][block_ind + 1])
+                         self._out_block_offsets[lead_ind][block_ind + 1])
 
     def in_block_coords(self, lead_in):
         """
@@ -876,9 +874,9 @@ class SMatrix(BlockResult):
             lead_ind, block_ind = lead_in
             lead_ind = self.in_leads.index(lead_ind)
             return slice(self.in_offsets[lead_ind] +
-                         self.in_block_offsets[lead_ind][block_ind],
+                         self._in_block_offsets[lead_ind][block_ind],
                          self.in_offsets[lead_ind] +
-                         self.in_block_offsets[lead_ind][block_ind + 1])
+                         self._in_block_offsets[lead_ind][block_ind + 1])
 
     def _transmission(self, lead_out, lead_in):
         return np.linalg.norm(self.submatrix(lead_out, lead_in)) ** 2

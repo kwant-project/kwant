@@ -180,7 +180,7 @@ def test_graphene_to_kwant():
         assert allclose(hamiltonian2, hamiltonian3)
 
     # Include random onsites as well
-    one = sympy.numbers.One()
+    one = sympy.S.One
     onsites = [Model({one: np.array([[1, 0], [0, 0]])}, momenta=family[0].momenta),
                Model({one: np.array([[0, 0], [0, 1]])}, momenta=family[0].momenta)]
     family = family + onsites
