@@ -18,6 +18,7 @@ import scipy.linalg as la
 
 try:
     import sympy
+    import sympy.matrices.matrices
     import qsymm
     from qsymm.model import Model, BlochModel, BlochCoeff
     from qsymm.groups import PointGroupElement, ContinuousGroupGenerator

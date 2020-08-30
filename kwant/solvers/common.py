@@ -814,7 +814,7 @@ class SMatrix(BlockResult):
                 block_offsets.append(block_offset)
         # Symmetry block offsets for all leads - or None if lead does not have
         # blocks.
-        self.block_offsets = block_offsets
+        self.block_offsets = np.array(block_offsets, dtype=object)
         # Pick out symmetry block offsets for in and out leads
         self.in_block_offsets = \
                 np.array(self.block_offsets)[list(self.in_leads)]
