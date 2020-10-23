@@ -294,7 +294,7 @@ class Polyatomic:
 
         Returns
         -------
-        hoppings : list of kwant.builder.HopplingKind objects
+        hoppings : list of kwant.builder.HoppingKind objects
             The n-th nearest neighbor hoppings.
 
         Notes
