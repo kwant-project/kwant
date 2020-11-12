@@ -27,7 +27,8 @@ __all__ = ['SpectralDensity', 'Correlator', 'conductivity',
            'RandomVectors', 'LocalVectors', 'jackson_kernel', 'lorentz_kernel',
            'fermi_distribution']
 
-SAMPLING = 2 # number of sampling points to number of moments ratio
+SAMPLING = 2  # number of sampling points to number of moments ratio
+
 
 class SpectralDensity:
     r"""Calculate the spectral density of an operator.
@@ -211,7 +212,7 @@ class SpectralDensity:
             num_moments = 100
 
         if num_moments <= 0 or num_moments != int(num_moments):
-                raise ValueError("'num_moments' must be a positive integer")
+            raise ValueError("'num_moments' must be a positive integer")
 
         if vector_factory is None:
             self._vector_factory = _VectorFactory(
@@ -248,6 +249,7 @@ class SpectralDensity:
     def energies(self):
         return (self._a * _chebyshev_nodes(SAMPLING * self.num_moments)
                 + self._b)
+
     @property
     def num_vectors(self):
         return len(self._moments_list)
@@ -733,6 +735,7 @@ class Correlator:
         e_scaled = (self.energies - self._b) / self._a
 
         m_array = np.arange(n_moments)
+
         def _integral_factor(e):
             # arrays for faster calculation
             sqrt_e = np.sqrt(1 - e ** 2)
@@ -956,6 +959,7 @@ class LocalVectors:
         must be a list of integers with the indices where column vectors
         are nonzero.
     """
+
     def __init__(self, syst, where=None, *args):
         self.tot_norbs, self.orbs = _normalize_orbs_where(syst, where)
         self._idx = 0
@@ -975,6 +979,7 @@ class LocalVectors:
         raise StopIteration('Too many vectors requested from this generator')
 
 # ### Auxiliary functions
+
 
 def fermi_distribution(energy, mu, temperature):
     """Returns the Fermi distribution f(e, µ, T) evaluated at 'e'.
@@ -996,6 +1001,7 @@ def fermi_distribution(energy, mu, temperature):
         return np.array(np.less(energy - mu, 0), dtype=float)
     else:
         return 1 / (1 + np.exp((energy - mu) / temperature))
+
 
 def _from_where_to_orbs(syst, where):
     """Returns a list of slices of the orbitals in 'where'"""
@@ -1021,7 +1027,7 @@ def _normalize_orbs_where(syst, where):
             tot_norbs = csr_matrix(syst).shape[0]
         except TypeError:
             raise TypeError("'syst' is neither a matrix "
-                             "nor a Kwant system.")
+                            "nor a Kwant system.")
         orbs = (range(tot_norbs) if where is None
                 else np.asarray(where, int))
     return tot_norbs, orbs
@@ -1173,6 +1179,7 @@ def _rescale(hamiltonian, eps, v0, bounds):
     rescaled_ham = LinearOperator(shape=hamiltonian.shape, matvec=rescaled)
 
     return rescaled_ham, (a, b)
+
 
 def _chebyshev_nodes(n_sampling):
     """Return an array of 'n_sampling' points in the interval (-1,1)"""
