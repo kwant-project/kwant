@@ -165,6 +165,16 @@ cdef int _check_hams(complex[:, :, :] H, gint to_norbs, gint from_norbs,
     return 0
 
 
+def _check_norbs(syst):
+    # TODO: Update this when it becomes clear how ND systems will be
+    #       implemented.
+    if syst.site_ranges is None:
+        raise ValueError('Number of orbitals not defined.\n'
+                         'Declare the number of orbitals using the '
+                         '`norbs` keyword argument when constructing '
+                         'the site families (lattices).')
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef void _get_orbs(gint[:, :] site_ranges, gint site,
@@ -206,6 +216,7 @@ def _get_all_orbs(gint[:, :] where, gint[:, :] site_ranges):
 
 def _get_tot_norbs(syst):
     cdef gint _unused, tot_norbs
+    _check_norbs(syst)
     is_infinite_system = is_infinite(syst)
     n_sites = syst.cell_size if is_infinite_system else syst.graph.num_nodes
     _get_orbs(np.asarray(syst.site_ranges, dtype=gint_dtype),
@@ -672,13 +683,7 @@ cdef class _LocalOperator:
     @cython.embedsignature
     def __init__(self, syst, onsite, where, *,
                  check_hermiticity=True, sum=False):
-        if syst.site_ranges is None:
-            raise ValueError('Number of orbitals not defined.\n'
-                             'Declare the number of orbitals using the '
-                             '`norbs` keyword argument when constructing '
-                             'the site families (lattices).')
-        # TODO: Update this when it becomes clear how ND systems will be
-        #       implemented.
+        _check_norbs(syst)
         if is_vectorized(syst) and is_infinite(syst):
             raise TypeError('Vectorized infinite systems cannot yet be '
                             'used with operators.')
