@@ -217,7 +217,7 @@ build documentation:
   stage: test
   script:
     - python -c 'from matplotlib import pyplot'  # Pre-generate font cache
-    - make -C doc clean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W -D jupyter_execute_default_kernel=kwant-latest' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
+    - make -C doc clean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -D jupyter_execute_default_kernel=kwant-latest' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
   artifacts:
     paths:
       - doc/build/html/
@@ -230,7 +230,7 @@ build PDF documentation:
   stage: test
   script:
     - python -c 'from matplotlib import pyplot'  # Pre-generate font cache
-    - make -C doc latex SPHINXOPTS='-n -W -D jupyter_execute_default_kernel=kwant-latest'
+    - make -C doc latex SPHINXOPTS='-n -D jupyter_execute_default_kernel=kwant-latest'
     - cd doc/build/latex
     - make all-pdf
   artifacts:
