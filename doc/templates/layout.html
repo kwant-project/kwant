@@ -15,7 +15,7 @@
 
 {%- block doctype -%}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 {%- endblock %}
 {%- set reldelim1 = reldelim1 is not defined and ' &raquo;' or reldelim1 %}
 {%- set reldelim2 = reldelim2 is not defined and ' |' or reldelim2 %}
@@ -41,7 +41,7 @@
           {%- if not loop.first %}{{ reldelim2 }}{% endif %}</li>
         {%- endfor %}
         {%- block rootrellink %}
-        <li><a href="http://kwant-project.org/">
+        <li><a href="https://kwant-project.org/">
             <img src="{{ pathto('_static/kwant_logo.png', 1) }}"
             style="vertical-align: middle; margin-top: -4px" alt="Kwant logo"/></a>
           {{ reldelim1 }}</li>
@@ -117,7 +117,7 @@
     {%- endfor %}
 {%- endmacro %}
 
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<html xmlns="https://www.w3.org/1999/xhtml" lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset={{ encoding }}" />
     {{ metatags }}
@@ -205,7 +205,7 @@
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
     {%- endif %}
     {%- if show_sphinx %}
-      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
+      {% trans sphinx_version=sphinx_version|e %}Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
     {%- endif %}
     </div>
 {%- endblock %}
@@ -226,7 +226,7 @@
       g.defer=true; g.async=true; g.src=u+"piwik.js"; s.parentNode.insertBefore(g,s);
       })();
     </script>
-    <noscript><img src="http://piwik.kwant-project.org/piwik.php?idsite=1&amp;rec=1" style="border:0" alt="" /></noscript>
+    <noscript><img src="https://piwik.kwant-project.org/piwik.php?idsite=1&amp;rec=1" style="border:0" alt="" /></noscript>
     <!-- End Piwik Code: Analytics are used by us to improve the site, and not sent to anyone. -->
 {%- endif %}
   </body>

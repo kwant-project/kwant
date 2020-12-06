@@ -15,7 +15,7 @@ cite the main paper that introduces Kwant:
   C. W. Groth, M. Wimmer, A. R. Akhmerov, X. Waintal,
   *Kwant: a software package for quantum transport*,
   `New J. Phys. 16, 063065 (2014)
-  <https://iopscience.iop.org/1367-2630/16/6/063065/article>`_.
+  <https://doi.org/10.1088/1367-2630/16/6/063065>`_.
 
 
 Other references we ask you to consider
@@ -26,7 +26,7 @@ also cite the upcoming paper that describes the relevant algorithms. The
 reference will also be added here once it is available.
 
 Kwant owes much of its current performance to the use of the `MUMPS
-<http://graal.ens-lyon.fr/MUMPS/>`_ library for solving systems of sparse linear
+<https://graal.ens-lyon.fr/MUMPS/>`_ library for solving systems of sparse linear
 equations.  If you have done high-performance calculations, we suggest citing
 
   P. R. Amestoy, I. S. Duff, J. S. Koster, J. Y. L’Excellent, SIAM. J. Matrix

@@ -105,7 +105,7 @@ This gives the result:
     :hide-code:
 
     # Call the main function if the script gets executed (as opposed to imported).
-    # See <http://docs.python.org/library/__main__.html>.
+    # See <https://docs.python.org/library/__main__.html>.
     if __name__ == '__main__':
         main()
 
