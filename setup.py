@@ -4,9 +4,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 from __future__ import print_function
 
@@ -319,7 +319,7 @@ class sdist(sdist_orig):
 
 
 # The following class is based on a recipe in
-# http://doc.pytest.org/en/latest/goodpractices.html#manual-integration.
+# https://doc.pytest.org/en/latest/goodpractices.html#manual-integration.
 class test(test_orig):
     user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
 
@@ -573,7 +573,7 @@ def main():
                        "(Python 3 version)"),
           long_description=long_description(),
           platforms=["Unix", "Linux", "Mac OS-X", "Windows"],
-          url="http://kwant-project.org/",
+          url="https://kwant-project.org/",
           license="BSD",
           packages=packages,
           package_data={p: ['*.pxd', '*.h'] for p in packages},

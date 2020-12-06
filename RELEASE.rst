@@ -338,7 +338,7 @@ Push the tag to the official Kwant repository::
 PyPI
 ----
 
-Install `twine <https://pypi.python.org/pypi/twine>`_ and run the following
+Install `twine <https://pypi.org/project/twine>`_ and run the following
 (this requires a file ~/.pypirc with a valid username and password: ask
 Christoph Groth to add you as a maintainer on PyPI, if you are not already)::
 
@@ -382,7 +382,7 @@ sure to update the codenames and the versions)::
     Version: 9.0
     Architectures: i386 amd64 source
     Components: main
-    Description: Unofficial Debian package repository of http://kwant-project.org/
+    Description: Unofficial Debian package repository of https://kwant-project.org/
     SignWith: C3F147F5980F3535
 
     Origin: Kwant project
@@ -391,7 +391,7 @@ sure to update the codenames and the versions)::
     Version: 10.0
     Architectures: i386 amd64 source
     Components: main
-    Description: Unofficial Debian package repository of http://kwant-project.org/
+    Description: Unofficial Debian package repository of https://kwant-project.org/
     SignWith: C3F147F5980F3535
 
 If the config had to be updated execute::

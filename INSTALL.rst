@@ -20,7 +20,7 @@ Obtaining the source code
 
 Source distributions of Kwant (and Tinyarray) are available at the `downloads
 section of the Kwant website <https://downloads.kwant-project.org/kwant/>`_ as well
-as `PyPI <https://pypi.python.org/pypi/kwant>`_.  The sources may be also
+as `PyPI <https://pypi.org/project/kwant>`_.  The sources may be also
 cloned directly from the `official Kwant git repository
 <https://gitlab.kwant-project.org/kwant/kwant>`_.
 
@@ -31,11 +31,11 @@ Prerequisites
 Building Kwant requires
  * `Python <https://www.python.org/>`_ 3.6 or above (Kwant 1.1 is the last
    version to support Python 2),
- * `NumPy <http://numpy.org/>`_ 1.13.3 or newer,
+ * `NumPy <https://numpy.org/>`_ 1.13.3 or newer,
  * `SciPy <https://www.scipy.org/>`_ 0.19.1 or newer,
- * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
+ * `LAPACK <https://netlib.org/lapack/>`_ and `BLAS <https://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
-   <http://www.openblas.net/>`_ or the nonfree `MKL
+   <https://www.openblas.net/>`_ or the nonfree `MKL
    <https://software.intel.com/en-us/intel-mkl>`_.)
  * `Tinyarray <https://gitlab.kwant-project.org/kwant/tinyarray>`_ 1.2 or newer,
 a NumPy-like Python package optimized for very small arrays,
@@ -43,19 +43,19 @@ a NumPy-like Python package optimized for very small arrays,
    C++.
 
 The following software is highly recommended though not strictly required:
- * `matplotlib <http://matplotlib.org/>`_ 2.1.1 or newer, for the module `kwant.plotter` and the tutorial,
- * `SymPy <http://sympy.org/>`_ 1.1.1 or newer, for the subpackage `kwant.continuum`.
+ * `matplotlib <https://matplotlib.org/>`_ 2.1.1 or newer, for the module `kwant.plotter` and the tutorial,
+ * `SymPy <https://sympy.org/>`_ 1.1.1 or newer, for the subpackage `kwant.continuum`.
  * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.2.6 or newer, for the subpackage `kwant.qsymm`.
- * `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
+ * `MUMPS <https://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
    that will in many cases speed up Kwant several times and reduce the memory
    footprint.  (Kwant uses only the sequential, single core version
    of MUMPS.  The advantages due to MUMPS as used by Kwant are thus independent
    of the number of CPU cores of the machine on which Kwant runs.)
- * The `py.test testing framework <http://pytest.org/>`_ 3.3.2 or newer for running the
+ * The `py.test testing framework <https://docs.pytest.org/>`_ 3.3.2 or newer for running the
    tests included with Kwant.
 
 In addition, to build a copy of Kwant that has been checked-out directly from
-version control, you will also need `Cython <http://cython.org/>`_ 0.26.1 or
+version control, you will also need `Cython <https://cython.org/>`_ 0.26.1 or
 newer.  You do not need Cython to build Kwant that has been unpacked from a
 source .tar.gz-file.
 
@@ -128,7 +128,7 @@ The section ``[kwant.linalg._mumps]`` may be used to adapt the build process.
 
 
 Example ``build.conf`` for linking Kwant against a self-compiled MUMPS, `SCOTCH
-<http://www.labri.fr/perso/pelegrin/scotch/>`_ and `METIS
+<https://www.labri.fr/perso/pelegrin/scotch/>`_ and `METIS
 <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_::
 
     [mumps]
@@ -143,7 +143,7 @@ Building the documentation
 ==========================
 
 To build the documentation, the `Sphinx documentation generator
-<http://www.sphinx-doc.org/en/stable/>`_ is required with ``numpydoc`` extension
+<https://www.sphinx-doc.org/en/stable/>`_ is required with ``numpydoc`` extension
 (version 0.5 or newer), as well as ``jupyter-sphinx`` (version 0.2 or newer).
 If PDF documentation is to be built, the tools
 from the `libRSVG <https://wiki.gnome.org/action/show/Projects/LibRsvg>`_

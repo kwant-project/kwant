@@ -36,11 +36,11 @@ Here :math:`\sigma_{x,y,z}` denote the Pauli matrices.
 It turns out that this well studied Rashba-Hamiltonian has some peculiar
 properties in (ballistic) nanowires: It was first predicted theoretically
 in `Phys. Rev. Lett. 90, 256601 (2003)
-<http://prl.aps.org/abstract/PRL/v90/i25/e256601>`_ that such a system should
+<https://doi.org/10.1103/PhysRevLett.90.256601>`_ that such a system should
 exhibit non-monotonic conductance steps due to a spin-orbit gap. Only
 very recently, this non-monotonic behavior has been supposedly
 observed in experiment: `Nature Physics 6, 336 (2010)
-<http://www.nature.com/nphys/journal/v6/n5/abs/nphys1626.html>`_. Here
+<https://doi.org/10.1038/nphys1626>`_. Here
 we will show that a very simple extension of our previous examples will
 exactly show this behavior (Note though that no care was taken to choose
 realistic parameters).
@@ -48,7 +48,7 @@ realistic parameters).
 The tight-binding model corresponding to the Rashba-Hamiltonian naturally
 exhibits a 2x2-matrix structure of onsite energies and hoppings.  In order to
 use matrices in our program, we import the Tinyarray package.  (`NumPy
-<http://www.numpy.org/>`_ would work as well, but Tinyarray is much faster
+<https://numpy.org/>`_ would work as well, but Tinyarray is much faster
 for small arrays.)
 
 .. jupyter-execute::
@@ -61,9 +61,9 @@ for small arrays.)
     # ------------------
     #  Gaps in quantum wires with spin-orbit coupling and Zeeman splititng,
     #  as theoretically predicted in
-    #   http://prl.aps.org/abstract/PRL/v90/i25/e256601
+    #   https://doi.org/10.1103/PhysRevLett.90.256601
     #  and (supposedly) experimentally oberved in
-    #   http://www.nature.com/nphys/journal/v6/n5/abs/nphys1626.html
+    #   https://doi.org/10.1038/nphys1626
     #
     # Kwant features highlighted
     # --------------------------

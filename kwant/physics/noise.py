@@ -2,9 +2,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 import numpy as np
 from ..solvers.common import SMatrix
@@ -43,7 +43,7 @@ def two_terminal_shotnoise(smatrix):
 
 # A general multi-terminal routine for noise would need to also have the
 # voltages at various leads as input.  (See
-# http://arxiv.org/abs/cond-mat/9910158) It could still be based on
+# https://arxiv.org/abs/cond-mat/9910158) It could still be based on
 # smatrix._a_ttdagger_a_inv, i.e. be also valid also for self-energy leads,
 # provided that only true transmission blocks are used.  As long as nobody needs
 # it though, it does make little sense to make such a routine.
