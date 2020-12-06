@@ -110,7 +110,7 @@ class SiteArray(collections.abc.Sequence):
     Raises
     ------
     ValueError
-        If `tags` are not proper tags for `family`.
+        If ``tags`` are not proper tags for ``family``.
 
     See Also
     --------
@@ -557,23 +557,23 @@ class VectorizedSystem(System, metaclass=abc.ABCMeta):
         the site array, and the offset of the first orbital of the first
         site in the site array.  In addition, the final row has the form
         ``(len(graph.num_nodes), 0, tot_norbs)`` where ``tot_norbs`` is the
-        total number of orbitals in the system. Note 'site_ranges'
-        is directly computable from 'site_arrays'.
+        total number of orbitals in the system. Note ``site_ranges``
+        is directly computable from ``site_arrays``.
     graph : kwant.graph.CGraph
         The system graph.
     subgraphs : sequence of tuples
-        Each subgraph has the form '((idx1, idx2), (offsets1, offsets2))'
-        where 'offsets1' and 'offsets2' index sites within the site arrays
-        indexed by 'idx1' and 'idx2'.
+        Each subgraph has the form ``((idx1, idx2), (offsets1, offsets2))``
+        where ``offsets1`` and ``offsets2`` index sites within the site arrays
+        indexed by ``idx1`` and ``idx2``.
     terms : sequence of tuples
         Each tuple has the following structure:
         (subgraph: int, symmetry_element: tuple, hermitian: bool,
          parameters: List(str))
-        'subgraph' indexes 'subgraphs' and supplies the to/from sites of this
-        term. 'symmetry_element' is the symmetry group element that should be
-        applied to the 'to-sites' of this term.
-        'hermitian' is 'True' if the term needs its Hermitian
-        conjugate to be added when evaluating the Hamiltonian, and 'parameters'
+        ``subgraph`` indexes ``subgraphs`` and supplies the to/from sites of this
+        term. ``symmetry_element`` is the symmetry group element that should be
+        applied to the to-sites of this term.
+        ``hermitian`` is ``True`` if the term needs its Hermitian
+        conjugate to be added when evaluating the Hamiltonian, and ``parameters``
         contains a list of parameter names used when evaluating this term.
     parameters : frozenset of strings
         The names of the parameters on which the system depends. This attribute
@@ -588,6 +588,7 @@ class VectorizedSystem(System, metaclass=abc.ABCMeta):
     ``pos`` which is assumed to return the real-space position of a site
     given its index.
     """
+
     @abc.abstractmethod
     def hamiltonian_term(self, index, selector=slice(None),
                          args=(), params=None):
@@ -615,6 +616,7 @@ class VectorizedSystem(System, metaclass=abc.ABCMeta):
         Providing positional arguments via 'args' is deprecated,
         instead, provide named parameters as a dictionary via 'params'.
         """
+
     @property
     @lru_cache(1)
     def site_ranges(self):
