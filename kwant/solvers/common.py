@@ -1000,7 +1000,7 @@ class GreensFunction(BlockResult):
             # We use ‖Σ‖, not ‖Γ‖, for the tolerance as ‖Γ‖~0 when there
             # are no open modes.
             eps = (
-                1e3 * np.finfo(gamma.dtype).eps * np.linalg.norm(sigma, np.inf)
+                1e6 * np.finfo(gamma.dtype).eps * np.linalg.norm(sigma, np.inf)
             )
             N = np.sum(np.linalg.eigvalsh(gamma) > eps)
 
