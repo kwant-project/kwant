@@ -272,6 +272,29 @@ def test_two_equal_leads(smatrix):
     raises(ValueError, check_fsyst, fsyst.precalculate(what='selfenergy'))
 
 
+# Regression test against
+# https://gitlab.kwant-project.org/kwant/kwant/-/issues/398
+# that the reflection calculation in 'greens_function' does not
+# mis-count the number of open modes when there are none.
+def test_reflection_no_open_modes(greens_function):
+    # Build system
+    syst = kwant.Builder()
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+    syst[(square(i, j) for i in range(3) for j in range(3))] = 4
+    lead[(square(0, j) for j in range(3))] = 4
+    syst[square.neighbors()] = -1
+    lead[square.neighbors()] = -1
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+    syst = syst.finalized()
+
+    # Sanity check; no open modes at 0 energy
+    _, m = syst.leads[0].modes(energy=0)
+    assert m.nmodes == 0
+
+    assert np.isclose(greens_function(syst).transmission(0, 0), 0)
+
+
 # Test a more complicated graph with non-singular hopping.
 def test_graph_system(smatrix):
     rng = ensure_rng(11)
