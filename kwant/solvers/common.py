@@ -989,17 +989,20 @@ class GreensFunction(BlockResult):
         result = np.trace(attdagainv).real
         if lead_out == lead_in:
             # For reflection we have to be more careful
-            gamma = 1j * (self.lead_info[lead_in] -
-                          self.lead_info[lead_in].conj().T)
+            sigma = self.lead_info[lead_in]
+            gamma = 1j * (sigma - sigma.conj().T)
             gf = self.submatrix(lead_out, lead_in)
 
             # The number of channels is given by the number of
             # nonzero eigenvalues of Gamma
             # rationale behind the threshold from
             # Golub; van Loan, chapter 5.5.8
-            eps = np.finfo(gamma.dtype).eps * 1000
-            N = np.sum(np.linalg.eigvalsh(gamma) >
-                       eps * np.linalg.norm(gamma, np.inf))
+            # We use ‖Σ‖, not ‖Γ‖, for the tolerance as ‖Γ‖~0 when there
+            # are no open modes.
+            eps = (
+                1e6 * np.finfo(gamma.dtype).eps * np.linalg.norm(sigma, np.inf)
+            )
+            N = np.sum(np.linalg.eigvalsh(gamma) > eps)
 
             result += 2 * np.trace(np.dot(gamma, gf)).imag + N
 
