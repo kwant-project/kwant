@@ -6,7 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
-from itertools import chain
+import itertools
 from math import cos, sin
 import numpy as np
 import pytest
@@ -37,7 +37,7 @@ sparse_solver_options = [
     {},
 ]
 
-solvers = list(chain(
+solvers = list(itertools.chain(
     [("mumps", opts) for opts in mumps_solver_options],
     [("sparse", opts) for opts in sparse_solver_options],
 ))
