@@ -2,9 +2,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 from keyword import iskeyword
 from collections import defaultdict
@@ -15,6 +15,7 @@ import numpy as np
 import tinyarray as ta
 
 import sympy
+from sympy.matrices.matrices import MatrixBase
 from sympy.utilities.lambdify import lambdastr
 from sympy.printing.lambdarepr import LambdaPrinter
 from sympy.printing.precedence import precedence
@@ -211,7 +212,7 @@ def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
 
     onsite_zeros = (0,) * len(coords)
 
-    if not isinstance(hamiltonian, sympy.matrices.MatrixBase):
+    if not isinstance(hamiltonian, MatrixBase):
         hamiltonian = sympy.Matrix([hamiltonian])
         _input_format = 'expression'
     else:
@@ -328,7 +329,7 @@ def build_discretized(tb_hamiltonian, coords, *, grid=None, locals=None,
     is_diagonal = lambda m: np.allclose(m, np.diag(np.diagonal(m)))
     if not (lat.prim_vecs.shape[0] == grid_dim and
             is_diagonal(lat.prim_vecs)):
-        raise ValueError('"grid" is expected to by an orthogonal lattice '
+        raise ValueError('"grid" has to be an orthogonal lattice '
                          'of dimension matching number of "coords".')
 
     if (lat.norbs is not None) and (lat.norbs != norbs):
@@ -574,7 +575,7 @@ def _return_string(expr, coords):
 
     expr = expr.subs(map_func_calls)
 
-    if isinstance(expr, sympy.matrices.MatrixBase):
+    if isinstance(expr, MatrixBase):
         # express matrix return values in terms of sums of known matrices,
         # which will be assigned to '_cache_n' in the function body.
         mons = monomials(expr, expr.atoms(sympy.Symbol))

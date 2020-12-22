@@ -4,9 +4,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 from __future__ import print_function
 
@@ -315,7 +315,7 @@ class sdist(sdist_orig):
 
 
 # The following class is based on a recipe in
-# http://doc.pytest.org/en/latest/goodpractices.html#manual-integration.
+# https://doc.pytest.org/en/latest/goodpractices.html#manual-integration.
 class test(test_orig):
     user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
 
@@ -584,7 +584,7 @@ def main():
                        "(Python 3 version)"),
           long_description=long_description(),
           platforms=["Unix", "Linux", "Mac OS-X", "Windows"],
-          url="http://kwant-project.org/",
+          url="https://kwant-project.org/",
           license="BSD",
           packages=packages,
           package_data={p: ['*.pxd', '*.h'] for p in packages},
@@ -593,16 +593,16 @@ def main():
                     'build_ext': build_ext,
                     'test': test},
           ext_modules=exts,
-          python_requires='>=3.6',
-          install_requires=['numpy >= 1.13.3', 'scipy >= 0.19.1',
+          python_requires='>=3.7',
+          # The oldest versions between: Debian stable, Ubuntu LTS
+          install_requires=['numpy >= 1.16.2', 'scipy >= 1.1.0',
                             'tinyarray >= 1.2'],
           extras_require={
-              # The oldest versions between: Debian stable, Ubuntu LTS
-              'plotting': ['matplotlib >= 2.1.1',
-                           'plotly >= 2.2.2'],
-              'continuum': 'sympy >= 1.1.1',
+              'plotting': ['matplotlib >= 3.0.2',
+                           'plotly >= 3.6.1'],
+              'continuum': 'sympy >= 1.3.0',
               # qsymm is only packaged on PyPI
-              'qsymm': 'qsymm >= 1.2.6',
+              'qsymm': 'qsymm >= 1.3.0',
           },
           classifiers=[c.strip() for c in classifiers.split('\n')])
 

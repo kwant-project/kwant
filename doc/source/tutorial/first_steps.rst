@@ -750,7 +750,7 @@ Finally, we use the following standard Python construct [#]_ to execute
 .. jupyter-execute::
 
     # Call the main function if the script gets executed (as opposed to imported).
-    # See <http://docs.python.org/library/__main__.html>.
+    # See <https://docs.python.org/library/__main__.html>.
     if __name__ == '__main__':
         main()
 

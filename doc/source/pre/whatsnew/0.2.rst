@@ -21,7 +21,7 @@ New MUMPS-based solver
 ----------------------
 The code for sparse matrix solvers has been reorganized and a new solver has
 been added next to `kwant.solvers.sparse`: `kwant.solvers.mumps`.  The new
-solver uses the `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_ software package and
+solver uses the `MUMPS <https://graal.ens-lyon.fr/MUMPS/>`_ software package and
 is much (typically several times) faster than the UMFPACK-based old solver.
 In addition, MUMPS uses considerably less memory for a given system while at
 the same time it is able to take advantage of more than 2 GiB of RAM.

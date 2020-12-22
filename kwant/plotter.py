@@ -3,9 +3,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 """Plotter module for Kwant.
 
@@ -2179,9 +2179,11 @@ def _spectrum_matplotlib(syst, x, y=None, params=None, mask=None, file=None,
         # plot_surface cannot directly handle rank-3 values, so we
         # explicitly loop over the last axis
         grid = np.meshgrid(*array_values)
-        for i in range(spectrum.shape[-1]):
-            spec = spectrum[:, :, i].transpose()  # row-major to x-y ordering
-            ax.plot_surface(*(grid + [spec]), cstride=1, rstride=1)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', message='Z contains NaN values')
+            for i in range(spectrum.shape[-1]):
+                spec = spectrum[:, :, i].transpose()  # row-major to x-y ordering
+                ax.plot_surface(*(grid + [spec]), cstride=1, rstride=1)
 
     _maybe_output_fig(fig, file=file, show=show)
 
@@ -2324,8 +2326,13 @@ def _interpolate_field(dim, elements, discrete_field, bbox, width,
 
         # Coordinates of the grid points that are within range of the current
         # hopping.
-        coords = np.meshgrid(*[region[d][field_slice[d]] for d in range(dim)],
-                             sparse=True, indexing='ij')
+        coords = np.array(
+            np.meshgrid(
+                *[region[d][field_slice[d]] for d in range(dim)],
+                sparse=True, indexing='ij'
+            ),
+            dtype=object
+        )
 
         # Convert "coords" into scaled distances from pos_offset
         coords -= pos_offsets[i]

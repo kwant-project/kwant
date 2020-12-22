@@ -38,7 +38,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
               'sphinx.ext.todo', 'sphinx.ext.mathjax', 'numpydoc',
-              'kwantdoc', 'sphinx.ext.linkcode', 'jupyter_sphinx.execute',
+              'kwantdoc', 'sphinx.ext.linkcode', 'jupyter_sphinx',
               'sphinxcontrib.rsvgconverter']
 
 # Add any paths that contain templates here, relative to this directory.
@@ -198,7 +198,6 @@ htmlhelp_basename = 'kwantdoc'
 
 # -- Options for LaTeX output --------------------------------------------------
 
-# http://thread.gmane.org/gmane.comp.python.sphinx.devel/4220/focus=4238
 latex_elements = {'papersize': 'a4paper',
                   'release': '',
                   'releasename': '',
@@ -271,7 +270,7 @@ class BoundMethodDocumenter(autodoc.FunctionDocumenter):
     @classmethod
     def can_document_member(cls, member, membername, isattr, parent):
         # Return True iff `member` is a bound method.  Taken from
-        # <http://stackoverflow.com/a/1260881>.
+        # <https://stackoverflow.com/a/1260881>.
         return (isinstance(member, types.MethodType) and
                 member.__self__ is not None and
                 not issubclass(member.__self__.__class__, type) and

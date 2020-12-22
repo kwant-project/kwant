@@ -2,15 +2,29 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 __all__ = []
 
 from . import version
 version.ensure_python()
 __version__ = version.version
+"""The version of Kwant is available under the name ``__version__``.
+
+This string respects `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_
+and has the following format
+
+- Released version: '1.3.0', '1.3.1', etc.
+- Alpha version: '1.2.0a0', '1.2.0a1', etc.
+- Beta version: '1.1.0b0', '1.1.0b1', etc.
+- Development version (derived from ``git describe --first-parent --dirty``):
+  '1.3.2.dev27+gdecf6893', '1.1.1.dev10+gabcd012.dirty', etc.
+- Development version with incomplete information: 'unknown',
+  'unknown+g0123abc', etc.
+"""
+
 
 import numpy                    # Needed by C. Gohlke's Windows package.
 import warnings

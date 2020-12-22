@@ -8,8 +8,8 @@ The principal developers of Kwant are
 
 * `Christoph Groth <mailto:christoph.groth@cea.fr>`_ (CEA Grenoble)
 * `Michael Wimmer <https://michaelwimmer.org>`_ (TU Delft)
-* `Anton Akhmerov <http://antonakhmerov.org>`_ (TU Delft)
-* `Xavier Waintal <http://inac.cea.fr/Pisp/xavier.waintal>`_ (CEA Grenoble)
+* `Anton Akhmerov <https://antonakhmerov.org>`_ (TU Delft)
+* `Xavier Waintal <https://www.pheliqs.fr/en/Pages/Portrait/Xavier-Waintal.aspx>`_ (CEA Grenoble)
 * `Joseph Weston <https://joseph.weston.cloud>`_ (TU Delft)
 
 Contributors to Kwant include
@@ -34,7 +34,7 @@ Contributors to Kwant include
 
 We thank Christoph Gohlke for the creation of installers for Microsoft Windows.
 
-`CEA <http://www.cea.fr>`_ is the French Commissariat à l'énergie atomique et aux
+`CEA <https://www.cea.fr>`_ is the French Commissariat à l'énergie atomique et aux
 énergies alternatives.  The CEA is the copyright holder for the contributions of
 C. W. Groth, X. Waintal, and its other employees involved in Kwant.
 

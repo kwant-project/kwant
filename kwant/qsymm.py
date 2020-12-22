@@ -2,9 +2,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 
 __all__ = ['builder_to_model', 'model_to_builder', 'find_builder_symmetries']
@@ -18,12 +18,15 @@ import scipy.linalg as la
 
 try:
     import sympy
+    import sympy.matrices.matrices
     import qsymm
     from qsymm.model import Model, BlochModel, BlochCoeff
     from qsymm.groups import PointGroupElement, ContinuousGroupGenerator
     from qsymm.symmetry_finder import bravais_point_group
     from qsymm.linalg import allclose
     from qsymm.hamiltonian_generator import hamiltonian_from_family
+
+    one = sympy.S.One
 except ImportError as error:
     msg = ("'kwant.qsymm' is not available because one or more of its "
            "dependencies is not installed.")
@@ -346,7 +349,7 @@ def model_to_builder(model, norbs, lat_vecs, atom_coords, *, coeffs=None):
     for atom in atoms:
         if atom not in onsites_dict:
             onsites_dict[atom] = Model(
-                {sympy.numbers.One(): np.zeros((norbs[atom], norbs[atom]))},
+                {one: np.zeros((norbs[atom], norbs[atom]))},
                 momenta=momenta)
 
     # Make the Kwant system, and set all onsites and hoppings.

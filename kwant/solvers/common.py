@@ -2,9 +2,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 __all__ = ['SparseSolver', 'SMatrix', 'GreensFunction']
 
@@ -18,17 +18,6 @@ from .._common import ensure_isinstance, deprecate_args
 from .. import system, physics
 from functools import reduce
 
-# Until v0.13.0, scipy.sparse did not support making block matrices out of
-# matrices with one dimension being zero:
-# https://github.com/scipy/scipy/issues/2127 Additionally, 'scipy.sparse.bmat'
-# didn't support matrices with zero size until v0.18:
-# https://github.com/scipy/scipy/issues/5976. For now we use NumPy dense
-# matrices as a replacement.
-
-# TODO: Once we depend on scipy >= 0.18, code for the special cases can be
-# removed from _make_linear_sys, _solve_linear_sys and possibly other places
-# marked by the line "See comment about zero-shaped sparse matrices at the top
-# of common.py".
 
 LinearSys = namedtuple('LinearSys', ['lhs', 'rhs', 'indices', 'num_orb'])
 
@@ -296,11 +285,8 @@ class SparseSolver(metaclass=abc.ABCMeta):
                     zero_rows = (lhs.shape[0] - mats[0].shape[0] -
                                  mats[1].shape[0])
 
-                    if zero_rows:
-                        zero_mat = sprhsmat((zero_rows, mats[0].shape[1]))
-                        bmat = [[mats[0]], [mats[1]], [zero_mat]]
-                    else:
-                        bmat = [[mats[0]], [mats[1]]]
+                    zero_mat = sprhsmat((zero_rows, mats[0].shape[1]))
+                    bmat = [[mats[0]], [mats[1]], [zero_mat]]
 
                     rhs[i] = sp.bmat(bmat, format=self.rhsformat)
             elif mats is None:
@@ -407,9 +393,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
             return SMatrix(np.zeros((len_kv, len_rhs)), lead_info,
                            out_leads, in_leads, check_hermiticity)
 
-        # See comment about zero-shaped sparse matrices at the top of common.py.
-        rhs = sp.bmat([[i for i in linsys.rhs if i.shape[1]]],
-                      format=self.rhsformat)
+        rhs = sp.bmat([linsys.rhs], format=self.rhsformat)
         flhs = self._factorized(linsys.lhs)
         data = self._solve_linear_sys(flhs, rhs, kept_vars)
 
@@ -505,9 +489,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
             return GreensFunction(np.zeros((len_kv, len_rhs)), lead_info,
                                   out_leads, in_leads, check_hermiticity)
 
-        # See comment about zero-shaped sparse matrices at the top of common.py.
-        rhs = sp.bmat([[i for i in linsys.rhs if i.shape[1]]],
-                      format=self.rhsformat)
+        rhs = sp.bmat([linsys.rhs], format=self.rhsformat)
         flhs = self._factorized(linsys.lhs)
         data = self._solve_linear_sys(flhs, rhs, kept_vars)
 
@@ -569,9 +551,7 @@ class SparseSolver(metaclass=abc.ABCMeta):
 
         factored = self._factorized(linsys.lhs)
 
-        # See comment about zero-shaped sparse matrices at the top of common.py.
-        rhs = sp.bmat([[i for i in linsys.rhs if i.shape[1]]],
-                      format=self.rhsformat)
+        rhs = sp.bmat([linsys.rhs], format=self.rhsformat)
         for j in range(0, rhs.shape[1], self.nrhs):
             jend = min(j + self.nrhs, rhs.shape[1])
             psi = self._solve_linear_sys(factored, rhs[:, j:jend],
@@ -861,12 +841,10 @@ class SMatrix(BlockResult):
                 block_offsets.append(block_offset)
         # Symmetry block offsets for all leads - or None if lead does not have
         # blocks.
-        self.block_offsets = block_offsets
+        block_offsets = np.array(block_offsets, dtype=object)
         # Pick out symmetry block offsets for in and out leads
-        self.in_block_offsets = \
-                np.array(self.block_offsets)[list(self.in_leads)]
-        self.out_block_offsets = \
-                np.array(self.block_offsets)[list(self.out_leads)]
+        self._in_block_offsets = block_offsets[list(self.in_leads)]
+        self._out_block_offsets = block_offsets[list(self.out_leads)]
         # Block j of in lead i starts at in_block_offsets[i][j]
 
     def out_block_coords(self, lead_out):
@@ -880,9 +858,9 @@ class SMatrix(BlockResult):
             lead_ind, block_ind = lead_out
             lead_ind = self.out_leads.index(lead_ind)
             return slice(self.out_offsets[lead_ind] +
-                         self.out_block_offsets[lead_ind][block_ind],
+                         self._out_block_offsets[lead_ind][block_ind],
                          self.out_offsets[lead_ind] +
-                         self.out_block_offsets[lead_ind][block_ind + 1])
+                         self._out_block_offsets[lead_ind][block_ind + 1])
 
     def in_block_coords(self, lead_in):
         """
@@ -896,9 +874,9 @@ class SMatrix(BlockResult):
             lead_ind, block_ind = lead_in
             lead_ind = self.in_leads.index(lead_ind)
             return slice(self.in_offsets[lead_ind] +
-                         self.in_block_offsets[lead_ind][block_ind],
+                         self._in_block_offsets[lead_ind][block_ind],
                          self.in_offsets[lead_ind] +
-                         self.in_block_offsets[lead_ind][block_ind + 1])
+                         self._in_block_offsets[lead_ind][block_ind + 1])
 
     def _transmission(self, lead_out, lead_in):
         return np.linalg.norm(self.submatrix(lead_out, lead_in)) ** 2

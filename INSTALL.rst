@@ -20,7 +20,7 @@ Obtaining the source code
 
 Source distributions of Kwant (and Tinyarray) are available at the `downloads
 section of the Kwant website <https://downloads.kwant-project.org/kwant/>`_ as well
-as `PyPI <https://pypi.python.org/pypi/kwant>`_.  The sources may be also
+as `PyPI <https://pypi.org/project/kwant>`_.  The sources may be also
 cloned directly from the `official Kwant git repository
 <https://gitlab.kwant-project.org/kwant/kwant>`_.
 
@@ -29,13 +29,12 @@ Prerequisites
 =============
 
 Building Kwant requires
- * `Python <https://www.python.org/>`_ 3.6 or above (Kwant 1.1 is the last
-   version to support Python 2),
- * `NumPy <http://numpy.org/>`_ 1.13.3 or newer,
- * `SciPy <https://www.scipy.org/>`_ 0.19.1 or newer,
- * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
+ * `Python <https://www.python.org/>`_ 3.7 or above,
+ * `NumPy <https://numpy.org/>`_ 1.16.2 or newer,
+ * `SciPy <https://www.scipy.org/>`_ 1.1.0 or newer,
+ * `LAPACK <https://netlib.org/lapack/>`_ and `BLAS <https://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
-   <http://www.openblas.net/>`_ or the nonfree `MKL
+   <https://www.openblas.net/>`_ or the nonfree `MKL
    <https://software.intel.com/en-us/intel-mkl>`_.)
  * `Tinyarray <https://gitlab.kwant-project.org/kwant/tinyarray>`_ 1.2 or newer,
 a NumPy-like Python package optimized for very small arrays,
@@ -43,19 +42,20 @@ a NumPy-like Python package optimized for very small arrays,
    C++.
 
 The following software is highly recommended though not strictly required:
- * `matplotlib <http://matplotlib.org/>`_ 2.1.1 or newer, for the module `kwant.plotter` and the tutorial,
- * `SymPy <http://sympy.org/>`_ 1.1.1 or newer, for the subpackage `kwant.continuum`.
- * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.2.6 or newer, for the subpackage `kwant.qsymm`.
- * `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
+ * `matplotlib <https://matplotlib.org/>`_ 3.0.2 or newer, for the module `kwant.plotter` and the tutorial,
+ * `plotly <https://plotly.com/>`_ 3.6.1 or newer, for the module `kwant.plotter` and the tutorial,
+ * `SymPy <https://sympy.org/>`_ 1.3.0 or newer, for the subpackage `kwant.continuum`.
+ * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.3.0 or newer, for the subpackage `kwant.qsymm`.
+ * `MUMPS <https://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
    that will in many cases speed up Kwant several times and reduce the memory
    footprint.  (Kwant uses only the sequential, single core version
    of MUMPS.  The advantages due to MUMPS as used by Kwant are thus independent
    of the number of CPU cores of the machine on which Kwant runs.)
- * The `py.test testing framework <http://pytest.org/>`_ 3.3.2 or newer for running the
+ * The `py.test testing framework <https://docs.pytest.org/>`_ 3.3.2 or newer for running the
    tests included with Kwant.
 
 In addition, to build a copy of Kwant that has been checked-out directly from
-version control, you will also need `Cython <http://cython.org/>`_ 0.26.1 or
+version control, you will also need `Cython <https://cython.org/>`_ 0.26.1 or
 newer.  You do not need Cython to build Kwant that has been unpacked from a
 source .tar.gz-file.
 
@@ -128,7 +128,7 @@ The section ``[kwant.linalg._mumps]`` may be used to adapt the build process.
 
 
 Example ``build.conf`` for linking Kwant against a self-compiled MUMPS, `SCOTCH
-<http://www.labri.fr/perso/pelegrin/scotch/>`_ and `METIS
+<https://www.labri.fr/perso/pelegrin/scotch/>`_ and `METIS
 <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_::
 
     [mumps]
@@ -143,7 +143,7 @@ Building the documentation
 ==========================
 
 To build the documentation, the `Sphinx documentation generator
-<http://www.sphinx-doc.org/en/stable/>`_ is required with ``numpydoc`` extension
+<https://www.sphinx-doc.org/en/stable/>`_ is required with ``numpydoc`` extension
 (version 0.5 or newer), as well as ``jupyter-sphinx`` (version 0.2 or newer).
 If PDF documentation is to be built, the tools
 from the `libRSVG <https://wiki.gnome.org/action/show/Projects/LibRsvg>`_
@@ -193,72 +193,6 @@ root.
 
 By default the package will be installed under ``/usr/local``.  Run ``python3
 setup.py --help install`` for installation options.
-
-
-Mac OS X: MacPorts
-==================
-
-The following instructions are valid for Kwant 1.1 with Python 2.7.  They need
-to be updated for Kwant 1.2.  (Help is welcome.)
-
-The required dependencies of Kwant are best installed with one of the packaging
-systems. Here we only consider the case of `MacPorts
-<https://www.macports.org>`_ in detail. Some remarks for homebrew are given
-below.
-
-1. Install a recent version of MacPorts, as explained in the `installation
-   instructions of MacPorts <https://www.macports.org/install.php>`_.
-
-2. Install the required dependencies::
-
-       sudo port install gcc47 python27 py27-numpy py27-scipy py27-matplotlib mumps_seq
-       sudo port select --set python python27
-
-3. Unpack Tinyarray, enter its directory, build and install::
-
-       python setup.py build
-       sudo python setup.py install
-
-4. Unpack Kwant, go to the Kwant directory, and edit ``build.conf`` to read::
-
-       [mumps]
-       include_dirs = /opt/local/include
-       library_dirs = /opt/local/lib
-       libraries = zmumps_seq mumps_common_seq pord_seq esmumps scotch scotcherr mpiseq gfortran
-
-5. Then, build and install Kwant. ::
-
-       CC=gcc-mp-4.7 LDSHARED='gcc-mp-4.7 -shared -undefined dynamic_lookup' python setup.py build
-       sudo python setup.py install
-
-You might note that installing Kwant on Mac OS X is somewhat more involved than
-installing on Linux. Part of the reason is that we need to mix Fortran and C
-code in Kwant: While C code is usually compiled using Apple compilers,
-Fortran code must be compiled with the Gnu Fortran compiler (there is
-no Apple Fortran compiler). For this reason we force the Gnu compiler suite
-with the environment variables ``CC`` and ``LDSHARED`` as shown above.
-
-
-Mac OS X: homebrew
-==================
-
-The following instructions are valid for Kwant 1.1 with Python 2.7.  They need
-to be updated for Kwant 1.2.  (Help is welcome.)
-
-It is also possible to build Kwant using homebrew. The dependencies can be
-installed as ::
-
-    brew install gcc python
-    brew tap homebrew/science
-    brew tap homebrew/python
-    brew tap kwant-project/kwant
-    pip install pytest pytest-runner six
-    brew install numpy scipy matplotlib
-
-Note that during the installation you will be told which paths to add when you
-want to compile/link against scotch/metis/mumps; you need to add these to the
-build.conf file. Also, when linking against MUMPS, one needs also to link
-against METIS (in addition to the libraries needed for MacPorts).
 
 
 Microsoft Windows

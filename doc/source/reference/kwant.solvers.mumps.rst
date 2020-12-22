@@ -3,7 +3,7 @@
 
 .. module:: kwant.solvers.mumps
 
-This solver uses `MUMPS <http://graal.ens-lyon.fr/MUMPS/>`_.  (Only the
+This solver uses `MUMPS <https://graal.ens-lyon.fr/MUMPS/>`_.  (Only the
 sequential, single core version of MUMPS is used.)  MUMPS is a very efficient
 direct sparse solver that can take advantage of memory beyond 3GiB for the
 solution of large problems.  Furthermore, it offers a choice of several

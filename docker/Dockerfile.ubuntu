@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
@@ -22,7 +22,7 @@ RUN apt-add-repository -s ppa:kwant-project/ppa && \
 
 ### install optional dependencies not available from the Debian repositories
 RUN pip3 install \
-    qsymm==1.2.6
+    qsymm==1.3.0
 
 ### install build and testing dependencies
 RUN pip3 install \
