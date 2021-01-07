@@ -262,7 +262,9 @@ upload coverage:
     on_stop: remove_coverage
   before_script:
     - mkdir -p ~/.ssh
-    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    - chmod 700 ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
   script:
     - mv htmlcov $CI_BUILD_REF_SLUG
     - rsync -rlv -e "$SSH_COMMAND" --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
@@ -280,7 +282,9 @@ remove_coverage:
     action: stop
   before_script:
     - mkdir -p ~/.ssh
-    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    - chmod 700 ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
   script:
     - mkdir empty/
     - rsync -rlv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
@@ -298,7 +302,9 @@ upload documentation to the test server:
     - branches@kwant/kwant
   before_script:
     - mkdir -p ~/.ssh
-    - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    - chmod 700 ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo $TEST_WEBSITE_KEY | base64 -d | ssh-add -
   script:
     - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG
   after_script:
@@ -315,7 +321,9 @@ remove_docs:
     action: stop
   before_script:
     - mkdir -p ~/.ssh
-    - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    - chmod 700 ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo $TEST_WEBSITE_KEY | base64 -d | ssh-add -
   script:
     - mkdir empty
     - rsync -arv -e "$SSH_COMMAND" --delete empty/ kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG/
@@ -332,7 +340,9 @@ upload dev version docs:
     - master@kwant/kwant
   before_script:
     - mkdir -p ~/.ssh
-    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+    - chmod 700 ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
   script:
     - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant@kwant-project.org:doc/dev
   after_script:
