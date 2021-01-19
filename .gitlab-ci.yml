@@ -10,7 +10,7 @@ stages:
 variables:
   # rsync is used to send documentation to our web servers: we never send any
   # secret information, and using 'ssh-keyscan' causes the CI server's IP to be blacklisted
-  IGNORE_HOSTKEY: "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+  SSH_COMMAND: "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 
 ## Building Docker environments
 ## Only runs when docker specifications change
@@ -265,7 +265,7 @@ upload coverage:
     - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
     - mv htmlcov $CI_BUILD_REF_SLUG
-    - rsync -rlv -e "$IGNORE_HOSTKEY" --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
+    - rsync -rlv -e "$SSH_COMMAND" --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
   after_script:
     - rm -rf ~/.ssh
 
@@ -283,7 +283,7 @@ remove_coverage:
     - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
     - mkdir empty/
-    - rsync -rlv -e "$IGNORE_HOSTKEY" --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
+    - rsync -rlv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
   after_script:
     - rm -rf ~/.ssh
 
@@ -300,7 +300,7 @@ upload documentation to the test server:
     - mkdir -p ~/.ssh
     - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
-    - rsync -rlv -e "$IGNORE_HOSTKEY" --delete doc/build/html/* kwant@kwant-project.org:doc/$CI_BUILD_REF_SLUG
+    - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG
   after_script:
     - rm -rf ~/.ssh
 
@@ -318,7 +318,7 @@ remove_docs:
     - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
     - mkdir empty
-    - rsync -arv -e "$IGNORE_HOSTKEY" --delete empty/ kwant@kwant-project.org:doc/$CI_BUILD_REF_SLUG/
+    - rsync -arv -e "$SSH_COMMAND" --delete empty/ kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG/
   after_script:
     - rm -rf ~/.ssh
 
@@ -334,7 +334,7 @@ upload dev version docs:
     - mkdir -p ~/.ssh
     - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
-    - rsync -rlv -e "$IGNORE_HOSTKEY" --delete doc/build/html/* kwant@kwant-project.org:doc/dev
+    - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant@kwant-project.org:doc/dev
   after_script:
     - rm -rf ~/.ssh
 
