@@ -297,7 +297,7 @@ upload documentation to the test server:
     - mkdir -p ~/.ssh
     - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
-    - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant@kwant-project.org:doc/$CI_BUILD_REF_SLUG
+    - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG
   after_script:
     - rm -rf ~/.ssh
 
@@ -315,7 +315,7 @@ remove_docs:
     - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
     - mkdir empty
-    - rsync -arv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:doc/$CI_BUILD_REF_SLUG/
+    - rsync -arv -e "$SSH_COMMAND" --delete empty/ kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG/
   after_script:
     - rm -rf ~/.ssh
 
