@@ -260,16 +260,11 @@ upload coverage:
     name: coverage/$CI_BUILD_REF_NAME
     url: https://kwant-project.org/coverage/$CI_BUILD_REF_SLUG
     on_stop: remove_coverage
-  before_script:
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
+  script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
-  script:
     - mv htmlcov $CI_BUILD_REF_SLUG
     - rsync -rlv -e "$SSH_COMMAND" --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
-  after_script:
-    - rm -rf ~/.ssh
 
 
 remove_coverage:
@@ -280,16 +275,11 @@ remove_coverage:
   environment:
     name: coverage/$CI_BUILD_REF_NAME
     action: stop
-  before_script:
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
+  script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
-  script:
     - mkdir empty/
     - rsync -rlv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
-  after_script:
-    - rm -rf ~/.ssh
 
 
 upload documentation to the test server:
@@ -300,15 +290,10 @@ upload documentation to the test server:
     on_stop: remove_docs
   only:
     - branches@kwant/kwant
-  before_script:
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
+  script:
     - eval $(ssh-agent -s)
     - echo $TEST_WEBSITE_KEY | base64 -d | ssh-add -
-  script:
     - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG
-  after_script:
-    - rm -rf ~/.ssh
 
 
 remove_docs:
@@ -319,16 +304,11 @@ remove_docs:
   environment:
     name: docs review/$CI_BUILD_REF_NAME
     action: stop
-  before_script:
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
+  script:
     - eval $(ssh-agent -s)
     - echo $TEST_WEBSITE_KEY | base64 -d | ssh-add -
-  script:
     - mkdir empty
     - rsync -arv -e "$SSH_COMMAND" --delete empty/ kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG/
-  after_script:
-    - rm -rf ~/.ssh
 
 
 upload dev version docs:
@@ -338,15 +318,10 @@ upload dev version docs:
     url: https://kwant-project.org/doc/dev
   only:
     - master@kwant/kwant
-  before_script:
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
+  script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
-  script:
     - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant@kwant-project.org:doc/dev
-  after_script:
-    - rm -rf ~/.ssh
 
 
 ## Build documentation for tagged releases
