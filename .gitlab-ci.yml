@@ -260,16 +260,11 @@ upload coverage:
     name: coverage/$CI_BUILD_REF_NAME
     url: https://kwant-project.org/coverage/$CI_BUILD_REF_SLUG
     on_stop: remove_coverage
-  before_script:
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
+  script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
-  script:
     - mv htmlcov $CI_BUILD_REF_SLUG
-    - rsync -rlv -e "$IGNORE_HOSTKEY" --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
-  after_script:
-    - rm -rf ~/.ssh
+    - rsync -rlv -e "$SSH_COMMAND" --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
 
 
 remove_coverage:
@@ -280,16 +275,11 @@ remove_coverage:
   environment:
     name: coverage/$CI_BUILD_REF_NAME
     action: stop
-  before_script:
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
+  script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
-  script:
     - mkdir empty/
-    - rsync -rlv -e "$IGNORE_HOSTKEY" --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
-  after_script:
-    - rm -rf ~/.ssh
+    - rsync -rlv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
 
 
 upload documentation to the test server:
