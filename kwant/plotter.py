@@ -910,7 +910,7 @@ def plot(sys, num_lead_cells=2, unit=None,
                         lead_hop_lw, pos_transform,
                         cmap, colorbar, file,
                         show)
-    elif _p.engine == None:
+    elif _p.engine is None:
         raise RuntimeError("Cannot use plot() without a plotting lib installed")
     else:
         raise RuntimeError("plot() does not support engine '{}'".format(_p.engine))
@@ -980,7 +980,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
          cmap, colorbar, file,
          show, fig=None):
 
-    if unit == None:
+    if unit is None:
         unit = 'pt'
 
     syst = sys  # for naming consistency inside function bodies
@@ -1278,7 +1278,7 @@ def _plot_plotly(sys, num_lead_cells, unit,
                                            showticklabels=True),
                                 yaxis=dict(showgrid=False, zeroline=False,
                                            showticklabels=True))
-    if fig == None:
+    if fig is None:
         full_trace = list(itertools.chain.from_iterable([site_edge_trace,
                                             site_node_trace, lead_edge_trace,
                                             lead_node_trace]))
@@ -1306,7 +1306,7 @@ def _plot_matplotlib(sys, num_lead_cells, unit,
          cmap, colorbar, file,
          show, dpi, fig_size, ax):
 
-    if unit == None:
+    if unit is None:
         unit = 'nn'
 
     syst = sys  # for naming consistency inside function bodies
@@ -1766,7 +1766,7 @@ def map(sys, value, colorbar=True, cmap=None, vmin=None, vmax=None, a=None,
         fig = _map_plotly(syst, img, colorbar, _max, _min,  vmin, vmax,
                           overflow_pct, underflow_pct, cmap, num_lead_cells,
                           background)
-    elif _p.engine == None:
+    elif _p.engine is None:
         raise RuntimeError("Cannot use map() without a plotting lib installed")
     else:
         raise RuntimeError("map() does not support engine '{}'".format(_p.engine))
@@ -2011,7 +2011,7 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
     elif _p.engine == "plotly":
         _check_incompatible_args_plotly(dpi, fig_size, ax)
         return _spectrum_plotly(syst, x, y, params, mask, file, show)
-    elif _p.engine == None:
+    elif _p.engine is None:
         raise RuntimeError("Cannot use spectrum() without a plotting lib installed")
     else:
         raise RuntimeError("spectrum() does not support engine '{}'".format(_p.engine))
@@ -2566,7 +2566,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
         fig = _streamplot_plotly(field, box, cmap, bgcolor, linecolor,
                                max_linewidth, min_linewidth, density,
                                colorbar, file, show, vmax)
-    elif _p.engine == None:
+    elif _p.engine is None:
         raise RuntimeError("Cannot use streamplot() without a plotting lib installed")
     else:
         raise RuntimeError("streamplot() does not support engine '{}'".format(_p.engine))
@@ -2776,7 +2776,7 @@ def scalarplot(field, box,
         _check_incompatible_args_plotly(dpi, fig_size, ax)
         fig = _scalarplot_plotly(field, box, cmap, colorbar, file,
                                  show, vmin, vmax, background)
-    elif _p.engine == None:
+    elif _p.engine is None:
         raise RuntimeError("Cannot use scalarplot() without a plotting lib installed")
     else:
         raise RuntimeError("scalarplot() does not support engine '{}'".format(_p.engine))
