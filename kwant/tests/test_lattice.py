@@ -225,7 +225,7 @@ def test_norbs():
     # Catch deprecation warning
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        assert lattice.general(id_mat).norbs == None
+        assert lattice.general(id_mat).norbs is None
     assert lattice.general(id_mat, norbs=2).norbs == 2
     # Polyatomic lattices
     # Catch deprecation warning
@@ -233,7 +233,7 @@ def test_norbs():
         warnings.simplefilter("ignore")
         lat = lattice.general(id_mat, basis=id_mat, norbs=None)
     for l in lat.sublattices:
-        assert l.norbs == None
+        assert l.norbs is None
     lat = lattice.general(id_mat, basis=id_mat, norbs=2)
     for l in lat.sublattices:
         assert l.norbs == 2

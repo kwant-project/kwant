@@ -169,7 +169,7 @@ def test_edge_ids():
     for i, edge_id in enumerate(g.all_edge_ids(-1, 0)):
         if i == 0:
             assert edge_id == g.first_edge_id(-1, 0)
-        assert g.tail(edge_id) == None
+        assert g.tail(edge_id) is None
         assert g.head(edge_id) == 0
     assert i == 2
 

@@ -144,7 +144,7 @@ def test_site_families():
     # test site families compare equal/not-equal
     assert fam == ofam
     assert fam != yafam
-    assert fam != None
+    assert fam is not None
     assert fam != 'a'
 
     # test site families sorting

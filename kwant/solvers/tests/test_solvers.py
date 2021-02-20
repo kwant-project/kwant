@@ -118,7 +118,7 @@ class LeadWithOnlySelfEnergy:
 
     def selfenergy(self, energy, args=(), *, params=None):
         assert args == ()
-        assert params == None
+        assert params is None
         return self.lead.selfenergy(energy)
 
 
