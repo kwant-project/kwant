@@ -580,7 +580,7 @@ cdef class _LocalOperator:
         tot_norbs = _get_tot_norbs(self.syst)
         if ket.shape != (tot_norbs,):
             raise ValueError('ket vector is incorrect shape')
-        result = np.zeros((tot_norbs,), dtype=np.complex)
+        result = np.zeros((tot_norbs,), dtype=complex)
         self._operate(out_data=result, bra=None, ket=ket, args=args,
                       params=params, op=ACT)
         return result
