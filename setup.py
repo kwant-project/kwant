@@ -595,7 +595,7 @@ def main():
           ext_modules=exts,
           python_requires='>=3.7',
           # The oldest versions between: Debian stable, Ubuntu LTS
-          install_requires=['numpy >= 1.16.2', 'scipy >= 1.1.0',
+          install_requires=['numpy >= 1.16.2', 'scipy >= 1.1.0, != 1.6.1',
                             'tinyarray >= 1.2'],
           extras_require={
               'plotting': ['matplotlib >= 3.0.2',
