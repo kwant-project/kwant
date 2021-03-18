@@ -169,7 +169,7 @@ Minimum required versions for some dependencies have increased
 --------------------------------------------------------------
 Kwant now requires at least the following versions:
 
-+ Python 3.6
++ Python 3.7
 + numpy 0.13.3
 + scipy 0.19.1
 

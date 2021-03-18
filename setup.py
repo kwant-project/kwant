@@ -528,7 +528,7 @@ def add_sys_includes_and_libs(exts):
 
 
 def main():
-    check_python_version((3, 6))
+    check_python_version((3, 7))
     check_versions()
 
     exts = collections.OrderedDict([
