@@ -192,6 +192,10 @@ if mpl_available:
                 if offsets is not None:
                     kwargs['offsets'] = offsets[:, :2]
 
+                # Workaround for issue in Matplotlib-3.4.2 before PR merged
+                # https://github.com/matplotlib/matplotlib/pull/20416
+                self._z_markers_idx = slice(-1)
+
                 super().__init__(paths, **kwargs)
 
                 if offsets is not None:
