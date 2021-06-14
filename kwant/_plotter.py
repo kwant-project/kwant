@@ -306,7 +306,7 @@ if mpl_available:
             def set_linewidths(self, linewidths):
                 self.linewidths_orig = nparray_if_array(linewidths)
 
-            def do_3d_projection(self, renderer):
+            def do_3d_projection(self, renderer=None):
                 super().do_3d_projection(renderer)
                 # The whole 3D ordering is flawed in mplot3d when several
                 # collections are added. We just use normal zorder. Note the
@@ -397,7 +397,7 @@ if mpl_available:
                 else:
                     return Affine2D().scale(self.figure.dpi / 72.0)
 
-            def do_3d_projection(self, renderer):
+            def do_3d_projection(self, renderer=None):
                 xs, ys, zs = self._offsets3d
 
                 # numpy complains about zero-length index arrays
@@ -405,7 +405,7 @@ if mpl_available:
                     return -self.zorder3d
 
                 proj = mplot3d.proj3d.proj_transform_clip
-                vs = np.array(proj(xs, ys, zs, renderer.M)[:3])
+                vs = np.array(proj(xs, ys, zs, self.axes.M)[:3])
 
                 if sort3d:
                     indx = vs[2].argsort()[::-1]
@@ -461,7 +461,7 @@ if mpl_available:
                 bbox = np.asarray(self.axes.get_w_lims())
 
                 proj = mplot3d.proj3d.proj_transform_clip
-                cz = proj(*(list(np.dot(corners, bbox)) + [renderer.M]))[2]
+                cz = proj(*(list(np.dot(corners, bbox)) + [self.axes.M]))[2]
 
                 return -self.zorder3d + vs[2].mean() / cz.ptp()
 
