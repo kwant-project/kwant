@@ -302,8 +302,7 @@ def gen_schur(a, b, calc_q=True, calc_z=True, calc_ev=True,
     problem (the entries of the diagonal of the complex Schur form are the
     eigenvalues of the matrix, for example), and the routine can optionally
     also return the generalized eigenvalues in the form (alpha, beta), such
-    that alpha/beta is a generalized eigenvalue of the pencil (a, b) (see also
-    gen_eig()).
+    that alpha/beta is a generalized eigenvalue of the pencil (a, b).
 
     Parameters
     ----------
