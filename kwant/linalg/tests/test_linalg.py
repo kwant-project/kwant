@@ -8,9 +8,10 @@
 
 import pytest
 import numpy as np
+from scipy import linalg
 
 from kwant.linalg import (
-    lu_factor, lu_solve, rcond_from_lu, gen_eig, schur,
+    gen_eig, schur,
     convert_r2c_schur, order_schur, evecs_from_schur, gen_schur,
     convert_r2c_gen_schur, order_gen_schur, evecs_from_gen_schur)
 from ._test_utils import _Random, assert_array_almost_equal
@@ -34,46 +35,6 @@ def test_gen_eig(dtype):
     assert_array_almost_equal(dtype, a @ vr @ beta, b @ vr @ alpha)
     assert_array_almost_equal(dtype, beta @ vl.T.conj() @ a,
                               alpha @ vl.T.conj() @ b)
-
-
-def test_lu(dtype):
-    rand = _Random()
-    a = rand.randmat(4, 4, dtype)
-    bmat = rand.randmat(4, 4, dtype)
-    bvec = rand.randvec(4, dtype)
-
-    lu = lu_factor(a)
-    xmat = lu_solve(lu, bmat)
-    xvec = lu_solve(lu, bvec)
-
-    assert_array_almost_equal(dtype, a @ xmat, bmat)
-    assert_array_almost_equal(dtype, a @ xvec, bvec)
-
-
-def test_rcond_from_lu(dtype):
-    rand = _Random()
-    a = rand.randmat(10, 10, dtype)
-
-    norm1_a = np.linalg.norm(a, 1)
-    normI_a = np.linalg.norm(a, np.inf)
-
-    lu = lu_factor(a)
-
-    rcond1 = rcond_from_lu(lu, norm1_a, '1')
-    rcondI = rcond_from_lu(lu, normI_a, 'I')
-
-    err1 = abs(rcond1 -
-                1/(norm1_a * np.linalg.norm(np.linalg.inv(a), 1)))
-    errI = abs(rcondI -
-                1/(normI_a * np.linalg.norm(np.linalg.inv(a), np.inf)))
-
-    #rcond_from_lu returns an estimate for the reciprocal
-    #condition number only; hence we shouldn't be too strict about
-    #the assertions here
-    #Note: in my experience the estimate is excellent for somewhat
-    #larger matrices
-    assert err1/rcond1 < 0.1
-    assert errI/rcondI < 0.1
 
 
 def test_schur(dtype):

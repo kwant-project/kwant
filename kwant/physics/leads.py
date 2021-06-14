@@ -9,6 +9,7 @@
 
 from math import sin, cos, sqrt, pi, copysign
 from collections import namedtuple
+import warnings
 
 from itertools import combinations_with_replacement
 import numpy as np
@@ -21,6 +22,30 @@ from scipy.sparse import (identity as sp_identity, hstack as sp_hstack,
 
 
 __all__ = ['selfenergy', 'modes', 'PropagatingModes', 'StabilizedModes']
+
+
+def lu_factor_rcond(mat: np.ndarray):
+    """Perform LU factorization and check condition number.
+
+    Parameters
+    ----------
+    mat : numpy array
+        Matrix to be factorized
+
+    Returns
+    -------
+    sol :
+        LU factorization
+    rcond : float
+        Condition number
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", la.LinAlgWarning)
+        sol = la.lu_factor(mat)
+
+    lu = np.asfortranarray(sol[0])
+    gecon = la.lapack.get_lapack_funcs("gecon", [lu])
+    return sol, gecon(lu, npl.norm(mat, 1))[0]
 
 
 def nonzero_symm_projection(matrix):
@@ -283,8 +308,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         # Check if there is a chance we will not need to add an imaginary term.
         if not add_imaginary:
             h = h_cell
-            sol = kla.lu_factor(h)
-            rcond = kla.rcond_from_lu(sol, npl.norm(h, 1))
+            sol, rcond = lu_factor_rcond(h)
 
             if rcond < eps:
                 need_to_stabilize = True
@@ -298,8 +322,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
             temp = u @ u.T.conj() + v @ v.T.conj()
             h = h_cell + 1j * temp
 
-            sol = kla.lu_factor(h)
-            rcond = kla.rcond_from_lu(sol, npl.norm(h, 1))
+            sol, rcond = lu_factor_rcond(h)
 
             # If the condition number of the stabilized h is
             # still bad, there is nothing we can do.
@@ -315,7 +338,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
             if need_to_stabilize:
                 wf += 1j * (v @ psi[: n_nonsing] +
                             u @ (psi[n_nonsing:] * lmbdainv))
-            return kla.lu_solve(sol, wf)
+            return la.lu_solve(sol, wf)
 
         # Setup the generalized eigenvalue problem.
 
@@ -325,7 +348,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         begin, end = slice(n_nonsing), slice(n_nonsing, None)
 
         A[end, begin] = np.identity(n_nonsing)
-        temp = kla.lu_solve(sol, v)
+        temp = la.lu_solve(sol, v)
         temp2 = u.T.conj() @ temp
         if need_to_stabilize:
             A[begin, begin] = -1j * temp2
@@ -336,7 +359,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         A[end, end] = temp2
 
         B[begin, end] = -np.identity(n_nonsing)
-        temp = kla.lu_solve(sol, u)
+        temp = la.lu_solve(sol, u)
         temp2 = u.T.conj() @ temp
         B[begin, begin] = -temp2
         if need_to_stabilize:
@@ -354,15 +377,15 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         # the generalized eigenvalue problem to a regular one, provided
         # the matrix B can be safely inverted.
 
-        lu_b = kla.lu_factor(B)
+        lu_b, rcond = lu_factor_rcond(B)
+
         if not stabilization[1]:
-            rcond = kla.rcond_from_lu(lu_b, npl.norm(B, 1))
             # A more stringent condition is used here since errors can
             # accumulate from here to the eigenvalue calculation later.
             stabilization[1] = rcond > eps * tol
 
         if stabilization[1]:
-            matrices = (kla.lu_solve(lu_b, A), None)
+            matrices = (la.lu_solve(lu_b, A), None)
         else:
             matrices = (A, B)
     return Linsys(matrices, v, extract_wf)

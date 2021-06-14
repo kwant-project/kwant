@@ -10,10 +10,8 @@ __all__ = ['lapack']
 from . import lapack
 
 # Merge the public interface of the other submodules.
-from .decomp_lu import *
 from .decomp_schur import *
 from .decomp_ev import *
 
-__all__.extend([decomp_lu.__all__,
-                decomp_ev.__all__,
+__all__.extend([decomp_ev.__all__,
                 decomp_schur.__all__])
