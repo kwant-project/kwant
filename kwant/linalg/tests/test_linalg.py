@@ -8,12 +8,11 @@
 
 import pytest
 import numpy as np
-from scipy import linalg
 
 from kwant.linalg import (
-    gen_eig, schur,
-    convert_r2c_schur, order_schur, evecs_from_schur, gen_schur,
-    convert_r2c_gen_schur, order_gen_schur, evecs_from_gen_schur)
+    schur, convert_r2c_schur, order_schur, evecs_from_schur, gen_schur,
+    convert_r2c_gen_schur, order_gen_schur, evecs_from_gen_schur
+)
 from ._test_utils import _Random, assert_array_almost_equal
 
 
@@ -23,18 +22,6 @@ from ._test_utils import _Random, assert_array_almost_equal
 ])
 def dtype(request):
     return request.param
-
-
-def test_gen_eig(dtype):
-    rand = _Random()
-    a = rand.randmat(4, 4, dtype)
-    b = rand.randmat(4, 4, dtype)
-
-    (alpha, beta, vl, vr) = gen_eig(a, b, True, True)
-
-    assert_array_almost_equal(dtype, a @ vr @ beta, b @ vr @ alpha)
-    assert_array_almost_equal(dtype, beta @ vl.T.conj() @ a,
-                              alpha @ vl.T.conj() @ b)
 
 
 def test_schur(dtype):
