@@ -375,10 +375,10 @@ def test_for_all_evs_equal():
 def test_dtype_linsys():
     """Test that setup_linsys stays in real arithmetics when possible."""
     h_cell = np.array([[2.0, -1.0], [-1.0, 2.0]], dtype=np.float64)
-    h_hop = np.array([[0.0],[-1.0]], dtype=np.float64)
+    h_hop = np.array([[0.0, 0.0],[-1.0, 0.0]], dtype=np.float64)
 
     lsyst = kwant.physics.leads.setup_linsys(h_cell - 0.3*np.eye(2),
-                                            h_hop)
+                                             h_hop)
     assert lsyst.eigenproblem[0].dtype == np.float64
 
     lsyst = kwant.physics.leads.setup_linsys(h_cell.astype(np.complex128)
@@ -393,7 +393,7 @@ def test_dtype_linsys():
     assert lsyst.eigenproblem[0].dtype == np.complex128
 
     # with complex input, output must be complex, too
-    h_hop = np.array([[0.0],[-1.0 + 0.1j]], dtype=np.complex128)
+    h_hop = np.array([[0.0, 0.0], [-1.0 + 0.1j, 0.0]], dtype=np.complex128)
     lsyst = kwant.physics.leads.setup_linsys(h_cell - 0.3*np.eye(2),
                                             h_hop)
     assert lsyst.eigenproblem[0].dtype == np.complex128
