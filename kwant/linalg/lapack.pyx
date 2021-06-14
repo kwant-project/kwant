@@ -8,9 +8,7 @@
 
 """Low-level access to LAPACK functions. """
 
-__all__ = ['getrf',
-           'getrs',
-           'gecon',
+__all__ = ['gecon',
            'ggev',
            'gees',
            'trsen',
@@ -90,85 +88,6 @@ cdef l_int lwork_from_qwork(scalar qwork):
         return <l_int>qwork
     else:
         return <l_int>qwork.real
-
-
-def getrf(np.ndarray[scalar, ndim=2] A):
-    cdef l_int M, N, info
-    cdef np.ndarray[l_int] ipiv
-
-    assert_fortran_mat(A)
-
-    M = A.shape[0]
-    N = A.shape[1]
-    ipiv = np.empty(min(M,N), dtype = int_dtype)
-
-    if scalar is float:
-        lapack.sgetrf(&M, &N, <float *>A.data, &M,
-                      <l_int *>ipiv.data, &info)
-    elif scalar is double:
-        lapack.dgetrf(&M, &N, <double *>A.data, &M,
-                      <l_int *>ipiv.data, &info)
-    elif scalar is float_complex:
-        lapack.cgetrf(&M, &N, <float complex *>A.data, &M,
-                      <l_int *>ipiv.data, &info)
-    elif scalar is double_complex:
-        lapack.zgetrf(&M, &N, <double complex *>A.data, &M,
-                      <l_int *>ipiv.data, &info)
-
-    assert info >= 0, "Argument error in getrf"
-
-    return (A, ipiv, info > 0 or M != N)
-
-
-def getrs(np.ndarray[scalar, ndim=2] LU, np.ndarray[l_int] IPIV,
-          np.ndarray B):
-    cdef l_int N, NRHS, info
-
-    assert_fortran_mat(LU)
-
-    # Consistency checks for LU and B
-
-    if B.descr.type_num != LU.descr.type_num:
-        raise TypeError('B must have same dtype as LU')
-
-    # Workaround for 1x1-Fortran bug in NumPy < v2.0
-    if ((B.ndim == 2 and (B.shape[0] > 1 or B.shape[1] > 1) and
-         not B.flags["F_CONTIGUOUS"])):
-        raise ValueError("B must be Fortran ordered")
-
-    if B.ndim > 2:
-        raise ValueError("B must be a vector or matrix")
-
-    if LU.shape[0] != B.shape[0]:
-        raise ValueError('LU and B have incompatible shapes')
-
-    N = LU.shape[0]
-
-    if B.ndim == 1:
-        NRHS = 1
-    elif B.ndim == 2:
-        NRHS = B.shape[1]
-
-    if scalar is float:
-        lapack.sgetrs("N", &N, &NRHS, <float *>LU.data, &N,
-                      <l_int *>IPIV.data, <float *>B.data, &N,
-                      &info)
-    elif scalar is double:
-        lapack.dgetrs("N", &N, &NRHS, <double *>LU.data, &N,
-                      <l_int *>IPIV.data, <double *>B.data, &N,
-                      &info)
-    elif scalar is float_complex:
-        lapack.cgetrs("N", &N, &NRHS, <float complex *>LU.data, &N,
-                      <l_int *>IPIV.data, <float complex *>B.data, &N,
-                      &info)
-    elif scalar is double_complex:
-        lapack.zgetrs("N", &N, &NRHS, <double complex *>LU.data, &N,
-                      <l_int *>IPIV.data, <double complex *>B.data, &N,
-                      &info)
-
-    assert info == 0, "Argument error in getrs"
-
-    return B
 
 
 def gecon(np.ndarray[scalar, ndim=2] LU, double normA, char *norm = b"1"):
