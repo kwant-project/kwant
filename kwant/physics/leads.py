@@ -179,7 +179,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
     ----------
     h_cell : numpy array with shape (n, n)
         Hamiltonian of a single lead unit cell.
-    h_hop : numpy array with shape (n, m), m <= n
+    h_hop : numpy array with shape (n, n)
         Hopping Hamiltonian from a cell to the next one.
     tol : float
         Numbers are considered zero when they are smaller than `tol` times
@@ -213,7 +213,6 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
 
     """
     n = h_cell.shape[0]
-    m = h_hop.shape[1]
     if stabilization is not None:
         stabilization = list(stabilization)
 
@@ -234,7 +233,6 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
     # s[0] is the largest singular value.)
 
     u, s, vh = la.svd(h_hop)
-    assert m == vh.shape[1], "Corrupt output of svd."
     n_nonsing = np.sum(s > eps * s[0])
 
     if (n_nonsing == n and stabilization is None):
@@ -244,18 +242,18 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         A = h_hop / h_hop_sqrt
         B = h_hop_sqrt
         B_H_inv = 1.0 / B     # just a real scalar here
-        A_inv = la.inv(A)
+        mA_inv = -la.inv(A)
 
         lhs = np.zeros((2*n, 2*n), dtype=np.common_type(h_cell, h_hop))
-        lhs[:n, :n] = -(A_inv @ h_cell) * B_H_inv
-        lhs[:n, n:] = -A_inv * B
+        lhs[:n, :n] = (mA_inv @ h_cell) * B_H_inv
+        lhs[:n, n:] = mA_inv * B
         lhs[n:, :n] = A.T.conj() * B_H_inv
 
         def extract_wf(psi, lmbdainv):
-            return B_H_inv * np.copy(psi[:n])
+            return B_H_inv * psi[:n]
 
         matrices = (lhs, None)
-        v_out = h_hop_sqrt * np.eye(n)
+        v = h_hop_sqrt * np.eye(n)
     else:
         if stabilization is None:
             stabilization = [None, False]
@@ -268,10 +266,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         u = u[:, :n_nonsing]
         s = s[:n_nonsing]
         u = u * np.sqrt(s)
-        # pad v with zeros if necessary
-        v = np.zeros((n, n_nonsing), dtype=vh.dtype)
-        v[:vh.shape[1]] = vh[:n_nonsing].T.conj()
-        v = v * np.sqrt(s)
+        v = vh[:n_nonsing].T.conj() * np.sqrt(s)
 
         # Eliminating the zero eigenvalues requires inverting the on-site
         # Hamiltonian, possibly including a self-energy-like term.  The
@@ -351,8 +346,6 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         if need_to_stabilize:
             B[end, end] = 1j * temp2
 
-        v_out = v[:m]
-
         # Solving a generalized eigenproblem is about twice as expensive
         # as solving a regular eigenvalue problem.
         # Computing the LU factorization is negligible compared to both
@@ -372,7 +365,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
             matrices = (kla.lu_solve(lu_b, A), None)
         else:
             matrices = (A, B)
-    return Linsys(matrices, v_out, extract_wf)
+    return Linsys(matrices, v, extract_wf)
 
 
 def unified_eigenproblem(a, b=None, tol=1e6):
@@ -465,7 +458,7 @@ def phs_symmetrization(wfs, particle_hole):
     wfs : numpy array
         A matrix of propagating wave functions at a TRIM that all have the same
         velocity. The orthonormal wave functions form the columns of this matrix.
-    particle_hole : numpy array
+    particle_hole : numpy array or sparse matrix
         The matrix representation of the unitary part of the particle-hole
         operator, expressed in the tight binding basis.
 
@@ -846,8 +839,6 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
 def compute_block_modes(h_cell, h_hop, tol, stabilization,
                         time_reversal, particle_hole, chiral):
     """Calculate modes corresponding to a single projector. """
-    n, m = h_hop.shape
-
     # Defer most of the calculation to helper routines.
     matrices, v, extract = setup_linsys(h_cell, h_hop, tol, stabilization)
     ev, evanselect, propselect, vec_gen, ord_schur = unified_eigenproblem(
@@ -1061,7 +1052,7 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *,
     time_reversal, particle_hole, chiral = symmetries
 
     offsets = np.cumsum([0] + [projector.shape[1] for projector in projectors])
-    indices = [slice(*i) for i in np.vstack([offsets[:-1], offsets[1:]]).T]
+    indices = [slice(*i) for i in zip(offsets[:-1], offsets[1:])]
     projection_op = sp_hstack(projectors)
 
     def basis_change(a, antiunitary=False):
