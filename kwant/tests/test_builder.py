@@ -241,11 +241,17 @@ def test_construction_and_indexing():
                                     unknown_hoppings, sym)
 
 
-def test_hermitian_conjugation():
-    def f(i, j, arg):
+@pytest.mark.parametrize('value', (
+    ta.array([[1, 2j], [3 + 1j, 4j]]),
+    np.array([[1, 2j], [3 + 1j, 4j]]),
+    [[1, 2j], [3 + 1j, 4j]],
+    ((1, 2j), (3 + 1j, 4j)),
+))
+def test_hermitian_conjugation(value):
+    def f(i, j):
         i, j = i.tag, j.tag
         if j[0] == i[0] + 1:
-            return arg * ta.array([[1, 2j], [3 + 1j, 4j]])
+            return value
         else:
             raise ValueError
 
@@ -256,8 +262,13 @@ def test_hermitian_conjugation():
     syst[fam(0), fam(1)] = f
     assert syst[fam(0), fam(1)] is f
     assert isinstance(syst[fam(1), fam(0)], builder.HermConjOfFunc)
-    assert (syst[fam(1), fam(0)](fam(1), fam(0), 2) ==
-            syst[fam(0), fam(1)](fam(0), fam(1), 2).conjugate().transpose())
+    assert np.all(
+        np.asarray(
+            syst[fam(1), fam(0)](fam(1), fam(0))
+        ) == np.asarray(
+            syst[fam(0), fam(1)](fam(0), fam(1))
+        ).conjugate().transpose()
+    )
     syst[fam(0), fam(1)] = syst[fam(1), fam(0)]
     assert isinstance(syst[fam(0), fam(1)], builder.HermConjOfFunc)
     assert syst[fam(1), fam(0)] is f

@@ -346,3 +346,10 @@ Changes in Kwant 1.4.2
   1.2.6.  SInce Qsymm is an optional dependency of Kwant, this
   backwards-incompatible change only affects Kwant users who use it.
 - Minor bugs were fixed in the KPM module.
+
+Changes after Kwant 1.4.2
+-------------------------
+- Builder properly handles Hermitian conjugation of array-like values.
+  Before, if the value was provided not as a true array but, for example, as a
+  list of lists, it was not conjugated, which could lead to generation of a
+  non-Hermitian Hamiltonian matrix without emitting any error.
