@@ -27,6 +27,9 @@ def test_closest():
         tag = rng.randint(10, size=(3,))
         assert lat.closest(lat(*tag).pos) == tag
 
+    # Closest should raise if input has a wrong dimensionality
+    raises(ValueError, lattice.square().closest, [0])
+
 
 def test_general():
     for lat in (lattice.general(((1, 0), (0.5, 0.5))),
