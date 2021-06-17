@@ -9,6 +9,7 @@
 
 from math import sin, cos, sqrt, pi, copysign
 from collections import namedtuple
+import warnings
 
 from itertools import combinations_with_replacement
 import numpy as np
@@ -19,9 +20,32 @@ from scipy.linalg import block_diag
 from scipy.sparse import (identity as sp_identity, hstack as sp_hstack,
                           csr_matrix)
 
-dot = np.dot
 
 __all__ = ['selfenergy', 'modes', 'PropagatingModes', 'StabilizedModes']
+
+
+def lu_factor_rcond(mat: np.ndarray):
+    """Perform LU factorization and check condition number.
+
+    Parameters
+    ----------
+    mat : numpy array
+        Matrix to be factorized
+
+    Returns
+    -------
+    sol :
+        LU factorization
+    rcond : float
+        Condition number
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", la.LinAlgWarning)
+        sol = la.lu_factor(mat)
+
+    lu = np.asfortranarray(sol[0])
+    gecon = la.lapack.get_lapack_funcs("gecon", [lu])
+    return sol, gecon(lu, npl.norm(mat, 1))[0]
 
 
 def nonzero_symm_projection(matrix):
@@ -169,7 +193,7 @@ class StabilizedModes:
         outgoing = slice(self.nmodes, None)
         vecs = self.vecs[:, outgoing]
         vecslmbdainv = self.vecslmbdainv[:, outgoing]
-        return dot(v, dot(vecs, la.solve(vecslmbdainv, v.T.conj())))
+        return v @ vecs @ la.solve(vecslmbdainv, v.T.conj())
 
 
 # Auxiliary functions that perform different parts of the calculation.
@@ -180,7 +204,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
     ----------
     h_cell : numpy array with shape (n, n)
         Hamiltonian of a single lead unit cell.
-    h_hop : numpy array with shape (n, m), m <= n
+    h_hop : numpy array with shape (n, n)
         Hopping Hamiltonian from a cell to the next one.
     tol : float
         Numbers are considered zero when they are smaller than `tol` times
@@ -214,7 +238,6 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
 
     """
     n = h_cell.shape[0]
-    m = h_hop.shape[1]
     if stabilization is not None:
         stabilization = list(stabilization)
 
@@ -235,7 +258,6 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
     # s[0] is the largest singular value.)
 
     u, s, vh = la.svd(h_hop)
-    assert m == vh.shape[1], "Corrupt output of svd."
     n_nonsing = np.sum(s > eps * s[0])
 
     if (n_nonsing == n and stabilization is None):
@@ -245,18 +267,18 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         A = h_hop / h_hop_sqrt
         B = h_hop_sqrt
         B_H_inv = 1.0 / B     # just a real scalar here
-        A_inv = la.inv(A)
+        mA_inv = -la.inv(A)
 
         lhs = np.zeros((2*n, 2*n), dtype=np.common_type(h_cell, h_hop))
-        lhs[:n, :n] = -dot(A_inv, h_cell) * B_H_inv
-        lhs[:n, n:] = -A_inv * B
+        lhs[:n, :n] = (mA_inv @ h_cell) * B_H_inv
+        lhs[:n, n:] = mA_inv * B
         lhs[n:, :n] = A.T.conj() * B_H_inv
 
         def extract_wf(psi, lmbdainv):
-            return B_H_inv * np.copy(psi[:n])
+            return B_H_inv * psi[:n]
 
         matrices = (lhs, None)
-        v_out = h_hop_sqrt * np.eye(n)
+        v = h_hop_sqrt * np.eye(n)
     else:
         if stabilization is None:
             stabilization = [None, False]
@@ -269,10 +291,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         u = u[:, :n_nonsing]
         s = s[:n_nonsing]
         u = u * np.sqrt(s)
-        # pad v with zeros if necessary
-        v = np.zeros((n, n_nonsing), dtype=vh.dtype)
-        v[:vh.shape[1]] = vh[:n_nonsing].T.conj()
-        v = v * np.sqrt(s)
+        v = vh[:n_nonsing].T.conj() * np.sqrt(s)
 
         # Eliminating the zero eigenvalues requires inverting the on-site
         # Hamiltonian, possibly including a self-energy-like term.  The
@@ -289,8 +308,7 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         # Check if there is a chance we will not need to add an imaginary term.
         if not add_imaginary:
             h = h_cell
-            sol = kla.lu_factor(h)
-            rcond = kla.rcond_from_lu(sol, npl.norm(h, 1))
+            sol, rcond = lu_factor_rcond(h)
 
             if rcond < eps:
                 need_to_stabilize = True
@@ -301,11 +319,10 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
             need_to_stabilize = True
             # Matrices are complex or need self-energy-like term to be
             # stabilized.
-            temp = dot(u, u.T.conj()) + dot(v, v.T.conj())
+            temp = u @ u.T.conj() + v @ v.T.conj()
             h = h_cell + 1j * temp
 
-            sol = kla.lu_factor(h)
-            rcond = kla.rcond_from_lu(sol, npl.norm(h, 1))
+            sol, rcond = lu_factor_rcond(h)
 
             # If the condition number of the stabilized h is
             # still bad, there is nothing we can do.
@@ -317,11 +334,11 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         # the projected one (v^dagger psi lambda^-1, s u^dagger psi).
 
         def extract_wf(psi, lmbdainv):
-            wf = -dot(u, psi[: n_nonsing] * lmbdainv) - dot(v, psi[n_nonsing:])
+            wf = -u @ (psi[: n_nonsing] * lmbdainv) - v @ psi[n_nonsing:]
             if need_to_stabilize:
-                wf += 1j * (dot(v, psi[: n_nonsing]) +
-                            dot(u, psi[n_nonsing:] * lmbdainv))
-            return kla.lu_solve(sol, wf)
+                wf += 1j * (v @ psi[: n_nonsing] +
+                            u @ (psi[n_nonsing:] * lmbdainv))
+            return la.lu_solve(sol, wf)
 
         # Setup the generalized eigenvalue problem.
 
@@ -331,28 +348,26 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         begin, end = slice(n_nonsing), slice(n_nonsing, None)
 
         A[end, begin] = np.identity(n_nonsing)
-        temp = kla.lu_solve(sol, v)
-        temp2 = dot(u.T.conj(), temp)
+        temp = la.lu_solve(sol, v)
+        temp2 = u.T.conj() @ temp
         if need_to_stabilize:
             A[begin, begin] = -1j * temp2
         A[begin, end] = temp2
-        temp2 = dot(v.T.conj(), temp)
+        temp2 = v.T.conj() @ temp
         if need_to_stabilize:
             A[end, begin] -= 1j *temp2
         A[end, end] = temp2
 
         B[begin, end] = -np.identity(n_nonsing)
-        temp = kla.lu_solve(sol, u)
-        temp2 = dot(u.T.conj(), temp)
+        temp = la.lu_solve(sol, u)
+        temp2 = u.T.conj() @ temp
         B[begin, begin] = -temp2
         if need_to_stabilize:
             B[begin, end] += 1j * temp2
-        temp2 = dot(v.T.conj(), temp)
+        temp2 = v.T.conj() @ temp
         B[end, begin] = -temp2
         if need_to_stabilize:
             B[end, end] = 1j * temp2
-
-        v_out = v[:m]
 
         # Solving a generalized eigenproblem is about twice as expensive
         # as solving a regular eigenvalue problem.
@@ -362,18 +377,18 @@ def setup_linsys(h_cell, h_hop, tol=1e6, stabilization=None):
         # the generalized eigenvalue problem to a regular one, provided
         # the matrix B can be safely inverted.
 
-        lu_b = kla.lu_factor(B)
+        lu_b, rcond = lu_factor_rcond(B)
+
         if not stabilization[1]:
-            rcond = kla.rcond_from_lu(lu_b, npl.norm(B, 1))
             # A more stringent condition is used here since errors can
             # accumulate from here to the eigenvalue calculation later.
             stabilization[1] = rcond > eps * tol
 
         if stabilization[1]:
-            matrices = (kla.lu_solve(lu_b, A), None)
+            matrices = (la.lu_solve(lu_b, A), None)
         else:
             matrices = (A, B)
-    return Linsys(matrices, v_out, extract_wf)
+    return Linsys(matrices, v, extract_wf)
 
 
 def unified_eigenproblem(a, b=None, tol=1e6):
@@ -466,7 +481,7 @@ def phs_symmetrization(wfs, particle_hole):
     wfs : numpy array
         A matrix of propagating wave functions at a TRIM that all have the same
         velocity. The orthonormal wave functions form the columns of this matrix.
-    particle_hole : numpy array
+    particle_hole : numpy array or sparse matrix
         The matrix representation of the unitary part of the particle-hole
         operator, expressed in the tight binding basis.
 
@@ -481,15 +496,15 @@ def phs_symmetrization(wfs, particle_hole):
 
     def Pdot(mat):
         """Apply the particle-hole operator to an array. """
-        return particle_hole.dot(mat.conj())
+        return particle_hole @ mat.conj()
 
     # Take P in the subspace of W = wfs: U = W^+ @ P @ W^*.
-    U = wfs.T.conj().dot(Pdot(wfs))
+    U = wfs.T.conj() @ Pdot(wfs)
     # Check that wfs are orthonormal and the space spanned
     # by them is closed under ph, meaning U is unitary.
-    if not np.allclose(U.dot(U.T.conj()), np.eye(U.shape[0])):
+    if not np.allclose(U @ U.T.conj(), np.eye(U.shape[0])):
         raise ValueError('wfs are not orthonormal or not closed under particle_hole.')
-    P_squared = U.dot(U.conj())
+    P_squared = U @ U.conj()
     if np.allclose(P_squared, np.eye(U.shape[0])):
         P_squared = 1
     elif np.allclose(P_squared, -np.eye(U.shape[0])):
@@ -515,12 +530,12 @@ def phs_symmetrization(wfs, particle_hole):
         shift = -np.pi - (phases[i] + dph[i]/2)
         # Take matrix square root with branch cut in largest gap
         vals = np.sqrt(vals * np.exp(1j * shift)) * np.exp(-0.5j * shift)
-        sqrtU = vecs.dot(np.diag(vals)).dot(vecs.T.conj())
+        sqrtU = vecs @ np.diag(vals) @ vecs.T.conj()
         # For symmetric U sqrt(U) is also symmetric.
         assert np.allclose(sqrtU, sqrtU.T)
         # We want a new basis W_new such that W_new^+ @ P @ W_new^* = 1.
         # This is achieved by W_new = W @ sqrt(U).
-        new_wfs = wfs.dot(sqrtU)
+        new_wfs = wfs @ sqrtU
         # If P^2 = 1, there is no need to sort the modes further.
         TRIM_sort = np.zeros((wfs.shape[1],), dtype=int)
     else:
@@ -556,12 +571,11 @@ def phs_symmetrization(wfs, particle_hole):
                 wfs = wfs[:, 1:]
                 # Now we project the remaining modes onto the orthogonal
                 # complement of P psi_n. projector:
-                projector = wfs.dot(wfs.T.conj()) - \
-                            np.outer(P_wf, P_wf.T.conj())
+                projector = wfs @ wfs.T.conj() - np.outer(P_wf, P_wf.T.conj())
                 # After the projection, the mode matrix is rank deficient -
                 # the span of the column space has dimension one less than
                 # the number of columns.
-                wfs = projector.dot(wfs)
+                wfs = projector @ wfs
                 wfs = la.qr(wfs, mode='economic', pivoting=True)[0]
                 # Remove the redundant column.
                 wfs = wfs[:, :-1]
@@ -574,14 +588,13 @@ def phs_symmetrization(wfs, particle_hole):
                     # Store psi_n and P psi_n.
                     new_wfs.append(wf)
                     new_wfs.append(Pdot(wf))
-                assert np.allclose(wfs.T.conj().dot(wfs),
-                                   np.eye(wfs.shape[1]))
+                assert np.allclose(wfs.T.conj() @ wfs, np.eye(wfs.shape[1]))
         new_wfs = np.hstack([col.reshape(len(col), 1)/npl.norm(col) for
                              col in new_wfs])
         assert np.allclose(new_wfs[:, 1::2], Pdot(new_wfs[:, ::2]))
         # Store sort ordering in this subspace of modes
         TRIM_sort = np.arange(new_wfs.shape[1])
-    assert np.allclose(new_wfs.T.conj().dot(new_wfs), np.eye(new_wfs.shape[1]))
+    assert np.allclose(new_wfs.T.conj() @ new_wfs, np.eye(new_wfs.shape[1]))
     return new_wfs, TRIM_sort
 
 
@@ -674,7 +687,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         # must have the same velocity). However, this does not matter,
         # since we are happy with any superposition in this case.
 
-        vel_op = -1j * dot(psi[n:, indx].T.conj(), psi[:n, indx])
+        vel_op = -1j * psi[n:, indx].T.conj() @ psi[:n, indx]
         vel_op = vel_op + vel_op.T.conj()
         vel_vals, rot = la.eigh(vel_op)
 
@@ -686,8 +699,8 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         if full_psi.dtype != np.common_type(full_psi, rot):
             full_psi = full_psi.astype(np.common_type(psi, rot))
 
-        psi[:, indx] = dot(psi[:, indx], rot)
-        full_psi[:, indx] = dot(full_psi[:, indx], rot)
+        psi[:, indx] = psi[:, indx] @ rot
+        full_psi[:, indx] = full_psi[:, indx] @ rot
         velocities[indx] = vel_vals
 
         # With particle-hole symmetry, treat TRIMs individually.
@@ -757,18 +770,18 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
             full_psi[:, indx] = new_wf
             # For both cases P^2 = +-1, must rotate wave functions in the
             # singular value basis. Find the rotation from new basis to old.
-            rot = new_wf.T.conj().dot(orig_wf)
+            rot = new_wf.T.conj() @ orig_wf
             # Rotate the wave functions in the singular value basis
-            psi[:, indx] = psi[:, indx].dot(rot.T.conj())
+            psi[:, indx] = psi[:, indx] @ rot.T.conj()
 
         # Ensure proper usage of chiral symmetry.
         if chiral is not None and time_reversal is None:
             out_orig = full_psi[:, indx[len(indx)//2:]]
-            out = chiral.dot(full_psi[:, indx[:len(indx)//2]])
+            out = chiral @ full_psi[:, indx[:len(indx)//2]]
             # No least squares below because the modes should be orthogonal.
-            rot = out_orig.T.conj().dot(out)
+            rot = out_orig.T.conj() @ out
             full_psi[:, indx[len(indx)//2:]] = out
-            psi[:, indx[len(indx)//2:]] = psi[:, indx[len(indx)//2:]].dot(rot)
+            psi[:, indx[len(indx)//2:]] = psi[:, indx[len(indx)//2:]] @ rot
 
     if np.any(abs(velocities) < vel_eps):
         raise RuntimeError("Found a mode with zero or close to zero velocity.")
@@ -806,12 +819,12 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         # is [-k2, -k1, k1, k2], if k2, k1 > 0 and k2 > k1.
         # To maintain this ordering with ki and -ki as particle-hole partners,
         # reverse the order of the product at the end.
-        wf_neg_k = particle_hole.dot(
+        wf_neg_k = (particle_hole @
                 (full_psi[:, :N][:, positive_k]).conj())[:, ::-1]
         rot = la.lstsq(orig_neg_k, wf_neg_k)[0]
         full_psi[:, :N][:, positive_k[::-1]] = wf_neg_k
         psi[:, :N][:, positive_k[::-1]] = \
-                psi[:, :N][:, positive_k[::-1]].dot(rot)
+                psi[:, :N][:, positive_k[::-1]] @ rot
 
         # Outgoing modes
         positive_k = (np.pi - eps > momenta[N:]) * (momenta[N:] > eps)
@@ -821,12 +834,12 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         # is like [k2, k1, -k1, -k2], if k2, k1 > 0 and k2 > k1.
 
         # Reverse order at the end to match momenta of opposite sign.
-        wf_neg_k = particle_hole.dot(
+        wf_neg_k = (particle_hole @
                 full_psi[:, N:][:, positive_k].conj())[:, ::-1]
         rot = la.lstsq(orig_neg_k, wf_neg_k)[0]
         full_psi[:, N:][:, positive_k[::-1]] = wf_neg_k
         psi[:, N:][:, positive_k[::-1]] = \
-                psi[:, N:][:, positive_k[::-1]].dot(rot)
+                psi[:, N:][:, positive_k[::-1]] @ rot
 
     # Modes are ordered by velocity.
     # Use time-reversal symmetry to relate modes of opposite velocity.
@@ -834,10 +847,10 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         # Note: within this function, nmodes refers to the total number
         # of propagating modes, not either left or right movers.
         out_orig = full_psi[:, nmodes//2:]
-        out = time_reversal.dot(full_psi[:, :nmodes//2].conj())
+        out = time_reversal @ full_psi[:, :nmodes//2].conj()
         rot = la.lstsq(out_orig, out)[0]
         full_psi[:, nmodes//2:] = out
-        psi[:, nmodes//2:] = psi[:, nmodes//2:].dot(rot)
+        psi[:, nmodes//2:] = psi[:, nmodes//2:] @ rot
 
     norm = np.sqrt(abs(velocities))
     full_psi = full_psi / norm
@@ -849,8 +862,6 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
 def compute_block_modes(h_cell, h_hop, tol, stabilization,
                         time_reversal, particle_hole, chiral):
     """Calculate modes corresponding to a single projector. """
-    n, m = h_hop.shape
-
     # Defer most of the calculation to helper routines.
     matrices, v, extract = setup_linsys(h_cell, h_hop, tol, stabilization)
     ev, evanselect, propselect, vec_gen, ord_schur = unified_eigenproblem(
@@ -951,8 +962,8 @@ def transform_modes(modes_data, unitary=None, time_reversal=None,
     if flip_energy != conj:
         velocities *= -1
 
-    wave_functions = unitary.dot(wave_functions)[:, perm]
-    v = unitary.dot(v)
+    wave_functions = (unitary @ wave_functions)[:, perm]
+    v = unitary @ v
     vecs[:, :2*nmodes] = vecs[:, perm]
     vecslmbdainv[:, :2*nmodes] = vecslmbdainv[:, perm]
     velocities = velocities[perm]
@@ -1064,18 +1075,12 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *,
     time_reversal, particle_hole, chiral = symmetries
 
     offsets = np.cumsum([0] + [projector.shape[1] for projector in projectors])
-    indices = [slice(*i) for i in np.vstack([offsets[:-1], offsets[1:]]).T]
+    indices = [slice(*i) for i in zip(offsets[:-1], offsets[1:])]
     projection_op = sp_hstack(projectors)
 
     def basis_change(a, antiunitary=False):
         b = projection_op
-        # We need the extra transposes to ensure that sparse dot is used.
-        if antiunitary:
-            # b.T.conj() @ a @ b.conj()
-            return (b.T.conj().dot((b.T.conj().dot(a)).T)).T
-        else:
-            # b.T.conj() @ a @ b
-            return (b.T.dot((b.T.conj().dot(a)).T)).T
+        return b.T.conj() @ a @ (b.conj() if antiunitary else b)
 
     # Conservation law basis
     ham_cons = basis_change(ham)
@@ -1120,7 +1125,7 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *,
      vecs, vecslmbdainv, sqrt_hops) = zip(*block_modes)
 
     # Reorder by direction of propagation
-    wave_functions = group_halves([(projector.dot(wf)).T for wf, projector in
+    wave_functions = group_halves([(projector @ wf).T for wf, projector in
                                    zip(wave_functions, projectors)]).T
     # Propagating modes object to return
     prop_modes = PropagatingModes(wave_functions, group_halves(velocities),
@@ -1140,7 +1145,7 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *,
                   for n, v in zip(nmodes, vecslmbdainv)))
     vecslmbdainv = np.hstack([block_diag(*part) for part in parts])
 
-    sqrt_hops = np.hstack([projector.dot(hop) for projector, hop in
+    sqrt_hops = np.hstack([projector @ hop for projector, hop in
                              zip(projectors, sqrt_hops)])[:h_hop.shape[1]]
 
     stab_modes = StabilizedModes(vecs, vecslmbdainv, sum(nmodes), sqrt_hops)
