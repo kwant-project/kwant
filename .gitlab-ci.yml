@@ -19,20 +19,14 @@ variables:
   stage: build-env
   when: manual
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: gcr.io/kaniko-project/executor:debug-v0.16.0
     entrypoint: [""]
-  artifacts:
-    untracked: true
-    expire_in: 1 hour
   before_script:
-    - mkdir -p /root/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /root/.docker/config.json
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
 build-env:ubuntu:
   <<: *build-env
-  only:
-    changes:
-      - docker/Dockerfile.ubuntu
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
@@ -41,9 +35,6 @@ build-env:ubuntu:
 
 build-env:debian:
   <<: *build-env
-  only:
-    changes:
-      - docker/Dockerfile.debian
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
@@ -52,10 +43,6 @@ build-env:debian:
 
 build-env:conda:
   <<: *build-env
-  only:
-    changes:
-      - docker/Dockerfile.conda
-      - docker/*.yml
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
@@ -64,10 +51,6 @@ build-env:conda:
 
 build-env:default:
   <<: *build-env
-  only:
-    changes:
-      - docker/Dockerfile.conda
-      - docker/*.yml
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
@@ -162,6 +145,14 @@ check for dependencies installed:
 .test: &test
   stage: test
   script:
+    - py.test -r w --flakes kwant --junitxml=tests.xml --durations=10
+  artifacts:
+    reports:
+      junit: tests.xml
+
+.coverage: &coverage
+  stage: test
+  script:
     - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant --junitxml=tests.xml --durations=10
   artifacts:
     paths:
@@ -209,6 +200,14 @@ test:bleeding-edge:
     - schedules
   allow_failure: true
 
+coverage:latest:
+  <<: *coverage
+  <<: *latest_env
+  dependencies:
+    - build:latest
+  only:
+    - schedules
+
 ## Documentation building
 
 build documentation:
@@ -217,7 +216,8 @@ build documentation:
     - build:latest
   stage: test
   script:
-    - make -C doc realclean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -W' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
+    - python -c 'from matplotlib import pyplot'  # Pre-generate font cache
+    - make -C doc clean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -D jupyter_execute_default_kernel=kwant-latest' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
   artifacts:
     paths:
       - doc/build/html/
@@ -229,7 +229,8 @@ build PDF documentation:
     - build:latest
   stage: test
   script:
-    - make -C doc latex SPHINXOPTS='-n -W'
+    - python -c 'from matplotlib import pyplot'  # Pre-generate font cache
+    - make -C doc latex SPHINXOPTS='-n -D jupyter_execute_default_kernel=kwant-latest'
     - cd doc/build/latex
     - make all-pdf
   artifacts:
@@ -252,19 +253,18 @@ check for broken links in doc:
 upload coverage:
   stage: deploy
   only:
-    - branches@kwant/kwant
+    - schedules
+  dependencies:
+    - coverage:latest
   environment:
     name: coverage/$CI_BUILD_REF_NAME
     url: https://kwant-project.org/coverage/$CI_BUILD_REF_SLUG
     on_stop: remove_coverage
-  before_script:
-    - mkdir -p ~/.ssh
-    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
+    - eval $(ssh-agent -s)
+    - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
     - mv htmlcov $CI_BUILD_REF_SLUG
     - rsync -rlv -e "$SSH_COMMAND" --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
-  after_script:
-    - rm -rf ~/.ssh
 
 
 remove_coverage:
@@ -275,14 +275,11 @@ remove_coverage:
   environment:
     name: coverage/$CI_BUILD_REF_NAME
     action: stop
-  before_script:
-    - mkdir -p ~/.ssh
-    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
+    - eval $(ssh-agent -s)
+    - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
     - mkdir empty/
     - rsync -rlv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
-  after_script:
-    - rm -rf ~/.ssh
 
 
 upload documentation to the test server:
@@ -293,13 +290,10 @@ upload documentation to the test server:
     on_stop: remove_docs
   only:
     - branches@kwant/kwant
-  before_script:
-    - mkdir -p ~/.ssh
-    - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
+    - eval $(ssh-agent -s)
+    - echo $TEST_WEBSITE_KEY | base64 -d | ssh-add -
     - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG
-  after_script:
-    - rm -rf ~/.ssh
 
 
 remove_docs:
@@ -310,14 +304,11 @@ remove_docs:
   environment:
     name: docs review/$CI_BUILD_REF_NAME
     action: stop
-  before_script:
-    - mkdir -p ~/.ssh
-    - echo $TEST_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
+    - eval $(ssh-agent -s)
+    - echo $TEST_WEBSITE_KEY | base64 -d | ssh-add -
     - mkdir empty
     - rsync -arv -e "$SSH_COMMAND" --delete empty/ kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG/
-  after_script:
-    - rm -rf ~/.ssh
 
 
 upload dev version docs:
@@ -327,13 +318,10 @@ upload dev version docs:
     url: https://kwant-project.org/doc/dev
   only:
     - master@kwant/kwant
-  before_script:
-    - mkdir -p ~/.ssh
-    - echo $MASTER_WEBSITE_KEY | base64 -d > ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
   script:
+    - eval $(ssh-agent -s)
+    - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
     - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant@kwant-project.org:doc/dev
-  after_script:
-    - rm -rf ~/.ssh
 
 
 ## Build documentation for tagged releases
