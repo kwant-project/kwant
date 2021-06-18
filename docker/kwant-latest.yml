@@ -32,3 +32,4 @@ dependencies:
     - jupyter_sphinx
     - pip:
         - git+https://github.com/sphinx-doc/sphinx.git@bedbb8c8259f1b4520ed654ffda3a045c55163d7
+        - sphinxcontrib-svg2pdfconverter
