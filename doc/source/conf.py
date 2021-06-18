@@ -37,7 +37,7 @@ import kwant.continuum  # sphinx gets confused with lazy loading
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-              'sphinx.ext.todo', 'sphinx.ext.mathjax', 'numpydoc',
+              'sphinx.ext.todo', 'sphinx.ext.mathjax', 'sphinx.ext.napoleon',
               'kwantdoc', 'sphinx.ext.linkcode', 'jupyter_sphinx',
               'sphinxcontrib.rsvgconverter']
 

@@ -3,6 +3,7 @@ channels:
     - conda-forge
 dependencies:
     - python=3.9
+    - pip
     - numpy
     - scipy
     - tinyarray
@@ -26,7 +27,8 @@ dependencies:
     - pytest-flakes
     - pytest-pep8
     # Documentation building
-    - sphinx
     - numpydoc
     - requests
     - jupyter_sphinx
+    - pip:
+        - git+https://github.com/sphinx-doc/sphinx.git@bedbb8c8259f1b4520ed654ffda3a045c55163d7
