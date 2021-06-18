@@ -174,15 +174,27 @@ def herm_conj(value):
     """
     if hasattr(value, 'conjugate'):
         value = value.conjugate()
-        if hasattr(value, 'shape'):
-            if len(value.shape) > 2:
-                is_ta = isinstance(value, (
-                    ta.ndarray_int, ta.ndarray_float, ta.ndarray_complex))
-                value = np.swapaxes(value, -1, -2)
-                if is_ta:
-                    value = ta.array(value)
-            else:
-                value = value.transpose()
+    elif not isinstance(value, numbers.Number):
+        # Fallback for the case of array-like: see issue 406
+        # https://gitlab.kwant-project.org/kwant/kwant/-/issues/406
+        # If we get a list of lists or another array-like, conjugate()
+        # attribute won't be present. To be able to conjugate them, we try to
+        # convert them to tinyarrays
+        try:
+            value = ta.array(value).conjugate()
+        except Exception:
+            pass
+
+    if hasattr(value, 'shape'):
+        if len(value.shape) > 2:
+            is_ta = isinstance(value, (
+                ta.ndarray_int, ta.ndarray_float, ta.ndarray_complex))
+            value = np.swapaxes(value, -1, -2)
+            if is_ta:
+                value = ta.array(value)
+        else:
+            value = value.transpose()
+
     return value
 
 

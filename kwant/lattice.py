@@ -491,6 +491,9 @@ class Monatomic(system.SiteFamily, Polyatomic):
         sites : numpy array
             An array with sites coordinates.
         """
+        if len(pos) != len(self.offset):
+            raise ValueError("Incorrect dimensionality of 'pos'.")
+
         # TODO (Anton): transform to tinyarrays, once ta indexing is better.
         return np.dot(lll.cvp(pos - self.offset, self.reduced_vecs,
                               n=n, group_by_length=group_by_length, rtol=rtol),
