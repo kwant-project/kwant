@@ -180,7 +180,12 @@ def test_graphene_to_kwant():
         assert allclose(hamiltonian2, hamiltonian3)
 
     # Include random onsites as well
-    one = sympy.numbers.One()
+    # The try-except block below needs to be removed,
+    # when we require sympy >= 1.7
+    try:
+        one = sympy.core.numbers.One()
+    except AttributeError:
+        one = sympy.numbers.One()
     onsites = [Model({one: np.array([[1, 0], [0, 0]])}, momenta=family[0].momenta),
                Model({one: np.array([[0, 0], [0, 1]])}, momenta=family[0].momenta)]
     family = family + onsites
