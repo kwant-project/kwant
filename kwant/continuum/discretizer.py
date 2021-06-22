@@ -15,6 +15,7 @@ import numpy as np
 import tinyarray as ta
 
 import sympy
+from sympy.matrices.matrices import MatrixBase
 from sympy.utilities.lambdify import lambdastr
 from sympy.printing.lambdarepr import LambdaPrinter
 from sympy.printing.precedence import precedence
@@ -211,7 +212,7 @@ def discretize_symbolic(hamiltonian, coords=None, *, locals=None):
 
     onsite_zeros = (0,) * len(coords)
 
-    if not isinstance(hamiltonian, sympy.matrices.MatrixBase):
+    if not isinstance(hamiltonian, MatrixBase):
         hamiltonian = sympy.Matrix([hamiltonian])
         _input_format = 'expression'
     else:
@@ -574,7 +575,7 @@ def _return_string(expr, coords):
 
     expr = expr.subs(map_func_calls)
 
-    if isinstance(expr, sympy.matrices.MatrixBase):
+    if isinstance(expr, MatrixBase):
         # express matrix return values in terms of sums of known matrices,
         # which will be assigned to '_cache_n' in the function body.
         mons = monomials(expr, expr.atoms(sympy.Symbol))

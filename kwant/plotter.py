@@ -1498,8 +1498,8 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
             h_p = np.atleast_2d(bound_ham(**p))
             spectrum.append(np.linalg.eigvalsh(h_p))
     # massage masked grid points into a list of NaNs of the appropriate length
-    n_eigvals = len(next(filter(lambda s: s is not None, spectrum)))
-    nan_list = [np.nan] * n_eigvals
+    shape_eigvals = next(filter(lambda s: s is not None, spectrum)).shape
+    nan_list = np.full(shape_eigvals, np.nan)
     spectrum = [nan_list if s is None else s for s in spectrum]
     # make into a numpy array and reshape
     new_shape = [len(v) for v in array_values] + [-1]
@@ -1542,9 +1542,11 @@ def spectrum(syst, x, y=None, params=None, mask=None, file=None,
         # plot_surface cannot directly handle rank-3 values, so we
         # explicitly loop over the last axis
         grid = np.meshgrid(*array_values)
-        for i in range(spectrum.shape[-1]):
-            spec = spectrum[:, :, i].transpose()  # row-major to x-y ordering
-            ax.plot_surface(*(grid + [spec]), cstride=1, rstride=1)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', message='Z contains NaN values')
+            for i in range(spectrum.shape[-1]):
+                spec = spectrum[:, :, i].transpose()  # row-major to x-y ordering
+                ax.plot_surface(*(grid + [spec]), cstride=1, rstride=1)
 
     _maybe_output_fig(fig, file=file, show=show)
 
@@ -1687,8 +1689,13 @@ def _interpolate_field(dim, elements, discrete_field, bbox, width,
 
         # Coordinates of the grid points that are within range of the current
         # hopping.
-        coords = np.meshgrid(*[region[d][field_slice[d]] for d in range(dim)],
-                             sparse=True, indexing='ij')
+        coords = np.array(
+            np.meshgrid(
+                *[region[d][field_slice[d]] for d in range(dim)],
+                sparse=True, indexing='ij'
+            ),
+            dtype=object
+        )
 
         # Convert "coords" into scaled distances from pos_offset
         coords -= pos_offsets[i]
