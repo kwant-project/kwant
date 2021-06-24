@@ -2061,8 +2061,8 @@ def _generate_spectrum(syst, params, mask, x, y):
             h_p = np.atleast_2d(bound_ham(**p))
             spectrum.append(np.linalg.eigvalsh(h_p))
     # massage masked grid points into a list of NaNs of the appropriate length
-    n_eigvals = len(next(filter(lambda s: s is not None, spectrum)))
-    nan_list = [np.nan] * n_eigvals
+    shape_eigvals = next(filter(lambda s: s is not None, spectrum)).shape
+    nan_list = np.full(shape_eigvals, np.nan)
     spectrum = [nan_list if s is None else s for s in spectrum]
     # make into a numpy array and reshape
     new_shape = [len(v) for v in array_values] + [-1]
