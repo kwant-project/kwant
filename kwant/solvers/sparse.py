@@ -13,7 +13,7 @@ import scipy.sparse as sp
 from . import common
 
 # Note: previous code would have failed if UMFPACK was provided by scikit
-import scipy.sparse.linalg.dsolve.linsolve as linsolve
+from scipy.sparse.linalg.dsolve import linsolve
 
 uses_umfpack = linsolve.useUmfpack
 

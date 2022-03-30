@@ -19,6 +19,12 @@ import importlib
 import subprocess
 import configparser
 import collections
+
+# Until there is an alternative way to add custom build steps, request that
+# setuptools' local distutils copy is used as global module "distutils".  This
+# works around the future removal of distutils from the stdlib.  See
+# https://github.com/pypa/setuptools/issues/2928#issuecomment-997138589.
+os.environ["SETUPTOOLS_USE_DISTUTILS"] = "local"
 from setuptools import setup, find_packages, Extension, Command
 from distutils.errors import DistutilsError, CCompilerError
 from distutils.command.build import build as build_orig
