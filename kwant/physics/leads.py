@@ -1015,15 +1015,17 @@ def modes(h_cell, h_hop, tol=1e6, stabilization=None, *,
         to the regular one.  If it is `False`, reduction to a regular problem
         is performed if possible.  Selecting the stabilization manually is
         mostly necessary for testing purposes.
-    particle_hole : sparse or dense square matrix
-        The unitary part of the particle-hole symmetry operator.
-    time_reversal : sparse or dense square matrix
-        The unitary part of the time-reversal symmetry operator.
-    chiral : sparse or dense square matrix
-        The chiral symmetry operator.
+    discrete_symmetry : `~kwant.physics.DiscreteSymmetry` or None
+        The discrete symmetry to use when performing the computation.
     projectors : an iterable of sparse or dense matrices
         Projectors that block diagonalize the Hamiltonian in accordance
         with a conservation law.
+    time_reversal : sparse or dense square matrix
+        The unitary part of the time-reversal symmetry operator.
+    particle_hole : sparse or dense square matrix
+        The unitary part of the particle-hole symmetry operator.
+    chiral : sparse or dense square matrix
+        The chiral symmetry operator.
 
     Returns
     -------
