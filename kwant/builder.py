@@ -1817,15 +1817,16 @@ class Builder:
     # Protect novice users from confusing error messages if they
     # forget to finalize their Builder.
 
-    @staticmethod
-    def _require_system(*args, **kwargs):
-        """You need a finalized system; Use Builder.finalized() first."""
-        raise TypeError('You need a finalized system; '
-                        'use Builder.finalized() first.')
+    _system_methods = {
+        "hamiltonian", "hamiltonian_submatrix", "modes", "selfenergy",
+        "inter_cell_hopping", "cell_hamiltonian", "precalculated"}
 
-    hamiltonian = hamiltonian_submatrix = modes = selfenergy = \
-    inter_cell_hopping = cell_hamiltonian = precalculated = \
-    _require_system
+    def __getattr__(self, name):
+        msg = "'Builder' object has no attribute '{}'.".format(name)
+        if name in self._system_methods:
+            msg += ("\nIt looks like you need a finalized system; "
+                    "use Builder.finalized() first.")
+        raise AttributeError(msg)
 
 
 ################ Finalized systems
