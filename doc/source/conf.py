@@ -239,8 +239,9 @@ latex_domain_indices = False
 autosummary_generate = True
 
 autoclass_content = "both"
-autodoc_default_flags = ['show-inheritance']
-
+autodoc_default_options = {
+    'show-inheritance': True,
+}
 
 # -- Teach Sphinx to document bound methods like functions ---------------------
 import types
