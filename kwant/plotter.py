@@ -1998,7 +1998,7 @@ def streamplot(field, box, cmap=None, bgcolor=None, linecolor='k',
     if bgcolor is None:
         if cmap is None:
             cmap = _p._colormaps.kwant_red
-        cmap = _p.matplotlib.cm.get_cmap(cmap)
+        cmap = _p.get_cmap(cmap)
         bgcolor = cmap(0)[:3]
     elif cmap is not None:
         raise ValueError("The parameters 'cmap' and 'bgcolor' are "
@@ -2108,7 +2108,7 @@ def scalarplot(field, box,
 
     if cmap is None:
         cmap = _p._colormaps.kwant_red
-    cmap = _p.matplotlib.cm.get_cmap(cmap)
+    cmap = _p.get_cmap(cmap)
 
     if ax is None:
         fig = _make_figure(dpi, fig_size, use_pyplot=(file is None))

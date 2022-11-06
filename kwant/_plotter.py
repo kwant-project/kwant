@@ -22,7 +22,6 @@ import numpy as np
 try:
     import matplotlib
     import matplotlib.colors
-    import matplotlib.cm
     from matplotlib.figure import Figure
     from matplotlib import collections
     from . import _colormaps
@@ -33,6 +32,14 @@ try:
     except ImportError:
         warnings.warn("3D plotting not available.", RuntimeWarning)
         has3d = False
+
+    # TODO: remove the try statement (leaving only the try clause)
+    # once we depend on matplotlib >= 3.5.0
+    try:
+        get_cmap = matplotlib.colormaps.get_cmap
+    except AttributeError:
+        from matplotlib.cm import get_cmap
+
 except ImportError:
     warnings.warn("matplotlib is not available, only iterator-providing "
                   "functions will work.", RuntimeWarning)
