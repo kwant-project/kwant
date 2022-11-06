@@ -157,7 +157,12 @@ if mpl_available:
                 self.linewidths_orig = nparray_if_array(linewidths)
 
             def do_3d_projection(self, renderer=None):
-                super().do_3d_projection(renderer)
+                # TODO: remove the try once we depend on matplotlib >= 3.6.0
+                try:
+                    super().do_3d_projection(renderer)
+                except TypeError:
+                    super().do_3d_projection()
+
                 # The whole 3D ordering is flawed in mplot3d when several
                 # collections are added. We just use normal zorder. Note the
                 # "-" due to the different logic in the 3d plotting, we still
