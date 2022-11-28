@@ -35,7 +35,6 @@ plotly_available = False
 try:
     import matplotlib
     import matplotlib.colors
-    import matplotlib.cm
     from matplotlib.figure import Figure
     from matplotlib import collections
     from . import _colormaps
@@ -49,6 +48,14 @@ try:
     except ImportError:
         warnings.warn("3D plotting not available.", RuntimeWarning)
         has3d = False
+
+    # TODO: remove the try statement (leaving only the try clause)
+    # once we depend on matplotlib >= 3.5.0
+    try:
+        get_cmap = matplotlib.colormaps.get_cmap
+    except AttributeError:
+        from matplotlib.cm import get_cmap
+
 except ImportError:
     warnings.warn("matplotlib is not available, if other engines are "
                   "unavailable, only iterator-providing functions will work",
@@ -171,7 +178,7 @@ if plotly_available:
 
     def convert_cmap_list_mpl_plotly(mpl_cmap_name):
         if isinstance(mpl_cmap_name, str):
-            cmap = matplotlib.cm.get_cmap(mpl_cmap_name)
+            cmap = get_cmap(mpl_cmap_name)
             cmap_plotly_linear = [
                 (level, convert_colormap_mpl_plotly(*cmap(level)))
                 for level in np.linspace(0, 1, cmap.N)
@@ -307,7 +314,12 @@ if mpl_available:
                 self.linewidths_orig = nparray_if_array(linewidths)
 
             def do_3d_projection(self, renderer=None):
-                super().do_3d_projection(renderer)
+                # TODO: remove the try once we depend on matplotlib >= 3.6.0
+                try:
+                    super().do_3d_projection(renderer)
+                except TypeError:
+                    super().do_3d_projection()
+
                 # The whole 3D ordering is flawed in mplot3d when several
                 # collections are added. We just use normal zorder. Note the
                 # "-" due to the different logic in the 3d plotting, we still

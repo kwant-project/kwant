@@ -510,6 +510,9 @@ class System(metaclass=abc.ABCMeta):
     def discrete_symmetry(self, args, *, params=None):
         """Return the discrete symmetry of the system.
 
+        The returned object is an instance of
+        `~kwant.physics.DiscreteSymmetry`.
+
         Providing positional arguments via 'args' is deprecated,
         instead, provide named parameters as a dictionary via 'params'.
         """
@@ -772,8 +775,15 @@ class InfiniteSystemMixin(metaclass=abc.ABCMeta):
     def modes(self, energy=0, args=(), *, params=None):
         """Return mode decomposition of the lead
 
-        See documentation of `~kwant.physics.PropagatingModes` and
-        `~kwant.physics.StabilizedModes` for the return format details.
+        This is a wrapper around `kwant.physics.modes`.  The said
+        function is applied to the infinite system at hand.  Any
+        discrete symmetries that are declared for the system are
+        validated, and, if present, passed on as well.  (Warnings are
+        emitted for declared symmetries that are broken.)
+
+        The result of the wrapped function (an instance of
+        `~kwant.physics.PropagatingModes` along with an instance of
+        `~kwant.physics.StabilizedModes`) is returned unchanged.
 
         The wave functions of the returned modes are defined over the
         *unit cell* of the system, which corresponds to the degrees of
