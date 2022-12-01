@@ -1653,6 +1653,7 @@ def _interpolate_field(dim, elements, discrete_field, bbox, width,
         dirs = elements[:, 1] - elements[:, 0]
         lens = np.sqrt(np.sum(dirs * dirs, axis=-1))
         dirs /= lens[:, None]
+        dirs = np.nan_to_num(dirs)
         lens = lens * scale
 
     if is_current:
@@ -1785,6 +1786,7 @@ def interpolate_current(syst, current, relwidth=None, abswidth=None, n=9):
     dirs = hops[:, 1] - hops[:, 0]
     lens = np.sqrt(np.sum(dirs * dirs, -1))
     dirs /= lens[:, None]
+    dirs = np.nan_to_num(dirs)
     width = _optimal_width(lens, abswidth, relwidth, bbox_size)
 
 
