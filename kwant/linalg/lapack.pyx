@@ -8,9 +8,7 @@
 
 """Low-level access to LAPACK functions. """
 
-__all__ = ['gecon',
-           'ggev',
-           'gees',
+__all__ = ['gees',
            'trsen',
            'trevc',
            'gges',
@@ -88,99 +86,6 @@ cdef l_int lwork_from_qwork(scalar qwork):
         return <l_int>qwork
     else:
         return <l_int>qwork.real
-
-
-def gecon(np.ndarray[scalar, ndim=2] LU, double normA, char *norm = b"1"):
-    cdef l_int N, info
-    cdef float srcond, snormA
-    cdef double drcond
-
-    # Parameter checks
-
-    assert_fortran_mat(LU)
-    if norm[0] != b"1" and norm[0] != b"I":
-        raise ValueError("'norm' must be either '1' or 'I'")
-    if scalar in single_precision:
-        snormA = normA
-
-    # Allocate workspaces
-
-    N = LU.shape[0]
-
-    cdef np.ndarray[l_int] iwork
-    if scalar in floating:
-        iwork = np.empty(N, dtype=int_dtype)
-
-    cdef np.ndarray[scalar] work
-    if scalar in floating:
-        work = np.empty(4 * N, dtype=LU.dtype)
-    else:
-        work = np.empty(2 * N, dtype=LU.dtype)
-
-    cdef np.ndarray rwork
-    if scalar is float_complex:
-        rwork = np.empty(2 * N, dtype=np.float32)
-    elif scalar is double_complex:
-        rwork = np.empty(2 * N, dtype=np.float64)
-
-    # The actual calculation
-
-    if scalar is float:
-        lapack.sgecon(norm, &N, <float *>LU.data, &N, &snormA,
-                      &srcond, <float *>work.data,
-                      <l_int *>iwork.data, &info)
-    elif scalar is double:
-        lapack.dgecon(norm, &N, <double *>LU.data, &N, &normA,
-                      &drcond, <double *>work.data,
-                      <l_int *>iwork.data, &info)
-    elif scalar is float_complex:
-        lapack.cgecon(norm, &N, <float complex *>LU.data, &N, &snormA,
-                      &srcond, <float complex *>work.data,
-                      <float *>rwork.data, &info)
-    elif scalar is double_complex:
-        lapack.zgecon(norm, &N, <double complex *>LU.data, &N, &normA,
-                      &drcond, <double complex *>work.data,
-                      <double *>rwork.data, &info)
-
-    assert info == 0, "Argument error in gecon"
-
-    if scalar in single_precision:
-        return srcond
-    else:
-        return drcond
-
-
-# Helper function for xGGEV
-def ggev_postprocess(dtype, alphar, alphai, vl_r=None, vr_r=None):
-    # depending on whether the eigenvalues are purely real or complex,
-    # some post-processing of the eigenvalues and -vectors is necessary
-
-    indx = (alphai > 0.0).nonzero()[0]
-
-    if indx.size:
-        alpha = alphar + 1j * alphai
-
-        if vl_r is not None:
-            vl = np.array(vl_r, dtype = dtype)
-            for i in indx:
-                vl.imag[:, i] = vl_r[:,i+1]
-                vl[:, i+1] = np.conj(vl[:, i])
-        else:
-            vl = None
-
-        if vr_r is not None:
-            vr = np.array(vr_r, dtype = dtype)
-            for i in indx:
-                vr.imag[:, i] = vr_r[:,i+1]
-                vr[:, i+1] = np.conj(vr[:, i])
-        else:
-            vr = None
-    else:
-        alpha = alphar
-        vl = vl_r
-        vr = vr_r
-
-    return (alpha, vl, vr)
 
 
 def gees(np.ndarray[scalar, ndim=2] A, calc_q=True, calc_ev=True):
