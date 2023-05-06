@@ -317,7 +317,7 @@ def build_discretized(tb_hamiltonian, coords, *, grid=None, locals=None,
 
     # generate grid if required, check constraints if provided
     random_element = next(iter(tb_hamiltonian.values()))
-    norbs = (1 if isinstance(random_element, sympy.Expr)
+    norbs = (1 if not isinstance(random_element, sympy.MatrixExpr)
              else random_element.shape[0])
 
     if np.isscalar(grid):
