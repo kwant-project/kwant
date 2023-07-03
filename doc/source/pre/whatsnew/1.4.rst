@@ -354,3 +354,8 @@ Changes in Kwant 1.4.3
   list of lists, it was not conjugated, which could lead to generation of a
   non-Hermitian Hamiltonian matrix without emitting any error.
 - Various maintenance.
+
+Changes in Kwant 1.4.4
+----------------------
+- Ensure compatibility with recent versions of SymPy, matplotlib and Sphinx.
+- Fix current density plotting when sites coincide.
