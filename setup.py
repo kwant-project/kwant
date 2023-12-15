@@ -30,7 +30,6 @@ from distutils.errors import DistutilsError, CCompilerError
 from distutils.command.build import build as build_orig
 from setuptools.command.sdist import sdist as sdist_orig
 from setuptools.command.build_ext import build_ext as build_ext_orig
-from setuptools.command.test import test as test_orig
 
 
 STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
@@ -318,27 +317,6 @@ class sdist(sdist_orig):
         write_version(os.path.join(base_dir, *STATIC_VERSION_PATH))
 
 
-# The following class is based on a recipe in
-# https://doc.pytest.org/en/latest/goodpractices.html#manual-integration.
-class test(test_orig):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
-
-    def initialize_options(self):
-        super().initialize_options()
-        self.pytest_args = ''
-
-    def run_tests(self):
-        import shlex
-        try:
-            import pytest
-        except:
-            print('The Python package "pytest" is required to run tests.',
-                  file=sys.stderr)
-            sys.exit(1)
-        errno = pytest.main(shlex.split(self.pytest_args))
-        sys.exit(errno)
-
-
 def write_version(fname):
     # This could be a hard link, so try to delete it first.  Is there any way
     # to do this atomically together with opening?
@@ -579,8 +557,7 @@ def main():
           package_data={p: ['*.pxd', '*.h'] for p in packages},
           cmdclass={'build': build,
                     'sdist': sdist,
-                    'build_ext': build_ext,
-                    'test': test},
+                    'build_ext': build_ext},
           ext_modules=exts,
           python_requires='>=3.7',
           # The oldest versions between: Debian stable, Ubuntu LTS

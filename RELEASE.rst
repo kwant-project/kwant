@@ -109,7 +109,9 @@ in /tmp and inspect that builds in isolation and that the tests run::
     cd /tmp
     tar xzf ~/src/kwant/dist/kwant-<version>.tar.gz
     cd kwant-<version>
-    ./setup.py test
+    ./setup.py build
+    ./setup.py build_ext -i
+    py.test
 
 
 Build the documentation
