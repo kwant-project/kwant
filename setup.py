@@ -335,7 +335,7 @@ def long_description():
     return text[:text.find('See also in this directory:')]
 
 
-def search_libs(libs):
+def libs_present(libs):
     cmd = ['gcc']
     cmd.extend(['-l' + lib for lib in libs])
     cmd.extend(['-o/dev/null', '-xc', '-'])
@@ -345,8 +345,7 @@ def search_libs(libs):
         pass
     else:
         p.communicate(input=b'int main() {}\n')
-        if p.wait() == 0:
-            return libs
+        return not p.wait()  # exit code 0 means success
 
 
 def search_mumps():
@@ -361,11 +360,7 @@ def search_mumps():
         # Conda (via conda-forge).
         ['zmumps_seq', 'mumps_common_seq'],
     ]
-    for libs in lib_sets:
-        found_libs = search_libs(libs)
-        if found_libs:
-            return found_libs
-    return []
+    return next((libs for libs in lib_sets if libs_present(libs)), [])
 
 
 def configure_special_extensions(exts, build_summary):
