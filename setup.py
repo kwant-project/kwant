@@ -14,7 +14,6 @@ import sys
 
 import re
 import os
-import glob
 import importlib
 import subprocess
 import configparser
@@ -25,11 +24,11 @@ import collections
 # works around the future removal of distutils from the stdlib.  See
 # https://github.com/pypa/setuptools/issues/2928#issuecomment-997138589.
 os.environ["SETUPTOOLS_USE_DISTUTILS"] = "local"
-from setuptools import setup, find_packages, Extension, Command
-from distutils.errors import DistutilsError, CCompilerError
-from distutils.command.build import build as build_orig
-from setuptools.command.sdist import sdist as sdist_orig
-from setuptools.command.build_ext import build_ext as build_ext_orig
+from setuptools import setup, find_packages, Extension  # noqa: E402
+from distutils.errors import DistutilsError, CCompilerError  # noqa: E402
+from distutils.command.build import build as build_orig  # noqa: E402
+from setuptools.command.sdist import sdist as sdist_orig  # noqa: E402
+from setuptools.command.build_ext import build_ext as build_ext_orig  # noqa: E402
 
 
 STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
