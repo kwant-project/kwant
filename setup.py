@@ -18,6 +18,7 @@ import importlib
 import subprocess
 import configparser
 import collections
+from pathlib import Path
 
 # Until there is an alternative way to add custom build steps, request that
 # setuptools' local distutils copy is used as global module "distutils".  This
@@ -31,9 +32,9 @@ from setuptools.command.sdist import sdist as sdist_orig  # noqa: E402
 from setuptools.command.build_ext import build_ext as build_ext_orig  # noqa: E402
 
 
-STATIC_VERSION_PATH = ('kwant', '_kwant_version.py')
+STATIC_VERSION_PATH = 'kwant/_kwant_version.py'
 
-distr_root = os.path.dirname(os.path.abspath(__file__))
+distr_root = Path(__file__).resolve().parent
 
 
 def configure_extensions(exts, aliases=(), build_summary=None):
@@ -249,7 +250,7 @@ Build configuration was:
 class build(build_orig):
     def run(self):
         super().run()
-        write_version(os.path.join(self.build_lib, *STATIC_VERSION_PATH))
+        write_version(Path(self.build_lib) / STATIC_VERSION_PATH)
 
 
 def git_lsfiles():
@@ -283,10 +284,10 @@ class sdist(sdist_orig):
         include *.pyx and other source files in the binary distribution.
         """
         manifest_in_file = 'MANIFEST.in'
-        manifest = os.path.join(distr_root, manifest_in_file)
+        manifest = distr_root / manifest_in_file
         names = git_lsfiles()
         if names is None:
-            if not (os.path.isfile(manifest) and os.access(manifest, os.R_OK)):
+            if not (manifest.is_file() and os.access(manifest, os.R_OK)):
                 print("Error:", manifest_in_file,
                       "file is missing and Git is not available"
                       " to regenerate it.", file=sys.stderr)
@@ -313,34 +314,25 @@ class sdist(sdist_orig):
 
     def make_release_tree(self, base_dir, files):
         super().make_release_tree(base_dir, files)
-        write_version(os.path.join(base_dir, *STATIC_VERSION_PATH))
+        write_version(Path(base_dir) / STATIC_VERSION_PATH)
 
 
-def write_version(fname):
+def write_version(path):
     # This could be a hard link, so try to delete it first.  Is there any way
     # to do this atomically together with opening?
-    try:
-        os.remove(fname)
-    except OSError:
-        pass
-    with open(fname, 'w') as f:
-        f.write("# This file has been created by setup.py.\n")
-        f.write("version = '{}'\n".format(version))
+    path.unlink(missing_ok=True)
+    path.write_text(
+        "# This file has been created by setup.py.\n"
+        f"version = '{version}'\n"
+    )
 
 
 def long_description():
-    text = []
-    try:
-        with open('README.rst', encoding='utf8') as f:
-            for line in f:
-                if line.startswith('See also in this directory:'):
-                    break
-                text.append(line.rstrip())
-            while text[-1] == "":
-                text.pop()
-    except:
+    source = Path('README.rst')
+    if not source.is_file():
         return ''
-    return '\n'.join(text)
+    text = source.read_text()
+    return text[:text.find('See also in this directory:')]
 
 
 def search_libs(libs):
