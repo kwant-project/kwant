@@ -41,14 +41,6 @@ build-env:debian:
       --dockerfile $CI_PROJECT_DIR/docker/Dockerfile.debian
       --destination $CI_REGISTRY_IMAGE/debian
 
-build-env:conda:
-  <<: *build-env
-  script:
-    - /kaniko/executor
-      --context $CI_PROJECT_DIR/docker
-      --dockerfile $CI_PROJECT_DIR/docker/Dockerfile.conda
-      --destination $CI_REGISTRY_IMAGE/conda
-
 build-env:default:
   <<: *build-env
   script:
@@ -73,25 +65,25 @@ build-env:default:
 
 .stable-env: &stable_env
   before_script:
-    - source deactivate
-    - source activate kwant-stable
+    - eval "$(micromamba shell hook --shell bash)"
+    - micromamba activate kwant-stable
 
 .no-extras-env: &no_extras_env
   before_script:
-    - source deactivate
-    - source activate kwant-stable-no-extras
+    - eval "$(micromamba shell hook --shell bash)"
+    - micromamba activate kwant-stable-no-extras
 
 # Note that this is 'latest' as of when the image was last built
 .latest-env: &latest_env
   before_script:
-    - source deactivate
-    - source activate kwant-latest
+    - eval "$(micromamba shell hook --shell bash)"
+    - micromamba activate kwant-latest
 
 .bleeding-edge-env: &bleeding_edge_env
   before_script:
-    - source deactivate
-    - conda env update -f /kwant-latest.yml
-    - source activate kwant-latest
+    - eval "$(micromamba shell hook --shell bash)"
+    - micromamba env update -f /kwant-latest.yml
+    - micromamba activate kwant-latest
 
 .ubuntu-env: &ubuntu_env
   image: gitlab.kwant-project.org:5005/kwant/kwant/ubuntu

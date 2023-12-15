@@ -2,7 +2,7 @@ name: kwant-latest
 channels:
     - conda-forge
 dependencies:
-    - python=3.9
+    - python=3.12
     - pip
     - numpy
     - scipy
@@ -11,12 +11,13 @@ dependencies:
     - matplotlib-base
     - plotly
     - qsymm
-    # Linear algebra libraraies
-    - mumps
-    - blas #=1.1 openblas
-    - openblas #=0.2.20
+    # Linear algebra libraries
+    # Pin mumps due to switching int size in 5.5.1
+    - mumps-seq=5.2.1
+    - blas
+    - openblas
     # Build toolchain
-    - toolchain3
+    - compilers
     - cython
     - libgfortran
     ## Dev Dependencies
@@ -26,9 +27,9 @@ dependencies:
     - pytest-flakes
     - pytest-pep8
     # Documentation building
+    - sphinx
     - numpydoc
     - requests
     - jupyter_sphinx
     - pip:
-        - git+https://github.com/sphinx-doc/sphinx.git@bedbb8c8259f1b4520ed654ffda3a045c55163d7
         - sphinxcontrib-svg2pdfconverter

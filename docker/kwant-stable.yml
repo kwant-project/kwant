@@ -2,20 +2,21 @@ name: kwant-stable
 channels:
     - conda-forge
 dependencies:
-    - python=3.7
-    - numpy=1.16.2
-    - scipy=1.1.0
-    - tinyarray=1.2
-    - sympy=1.3.0
-    - matplotlib-base=3.0.2
-    - plotly=3.6.1
-    - qsymm=1.3.0
-    # Linear algebra libraraies
-    - mumps
+    - python=3.8
+    - numpy=1.18
+    - scipy=1.3
+    - tinyarray=1.2.2
+    - sympy=1.5.1
+    - matplotlib-base=3.2.2
+    - plotly=2.2.2
+    - qsymm=1.2.6
+    # Linear algebra libraries
+    # Pin mumps due to switching int size in 5.5.1
+    - mumps-seq=5.2.1
     - blas #=1.1 openblas
     - openblas #=0.2.20
     # Build toolchain
-    - toolchain3
+    - compilers
     - cython
     - libgfortran
     ## Dev Dependencies
@@ -24,3 +25,7 @@ dependencies:
     - pytest-cov
     - pytest-flakes
     - pytest-pep8
+    # Documentation building
+    - sphinx=2.4.4
+    - numpydoc
+    - requests

@@ -29,10 +29,10 @@ Prerequisites
 =============
 
 Building Kwant requires
- * `Python <https://www.python.org/>`_ 3.7 or above,
- * `NumPy <https://numpy.org/>`_ 1.16.2 or newer,
- * `SciPy <https://www.scipy.org/>`_ 1.1.0 or newer,
- * `LAPACK <https://netlib.org/lapack/>`_ and `BLAS <https://netlib.org/blas/>`_,
+ * `Python <https://www.python.org/>`_ 3.8 or above,
+ * `NumPy <http://numpy.org/>`_ 1.11.0 or newer,
+ * `SciPy <https://www.scipy.org/>`_ 0.17.0 or newer,
+ * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
    <https://www.openblas.net/>`_ or the nonfree `MKL
    <https://software.intel.com/en-us/intel-mkl>`_.)

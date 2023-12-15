@@ -482,7 +482,8 @@ def maybe_add_numpy_include(exts):
 
 
 def main():
-    check_python_version((3, 6))
+    min_python_version = (3, 8)
+    check_python_version(min_python_version)
     check_versions()
 
     exts = collections.OrderedDict([
@@ -556,6 +557,7 @@ def main():
               # qsymm is only packaged on PyPI
               'qsymm': 'qsymm >= 1.3.0',
           },
+          python_requires=f'>={min_python_version[0]}.{min_python_version[1]}',
           classifiers=[c.strip() for c in classifiers.split('\n')])
 
 if __name__ == '__main__':

@@ -1,9 +1,11 @@
-FROM conda/miniconda3:latest
+FROM mambaorg/micromamba:1.5.5-jammy
 
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 ENV DEBIAN_FRONTEND noninteractive
+ENV TZ Etc/UTC
 
+USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
         # all the hard non-Python dependencies
         git make patch build-essential \
@@ -14,10 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY kwant-latest.yml kwant-stable.yml kwant-stable-no-extras.yml /
+USER $MAMBA_USER
+COPY --chown=$MAMBA_USER:$MAMBA_USER kwant-latest.yml kwant-stable.yml kwant-stable-no-extras.yml /
 
-RUN conda env create -qf kwant-stable.yml
-RUN conda env create -qf kwant-stable-no-extras.yml
-RUN conda env create -qf kwant-latest.yml
-
-RUN /usr/local/envs/kwant-latest/bin/python -m ipykernel install --user --name kwant-latest
+RUN micromamba env create -f /kwant-stable.yml
+RUN micromamba env create -f /kwant-stable-no-extras.yml
+RUN micromamba env create -f /kwant-latest.yml

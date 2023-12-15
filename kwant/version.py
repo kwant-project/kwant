@@ -19,13 +19,11 @@ __all__ = []
 package_root = os.path.dirname(os.path.realpath(__file__))
 distr_root = os.path.dirname(package_root)
 
-def ensure_python(required_version=(3, 5)):
+def ensure_python(required_version=(3, 8)):
     v = sys.version_info
     if v[:3] < required_version:
         error = "This version of Kwant requires Python {} or above.".format(
             ".".join(str(p) for p in required_version))
-        if v[0] == 2:
-            error += "\nKwant 1.1 is the last version to support Python 2."
         print(error, file=sys.stderr)
         sys.exit(1)
 
