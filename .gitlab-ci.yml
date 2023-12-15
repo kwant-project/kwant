@@ -257,14 +257,14 @@ upload coverage:
   dependencies:
     - coverage:latest
   environment:
-    name: coverage/$CI_BUILD_REF_NAME
-    url: https://kwant-project.org/coverage/$CI_BUILD_REF_SLUG
+    name: coverage/$CI_COMMIT_REF_NAME
+    url: https://kwant-project.org/coverage/$CI_COMMIT_REF_SLUG
     on_stop: remove_coverage
   script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
-    - mv htmlcov $CI_BUILD_REF_SLUG
-    - rsync -rlv -e "$SSH_COMMAND" --delete --relative $CI_BUILD_REF_SLUG kwant@kwant-project.org:coverage/
+    - mv htmlcov $CI_COMMIT_REF_SLUG
+    - rsync -rlv -e "$SSH_COMMAND" --delete --relative $CI_COMMIT_REF_SLUG kwant@kwant-project.org:coverage/
 
 
 remove_coverage:
@@ -273,27 +273,27 @@ remove_coverage:
     - branches@kwant/kwant
   when: manual
   environment:
-    name: coverage/$CI_BUILD_REF_NAME
+    name: coverage/$CI_COMMIT_REF_NAME
     action: stop
   script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
     - mkdir empty/
-    - rsync -rlv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:coverage/$CI_BUILD_REF_SLUG
+    - rsync -rlv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:coverage/$CI_COMMIT_REF_SLUG
 
 
 upload documentation to the test server:
   stage: deploy
   environment:
-    name: docs review/$CI_BUILD_REF_NAME
-    url: https://test.kwant-project.org/doc/$CI_BUILD_REF_SLUG
+    name: docs review/$CI_COMMIT_REF_NAME
+    url: https://test.kwant-project.org/doc/$CI_COMMIT_REF_SLUG
     on_stop: remove_docs
   only:
     - branches@kwant/kwant
   script:
     - eval $(ssh-agent -s)
     - echo $TEST_WEBSITE_KEY | base64 -d | ssh-add -
-    - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG
+    - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant2@test.kwant-project.org:doc/$CI_COMMIT_REF_SLUG
 
 
 remove_docs:
@@ -302,13 +302,13 @@ remove_docs:
   only:
     - branches@kwant/kwant
   environment:
-    name: docs review/$CI_BUILD_REF_NAME
+    name: docs review/$CI_COMMIT_REF_NAME
     action: stop
   script:
     - eval $(ssh-agent -s)
     - echo $TEST_WEBSITE_KEY | base64 -d | ssh-add -
     - mkdir empty
-    - rsync -arv -e "$SSH_COMMAND" --delete empty/ kwant2@test.kwant-project.org:doc/$CI_BUILD_REF_SLUG/
+    - rsync -arv -e "$SSH_COMMAND" --delete empty/ kwant2@test.kwant-project.org:doc/$CI_COMMIT_REF_SLUG/
 
 
 upload dev version docs:
