@@ -208,6 +208,7 @@ build documentation:
     - build:latest
   stage: test
   script:
+    - pip install --editable .  # Makefile executes from folders
     - python -c 'from matplotlib import pyplot'  # Pre-generate font cache
     - make -C doc clean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -D jupyter_execute_default_kernel=kwant-latest' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
   artifacts:
@@ -221,6 +222,7 @@ build PDF documentation:
     - build:latest
   stage: test
   script:
+    - pip install --editable .  # Makefile executes from folders
     - python -c 'from matplotlib import pyplot'  # Pre-generate font cache
     - make -C doc latex SPHINXOPTS='-n -D jupyter_execute_default_kernel=kwant-latest'
     - cd doc/build/latex
@@ -236,6 +238,7 @@ check for broken links in doc:
     - build:latest
   stage: test
   script:
+    - pip install --editable .  # Makefile executes from folders
     - make -C doc linkcheck
   allow_failure: true
 
