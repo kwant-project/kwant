@@ -283,8 +283,7 @@ def write_version(path):
     # to do this atomically together with opening?
     path.unlink(missing_ok=True)
     path.write_text(
-        "# This file has been created by setup.py.\n"
-        f"version = '{version}'\n"
+        f"# This file has been created by setup.py.\n{version = }\n"
     )
 
 
