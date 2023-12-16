@@ -129,16 +129,6 @@ def configure_extensions(exts, aliases=(), build_summary=None):
     return exts
 
 
-def check_python_version(min_version):
-    installed_version = sys.version_info[:3]
-    if installed_version < min_version:
-        print('Error: Python {} required, but {} is installed'.format(
-              '.'.join(map(str, min_version)),
-              '.'.join(map(str, installed_version)))
-        )
-        sys.exit(1)
-
-
 def check_versions():
     global version, version_is_from_git
 
@@ -482,8 +472,6 @@ def maybe_add_numpy_include(exts):
 
 
 def main():
-    min_python_version = (3, 8)
-    check_python_version(min_python_version)
     check_versions()
 
     exts = collections.OrderedDict([
@@ -557,7 +545,7 @@ def main():
               # qsymm is only packaged on PyPI
               'qsymm': 'qsymm >= 1.3.0',
           },
-          python_requires=f'>={min_python_version[0]}.{min_python_version[1]}',
+          python_requires='>=3.8',
           classifiers=[c.strip() for c in classifiers.split('\n')])
 
 if __name__ == '__main__':
