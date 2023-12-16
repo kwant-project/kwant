@@ -106,7 +106,7 @@ def get_version_from_git_archive(version_info):
         release, *_ = sorted(version_tags)  # prefer e.g. "2.0" over "2.0rc1"
         return release
     else:
-        return ''.join(('unknown', '+g', git_hash))
+        return ''.join(('0.0.0+unknown', '+g', git_hash))
 
 
 def init(version_file='_kwant_version.py'):
@@ -121,6 +121,6 @@ def init(version_file='_kwant_version.py'):
         if not version:
             version = get_version_from_git_archive(version_info)
         if not version:
-            version = "unknown"
+            version = "0.0.0+unknown"
 
 init()
