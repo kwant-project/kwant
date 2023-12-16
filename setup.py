@@ -18,6 +18,7 @@ import subprocess
 import configparser
 import argparse
 from pathlib import Path
+from ctypes.util import find_library
 
 # Until there is an alternative way to add custom build steps, request that
 # setuptools' local distutils copy is used as global module "distutils".  This
@@ -294,19 +295,6 @@ def long_description():
     return text[:text.find('See also in this directory:')]
 
 
-def libs_present(libs):
-    cmd = ['gcc']
-    cmd.extend(['-l' + lib for lib in libs])
-    cmd.extend(['-o/dev/null', '-xc', '-'])
-    try:
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-    except OSError:
-        pass
-    else:
-        p.communicate(input=b'int main() {}\n')
-        return not p.wait()  # exit code 0 means success
-
-
 def search_mumps():
     """Return the configuration for MUMPS if it is available in a known way.
 
@@ -319,7 +307,10 @@ def search_mumps():
         # Conda (via conda-forge).
         ['zmumps_seq', 'mumps_common_seq'],
     ]
-    return next((libs for libs in lib_sets if libs_present(libs)), [])
+    return next(
+        (libs for libs in lib_sets if all(find_library(lib) for lib in libs)),
+        []
+    )
 
 
 def configure_special_extensions(exts, build_summary):
