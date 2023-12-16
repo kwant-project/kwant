@@ -506,14 +506,12 @@ def main():
                     'sdist': sdist,
                     'build_ext': build_ext},
           ext_modules=exts,
-          python_requires='>=3.7',
-          # The oldest versions between: Debian stable, Ubuntu LTS
-          install_requires=['numpy >= 1.16.2', 'scipy >= 1.1.0, != 1.6.1',
-                            'tinyarray >= 1.2'],
+          install_requires=['numpy >= 1.18.0', 'scipy >= 1.3.0',
+                            'tinyarray >= 1.2.2'],
           extras_require={
-              'plotting': ['matplotlib >= 3.0.2',
-                           'plotly >= 3.6.1'],
-              'continuum': 'sympy >= 1.3.0',
+              # The oldest versions between: Debian stable, Ubuntu LTS
+              'plotting': 'matplotlib >= 3.2.2',
+              'continuum': 'sympy >= 1.5.1',
               # qsymm is only packaged on PyPI
               'qsymm': 'qsymm >= 1.3.0',
           },

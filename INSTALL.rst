@@ -30,23 +30,22 @@ Prerequisites
 
 Building Kwant requires
  * `Python <https://www.python.org/>`_ 3.8 or above,
- * `NumPy <http://numpy.org/>`_ 1.11.0 or newer,
- * `SciPy <https://www.scipy.org/>`_ 0.17.0 or newer,
- * `LAPACK <http://netlib.org/lapack/>`_ and `BLAS <http://netlib.org/blas/>`_,
+ * `NumPy <https://numpy.org/>`_ 1.18.0 or newer,
+ * `SciPy <https://www.scipy.org/>`_ 1.3.0 or newer,
+ * `LAPACK <https://netlib.org/lapack/>`_ and `BLAS <https://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
    <https://www.openblas.net/>`_ or the nonfree `MKL
    <https://software.intel.com/en-us/intel-mkl>`_.)
- * `Tinyarray <https://gitlab.kwant-project.org/kwant/tinyarray>`_ 1.2 or newer,
+ * `Tinyarray <https://gitlab.kwant-project.org/kwant/tinyarray>`_ 1.2.2 or newer,
 a NumPy-like Python package optimized for very small arrays,
  * An environment which allows to compile Python extensions written in C and
    C++.
 
 The following software is highly recommended though not strictly required:
- * `matplotlib <https://matplotlib.org/>`_ 3.0.2 or newer, for the module `kwant.plotter` and the tutorial,
- * `plotly <https://plotly.com/>`_ 3.6.1 or newer, for the module `kwant.plotter` and the tutorial,
- * `SymPy <https://sympy.org/>`_ 1.3.0 or newer, for the subpackage `kwant.continuum`.
- * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.3.0 or newer, for the subpackage `kwant.qsymm`.
- * `MUMPS <https://graal.ens-lyon.fr/MUMPS/>`_, a sparse linear algebra library
+ * `matplotlib <https://matplotlib.org/>`_ 3.2.2 or newer, for the module `kwant.plotter` and the tutorial,
+ * `SymPy <https://sympy.org/>`_ 1.5.1 or newer, for the subpackage `kwant.continuum`.
+ * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.2.6 or newer, for the subpackage `kwant.qsymm`.
+ * `MUMPS <https://mumps-solver.org/>`_, a sparse linear algebra library
    that will in many cases speed up Kwant several times and reduce the memory
    footprint.  (Kwant uses only the sequential, single core version
    of MUMPS.  The advantages due to MUMPS as used by Kwant are thus independent
@@ -55,7 +54,7 @@ The following software is highly recommended though not strictly required:
    tests included with Kwant.
 
 In addition, to build a copy of Kwant that has been checked-out directly from
-version control, you will also need `Cython <https://cython.org/>`_ 0.26.1 or
+version control, you will also need `Cython <https://cython.org/>`_ 3.0 or
 newer.  You do not need Cython to build Kwant that has been unpacked from a
 source .tar.gz-file.
 
