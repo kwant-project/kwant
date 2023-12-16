@@ -85,9 +85,10 @@ def configure_extensions(exts, aliases=(), build_summary=None):
     for short, long in aliases:
         if short in configs:
             if long in configs:
-                print('Error: both {} and {} sections present in {}.'.format(
-                    short, long, config_file))
-                sys.exit(1)
+                sys.exit(
+                    f'Error: both {short} and {long} '
+                    f'sections present in {config_file}.'
+                )
             configs[long] = configs[short]
             del configs[short]
 
@@ -121,11 +122,8 @@ def configure_extensions(exts, aliases=(), build_summary=None):
         if config is not defaultconfig:
             del configs[name]
 
-    unknown_sections = configs.sections()
-    if unknown_sections:
-        print('Error: Unknown sections in file {}: {}'.format(
-            config_file, ', '.join(unknown_sections)))
-        sys.exit(1)
+    if (unknown_sections := ", ".join(configs.sections())):
+        sys.exit(f"Unknown sections in {config_file}: {unknown_sections}")
 
     return exts
 
@@ -266,10 +264,9 @@ class sdist(sdist_orig):
         names = git_lsfiles()
         if names is None:
             if not (manifest.is_file() and os.access(manifest, os.R_OK)):
-                print("Error:", manifest_in_file,
-                      "file is missing and Git is not available"
-                      " to regenerate it.", file=sys.stderr)
-                sys.exit(1)
+                sys.exit(f"Error: {manifest_in_file}"
+                         "file is missing and Git is not available"
+                         " to regenerate it.")
         else:
             with open(manifest, 'w') as f:
                 for name in names:
@@ -389,8 +386,7 @@ def maybe_cythonize(exts):
         elif language == 'c++':
             ext = '.cpp'
         else:
-            print('Unknown language: {}'.format(language), file=sys.stderr)
-            sys.exit(1)
+            sys.exit(f"Unknown language: {language}")
 
         pyx_files = []
         cythonized_files = []
@@ -408,10 +404,13 @@ def maybe_cythonize(exts):
             cythonized_oldest = min(os.stat(f).st_mtime
                                     for f in cythonized_files)
         except OSError:
-            msg = "Cython-generated file {} is missing."
-            print(banner(" Error "), msg.format(f), "",
-                  cython_help, banner(), sep="\n", file=sys.stderr)
-            sys.exit(1)
+            sys.exit("\n".join([
+                banner(" Error "),
+                f"Cython-generated file {f} is missing.",
+                "",
+                cython_help,
+                banner(),
+            ]))
 
         for f in pyx_files + kwargs.get('depends', []):
             if f == config_file:
