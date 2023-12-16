@@ -12,7 +12,6 @@ from __future__ import print_function
 
 import sys
 
-import re
 import os
 import importlib
 import subprocess
@@ -30,6 +29,8 @@ from distutils.errors import DistutilsError, CCompilerError  # noqa: E402
 from distutils.command.build import build as build_orig  # noqa: E402
 from setuptools.command.sdist import sdist as sdist_orig  # noqa: E402
 from setuptools.command.build_ext import build_ext as build_ext_orig  # noqa: E402
+# Packaging is a dependency of setuptools, so we are free to use it.
+from packaging.version import Version, parse as parse_version  # noqa: E402
 
 
 STATIC_VERSION_PATH = 'kwant/_kwant_version.py'
@@ -161,7 +162,7 @@ def init_cython():
     global cythonize, cython_help
 
     cython_option = '--cython'
-    required_cython_version = (0, 24)
+    required_cython_version = Version("0.24")
     try:
         sys.argv.remove(cython_option)
         cythonize = True
@@ -175,27 +176,14 @@ def init_cython():
         except ImportError:
             cythonize = None
         else:
-            #### Get Cython version.
-            match = re.match('([0-9.]*)(.*)', Cython.__version__)
-            cython_version = [int(n) for n in match.group(1).split('.')]
-            # Decrease version if the version string contains a suffix.
-            if match.group(2):
-                while cython_version[-1] == 0:
-                    cython_version.pop()
-                cython_version[-1] -= 1
-            cython_version = tuple(cython_version)
-
-            if cython_version < required_cython_version:
+            if parse_version(Cython.__version__) < required_cython_version:
                 cythonize = None
 
         if cythonize is None:
-            msg = ("Install Cython >= {0} or use"
+            cython_help = (f"Install Cython >= {required_cython_version} or use"
                     " a source distribution (tarball) of Kwant.")
-            ver = '.'.join(str(e) for e in required_cython_version)
-            cython_help = msg.format(ver)
     else:
-        msg = "Run setup.py with the {} option to enable Cython."
-        cython_help = msg.format(cython_option)
+        cython_help = f"Run setup.py with the {cython_option} option to enable Cython."
 
 
 def banner(title=''):
