@@ -17,7 +17,6 @@ import importlib
 import subprocess
 import configparser
 import argparse
-import collections
 from pathlib import Path
 
 # Until there is an alternative way to add custom build steps, request that
@@ -146,7 +145,7 @@ def init_cython():
     global cythonize, cython_help
 
     cython_option = '--cython'
-    required_cython_version = Version("0.24")
+    required_cython_version = Version("3.0")
     try:
         sys.argv.remove(cython_option)
         cythonize = True
@@ -446,7 +445,7 @@ def maybe_add_numpy_include(exts):
 def main():
     check_versions()
 
-    exts = collections.OrderedDict([
+    exts = dict([
         ('kwant._system',
          dict(sources=['kwant/_system.pyx'],
               include_dirs=['kwant/graph'])),
@@ -464,6 +463,11 @@ def main():
         ('kwant.linalg._mumps',
          dict(sources=['kwant/linalg/_mumps.pyx'],
               depends=['kwant/linalg/cmumps.pxd']))])
+    # Stop relying on numpy deprecated API.
+    for ext in exts.values():
+        ext['define_macros'] = [
+            ('NPY_NO_DEPRECATED_API', 'NPY_1_7_API_VERSION')
+        ]
 
     aliases = [('mumps', 'kwant.linalg._mumps')]
 

@@ -55,7 +55,7 @@ build-env:default:
 .build: &build
   stage: build
   script:
-    - echo -e "[DEFAULT]\ndefine_macros = CYTHON_TRACE=1" >build.conf
+    - echo -e "[DEFAULT]\ndefine_macros = CYTHON_TRACE=1 NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION" >build.conf
     - ./setup.py build
     - ./setup.py build_ext -i
   artifacts:
