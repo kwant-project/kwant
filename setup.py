@@ -16,6 +16,7 @@ import os
 import importlib
 import subprocess
 import configparser
+import argparse
 import collections
 from pathlib import Path
 
@@ -45,41 +46,26 @@ def configure_extensions(exts, aliases=(), build_summary=None):
     `Extension(name, **kwargs).  This function modifies the kwargs according to
     the configuration file.
 
-    This function modifies `sys.argv`.
+    This function removes `--configfile` from `sys.argv`.
     """
     global config_file, config_file_present
 
     #### Determine the name of the configuration file.
-    config_file_option = '--configfile'
-    config_file_option_present = False
-    # Handle command line option
-    for i, opt in enumerate(sys.argv):
-        if not opt.startswith(config_file_option):
-            continue
-        config_file_option_present = True
-        l, _, config_file = opt.partition('=')
-        if l != config_file_option or not config_file:
-            print('Error: Expecting {}=PATH'.format(config_file_option),
-                  file=sys.stderr)
-            sys.exit(1)
-        sys.argv.pop(i)
-        break
-    else:
-        config_file = 'build.conf'
+    default_config_file = Path('build.conf')
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--configfile', type=argparse.FileType('r'))
+    known, unknown = parser.parse_known_args()
+    config_file = known.configfile
+    sys.argv = [sys.argv[0]] + unknown
+    if config_file is None and default_config_file.is_file():
+        config_file = default_config_file.open()
 
     #### Read build configuration file.
     configs = configparser.ConfigParser()
-    try:
-        with open(config_file) as f:
-            configs.read_file(f)
-    except IOError:
-        config_file_present = False
-        if config_file_option_present:
-            print("Error: '{}' option was provided, but '{}' does not exist"
-                  .format(config_file_option, config_file))
-            sys.exit(1)
-    else:
-        config_file_present = True
+    if (config_file_present := config_file is not None):
+        configs.read_file(config_file)
+
+    config_file = config_file.name if config_file is not None else 'build.conf'
 
     #### Handle section aliases.
     for short, long in aliases:
@@ -155,7 +141,7 @@ def init_cython():
     * If Cython should, but cannot be run it contains `None`.  A help message
       on how to solve the problem is stored in `cython_help`.
 
-    This function modifies `sys.argv`.
+    This function removes `--cython` from `sys.argv`.
     """
     global cythonize, cython_help
 
