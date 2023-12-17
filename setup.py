@@ -20,18 +20,20 @@ import argparse
 from pathlib import Path
 from ctypes.util import find_library
 
-# Until there is an alternative way to add custom build steps, request that
-# setuptools' local distutils copy is used as global module "distutils".  This
-# works around the future removal of distutils from the stdlib.  See
-# https://github.com/pypa/setuptools/issues/2928#issuecomment-997138589.
-os.environ["SETUPTOOLS_USE_DISTUTILS"] = "local"
-from setuptools import setup, find_packages, Extension  # noqa: E402
-from distutils.errors import DistutilsError, CCompilerError  # noqa: E402
-from distutils.command.build import build as build_orig  # noqa: E402
-from setuptools.command.sdist import sdist as sdist_orig  # noqa: E402
-from setuptools.command.build_ext import build_ext as build_ext_orig  # noqa: E402
+from setuptools import setup, find_packages, Extension
+from setuptools.errors import CCompilerError, BaseError as DistutilsError
+from setuptools.command.sdist import sdist as sdist_orig
+from setuptools.command.build_ext import build_ext as build_ext_orig
 # Packaging is a dependency of setuptools, so we are free to use it.
-from packaging.version import Version, parse as parse_version  # noqa: E402
+from packaging.version import Version, parse as parse_version
+import setuptools
+
+if parse_version(setuptools.__version__) < Version("63.0"):
+    # TODO: remove this once we depend on setuptools >= 63.0
+    os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'local'
+    from distutils.command.build import build as build_orig
+else:
+    from setuptools.command.build import build as build_orig
 
 
 STATIC_VERSION_PATH = 'kwant/_kwant_version.py'
