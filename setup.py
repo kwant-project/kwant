@@ -289,10 +289,6 @@ def write_version(path):
     )
 
 
-def long_description():
-    return Path('README.rst').read_text()
-
-
 def search_mumps():
     """Return the configuration for MUMPS if it is available in a known way.
 
@@ -469,47 +465,15 @@ def main():
     exts = maybe_add_numpy_include(exts)
     exts = maybe_cythonize(exts)
 
-    classifiers = """\
-        Development Status :: 5 - Production/Stable
-        Intended Audience :: Science/Research
-        Intended Audience :: Developers
-        Programming Language :: Python :: 3 :: Only
-        Topic :: Software Development
-        Topic :: Scientific/Engineering
-        Operating System :: POSIX
-        Operating System :: Unix
-        Operating System :: MacOS :: MacOS X
-        Operating System :: Microsoft :: Windows"""
-
     packages = find_packages('.')
-    setup(name='kwant',
-          version=version,
-          author='C. W. Groth (CEA), M. Wimmer, '
-                 'A. R. Akhmerov, X. Waintal (CEA), and others',
-          author_email='authors@kwant-project.org',
-          description=("Package for numerical quantum transport calculations "
-                       "(Python 3 version)"),
-          long_description=long_description(),
-          platforms=["Unix", "Linux", "Mac OS-X", "Windows"],
-          url="https://kwant-project.org/",
-          license="BSD",
+    setup(version=version,
           packages=packages,
           package_data={p: ['*.pxd', '*.h'] for p in packages},
           cmdclass={'build': build,
                     'sdist': sdist,
                     'build_ext': build_ext},
           ext_modules=exts,
-          install_requires=['numpy >= 1.18.0', 'scipy >= 1.3.0',
-                            'tinyarray >= 1.2.2'],
-          extras_require={
-              # The oldest versions between: Debian stable, Ubuntu LTS
-              'plotting': 'matplotlib >= 3.2.2',
-              'continuum': 'sympy >= 1.5.1',
-              # qsymm is only packaged on PyPI
-              'qsymm': 'qsymm >= 1.3.0',
-          },
-          python_requires='>=3.8',
-          classifiers=[c.strip() for c in classifiers.split('\n')])
+    )
 
 if __name__ == '__main__':
     main()
