@@ -290,11 +290,7 @@ def write_version(path):
 
 
 def long_description():
-    source = Path('README.rst')
-    if not source.is_file():
-        return ''
-    text = source.read_text()
-    return text[:text.find('See also in this directory:')]
+    return Path('README.rst').read_text()
 
 
 def search_mumps():

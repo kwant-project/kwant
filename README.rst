@@ -36,6 +36,3 @@ welcome.
 A `mailing list <https://kwant-project.org/community>`_ exists for general
 discussions related to Kwant.  Please report bugs and other issues using the
 `issue tracker <https://gitlab.kwant-project.org/kwant/kwant/issues>`_.
-
-See also in this directory: `<INSTALL.rst>`_, `<LICENSE.rst>`_, `<AUTHORS.rst>`_,
-`<CITING.rst>`_, `<CONTRIBUTE.rst>`_.
