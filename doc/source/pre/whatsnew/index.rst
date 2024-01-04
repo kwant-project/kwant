@@ -2,6 +2,7 @@ What's new in Kwant
 ===================
 
 .. toctree::
+    unreleased
     1.5
     1.4
     1.3
