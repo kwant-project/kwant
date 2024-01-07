@@ -178,7 +178,7 @@ if plotly_available:
 
     def convert_cmap_list_mpl_plotly(mpl_cmap_name):
         if isinstance(mpl_cmap_name, str):
-            cmap = matplotlib.cm.get_cmap(mpl_cmap_name)
+            cmap = get_cmap(mpl_cmap_name)
             cmap_plotly_linear = [
                 (level, convert_colormap_mpl_plotly(*cmap(level)))
                 for level in np.linspace(0, 1, cmap.N)

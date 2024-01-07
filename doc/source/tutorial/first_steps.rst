@@ -402,11 +402,6 @@ subbands that increases with energy.
      `~kwant.plotter.plot` can also write to a file specified by the argument
      ``file``.
 
-   - Due to matplotlib's limitations, Kwant's plotting routines have the
-     side effect of fixing matplotlib's "backend".  If you would like to choose
-     a different backend than the standard one, you must do so before asking
-     Kwant to plot anything.
-
 
 .. rubric:: Footnotes
 

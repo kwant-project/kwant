@@ -16,7 +16,6 @@ system in two or three dimensions.
 """
 
 from collections import defaultdict
-import sys
 import itertools
 import functools
 import warnings
@@ -101,19 +100,8 @@ def _color_cycle():
 
 
 def _make_figure(dpi, fig_size, use_pyplot=False):
-    if 'matplotlib.backends' not in sys.modules:
-        warnings.warn(
-            "Kwant's plotting functions have\nthe side effect of "
-            "selecting the matplotlib backend. To avoid this "
-            "warning,\nimport matplotlib.pyplot, "
-            "matplotlib.backends or call matplotlib.use().",
-            RuntimeWarning, stacklevel=3
-        )
     if use_pyplot:
         # We import backends and pyplot only at the last possible moment (=now)
-        # because this has the side effect of selecting the matplotlib backend
-        # for good.  Warn if backend has not been set yet.  This check is the
-        # same as the one performed inside matplotlib.use.
         from matplotlib import pyplot
         fig = pyplot.figure()
     else:
@@ -2658,7 +2646,8 @@ def _streamplot_matplotlib(field, box, cmap, bgcolor, linecolor,
     if bgcolor is None:
         if cmap is None:
             cmap = _p.kwant_red_matplotlib
-        cmap = _p.get_cmap(cmap)
+        if isinstance(cmap, str):
+            cmap = _p.get_cmap(cmap)
         bgcolor = cmap(0)[:3]
     elif cmap is not None:
         raise ValueError("The parameters 'cmap' and 'bgcolor' are "
@@ -2814,7 +2803,8 @@ def _scalarplot_matplotlib(field, box, cmap, colorbar, file, show, dpi,
 
     if cmap is None:
         cmap = _p.kwant_red_matplotlib
-    cmap = _p.get_cmap(cmap)
+    if isinstance(cmap, str):
+        cmap = _p.get_cmap(cmap)
 
     if ax is None:
         fig = _make_figure(dpi, fig_size, use_pyplot=(file is None))
