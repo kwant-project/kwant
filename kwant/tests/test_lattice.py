@@ -29,7 +29,7 @@ def test_closest():
         assert lat.closest(lat(*tag).pos) == tag
 
     # Closest should raise if input has a wrong dimensionality
-    raises(ValueError, lattice.square().closest, [0])
+    raises(ValueError, lattice.square(norbs=1).closest, [0])
 
 
 def test_general():

@@ -407,11 +407,11 @@ def test_zero_hopping():
                 leads.StabilizedModes(np.zeros((0, 0)), np.zeros((0, 0)), 0,
                                       np.zeros((1, 0))))
     actual = leads.modes(h_cell, h_hop)
-    assert all(np.alltrue(getattr(actual[1], attr) ==
-                          getattr(expected[1], attr)) for attr
+    assert all(np.all(getattr(actual[1], attr) ==
+                      getattr(expected[1], attr)) for attr
                    in ('vecs', 'vecslmbdainv', 'nmodes', 'sqrt_hop'))
-    assert all(np.alltrue(getattr(actual[0], attr) ==
-                          getattr(expected[0], attr)) for attr
+    assert all(np.all(getattr(actual[0], attr) ==
+                      getattr(expected[0], attr)) for attr
                    in ('wave_functions', 'velocities', 'momenta'))
 
 

@@ -361,10 +361,10 @@ def test_bounds():
     # re initialize to obtain the same vector v0
     rng = ensure_rng(1)
     v0 = np.exp(2j * np.pi * rng.random_sample(dim))
-    lmax = float(sla.eigsh(
-        ham, k=1, which='LA', return_eigenvectors=False, tol=tol, v0=v0))
-    lmin = float(sla.eigsh(
-        ham, k=1, which='SA', return_eigenvectors=False, tol=tol, v0=v0))
+    lmax = sla.eigsh(
+        ham, k=1, which='LA', return_eigenvectors=False, tol=tol, v0=v0)[0]
+    lmin = sla.eigsh(
+        ham, k=1, which='SA', return_eigenvectors=False, tol=tol, v0=v0)[0]
     sp2 = SpectralDensity(ham, bounds=(lmin, lmax), eps=epsilon, rng=1)
 
     # different algorithms are used so these arrays are equal up to TOL_SP

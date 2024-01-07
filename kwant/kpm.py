@@ -1160,10 +1160,10 @@ def _rescale(hamiltonian, eps, v0, bounds):
     if bounds:
         lmin, lmax = bounds
     else:
-        lmax = float(eigsh(hamiltonian, k=1, which='LA',
-                           return_eigenvectors=False, tol=tol, v0=v0))
-        lmin = float(eigsh(hamiltonian, k=1, which='SA',
-                           return_eigenvectors=False, tol=tol, v0=v0))
+        lmax = eigsh(hamiltonian, k=1, which='LA',
+                     return_eigenvectors=False, tol=tol, v0=v0)[0]
+        lmin = eigsh(hamiltonian, k=1, which='SA',
+                     return_eigenvectors=False, tol=tol, v0=v0)[0]
 
     a = np.abs(lmax-lmin) / (2. - eps)
     b = (lmax+lmin) / 2.
