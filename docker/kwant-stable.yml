@@ -8,7 +8,7 @@ dependencies:
     - tinyarray=1.2.2
     - sympy=1.5.1
     - matplotlib-base=3.2.2
-    - plotly=2.2.2
+    - plotly=2.7.0
     - qsymm=1.2.6
     # Linear algebra libraries
     # Pin mumps due to switching int size in 5.5.1
