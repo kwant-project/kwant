@@ -13,6 +13,9 @@ dependencies:
     # Linear algebra libraries
     # Pin mumps due to switching int size in 5.5.1
     - mumps-seq=5.2.1
+    # Pin metis due to ABI incompatibility in 5.1.1
+    # See https://github.com/conda-forge/mumps-feedstock/issues/87
+    - metis=5.1.0
     - blas #=1.1 openblas
     - openblas #=0.2.20
     # Build toolchain
