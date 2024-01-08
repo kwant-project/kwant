@@ -98,7 +98,7 @@ and we also define some other parameters useful for constructing our system:
 .. jupyter-execute::
 
     t = 1.0
-    alpha = 0.5
+    alpha = 1.0
     e_z = 0.08
     W, L = 10, 30
 
