@@ -24,7 +24,7 @@ continuum models and for discretizing them into tight-binding models.
 
 .. seealso::
     The complete source code of this tutorial can be found in
-    :jupyter-download:script:`discretize`
+    :jupyter-download-script:`discretize`
 
 .. jupyter-kernel::
     :id: discretize

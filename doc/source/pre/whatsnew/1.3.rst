@@ -64,7 +64,7 @@ a quantum anomalous spin Hall phase:
         subs = {"kk": "k_x**2 + k_y**2"}
         return kwant.continuum.discretize(ham, locals=subs, grid=a)
 
-From: :jupyter-download:script:`plot_qahe`
+From: :jupyter-download-script:`plot_qahe`
 
 See the tutorial: :doc:`../../tutorial/discretize`
 
@@ -143,7 +143,7 @@ of the two-band model shown in the `above section
     current = sum(J(p) for p in psi)
     kwant.plotter.current(syst, current);
 
-From: :jupyter-download:script:`plot_qahe`
+From: :jupyter-download-script:`plot_qahe`
 
 Scattering states with discrete symmetries and conservation laws
 ----------------------------------------------------------------

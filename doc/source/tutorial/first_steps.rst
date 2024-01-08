@@ -68,7 +68,7 @@ Transport through a quantum wire
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`quantum_wire`
+    :jupyter-download-script:`quantum_wire`
 
 In order to use Kwant, we need to import it:
 
@@ -413,7 +413,7 @@ Building the same system with less code
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`quantum_wire_revisited`
+    :jupyter-download-script:`quantum_wire_revisited`
 
 
 .. jupyter-kernel::
@@ -638,7 +638,7 @@ Tips for organizing your simulation scripts
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`quantum_wire_organized`
+    :jupyter-download-script:`quantum_wire_organized`
 
 
 .. jupyter-kernel::

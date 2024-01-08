@@ -17,7 +17,7 @@ Matrix structure of on-site and hopping elements
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`spin_orbit`
+    :jupyter-download-script:`spin_orbit`
 
 .. jupyter-kernel::
     :id: spin_orbit
@@ -230,7 +230,7 @@ Spatially dependent values through functions
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`quantum_well`
+    :jupyter-download-script:`quantum_well`
 
 .. jupyter-kernel::
     :id: quantum_well
@@ -388,7 +388,7 @@ Nontrivial shapes
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`ab_ring`
+    :jupyter-download-script:`ab_ring`
 
 .. jupyter-kernel::
     :id: ab_ring

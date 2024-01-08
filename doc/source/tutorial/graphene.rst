@@ -11,7 +11,7 @@ Beyond square lattices: graphene
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`graphene`
+    :jupyter-download-script:`graphene`
 
 In the following example, we are going to calculate the
 conductance through a graphene quantum dot with a p-n junction

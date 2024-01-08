@@ -12,7 +12,7 @@ Computing Landau levels in a harmonic oscillator basis
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`landau-levels`
+    :jupyter-download-script:`landau-levels`
 
 .. jupyter-kernel::
     :id: landau-levels

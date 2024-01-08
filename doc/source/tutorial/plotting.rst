@@ -18,7 +18,7 @@ these options can be used to achieve various very different objectives.
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`plot_graphene`
+    :jupyter-download-script:`plot_graphene`
 
 .. jupyter-kernel::
     :id: plot_graphene
@@ -205,7 +205,7 @@ visible. The hoppings are also plotted in order to show the underlying lattice.
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`plot_zincblende`
+    :jupyter-download-script:`plot_zincblende`
 
 .. jupyter-kernel::
     :id: plot_zincblende

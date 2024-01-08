@@ -12,7 +12,7 @@ Band structure calculations
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`band_structure`
+    :jupyter-download-script:`band_structure`
 
 .. jupyter-kernel::
     :id: band_structure
@@ -120,7 +120,7 @@ Closed systems
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`closed_system`
+    :jupyter-download-script:`closed_system`
 
 .. jupyter-kernel::
     :id: closed_system

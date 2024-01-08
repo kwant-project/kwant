@@ -19,7 +19,7 @@ texture.
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`magnetic_texture`
+    :jupyter-download-script:`magnetic_texture`
 
 .. jupyter-kernel::
     :id: magnetic_texture

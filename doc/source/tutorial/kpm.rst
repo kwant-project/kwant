@@ -23,7 +23,7 @@ KPM method `kwant.kpm`, that is based on the algorithms presented in Ref. [1]_.
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`kernel_polynomial_method`
+    :jupyter-download-script:`kernel_polynomial_method`
 
 .. jupyter-kernel::
     :id: kernel_polynomial_method

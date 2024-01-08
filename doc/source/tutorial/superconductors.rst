@@ -9,7 +9,7 @@ Superconductors: orbital degrees of freedom, conservation laws and symmetries
 
 .. seealso::
     The complete source code of this example can be found in
-    :jupyter-download:script:`superconductor`
+    :jupyter-download-script:`superconductor`
 
 .. jupyter-kernel::
     :id: superconductor
