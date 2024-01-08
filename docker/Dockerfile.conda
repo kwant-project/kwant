@@ -17,8 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 USER $MAMBA_USER
-COPY --chown=$MAMBA_USER:$MAMBA_USER kwant-latest.yml kwant-stable.yml kwant-stable-no-extras.yml /
+COPY --chown=$MAMBA_USER:$MAMBA_USER kwant-latest.yml kwant-stable.yml kwant-stable-no-extras.yml /tmp/
 
-RUN micromamba env create -f /kwant-stable.yml
-RUN micromamba env create -f /kwant-stable-no-extras.yml
-RUN micromamba env create -f /kwant-latest.yml
+RUN micromamba env create -f /tmp/kwant-stable.yml
+RUN micromamba env create -f /tmp/kwant-stable-no-extras.yml
+RUN micromamba env create -f /tmp/kwant-latest.yml
+

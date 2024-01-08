@@ -210,6 +210,7 @@ build documentation:
   script:
     - pip install --editable .  # Makefile executes from folders
     - python -c 'from matplotlib import pyplot'  # Pre-generate font cache
+    - python -m ipykernel install --user --name kwant-latest  # Register the kernel
     - make -C doc clean; make -C doc html SPHINXOPTS='-A website_deploy=True -n -D jupyter_execute_default_kernel=kwant-latest' SOURCE_LINK_TEMPLATE="$CI_PROJECT_URL"/blob/\$\$r/\$\$f
   artifacts:
     paths:
@@ -224,6 +225,7 @@ build PDF documentation:
   script:
     - pip install --editable .  # Makefile executes from folders
     - python -c 'from matplotlib import pyplot'  # Pre-generate font cache
+    - python -m ipykernel install --user --name kwant-latest  # Register the kernel
     - make -C doc latex SPHINXOPTS='-n -D jupyter_execute_default_kernel=kwant-latest'
     - cd doc/build/latex
     - make all-pdf
