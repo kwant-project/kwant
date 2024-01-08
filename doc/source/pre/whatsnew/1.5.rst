@@ -79,6 +79,8 @@ the code are inserted directly into the document thanks to the magic of
 It has never been easier to get started contributing to Kwant by
 helping us improve our documentation.
 
+We have also updated the docs theme to a more modern sphinx-book-theme.
+
 Discretization onto a Landau level basis
 ----------------------------------------
 The Hamiltonian for a system infinite in at least two dimensions and with
