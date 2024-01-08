@@ -14,7 +14,7 @@ import tinyarray as ta
 import pytest
 
 import kwant
-from kwant import _plotter
+from kwant import _plotter, plotter
 from kwant.wraparound import wraparound, plot_2d_bands
 from kwant._common import get_parameters
 
@@ -208,7 +208,7 @@ def test_plot_2d_bands():
     syst_3d[cube(0, 0, 0)] = 6
     syst_3d[cube.neighbors()] = -1
 
-
+    plotter.set_engine('matplotlib')
     with tempfile.TemporaryFile('w+b') as out:
         # test 2D
         plot_2d_bands(wraparound(syst_2d).finalized(), k_x=11, k_y=11, file=out)
@@ -228,6 +228,7 @@ def test_plot_2d_bands():
         plot_2d_bands(wraparound(syst_3d).finalized())
 
     # test k_x and k_y differ
+    plotter.set_engine('matplotlib')
     with tempfile.TemporaryFile('w+b') as out:
         syst = wraparound(syst_2d).finalized()
         plot_2d_bands(syst, k_x=11, k_y=15, file=out)
