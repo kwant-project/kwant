@@ -85,7 +85,8 @@ The accuracy of the method can be tuned by modifying the order of the Chebyshev
 expansion and the number of vectors. See notes on accuracy_ below for details.
 
 .. _accuracy:
-.. specialnote:: Performance and accuracy
+.. admonition:: Performance and accuracy
+    :class: dropdown note
 
     The KPM method is especially well suited for large systems, and in the
     case when one is not interested in individual eigenvalues, but rather
@@ -252,7 +253,8 @@ respect to a Fermi-Dirac distribution:
 
     print('number of filled states:', spectrum.integrate(fermi))
 
-.. specialnote:: Stability and performance: spectral bounds
+.. admonition:: Stability and performance: spectral bounds
+    :class: dropdown note
 
     The KPM method internally rescales the spectrum of the Hamiltonian to the
     interval ``(-1, 1)`` (see Ref. [1]_ for details), which requires calculating

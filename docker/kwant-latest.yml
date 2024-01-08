@@ -30,6 +30,8 @@ dependencies:
     - sphinx
     - numpydoc
     - requests
-    - jupyter_sphinx
+    - sphinx-book-theme
+    - jupyter-sphinx
+    - sphinx-togglebutton
     - pip:
         - sphinxcontrib-svg2pdfconverter

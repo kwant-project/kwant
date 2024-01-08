@@ -326,81 +326,82 @@ value of the conductance is determined by the number of occupied
 subbands that increases with energy.
 
 
-.. specialnote:: Technical details
+.. admonition:: Technical details
+    :class: dropdown note
 
-   - In the example above, when building the system, only one direction
-     of hopping is given, i.e. ``syst[lat(i, j), lat(i, j-1)] = ...`` and
-     not also ``syst[lat(i, j-1), lat(i, j)] = ...``. The reason is that
-     `~kwant.builder.Builder` automatically adds the other
-     direction of the hopping such that the resulting system is Hermitian.
+    - In the example above, when building the system, only one direction
+      of hopping is given, i.e. ``syst[lat(i, j), lat(i, j-1)] = ...`` and
+      not also ``syst[lat(i, j-1), lat(i, j)] = ...``. The reason is that
+      `~kwant.builder.Builder` automatically adds the other
+      direction of the hopping such that the resulting system is Hermitian.
 
-     However, it does not hurt to define the opposite direction of hopping as
-     well::
+      However, it does not hurt to define the opposite direction of hopping as
+      well::
 
-         syst[lat(1, 0), lat(0, 0)] = -t
-         syst[lat(0, 0), lat(1, 0)] = -t.conj()
+        syst[lat(1, 0), lat(0, 0)] = -t
+        syst[lat(0, 0), lat(1, 0)] = -t.conj()
 
-     (assuming that `t` is complex) is perfectly fine. However,
-     be aware that also
+      (assuming that `t` is complex) is perfectly fine. However,
+      be aware that also
 
-     ::
+      ::
 
-         syst[lat(1, 0), lat(0, 0)] = -1
-         syst[lat(0, 0), lat(1, 0)] = -2
+          syst[lat(1, 0), lat(0, 0)] = -1
+          syst[lat(0, 0), lat(1, 0)] = -2
 
-     is valid code. In the latter case, the hopping ``syst[lat(1, 0),
-     lat(0, 0)]`` is overwritten by the last line and also equals to -2.
+      is valid code. In the latter case, the hopping ``syst[lat(1, 0),
+      lat(0, 0)]`` is overwritten by the last line and also equals to -2.
 
-   - Some more details the relation between `~kwant.builder.Builder`
-     and the square lattice `lat` in the example:
+    - Some more details the relation between `~kwant.builder.Builder`
+      and the square lattice `lat` in the example:
 
-     Technically, `~kwant.builder.Builder` expects
-     **sites** as indices. Sites themselves have a certain type, and
-     belong to a **site family**. A site family is also used to convert
-     something that represents a site (like a tuple) into a
-     proper `~kwant.builder.Site` object that can be used with
-     `~kwant.builder.Builder`.
+      Technically, `~kwant.builder.Builder` expects
+      **sites** as indices. Sites themselves have a certain type, and
+      belong to a **site family**. A site family is also used to convert
+      something that represents a site (like a tuple) into a
+      proper `~kwant.builder.Site` object that can be used with
+      `~kwant.builder.Builder`.
 
-     In the above example, `lat` is the site family. ``lat(i, j)``
-     then translates the description of a lattice site in terms of two
-     integer indices (which is the natural way to do here) into
-     a proper `~kwant.builder.Site` object.
+      In the above example, `lat` is the site family. ``lat(i, j)``
+      then translates the description of a lattice site in terms of two
+      integer indices (which is the natural way to do here) into
+      a proper `~kwant.builder.Site` object.
 
-     The concept of site families and sites allows `~kwant.builder.Builder`
-     to mix arbitrary lattices and site families
+      The concept of site families and sites allows `~kwant.builder.Builder`
+      to mix arbitrary lattices and site families
 
-   - In the example, we wrote
+    - In the example, we wrote
 
-     ::
+      ::
 
-         syst = syst.finalized()
+        syst = syst.finalized()
 
-     In doing so, we transform the `~kwant.builder.Builder` object (with which
-     we built up the system step by step) into a `~kwant.system.System`
-     that has a fixed structure (which we cannot change any more).
+      In doing so, we transform the `~kwant.builder.Builder` object (with which
+      we built up the system step by step) into a `~kwant.system.System`
+      that has a fixed structure (which we cannot change any more).
 
-     Note that this means that we cannot access the `~kwant.builder.Builder`
-     object any more. This is not necesarry any more, as the computational
-     routines all expect finalized systems. It even has the advantage
-     that python is now free to release the memory occupied by the
-     `~kwant.builder.Builder` which, for large systems, can be considerable.
-     Roughly speaking, the above code corresponds to
+      Note that this means that we cannot access the `~kwant.builder.Builder`
+      object any more. This is not necesarry any more, as the computational
+      routines all expect finalized systems. It even has the advantage
+      that python is now free to release the memory occupied by the
+      `~kwant.builder.Builder` which, for large systems, can be considerable.
+      Roughly speaking, the above code corresponds to
 
-     ::
+      ::
 
-         fsyst = syst.finalized()
-         del syst
-         syst = fsyst
+          fsyst = syst.finalized()
+          del syst
+          syst = fsyst
 
-   - Even though the vector passed to the
-     `~kwant.lattice.TranslationalSymmetry` is specified in real space, it must
-     be compatible with the lattice symmetries.  A single lead can consists of
-     sites belonging to more than one lattice, but of course the translational
-     symmetry of the lead has to be shared by all of them.
+    - Even though the vector passed to the
+      `~kwant.lattice.TranslationalSymmetry` is specified in real space, it must
+      be compatible with the lattice symmetries.  A single lead can consists of
+      sites belonging to more than one lattice, but of course the translational
+      symmetry of the lead has to be shared by all of them.
 
-   - Instead of plotting to the screen (which is standard)
-     `~kwant.plotter.plot` can also write to a file specified by the argument
-     ``file``.
+    - Instead of plotting to the screen (which is standard)
+      `~kwant.plotter.plot` can also write to a file specified by the argument
+      ``file``.
 
 
 .. rubric:: Footnotes
@@ -563,74 +564,75 @@ and then calculate the transmission and plot:
     pyplot.ylabel("conductance [e^2/h]")
     pyplot.show()
 
-.. specialnote:: Technical details
+.. admonition:: Technical details
+    :class: dropdown note
 
-   - We have seen different ways to add lattice points to a
-     `~kwant.builder.Builder`. It allows to
+    - We have seen different ways to add lattice points to a
+      `~kwant.builder.Builder`. It allows to
 
-     * add single points, specified as sites
-     * add several points at once using a generator (as in this example)
-     * add several points at once using a list (typically less
-       effective compared to a generator)
+      * add single points, specified as sites
+      * add several points at once using a generator (as in this example)
+      * add several points at once using a list (typically less
+        effective compared to a generator)
 
-     For technical reasons it is not possible to add several points
-     using a tuple of sites. Hence it is worth noting
-     a subtle detail in:
+      For technical reasons it is not possible to add several points
+      using a tuple of sites. Hence it is worth noting
+      a subtle detail in:
 
-     >>> syst[(lat(x, y) for x in range(L) for y in range(W))] = 4 * t
+      >>> syst[(lat(x, y) for x in range(L) for y in range(W))] = 4 * t
 
-     Note that ``(lat(x, y) for x in range(L) for y in range(W))`` is not
-     a tuple, but a generator.
+      Note that ``(lat(x, y) for x in range(L) for y in range(W))`` is not
+      a tuple, but a generator.
 
-     Let us elaborate a bit more on this using a simpler example:
+      Let us elaborate a bit more on this using a simpler example:
 
-     >>> a = (0, 1, 2, 3)
-     >>> b = (i for i in range(4))
+      >>> a = (0, 1, 2, 3)
+      >>> b = (i for i in range(4))
 
-     Here, `a` is a tuple, whereas `b` is a generator. One difference
-     is that one can subscript tuples, but not generators:
+      Here, `a` is a tuple, whereas `b` is a generator. One difference
+      is that one can subscript tuples, but not generators:
 
-     >>> a[0]
-     0
-     >>> b[0]
-     Traceback (most recent call last):
-       File "<stdin>", line 1, in <module>
-     TypeError: 'generator' object is unsubscriptable
+      >>> a[0]
+      0
+      >>> b[0]
+      Traceback (most recent call last):
+        File "<stdin>", line 1, in <module>
+      TypeError: 'generator' object is unsubscriptable
 
-     However, both can be used in ``for``-loops, for example.
+      However, both can be used in ``for``-loops, for example.
 
-   - In the example, we have added all the hoppings using
-     `~kwant.builder.HoppingKind`. In fact,
-     hoppings can be added in the same fashion as sites, namely specifying
+    - In the example, we have added all the hoppings using
+      `~kwant.builder.HoppingKind`. In fact,
+      hoppings can be added in the same fashion as sites, namely specifying
 
-     * a single hopping
-     * several hoppings via a generator
-     * several hoppings via a list
+      * a single hopping
+      * several hoppings via a generator
+      * several hoppings via a list
 
-     A hopping is defined using two sites. If several hoppings are
-     added at once, these two sites should be encapsulated in a tuple.
-     In particular, one must write::
+      A hopping is defined using two sites. If several hoppings are
+      added at once, these two sites should be encapsulated in a tuple.
+      In particular, one must write::
 
-         syst[((lat(0,j+1), lat(0, j)) for j in range(W-1)] = ...
+          syst[((lat(0,j+1), lat(0, j)) for j in range(W-1)] = ...
 
-     or::
+      or::
 
-         syst[[(site1, site2), (site3, site4), ...]] = ...
+          syst[[(site1, site2), (site3, site4), ...]] = ...
 
-     You might wonder, why it is then possible to write for a single hopping::
+      You might wonder, why it is then possible to write for a single hopping::
 
-        syst[site1, site2] = ...
+         syst[site1, site2] = ...
 
-     instead of ::
+      instead of ::
 
-        syst[(site1, site2)] = ...
+         syst[(site1, site2)] = ...
 
-     In fact, due to the way python handles subscripting, ``syst[site1, site2]``
-     is the same as ``syst[(site1, site2)]``.
+      In fact, due to the way python handles subscripting, ``syst[site1, site2]``
+      is the same as ``syst[(site1, site2)]``.
 
-     (This is the deeper reason why several sites cannot be added as a tuple --
-     it would be impossible to distinguish whether one would like to add two
-     separate sites, or one hopping.
+      (This is the deeper reason why several sites cannot be added as a tuple --
+      it would be impossible to distinguish whether one would like to add two
+      separate sites, or one hopping.
 
 
 Tips for organizing your simulation scripts

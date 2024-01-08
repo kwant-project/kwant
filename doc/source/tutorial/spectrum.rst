@@ -312,7 +312,8 @@ it using `kwant.plotter.current`:
 
     plot_current(syst);
 
-.. specialnote:: Technical details
+.. admonition:: Technical details
+    :class: dropdown note
 
   - `~kwant.system.System.hamiltonian_submatrix` can also return a sparse
     matrix, if the optional argument ``sparse=True``. The sparse matrix is in

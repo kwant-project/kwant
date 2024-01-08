@@ -307,24 +307,25 @@ Finally the transmission through the system is computed,
 showing the typical resonance-like transmission probability through
 an open quantum dot
 
-.. specialnote:: Technical details
+.. admonition:: Technical details
+    :class: dropdown note
 
- - In a lattice with more than one basis atom, you can always act either
-   on all sublattices at the same time, or on a single sublattice only.
+    - In a lattice with more than one basis atom, you can always act either
+      on all sublattices at the same time, or on a single sublattice only.
 
-   For example, you can add lattice points for all sublattices in the
-   current example using::
+      For example, you can add lattice points for all sublattices in the
+      current example using::
 
-       syst[graphene.shape(...)] = ...
+          syst[graphene.shape(...)] = ...
 
-   or just for a single sublattice::
+      or just for a single sublattice::
 
-       syst[a.shape(...)] = ...
+          syst[a.shape(...)] = ...
 
-   and the same of course with `b`. Also, you can selectively remove points::
+      and the same of course with `b`. Also, you can selectively remove points::
 
-       del syst[graphene.shape(...)]
-       del syst[a.shape(...)]
+          del syst[graphene.shape(...)]
+          del syst[a.shape(...)]
 
-   where the first line removes points in both sublattices, whereas the
-   second line removes only points in one sublattice.
+      where the first line removes points in both sublattices, whereas the
+      second line removes only points in one sublattice.

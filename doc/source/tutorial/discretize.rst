@@ -113,7 +113,8 @@ discretization process.
 
 Printing the Builder produced by ``discretize`` shows the source code of its onsite and hopping functions (this is a special feature of builders returned by ``discretize``).
 
-.. specialnote:: Technical details
+.. admonition:: Technical details
+    :class: dropdown note
 
     - ``kwant.continuum`` uses ``sympy`` internally to handle symbolic
       expressions. Strings are converted using `kwant.continuum.sympify`,
@@ -461,14 +462,15 @@ and numerical values:
 Symbolic expressions obtained in this way can be directly passed to all
 ``discretizer`` functions.
 
-.. specialnote:: Technical details
+.. admonition:: Technical details
+    :class: dropdown note
 
-  Because of the way that ``sympy`` handles commutation relations all symbols
-  representing position and momentum operators are set to be non commutative.
-  This means that the order of momentum and position operators in the input
-  expression is preserved.  Note that it is not possible to define individual
-  commutation relations within ``sympy``, even expressions such :math:`x k_y x`
-  will not be simplified, even though mathematically :math:`[x, k_y] = 0`.
+    Because of the way that ``sympy`` handles commutation relations all symbols
+    representing position and momentum operators are set to be non commutative.
+    This means that the order of momentum and position operators in the input
+    expression is preserved.  Note that it is not possible to define individual
+    commutation relations within ``sympy``, even expressions such :math:`x k_y x`
+    will not be simplified, even though mathematically :math:`[x, k_y] = 0`.
 
 
 .. rubric:: References

@@ -281,7 +281,8 @@ is returned by evaluating a `~kwant.operator.Density` can be used directly with
         ('$σ_y$', spin_y),
     ])
 
-.. specialnote:: Technical Details
+.. admonition:: Technical details
+    :class: dropdown note
 
     Although we refer loosely to "densities" and "operators" above, a
     `~kwant.operator.Density` actually represents a *collection* of linear
@@ -360,7 +361,8 @@ Evaluating a `~kwant.operator.Current` operator on a wavefunction returns a
     returns a 1D array of the same length as the number of hoppings in the
     system, ordered in the same way as the edges in the system's graph.
 
-.. specialnote:: Technical Details
+.. admonition:: Technical details
+    :class: dropdown note
 
     Similarly to how we saw in the previous section that `~kwant.operator.Density`
     can be thought of as a collection of operators, `~kwant.operator.Current`

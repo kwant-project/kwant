@@ -38,7 +38,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary',
               'sphinx.ext.todo', 'sphinx.ext.mathjax', 'sphinx.ext.napoleon',
-              'kwantdoc', 'sphinx.ext.linkcode', 'jupyter_sphinx',
+              'sphinx.ext.linkcode', 'jupyter_sphinx', 'sphinx_togglebutton',
               'sphinxcontrib.rsvgconverter']
 
 # Add any paths that contain templates here, relative to this directory.
@@ -120,10 +120,7 @@ jupyter_sphinx_thebelab_config = {
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'kwantdoctheme'
-html_theme_path = ['..']
-html_theme_options = {'collapsiblesidebar': True}
-html_style = 'kwant.css'
+html_theme = 'sphinx_book_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -142,7 +139,7 @@ html_style = 'kwant.css'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+html_logo = "_static/kwant_logo.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -191,9 +188,6 @@ html_domain_indices = False
 
 # If nonempty, this is the file name suffix for HTML files (e.g. ".xhtml").
 #html_file_suffix = ''
-
-# Output file base name for HTML help builder.
-htmlhelp_basename = 'kwantdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -301,10 +295,6 @@ nitpick_ignore = [('py:class', 'Warning'), ('py:class', 'Exception'),
                   ('py:class', 'numpy.ndarray'),
                   ('py:class', 'kwant.solvers.common.BlockResult'),
                   ('py:class', 'kwant.builder._FinalizedBuilderMixin')]
-
-
-# Use custom MathJax CDN, as cdn.mathjax.org will soon shut down
-mathjax_path = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
 
 
 # -- Make Sphinx insert source code links --------------------------------------

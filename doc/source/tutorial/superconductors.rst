@@ -316,7 +316,8 @@ We thus reorder the matrix elements of the scattering matrix blocks above,
 to ensure that the same matrix elements in the electron and hole blocks relate
 scattering states and their particle hole partners.
 
-.. specialnote:: Technical details
+.. admonition:: Technical details
+    :class: dropdown note
 
     - If you are only interested in particle (thermal) currents you do not need
       to separate the electron and hole degrees of freedom. Still, separating them

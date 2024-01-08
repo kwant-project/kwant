@@ -195,34 +195,35 @@ the following, clearly non-monotonic conductance steps:
     pyplot.ylabel("conductance [e^2/h]")
     pyplot.show()
 
-.. specialnote:: Technical details
+.. admonition:: Technical details
+    :class: dropdown note
 
-  - The Tinyarray package, one of the dependencies of Kwant, implements
-    efficient small arrays.  It is used internally in Kwant for storing small
-    vectors and matrices.  For performance, it is preferable to define small
-    arrays that are going to be used with Kwant using Tinyarray.  However,
-    NumPy would work as well::
+    - The Tinyarray package, one of the dependencies of Kwant, implements
+        efficient small arrays.  It is used internally in Kwant for storing small
+        vectors and matrices.  For performance, it is preferable to define small
+        arrays that are going to be used with Kwant using Tinyarray.  However,
+        NumPy would work as well::
 
-        import numpy
-        sigma_0 = numpy.array([[1, 0], [0, 1]])
-        sigma_x = numpy.array([[0, 1], [1, 0]])
-        sigma_y = numpy.array([[0, -1j], [1j, 0]])
-        sigma_z = numpy.array([[1, 0], [0, -1]])
+            import numpy
+            sigma_0 = numpy.array([[1, 0], [0, 1]])
+            sigma_x = numpy.array([[0, 1], [1, 0]])
+            sigma_y = numpy.array([[0, -1j], [1j, 0]])
+            sigma_z = numpy.array([[1, 0], [0, -1]])
 
-    Tinyarray arrays behave for most purposes like NumPy arrays except that
-    they are immutable: they cannot be changed once created.  This is important
-    for Kwant: it allows them to be used directly as dictionary keys.
+        Tinyarray arrays behave for most purposes like NumPy arrays except that
+        they are immutable: they cannot be changed once created.  This is important
+        for Kwant: it allows them to be used directly as dictionary keys.
 
-  - It should be emphasized that the relative hopping used for
-    `~kwant.builder.HoppingKind` is given in terms of
-    lattice indices, i.e. relative to the Bravais lattice vectors.
-    For a square lattice, the Bravais lattice vectors are simply
-    `(a,0)` and `(0,a)`, and hence the mapping from
-    lattice indices `(i,j)` to real space and back is trivial.
-    This becomes more involved in more complicated lattices, where
-    the real-space directions corresponding to, for example, `(1,0)`
-    and `(0,1)` need not be orthogonal any more
-    (see :ref:`tutorial-graphene`).
+    - It should be emphasized that the relative hopping used for
+        `~kwant.builder.HoppingKind` is given in terms of
+        lattice indices, i.e. relative to the Bravais lattice vectors.
+        For a square lattice, the Bravais lattice vectors are simply
+        `(a,0)` and `(0,a)`, and hence the mapping from
+        lattice indices `(i,j)` to real space and back is trivial.
+        This becomes more involved in more complicated lattices, where
+        the real-space directions corresponding to, for example, `(1,0)`
+        and `(0,1)` need not be orthogonal any more
+        (see :ref:`tutorial-graphene`).
 
 
 Spatially dependent values through functions
@@ -372,7 +373,8 @@ oscillatory transmission behavior through resonances in the quantum well.
     the same symmetry as the lead does.  There is (currently) no check and
     wrong results will be the consequence of a misbehaving function.
 
-.. specialnote:: Technical details
+.. admonition:: Technical details
+    :class: dropdown note
 
   - Functions can also be used for hoppings. In this case, they take
     two `~kwant.builder.Site`'s as arguments and then an arbitrary number
@@ -592,7 +594,8 @@ Finally you should get the following result:
 where one can observe the conductance oscillations with the
 period of one flux quantum.
 
-.. specialnote:: Technical details
+.. admonition:: Technical details
+    :class: dropdown note
 
   - Leads have to have proper periodicity. Furthermore, the Kwant
     format requires the hopping from the leads to the scattering
