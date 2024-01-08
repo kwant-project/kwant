@@ -124,17 +124,30 @@ Minimum required versions for some dependencies have increased
 --------------------------------------------------------------
 Kwant now requires at least the following versions:
 
-+ Python 3.6
-+ numpy 0.13.3
-+ scipy 0.19.1
++ Python 3.8
++ numpy 1.18.0
++ scipy 1.3.0
 
 The kwant extensions (plotting, continuum and qsymm) now require at
 least the following versions:
 
-+ matplotlib 2.1.1
-+ sympy 1.1.1
++ matplotlib 3.2.2
++ sympy 1.5.1
 + qsymm 1.2.6
 
 These versions (or newer) are available in the latest stable releases
 of Ubuntu and Debian GNU/Linux, with the exception of qsymm, which is
 available on PyPI or Conda forge.
+
+Update of the setup script
+--------------------------
+
+Following the recommendation of py.test, the command ``setup.py test`` is now
+removed. Instead the users should run ``py.test`` directly or use
+``import kwant; kwant.test()``.
+
+Removal of Umfpack support
+--------------------------
+Scipy used to provide a Python interface to the Umfpack library.  This is now
+done by a separate package ``scikit-umfpack``.  Because it is hard for end
+users to obtain this, we have removed built-in support for Umfpack.
