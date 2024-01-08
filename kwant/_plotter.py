@@ -22,7 +22,7 @@ from enum import Enum
 
 
 try:
-    __IPYTHON__
+    __IPYTHON__  # noqa: F821
     is_ipython_kernel = True
 except NameError:
     is_ipython_kernel = False

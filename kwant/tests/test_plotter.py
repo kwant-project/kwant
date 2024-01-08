@@ -627,3 +627,18 @@ def test_current():
         fig = pyplot.Figure()
         ax = fig.add_subplot(1, 1, 1)
         plotter.current(syst, current, ax=ax, file=out)
+
+
+@pytest.mark.parametrize("engine", _plotter.engines)
+def test_density_works(engine):
+    # This mainly checks that density() works, which was only caught by docs
+    # before.
+    plotter.set_engine(engine)
+    syst = syst_2d().finalized()
+    psi = kwant.wave_function(syst, energy=1)(1)[0]
+    density = kwant.operator.Density(syst)(psi)
+
+    suffix = plotter_file_suffix(engine)
+    with tempfile.NamedTemporaryFile('w+b', suffix=suffix) as out:
+        out_filename = out.name
+        plotter.density(syst, density, file=out_filename, show=False)
