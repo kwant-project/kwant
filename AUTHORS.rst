@@ -21,6 +21,7 @@ Contributors to Kwant include
 * Mathieu Istas (CEA Grenoble)
 * Daniel Jaschke (CEA Grenoble)
 * Thomas Kloss (CEA Grenoble)
+* Kelvin Loh (TNO)
 * Bas Nijholt (TU Delft)
 * Michał Nowak (TU Delft)
 * Viacheslav Ostroukh (Leiden University)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2011-2018 Kwant authors.
+# Copyright 2011-2019 Kwant authors.
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
@@ -18,6 +18,19 @@
 import warnings
 from math import sqrt, pi
 import numpy as np
+from enum import Enum
+
+
+try:
+    __IPYTHON__
+    is_ipython_kernel = True
+except NameError:
+    is_ipython_kernel = False
+
+global mpl_available
+global plotly_available
+mpl_available = False
+plotly_available = False
 
 try:
     import matplotlib
@@ -25,7 +38,10 @@ try:
     from matplotlib.figure import Figure
     from matplotlib import collections
     from . import _colormaps
+    from matplotlib.colors import ListedColormap
     mpl_available = True
+    kwant_red_matplotlib = ListedColormap(_colormaps.kwant_red,
+                                          name="kwant red")
     try:
         from mpl_toolkits import mplot3d
         has3d = True
@@ -41,9 +57,41 @@ try:
         from matplotlib.cm import get_cmap
 
 except ImportError:
-    warnings.warn("matplotlib is not available, only iterator-providing "
-                  "functions will work.", RuntimeWarning)
-    mpl_available = False
+    warnings.warn("matplotlib is not available, if other engines are "
+                  "unavailable, only iterator-providing functions will work",
+                  RuntimeWarning)
+
+
+try:
+    import plotly.offline as plotly_module
+    import plotly.graph_objs as plotly_graph_objs
+    init_notebook_mode_set = False
+    from . import _colormaps
+    plotly_available = True
+
+    _cmap_plotly = 255 * _colormaps.kwant_red
+    _cmap_levels = np.linspace(0, 1, len(_cmap_plotly))
+    kwant_red_plotly = [(level, 'rgb({},{},{})'.format(*rgb))
+                        for level, rgb in zip(_cmap_levels, _cmap_plotly)]
+except ImportError:
+    warnings.warn("plotly is not available, if other engines are unavailable,"
+                  " only iterator-providing functions will work",
+                  RuntimeWarning)
+
+Engines = []
+
+if plotly_available:
+    Engines.append("plotly")
+    engine = "plotly"
+
+if mpl_available:
+    Engines.append("matplotlib")
+    engine = "matplotlib"
+
+if not ((mpl_available) or (plotly_available)):
+    engine = None
+
+Engines = frozenset(Engines)
 
 
 # Collections that allow for symbols and linewiths to be given in data space
@@ -57,6 +105,113 @@ def isarray(var):
 
 def nparray_if_array(var):
     return np.asarray(var) if isarray(var) else var
+
+
+if plotly_available:
+
+    # The converter_map and converter_map_3d converts the common marker symbols
+    # of matplotlib to the symbols of plotly
+    converter_map = {
+        "o": 0,
+        "v": 6,
+        "^": 5,
+        "<": 7,
+        ">": 8,
+        "s": 1,
+        "+": 3,
+        "x": 4,
+        "*": 17,
+        "d": 2,
+        "h": 14,
+        "no symbol": -1
+    }
+
+    converter_map_3d = {
+        "o": "circle",
+        "s": "square",
+        "+": "cross",
+        "x": "x",
+        "d": "diamond",
+    }
+
+    def error_string(symbol_input, supported):
+        return 'Input symbol/s \'{}\' not supported. Only the following characters are supported: {}'.format(symbol_input, supported)
+
+
+    def convert_symbol_mpl_plotly(mpl_symbol):
+        if isarray(mpl_symbol):
+            try:
+                converted_symbol = [converter_map.get(i) for i in mpl_symbol]
+            except KeyError:
+                raise RuntimeError( error_string(mpl_symbol, list(converter_map)) )
+        else:
+            try:
+                converted_symbol = converter_map.get(mpl_symbol)
+            except KeyError:
+                raise RuntimeError( error_string(mpl_symbol, list(converter_map)) )
+        return converted_symbol
+
+
+    def convert_symbol_mpl_plotly_3d(mpl_symbol):
+        if isarray(mpl_symbol):
+            try:
+                converted_symbol = [converter_map_3d.get(i) for i in mpl_symbol]
+            except KeyError:
+                raise RuntimeError( error_string(mpl_symbol, list(converter_map_3d)) )
+        else:
+            try:
+                converted_symbol = converter_map_3d.get(mpl_symbol)
+            except KeyError:
+                raise RuntimeError( error_string(mpl_symbol, list(converter_map_3d)) )
+        return converted_symbol
+
+
+    def convert_site_size_mpl_plotly(mpl_site_size, plotly_ref_px):
+        # The conversion is such that we assume matplotlib's marker size is in
+        # square points (https://matplotlib.org/devdocs/api/_as_gen/matplotlib.pyplot.scatter.html)
+        # and we need to convert the points to pixels for plotly.
+        # Hence, 1 pixel = (96.0)/(72.0) point
+        return np.sqrt(mpl_site_size)*(96.0/72.0)*plotly_ref_px
+
+
+    def convert_colormap_mpl_plotly(mpl_rgba):
+        _cmap_plotly = 255 * np.array(mpl_rgba)
+        return 'rgba({},{},{},{})'.format(*_cmap_plotly[0:-1],
+                                          _cmap_plotly[-1]/255)
+
+
+    def convert_cmap_list_mpl_plotly(mpl_cmap_name, N=255):
+        if isinstance(mpl_cmap_name, str):
+            cmap_mpl = matplotlib.cm.get_cmap(mpl_cmap_name)
+            cmap_mpl_arr = matplotlib.colors.makeMappingArray(N, cmap_mpl)
+            level = np.linspace(0, 1, N)
+            cmap_plotly_linear = [(level, convert_colormap_mpl_plotly(cmap_mpl))
+                                    for level, cmap_mpl in zip(level,
+                                                                cmap_mpl_arr)]
+        else:
+            assert(isinstance(mpl_cmap_name, list))
+            # Do not do any conversion if it's already a list
+            cmap_plotly_linear = mpl_cmap_name
+        return cmap_plotly_linear
+
+
+    def convert_lead_cmap_mpl_plotly(mpl_lead_cmap_init, mpl_lead_cmap_end,
+                                     N=255):
+        r_levels = np.linspace(mpl_lead_cmap_init[0],
+                               mpl_lead_cmap_end[0], N) * 255
+        g_levels = np.linspace(mpl_lead_cmap_init[1],
+                               mpl_lead_cmap_end[1], N) * 255
+        b_levels = np.linspace(mpl_lead_cmap_init[2],
+                               mpl_lead_cmap_end[2], N) * 255
+        a_levels = np.linspace(mpl_lead_cmap_init[3],
+                               mpl_lead_cmap_end[3], N)
+        level = np.linspace(0, 1, N)
+        cmap_plotly_linear = [(level, 'rgba({},{},{},{})'.format(*rgba))
+                                for level, rgba in zip(level,
+                                                        zip(r_levels, g_levels,
+                                                            b_levels, a_levels
+                                                            ))]
+        return cmap_plotly_linear
 
 
 if mpl_available:
@@ -337,3 +492,14 @@ if mpl_available:
                     self.set_linewidths(self.linewidths_orig2 * factor)
 
                 super().draw(renderer)
+
+if plotly_available:
+    def matplotlib_to_plotly_cmap(cmap, pl_entries):
+        h = 1.0/(pl_entries-1)
+        pl_colorscale = []
+
+        for k in range(pl_entries):
+            C = map(np.uint8, np.array(cmap(k*h)[:3])*255)
+            pl_colorscale.append([k*h, 'rgb'+str((C[0], C[1], C[2]))])
+
+        return pl_colorscale
