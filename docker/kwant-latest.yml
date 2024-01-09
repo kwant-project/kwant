@@ -2,14 +2,14 @@ name: kwant-latest
 channels:
     - conda-forge
 dependencies:
-    - python=3.6
+    - python=3.9
     - numpy
     - scipy
     - tinyarray
     - sympy
-    - matplotlib
-    - qsymm
+    - matplotlib-base
     - plotly
+    - qsymm
     # Linear algebra libraraies
     - mumps
     - blas #=1.1 openblas
@@ -29,6 +29,3 @@ dependencies:
     - numpydoc
     - requests
     - jupyter_sphinx
-    - pip
-    - pip:
-        - sphinxcontrib-svg2pdfconverter

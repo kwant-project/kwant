@@ -1,7 +1,9 @@
 from collections import namedtuple, Counter
 import warnings
 from math import sqrt
+
 import numpy as np
+from scipy.stats import special_ortho_group
 import pytest
 
 import kwant
@@ -11,31 +13,6 @@ from .. import gauge
 
 
 ## Utilities
-
-# TODO: remove in favour of 'scipy.stats.special_ortho_group' once
-#       we depend on scipy 0.18
-class special_ortho_group_gen:
-
-    def rvs(self, dim):
-        H = np.eye(dim)
-        D = np.empty((dim,))
-        for n in range(dim-1):
-            x = np.random.normal(size=(dim-n,))
-            D[n] = np.sign(x[0]) if x[0] != 0 else 1
-            x[0] += D[n]*np.sqrt((x*x).sum())
-            # Householder transformation
-            Hx = (np.eye(dim-n)
-                  - 2.*np.outer(x, x)/(x*x).sum())
-            mat = np.eye(dim)
-            mat[n:, n:] = Hx
-            H = np.dot(H, mat)
-        D[-1] = (-1)**(dim-1)*D[:-1].prod()
-        # Equivalent to np.dot(np.diag(D), H) but faster, apparently
-        H = (D*H.T).T
-        return H
-
-special_ortho_group = special_ortho_group_gen()
-
 
 square_lattice = lattice.square(norbs=1, name='square')
 honeycomb_lattice = lattice.honeycomb(norbs=1, name='honeycomb')

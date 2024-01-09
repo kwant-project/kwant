@@ -2,9 +2,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 __all__ = ['lll', 'cvp', 'voronoi']
 
@@ -39,7 +39,7 @@ def lll(basis, c=1.34):
     Calculate a reduced lattice basis using LLL algorithm.
 
     Reduce a basis of a lattice to an almost orthonormal form. For details see
-    e.g. http://en.wikipedia.org/wiki/LLL-algorithm.
+    e.g. https://en.wikipedia.org/wiki/Lenstra–Lenstra–Lovász_lattice_basis_reduction_algorithm.
 
     Parameters
     ----------
@@ -101,8 +101,7 @@ def lll(basis, c=1.34):
             if abs(u[i+1, i]) > 0.5:
                 ll_reduce(i+1)
             i = max(i-1, 0)
-    # TODO: change to rcond=None once we depend on numpy >= 1.14.
-    coefs = np.linalg.lstsq(vecs_orig.T, vecs.T, rcond=-1)[0]
+    coefs = np.linalg.lstsq(vecs_orig.T, vecs.T, rcond=None)[0]
     if not np.allclose(np.round(coefs), coefs, atol=1e-6):
         raise RuntimeError('LLL algorithm instability.')
     if not is_c_reduced(vecs, c):

@@ -2,9 +2,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 
 from math import sin, cos, sqrt, pi, copysign
@@ -22,36 +22,6 @@ from scipy.sparse import (identity as sp_identity, hstack as sp_hstack,
 dot = np.dot
 
 __all__ = ['selfenergy', 'modes', 'PropagatingModes', 'StabilizedModes']
-
-
-# TODO: Use scipy block_diag once we depend on scipy>=0.19
-try:
-    # Throws ValueError, but if fixed ensure that works as intended
-    bdiag_broken = block_diag(np.zeros((1,1)), np.zeros((2,0))).shape != (3, 1)
-except ValueError:  # skip coverage
-    bdiag_broken = True
-if bdiag_broken:  # skip coverage
-    def block_diag(*matrices):
-        """Construct a block diagonal matrix out of the input matrices.
-
-        Like scipy.linalg.block_diag, but works for zero size matrices."""
-        rows, cols = np.sum([mat.shape for mat in matrices], axis=0)
-        b_mat = np.zeros((rows,cols), dtype='complex')
-        rows, cols = 0, 0
-        for mat in matrices:
-            new_rows = rows + mat.shape[0]
-            new_cols = cols + mat.shape[1]
-            b_mat[rows:new_rows, cols:new_cols] = mat
-            rows, cols = new_rows, new_cols
-        return b_mat
-
-
-# TODO: Remove the workaround once we depend on scipy >= 1.0
-def lstsq(a, b):
-    """Least squares version that works also with 0-shaped matrices."""
-    if a.shape[1] == 0:
-        return np.empty((0, 0), dtype=np.common_type(a, b))
-    return la.lstsq(a, b)[0]
 
 
 def nonzero_symm_projection(matrix):
@@ -838,7 +808,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         # reverse the order of the product at the end.
         wf_neg_k = particle_hole.dot(
                 (full_psi[:, :N][:, positive_k]).conj())[:, ::-1]
-        rot = lstsq(orig_neg_k, wf_neg_k)
+        rot = la.lstsq(orig_neg_k, wf_neg_k)[0]
         full_psi[:, :N][:, positive_k[::-1]] = wf_neg_k
         psi[:, :N][:, positive_k[::-1]] = \
                 psi[:, :N][:, positive_k[::-1]].dot(rot)
@@ -853,7 +823,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         # Reverse order at the end to match momenta of opposite sign.
         wf_neg_k = particle_hole.dot(
                 full_psi[:, N:][:, positive_k].conj())[:, ::-1]
-        rot = lstsq(orig_neg_k, wf_neg_k)
+        rot = la.lstsq(orig_neg_k, wf_neg_k)[0]
         full_psi[:, N:][:, positive_k[::-1]] = wf_neg_k
         psi[:, N:][:, positive_k[::-1]] = \
                 psi[:, N:][:, positive_k[::-1]].dot(rot)
@@ -865,7 +835,7 @@ def make_proper_modes(lmbdainv, psi, extract, tol, particle_hole,
         # of propagating modes, not either left or right movers.
         out_orig = full_psi[:, nmodes//2:]
         out = time_reversal.dot(full_psi[:, :nmodes//2].conj())
-        rot = lstsq(out_orig, out)
+        rot = la.lstsq(out_orig, out)[0]
         full_psi[:, nmodes//2:] = out
         psi[:, nmodes//2:] = psi[:, nmodes//2:].dot(rot)
 

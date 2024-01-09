@@ -2,9 +2,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 import keyword
 from collections import defaultdict
@@ -36,7 +36,7 @@ extra_ns.update({'kron': sympy.physics.quantum.TensorProduct,
 extra_ns.update({'sigma_{}'.format(c): p for c, p in zip('0xyz', pauli)})
 
 
-# workaroud for https://github.com/sympy/sympy/issues/12060
+# TODO: remove this once https://github.com/sympy/sympy/issues/12060 is fixed
 del extra_ns['I']
 del extra_ns['pi']
 

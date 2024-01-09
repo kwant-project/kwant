@@ -1,4 +1,4 @@
-FROM debian:latest
+FROM debian:buster
 
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         gnupg dirmngr apt-transport-https ca-certificates curl software-properties-common
 
-RUN echo "deb http://downloads.kwant-project.org/debian/ stable main" >> /etc/apt/sources.list && \
+RUN echo "deb https://downloads.kwant-project.org/debian/ stable main" >> /etc/apt/sources.list && \
     apt-key adv --no-tty --keyserver pool.sks-keyservers.net --recv-key C3F147F5980F3535 && \
     apt-get update && apt-get install -y --no-install-recommends \
         # all the hard non-Python dependencies
@@ -24,7 +24,7 @@ RUN echo "deb http://downloads.kwant-project.org/debian/ stable main" >> /etc/ap
 
 ### install optional dependencies not available from the Debian repositories
 RUN pip3 install \
-    qsymm==1.2.6
+    qsymm==1.3.0
 
 ### install build and testing dependencies
 RUN pip3 install \

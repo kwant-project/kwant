@@ -2,9 +2,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 __all__ = ['gaussian', 'circular']
 
@@ -134,8 +134,7 @@ def gaussian(n, sym='A', v=1., rng=None):
         h = randn(n, n) + 1j * randn(n, n)
 
     # Ensure Hermiticity.
-    # TODO: write this as h += h.T.conj() once we rely on numpy >= 1.13.0
-    h = h + h.T.conj()
+    h += h.T.conj()
 
     # Ensure Chiral symmetry.
     if c(sym):

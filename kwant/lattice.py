@@ -2,9 +2,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 __all__ = ['TranslationalSymmetry', 'general', 'Polyatomic', 'Monatomic',
            'chain', 'square', 'cubic', 'triangular', 'honeycomb', 'kagome']
@@ -533,10 +533,7 @@ class TranslationalSymmetry(builder.Symmetry):
     def __init__(self, *periods):
         self.periods = ta.array(periods)
         if self.periods.ndim != 2:
-            # TODO: remove the second part of the following message once
-            # everybody got used to it.
-            msg = ("TranslationalSymmetry takes 1d sequences as parameters.\n"
-                   "See What's new in Kwant 0.2 in the documentation.")
+            msg = ("TranslationalSymmetry takes 1d sequences as parameters.")
             raise ValueError(msg)
         if np.linalg.matrix_rank(periods) < len(periods):
             raise ValueError("Translational symmetry periods must be "

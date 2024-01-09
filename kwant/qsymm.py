@@ -2,9 +2,9 @@
 #
 # This file is part of Kwant.  It is subject to the license terms in the file
 # LICENSE.rst found in the top-level directory of this distribution and at
-# http://kwant-project.org/license.  A list of Kwant authors can be found in
+# https://kwant-project.org/license.  A list of Kwant authors can be found in
 # the file AUTHORS.rst at the top-level directory of this distribution and at
-# http://kwant-project.org/authors.
+# https://kwant-project.org/authors.
 
 
 __all__ = ['builder_to_model', 'model_to_builder', 'find_builder_symmetries']
@@ -26,12 +26,7 @@ try:
     from qsymm.linalg import allclose
     from qsymm.hamiltonian_generator import hamiltonian_from_family
 
-    # The try-except block below needs to be removed,
-    # when we require sympy >= 1.7
-    try:
-        sn = sympy.core.numbers
-    except AttributeError:
-        sn = sympy.numbers
+    one = sympy.S.One
 except ImportError as error:
     msg = ("'kwant.qsymm' is not available because one or more of its "
            "dependencies is not installed.")
@@ -353,9 +348,9 @@ def model_to_builder(model, norbs, lat_vecs, atom_coords, *, coeffs=None):
     # If some onsite terms are not set, we set them to zero.
     for atom in atoms:
         if atom not in onsites_dict:
-            onsites_dict[atom] = Model({
-                sn.One(): np.zeros((norbs[atom], norbs[atom]))
-            }, momenta=momenta)
+            onsites_dict[atom] = Model(
+                {one: np.zeros((norbs[atom], norbs[atom]))},
+                momenta=momenta)
 
     # Make the Kwant system, and set all onsites and hoppings.
 
