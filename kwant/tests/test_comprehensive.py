@@ -18,7 +18,7 @@ def test_qhe(W=16, L=8):
         x, y = pos
         return -L < x < L and abs(y) < W - 5.5 * math.exp(-x**2 / 5**2)
 
-    lat = kwant.lattice.square()
+    lat = kwant.lattice.square(norbs=1)
     syst = kwant.Builder()
 
     syst[lat.shape(central_region, (0, 0))] = onsite

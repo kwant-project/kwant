@@ -14,7 +14,7 @@ from kwant.physics import two_terminal_shotnoise
 from kwant._common import ensure_rng
 
 n = 5
-chain = kwant.lattice.chain()
+chain = kwant.lattice.chain(norbs=2)
 
 def twoterminal_system():
     rng = ensure_rng(11)

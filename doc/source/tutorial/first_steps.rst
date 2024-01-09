@@ -128,14 +128,16 @@ a square lattice. For simplicity, we set the lattice constant to unity:
 .. jupyter-execute::
 
     a = 1
-    lat = kwant.lattice.square(a)
+    lat = kwant.lattice.square(a, norbs=1)
 
 Since we work with a square lattice, we label the points with two
 integer coordinates `(i, j)`. `~kwant.builder.Builder` then
 allows us to add matrix elements corresponding to lattice points:
 ``syst[lat(i, j)] = ...`` sets the on-site energy for the point `(i, j)`,
 and ``syst[lat(i1, j1), lat(i2, j2)] = ...`` the hopping matrix element
-**from** point `(i2, j2)` **to** point `(i1, j1)`.
+**from** point `(i2, j2)` **to** point `(i1, j1)`. In specifying ``norbs=1``
+in the definition of the lattice we tell Kwant that there is 1 degree
+of freedom per lattice site.
 
 Note that we need to specify sites for `~kwant.builder.Builder`
 in the form ``lat(i, j)``. The lattice object `lat` does the
@@ -472,7 +474,8 @@ file and defining the a square lattice and empty scattering region.
 
     # Start with an empty tight-binding system and a single square lattice.
     # `a` is the lattice constant (by default set to 1 for simplicity).
-    lat = kwant.lattice.square(a)
+    # Each lattice site has 1 degree of freedom, hence norbs=1.
+    lat = kwant.lattice.square(a, norbs=1)
 
     syst = kwant.Builder()
 
@@ -681,7 +684,7 @@ return a Kwant ``Builder``:
 .. jupyter-execute::
 
     def make_system(L, W, a=1, t=1.0):
-        lat = kwant.lattice.square(a)
+        lat = kwant.lattice.square(a, norbs=1)
 
         syst = kwant.Builder()
         syst[(lat(i, j) for i in range(L) for j in range(W))] = 4 * t

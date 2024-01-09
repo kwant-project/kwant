@@ -6,6 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+import warnings
 import functools as ft
 from collections import deque
 import pickle
@@ -59,7 +60,10 @@ def test_operator_construction():
     N = len(fsyst.sites)
 
     # test construction failure if norbs not given
-    latnone = kwant.lattice.chain()
+    # Catch deprecation warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        latnone = kwant.lattice.chain()
     syst[latnone(0)] = 1
     for A in opservables:
         raises(ValueError, A, syst.finalized())

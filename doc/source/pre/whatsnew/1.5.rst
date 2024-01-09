@@ -3,6 +3,21 @@ What's new in Kwant 1.5
 
 This article explains the user-visible changes in Kwant 1.5.0.
 
+Deprecation of leaving 'norbs' unset for site families
+------------------------------------------------------
+When constructing site families (e.g. lattices) it is now deprecated to
+leave the 'norbs' parameter unset. This will now raise a
+KwantDeprecationWarning and will be disallowed in a future version of
+Kwant. For example, when constructing a square lattice with 1 orbital
+per site, use::
+
+    kwant.lattice.square(norbs=1)
+
+rather than::
+
+    kwant.lattice.square()
+
+
 Automatic addition of Peierls phase terms to Builders
 -----------------------------------------------------
 Kwant 1.4 introduced `kwant.physics.magnetic_gauge` for computing Peierls

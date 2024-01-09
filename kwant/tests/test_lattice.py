@@ -6,6 +6,7 @@
 # the file AUTHORS.rst at the top-level directory of this distribution and at
 # http://kwant-project.org/authors.
 
+import warnings
 from math import sqrt
 import numpy as np
 import tinyarray as ta
@@ -17,12 +18,12 @@ import pytest
 
 def test_closest():
     rng = ensure_rng(4)
-    lat = lattice.general(((1, 0), (0.5, sqrt(3)/2)))
+    lat = lattice.general(((1, 0), (0.5, sqrt(3)/2)), norbs=1)
     for i in range(50):
         point = 20 * rng.random_sample(2)
         closest = lat(*lat.closest(point)).pos
         assert np.linalg.norm(point - closest) <= 1 / sqrt(3)
-    lat = lattice.general(rng.randn(3, 3))
+    lat = lattice.general(rng.randn(3, 3), norbs=1)
     for i in range(50):
         tag = rng.randint(10, size=(3,))
         assert lat.closest(lat(*tag).pos) == tag
@@ -32,28 +33,30 @@ def test_closest():
 
 
 def test_general():
-    for lat in (lattice.general(((1, 0), (0.5, 0.5))),
+    for lat in (lattice.general(((1, 0), (0.5, 0.5)), norbs=1),
                 lattice.general(((1, 0), (0.5, sqrt(3)/2)),
-                                     ((0, 0), (0, 1/sqrt(3))))):
+                                ((0, 0), (0, 1/sqrt(3))),
+                                norbs=1,
+                               )):
         for sl in lat.sublattices:
             tag = (-5, 33)
             site = sl(*tag)
             assert tag == sl.closest(site.pos)
 
     # Test 2D lattice with 1 vector.
-    lat = lattice.general([[1, 0]])
+    lat = lattice.general([[1, 0]], norbs=1)
     site = lat(0)
     raises(ValueError, lat, 0, 1)
 
 
 def test_neighbors():
-    lat = lattice.honeycomb(1e-10)
+    lat = lattice.honeycomb(1e-10, norbs=1)
     num_nth_nearest = [len(lat.neighbors(n)) for n in range(5)]
     assert num_nth_nearest == [2, 3, 6, 3, 6]
-    lat = lattice.general([(0, 1e8, 0, 0), (0, 0, 1e8, 0)])
+    lat = lattice.general([(0, 1e8, 0, 0), (0, 0, 1e8, 0)], norbs=1)
     num_nth_nearest = [len(lat.neighbors(n)) for n in range(5)]
     assert num_nth_nearest == [1, 2, 2, 2, 4]
-    lat = lattice.chain(1e-10)
+    lat = lattice.chain(1e-10, norbs=1)
     num_nth_nearest = [len(lat.neighbors(n)) for n in range(5)]
     assert num_nth_nearest == 5 * [1]
 
@@ -62,7 +65,7 @@ def test_shape():
     def in_circle(pos):
         return pos[0] ** 2 + pos[1] ** 2 < 3
 
-    lat = lattice.honeycomb()
+    lat = lattice.honeycomb(norbs=1)
     sites = list(lat.shape(in_circle, (0, 0))())
     sites_alt = list()
     sl0, sl1 = lat.sublattices
@@ -91,7 +94,7 @@ def test_wire():
     vecs = rng.randn(3, 3)
     vecs[0] = [1, 0, 0]
     center = rng.randn(3)
-    lat = lattice.general(vecs, rng.randn(4, 3))
+    lat = lattice.general(vecs, rng.randn(4, 3), norbs=1)
     syst = builder.Builder(lattice.TranslationalSymmetry((2, 0, 0)))
     def wire_shape(pos):
         pos = np.array(pos)
@@ -106,8 +109,8 @@ def test_wire():
 
 def test_translational_symmetry():
     ts = lattice.TranslationalSymmetry
-    f2 = lattice.general(np.identity(2))
-    f3 = lattice.general(np.identity(3))
+    f2 = lattice.general(np.identity(2), norbs=1)
+    f3 = lattice.general(np.identity(3), norbs=1)
     shifted = lambda site, delta: site.family(*ta.add(site.tag, delta))
 
     raises(ValueError, ts, (0, 0, 4), (0, 5, 0), (0, 0, 2))
@@ -115,7 +118,7 @@ def test_translational_symmetry():
     raises(ValueError, sym.add_site_family, f2)
 
     # Test lattices with dimension smaller than dimension of space.
-    f2in3 = lattice.general([[4, 4, 0], [4, -4, 0]])
+    f2in3 = lattice.general([[4, 4, 0], [4, -4, 0]], norbs=1)
     sym = ts((8, 0, 0))
     sym.add_site_family(f2in3)
     sym = ts((8, 0, 1))
@@ -153,7 +156,7 @@ def test_translational_symmetry():
                         (site, shifted(site, hop)))
 
     # Test act for hoppings belonging to different lattices.
-    f2p = lattice.general(2 * np.identity(2))
+    f2p = lattice.general(2 * np.identity(2), norbs=1)
     sym = ts(*(2 * np.identity(2)))
     assert sym.act((1, 1), f2(0, 0), f2p(0, 0)) == (f2(2, 2), f2p(1, 1))
     assert sym.act((1, 1), f2p(0, 0), f2(0, 0)) == (f2p(1, 1), f2(2, 2))
@@ -163,7 +166,7 @@ def test_translational_symmetry():
     # generated symmetry with proper vectors.
     rng = ensure_rng(30)
     vec = rng.randn(3, 5)
-    lat = lattice.general(vec)
+    lat = lattice.general(vec, norbs=1)
     total = 0
     for k in range(1, 4):
         for i in range(10):
@@ -179,7 +182,7 @@ def test_translational_symmetry():
 
 def test_translational_symmetry_reversed():
     rng = ensure_rng(30)
-    lat = lattice.general(np.identity(3))
+    lat = lattice.general(np.identity(3), norbs=1)
     sites = [lat(i, j, k) for i in range(-2, 6) for j in range(-2, 6)
                           for k in range(-2, 6)]
     for i in range(4):
@@ -197,9 +200,9 @@ def test_translational_symmetry_reversed():
 
 
 def test_monatomic_lattice():
-    lat = lattice.square()
-    lat2 = lattice.general(np.identity(2))
-    lat3 = lattice.square(name='no')
+    lat = lattice.square(norbs=1)
+    lat2 = lattice.general(np.identity(2), norbs=1)
+    lat3 = lattice.square(name='no', norbs=1)
     assert len(set([lat, lat2, lat3, lat(0, 0), lat2(0, 0), lat3(0, 0)])) == 4
 
 @pytest.mark.parametrize('prim_vecs, basis', [
@@ -213,16 +216,22 @@ def test_monatomic_lattice():
 ])
 def test_lattice_constraints(prim_vecs, basis):
     with pytest.raises(ValueError):
-        lattice.general(prim_vecs, basis)
+        lattice.general(prim_vecs, basis, norbs=1)
 
 
 def test_norbs():
     id_mat = np.identity(2)
     # Monatomic lattices
-    assert lattice.general(id_mat).norbs == None
+    # Catch deprecation warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        assert lattice.general(id_mat).norbs == None
     assert lattice.general(id_mat, norbs=2).norbs == 2
     # Polyatomic lattices
-    lat = lattice.general(id_mat, basis=id_mat, norbs=None)
+    # Catch deprecation warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        lat = lattice.general(id_mat, basis=id_mat, norbs=None)
     for l in lat.sublattices:
         assert l.norbs == None
     lat = lattice.general(id_mat, basis=id_mat, norbs=2)
@@ -240,8 +249,14 @@ def test_norbs():
     raises(ValueError, lattice.general, id_mat, norbs=1.5)
     raises(ValueError, lattice.general, id_mat, id_mat, norbs=1.5)
     raises(ValueError, lattice.general, id_mat, id_mat, norbs=[1.5, 1.5])
+    # should raise ValueError if norbs is <= 0
+    raises(ValueError, lattice.general, id_mat, norbs=0)
+    raises(ValueError, lattice.general, id_mat, norbs=-1)
     # test that lattices with different norbs are compared `not equal`
-    lat = lattice.general(id_mat, basis=id_mat, norbs=None)
+    # Catch deprecation warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        lat = lattice.general(id_mat, basis=id_mat, norbs=None)
     lat1 = lattice.general(id_mat, basis=id_mat, norbs=1)
     lat2 = lattice.general(id_mat, basis=id_mat, norbs=2)
     assert lat != lat1
@@ -250,7 +265,7 @@ def test_norbs():
 
 
 def test_symmetry_act():
-    lat = lattice.square()
+    lat = lattice.square(norbs=1)
     sym = lattice.TranslationalSymmetry((1, 0), (0, 1))
     site = lat(0, 0)
     hopping = (lat(0, 0), lat(1, 0))

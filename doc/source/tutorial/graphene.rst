@@ -59,7 +59,8 @@ explicitly here to show how to define a new lattice:
 .. jupyter-execute::
 
     graphene = kwant.lattice.general([(1, 0), (sin_30, cos_30)],
-                                     [(0, 0), (0, 1 / sqrt(3))])
+                                     [(0, 0), (0, 1 / sqrt(3))],
+                                     norbs=1)
     a, b = graphene.sublattices
 
 The first argument to the `~kwant.lattice.general` function is the list of
