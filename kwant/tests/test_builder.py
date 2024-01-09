@@ -1443,6 +1443,16 @@ def test_add_peierls_phase():
     lead[(lat(0, j) for j in range(5))] = 4
     lead[lat.neighbors()] = -1
 
+    # System without leads
+    syst_without_lead, phase_without_lead = builder.add_peierls_phase(syst)
+
+    assert isinstance(syst_without_lead, builder.FiniteSystem)
+
+    params_without_lead = phase_without_lead(1)
+
+    assert all(p in params_without_lead for p in ('phi',))
+
+    # System with leads
     syst.attach_lead(lead)
     syst.attach_lead(lead.reversed())
 
