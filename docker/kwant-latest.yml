@@ -8,6 +8,7 @@ dependencies:
     - tinyarray
     - sympy
     - matplotlib
+    - qsymm
     # Linear algebra libraraies
     - mumps
     - blas #=1.1 openblas
