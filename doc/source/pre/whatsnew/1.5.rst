@@ -12,3 +12,41 @@ the code are inserted directly into the document thanks to the magic of
 `jupyter-sphinx <https://github.com/jupyter-widgets/jupyter-sphinx/>`_.
 It has never been easier to get started contributing to Kwant by
 helping us improve our documentation.
+
+Discretization onto a Landau level basis
+----------------------------------------
+The Hamiltonian for a system infinite in at least two dimensions and with
+a constant applied magnetic field may be expressed in a basis of Landau levels.
+The momenta in the plane perpendicular to the magnetic field direction are
+written in terms of the Landau level ladder operators:
+
+.. math::
+    k_x = \sqrt{\frac{B}{2}} (a + a^\dagger) \quad\quad
+    k_y = i \sqrt{\frac{B}{2}} (a - a^\dagger)
+
+The Hamiltonian is then expressed in terms of these ladder operators, which
+allows for a straight-forward discretization in the basis of Landau levels,
+provided that the basis is truncated after $N$ levels.
+`kwant.continuum.discretize_landau` makes this procedure simple::
+
+    syst = kwant.continuum.discretize_landau("k_x**2 + k_y**2", N)
+    syst.finalized().hamiltonian_submatrix(params=dict(B=0.5))
+
+`~kwant.continuum.discretize_landau` produces a regular Kwant Builder that
+can be inspected or finalized as usual. 3D Hamiltonians for systems that
+extend into the direction perpendicular to the magnetic field are also
+possible::
+
+    template = kwant.continuum.discretize_landau("k_x**2 + k_y**2 + k_z**2 + V(z)", N)
+
+This will produce a Builder with a single translational symmetry, which can be
+directly finalized, or can be used as a template for e.g. a heterostructure stack
+in the direction of the magnetic field::
+
+    def stack(site):
+        z, = site.pos
+        return 0 <= z < 10
+
+    template = kwant.continuum.discretize_landau("k_x**2 + k_y**2 + k_z**2 + V(z)", N)
+    syst = kwant.Builder()
+    syst.fill(template, stack, (0,))
