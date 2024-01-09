@@ -378,6 +378,10 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         return list(broken)
 
 
+def is_selfenergy_lead(lead):
+    return hasattr(lead, "selfenergy") and not hasattr(lead, "modes")
+
+
 class PrecalculatedLead:
     def __init__(self, modes=None, selfenergy=None):
         """A general lead defined by its self energy.
