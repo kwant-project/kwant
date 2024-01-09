@@ -172,20 +172,17 @@ if plotly_available:
         return np.sqrt(mpl_site_size)*(96.0/72.0)*plotly_ref_px
 
 
-    def convert_colormap_mpl_plotly(mpl_rgba):
-        _cmap_plotly = 255 * np.array(mpl_rgba)
-        return 'rgba({},{},{},{})'.format(*_cmap_plotly[0:-1],
-                                          _cmap_plotly[-1]/255)
+    def convert_colormap_mpl_plotly(r, g, b, a):
+        return f"rgba({255*r},{255*g},{255*b},{a})"
 
 
-    def convert_cmap_list_mpl_plotly(mpl_cmap_name, N=255):
+    def convert_cmap_list_mpl_plotly(mpl_cmap_name):
         if isinstance(mpl_cmap_name, str):
-            cmap_mpl = matplotlib.cm.get_cmap(mpl_cmap_name)
-            cmap_mpl_arr = matplotlib.colors.makeMappingArray(N, cmap_mpl)
-            level = np.linspace(0, 1, N)
-            cmap_plotly_linear = [(level, convert_colormap_mpl_plotly(cmap_mpl))
-                                    for level, cmap_mpl in zip(level,
-                                                                cmap_mpl_arr)]
+            cmap = matplotlib.cm.get_cmap(mpl_cmap_name)
+            cmap_plotly_linear = [
+                (level, convert_colormap_mpl_plotly(*cmap(level)))
+                for level in np.linspace(0, 1, cmap.N)
+            ]
         else:
             assert(isinstance(mpl_cmap_name, list))
             # Do not do any conversion if it's already a list
