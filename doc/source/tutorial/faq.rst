@@ -5,6 +5,17 @@ questions that are discussed there.  The `Kwant paper
 <https://downloads.kwant-project.org/doc/kwant-paper.pdf>`_ also digs deeper
 into Kwant's structure.
 
+.. jupyter-execute::
+    :hide-code:
+
+    import kwant
+    import numpy as np
+    import tinyarray
+    import matplotlib
+    from matplotlib import pyplot as plt
+
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
 
 What is a system, and what is a builder?
 ========================================
@@ -48,11 +59,16 @@ combination of family and tag uniquely defines a site.
 
 For example let us create an empty tight binding system and add two sites:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_site
-    :end-before: #HIDDEN_END_site
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_site.*
+    a = 1
+    lat = kwant.lattice.square(a)
+    syst = kwant.Builder()
+
+    syst[lat(1, 0)] = 4
+    syst[lat(1, 1)] = 4
+
+    kwant.plot(syst);
 
 In the above snippet we added 2 sites: ``lat(1, 0)`` and ``lat(0, 1)``. Both
 of these sites belong to the same family, ``lat``, but have different tags:
@@ -79,11 +95,11 @@ tuples, for example lists, are not treated as hoppings.
 Starting from the example code from `What is a site?`_, we can add a hopping
 to our system in the following way:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_hopping
-    :end-before: #HIDDEN_END_hopping
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_hopping.*
+    syst[(lat(1, 0), lat(1, 1))] = 1j
+
+    kwant.plot(syst);
 
 Visually, a hopping is represented as a line that joins two sites.
 
@@ -139,18 +155,29 @@ Let's create two monatomic lattices (``lat_a`` and ``lat_b``).  ``(1, 0)``
 and ``(0, 1)`` will be the primitive vectors and ``(0, 0)`` and ``(0.5, 0.5)``
 the origins of the two lattices:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_lattice_monatomic
-    :end-before: #HIDDEN_END_lattice_monatomic
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_lattice.*
+    # Two monatomic lattices
+    primitive_vectors = [(1, 0), (0, 1)]
+    lat_a = kwant.lattice.Monatomic(primitive_vectors, offset=(0, 0))
+    lat_b = kwant.lattice.Monatomic(primitive_vectors, offset=(0.5, 0.5))
+    # lat1 is equivalent to kwant.lattice.square()
+
+    syst = kwant.Builder()
+
+    syst[lat_a(0, 0)] = 4
+    syst[lat_b(0, 0)] = 4
+
+    kwant.plot(syst);
 
 We can also create a ``Polyatomic`` lattice with the same primitive vectors and
 two sites in the basis:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_lattice_polyatomic
-    :end-before: #HIDDEN_END_lattice_polyatomic
+.. jupyter-execute::
+
+    # One polyatomic lattice containing two sublattices
+    lat = kwant.lattice.Polyatomic([(1, 0), (0, 1)], [(0, 0), (0.5, 0.5)])
+    sub_a, sub_b = lat.sublattices
 
 The two sublattices ``sub_a`` and ``sub_b`` are nothing else than ``Monatomic``
 instances, and are equivalent to ``lat_a`` and ``lat_b`` that we created
@@ -169,17 +196,40 @@ When plotting, how to color the different sublattices differently?
 ==================================================================
 In the following example we shall use a kagome lattice, which has three sublattices.
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_colors1
-    :end-before: #HIDDEN_END_colors1
+.. jupyter-execute::
+
+    lat = kwant.lattice.kagome()
+    syst = kwant.Builder()
+
+    a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
 
 As we can see below, we create a new plotting function that assigns a color for each family, and a different size for the hoppings depending on the family of the two sites. Finally we add sites and hoppings to our system and plot it with the new function.
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_colors2
-    :end-before: #HIDDEN_END_colors2
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_colors.*
+    # Plot sites from different families in different colors
+    def family_color(site):
+        if site.family == a:
+            return 'red'
+        if site.family == b:
+            return 'green'
+        else:
+            return 'blue'
+
+    def plot_system(syst):
+        kwant.plot(syst, site_lw=0.1, site_color=family_color)
+
+    ## Add sites and hoppings.
+    for i in range(4):
+        for j in range (4):
+            syst[a(i, j)] = 4
+            syst[b(i, j)] = 4
+            syst[c(i, j)] = 4
+
+    syst[lat.neighbors()] = -1
+
+    ## Plot the system.
+    plot_system(syst)
 
 
 How to create many similar hoppings in one go?
@@ -197,31 +247,64 @@ integers).
 
 The following example shows how this can be used:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_direction1
-    :end-before: #HIDDEN_END_direction1
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_direction1.*
+    # Create hopping between neighbors with HoppingKind
+    a = 1
+    syst = kwant.Builder()
+    lat = kwant.lattice.square(a)
+    syst[ (lat(i, j) for i in range(5) for j in range(5)) ] = 4
+
+    syst[kwant.builder.HoppingKind((1, 0), lat)] = -1
+    kwant.plot(syst);
 
 Note that ``HoppingKind`` only works with site families so you cannot use
 them directly with ``Polyatomic`` lattices; you have to explicitly specify
 the sublattices when creating a ``HoppingKind``:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_direction2
-    :end-before: #HIDDEN_END_direction2
+.. jupyter-execute::
+    :hide-code:
+
+    lat = kwant.lattice.kagome()
+    syst = kwant.Builder()
+
+    a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
+
+    for i in range(4):
+        for j in range (4):
+            syst[a(i, j)] = 4
+            syst[b(i, j)] = 4
+            syst[c(i, j)] = 4
+
+.. jupyter-execute::
+
+    # equivalent to syst[kwant.builder.HoppingKind((0, 1), b)] = -1
+    syst[kwant.builder.HoppingKind((0, 1), b, b)] = -1
 
 Here, we want the hoppings between the sites from sublattice b with a direction of (0,1) in the lattice coordinates.
 
-.. image:: /code/figure/faq_direction2.*
+.. jupyter-execute::
+    :hide-code:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_direction3
-    :end-before: #HIDDEN_END_direction3
+    plot_system(syst)
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Delete the hoppings previously created
+    del syst[kwant.builder.HoppingKind((0, 1), b, b)]
+
+.. jupyter-execute::
+
+    syst[kwant.builder.HoppingKind((0, 0), a, b)] = -1
+    syst[kwant.builder.HoppingKind((0, 0), a, c)] = -1
+    syst[kwant.builder.HoppingKind((0, 0), c, b)] = -1
 
 Here, we create hoppings between the sites of the same lattice coordinates but from different families.
 
-.. image:: /code/figure/faq_direction3.*
+.. jupyter-execute::
+
+    plot_system(syst)
 
 
 How to set the hoppings between adjacent sites?
@@ -230,32 +313,53 @@ How to set the hoppings between adjacent sites?
 that returns a list of ``HoppingKind`` instances that connect sites with their
 (n-nearest) neighors:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_adjacent1
-    :end-before: #HIDDEN_END_adjacent1
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_adjacent1.*
-.. image:: /code/figure/faq_adjacent2.*
+    # Create hoppings with lat.neighbors()
+    syst = kwant.Builder()
+    lat = kwant.lattice.square()
+    syst[(lat(i, j) for i in range(3) for j in range(3))] = 4
 
-As we can see in the figure above, ``lat.neighbors()`` (on the left) returns the hoppings between the first nearest neighbors and ``lat.neighbors(2)`` (on the right) returns the hoppings between the second nearest neighbors.
+    syst[lat.neighbors()] = -1  # Equivalent to lat.neighbors(1)
+    kwant.plot(syst);
+
+.. jupyter-execute::
+
+    del syst[lat.neighbors()]  # Delete all nearest-neighbor hoppings
+    syst[lat.neighbors(2)] = -1
+
+    kwant.plot(syst);
+
+As we can see in the figures above, ``lat.neighbors()`` returns the hoppings between the first nearest neighbors and ``lat.neighbors(2)`` returns the hoppings between the second nearest neighbors.
 
 When using a ``Polyatomic`` lattice ``neighbors()`` knows about the different
 sublattices:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_adjacent2
-    :end-before: #HIDDEN_END_adjacent2
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_adjacent3.*
+    # Create the system
+    lat = kwant.lattice.kagome()
+    syst = kwant.Builder()
+    a, b, c = lat.sublattices  # The kagome lattice has 3 sublattices
+
+    for i in range(4):
+        for j in range (4):
+            syst[a(i, j)] = 4  # red
+            syst[b(i, j)] = 4  # green
+            syst[c(i, j)] = 4  # blue
+
+    syst[lat.neighbors()] = -1
+
+    plot_system(syst)
 
 However, if we use the ``neighbors()`` method of a single sublattice, we will
 only get the neighbors *on that sublattice*:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_adjacent3
-    :end-before: #HIDDEN_END_adjacent3
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_adjacent4.*
+    del syst[lat.neighbors()]  # Delete the hoppings previously created
+    syst[a.neighbors()] = -1
+    plot_system(syst)
 
 Note in the above that there are *only* hoppings between the red sites. This
 is an artifact of the visualisation: the blue and green sites just happen to lie
@@ -268,12 +372,35 @@ To make a hole in the system, use ``del syst[site]``, just like with any other
 mapping. In the following example we remove all sites inside some "hole"
 region:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_hole
-    :end-before: #HIDDEN_END_hole
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_hole1.*
-.. image:: /code/figure/faq_hole2.*
+    # Define the lattice and the (empty) system
+    a = 2
+    lat = kwant.lattice.cubic(a)
+    syst = kwant.Builder()
+
+    L = 10
+    W = 10
+    H = 2
+
+    # Add sites to the system in a cuboid
+
+    syst[(lat(i, j, k) for i in range(L) for j in range(W) for k in range(H))] = 4
+    kwant.plot(syst);
+
+.. jupyter-execute::
+
+    # Delete sites to create a hole
+
+    def in_hole(site):
+        x, y, z = site.pos / a - (L/2, W/2, H/2)  # position relative to centre
+        return abs(x) < L / 4 and abs(y) < W / 4
+
+    for site in filter(in_hole, list(syst.sites())):
+        del syst[site]
+
+    kwant.plot(syst);
+
 
 ``del syst[site]`` also works after hoppings have been added to the system.
 If a site is deleted, then all the hoppings to/from that site are also deleted.
@@ -287,9 +414,18 @@ what is a builder?`_ if you do not know the difference).
 
 We can access the sites of a ``Builder`` by using its `~kwant.builder.Builder.sites` method:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_sites1
-    :end-before: #HIDDEN_END_sites1
+.. jupyter-execute::
+    :hide-code:
+
+    builder = kwant.Builder()
+    lat = kwant.lattice.square()
+    builder[(lat(i, j) for i in range(3) for j in range(3))] = 4
+
+.. jupyter-execute::
+
+    # Before finalizing the system
+
+    sites = list(builder.sites())  # sites() doe *not* return a list
 
 The ``sites()`` method returns an *iterator* over the system sites, and in the
 above example we create a list from the contents of this iterator, which
@@ -300,9 +436,11 @@ well be returned in a different order.
 After finalization, when we are dealing with a ``System``, the sites themselves
 are stored in a list, which can be accessed via the ``sites`` attribute:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_sites2
-    :end-before: #HIDDEN_END_sites2
+.. jupyter-execute::
+
+    # After finalizing the system
+    syst = builder.finalized()
+    sites = syst.sites  # syst.sites is an actual list
 
 The order of sites in a ``System`` is fixed, and also defines the ordering of
 the system Hamiltonian, system wavefunctions etc. (see `How does Kwant order components of an individual wavefunction?`_ for details).
@@ -310,9 +448,9 @@ the system Hamiltonian, system wavefunctions etc. (see `How does Kwant order com
 ``System`` also contains the inverse mapping, ``id_by_site`` which gives us
 the index of a given site within the system:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_sites3
-    :end-before: #HIDDEN_END_sites3
+.. jupyter-execute::
+
+    i = syst.id_by_site[lat(0, 2)]  # we want the id of the site lat(0, 2)
 
 
 How to use different lattices for the scattering region and a lead?
@@ -322,19 +460,35 @@ which we want to connect to leads that contain sites from a square lattice.
 
 First we construct the central system:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_different_lattice1
-    :end-before: #HIDDEN_END_different_lattice1
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_different_lattice1.*
+    # Define the scattering Region
+    L = 5
+    W = 5
+
+    lat = kwant.lattice.honeycomb()
+    subA, subB = lat.sublattices
+
+    syst = kwant.Builder()
+    syst[(subA(i, j) for i in range(L) for j in range(W))] = 4
+    syst[(subB(i, j) for i in range(L) for j in range(W))] = 4
+    syst[lat.neighbors()] = -1
+
+    kwant.plot(syst);
 
 and the lead:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_different_lattice2
-    :end-before: #HIDDEN_END_different_lattice2
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_different_lattice2.*
+    # Create a lead
+    lat_lead = kwant.lattice.square()
+    sym_lead1 = kwant.TranslationalSymmetry((0, 1))
+
+    lead1 = kwant.Builder(sym_lead1)
+    lead1[(lat_lead(i, 0) for i in range(2, 7))] = 4
+    lead1[lat_lead.neighbors()] = -1
+
+    kwant.plot(syst);
 
 We cannot simply use `~kwant.builder.Builder.attach_lead` to attach this lead to the
 system with the honeycomb lattice because Kwant does not know how sites from
@@ -343,19 +497,22 @@ these two lattices should be connected.
 We must first add a layer of sites from the square lattice to the system and manually
 add the hoppings from these sites to the sites from the honeycomb lattice:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_different_lattice3
-    :end-before: #HIDDEN_END_different_lattice3
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_different_lattice3.*
+    syst[(lat_lead(i, 5) for i in range(2, 7))] = 4
+    syst[lat_lead.neighbors()] = -1
+
+    # Manually attach sites from graphene to square lattice
+    syst[((lat_lead(i+2, 5), subB(i, 4)) for i in range(5))] = -1
+
+    kwant.plot(syst);
 
 ``attach_lead()`` will now be able to attach the lead:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_different_lattice4
-    :end-before: #HIDDEN_END_different_lattice4
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_different_lattice4.*
+    syst.attach_lead(lead1)
+    kwant.plot(syst);
 
 
 How to cut a finite system out of a system with translational symmetries?
@@ -369,30 +526,50 @@ will be repeated in the desired shape to create the final system.
 
 For example, say we want to create a simple model on a cubic lattice:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_fill1
-    :end-before: #HIDDEN_END_fill1
+.. jupyter-execute::
+
+    # Create 3d model.
+    cubic = kwant.lattice.cubic()
+    sym_3d = kwant.TranslationalSymmetry([1, 0, 0], [0, 1, 0], [0, 0, 1])
+    model = kwant.Builder(sym_3d)
+    model[cubic(0, 0, 0)] = 4
+    model[cubic.neighbors()] = -1
 
 We have now created our "template" ``Builder`` which has 3 translational
 symmetries. Next we will fill a system with no translational symmetries with
 sites and hoppings from the template inside a cuboid:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_fill2
-    :end-before: #HIDDEN_END_fill2
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_fill2.*
+    # Build scattering region (white).
+    def cuboid_shape(site):
+        x, y, z = abs(site.pos)
+        return x < 4 and y < 10 and z < 3
+
+    cuboid = kwant.Builder()
+    cuboid.fill(model, cuboid_shape, (0, 0, 0));
+    kwant.plot(cuboid);
 
 We can then use the original template to create a lead, which has 1 translational
 symmetry. We can then use this lead as a template to fill another section of
 the system with a cylinder of sites and hoppings:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_fill3
-    :end-before: #HIDDEN_END_fill3
+.. jupyter-execute::
 
-.. image:: /code/figure/faq_fill3.*
+    # Build electrode (black).
+    def electrode_shape(site):
+        x, y, z = site.pos - (0, 5, 2)
+        return y**2 + z**2 < 2.3**2
 
+    electrode = kwant.Builder(kwant.TranslationalSymmetry([1, 0, 0]))
+    electrode.fill(model, electrode_shape, (0, 5, 2))  # lead
+
+    # Scattering region
+    cuboid.fill(electrode, lambda s: abs(s.pos[0]) < 7, (0, 5, 4))
+
+    cuboid.attach_lead(electrode)
+
+    kwant.plot(cuboid);
 
 How does Kwant order the propagating modes of a lead?
 =====================================================
@@ -402,16 +579,44 @@ achieved with the `~kwant.system.InfiniteSystem.modes` method, which returns a
 pair of objects, the first of which contains the propagating modes of the
 system in a `~kwant.physics.PropagatingModes` object:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_pm
-    :end-before: #HIDDEN_END_pm
+.. jupyter-execute::
+
+    lat = kwant.lattice.square()
+
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+    lead[(lat(0, i) for i in range(3))] = 4
+    lead[lat.neighbors()] = -1
+
+    flead = lead.finalized()
+
+    E = 2.5
+    prop_modes, _ = flead.modes(energy=E)
 
 ``PropagatingModes`` contains the wavefunctions, velocities and momenta of the
 modes at the requested energy (2.5 in this example).  In order to understand
 the order in which these quantities are returned it is often useful to look at
 the a section of the band structure for the system in question:
 
-.. image:: /code/figure/faq_pm1.*
+.. jupyter-execute::
+    :hide-code:
+
+    def plot_and_label_modes(lead, E):
+        # Plot the different modes
+        pmodes, _ = lead.modes(energy=E)
+        kwant.plotter.bands(lead, show=False)
+        for i, k in enumerate(pmodes.momenta):
+            plt.plot(k, E, 'ko')
+            plt.annotate(str(i), xy=(k, E), xytext=(-5, 8),
+                         textcoords='offset points',
+                         bbox=dict(boxstyle='round,pad=0.1',fc='white', alpha=0.7))
+        plt.plot([-3, 3], [E, E], 'r--')
+        plt.ylim(E-1, E+1)
+        plt.xlim(-2, 2)
+        plt.xlabel("momentum")
+        plt.ylabel("energy")
+        plt.show()
+
+    plot_and_label_modes(flead, E)
 
 On the above band structure we have labelled the 4 modes in the order
 that they appear in the output of ``modes()`` at energy 2.5. Note that
@@ -425,7 +630,20 @@ the modes are sorted in the following way:
 For more complicated systems and band structures this can lead to some
 unintuitive orderings:
 
-.. image:: /code/figure/faq_pm2.*
+.. jupyter-execute::
+    :hide-code:
+
+    s0 = np.eye(2)
+    sz = np.array([[1, 0], [0, -1]])
+
+    lead2 = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+
+    lead2[(lat(0, i) for i in range(2))] = np.diag([1.8, -1])
+    lead2[lat.neighbors()] = -1 * sz
+
+    flead2 = lead2.finalized()
+
+    plot_and_label_modes(flead2, 1)
 
 
 How does Kwant order scattering states?
@@ -452,10 +670,38 @@ When all the site families present in a system have only 1 degree of freedom
 per site (i.e.  the all the onsites are scalars) then the index into a
 wavefunction defined over the system is exactly the site index:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_ord1
-    :end-before: #HIDDEN_END_ord1
-.. literalinclude:: /code/figure/faq_ord1.txt
+.. jupyter-execute::
+    :hide-code:
+
+    def circle(R):
+        return lambda r: np.linalg.norm(r) < R
+
+
+    def make_system(lat):
+        norbs = lat.norbs
+        syst = kwant.Builder()
+        syst[lat.shape(circle(3), (0, 0))] = 4 * np.eye(norbs)
+        syst[lat.neighbors()] = -1 * np.eye(norbs)
+
+        lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+        lead[(lat(0, i) for i in range(-1, 2))] = 4 * np.eye(norbs)
+        lead[lat.neighbors()] = -1 * np.eye(norbs)
+
+        syst.attach_lead(lead)
+        syst.attach_lead(lead.reversed())
+
+        return syst.finalized()
+
+.. jupyter-execute::
+
+    lat = kwant.lattice.square(norbs=1)
+    syst = make_system(lat)
+    scattering_states = kwant.wave_function(syst, energy=1)
+    wf = scattering_states(0)[0]  # scattering state from lead 0 incoming in mode 0
+
+    idx = syst.id_by_site[lat(0, 0)]  # look up index of site
+
+    print('wavefunction on lat(0, 0): ', wf[idx])
 
 We see that the wavefunction on a single site is a single complex number, as
 expected.
@@ -467,10 +713,20 @@ to one another.  In the case where all site families in the system have the
 wavefunction into a matrix, where the row number indexes the site, and the
 column number indexes the degree of freedom on that site:
 
-.. literalinclude:: /code/include/faq.py
-    :start-after: #HIDDEN_BEGIN_ord2
-    :end-before: #HIDDEN_END_ord2
-.. literalinclude:: /code/figure/faq_ord2.txt
+.. jupyter-execute::
+
+    lat = kwant.lattice.square(norbs=2)
+    syst = make_system(lat)
+    scattering_states = kwant.wave_function(syst, energy=1)
+    wf = scattering_states(0)[0]  # scattering state from lead 0 incoming in mode 0
+
+    idx = syst.id_by_site[lat(0, 0)]  # look up index of site
+
+    # Group consecutive degrees of freedom from 'wf' together; these correspond
+    # to degrees of freedom on the same site.
+    wf = wf.reshape(-1, 2)
+
+    print('wavefunction on lat(0, 0): ', wf[idx])
 
 We see that the wavefunction on a single site is a *vector* of 2 complex numbers,
 as we expect.

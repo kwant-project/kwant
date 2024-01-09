@@ -17,8 +17,30 @@ KPM method `kwant.kpm`, that is based on the algorithms presented in Ref. [1]_.
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`kernel_polynomial_method.py </code/download/kernel_polynomial_method.py>`
+    :jupyter-download:script:`kernel_polynomial_method`
 
+.. jupyter-kernel::
+    :id: kernel_polynomial_method
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.8. Calculating spectral density with the Kernel Polynomial Method
+    # ============================================================================
+    #
+    # Physics background
+    # ------------------
+    #  - Chebyshev polynomials, random trace approximation, spectral densities.
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - kpm module,kwant operators.
+
+    import scipy
+    from matplotlib import pyplot
+
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
 
 Introduction
 ************
@@ -103,35 +125,104 @@ to obtain the (global) density of states of a graphene disk.
 
 We start by importing kwant and defining our system.
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_sys1
-    :end-before: #HIDDEN_END_sys1
+.. jupyter-execute::
+
+    # necessary imports
+    import kwant
+    import numpy as np
+
+
+    # define the system
+    def make_syst(r=30, t=-1, a=1):
+        syst = kwant.Builder()
+        lat = kwant.lattice.honeycomb(a, norbs=1)
+
+        def circle(pos):
+            x, y = pos
+            return x ** 2 + y ** 2 < r ** 2
+
+        syst[lat.shape(circle, (0, 0))] = 0.
+        syst[lat.neighbors()] = t
+        syst.eradicate_dangling()
+
+        return syst
+
+.. jupyter-execute::
+    :hide-code:
+
+    ## common plotting routines ##
+
+    # Plot several density of states curves on the same axes.
+    def plot_dos(labels_to_data):
+        pyplot.figure()
+        for label, (x, y) in labels_to_data:
+            pyplot.plot(x, y.real, label=label, linewidth=2)
+        pyplot.legend(loc=2, framealpha=0.5)
+        pyplot.xlabel("energy [t]")
+        pyplot.ylabel("DoS [a.u.]")
+        pyplot.show()
+
+
+    # Plot fill density of states plus curves on the same axes.
+    def plot_dos_and_curves(dos, labels_to_data):
+        pyplot.figure()
+        pyplot.fill_between(dos[0], dos[1], label="DoS [a.u.]",
+                         alpha=0.5, color='gray')
+        for label, (x, y) in labels_to_data:
+            pyplot.plot(x, y, label=label, linewidth=2)
+        pyplot.legend(loc=2, framealpha=0.5)
+        pyplot.xlabel("energy [t]")
+        pyplot.ylabel("$σ [e^2/h]$")
+        pyplot.show()
+
+
+    def site_size_conversion(densities):
+        return 3 * np.abs(densities) / max(densities)
+
+
+    # Plot several local density of states maps in different subplots
+    def plot_ldos(syst, densities):
+        fig, axes = pyplot.subplots(1, len(densities), figsize=(7*len(densities), 7))
+        for ax, (title, rho) in zip(axes, densities):
+            kwant.plotter.density(syst, rho.real, ax=ax)
+            ax.set_title(title)
+            ax.set(adjustable='box', aspect='equal')
+        pyplot.show()
 
 After making a system we can then create a `~kwant.kpm.SpectralDensity`
 object that represents the density of states for this system.
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_kpm1
-    :end-before: #HIDDEN_END_kpm1
+.. jupyter-execute::
+
+    fsyst = make_syst().finalized()
+
+    spectrum = kwant.kpm.SpectralDensity(fsyst)
 
 The `~kwant.kpm.SpectralDensity` can then be called like a function to obtain a
 sequence of energies in the spectrum of the Hamiltonian, and the corresponding
 density of states at these energies.
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_kpm2
-    :end-before: #HIDDEN_END_kpm2
+.. jupyter-execute::
+
+    energies, densities = spectrum()
 
 When called with no arguments, an optimal set of energies is chosen (these are
 not evenly distributed over the spectrum, see Ref. [1]_ for details), however
 it is also possible to provide an explicit sequence of energies at which to
 evaluate the density of states.
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_kpm3
-    :end-before: #HIDDEN_END_kpm3
+.. jupyter-execute::
 
-.. image:: /code/figure/kpm_dos.*
+    energy_subset = np.linspace(0, 2)
+    density_subset = spectrum(energy_subset)
+
+.. jupyter-execute::
+    :hide-code:
+
+    plot_dos([
+        ('densities', (energies, densities)),
+        ('density subset', (energy_subset, density_subset)),
+    ])
 
 In addition to being called like functions, `~kwant.kpm.SpectralDensity`
 objects also have a method `~kwant.kpm.SpectralDensity.integrate` which can be
@@ -139,22 +230,21 @@ used to integrate the density of states against some distribution function over
 the whole spectrum. If no distribution function is specified, then the uniform
 distribution is used:
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_int1
-    :end-before: #HIDDEN_END_int1
+.. jupyter-execute::
 
-.. literalinclude:: /code/figure/kpm_normalization.txt
+    print('identity resolution:', spectrum.integrate())
 
 We see that the integral of the density of states is normalized to the total
 number of available states in the system. If we wish to calculate, say, the
 number of states populated in equilibrium, then we should integrate with
 respect to a Fermi-Dirac distribution:
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_int2
-    :end-before: #HIDDEN_END_int2
+.. jupyter-execute::
 
-.. literalinclude:: /code/figure/kpm_total_states.txt
+    # Fermi energy 0.1 and temperature 0.2
+    fermi = lambda E: 1 / (np.exp((E - 0.1) / 0.2) + 1)
+
+    print('number of filled states:', spectrum.integrate(fermi))
 
 .. specialnote:: Stability and performance: spectral bounds
 
@@ -194,23 +284,51 @@ In the following example, we compute the local density of states at the center
 of the graphene disk, and we add a staggering potential between the two
 sublattices.
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_sys3
-    :end-before: #HIDDEN_END_sys3
+.. jupyter-execute::
+
+    def make_syst_staggered(r=30, t=-1, a=1, m=0.1):
+        syst = kwant.Builder()
+        lat = kwant.lattice.honeycomb(a, norbs=1)
+
+        def circle(pos):
+            x, y = pos
+            return x ** 2 + y ** 2 < r ** 2
+
+        syst[lat.a.shape(circle, (0, 0))] = m
+        syst[lat.b.shape(circle, (0, 0))] = -m
+        syst[lat.neighbors()] = t
+        syst.eradicate_dangling()
+
+        return syst
 
 Next, we choose one site of each sublattice "A" and "B",
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_op5
-    :end-before: #HIDDEN_END_op5
+.. jupyter-execute::
+
+    fsyst_staggered = make_syst_staggered().finalized()
+    # find 'A' and 'B' sites in the unit cell at the center of the disk
+    center_tag = np.array([0, 0])
+    where = lambda s: s.tag == center_tag
+    # make local vectors
+    vector_factory = kwant.kpm.LocalVectors(fsyst_staggered, where)
 
 and plot their respective local density of states.
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_op6
-    :end-before: #HIDDEN_END_op6
+.. jupyter-execute::
 
-.. image:: /code/figure/kpm_ldos_sites.*
+    # 'num_vectors' can be unspecified when using 'LocalVectors'
+    local_dos = kwant.kpm.SpectralDensity(fsyst_staggered, num_vectors=None,
+                                          vector_factory=vector_factory,
+                                          mean=False)
+    energies, densities = local_dos()
+
+.. jupyter-execute::
+    :hide-code:
+
+    plot_dos([
+        ('A sublattice', (energies, densities[:, 0])),
+        ('B sublattice', (energies, densities[:, 1])),
+    ])
 
 Note that there is no noise comming from the random vectors.
 
@@ -225,9 +343,15 @@ exactly is changed.
 The simplest way to obtain a more accurate solution is to use the
 ``add_moments`` method:
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_acc1
-    :end-before: #HIDDEN_END_acc1
+.. jupyter-execute::
+    :hide-code:
+
+    spectrum = kwant.kpm.SpectralDensity(fsyst)
+    original_dos = spectrum()
+
+.. jupyter-execute::
+
+   spectrum.add_moments(energy_resolution=0.03)
 
 This will update the number of calculated moments and also the default
 number of sampling points such that the maximum distance between successive
@@ -237,12 +361,19 @@ Alternatively, you can directly increase the number of moments
 with ``add_moments``, or the number of random vectors with ``add_vectors``.
 The added vectors will be generated with the ``vector_factory``.
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_acc2
-    :end-before: #HIDDEN_END_acc2
+.. jupyter-execute::
 
-.. image:: /code/figure/kpm_dos_r.*
+    spectrum.add_moments(100)
+    spectrum.add_vectors(5)
 
+.. jupyter-execute::
+    :hide-code:
+
+    increased_moments_dos = spectrum()
+    plot_dos([
+        ('density', original_dos),
+        ('higher number of moments', increased_moments_dos),
+    ])
 
 .. _operator_spectral_density:
 
@@ -264,17 +395,19 @@ the spectral density of the given operator that is calculated.
 If an explicit matrix is provided then it must have the same
 shape as the system Hamiltonian.
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_op1
-    :end-before: #HIDDEN_END_op1
+.. jupyter-execute::
 
+    # identity matrix
+    matrix_op = scipy.sparse.eye(len(fsyst.sites))
+    matrix_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=matrix_op)
 
 Or, to do the same calculation using `kwant.operator.Density`:
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_op2
-    :end-before: #HIDDEN_END_op2
+.. jupyter-execute::
 
+    # 'sum=True' means we sum over all the sites
+    kwant_op = kwant.operator.Density(fsyst, sum=True)
+    operator_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=kwant_op)
 
 Spectral density with random vectors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -283,9 +416,11 @@ Using operators from `kwant.operator` allows us to calculate quantities
 such as the *local* density of states by telling the operator not to
 sum over all the sites of the system:
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_op3
-    :end-before: #HIDDEN_END_op3
+.. jupyter-execute::
+
+    # 'sum=False' is the default, but we include it explicitly here for clarity.
+    kwant_op = kwant.operator.Density(fsyst, sum=False)
+    local_dos = kwant.kpm.SpectralDensity(fsyst, operator=kwant_op)
 
 `~kwant.kpm.SpectralDensity` will properly handle this vector output,
 and will average the local density obtained with random vectors.
@@ -294,12 +429,18 @@ The accuracy of this approximation depends on the number of random vectors used.
 This allows us to plot an approximate local density of states at different
 points in the spectrum:
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_op4
-    :end-before: #HIDDEN_END_op4
+.. jupyter-execute::
 
-.. image:: /code/figure/kpm_ldos.*
+    zero_energy_ldos = local_dos(energy=0)
+    finite_energy_ldos = local_dos(energy=1)
 
+.. jupyter-execute::
+    :hide-code:
+
+    plot_ldos(fsyst, [
+        ('energy = 0', zero_energy_ldos),
+        ('energy = 1', finite_energy_ldos)
+    ])
 
 Calculating Kubo conductivity
 *****************************
@@ -325,17 +466,53 @@ with nearest neigbours hoppings. To turn it into a topological
 insulator we add imaginary second nearest neigbours hoppings, where
 the sign changes for each sublattice.
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_sys2
-    :end-before: #HIDDEN_END_sys2
+.. jupyter-execute::
+
+    def make_syst_topo(r=30, a=1, t=1, t2=0.5):
+        syst = kwant.Builder()
+        lat = kwant.lattice.honeycomb(a, norbs=1, name=['a', 'b'])
+
+        def circle(pos):
+            x, y = pos
+            return x ** 2 + y ** 2 < r ** 2
+
+        syst[lat.shape(circle, (0, 0))] = 0.
+        syst[lat.neighbors()] = t
+        # add second neighbours hoppings
+        syst[lat.a.neighbors()] = 1j * t2
+        syst[lat.b.neighbors()] = -1j * t2
+        syst.eradicate_dangling()
+
+        return lat, syst.finalized()
 
 To calculate the bulk conductivity, we will select sites in the unit cell
 in the middle of the sample, and create a vector factory that outputs local
 vectors
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_cond
-    :end-before: #HIDDEN_END_cond
+.. jupyter-execute::
+
+    # construct the Haldane model
+    lat, fsyst_topo = make_syst_topo()
+    # find 'A' and 'B' sites in the unit cell at the center of the disk
+    where = lambda s: np.linalg.norm(s.pos) < 1
+
+    # component 'xx'
+    s_factory = kwant.kpm.LocalVectors(fsyst_topo, where)
+    cond_xx = kwant.kpm.conductivity(fsyst_topo, alpha='x', beta='x', mean=True,
+                                     num_vectors=None, vector_factory=s_factory)
+    # component 'xy'
+    s_factory = kwant.kpm.LocalVectors(fsyst_topo, where)
+    cond_xy = kwant.kpm.conductivity(fsyst_topo, alpha='x', beta='y', mean=True,
+                                     num_vectors=None, vector_factory=s_factory)
+
+    energies = cond_xx.energies
+    cond_array_xx = np.array([cond_xx(e, temperature=0.01) for e in energies])
+    cond_array_xy = np.array([cond_xy(e, temperature=0.01) for e in energies])
+
+    # area of the unit cell per site
+    area_per_site = np.abs(np.cross(*lat.prim_vecs)) / len(lat.sublattices)
+    cond_array_xx /= area_per_site
+    cond_array_xy /= area_per_site
 
 Note that the Kubo conductivity must be normalized with the area covered
 by the vectors. In this case, each local vector represents a site, and
@@ -345,8 +522,22 @@ value of the conductivity over large parts of the system. In this
 case, the area that normalizes the result, is the area covered by
 the random vectors.
 
-.. image:: /code/figure/kpm_cond.*
+.. jupyter-execute::
+    :hide-code:
 
+
+    s_factory = kwant.kpm.LocalVectors(fsyst_topo, where)
+    spectrum = kwant.kpm.SpectralDensity(fsyst_topo, num_vectors=None,
+                                         vector_factory=s_factory)
+
+    plot_dos_and_curves(
+    (spectrum.energies, spectrum.densities * 8),
+    [
+        (r'Longitudinal conductivity $\sigma_{xx} / 4$',
+         (energies, cond_array_xx / 4)),
+        (r'Hall conductivity $\sigma_{xy}$',
+         (energies, cond_array_xy))],
+    )
 
 .. _advanced_topics:
 
@@ -370,9 +561,16 @@ To change how the random vectors are generated, you need only specify a
 function that takes the dimension of the Hilbert space as a single parameter,
 and which returns a vector in that Hilbert space:
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_fact1
-    :end-before: #HIDDEN_END_fact1
+.. jupyter-execute::
+
+    # construct a generator of vectors with n random elements -1 or +1.
+    n = fsyst.hamiltonian_submatrix(sparse=True).shape[0]
+    def binary_vectors():
+        while True:
+           yield np.rint(np.random.random_sample(n)) * 2 - 1
+
+    custom_factory = kwant.kpm.SpectralDensity(fsyst,
+                                               vector_factory=binary_vectors())
 
 Aditionally, a `~kwant.kpm.LocalVectors` generator is also available, that
 returns local vectors that correspond to the sites passed. Note that
@@ -407,9 +605,16 @@ first argument, and linear in its second argument. Below, we compare two
 methods for computing the local density of states, one using
 `kwant.operator.Density`, and the other using a custom function.
 
-.. literalinclude:: /code/include/kernel_polynomial_method.py
-    :start-after: #HIDDEN_BEGIN_blm
-    :end-before: #HIDDEN_END_blm
+.. jupyter-execute::
+
+    rho = kwant.operator.Density(fsyst, sum=True)
+
+    # sesquilinear map that does the same thing as `rho`
+    def rho_alt(bra, ket):
+        return np.vdot(bra, ket)
+
+    rho_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=rho)
+    rho_alt_spectrum = kwant.kpm.SpectralDensity(fsyst, operator=rho_alt)
 
 __ operator_spectral_density_
 

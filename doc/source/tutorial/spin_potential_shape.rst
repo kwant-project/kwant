@@ -11,7 +11,10 @@ Matrix structure of on-site and hopping elements
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`spin_orbit.py </code/download/spin_orbit.py>`
+    :jupyter-download:script:`spin_orbit`
+
+.. jupyter-kernel::
+    :id: spin_orbit
 
 We begin by extending the simple 2DEG-Hamiltonian by a Rashba spin-orbit
 coupling and a Zeeman splitting due to an external magnetic field:
@@ -42,24 +45,78 @@ use matrices in our program, we import the Tinyarray package.  (`NumPy
 <http://www.numpy.org/>`_ would work as well, but Tinyarray is much faster
 for small arrays.)
 
-.. literalinclude:: /code/include/spin_orbit.py
-    :start-after: #HIDDEN_BEGIN_xumz
-    :end-before: #HIDDEN_END_xumz
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.3.1. Matrix structure of on-site and hopping elements
+    # ================================================================
+    #
+    # Physics background
+    # ------------------
+    #  Gaps in quantum wires with spin-orbit coupling and Zeeman splititng,
+    #  as theoretically predicted in
+    #   http://prl.aps.org/abstract/PRL/v90/i25/e256601
+    #  and (supposedly) experimentally oberved in
+    #   http://www.nature.com/nphys/journal/v6/n5/abs/nphys1626.html
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - Numpy matrices as values in Builder
+
+    import kwant
+
+    # For plotting
+    from matplotlib import pyplot
+
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
+
+.. jupyter-execute::
+
+    # For matrix support
+    import tinyarray
 
 For convenience, we define the Pauli-matrices first (with :math:`\sigma_0` the
 unit matrix):
 
-.. literalinclude:: /code/include/spin_orbit.py
-    :start-after: #HIDDEN_BEGIN_hwbt
-    :end-before: #HIDDEN_END_hwbt
+.. jupyter-execute::
+
+    # define Pauli-matrices for convenience
+    sigma_0 = tinyarray.array([[1, 0], [0, 1]])
+    sigma_x = tinyarray.array([[0, 1], [1, 0]])
+    sigma_y = tinyarray.array([[0, -1j], [1j, 0]])
+    sigma_z = tinyarray.array([[1, 0], [0, -1]])
+
+and we also define some other parameters useful for constructing our system:
+
+.. jupyter-execute::
+
+    t = 1.0
+    alpha = 0.5
+    e_z = 0.08
+    W, L = 10, 30
 
 Previously, we used numbers as the values of our matrix elements.
 However, `~kwant.builder.Builder` also accepts matrices as values, and
 we can simply write:
 
-.. literalinclude:: /code/include/spin_orbit.py
-    :start-after: #HIDDEN_BEGIN_uxrm
-    :end-before: #HIDDEN_END_uxrm
+.. jupyter-execute::
+    :hide-code:
+
+    lat = kwant.lattice.square()
+    syst = kwant.Builder()
+
+.. jupyter-execute::
+
+    #### Define the scattering region. ####
+    syst[(lat(x, y) for x in range(L) for y in range(W))] = \
+        4 * t * sigma_0 + e_z * sigma_z
+    # hoppings in x-direction
+    syst[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
+        -t * sigma_0 + 1j * alpha * sigma_y / 2
+    # hoppings in y-directions
+    syst[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
+        -t * sigma_0 - 1j * alpha * sigma_x / 2
 
 Note that the Zeeman energy adds to the onsite term, whereas the Rashba
 spin-orbit term adds to the hoppings (due to the derivative operator).
@@ -85,14 +142,49 @@ when specifying `(1, 0)` it is not necessary to specify `(-1, 0)`),
 
 The leads also allow for a matrix structure,
 
-.. literalinclude:: /code/include/spin_orbit.py
-    :start-after: #HIDDEN_BEGIN_yliu
-    :end-before: #HIDDEN_END_yliu
+
+.. jupyter-execute::
+    :hide-code:
+
+    #### Define the left lead. ####
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-1, 0)))
+
+.. jupyter-execute::
+
+    lead[(lat(0, j) for j in range(W))] = 4 * t * sigma_0 + e_z * sigma_z
+    # hoppings in x-direction
+    lead[kwant.builder.HoppingKind((1, 0), lat, lat)] = \
+        -t * sigma_0 + 1j * alpha * sigma_y / 2
+    # hoppings in y-directions
+    lead[kwant.builder.HoppingKind((0, 1), lat, lat)] = \
+        -t * sigma_0 - 1j * alpha * sigma_x / 2
+
+.. jupyter-execute::
+    :hide-code:
+
+    #### Attach the leads and finalize the system. ####
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+    syst = syst.finalized()
 
 The remainder of the code is unchanged, and as a result we should obtain
 the following, clearly non-monotonic conductance steps:
 
-.. image:: /code/figure/spin_orbit_result.*
+.. jupyter-execute::
+    :hide-code:
+
+    # Compute conductance
+    energies=[0.01 * i - 0.3 for i in range(100)]
+    data = []
+    for energy in energies:
+        smatrix = kwant.smatrix(syst, energy)
+        data.append(smatrix.transmission(1, 0))
+
+    pyplot.figure()
+    pyplot.plot(energies, data)
+    pyplot.xlabel("energy [t]")
+    pyplot.ylabel("conductance [e^2/h]")
+    pyplot.show()
 
 .. specialnote:: Technical details
 
@@ -129,7 +221,32 @@ Spatially dependent values through functions
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`quantum_well.py </code/download/quantum_well.py>`
+    :jupyter-download:script:`quantum_well`
+
+.. jupyter-kernel::
+    :id: quantum_well
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.3.2. Spatially dependent values through functions
+    # ============================================================
+    #
+    # Physics background
+    # ------------------
+    #  transmission through a quantum well
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - Functions as values in Builder
+
+    import kwant
+
+    # For plotting
+    from matplotlib import pyplot
+
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
 
 Up to now, all examples had position-independent matrix-elements
 (and thus translational invariance along the wire, which
@@ -148,22 +265,50 @@ changing the potential then implies the need to build up the system again.
 Instead, we use a python *function* to define the onsite energies. We
 define the potential profile of a quantum well as:
 
-.. literalinclude:: /code/include/quantum_well.py
-    :start-after: #HIDDEN_BEGIN_ehso
-    :end-before: #HIDDEN_END_ehso
+.. jupyter-execute::
+
+    W, L, L_well = 10, 30, 10
+
+    def potential(site, pot):
+        (x, y) = site.pos
+        if (L - L_well) / 2 < x < (L + L_well) / 2:
+            return pot
+        else:
+            return 0
 
 This function takes two arguments: the first of type `~kwant.builder.Site`,
 from which you can get the real-space coordinates using ``site.pos``, and the
 value of the potential as the second.  Note that in `potential` we can access
-variables of the surrounding function: `L` and `L_well` are taken from the
-namespace of `make_system`.
+variables `L` and `L_well` that are defined globally.
 
 Kwant now allows us to pass a function as a value to
 `~kwant.builder.Builder`:
 
-.. literalinclude:: /code/include/quantum_well.py
-    :start-after: #HIDDEN_BEGIN_coid
-    :end-before: #HIDDEN_END_coid
+.. jupyter-execute::
+
+    a = 1
+    t = 1.0
+
+    def onsite(site, pot):
+        return 4 * t + potential(site, pot)
+
+    lat = kwant.lattice.square(a)
+    syst = kwant.Builder()
+
+    syst[(lat(x, y) for x in range(L) for y in range(W))] = onsite
+    syst[lat.neighbors()] = -t
+
+.. jupyter-execute::
+    :hide-code:
+
+    #### Define and attach the leads. ####
+    lead = kwant.Builder(kwant.TranslationalSymmetry((-a, 0)))
+    lead[(lat(0, j) for j in range(W))] = 4 * t
+    lead[lat.neighbors()] = -t
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
+
+    syst = syst.finalized()
 
 For each lattice point, the corresponding site is then passed as the
 first argument to the function `onsite`. The values of any additional
@@ -180,9 +325,21 @@ of the lead -- this should be kept in mind.
 
 Finally, we compute the transmission probability:
 
-.. literalinclude:: /code/include/quantum_well.py
-    :start-after: #HIDDEN_BEGIN_sqvr
-    :end-before: #HIDDEN_END_sqvr
+.. jupyter-execute::
+
+    def plot_conductance(syst, energy, welldepths):
+
+        # Compute conductance
+        data = []
+        for welldepth in welldepths:
+            smatrix = kwant.smatrix(syst, energy, params=dict(pot=-welldepth))
+            data.append(smatrix.transmission(1, 0))
+
+        pyplot.figure()
+        pyplot.plot(welldepths, data)
+        pyplot.xlabel("well depth [t]")
+        pyplot.ylabel("conductance [e^2/h]")
+        pyplot.show()
 
 ``kwant.smatrix`` allows us to specify a dictionary, `params`, that contains
 the additional arguments required by the Hamiltonian matrix elements.
@@ -191,7 +348,11 @@ of the potential well by passing the potential value (remember above
 we defined our `onsite` function that takes a parameter named `pot`).
 We obtain the result:
 
-.. image:: /code/figure/quantum_well_result.*
+.. jupyter-execute::
+    :hide-code:
+
+    plot_conductance(syst, energy=0.2,
+                     welldepths=[0.01 * i for i in range(100)])
 
 Starting from no potential (well depth = 0), we observe the typical
 oscillatory transmission behavior through resonances in the quantum well.
@@ -218,13 +379,44 @@ Nontrivial shapes
 
 .. seealso::
     The complete source code of this example can be found in
-    :download:`ab_ring.py </code/download/ab_ring.py>`
+    :jupyter-download:script:`ab_ring`
+
+.. jupyter-kernel::
+    :id: ab_ring
+
+.. jupyter-execute::
+    :hide-code:
+
+    # Tutorial 2.3.3. Nontrivial shapes
+    # =================================
+    #
+    # Physics background
+    # ------------------
+    #  Flux-dependent transmission through a quantum ring
+    #
+    # Kwant features highlighted
+    # --------------------------
+    #  - More complex shapes with lattices
+    #  - Allows for discussion of subtleties of `attach_lead` (not in the
+    #    example, but in the tutorial main text)
+    #  - Modifcations of hoppings/sites after they have been added
+
+    from cmath import exp
+    from math import pi
+
+    import kwant
+
+    # For plotting
+    from matplotlib import pyplot
+
+.. jupyter-execute:: boilerplate.py
+    :hide-code:
 
 Up to now, we only dealt with simple wire geometries. Now we turn to the case
 of a more complex geometry, namely transport through a quantum ring
 that is pierced by a magnetic flux :math:`\Phi`:
 
-.. image:: /code/figure/ab_ring_sketch.*
+.. image:: /figure/ab_ring_sketch.*
 
 For a flux line, it is possible to choose a gauge such that a
 charged particle acquires a phase :math:`e\Phi/h` whenever it
@@ -238,9 +430,14 @@ First, define a boolean function defining the desired shape, i.e. a function
 that returns ``True`` whenever a point is inside the shape, and
 ``False`` otherwise:
 
-.. literalinclude:: /code/include/ab_ring.py
-    :start-after: #HIDDEN_BEGIN_eusz
-    :end-before: #HIDDEN_END_eusz
+.. jupyter-execute::
+
+    r1, r2 = 10, 20
+
+    def ring(pos):
+        (x, y) = pos
+        rsq = x ** 2 + y ** 2
+        return (r1 ** 2 < rsq < r2 ** 2)
 
 Note that this function takes a real-space position as argument (not a
 `~kwant.builder.Site`).
@@ -249,9 +446,16 @@ We can now simply add all of the lattice points inside this shape at
 once, using the function `~kwant.lattice.Square.shape`
 provided by the lattice:
 
-.. literalinclude:: /code/include/ab_ring.py
-    :start-after: #HIDDEN_BEGIN_lcak
-    :end-before: #HIDDEN_END_lcak
+.. jupyter-execute::
+
+    a = 1
+    t = 1.0
+
+    lat = kwant.lattice.square(a)
+    syst = kwant.Builder()
+
+    syst[lat.shape(ring, (0, r1 + 1))] = 4 * t
+    syst[lat.neighbors()] = -t
 
 Here, ``lat.shape`` takes as a second parameter a (real-space) point that is
 inside the desired shape. The hoppings can still be added using
@@ -264,9 +468,30 @@ along the branch cut in the lower arm of the ring. For this we select
 all hoppings in x-direction that are of the form `(lat(1, j), lat(0, j))`
 with ``j<0``:
 
-.. literalinclude:: /code/include/ab_ring.py
-    :start-after: #HIDDEN_BEGIN_lvkt
-    :end-before: #HIDDEN_END_lvkt
+.. jupyter-execute::
+
+    # In order to introduce a flux through the ring, we introduce a phase on
+    # the hoppings on the line cut through one of the arms.  Since we want to
+    # change the flux without modifying the Builder instance repeatedly, we
+    # define the modified hoppings as a function that takes the flux as its
+    # parameter phi.
+    def hopping_phase(site1, site2, phi):
+        return -t * exp(1j * phi)
+
+    def crosses_branchcut(hop):
+        ix0, iy0 = hop[0].tag
+
+        # builder.HoppingKind with the argument (1, 0) below
+        # returns hoppings ordered as ((i+1, j), (i, j))
+        return iy0 < 0 and ix0 == 1  # ix1 == 0 then implied
+
+    # Modify only those hopings in x-direction that cross the branch cut
+    def hops_across_cut(syst):
+        for hop in kwant.builder.HoppingKind((1, 0), lat, lat)(syst):
+            if crosses_branchcut(hop):
+                yield hop
+
+    syst[hops_across_cut] = hopping_phase
 
 Here, `crosses_branchcut` is a boolean function that returns ``True`` for
 the desired hoppings. We then use again a generator (this time with
@@ -279,9 +504,21 @@ by the parameter `phi`.
 
 For the leads, we can also use the ``lat.shape``-functionality:
 
-.. literalinclude:: /code/include/ab_ring.py
-    :start-after: #HIDDEN_BEGIN_qwgr
-    :end-before: #HIDDEN_END_qwgr
+.. jupyter-execute::
+
+    #### Define the leads. ####
+    W = 10
+
+    sym_lead = kwant.TranslationalSymmetry((-a, 0))
+    lead = kwant.Builder(sym_lead)
+
+
+    def lead_shape(pos):
+        (x, y) = pos
+        return (-W / 2 < y < W / 2)
+
+    lead[lat.shape(lead_shape, (0, 0))] = 4 * t
+    lead[lat.neighbors()] = -t
 
 Here, the shape must be compatible with the translational symmetry
 of the lead ``sym_lead``. In particular, this means that it should extend to
@@ -290,9 +527,12 @@ no restriction on ``x`` in ``lead_shape``) [#]_.
 
 Attaching the leads is done as before:
 
-.. literalinclude:: /code/include/ab_ring.py
-    :start-after: #HIDDEN_BEGIN_skbz
-    :end-before: #HIDDEN_END_skbz
+.. jupyter-execute::
+    :hide-output:
+
+    #### Attach the leads ####
+    syst.attach_lead(lead)
+    syst.attach_lead(lead.reversed())
 
 In fact, attaching leads seems not so simple any more for the current
 structure with a scattering region very much different from the lead
@@ -305,16 +545,40 @@ back (going opposite to the direction of the translational vector)
 until it intersects the scattering region. At this intersection,
 the lead is attached:
 
-.. image:: /code/figure/ab_ring_sketch2.*
+.. image:: /figure/ab_ring_sketch2.*
 
 After the lead has been attached, the system should look like this:
 
-.. image:: /code/figure/ab_ring_syst.*
+.. jupyter-execute::
+    :hide-code:
+
+    kwant.plot(syst);
 
 The computation of the conductance goes in the same fashion as before.
 Finally you should get the following result:
 
-.. image:: /code/figure/ab_ring_result.*
+
+.. jupyter-execute::
+    :hide-code:
+
+    def plot_conductance(syst, energy, fluxes):
+        # compute conductance
+
+        normalized_fluxes = [flux / (2 * pi) for flux in fluxes]
+        data = []
+        for flux in fluxes:
+            smatrix = kwant.smatrix(syst, energy, params=dict(phi=flux))
+            data.append(smatrix.transmission(1, 0))
+
+        pyplot.figure()
+        pyplot.plot(normalized_fluxes, data)
+        pyplot.xlabel("flux [flux quantum]")
+        pyplot.ylabel("conductance [e^2/h]")
+        pyplot.show()
+
+    # We should see a conductance that is periodic with the flux quantum
+    plot_conductance(syst.finalized(), energy=0.15,
+                     fluxes=[0.01 * i * 3 * 2 * pi for i in range(100)])
 
 where one can observe the conductance oscillations with the
 period of one flux quantum.
@@ -330,7 +594,47 @@ period of one flux quantum.
     becomes more apparent if we attach the leads a bit further away
     from the central axis o the ring, as was done in this example:
 
-    .. image:: /code/figure/ab_ring_note1.*
+    .. jupyter-kernel::
+        :id: ab_ring_note1
+
+    .. jupyter-execute::
+        :hide-code:
+
+        import kwant
+        from matplotlib import pyplot
+
+    .. jupyter-execute:: boilerplate.py
+        :hide-code:
+
+    .. jupyter-execute::
+        :hide-code:
+
+        a = 1
+        t = 1.0
+        W = 10
+        r1, r2 = 10, 20
+
+        lat = kwant.lattice.square()
+        syst = kwant.Builder()
+        def ring(pos):
+            (x, y) = pos
+            rsq = x**2 + y**2
+            return ( r1**2 < rsq < r2**2)
+        syst[lat.shape(ring, (0, 11))] = 4 * t
+        syst[lat.neighbors()] = -t
+        sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
+        lead0 = kwant.Builder(sym_lead0)
+        def lead_shape(pos):
+            (x, y) = pos
+            return (-1 < x < 1) and ( 0.5 * W < y < 1.5 * W )
+        lead0[lat.shape(lead_shape, (0, W))] = 4 * t
+        lead0[lat.neighbors()] = -t
+        lead1 = lead0.reversed()
+        syst.attach_lead(lead0)
+        syst.attach_lead(lead1)
+
+        kwant.plot(syst);
+
 
   - Per default, `~kwant.builder.Builder.attach_lead` attaches
     the lead to the "outside" of the structure, by tracing the
@@ -345,7 +649,46 @@ period of one flux quantum.
     starts the trace-back in the middle of the ring, resulting
     in the lead being attached to the inner circle:
 
-    .. image:: /code/figure/ab_ring_note2.*
+    .. jupyter-kernel::
+        :id: ab_ring_note2
+
+    .. jupyter-execute::
+        :hide-code:
+
+        import kwant
+        from matplotlib import pyplot
+
+    .. jupyter-execute:: boilerplate.py
+        :hide-code:
+
+    .. jupyter-execute::
+        :hide-code:
+
+        a = 1
+        t = 1.0
+        W = 10
+        r1, r2 = 10, 20
+
+        lat = kwant.lattice.square(a)
+        syst = kwant.Builder()
+        def ring(pos):
+            (x, y) = pos
+            rsq = x**2 + y**2
+            return ( r1**2 < rsq < r2**2)
+        syst[lat.shape(ring, (0, 11))] = 4 * t
+        syst[lat.neighbors()] = -t
+        sym_lead0 = kwant.TranslationalSymmetry((-a, 0))
+        lead0 = kwant.Builder(sym_lead0)
+        def lead_shape(pos):
+            (x, y) = pos
+            return (-1 < x < 1) and ( -W/2 < y < W/2  )
+        lead0[lat.shape(lead_shape, (0, 0))] = 4 * t
+        lead0[lat.neighbors()] = -t
+        lead1 = lead0.reversed()
+        syst.attach_lead(lead0)
+        syst.attach_lead(lead1, lat(0, 0))
+
+        kwant.plot(syst);
 
     Note that here the lead is treated as if it would pass over
     the other arm of the ring, without intersecting it.
