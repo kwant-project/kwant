@@ -2,6 +2,12 @@ Superconductors: orbital degrees of freedom, conservation laws and symmetries
 -----------------------------------------------------------------------------
 
 .. seealso::
+    You can execute the code examples live in your browser by
+    activating thebelab:
+
+    .. thebe-button:: Activate Thebelab
+
+.. seealso::
     The complete source code of this example can be found in
     :jupyter-download:script:`superconductor`
 

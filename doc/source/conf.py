@@ -107,6 +107,15 @@ pygments_style = 'sphinx'
 # Do not show all class members automatically in the class documentation
 numpydoc_show_class_members = False
 
+# Jupyter Sphinx config
+
+jupyter_sphinx_thebelab_config = {
+    "binderOptions": {
+        "repo": "kwant-project/binder",
+        "ref": "master",
+    }
+}
+
 # -- Options for HTML output ---------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with

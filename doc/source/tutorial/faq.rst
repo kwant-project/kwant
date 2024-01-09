@@ -5,6 +5,12 @@ questions that are discussed there.  The `Kwant paper
 <https://downloads.kwant-project.org/doc/kwant-paper.pdf>`_ also digs deeper
 into Kwant's structure.
 
+.. seealso::
+    You can execute the code examples live in your browser by
+    activating thebelab:
+
+    .. thebe-button:: Activate Thebelab
+
 .. jupyter-execute::
     :hide-code:
 
