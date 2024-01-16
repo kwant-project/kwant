@@ -1599,7 +1599,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
                  range(len(cmin)))
     grid = tuple(np.ogrid[dims])
     img = interpolate.griddata(coords, values, grid, method)
-    img = img.astype(np.float_)
+    img = img.astype(np.float64)
     mask = np.mgrid[dims].reshape(len(cmin), -1).T
     # The numerical values in the following line are optimized for the common
     # case of a square lattice:
@@ -1612,7 +1612,7 @@ def mask_interpolate(coords, values, a=None, method='nearest', oversampling=3):
 
     try:
         if _p.engine != "matplotlib":
-            result_array = masked_result_array.filled(np.NaN)
+            result_array = masked_result_array.filled(np.nan)
         else:
             result_array = masked_result_array
     except AttributeError:
