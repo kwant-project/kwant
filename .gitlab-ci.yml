@@ -15,7 +15,7 @@ variables:
 ## Building Docker environments
 ## Only runs when docker specifications change
 
-.build-env: &build-env
+.build-env:
   stage: build-env
   when: manual
   image:
@@ -26,7 +26,7 @@ variables:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
 build-env:ubuntu:
-  <<: *build-env
+  extends: .build-env
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
@@ -34,7 +34,7 @@ build-env:ubuntu:
       --destination $CI_REGISTRY_IMAGE/ubuntu
 
 build-env:debian:
-  <<: *build-env
+  extends: .build-env
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
@@ -42,7 +42,7 @@ build-env:debian:
       --destination $CI_REGISTRY_IMAGE/debian
 
 build-env:default:
-  <<: *build-env
+  extends: .build-env
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/docker
@@ -52,7 +52,7 @@ build-env:default:
 
 ## Build environment specifications
 
-.build: &build
+.build:
   stage: build
   script:
     - echo -e "[DEFAULT]\ndefine_macros = CYTHON_TRACE=1 NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION" >build.conf
@@ -63,59 +63,65 @@ build-env:default:
     expire_in: 2 hour
 
 
-.stable-env: &stable_env
+.stable-env:
   before_script:
     - eval "$(micromamba shell hook --shell bash)"
     - micromamba activate kwant-stable
 
-.no-extras-env: &no_extras_env
+.no-extras-env:
   before_script:
     - eval "$(micromamba shell hook --shell bash)"
     - micromamba activate kwant-stable-no-extras
 
 # Note that this is 'latest' as of when the image was last built
-.latest-env: &latest_env
+.latest-env:
   before_script:
     - eval "$(micromamba shell hook --shell bash)"
     - micromamba activate kwant-latest
 
-.bleeding-edge-env: &bleeding_edge_env
+.bleeding-edge-env:
   before_script:
     - eval "$(micromamba shell hook --shell bash)"
     - micromamba env update -f /kwant-latest.yml
     - micromamba activate kwant-latest
 
-.ubuntu-env: &ubuntu_env
+.ubuntu-env:
   image: gitlab.kwant-project.org:5005/kwant/kwant/ubuntu
 
-.debian-env: &debian_env
+.debian-env:
   image: gitlab.kwant-project.org:5005/kwant/kwant/debian
 
 ## Build Jobs
 
 build:ubuntu:
-  <<: *build
-  <<: *ubuntu_env
+  extends:
+    - .build
+    - .ubuntu-env
 
 build:debian:
-  <<: *build
-  <<: *debian_env
+  extends:
+    - .build
+    - .debian-env
 
 build:stable:
-  <<: *build
-  <<: *stable_env
+  extends:
+    - .build
+    - .stable-env
 
 build:no-extras:
-  <<: *build
-  <<: *no_extras_env
+  extends:
+    - .build
+    - .no-extras-env
 
 build:latest:
-  <<: *build
-  <<: *latest_env
+  extends:
+    - .build
+    - .latest-env
 
 build:bleeding-edge:
-  <<: *build
-  <<: *bleeding_edge_env
+  extends:
+    - .build
+    - .bleeding-edge-env
   only:
     - schedules
   allow_failure: true
@@ -134,7 +140,7 @@ check for dependencies installed:
   allow_failure: true
 
 
-.test: &test
+.test:
   stage: test
   script:
     - py.test -r w --flakes kwant --junitxml=tests.xml --durations=10
@@ -142,7 +148,7 @@ check for dependencies installed:
     reports:
       junit: tests.xml
 
-.coverage: &coverage
+.coverage:
   stage: test
   script:
     - py.test -r w --cov=kwant --cov-report term --cov-report html --flakes kwant --junitxml=tests.xml --durations=10
@@ -154,38 +160,44 @@ check for dependencies installed:
 
 
 test:stable:
-  <<: *test
-  <<: *stable_env
+  extends:
+    - .test
+    - .stable-env
   dependencies:
     - build:stable
 
 test:no-extras:
-  <<: *test
-  <<: *no_extras_env
+  extends:
+    - .test
+    - .no-extras-env
   dependencies:
     - build:no-extras
 
 test:ubuntu:
-  <<: *test
-  <<: *ubuntu_env
+  extends:
+    - .test
+    - .ubuntu-env
   dependencies:
     - build:ubuntu
 
 test:debian:
-  <<: *test
-  <<: *debian_env
+  extends:
+    - .test
+    - .debian-env
   dependencies:
     - build:debian
 
 test:latest:
-  <<: *test
-  <<: *latest_env
+  extends:
+    - .test
+    - .latest-env
   dependencies:
     - build:latest
 
 test:bleeding-edge:
-  <<: *test
-  <<: *bleeding_edge_env
+  extends:
+    - .test
+    - .bleeding-edge-env
   dependencies:
     - build:bleeding-edge
   only:
@@ -193,8 +205,9 @@ test:bleeding-edge:
   allow_failure: true
 
 coverage:latest:
-  <<: *coverage
-  <<: *latest_env
+  extends:
+    - .coverage
+    - .latest-env
   dependencies:
     - build:latest
   only:
@@ -203,7 +216,7 @@ coverage:latest:
 ## Documentation building
 
 build documentation:
-  <<: *latest_env
+  extends: .latest-env
   dependencies:
     - build:latest
   stage: test
@@ -219,7 +232,7 @@ build documentation:
     expire_in: 1 month
 
 build PDF documentation:
-  <<: *latest_env
+  extends: .latest-env
   dependencies:
     - build:latest
   stage: test
@@ -237,7 +250,7 @@ build PDF documentation:
     expire_in: 1 month
 
 check for broken links in doc:
-  <<: *latest_env
+  extends: .latest-env
   dependencies:
     - build:latest
   stage: test
@@ -327,12 +340,12 @@ upload dev version docs:
 
 ## Build documentation for tagged releases
 
-.tagged-version: &tagged_version
+.tagged-version:
     only:
        - /^v[0-9]+\.[0-9]+.[0-9]+$/@kwant/kwant
 
 gather release artifacts:
-  <<: *tagged_version
+  extends: .tagged-version
   stage: release
   script:
     - ./setup.py sdist
