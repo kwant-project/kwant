@@ -11,7 +11,15 @@ __all__ = ['smatrix', 'ldos', 'wave_function', 'greens_function', 'options',
 
 import numpy as np
 from . import common
-from ..linalg import mumps
+try:
+    import mumps
+    MUMPSContext = mumps.Context
+    # TODO: remove this with the next release of python-mumps
+    orderings = mumps.mumps.orderings
+except ImportError:
+    from ..linalg import mumps
+    MUMPSContext = mumps.MUMPSContext
+    orderings = mumps.orderings
 
 
 class Solver(common.SparseSolver):
@@ -90,7 +98,7 @@ class Solver(common.SparseSolver):
                                     for order in ['metis', 'scotch', 'auto']
                                     if order in mumps.possible_orderings()]
                 ordering = sorted_orderings[0]
-            elif ordering not in mumps.orderings:
+            elif ordering not in orderings:
                 raise ValueError("Invalid ordering: " + ordering)
             self.ordering = ordering
 
@@ -100,7 +108,7 @@ class Solver(common.SparseSolver):
         return old_opts
 
     def _factorized(self, a):
-        inst = mumps.MUMPSContext()
+        inst = MUMPSContext()
         inst.factor(a, ordering=self.ordering)
         return inst
 
