@@ -204,6 +204,17 @@ test:bleeding-edge:
     - schedules
   allow_failure: true
 
+test:python-mumps:
+  extends:
+    - .test
+    - .latest-env
+  dependencies:
+    - build:latest
+  script:
+    - micromamba install -y -c conda-forge python-mumps
+    - micromamba remove -y mumps-seq
+    - py.test -r w --flakes kwant --junitxml=tests.xml --durations=10
+
 coverage:latest:
   extends:
     - .coverage
