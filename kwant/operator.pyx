@@ -1037,9 +1037,9 @@ cdef class Source(_LocalOperator):
     certain "density" (e.g. charge or spin) that is represented by  a square
     matrix :math:`M_i` associated with each site :math:`i`, and :math:`H_{i}`
     is the onsite Hamiltonian on site site `i`, then an instance of this class
-    represents the tensor :math:`Q_{iαβ}` which is equal to :math:`(H_{i})^†
-    M_i - M_i H_{i}` when α and β are orbitals on site :math:`i`, and zero
-    otherwise.
+    represents the tensor :math:`Q_{iαβ}` which is equal to
+    :math:`i\left[(H_{i})^† M_i - M_i H_{i}\right]` when α and β are orbitals
+    on site :math:`i`, and zero otherwise.
     """
 
     @cython.embedsignature
