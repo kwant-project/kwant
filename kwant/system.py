@@ -86,14 +86,14 @@ class System(metaclass=abc.ABCMeta):
         items = [
             # (format, extractor, skip if info not present)
             ('{} sites', self.graph.num_nodes, False),
-            ('{} hoppings', self.graph.num_edges, False),
+            ('{} hoppings', self.graph.num_edges // 2, False),
             ('parameters: {}', tuple(self.parameters), True),
         ]
         # Skip some information when it's not present (parameters)
         details = [fmt.format(info) for fmt, info, skip in items
                    if (info or not skip)]
         details = ', and '.join((', '.join(details[:-1]), details[-1]))
-        return '<{} with {}>'.format(self.__class__.__name__, details)
+        return f'<{self.__class__.__name__} with {details}>'
 
 
 # Add a C-implemented function as an unbound method to class System.
@@ -221,6 +221,21 @@ class FiniteSystem(System, metaclass=abc.ABCMeta):
         symmetries = self.discrete_symmetry(args=args, params=params)
         ham = self.hamiltonian_submatrix(args, sparse=True, params=params)
         return symmetries.validate(ham)
+
+    def __str__(self):
+        # Same as System, but with leads
+        items = [
+            # (format, extractor, skip if info not present)
+            ('{} sites', self.graph.num_nodes, False),
+            ('{} hoppings', self.graph.num_edges // 2, False),
+            ('{} leads', len(self.leads), True),
+            ('parameters: {}', tuple(self.parameters), True),
+        ]
+        # Skip some information when it's not present (parameters, leads)
+        details = [fmt.format(info) for fmt, info, skip in items
+                   if (info or not skip)]
+        details = ', and '.join((', '.join(details[:-1]), details[-1]))
+        return f'<{self.__class__.__name__} with {details}>'
 
 
 class InfiniteSystem(System, metaclass=abc.ABCMeta):
@@ -376,6 +391,20 @@ class InfiniteSystem(System, metaclass=abc.ABCMeta):
         hop = self.inter_cell_hopping(args=args, sparse=True, params=params)
         broken = set(symmetries.validate(ham) + symmetries.validate(hop))
         return list(broken)
+
+    def __str__(self):
+        # Same as System, but a different number of sites.
+        items = [
+            # (format, extractor, skip if info not present)
+            ('{} sites', self.cell_size, False),
+            ('{} hoppings', self.graph.num_edges // 2, False),
+            ('parameters: {}', tuple(self.parameters), True),
+        ]
+        # Skip some information when it's not present (parameters)
+        details = [fmt.format(info) for fmt, info, skip in items
+                   if (info or not skip)]
+        details = ', and '.join((', '.join(details[:-1]), details[-1]))
+        return f'<{self.__class__.__name__} with {details}>'
 
 
 def is_selfenergy_lead(lead):
