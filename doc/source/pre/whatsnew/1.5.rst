@@ -151,3 +151,12 @@ Removal of Umfpack support
 Scipy used to provide a Python interface to the Umfpack library.  This is now
 done by a separate package ``scikit-umfpack``.  Because it is hard for end
 users to obtain this, we have removed built-in support for Umfpack.
+
+Addition of python-mumps wrapper
+--------------------------------
+The Kwant solver relies on the MUMPS library for solving large sparse linear
+systems.  In previous versions this was done using a limited wrapper provided
+by Kwant itself.  In Kwant 1.5 we instead interface with MUMPS using the
+``python-mumps`` package.  Importantly, ``python-mumps`` is available on
+Windows via conda-forge.  The integrated MUMPS wrapper remains in place as a
+fallback if ``python-mumps`` is not available.
