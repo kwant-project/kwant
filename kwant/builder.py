@@ -1892,15 +1892,18 @@ def add_peierls_phase(syst, peierls_parameter='phi', fix_gauge=True):
     Returns
     -------
     syst : kwant.builder.Finitesystem or kwant.builder.InfiniteSystem
-        A system where all hoppings are given by value functions
-        that have an additional parameter 'phi' that should be
-        the Peierls phase returned by `kwant.physics.magnetic_gauge`.
-        Any leads have similar parameters named 'phi_lead0',
-        'phi_lead1' etc.
+        A system where all hoppings are given by value functions that have an
+        additional parameter 'phi' that should be the Peierls phase. Any leads
+        have similar parameters named 'phi_lead0', 'phi_lead1' etc. This
+        parameter should be provided as a callable ``phi(site1, site2)``, that
+        returns the phase of the hopping between two sites ``exp(1j *
+        phi_12)``. This is the same format as returned by
+        `kwant.physics.magnetic_gauge`.
     gauge : callable
-        Only returned if 'fix_gauge' is True. Called with magnetic
-        field(s), and returns a parameter dictionary that can be
-        passed to the system as 'params' (see the example below).
+        Only returned if ``fix_gauge`` is True. Called with magnetic field(s),
+        and returns a parameter dictionary that can be passed to the system as
+        'params' (see the example below and `kwant.physics.magnetic_gauge`
+        for more information).
 
     Examples
     --------
