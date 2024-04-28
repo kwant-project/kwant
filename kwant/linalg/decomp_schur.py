@@ -199,24 +199,13 @@ def order_schur(select, t, q, calc_ev=True, overwrite_tq=False):
 
     t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
 
-    # Figure out if select is a function or array.
-    isfun = isarray = True
-    try:
-        select(0)
-    except:
-        isfun = False
-    try:
-        select[0]
-    except:
-        isarray = False
-
-    if not (isarray or isfun):
-        raise ValueError("select must be either a function or an array")
-    elif isarray:
-        select = np.array(select, dtype=lapack.logical_dtype, order='F')
-    else:
+    if callable(select):
         select = np.array(np.vectorize(select)(np.arange(t.shape[0])),
                           dtype=lapack.logical_dtype, order='F')
+    elif hasattr(select, "__getitem__"):
+        select = np.array(select, dtype=lapack.logical_dtype, order='F')
+    else:
+        raise ValueError("select must be either a function or an array")
 
     # Now check if the reordering can actually be done as desired,
     # if we have a real Schur form (i.e. if the 2x2 blocks would be
@@ -272,32 +261,17 @@ def evecs_from_schur(t, q, select=None, left=False, right=True,
 
     t, q = lapack.prepare_for_lapack(overwrite_tq, t, q)
 
-    # check if select is a function or an array
-    if select is not None:
-        isfun = isarray = True
-        try:
-            select(0)
-        except:
-            isfun = False
-
-        try:
-            select[0]
-        except:
-            isarray = False
-
-        if not (isarray or isfun):
-            raise ValueError("select must be either a function, "
-                             "an array or None")
-        elif isarray:
-            selectarr = np.array(select, dtype=lapack.logical_dtype,
-                                 order='F')
-        else:
-            selectarr = np.array(np.vectorize(select)(np.arange(t.shape[0])),
-                                 dtype=lapack.logical_dtype, order='F')
+    if select is None:
+        pass
+    elif callable(select):
+        select = np.array(np.vectorize(select)(np.arange(t.shape[0])),
+                          dtype=lapack.logical_dtype, order='F')
+    elif hasattr(select, "__getitem__"):
+        select = np.array(select, dtype=lapack.logical_dtype, order='F')
     else:
-        selectarr = None
+        raise ValueError("select must be either a function or an array")
 
-    return lapack.trevc(t, q, selectarr, left, right)
+    return lapack.trevc(t, q, select, left, right)
 
 
 def gen_schur(a, b, calc_q=True, calc_z=True, calc_ev=True,
@@ -441,41 +415,21 @@ def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
     """
     s, t, q, z = lapack.prepare_for_lapack(overwrite_stqz, s, t, q, z)
 
-
-    # Figure out if select is a function or array.
-    isfun = isarray = True
-    try:
-        select(0)
-    except:
-        isfun = False
-    try:
-        select[0]
-    except:
-        isarray = False
-
-    if not (isarray or isfun):
-        raise ValueError("select must be either a function or an array")
-    elif isarray:
-        select = np.array(select, dtype=lapack.logical_dtype, order='F')
-    else:
+    if callable(select):
         select = np.array(np.vectorize(select)(np.arange(t.shape[0])),
                           dtype=lapack.logical_dtype, order='F')
+    elif hasattr(select, "__getitem__"):
+        select = np.array(select, dtype=lapack.logical_dtype, order='F')
+    else:
+        raise ValueError("select must be either a function or an array")
 
     # Now check if the reordering can actually be done as desired, if we have a
     # real Schur form (i.e. if the 2x2 blocks would be separated). If this is
     # the case, convert to complex Schur form first.
     for i in np.diagonal(s, -1).nonzero()[0]:
         if bool(select[i]) != bool(select[i+1]):
-            # Convert to complex Schur form
-            if q is not None and z is not None:
-                s, t, q, z = convert_r2c_gen_schur(s, t, q, z)
-            elif q is not None:
-                s, t, q = convert_r2c_gen_schur(s, t, q=q, z=None)
-            elif z is not None:
-                s, t, z = convert_r2c_gen_schur(s, t, q=None, z=z)
-            else:
-                s, t = convert_r2c_gen_schur(s, t)
-
+            # Convert to complex Schur form first
+            s, t, q, z = convert_r2c_gen_schur(s, t, q, z)
             return order_gen_schur(select, s, t, q, z, calc_ev, True)
 
     return lapack.tgsen(select, s, t, q, z, calc_ev)
@@ -650,29 +604,14 @@ def evecs_from_gen_schur(s, t, q=None, z=None, select=None,
     if right and z is None:
         raise ValueError("Matrix z must be provided for right eigenvectors")
 
-    # Check if select is a function or an array.
-    if select is not None:
-        isfun = isarray = True
-        try:
-            select(0)
-        except:
-            isfun = False
-
-        try:
-            select[0]
-        except:
-            isarray = False
-
-        if not (isarray or isfun):
-            raise ValueError("select must be either a function, "
-                             "an array or None")
-        elif isarray:
-            selectarr = np.array(select, dtype=lapack.logical_dtype,
-                                 order='F')
-        else:
-            selectarr = np.array(np.vectorize(select)(np.arange(t.shape[0])),
-                                 dtype=lapack.logical_dtype, order='F')
+    if select is None:
+        pass
+    elif callable(select):
+        select = np.array(np.vectorize(select)(np.arange(t.shape[0])),
+                          dtype=lapack.logical_dtype, order='F')
+    elif hasattr(select, "__getitem__"):
+        select = np.array(select, dtype=lapack.logical_dtype, order='F')
     else:
-        selectarr = None
+        raise ValueError("select must be either a function or an array")
 
-    return lapack.tgevc(s, t, q, z, selectarr, left, right)
+    return lapack.tgevc(s, t, q, z, select, left, right)
