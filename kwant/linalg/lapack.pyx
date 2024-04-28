@@ -16,6 +16,8 @@ __all__ = ['gees',
            'tgevc',
            'prepare_for_lapack']
 
+from itertools import compress
+
 import numpy as np
 cimport numpy as np
 
@@ -59,9 +61,6 @@ class LinAlgError(RuntimeError):
 
 
 # some helper functions
-def filter_args(select, args):
-    return tuple([arg for sel, arg in zip(select, args) if sel])
-
 def assert_fortran_mat(*mats):
     # This is a workaround for a bug in NumPy version < 2.0,
     # where 1x1 matrices do not have the F_Contiguous flag set correctly.
@@ -185,7 +184,7 @@ def gees(np.ndarray[scalar, ndim=2] A, calc_q=True, calc_ev=True):
     # Real inputs possibly produce complex output
     cdef np.ndarray w = maybe_complex[scalar](0, wr, wi)
 
-    return filter_args((True, calc_q, calc_ev), (A, vs, w))
+    return tuple(compress((A, vs, w), (True, calc_q, calc_ev)))
 
 
 def trsen(np.ndarray[l_logical] select,
@@ -286,7 +285,7 @@ def trsen(np.ndarray[l_logical] select,
     # Real inputs possibly produce complex output
     cdef np.ndarray w = maybe_complex[scalar](0, wr, wi)
 
-    return filter_args((True, Q is not None, calc_ev), (T, Q, w))
+    return tuple(compress((T, Q, w), (True, Q is not None, calc_ev)))
 
 
 # Helper function for xTREVC and xTGEVC
@@ -617,8 +616,8 @@ def gges(np.ndarray[scalar, ndim=2] A,
     # Real inputs possibly produce complex output
     cdef np.ndarray alpha = maybe_complex[scalar](0, alphar, alphai)
 
-    return filter_args((True, True, calc_q, calc_z, calc_ev, calc_ev),
-                       (A, B, vsl, vsr, alpha, beta))
+    return tuple(compress((A, B, vsl, vsr, alpha, beta),
+                          (True, True, calc_q, calc_z, calc_ev, calc_ev)))
 
 
 def tgsen(np.ndarray[l_logical] select,
@@ -766,9 +765,9 @@ def tgsen(np.ndarray[l_logical] select,
     # Real inputs possibly produce complex output
     cdef np.ndarray alpha = maybe_complex[scalar](0, alphar, alphai)
 
-    return filter_args((True, True, Q is not None, Z is not None,
-                        calc_ev, calc_ev),
-                       (S, T, Q, Z, alpha, beta))
+    return tuple(compress((S, T, Q, Z, alpha, beta),
+                          (True, True, Q is not None, Z is not None,
+                           calc_ev, calc_ev)))
 
 
 def tgevc(np.ndarray[scalar, ndim=2] S,
