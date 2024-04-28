@@ -361,7 +361,24 @@ def gen_schur(a, b, calc_q=True, calc_z=True, calc_ev=True,
         If the underlying QZ iteration fails to converge.
     """
     a, b = lapack.prepare_for_lapack(overwrite_ab, a, b)
-    return lapack.gges(a, b, calc_q, calc_z, calc_ev)
+    gges = scipy_lapack.get_lapack_funcs('gges', (a, b))
+    result = gges(
+        (lambda *a: 1), a, b, jobvsl=int(calc_q), jobvsr=int(calc_z),
+        overwrite_a=overwrite_ab, overwrite_b=overwrite_ab
+    )
+    if np.iscomplexobj(a):
+        a, b, _, alpha, beta, vsl, vsr, _, info = result
+    else:
+        a, b, _, alphar, alphai, beta, vsl, vsr, _, info = result
+        if calc_ev:
+            alpha = alphar + 1j * alphai
+    if info > 0:
+        raise lapack.LinAlgError("QZ iteration failed to converge in gges")
+
+    return (
+        (a, b) + ((vsl,) if calc_q else ()) + ((vsr,) if calc_z else ())
+        + ((alpha, beta) if calc_ev else ())
+    )
 
 
 def order_gen_schur(select, s, t, q=None, z=None, calc_ev=True,
