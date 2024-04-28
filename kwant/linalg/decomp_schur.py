@@ -11,7 +11,9 @@ __all__ = ['schur', 'convert_r2c_schur', 'order_schur', 'evecs_from_schur',
            'evecs_from_gen_schur']
 
 from math import sqrt
+
 import numpy as np
+from scipy.linalg import lapack as scipy_lapack
 from . import lapack
 
 
@@ -63,7 +65,20 @@ def schur(a, calc_q=True, calc_ev=True, overwrite_a=False):
         If the underlying QR iteration fails to converge.
     """
     a = lapack.prepare_for_lapack(overwrite_a, a)
-    return lapack.gees(a, calc_q, calc_ev)
+    gees = scipy_lapack.get_lapack_funcs('gees', (a,))
+    result = gees(
+        (lambda *a: 1), a, compute_v=int(calc_q), overwrite_a=overwrite_a
+    )
+    if np.iscomplexobj(a):
+        t, _, w, vs, _, info = result
+    else:
+        t, _, wr, wi, vs, _, info = result
+        if calc_ev:
+            w = wr + 1j * wi
+    if info > 0:
+        raise lapack.LinAlgError("QZ iteration failed to converge in gees")
+
+    return (t,) + ((vs,) if calc_q else ()) + ((w,) if calc_ev else ())
 
 
 def convert_r2c_schur(t, q):

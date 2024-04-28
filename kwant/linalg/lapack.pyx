@@ -8,8 +8,7 @@
 
 """Low-level access to LAPACK functions. """
 
-__all__ = ['gees',
-           'trsen',
+__all__ = ['trsen',
            'trevc',
            'gges',
            'tgsen',
@@ -85,106 +84,6 @@ cdef l_int lwork_from_qwork(scalar qwork):
         return <l_int>qwork
     else:
         return <l_int>qwork.real
-
-
-def gees(np.ndarray[scalar, ndim=2] A, calc_q=True, calc_ev=True):
-    cdef l_int N, lwork, sdim, info
-
-    assert_fortran_mat(A)
-
-    if A.ndim != 2:
-        raise ValueError("Expect matrix as input")
-
-    if A.shape[0] != A.shape[1]:
-        raise ValueError("Expect square matrix")
-
-    # Allocate workspaces
-
-    N = A.shape[0]
-
-    cdef np.ndarray[scalar] wr, wi
-    if scalar in cmplx:
-        wr = np.empty(N, dtype=A.dtype)
-        wi = None
-    else:
-        wr = np.empty(N, dtype=A.dtype)
-        wi = np.empty(N, dtype=A.dtype)
-
-    cdef np.ndarray rwork
-    if scalar is float_complex:
-        rwork = np.empty(N, dtype=np.float32)
-    elif scalar is double_complex:
-        rwork = np.empty(N, dtype=np.float64)
-
-    cdef char *jobvs
-    cdef scalar *vs_ptr
-    cdef np.ndarray[scalar, ndim=2] vs
-    if calc_q:
-        vs = np.empty((N,N), dtype=A.dtype, order='F')
-        vs_ptr = <scalar *>vs.data
-        jobvs = "V"
-    else:
-        vs = None
-        vs_ptr = NULL
-        jobvs = "N"
-
-    # Workspace query
-    # Xgees expects &qwork as a <scalar *> (even though it's an integer)
-    lwork = -1
-    cdef scalar qwork
-
-    if scalar is float:
-        lapack.sgees(jobvs, "N", NULL, &N, <float *>A.data, &N,
-                     &sdim, <float *>wr.data, <float *>wi.data, vs_ptr, &N,
-                     &qwork, &lwork, NULL, &info)
-    elif scalar is double:
-        lapack.dgees(jobvs, "N", NULL, &N, <double *>A.data, &N,
-                     &sdim, <double *>wr.data, <double *>wi.data, vs_ptr, &N,
-                     &qwork, &lwork, NULL, &info)
-    elif scalar is float_complex:
-        lapack.cgees(jobvs, "N", NULL, &N, <float complex *>A.data, &N,
-                     &sdim, <float complex *>wr.data, vs_ptr, &N,
-                     &qwork, &lwork, <float *>rwork.data, NULL, &info)
-    elif scalar is double_complex:
-        lapack.zgees(jobvs, "N", NULL, &N, <double complex *>A.data, &N,
-                     &sdim, <double complex *>wr.data, vs_ptr, &N,
-                     &qwork, &lwork, <double *>rwork.data, NULL, &info)
-
-    assert info == 0, "Argument error in sgees"
-
-    lwork = lwork_from_qwork(qwork)
-    cdef np.ndarray[scalar] work = np.empty(lwork, dtype=A.dtype)
-
-    # The actual calculation
-
-    if scalar is float:
-        lapack.sgees(jobvs, "N", NULL, &N, <float *>A.data, &N,
-                     &sdim, <float *>wr.data, <float *>wi.data, vs_ptr, &N,
-                     <float *>work.data, &lwork, NULL, &info)
-    elif scalar is double:
-        lapack.dgees(jobvs, "N", NULL, &N, <double *>A.data, &N,
-                     &sdim, <double *>wr.data, <double *>wi.data, vs_ptr, &N,
-                     <double *>work.data, &lwork, NULL, &info)
-    elif scalar is float_complex:
-        lapack.cgees(jobvs, "N", NULL, &N, <float complex *>A.data, &N,
-                     &sdim, <float complex *>wr.data, vs_ptr, &N,
-                     <float complex *>work.data, &lwork,
-                     <float *>rwork.data, NULL, &info)
-    elif scalar is double_complex:
-        lapack.zgees(jobvs, "N", NULL, &N, <double complex *>A.data, &N,
-                     &sdim, <double complex *>wr.data, vs_ptr, &N,
-                     <double complex *>work.data, &lwork,
-                     <double *>rwork.data, NULL, &info)
-
-    if info > 0:
-        raise LinAlgError("QR iteration failed to converge in gees")
-
-    assert info == 0, "Argument error in gees"
-
-    # Real inputs possibly produce complex output
-    cdef np.ndarray w = maybe_complex[scalar](0, wr, wi)
-
-    return tuple(compress((A, vs, w), (True, calc_q, calc_ev)))
 
 
 def trsen(np.ndarray[l_logical] select,
