@@ -436,8 +436,11 @@ def unified_eigenproblem(a, b=None, tol=1e6):
         # Propagating modes.
         propselect = abs(abs(ev) - 1) < eps
 
-        vec_gen = lambda x: kla.evecs_from_schur(t, z, select=x)
-        ord_schur = lambda x: kla.order_schur(x, t, z, calc_ev=False)[1]
+        def vec_gen(select):
+            return kla.evecs_from_schur(t, z, select)
+
+        def ord_schur(select):
+            return kla.order_schur(select, t, z, calc_ev=False)[1]
 
     else:
         eps = np.finfo(np.common_type(a, b)).eps * tol
@@ -453,9 +456,11 @@ def unified_eigenproblem(a, b=None, tol=1e6):
         # Note: the division is OK here, since we later only access
         #       eigenvalues close to the unit circle
 
-        vec_gen = lambda x: kla.evecs_from_gen_schur(s, t, z=z, select=x)
-        ord_schur = lambda x: kla.order_gen_schur(x, s, t, z=z,
-                                                  calc_ev=False)[2]
+        def vec_gen(select):
+            return kla.evecs_from_gen_schur(s, t, z=z, select=select)
+
+        def ord_schur(select):
+            return kla.order_gen_schur(select, s, t, z=z, calc_ev=False)[2]
 
     return ev, select, propselect, vec_gen, ord_schur
 
@@ -503,14 +508,18 @@ def phs_symmetrization(wfs, particle_hole):
     # Check that wfs are orthonormal and the space spanned
     # by them is closed under ph, meaning U is unitary.
     if not np.allclose(U @ U.T.conj(), np.eye(U.shape[0])):
-        raise ValueError('wfs are not orthonormal or not closed under particle_hole.')
+        raise ValueError(
+            'wfs are not orthonormal or not closed under particle_hole.'
+        )
     P_squared = U @ U.conj()
     if np.allclose(P_squared, np.eye(U.shape[0])):
         P_squared = 1
     elif np.allclose(P_squared, -np.eye(U.shape[0])):
         P_squared = -1
     else:
-        raise ValueError('particle_hole must square to +1 or -1. P_squared = {}'.format(P_squared))
+        raise ValueError(
+            f'particle_hole must square to +1 or -1. {P_squared = }'
+        )
 
     if P_squared == 1:
         # Use the matrix square root method from
@@ -522,7 +531,8 @@ def phs_symmetrization(wfs, particle_hole):
         assert np.allclose(np.diag(np.diag(vals)), vals)
         vals = np.diag(vals)
         # Need to take safe square root of U, the branch cut should not go
-        # through any eigenvalues. Otherwise the square root may not be symmetric.
+        # through any eigenvalues. Otherwise the square root may not be
+        # symmetric.
         # Find largest gap between eigenvalues
         phases = np.sort(np.angle(vals))
         dph = np.append(np.diff(phases), phases[0] + 2*np.pi - phases[-1])
