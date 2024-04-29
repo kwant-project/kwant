@@ -8,13 +8,13 @@
 
 """Low-level access to LAPACK functions. """
 
-__all__ = ['gees',
-           'trsen',
+__all__ = ['trsen',
            'trevc',
-           'gges',
            'tgsen',
            'tgevc',
            'prepare_for_lapack']
+
+from itertools import compress
 
 import numpy as np
 cimport numpy as np
@@ -59,9 +59,6 @@ class LinAlgError(RuntimeError):
 
 
 # some helper functions
-def filter_args(select, args):
-    return tuple([arg for sel, arg in zip(select, args) if sel])
-
 def assert_fortran_mat(*mats):
     # This is a workaround for a bug in NumPy version < 2.0,
     # where 1x1 matrices do not have the F_Contiguous flag set correctly.
@@ -86,106 +83,6 @@ cdef l_int lwork_from_qwork(scalar qwork):
         return <l_int>qwork
     else:
         return <l_int>qwork.real
-
-
-def gees(np.ndarray[scalar, ndim=2] A, calc_q=True, calc_ev=True):
-    cdef l_int N, lwork, sdim, info
-
-    assert_fortran_mat(A)
-
-    if A.ndim != 2:
-        raise ValueError("Expect matrix as input")
-
-    if A.shape[0] != A.shape[1]:
-        raise ValueError("Expect square matrix")
-
-    # Allocate workspaces
-
-    N = A.shape[0]
-
-    cdef np.ndarray[scalar] wr, wi
-    if scalar in cmplx:
-        wr = np.empty(N, dtype=A.dtype)
-        wi = None
-    else:
-        wr = np.empty(N, dtype=A.dtype)
-        wi = np.empty(N, dtype=A.dtype)
-
-    cdef np.ndarray rwork
-    if scalar is float_complex:
-        rwork = np.empty(N, dtype=np.float32)
-    elif scalar is double_complex:
-        rwork = np.empty(N, dtype=np.float64)
-
-    cdef char *jobvs
-    cdef scalar *vs_ptr
-    cdef np.ndarray[scalar, ndim=2] vs
-    if calc_q:
-        vs = np.empty((N,N), dtype=A.dtype, order='F')
-        vs_ptr = <scalar *>vs.data
-        jobvs = "V"
-    else:
-        vs = None
-        vs_ptr = NULL
-        jobvs = "N"
-
-    # Workspace query
-    # Xgees expects &qwork as a <scalar *> (even though it's an integer)
-    lwork = -1
-    cdef scalar qwork
-
-    if scalar is float:
-        lapack.sgees(jobvs, "N", NULL, &N, <float *>A.data, &N,
-                     &sdim, <float *>wr.data, <float *>wi.data, vs_ptr, &N,
-                     &qwork, &lwork, NULL, &info)
-    elif scalar is double:
-        lapack.dgees(jobvs, "N", NULL, &N, <double *>A.data, &N,
-                     &sdim, <double *>wr.data, <double *>wi.data, vs_ptr, &N,
-                     &qwork, &lwork, NULL, &info)
-    elif scalar is float_complex:
-        lapack.cgees(jobvs, "N", NULL, &N, <float complex *>A.data, &N,
-                     &sdim, <float complex *>wr.data, vs_ptr, &N,
-                     &qwork, &lwork, <float *>rwork.data, NULL, &info)
-    elif scalar is double_complex:
-        lapack.zgees(jobvs, "N", NULL, &N, <double complex *>A.data, &N,
-                     &sdim, <double complex *>wr.data, vs_ptr, &N,
-                     &qwork, &lwork, <double *>rwork.data, NULL, &info)
-
-    assert info == 0, "Argument error in sgees"
-
-    lwork = lwork_from_qwork(qwork)
-    cdef np.ndarray[scalar] work = np.empty(lwork, dtype=A.dtype)
-
-    # The actual calculation
-
-    if scalar is float:
-        lapack.sgees(jobvs, "N", NULL, &N, <float *>A.data, &N,
-                     &sdim, <float *>wr.data, <float *>wi.data, vs_ptr, &N,
-                     <float *>work.data, &lwork, NULL, &info)
-    elif scalar is double:
-        lapack.dgees(jobvs, "N", NULL, &N, <double *>A.data, &N,
-                     &sdim, <double *>wr.data, <double *>wi.data, vs_ptr, &N,
-                     <double *>work.data, &lwork, NULL, &info)
-    elif scalar is float_complex:
-        lapack.cgees(jobvs, "N", NULL, &N, <float complex *>A.data, &N,
-                     &sdim, <float complex *>wr.data, vs_ptr, &N,
-                     <float complex *>work.data, &lwork,
-                     <float *>rwork.data, NULL, &info)
-    elif scalar is double_complex:
-        lapack.zgees(jobvs, "N", NULL, &N, <double complex *>A.data, &N,
-                     &sdim, <double complex *>wr.data, vs_ptr, &N,
-                     <double complex *>work.data, &lwork,
-                     <double *>rwork.data, NULL, &info)
-
-    if info > 0:
-        raise LinAlgError("QR iteration failed to converge in gees")
-
-    assert info == 0, "Argument error in gees"
-
-    # Real inputs possibly produce complex output
-    cdef np.ndarray w = maybe_complex[scalar](0, wr, wi)
-
-    return filter_args((True, calc_q, calc_ev), (A, vs, w))
 
 
 def trsen(np.ndarray[l_logical] select,
@@ -286,7 +183,7 @@ def trsen(np.ndarray[l_logical] select,
     # Real inputs possibly produce complex output
     cdef np.ndarray w = maybe_complex[scalar](0, wr, wi)
 
-    return filter_args((True, Q is not None, calc_ev), (T, Q, w))
+    return tuple(compress((T, Q, w), (True, Q is not None, calc_ev)))
 
 
 # Helper function for xTREVC and xTGEVC
@@ -474,153 +371,6 @@ def trevc(np.ndarray[scalar, ndim=2] T,
         return vr
 
 
-def gges(np.ndarray[scalar, ndim=2] A,
-          np.ndarray[scalar, ndim=2] B,
-          calc_q=True, calc_z=True, calc_ev=True):
-    cdef l_int N, sdim, info
-
-    # Check parameters
-
-    assert_fortran_mat(A, B)
-
-    if A.shape[0] != B.shape[1]:
-        raise ValueError("Expect square matrix A")
-
-    if A.shape[0] != B.shape[0] or A.shape[0] != B.shape[1]:
-        raise ValueError("Shape of B is incompatible with matrix A")
-
-    # Allocate workspaces
-
-    N = A.shape[0]
-
-    cdef np.ndarray[scalar] alphar, alphai
-    if scalar in cmplx:
-        alphar = np.empty(N, dtype=A.dtype)
-        alphai = None
-    else:
-        alphar = np.empty(N, dtype=A.dtype)
-        alphai = np.empty(N, dtype=A.dtype)
-
-    cdef np.ndarray[scalar] beta = np.empty(N, dtype=A.dtype)
-
-    cdef np.ndarray rwork = None
-    if scalar is float_complex:
-        rwork = np.empty(8 * N, dtype=np.float32)
-    elif scalar is double_complex:
-        rwork = np.empty(8 * N, dtype=np.float64)
-
-    cdef char *jobvsl
-    cdef scalar *vsl_ptr
-    cdef np.ndarray[scalar, ndim=2] vsl
-    if calc_q:
-        vsl = np.empty((N,N), dtype=A.dtype, order='F')
-        vsl_ptr = <scalar *>vsl.data
-        jobvsl = "V"
-    else:
-        vsl = None
-        vsl_ptr = NULL
-        jobvsl = "N"
-
-    cdef char *jobvsr
-    cdef scalar *vsr_ptr
-    cdef np.ndarray[scalar, ndim=2] vsr
-    if calc_z:
-        vsr = np.empty((N,N), dtype=A.dtype, order='F')
-        vsr_ptr = <scalar *>vsr.data
-        jobvsr = "V"
-    else:
-        vsr = None
-        vsr_ptr = NULL
-        jobvsr = "N"
-
-    # Workspace query
-    # Xgges expects &qwork as a <scalar *> (even though it's an integer)
-    cdef l_int lwork = -1
-    cdef scalar qwork
-
-    if scalar is float:
-        lapack.sgges(jobvsl, jobvsr, "N", NULL,
-                     &N, <float *>A.data, &N,
-                     <float *>B.data, &N, &sdim,
-                     <float *>alphar.data, <float *>alphai.data,
-                     <float *>beta.data,
-                     vsl_ptr, &N, vsr_ptr, &N,
-                     &qwork, &lwork, NULL, &info)
-    elif scalar is double:
-        lapack.dgges(jobvsl, jobvsr, "N", NULL,
-                     &N, <double *>A.data, &N,
-                     <double *>B.data, &N, &sdim,
-                     <double *>alphar.data, <double *>alphai.data,
-                     <double *>beta.data,
-                     vsl_ptr, &N, vsr_ptr, &N,
-                     &qwork, &lwork, NULL, &info)
-    elif scalar is float_complex:
-        lapack.cgges(jobvsl, jobvsr, "N", NULL,
-                     &N, <float complex *>A.data, &N,
-                     <float complex *>B.data, &N, &sdim,
-                     <float complex *>alphar.data, <float complex *>beta.data,
-                     vsl_ptr, &N, vsr_ptr, &N,
-                     &qwork, &lwork, <float *>rwork.data, NULL, &info)
-    elif scalar is double_complex:
-        lapack.zgges(jobvsl, jobvsr, "N", NULL,
-                     &N, <double complex *>A.data, &N,
-                     <double complex *>B.data, &N, &sdim,
-                     <double complex *>alphar.data, <double complex *>beta.data,
-                     vsl_ptr, &N, vsr_ptr, &N,
-                     &qwork, &lwork, <double *>rwork.data, NULL, &info)
-
-    assert info == 0, "Argument error in gges"
-
-    lwork = lwork_from_qwork(qwork)
-    cdef np.ndarray[scalar] work = np.empty(lwork, dtype=A.dtype)
-
-    # The actual calculation
-
-    if scalar is float:
-        lapack.sgges(jobvsl, jobvsr, "N", NULL,
-                     &N, <float *>A.data, &N,
-                     <float *>B.data, &N, &sdim,
-                     <float *>alphar.data, <float *>alphai.data,
-                     <float *>beta.data,
-                     vsl_ptr, &N, vsr_ptr, &N,
-                     <float *>work.data, &lwork, NULL, &info)
-    elif scalar is double:
-        lapack.dgges(jobvsl, jobvsr, "N", NULL,
-                     &N, <double *>A.data, &N,
-                     <double *>B.data, &N, &sdim,
-                     <double *>alphar.data, <double *>alphai.data,
-                     <double *>beta.data,
-                     vsl_ptr, &N, vsr_ptr, &N,
-                     <double *>work.data, &lwork, NULL, &info)
-    elif scalar is float_complex:
-        lapack.cgges(jobvsl, jobvsr, "N", NULL,
-                     &N, <float complex *>A.data, &N,
-                     <float complex *>B.data, &N, &sdim,
-                     <float complex *>alphar.data, <float complex *>beta.data,
-                     vsl_ptr, &N, vsr_ptr, &N,
-                     <float complex *>work.data, &lwork,
-                     <float *>rwork.data, NULL, &info)
-    elif scalar is double_complex:
-        lapack.zgges(jobvsl, jobvsr, "N", NULL,
-                     &N, <double complex *>A.data, &N,
-                     <double complex *>B.data, &N, &sdim,
-                     <double complex *>alphar.data, <double complex *>beta.data,
-                     vsl_ptr, &N, vsr_ptr, &N,
-                     <double complex *>work.data, &lwork,
-                     <double *>rwork.data, NULL, &info)
-
-    if info > 0:
-        raise LinAlgError("QZ iteration failed to converge in gges")
-
-    assert info == 0, "Argument error in gges"
-
-    # Real inputs possibly produce complex output
-    cdef np.ndarray alpha = maybe_complex[scalar](0, alphar, alphai)
-
-    return filter_args((True, True, calc_q, calc_z, calc_ev, calc_ev),
-                       (A, B, vsl, vsr, alpha, beta))
-
-
 def tgsen(np.ndarray[l_logical] select,
            np.ndarray[scalar, ndim=2] S,
            np.ndarray[scalar, ndim=2] T,
@@ -766,9 +516,9 @@ def tgsen(np.ndarray[l_logical] select,
     # Real inputs possibly produce complex output
     cdef np.ndarray alpha = maybe_complex[scalar](0, alphar, alphai)
 
-    return filter_args((True, True, Q is not None, Z is not None,
-                        calc_ev, calc_ev),
-                       (S, T, Q, Z, alpha, beta))
+    return tuple(compress((S, T, Q, Z, alpha, beta),
+                          (True, True, Q is not None, Z is not None,
+                           calc_ev, calc_ev)))
 
 
 def tgevc(np.ndarray[scalar, ndim=2] S,
