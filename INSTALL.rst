@@ -35,7 +35,7 @@ Building Kwant requires
  * `LAPACK <https://netlib.org/lapack/>`_ and `BLAS <https://netlib.org/blas/>`_,
    (For best performance we recommend the free `OpenBLAS
    <https://www.openblas.net/>`_ or the nonfree `MKL
-   <https://software.intel.com/en-us/intel-mkl>`_.)
+   <https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html>`_.)
  * `Tinyarray <https://gitlab.kwant-project.org/kwant/tinyarray>`_ 1.2.2 or newer,
 a NumPy-like Python package optimized for very small arrays,
  * An environment which allows to compile Python extensions written in C and
@@ -62,9 +62,8 @@ source .tar.gz-file.
 Building and installing Kwant
 =============================
 
-Kwant can be built and installed following the `usual Python conventions
-<https://docs.python.org/3/install/index.html>`_ by running the following
-commands in the root directory of the Kwant distribution. ::
+Kwant can be built and installed by running the following commands in the root
+directory of the Kwant distribution. ::
 
     python3 setup.py build
     python3 setup.py install
@@ -104,9 +103,9 @@ The sections bear the names of the extension modules, for example
 ``[DEFAULT]`` section that provides default values for all extensions, also
 those not explicitly present in the file.
 
-Possible keys are the keyword arguments for ``distutils.core.Extension`` (For a
+Possible keys are the keyword arguments for ``setuptools.Extension`` (For a
 complete list, see its `documentation
-<https://docs.python.org/3/distutils/apiref.html#distutils.core.Extension>`_).
+<https://setuptools.pypa.io/en/latest/userguide/ext_modules.html>`_).
 The corresponding values are whitespace-separated lists of strings.
 
 Example ``build.conf`` for compiling Kwant with C assertions and Cython's line

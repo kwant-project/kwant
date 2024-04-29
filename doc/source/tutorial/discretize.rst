@@ -151,7 +151,7 @@ Printing the Builder produced by ``discretize`` shows the source code of its ons
       When working interactively in `Jupyter notebooks <https://jupyter.org/>`_
       it can be useful to use this to see a symbolic representation of
       the discretized Hamiltonian. This works best when combined with ``sympy``
-      `Pretty Printing <https://docs.sympy.org/latest/tutorial/printing.html#setting-up-pretty-printing>`_.
+      `Pretty Printing <https://docs.sympy.org/latest/tutorials/intro-tutorial/printing.html#setting-up-pretty-printing>`_.
 
     - The symbolic result of discretization obtained with
       ``discretize_symbolic`` can be converted into a

@@ -20,7 +20,7 @@ rather than::
 
 Plotly for plots
 ----------------
-Kwant can now use the `Plotly <https://plot.ly/>`_ library when plotting,
+Kwant can now use the `Plotly <https://plotly.com/>`_ library when plotting,
 though matplotlib is still used by default. Using plotly empowers Kwant
 to produce high-quality interactive plots, as well as true 3D support:
 

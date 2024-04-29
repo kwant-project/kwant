@@ -13,7 +13,7 @@ version.ensure_python()
 __version__ = version.version
 """The version of Kwant is available under the name ``__version__``.
 
-This string respects `PEP 440 <https://www.python.org/dev/peps/pep-0440/>`_
+This string respects `PEP 440 <https://peps.python.org/pep-0440/>`_
 and has the following format
 
 - Released version: '1.3.0', '1.3.1', etc.
