@@ -82,8 +82,8 @@ build-env:default:
 .bleeding-edge-env:
   before_script:
     - eval "$(micromamba shell hook --shell bash)"
-    - micromamba env update -f /kwant-latest.yml
     - micromamba activate kwant-latest
+    - micromamba update --all
 
 .ubuntu-env:
   image: gitlab.kwant-project.org:5005/kwant/kwant/ubuntu
