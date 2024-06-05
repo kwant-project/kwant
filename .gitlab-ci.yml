@@ -212,7 +212,6 @@ test:python-mumps:
     - build:latest
   script:
     - micromamba install -y -c conda-forge python-mumps
-    - micromamba remove -y mumps-seq
     - py.test -r w --flakes kwant --junitxml=tests.xml --durations=10
 
 coverage:latest:
