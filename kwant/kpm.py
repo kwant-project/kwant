@@ -773,11 +773,11 @@ def conductivity(hamiltonian, alpha='x', beta='x', positions=None, **kwargs):
     and :math:`V=1`, otherwise the result of this calculation must be
     normalized with the corresponding volume.
 
-    The equations used here are based on [3]_ and [4]_
+    The equations used here are based on [5]_ and [6]_
 
-    .. [3] `Phys. Rev. Lett. 114, 116602 (2015)
+    .. [5] `Phys. Rev. Lett. 114, 116602 (2015)
        <https://arxiv.org/abs/1410.8140>`_.
-    .. [4] `Phys. Rev. B 92, 184415 (2015)
+    .. [6] `Phys. Rev. B 92, 184415 (2015)
        <https://doi.org/10.1103/PhysRevB.92.184415>`_
 
     Parameters

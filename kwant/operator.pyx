@@ -1001,7 +1001,7 @@ cdef class Current(_LocalOperator):
 
 
 cdef class Source(_LocalOperator):
-    """An operator for calculating general sources.
+    r"""An operator for calculating general sources.
 
     An instance of this class can be called like a function to evaluate the
     expectation value with a wavefunction. See
