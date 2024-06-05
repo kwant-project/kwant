@@ -13,7 +13,13 @@ from functools import reduce
 import numpy as np
 from numpy.polynomial.chebyshev import chebval
 from scipy.sparse import coo_matrix, csr_matrix
-from scipy.integrate import simps
+
+try:
+    from scipy.integrate import simpson
+except ImportError:
+    # TODO: remove this once we drop support for scipy < 1.6
+    from scipy.integrate import simps as simpson
+
 from scipy.sparse.linalg import eigsh, LinearOperator
 import scipy.fftpack as fft
 
@@ -618,7 +624,7 @@ class Correlator:
         distribution_array = fermi_distribution(e, mu, temperature)
         integrand = np.divide(distribution_array, (1 - e_rescaled ** 2) ** 2)
         integrand = np.multiply(integrand, self._integral_factor)
-        integral = simps(integrand, x=e_rescaled)
+        integral = simpson(integrand, x=e_rescaled)
         # gives the linear response in units of volume * e^2/h
         prefactor = 2 * 4**2 / ((2 * self._a) ** 2)
         return prefactor * integral

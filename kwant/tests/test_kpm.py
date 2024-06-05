@@ -13,7 +13,11 @@ import pytest
 import numpy as np
 import scipy.sparse
 import scipy.sparse.linalg as sla
-from scipy.integrate import simps
+try:
+    from scipy.integrate import simpson
+except ImportError:
+    # TODO: remove this once we drop support for scipy < 1.6
+    from scipy.integrate import simps as simpson
 
 import kwant
 from ..kpm import _rescale, LocalVectors, RandomVectors
@@ -664,7 +668,7 @@ def test_integrate():
     spectrum = make_spectrum(ham, p)
     ones = lambda x: np.ones_like(x)
     assert np.abs(
-        (spectrum.integrate() - simps(spectrum.densities, x=spectrum.energies))
+        (spectrum.integrate() - simpson(spectrum.densities, x=spectrum.energies))
         / spectrum.integrate()) < TOL_SP
     assert np.abs(spectrum.integrate() - spectrum.integrate(
         distribution_function=ones)) < TOL

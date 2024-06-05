@@ -12,7 +12,13 @@ import itertools
 import numpy as np
 import tinyarray as ta
 from math import cos, sin
-import scipy.integrate
+
+try:
+    from scipy.integrate import simpson
+except ImportError:
+    # TODO: remove this once we drop support for scipy < 1.6
+    from scipy.integrate import simps as simpson
+
 import scipy.stats
 import pytest
 import sys
@@ -563,7 +569,7 @@ def test_current_interpolation():
                     for (mn, mx), shape in zip(box, j0.shape))
             # slice field perpendicular to a cut along the y axis
             y_axis = (np.argmin(np.abs(x)), slice(None), 0)
-            J_interp = scipy.integrate.simps(j0[y_axis], y)
+            J_interp = simpson(j0[y_axis], x=y)
             data.append((n, abs(J_interp - J_exact)))
         # 3rd value returned from 'linregress' is 'rvalue'
         # TODO: review this value once #280 has been dealt with.
