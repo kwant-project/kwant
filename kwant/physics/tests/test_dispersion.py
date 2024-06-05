@@ -78,23 +78,13 @@ def test_band_velocity_derivative():
     lat = kwant.lattice.square(norbs=1)
     syst[lat(0, 0)] = 1
     syst[lat(0, 1)] = 3
-    syst[lat(1, 0), lat(0, 0)] = -1
-    syst[lat(1, 1), lat(0, 1)] = 2
+    syst[lat(1, 0), lat(0, 0)] = -0.1
+    syst[lat(1, 1), lat(0, 1)] = 0.2
     bands = kwant.physics.Bands(syst.finalized())
-    eps = 1E-4
-    eps2 = eps * eps
-    c3 = 1 / 90
-    c2 = - 3 / 20
-    c1 = 3 / 2
-    c0 = - 49 / 18
-    for k in linspace(-pi, pi, 200):
+    # E = E_0 - 2 t cos(k) => d2E/dk2 = 2 t cos(k)
+    for k in linspace(-pi, pi, 10):
         dvel = bands(k, derivative_order=2)[2]
-        # higher order formula for second derivative to get required accuracy
-        num_dvel = (c3 * (bands(k+3*eps) + bands(k-3*eps)) +
-                    c2 * (bands(k+2*eps) + bands(k-2*eps)) +
-                    c1 * (bands(k+eps) + bands(k-eps)) +
-                    c0 * bands(k)) / eps2
-        assert_array_almost_equal(dvel, num_dvel)
+        assert_array_almost_equal(dvel, [0.2 * cos(k), -0.4 * cos(k)])
 
 
 def test_eigenvector_calculation():
