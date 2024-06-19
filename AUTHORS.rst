@@ -31,6 +31,7 @@ Contributors to Kwant include
 * Rafał Skolasiński (TU Delft)
 * Adrien Sorgniard (CEA Grenoble)
 * Dániel Varjas (TU Delft)
+* Kostas Vilkelis (TU Delft)
 
 We thank Christoph Gohlke for the creation of installers for Microsoft Windows.
 
