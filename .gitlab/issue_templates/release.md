@@ -5,8 +5,8 @@ This is a checklist based on the [release document](RELEASE.rst); consult it for
 ## Preflight checks
 
 - [ ] All the issues from this milestone are resolved
-- [ ] Ensure that tests pass (either on [stable](https://gitlab.kwant-project.org/kwant/kwant/tree/stable) or on [master](https://gitlab.kwant-project.org/kwant/kwant/tree/master) branch)
-- [ ] Documentation looks correct https://test.kwant-project.org/doc/<branch name>
+- [ ] Ensure that tests pass on [main](https://gitlab.kwant-project.org/kwant/kwant/tree/main) branch
+- [ ] Documentation looks correct https://test.kwant-project.org/doc/main
 - [ ] [Whatnew](doc/source/pre/whatsnew) is up to date
 - [ ] `AUTHORS.rst` and `.mailmap` are up to date (run `git shortlog -s | sed -e "s/^ *[0-9\t ]*//"| xargs -i sh -c 'grep -q "{}" AUTHORS.rst || echo "{}"'`)
 
