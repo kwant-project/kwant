@@ -7,6 +7,12 @@ stages:
   - deploy
   - release
 
+before_script:
+  # Here and below, a workaround for gitlab runner not fetching tags
+  # See https://gitlab.com/gitlab-org/gitaly/-/issues/2221
+  - git config --global --add safe.directory /builds/kwant/kwant
+  - git fetch --tags
+
 variables:
   # rsync is used to send documentation to our web servers: we never send any
   # secret information, and using 'ssh-keyscan' causes the CI server's IP to be blacklisted
@@ -29,6 +35,8 @@ variables:
   before_script:
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - git config --global --add safe.directory /builds/kwant/kwant
+    - git fetch --tags
 
 build-env:ubuntu:
   extends: .build-env
@@ -72,23 +80,31 @@ build-env:default:
   before_script:
     - eval "$(micromamba shell hook --shell bash)"
     - micromamba activate kwant-stable
+    - git config --global --add safe.directory /builds/kwant/kwant
+    - git fetch --tags
 
 .no-extras-env:
   before_script:
     - eval "$(micromamba shell hook --shell bash)"
     - micromamba activate kwant-stable-no-extras
+    - git config --global --add safe.directory /builds/kwant/kwant
+    - git fetch --tags
 
 # Note that this is 'latest' as of when the image was last built
 .latest-env:
   before_script:
     - eval "$(micromamba shell hook --shell bash)"
     - micromamba activate kwant-latest
+    - git config --global --add safe.directory /builds/kwant/kwant
+    - git fetch --tags
 
 .bleeding-edge-env:
   before_script:
     - eval "$(micromamba shell hook --shell bash)"
     - micromamba activate kwant-latest
     - micromamba update --all
+    - git config --global --add safe.directory /builds/kwant/kwant
+    - git fetch --tags
 
 .ubuntu-env:
   image: gitlab.kwant-project.org:5005/kwant/kwant/ubuntu
