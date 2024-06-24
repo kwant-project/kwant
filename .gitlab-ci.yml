@@ -11,6 +11,11 @@ variables:
   # rsync is used to send documentation to our web servers: we never send any
   # secret information, and using 'ssh-keyscan' causes the CI server's IP to be blacklisted
   SSH_COMMAND: "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+  # Turn off threading to avoid slowdowns
+  OPENBLAS_NUM_THREADS : 1
+  OMP_NUM_THREADS : 1
+  MKL_DYNAMIC : FALSE
+  MKL_NUM_THREADS : 1
 
 ## Building Docker environments
 ## Only runs when docker specifications change
