@@ -340,8 +340,8 @@ upload dev version docs:
   environment:
     name: production
     url: https://kwant-project.org/doc/dev
-  only:
-    - master@kwant/kwant
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "kwant/kwant"
   script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
