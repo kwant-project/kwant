@@ -7,11 +7,11 @@
 # https://kwant-project.org/authors.
 
 from math import sqrt
+import itertools
 
 import numpy as np
-import sympy
 import pytest
-import itertools
+sympy = pytest.importorskip('sympy')
 
 import kwant.builder
 import kwant.lattice

@@ -13,7 +13,7 @@ from functools import wraps
 import numpy as np
 import pytest
 
-import sympy
+sympy = pytest.importorskip("sympy")
 
 from ..discretizer import discretize
 from ..discretizer import discretize_symbolic

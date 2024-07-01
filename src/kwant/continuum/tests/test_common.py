@@ -9,9 +9,9 @@
 import pytest
 import tinyarray as ta
 
-from sympy.physics.matrices import msigma
-from sympy.physics.quantum import TensorProduct
-import sympy
+sympy = pytest.importorskip('sympy')
+msigma = pytest.importorskip('sympy.physics.matrices').msigma
+TensorProduct = pytest.importorskip('sympy.physics.quantum').TensorProduct
 
 from kwant.continuum._common import position_operators, momentum_operators
 from kwant.continuum._common import make_commutative, sympify
