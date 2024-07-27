@@ -2170,7 +2170,7 @@ def _spectrum_matplotlib(syst, x, y=None, params=None, mask=None, file=None,
             warnings.filterwarnings('ignore', message='Z contains NaN values')
             for i in range(spectrum.shape[-1]):
                 spec = spectrum[:, :, i].transpose()  # row-major to x-y ordering
-                ax.plot_surface(*(grid + [spec]), cstride=1, rstride=1)
+                ax.plot_surface(*grid, spec, cstride=1, rstride=1)
 
     _maybe_output_fig(fig, file=file, show=show)
 

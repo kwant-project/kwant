@@ -475,7 +475,7 @@ if mpl_available:
                 proj = mplot3d.proj3d.proj_transform_clip
                 cz = proj(*(list(np.dot(corners, bbox)) + [self.axes.M]))[2]
 
-                return -self.zorder3d + vs[2].mean() / cz.ptp()
+                return -self.zorder3d + vs[2].mean() / np.ptp(cz)
 
             def draw(self, renderer):
                 if self.reflen:
