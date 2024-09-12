@@ -22,6 +22,8 @@ variables:
   OMP_NUM_THREADS : 1
   MKL_DYNAMIC : FALSE
   MKL_NUM_THREADS : 1
+  FF_USE_FASTZIP: "true"
+  CACHE_COMPRESSION_LEVEL: "fastest"
 
 ## Building Docker environments
 ## Only runs when docker specifications change
@@ -252,7 +254,7 @@ build documentation:
     - build:latest
   stage: test
   script:
-    - pip install --editable .  # Makefile executes from folders
+    - pip install --editable . --no-build-isolation  # Makefile executes from folders
     - python -c 'from matplotlib import pyplot'  # Pre-generate font cache
     - pip install ipykernel  # Temporary, should be removed after a jupyter-sphinx feedstock update.
     - python -m ipykernel install --user --name kwant-latest  # Register the kernel
@@ -268,7 +270,7 @@ build PDF documentation:
     - build:latest
   stage: test
   script:
-    - pip install --editable .  # Makefile executes from folders
+    - pip install --editable . --no-build-isolation  # Makefile executes from folders
     - python -c 'from matplotlib import pyplot'  # Pre-generate font cache
     - pip install ipykernel  # Temporary, should be removed after a jupyter-sphinx feedstock update.
     - python -m ipykernel install --user --name kwant-latest  # Register the kernel
@@ -286,7 +288,7 @@ check for broken links in doc:
     - build:latest
   stage: test
   script:
-    - pip install --editable .  # Makefile executes from folders
+    - pip install --editable . --no-build-isolation  # Makefile executes from folders
     - pip install ipykernel  # Temporary, should be removed after a jupyter-sphinx feedstock update.
     - python -m ipykernel install --user --name kwant-latest  # Register the kernel
     - make -C doc linkcheck SPHINXOPTS='-n -D jupyter_execute_default_kernel=kwant-latest'
