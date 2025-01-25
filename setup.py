@@ -26,14 +26,7 @@ from setuptools.command.sdist import sdist as sdist_orig
 from setuptools.command.build_ext import build_ext as build_ext_orig
 # Packaging is a dependency of setuptools, so we are free to use it.
 from packaging.version import Version, parse as parse_version
-import setuptools
-
-if parse_version(setuptools.__version__) < Version("63.0"):
-    # TODO: remove this once we depend on setuptools >= 63.0
-    os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'local'
-    from distutils.command.build import build as build_orig
-else:
-    from setuptools.command.build import build as build_orig
+from setuptools.command.build import build as build_orig
 
 
 STATIC_VERSION_PATH = 'kwant/_kwant_version.py'
