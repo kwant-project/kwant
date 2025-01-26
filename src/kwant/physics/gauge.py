@@ -754,7 +754,7 @@ def _check_composite_system(syst):
             pre_msg
             + ('There is at least one gauge-fixed loop formed by more than 2 leads. '
                ' The connectivity matrix of the leads is:\n\n'
-               '{}\n\n'.format(metagraph.A))
+               '{}\n\n'.format(metagraph.toarray()))
             + solution_msg
         )
 
