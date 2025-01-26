@@ -24,6 +24,7 @@ import numpy as np
 import tinyarray as ta
 from scipy import spatial, interpolate
 from math import cos, sin, pi, sqrt
+from packaging.version import parse as parse_version
 
 from . import system, builder, _common
 from ._common import deprecate_args
@@ -157,6 +158,17 @@ def _maybe_output_fig(fig, file=None, show=True):
                 raise RuntimeError('show flag using the plotly engine can '
                                    'only be True if and only if called from a '
                                    'jupyter/ipython environment.')
+
+
+def _add_collection(axes, collection, dim):
+    if dim == 2:
+        axes.add_collection(collection)
+        return
+    
+    if parse_version(_p.matplotlib.__version__) < parse_version('3.9.0'):
+        axes.add_collection3d(collection)
+    else:
+        axes.add_collection3d(collection, autolim=False)
 
 
 def set_colors(color, collection, cmap, norm=None):
@@ -343,10 +355,7 @@ def symbols(axes, pos, symbol='o', size=1, reflen=None, facecolor='k',
 
     coll.update(kwargs)
 
-    if dim == 2:
-        axes.add_collection(coll)
-    else:
-        axes.add_collection3d(coll)
+    _add_collection(axes, coll, dim)
 
     return coll
 
@@ -408,10 +417,7 @@ def lines(axes, pos0, pos1, reflen=None, colors='k', linestyles='solid',
         coll = Collection([], reflen=reflen, linestyles=linestyles,
                           zorder=zorder)
         coll.update(kwargs)
-        if dim == 2:
-            axes.add_collection(coll)
-        else:
-            axes.add_collection3d(coll)
+        _add_collection(axes, coll, dim)
         return coll
 
     segments = np.c_[pos0, pos1].reshape(pos0.shape[0], 2, dim)
@@ -421,10 +427,7 @@ def lines(axes, pos0, pos1, reflen=None, colors='k', linestyles='solid',
     set_colors(colors, coll, cmap, norm)
     coll.update(kwargs)
 
-    if dim == 2:
-        axes.add_collection(coll)
-    else:
-        axes.add_collection3d(coll)
+    _add_collection(axes, coll, dim)
 
     return coll
 
