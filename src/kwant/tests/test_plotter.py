@@ -503,7 +503,7 @@ def test_density_interpolation():
             N = rho.shape[0] * rho.shape[1]
             charge = np.sum(rho) * area / N
             data.append((n, abs(charge - exact_charge)))
-        _, _, rvalue, *_ = scipy.stats.linregress(np.log(data))
+        _, _, rvalue, *_ = scipy.stats.linregress(*np.log(data).T)
         # Gradient of -1 on log-log plot means error falls off as 1/n
         # TODO: review this value once #280 has been dealt with.
         assert rvalue < -0.7
@@ -567,7 +567,7 @@ def test_current_interpolation():
             data.append((n, abs(J_interp - J_exact)))
         # 3rd value returned from 'linregress' is 'rvalue'
         # TODO: review this value once #280 has been dealt with.
-        assert scipy.stats.linregress(np.log(data))[2] < -0.7
+        assert scipy.stats.linregress(*np.log(data).T)[2] < -0.7
 
 
     ### Tests on a divergence-free current (closed system)
@@ -610,7 +610,7 @@ def test_current_interpolation():
 
     # 3rd value returned from 'linregress' is 'rvalue'
     # TODO: review this value once #280 has been dealt with.
-    assert scipy.stats.linregress(np.log(data))[2] < -0.7
+    assert scipy.stats.linregress(*np.log(data).T)[2] < -0.7
 
 
 @pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
