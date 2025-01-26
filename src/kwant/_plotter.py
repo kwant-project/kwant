@@ -19,6 +19,7 @@ import warnings
 from math import sqrt, pi
 import numpy as np
 from enum import Enum
+from packaging.version import parse as parse_version
 
 
 try:
@@ -412,7 +413,10 @@ if mpl_available:
                 if len(xs) == 0:
                     return -self.zorder3d
 
-                proj = mplot3d.proj3d.proj_transform_clip
+                if parse_version(matplotlib.__version__) >= parse_version('3.10.0'):
+                    proj = mplot3d.proj3d.proj_transform
+                else:
+                    proj = mplot3d.proj3d.proj_transform_clip
                 vs = np.array(proj(xs, ys, zs, self.axes.M)[:3])
 
                 if sort3d:
@@ -468,7 +472,6 @@ if mpl_available:
 
                 bbox = np.asarray(self.axes.get_w_lims())
 
-                proj = mplot3d.proj3d.proj_transform_clip
                 cz = proj(*(list(np.dot(corners, bbox)) + [self.axes.M]))[2]
 
                 return -self.zorder3d + vs[2].mean() / np.ptp(cz)
