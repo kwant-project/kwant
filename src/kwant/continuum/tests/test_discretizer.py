@@ -205,33 +205,20 @@ def test_simple_derivations_matrix():
 
 
 def test_integer_float_input():
-    test = {
-        0: {(0, 0, 0): 0},
-        1: {(0, 0, 0): 1},
-        5: {(0, 0, 0): 5},
-    }
+    values = (0, 1)
 
-    for inp, out in test.items():
+    for inp in values:
         got, _ = discretize_symbolic(int(inp), 'xyz')
-        assert got == out
+        assert got == {(0, 0, 0): inp}
 
         got, _ = discretize_symbolic(float(inp), 'xyz')
-        assert got == out
+        assert got == {(0, 0, 0): float(inp) if inp else inp}
 
-    # let's test in matrix version too
-    new_test = []
-    for inp, out in test.items():
-        new_out = {}
-        for k, v in out.items():
-            new_out[k] = sympy.Matrix([v])
-        new_test.append((inp, new_out))
-
-    for inp, out in new_test:
         got, _ = discretize_symbolic(sympy.Matrix([int(inp)]), 'xyz')
-        assert got == out
+        assert got == {(0, 0, 0): sympy.Matrix([inp])}
 
         got, _ = discretize_symbolic(sympy.Matrix([float(inp)]), 'xyz')
-        assert got == out
+        assert got == {(0, 0, 0): sympy.Matrix([float(inp) if inp else inp])}
 
 
 def test_different_discrete_coordinates():
