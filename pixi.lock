@@ -180,6 +180,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/python-3.12.8-h9e4cc4f_1_cpython.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhff2d567_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-fastjsonschema-2.21.1-pyhd8ed1ab_0.conda
+      - conda: https://prefix.dev/conda-forge/linux-64/python-mumps-0.0.3-py312h6ad3ee3_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/python_abi-3.12-5_cp312.conda
       - conda: https://prefix.dev/conda-forge/noarch/pytz-2024.2-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pyzmq-26.2.0-py312hbf22597_3.conda
@@ -1248,8 +1249,8 @@ packages:
   timestamp: 1719463201255
 - pypi: .
   name: kwant
-  version: 1.5.1.dev6+g0faf88e7.d20250126
-  sha256: a61b9dd195369f69012f34bc655b89ce3139729135d91a7b565ac22ec552e73b
+  version: 1.5.1.dev16+g167729fe.d20250126
+  sha256: 8c8859b8ffb6ecc9149faa64befb915cfd8f4f2a761661ba2ac4c8f7eb91f796
   requires_dist:
   - numpy>=1.18.0
   - scipy>=1.3.0,!=1.6.1
@@ -2481,6 +2482,23 @@ packages:
   - pkg:pypi/fastjsonschema?source=hash-mapping
   size: 226259
   timestamp: 1733236073335
+- conda: https://prefix.dev/conda-forge/linux-64/python-mumps-0.0.3-py312h6ad3ee3_0.conda
+  sha256: a5897ce6cd551999957b11da404a16b362e5f761493560c1d68fb93b63bbe031
+  md5: 8755e9f1fee9ef390542f834aad6f85e
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=13
+  - mumps-seq >=5.7.3,<5.7.4.0a0
+  - numpy >=1.19,<3
+  - python >=3.12,<3.13.0a0
+  - python_abi 3.12.* *_cp312
+  - scipy >=1.8
+  license: BSD-2-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/python-mumps?source=hash-mapping
+  size: 98872
+  timestamp: 1729808718531
 - conda: https://prefix.dev/conda-forge/linux-64/python_abi-3.12-5_cp312.conda
   build_number: 5
   sha256: d10e93d759931ffb6372b45d65ff34d95c6000c61a07e298d162a3bc2accebb0

@@ -75,7 +75,7 @@ pip = "*"
 numpy = "*"
 scipy = "*"
 tinyarray = "*"
-sympy = "*"
+sympy = ">=1.13.3,<2"
 matplotlib-base = "*"
 plotly = "*"
 qsymm = "*"
@@ -96,10 +96,11 @@ requests = "*"
 sphinx-book-theme = "*"
 jupyter-sphinx = "*"
 sphinx-togglebutton = "*"
+python-mumps = ">=0.0.3,<0.0.4"
 
 [tool.pixi.pypi-dependencies]
 sphinxcontrib-svg2pdfconverter = "*"
-kwant = { path = ".", editable = true }
+kwant = { path = ".", editable = true, extras = ["plotting", "continuum", "qsymm", "mumps"] }
 
 [tool.pixi.pypi-options]
 no-build-isolation = ["kwant"]
