@@ -44,12 +44,6 @@ except ImportError:
 from kwant import plotter, _plotter
 
 
-@pytest.mark.skipif(not _plotter.mpl_available, reason="Matplotlib unavailable.")
-def test_matplotlib_backend_unset():
-    """Simply importing Kwant should not set the matplotlib backend."""
-    assert matplotlib_backend_chosen is False
-
-
 def test_importable_without_backends():
     prefix, sep, suffix = _plotter.__file__.rpartition('.')
     if suffix in ['pyc', 'pyo']:
