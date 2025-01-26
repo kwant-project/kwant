@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=66.1"]
+requires = ["setuptools>=66.1", "cython", "numpy"]
 build-backend = "setuptools.build_meta:__legacy__"
 
 [project]
@@ -53,17 +53,18 @@ platforms = [
     "Windows",
 ]
 license-files = ["LICENSE.rst"]
-include-package-data = false
+include-package-data = true
 
-[tool.distutils.egg_info]
-tag-build = ""
-tag-date = 0
-tag-svn-revision = 0
+[tool.setuptools_scm]
+version_file = "src/kwant/_version.py"
 
 [tool.pixi.project]
-channels = ["conda-forge"]
+channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64"]
 
+[tool.pixi.build-dependencies]
+compilers = "*"
+cython = "*"
 
 [tool.pixi.dependencies]
 python = "3.12.*"
@@ -95,7 +96,7 @@ sphinx-togglebutton = "*"
 
 [tool.pixi.pypi-dependencies]
 sphinxcontrib-svg2pdfconverter = "*"
-kwant = { path = "." }
+kwant = { path = ".", editable = true }
 
 [tool.pixi.pypi-options]
 no-build-isolation = ["kwant"]
