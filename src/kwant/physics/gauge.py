@@ -86,7 +86,7 @@ def _surface_integral(f, loop, tol=1e-8, average=False):
     for p1, p2 in zip(points, points[1:]):
         v1 = p1 - origin
         v2 = p2 - origin
-        n = np.cross(v1, v2)
+        n = np.cross(v1, v2) if len(v1) == 3 else v1[0] * v2[1] - v1[1] * v2[0]
         integral += integrator(f, origin, v1, v2, n, tol)
     return integral
 
