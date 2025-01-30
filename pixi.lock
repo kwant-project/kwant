@@ -1249,8 +1249,8 @@ packages:
   timestamp: 1719463201255
 - pypi: .
   name: kwant
-  version: 1.5.1.dev16+g167729fe.d20250126
-  sha256: 8c8859b8ffb6ecc9149faa64befb915cfd8f4f2a761661ba2ac4c8f7eb91f796
+  version: 1.5.1.dev17+g8a8ff15c.d20250130
+  sha256: cb7cef7a314f50b596262b83992750aa01b3a2eb1bfcb5ae46bdb46d122ad511
   requires_dist:
   - numpy>=1.18.0
   - scipy>=1.3.0,!=1.6.1

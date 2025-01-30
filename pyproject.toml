@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=66.1", "cython", "numpy"]
-build-backend = "setuptools.build_meta:__legacy__"
+requires = ["setuptools>=66.1", "setuptools-scm", "cython", "numpy"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "kwant"

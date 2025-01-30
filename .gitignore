@@ -18,6 +18,7 @@
 .eggs/
 htmlcov/
 .ipynb_checkpoints/
+
 # pixi environments
 .pixi
 *.egg-info
