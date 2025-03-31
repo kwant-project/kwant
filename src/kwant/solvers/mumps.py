@@ -10,16 +10,13 @@ __all__ = ['smatrix', 'ldos', 'wave_function', 'greens_function', 'options',
            'Solver']
 
 import numpy as np
+import mumps
+
 from . import common
-try:
-    import mumps
-    MUMPSContext = mumps.Context
-    # TODO: remove this with the next release of python-mumps
-    orderings = mumps.mumps.orderings
-except ImportError:
-    from ..linalg import mumps
-    MUMPSContext = mumps.MUMPSContext
-    orderings = mumps.orderings
+
+MUMPSContext = mumps.Context
+# TODO: remove this with the next release of python-mumps
+orderings = mumps.mumps.orderings
 
 
 class Solver(common.SparseSolver):
