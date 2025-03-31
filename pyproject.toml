@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=66.1", "setuptools-scm", "cython", "numpy"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-cython", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name = "kwant"
@@ -45,18 +45,21 @@ continuum = ["sympy >= 1.5.1"]
 qsymm = ["qsymm >= 1.2.6"]
 mumps = ["python-mumps < 0.1"]
 
-[tool.setuptools]
-platforms = [
-    "Unix",
-    "Linux",
-    "MacOS X",
-    "Windows",
-]
-license-files = ["LICENSE.rst"]
-include-package-data = true
+[tool.hatch.version]
+source = "vcs"
 
-[tool.setuptools_scm]
-version_file = "src/kwant/_version.py"
+[tool.hatch.build.hooks.vcs]
+version-file = "src/kwant/_version.py"
+
+[tool.hatch.build.hooks.cython]
+dependencies = ["hatch-cython"]
+
+[tool.hatch.build.hooks.cython.options]
+compile_py = false
+include_numpy = true
+define_macros = [
+    ["NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"]
+]
 
 [tool.pixi.project]
 channels = ["https://prefix.dev/conda-forge"]
@@ -65,9 +68,7 @@ platforms = ["linux-64"]
 [tool.pixi.build-dependencies]
 compilers = "*"
 cython = "*"
-setuptools = "*"
 numpy = "*"
-setuptools-scm = "*"
 
 [tool.pixi.dependencies]
 python = "3.12.*"
@@ -97,10 +98,13 @@ sphinx-book-theme = "*"
 jupyter-sphinx = "*"
 sphinx-togglebutton = "*"
 python-mumps = ">=0.0.3,<0.0.4"
+hatchling = "*"
+hatch-cython = "*"
+hatch-vcs = "*"
 
 [tool.pixi.pypi-dependencies]
-sphinxcontrib-svg2pdfconverter = "*"
 kwant = { path = ".", editable = true, extras = ["plotting", "continuum", "qsymm", "mumps"] }
 
 [tool.pixi.pypi-options]
 no-build-isolation = ["kwant"]
+
