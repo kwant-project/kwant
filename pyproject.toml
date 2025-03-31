@@ -85,12 +85,6 @@ pytest = "*"
 pytest-cov = "*"
 pytest-flakes = "*"
 pytest-pep8 = "*"
-sphinx = "*"
-numpydoc = "*"
-requests = "*"
-sphinx-book-theme = "*"
-jupyter-sphinx = "*"
-sphinx-togglebutton = "*"
 python-mumps = ">=0.0.3,<0.0.4"
 hatchling = "*"
 hatch-cython = "*"
@@ -102,3 +96,24 @@ kwant = { path = ".", editable = true, extras = ["plotting", "continuum", "qsymm
 [tool.pixi.pypi-options]
 no-build-isolation = ["kwant"]
 
+[tool.pixi.feature.docs.dependencies]
+sphinx = "*"
+sphinx-book-theme = "*"
+numpydoc = "*"
+requests = "*"
+sphinx-togglebutton = "*"
+jupyter-sphinx = "*"
+
+[tool.pixi.feature.docs.pypi-dependencies]
+sphinxcontrib-svg2pdfconverter = "*"
+
+[tool.pixi.feature.docs.tasks]
+build-docs = "make -C doc html"
+
+[tool.pixi.environments.default]
+features = ["plotting", "continuum", "qsymm", "mumps"]
+solve-group = "default"
+
+[tool.pixi.environments.docs]
+features = ["docs"]
+solve-group = "default"
