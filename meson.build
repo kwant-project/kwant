@@ -1,5 +1,5 @@
 project('kwant', 'c', 'cpp', 'cython',
-        version: run_command('python', '-c', 'import sys; sys.path.insert(0, "src/kwant"); import _version; print(_version.__version__)', check: true).stdout().strip(),
+        version: run_command('python', '-m', 'setuptools_scm', check: true).stdout().strip(),
         license: 'BSD-2-Clause',
         default_options: [
             'warning_level=2',
