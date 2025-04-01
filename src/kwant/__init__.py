@@ -8,8 +8,46 @@
 
 __all__ = []
 
-from ._version import __version__, __version_tuple__
+# Handle version information
+try:
+    # Try to get version from the generated _version.py file
+    from ._version import __version__, __version_tuple__
+except ImportError:
+    # Fallback if _version.py is not available
+    try:
+        from importlib.metadata import version as _version
+        from packaging.version import parse as _parse_version
 
+        __version__ = _version("kwant")
+
+        # Use packaging to parse the version string
+        parsed_version = _parse_version(__version__)
+
+        # Build version tuple from the parsed components
+        # Start with the release segment (major, minor, micro)
+        release_tuple = parsed_version.release
+
+        # Handle pre-releases (alpha, beta, rc)
+        if parsed_version.pre is not None:
+            pre_type, pre_num = parsed_version.pre
+            # Convert 'a', 'b', 'rc' to full words
+            pre_type_map = {'a': 'alpha', 'b': 'beta', 'c': 'rc'}
+            pre_type_str = pre_type_map.get(pre_type, pre_type)
+            release_tuple = release_tuple + (pre_type_str, pre_num)
+
+        # Handle dev releases
+        if parsed_version.dev is not None:
+            release_tuple = release_tuple + ('dev', parsed_version.dev)
+
+        # Handle local version (like git hash)
+        if parsed_version.local is not None:
+            release_tuple = release_tuple + ('local', parsed_version.local)
+
+        __version_tuple__ = release_tuple
+    except Exception:
+        # Last resort fallback
+        __version__ = "unknown"
+        __version_tuple__ = (0, 0, 0, "unknown")
 
 import numpy                    # Needed by C. Gohlke's Windows package.
 import warnings
