@@ -64,13 +64,12 @@ MKL_DYNAMIC = "FALSE"
 MKL_NUM_THREADS = "1"
 
 [tool.pixi.dependencies]
-python = "3.12.*"
-pip = "*"
+python = ">=3.11.0"
 numpy = ">=1.25.0"
 scipy = ">=1.11.0"
 tinyarray = ">=1.2.2"
 packaging = ">=23.0"
-sympy = ">=1.13.3,<2"
+sympy = ">=1.11.0"
 matplotlib-base = ">=3.7.0"
 plotly = ">=2.7.0"
 qsymm = ">=1.2.6"
@@ -81,10 +80,6 @@ pytest = "*"
 pytest-cov = "*"
 pytest-flakes = "*"
 pytest-pep8 = "*"
-
-[tool.pixi.feature.test.tasks]
-test = "pytest -r w --flakes kwant"
-test-cov = "pytest -r w --cov=kwant --cov-report term --cov-report html --flakes kwant"
 
 [tool.pixi.feature.build.dependencies]
 compilers = "*"
@@ -114,10 +109,10 @@ sphinxcontrib-svg2pdfconverter = "*"
 [tool.pixi.feature.docs.tasks]
 build-docs = "make -C doc html"
 
-[tool.pixi.environments.default]
-features = ["build", "test", "plotting", "continuum", "qsymm", "mumps"]
-solve-group = "default"
+[tool.pixi.environments]
+default = { features = ["build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "default" }
+docs = { features = ["docs", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "default" }
 
-[tool.pixi.environments.docs]
-features = ["docs", "build", "test", "plotting", "continuum", "qsymm", "mumps"]
-solve-group = "default"
+[tool.pixi.tasks]
+test = "pytest -r w --flakes src/kwant --junitxml=tests.xml --durations=10"
+test-cov = "pytest -r w --cov=src/kwant --cov-report term --cov-report html --cov-report xml --flakes src/kwant --junitxml=tests.xml --durations=10"
