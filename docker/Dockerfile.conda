@@ -22,4 +22,3 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER kwant-latest.yml kwant-stable.yml kwant-sta
 RUN micromamba env create -f /tmp/kwant-stable.yml
 RUN micromamba env create -f /tmp/kwant-stable-no-extras.yml
 RUN micromamba env create -f /tmp/kwant-latest.yml
-

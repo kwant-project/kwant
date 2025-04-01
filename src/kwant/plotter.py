@@ -164,7 +164,7 @@ def _add_collection(axes, collection, dim):
     if dim == 2:
         axes.add_collection(collection)
         return
-    
+
     if parse_version(_p.matplotlib.__version__) < parse_version('3.9.0'):
         axes.add_collection3d(collection)
     else:
