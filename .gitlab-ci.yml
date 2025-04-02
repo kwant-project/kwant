@@ -1,11 +1,5 @@
 image: ghcr.io/prefix-dev/pixi:0.42.1
 
-stages:
-  - build
-  - test
-  - deploy
-  - release
-
 variables:
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: "fastest"
@@ -21,7 +15,6 @@ default:
 
 # Build and test
 run tests:
-  stage: build
   script:
     - pixi run test
   artifacts:
@@ -33,7 +26,6 @@ run tests:
       - .pixi
 
 run coverage:
-  stage: test
   script:
     - pixi run test-cov
   artifacts:
@@ -49,7 +41,6 @@ run coverage:
       - .pixi
 
 build documentation:
-  stage: test
   script:
     - pixi run -e docs build-docs
   artifacts:
@@ -61,25 +52,9 @@ build documentation:
     paths:
       - .pixi
 
-build PDF documentation:
-  stage: test
-  script:
-    - pixi run -e docs "make -C doc latex"
-    - cd doc/build/latex
-    - make all-pdf
-  artifacts:
-    paths:
-      - doc/build/latex/kwant.pdf
-    expire_in: 1 month
-  cache:
-    key: "$CI_JOB_NAME"
-    paths:
-      - .pixi
-
 check for broken links in doc:
-  stage: test
   script:
-    - pixi run -e docs "make -C doc linkcheck"
+    - pixi run -e docs make -C doc linkcheck
   allow_failure: true
   cache:
     key: "$CI_JOB_NAME"
@@ -90,10 +65,9 @@ check for broken links in doc:
 ## Upload coverage reports and dev documentation
 
 upload coverage:
-  stage: deploy
   only:
     - schedules
-  dependencies:
+  needs:
     - run coverage
   environment:
     name: coverage/$CI_COMMIT_REF_NAME
@@ -106,7 +80,6 @@ upload coverage:
     - rsync -rlv -e "$SSH_COMMAND" --delete --relative $CI_COMMIT_REF_SLUG kwant@kwant-project.org:coverage/
 
 remove_coverage:
-  stage: deploy
   only:
     - branches@kwant/kwant
   when: manual
@@ -120,11 +93,12 @@ remove_coverage:
     - rsync -rlv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:coverage/$CI_COMMIT_REF_SLUG
 
 upload documentation to the test server:
-  stage: deploy
   environment:
     name: docs review/$CI_COMMIT_REF_NAME
     url: https://test.kwant-project.org/doc/$CI_COMMIT_REF_SLUG
     on_stop: remove_docs
+  needs:
+    - build documentation
   only:
     - branches@kwant/kwant
   script:
@@ -133,7 +107,6 @@ upload documentation to the test server:
     - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant2@test.kwant-project.org:doc/$CI_COMMIT_REF_SLUG
 
 remove_docs:
-  stage: deploy
   when: manual
   only:
     - branches@kwant/kwant
@@ -147,10 +120,11 @@ remove_docs:
     - rsync -arv -e "$SSH_COMMAND" --delete empty/ kwant2@test.kwant-project.org:doc/$CI_COMMIT_REF_SLUG/
 
 upload dev version docs:
-  stage: deploy
   environment:
     name: production
     url: https://kwant-project.org/doc/dev
+  needs:
+    - build documentation
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "kwant/kwant"
   script:
@@ -166,10 +140,11 @@ upload dev version docs:
 
 gather release artifacts:
   extends: .tagged-version
-  stage: release
+  needs:
+    - run tests
+    - build documentation
   script:
     - mkdir docs
-    - mv doc/build/latex/kwant.pdf docs/kwant-doc-${CI_COMMIT_TAG//v}.pdf
     - mv doc/build/html docs/html
     - zip -r docs/kwant-doc-${CI_COMMIT_TAG//v}.zip docs/html
   artifacts:
