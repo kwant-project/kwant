@@ -24,6 +24,7 @@ run tests:
     key: "$CI_JOB_NAME"
     paths:
       - .pixi
+      - build
 
 run coverage:
   script:
@@ -39,6 +40,7 @@ run coverage:
     key: "$CI_JOB_NAME"
     paths:
       - .pixi
+      - build
 
 build documentation:
   script:
@@ -51,6 +53,7 @@ build documentation:
     key: "$CI_JOB_NAME"
     paths:
       - .pixi
+      - build
 
 check for broken links in doc:
   script:
@@ -60,6 +63,7 @@ check for broken links in doc:
     key: "$CI_JOB_NAME"
     paths:
       - .pixi
+      - build
 
 # Keep the existing upload jobs
 ## Upload coverage reports and dev documentation
