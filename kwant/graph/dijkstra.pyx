@@ -46,7 +46,7 @@
 
 import numpy as np
 cimport numpy as np
-from numpy.math cimport INFINITY as inf
+from libc.math cimport INFINITY as inf
 
 from libc.stdlib cimport malloc, free
 from libc.string cimport memset
