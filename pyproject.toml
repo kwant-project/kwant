@@ -1,5 +1,5 @@
 [build-system]
-requires = ["meson-python>=0.15.0", "ninja>=1.11.1", "cython>=3.0.8", "setuptools-scm>=6.2"]
+requires = ["meson-python>=0.15.0", "ninja>=1.11.1", "cython>=3.0.8", "setuptools-scm>=6.2", "numpy>=1.25.0"]
 build-backend = "mesonpy"
 
 [project]
@@ -67,12 +67,30 @@ MKL_NUM_THREADS = "1"
 python = ">=3.11.0"
 numpy = ">=1.25.0"
 scipy = ">=1.11.0"
-tinyarray = ">=1.2.2"
+tinyarray = ">=1.2.4"
 packaging = ">=23.0"
 sympy = ">=1.11.0"
 matplotlib-base = ">=3.7.0"
 plotly = ">=2.7.0"
 qsymm = ">=1.2.6"
+python-mumps = ">=0.0.3,<0.1"
+
+[tool.pixi.pypi-dependencies]
+kwant = { path = ".", editable = true, extras = ["plotting", "continuum", "qsymm", "mumps"] }
+
+[tool.pixi.pypi-options]
+no-build-isolation = ["kwant"]
+
+[tool.pixi.feature.minimal.dependencies]
+python = "~=3.11.0"
+numpy = "~=1.25.0"
+scipy = "~=1.11.0"
+tinyarray = "==1.2.4"
+packaging = ">=23.0"
+sympy = "~=1.11.0"
+matplotlib-base = "~=3.8.0"
+plotly = "~=2.7.0"
+qsymm = "~=1.2.6"
 python-mumps = ">=0.0.3,<0.0.4"
 
 [tool.pixi.feature.test.dependencies]
@@ -89,13 +107,8 @@ meson-python = ">=0.15.0"
 ninja = ">=1.11.1"
 setuptools-scm = ">=6.2"
 
-[tool.pixi.pypi-dependencies]
-kwant = { path = ".", editable = true, extras = ["plotting", "continuum", "qsymm", "mumps"] }
-
-[tool.pixi.pypi-options]
-no-build-isolation = ["kwant"]
-
 [tool.pixi.feature.docs.dependencies]
+make = "*"
 sphinx = "*"
 sphinx-book-theme = "*"
 numpydoc = "*"
@@ -112,7 +125,8 @@ build-docs = "make -C doc html"
 [tool.pixi.environments]
 default = { features = ["build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "default" }
 docs = { features = ["docs", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "default" }
+minimal = { features = ["minimal", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "minimal" }
 
-[tool.pixi.tasks]
+[tool.pixi.feature.test.tasks]
 test = "pytest -r w --flakes src/kwant --junitxml=tests.xml --durations=10"
 test-cov = "pytest -r w --cov=src/kwant --cov-report term --cov-report html --cov-report xml --flakes src/kwant --junitxml=tests.xml --durations=10"

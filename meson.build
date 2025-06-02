@@ -12,16 +12,30 @@ project('kwant', 'c', 'cpp', 'cython',
 py_mod = import('python')
 py = py_mod.find_installation(pure: false)
 py_dep = py.dependency()
-numpy_dep = dependency('numpy')
+
+# Get NumPy include directory directly from Python
+# This is more compatible with older NumPy versions
+# See: https://github.com/mesonbuild/meson/issues/9598
+# TODO: Make numpy an actual dependency once we depend on numpy >= 2.0
+numpy_inc = run_command(py,
+  ['-c', 'import numpy; print(numpy.get_include())'],
+  check: true
+).stdout().strip()
 
 # Find Cython
 cython = find_program('cython')
 
-# Set include directories - using relative paths as required by meson
+# Set include directories - using relative paths for project dirs
 inc_dirs = include_directories('.', 'src', 'src/kwant', 'src/kwant/graph')
 
-# Share include directories and dependencies with all submodules
-kwant_deps = [py_dep, numpy_dep]
+# Define NumPy compiler arguments
+numpy_args = ['-I' + numpy_inc]
+
+# Share dependencies with all submodules
+kwant_deps = [py_dep]
+
+# Store the NumPy include directory to pass to extensions
+numpy_include_dir = numpy_inc
 
 # Core C/Cython modules
 subdir('src')

@@ -37,7 +37,8 @@ foreach mod : cython_modules
         include_directories: inc_dirs,
         install: true,
         subdir: 'kwant/graph',
-        cpp_args: lang == 'c++' ? ['-std=c++14'] : []
+        c_args: numpy_args,
+        cpp_args: lang == 'c++' ? ['-std=c++14'] + numpy_args : numpy_args
     )
 endforeach
 

@@ -1,5 +1,5 @@
 # Define kwant dependencies
-kwant_deps = [py_dep, numpy_dep]
+kwant_deps = [py_dep]
 
 # Compile Python modules - install all Python modules in the current directory
 py_files = run_command('find', '.', '-maxdepth', '1', '-name', '*.py', '-not', '-name', '_*system.py', '-not', '-name', 'operator.py', check: true).stdout().strip().split('\n')

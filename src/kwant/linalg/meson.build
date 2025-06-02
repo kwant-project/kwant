@@ -21,7 +21,8 @@ py.extension_module(
     include_directories: inc_dirs,
     install: true,
     subdir: 'kwant/linalg',
-    cpp_args: ['-std=c++14']
+    c_args: numpy_args,
+    cpp_args: ['-std=c++14'] + numpy_args
 )
 
 # Handle tests
