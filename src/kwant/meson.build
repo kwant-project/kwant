@@ -1,5 +1,4 @@
-# Define kwant dependencies
-kwant_deps = [py_dep]
+#! kwant_deps is defined in the top-level meson.build (includes Python & NumPy)
 
 # Compile Python modules - install all Python modules in the current directory
 py_files = run_command('find', '.', '-maxdepth', '1', '-name', '*.py', '-not', '-name', '_*system.py', '-not', '-name', 'operator.py', check: true).stdout().strip().split('\n')
@@ -47,7 +46,8 @@ foreach mod : cython_modules
         include_directories: inc_dirs,
         install: true,
         subdir: 'kwant',
-        cpp_args: lang == 'c++' ? ['-std=c++14'] : []
+        c_args: numpy_args,
+        cpp_args: lang == 'c++' ? ['-std=c++14'] + numpy_args : numpy_args
     )
 endforeach
 
