@@ -6,17 +6,11 @@ variables:
 
 default:
   before_script:
-    # Workaround for https://github.com/prefix-dev/pixi/issues/2923
     - pixi global install git
-    # Here and below, a workaround for gitlab runner not fetching tags
-    # See https://gitlab.com/gitlab-org/gitaly/-/issues/2221
     - git config --global --add safe.directory $CI_PROJECT_DIR
     - git fetch --tags
 
-# Build and test
-run tests:
-  script:
-    - pixi run test
+.test_template:
   artifacts:
     reports:
       junit: tests.xml
@@ -26,16 +20,27 @@ run tests:
       - .pixi
       - build
 
-run coverage:
+run tests:
+  parallel:
+    matrix:
+      - PIXI_ENV:
+          - minimal
+          - mid
+          - latest
   script:
-    - pixi run test-cov
+    - pixi run -e $PIXI_ENV test
+  extends: .test_template
+
+run coverage:
+  variables:
+    PIXI_ENV: minimal
+  script:
+    - pixi run -e $PIXI_ENV test-cov
   artifacts:
     paths:
       - htmlcov
     reports:
       junit: tests.xml
-  only:
-    - schedules
   cache:
     key: "$CI_JOB_NAME"
     paths:
@@ -43,6 +48,8 @@ run coverage:
       - build
 
 build documentation:
+  variables:
+    PIXI_ENV: mid
   script:
     - pixi run -e docs build-docs
   artifacts:
@@ -56,6 +63,8 @@ build documentation:
       - build
 
 check for broken links in doc:
+  variables:
+    PIXI_ENV: mid
   script:
     - pixi run -e docs make -C doc linkcheck
   allow_failure: true

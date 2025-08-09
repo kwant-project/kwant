@@ -6,8 +6,4 @@ py.install_sources([
     'landau_levels.py',
 ], subdir: 'kwant/continuum')
 
-# Handle tests
-tests_exist = run_command('test', '-d', 'tests', check: false).returncode() == 0
-if tests_exist
-    subdir('tests')
-endif
+subdir('tests')

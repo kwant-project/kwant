@@ -65,11 +65,8 @@ MKL_NUM_THREADS = "1"
 
 [tool.pixi.dependencies]
 python = ">=3.11.0"
-numpy = ">=1.26.0"
-scipy = ">=1.12.0"
-tinyarray = ">=1.2.4"
 packaging = ">=23.0"
-sympy = ">=1.11.0"
+tinyarray = ">=1.2.4"
 matplotlib-base = ">=3.7.0"
 plotly = ">=2.7.0"
 qsymm = ">=1.2.6"
@@ -82,16 +79,33 @@ kwant = { path = ".", editable = true, extras = ["plotting", "continuum", "qsymm
 no-build-isolation = ["kwant"]
 
 [tool.pixi.feature.minimal.dependencies]
+# Oldest supported stack (SPEC-0 guidance, Aug 2025) with exceptions: NumPy 2.0.x, SciPy 1.13.x
 python = "~=3.11.0"
-numpy = "~=1.26.0"
-scipy = "~=1.12.0"
+numpy = ">=2.0,<2.1"
+scipy = ">=1.13,<1.14"
 tinyarray = "==1.2.4"
 packaging = ">=23.0"
-sympy = "~=1.11.0"
+sympy = "~=1.12.0"
 matplotlib-base = "~=3.8.0"
 plotly = "~=2.7.0"
 qsymm = "~=1.2.6"
 python-mumps = ">=0.0.3,<0.0.4"
+
+[tool.pixi.feature.mid.dependencies]
+# Mid-range (current stable minor versions)
+python = "~=3.12.0"
+numpy = ">=2.2,<2.3"
+scipy = ">=1.14,<1.15"
+tinyarray = ">=1.2.4"
+sympy = "~=1.13.0"
+
+[tool.pixi.feature.latest.dependencies]
+# Latest (allow newest releases)
+python = "~=3.13.0"
+numpy = ">=2.3"
+scipy = ">=1.14"
+tinyarray = ">=1.2.4"
+sympy = ">=1.13.0"
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
@@ -123,9 +137,11 @@ sphinxcontrib-svg2pdfconverter = "*"
 build-docs = "make -C doc html"
 
 [tool.pixi.environments]
-default = { features = ["build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "default" }
-docs = { features = ["docs", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "default" }
+default = { features = ["mid", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "mid" }
+mid = { features = ["mid", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "mid" }
 minimal = { features = ["minimal", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "minimal" }
+latest = { features = ["latest", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "latest" }
+docs = { features = ["docs", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "mid" }
 
 [tool.pixi.feature.test.tasks]
 test = "pytest -r w src/kwant --junitxml=tests.xml --durations=10"

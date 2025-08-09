@@ -13,18 +13,13 @@ py_mod = import('python')
 py = py_mod.find_installation(pure: false)
 py_dep = py.dependency()
 
-# NumPy: use Meson's dependency object so include dirs & compile args are added automatically
-# Older code tried to manually construct include args via a numpy_inc variable; that's brittle.
 numpy_dep = dependency('numpy')
 
-# Obtain NumPy include directory explicitly (Meson does not always add it to compiler args)
+# Obtain NumPy include directory explicitly (still required for compile args on some Meson versions)
 numpy_inc = run_command(py, '-c', 'import numpy, sys; sys.stdout.write(numpy.get_include())', check: true).stdout().strip()
 
 # Compiler arguments to add NumPy includes
-numpy_args = ['-I' + numpy_inc]
-
-# Find Cython
-cython = find_program('cython')
+numpy_args = ['-I' + numpy_inc, '-Wno-cpp']
 
 # Set include directories - using relative paths for project dirs
 inc_dirs = include_directories('.', 'src', 'src/kwant', 'src/kwant/graph')

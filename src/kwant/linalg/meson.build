@@ -7,26 +7,15 @@ py.install_sources([
 ], subdir: 'kwant/linalg')
 
 # Cython extension for lapack
-lapack_cython = custom_target(
-    'lapack_cython',
-    input: 'lapack.pyx',
-    output: 'lapack.cpp',
-    command: [cython, '-3', '--cplus', '@INPUT@', '-o', '@OUTPUT@'],
-)
-
 py.extension_module(
     'lapack',
-    lapack_cython,
+    'lapack.pyx',
     dependencies: kwant_deps,
     include_directories: inc_dirs,
     install: true,
     subdir: 'kwant/linalg',
-    c_args: numpy_args,
-    cpp_args: ['-std=c++14'] + numpy_args
+    cython_args: ['-3'],
+    cpp_args: ['-std=c++14'] + numpy_args,
 )
 
-# Handle tests
-tests_exist = run_command('test', '-d', 'tests', check: false).returncode() == 0
-if tests_exist
-    subdir('tests')
-endif
+subdir('tests')
