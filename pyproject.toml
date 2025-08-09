@@ -140,6 +140,7 @@ build-docs = "make -C doc html"
 default = { features = ["mid", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "mid" }
 mid = { features = ["mid", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "mid" }
 minimal = { features = ["minimal", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "minimal" }
+minimal-no-extras = { features = ["minimal", "build", "test"], solve-group = "minimal" }
 latest = { features = ["latest", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "latest" }
 docs = { features = ["docs", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "mid" }
 

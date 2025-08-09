@@ -1,8 +1,9 @@
-image: ghcr.io/prefix-dev/pixi:0.42.1
+image: ghcr.io/prefix-dev/pixi:0.50.2
 
 variables:
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: "fastest"
+  SSH_COMMAND: "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 default:
   before_script:
@@ -78,6 +79,7 @@ check for broken links in doc:
 ## Upload coverage reports and dev documentation
 
 upload coverage:
+  image: eeacms/rsync
   only:
     - schedules
   needs:
@@ -86,9 +88,10 @@ upload coverage:
     name: coverage/$CI_COMMIT_REF_NAME
     url: https://kwant-project.org/coverage/$CI_COMMIT_REF_SLUG
     on_stop: remove_coverage
-  script:
+  before_script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
+  script:
     - mv htmlcov $CI_COMMIT_REF_SLUG
     - rsync -rlv -e "$SSH_COMMAND" --delete --relative $CI_COMMIT_REF_SLUG kwant@kwant-project.org:coverage/
 
@@ -99,13 +102,15 @@ remove_coverage:
   environment:
     name: coverage/$CI_COMMIT_REF_NAME
     action: stop
-  script:
+  before_script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
+  script:
     - mkdir empty/
     - rsync -rlv -e "$SSH_COMMAND" --delete empty/ kwant@kwant-project.org:coverage/$CI_COMMIT_REF_SLUG
 
 upload documentation to the test server:
+  image: eeacms/rsync
   environment:
     name: docs review/$CI_COMMIT_REF_NAME
     url: https://test.kwant-project.org/doc/$CI_COMMIT_REF_SLUG
@@ -114,25 +119,29 @@ upload documentation to the test server:
     - build documentation
   only:
     - branches@kwant/kwant
-  script:
+  before_script:
     - eval $(ssh-agent -s)
     - echo $TEST_WEBSITE_KEY | base64 -d | ssh-add -
+  script:
     - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant2@test.kwant-project.org:doc/$CI_COMMIT_REF_SLUG
 
 remove_docs:
+  image: eeacms/rsync
   when: manual
   only:
     - branches@kwant/kwant
   environment:
     name: docs review/$CI_COMMIT_REF_NAME
     action: stop
-  script:
+  before_script:
     - eval $(ssh-agent -s)
     - echo $TEST_WEBSITE_KEY | base64 -d | ssh-add -
+  script:
     - mkdir empty
     - rsync -arv -e "$SSH_COMMAND" --delete empty/ kwant2@test.kwant-project.org:doc/$CI_COMMIT_REF_SLUG/
 
 upload dev version docs:
+  image: eeacms/rsync
   environment:
     name: production
     url: https://kwant-project.org/doc/dev
@@ -140,9 +149,10 @@ upload dev version docs:
     - build documentation
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "kwant/kwant"
-  script:
+  before_script:
     - eval $(ssh-agent -s)
     - echo $MASTER_WEBSITE_KEY | base64 -d | ssh-add -
+  script:
     - rsync -rlv -e "$SSH_COMMAND" --delete doc/build/html/* kwant@kwant-project.org:doc/dev
 
 ## Build documentation for tagged releases
