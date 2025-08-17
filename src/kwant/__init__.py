@@ -11,22 +11,6 @@ __all__ = []
 # Handle version information
 from ._version import __version__, __version_tuple__
 
-import numpy                    # Needed by C. Gohlke's Windows package.
-import warnings
-
-try:
-    from . import _system
-except ImportError:
-    import inspect
-    if len(inspect.trace()) == 1:
-        msg = """Error importing Kwant:
-        You should not try to import Kwant from its source directory.
-        Please exit the Kwant source distribution directory, and relaunch
-        your Python intepreter from there."""
-        raise ImportError(msg)
-    else:
-        raise
-
 from ._common import KwantDeprecationWarning, UserCodeError
 __all__.extend(['KwantDeprecationWarning', 'UserCodeError'])
 
