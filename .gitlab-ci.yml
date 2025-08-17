@@ -25,6 +25,7 @@ run tests:
   parallel:
     matrix:
       - PIXI_ENV:
+          - minimal-no-extras
           - minimal
           - mid
           - latest

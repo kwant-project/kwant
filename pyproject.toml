@@ -67,29 +67,30 @@ MKL_NUM_THREADS = "1"
 python = ">=3.11.0"
 packaging = ">=23.0"
 tinyarray = ">=1.2.4"
-matplotlib-base = ">=3.7.0"
-plotly = ">=2.7.0"
-qsymm = ">=1.2.6"
-python-mumps = ">=0.0.3,<0.1"
 
 [tool.pixi.pypi-dependencies]
-kwant = { path = ".", editable = true, extras = ["plotting", "continuum", "qsymm", "mumps"] }
+kwant = { path = ".", editable = true }
 
 [tool.pixi.pypi-options]
 no-build-isolation = ["kwant"]
 
 [tool.pixi.feature.minimal.dependencies]
-# Oldest supported stack (SPEC-0 guidance, Aug 2025) with exceptions: NumPy 2.0.x, SciPy 1.13.x
+# Core: oldest supported stack (SPEC-0 guidance, Aug 2025) without optional extras
 python = "~=3.11.0"
 numpy = ">=2.0,<2.1"
 scipy = ">=1.13,<1.14"
 tinyarray = "==1.2.4"
 packaging = ">=23.0"
-sympy = "~=1.12.0"
-matplotlib-base = "~=3.8.0"
-plotly = "~=2.7.0"
-qsymm = "~=1.2.6"
-python-mumps = ">=0.0.3,<0.0.4"
+
+# Optional extras now live in dedicated features so that minimal-no-extras can exclude them.
+
+[tool.pixi.feature.minimal-extras.dependencies]
+# Pinned minimal versions of optional features
+sympy = "~=1.12.0"           # continuum
+matplotlib-base = "~=3.8.0"  # plotting
+plotly = "~=2.7.0"           # plotting
+qsymm = "~=1.2.6"            # qsymm
+python-mumps = ">=0.0.3,<0.0.4"  # mumps
 
 [tool.pixi.feature.mid.dependencies]
 # Mid-range (current stable minor versions)
@@ -97,7 +98,7 @@ python = "~=3.12.0"
 numpy = ">=2.2,<2.3"
 scipy = ">=1.14,<1.15"
 tinyarray = ">=1.2.4"
-sympy = "~=1.13.0"
+sympy = ">=1.13,<1.14"  # continuum mid
 
 [tool.pixi.feature.latest.dependencies]
 # Latest (allow newest releases)
@@ -105,7 +106,14 @@ python = "~=3.13.0"
 numpy = ">=2.3"
 scipy = ">=1.14"
 tinyarray = ">=1.2.4"
-sympy = ">=1.13.0"
+sympy = ">=1.14.0"  # continuum latest
+
+[tool.pixi.feature.extras.dependencies]
+# Less restrictive (mid/latest) optional extras; allow solver to pick newer versions.
+matplotlib-base = ">=3.10"   # plotting newer
+plotly = ">=6.2"            # plotting newer
+qsymm = ">=1.4.0"           # qsymm newer
+python-mumps = ">=0.0.4,<0.1" # mumps newer
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
@@ -137,12 +145,12 @@ sphinxcontrib-svg2pdfconverter = "*"
 build-docs = "make -C doc html"
 
 [tool.pixi.environments]
-default = { features = ["mid", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "mid" }
-mid = { features = ["mid", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "mid" }
-minimal = { features = ["minimal", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "minimal" }
+default = { features = ["mid", "extras", "build", "test"], solve-group = "mid" }
+mid = { features = ["mid", "extras", "build", "test"], solve-group = "mid" }
+minimal = { features = ["minimal", "minimal-extras", "build", "test"], solve-group = "minimal" }
 minimal-no-extras = { features = ["minimal", "build", "test"], solve-group = "minimal" }
-latest = { features = ["latest", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "latest" }
-docs = { features = ["docs", "build", "test", "plotting", "continuum", "qsymm", "mumps"], solve-group = "mid" }
+latest = { features = ["latest", "extras", "build", "test"], solve-group = "latest" }
+docs = { features = ["docs", "mid", "extras", "build"], solve-group = "mid" }
 
 [tool.pixi.feature.test.tasks]
 test = "pytest -r w src/kwant --junitxml=tests.xml --durations=10"
