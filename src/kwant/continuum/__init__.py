@@ -11,11 +11,22 @@ try:
     from ._common import sympify, lambdify
     from ._common import momentum_operators, position_operators
     from .landau_levels import to_landau_basis, discretize_landau, LandauLattice
-except ImportError as error:
-    msg = ("'kwant.continuum' is not available because one or more of its "
-           "dependencies is not installed.")
-    raise ImportError(msg) from error
+except ImportError:
+    # Optional dependency (sympy) is not available. Make the package importable
+    # so test collection can run (tests use pytest.importorskip to skip when
+    # sympy is missing). Accessing names will raise an informative ImportError.
+    __all__ = []
 
-__all__ = ['discretize', 'discretize_symbolic', 'build_discretized',
-           'to_landau_basis', 'discretize_landau', 'LandauLattice',
-           'sympify', 'lambdify', 'momentum_operators', 'position_operators']
+    def __getattr__(name):
+        # Defer the import error until attribute access so pytest.importorskip
+        # in test modules can execute during collection.
+        raise ImportError(
+            "'kwant.continuum' is not available because one or more of its "
+            "dependencies (for example 'sympy') is not installed.")
+
+    def __dir__():
+        return []
+else:
+    __all__ = ['discretize', 'discretize_symbolic', 'build_discretized',
+               'to_landau_basis', 'discretize_landau', 'LandauLattice',
+               'sympify', 'lambdify', 'momentum_operators', 'position_operators']
