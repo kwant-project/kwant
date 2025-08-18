@@ -144,6 +144,13 @@ sphinxcontrib-svg2pdfconverter = "*"
 [tool.pixi.feature.docs.tasks]
 build-docs = "make -C doc html"
 
+[tool.pixi.feature.precommit.dependencies]
+git = "*"
+pre-commit = "*"
+
+[tool.pixi.feature.precommit.tasks]
+pre-commit = "pre-commit"
+
 [tool.pixi.environments]
 default = { features = ["mid", "extras", "build", "test"], solve-group = "mid" }
 mid = { features = ["mid", "extras", "build", "test"], solve-group = "mid" }
@@ -151,6 +158,7 @@ minimal = { features = ["minimal", "minimal-extras", "build", "test"], solve-gro
 minimal-no-extras = { features = ["minimal", "build", "test"], solve-group = "minimal" }
 latest = { features = ["latest", "extras", "build", "test"], solve-group = "latest" }
 docs = { features = ["docs", "mid", "extras", "build"], solve-group = "mid" }
+precommit = { features = ["precommit"], no-default-feature = true }
 
 [tool.pixi.feature.test.tasks]
 test = "pytest -r w src/kwant --junitxml=tests.xml --durations=10"
