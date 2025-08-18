@@ -90,7 +90,7 @@ sympy = "~=1.12.0"           # continuum
 matplotlib-base = "~=3.8.0"  # plotting
 plotly = "~=2.7.0"           # plotting
 qsymm = "~=1.2.6"            # qsymm
-python-mumps = ">=0.0.3,<0.0.4"  # mumps
+python-mumps = ">=0.0.3,<0.0.5"  # mumps
 
 [tool.pixi.feature.mid.dependencies]
 # Mid-range (current stable minor versions)
