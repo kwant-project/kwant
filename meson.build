@@ -1,5 +1,5 @@
 project('kwant', 'c', 'cpp', 'cython',
-        version: run_command('python', '-m', 'setuptools_scm', check: true).stdout().strip(),
+        version: run_command('python3', '-m', 'setuptools_scm', check: true).stdout().strip(),
         license: 'BSD-2-Clause',
         default_options: [
             'warning_level=2',
