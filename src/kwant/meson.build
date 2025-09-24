@@ -22,8 +22,8 @@ foreach module_name : ['_system', 'operator']
         include_directories: inc_dirs,
         install: true,
         subdir: 'kwant',
-    cython_args: ['-3'],
-        cpp_args: ['-std=c++14'] + numpy_args,
+        cython_args: ['-3'],
+        cpp_args: ['-std=c++14'],
     )
 endforeach
 

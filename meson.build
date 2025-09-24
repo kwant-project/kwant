@@ -15,14 +15,8 @@ py_dep = py.dependency()
 
 numpy_dep = dependency('numpy')
 
-# Obtain NumPy include directory explicitly (still required for compile args on some Meson versions)
-numpy_inc = run_command(py, '-c', 'import numpy, sys; sys.stdout.write(numpy.get_include())', check: true).stdout().strip()
-
-# Compiler arguments to add NumPy includes
-numpy_args = ['-I' + numpy_inc, '-Wno-cpp']
-
 # Set include directories - using relative paths for project dirs
-inc_dirs = include_directories('.', 'src', 'src/kwant', 'src/kwant/graph')
+inc_dirs = include_directories('src/kwant', 'src/kwant/graph')
 
 # Share dependencies with all submodules (include NumPy)
 kwant_deps = [py_dep, numpy_dep]

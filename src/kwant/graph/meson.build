@@ -13,8 +13,8 @@ foreach module_name : ['core', 'dijkstra']
         include_directories: inc_dirs,
         install: true,
         subdir: 'kwant/graph',
-    cython_args: ['-3'],
-        cpp_args: ['-std=c++14'] + numpy_args,
+        cython_args: ['-3'],
+        cpp_args: ['-std=c++14'],
     )
 endforeach
 

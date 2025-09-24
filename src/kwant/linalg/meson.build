@@ -15,7 +15,7 @@ py.extension_module(
     install: true,
     subdir: 'kwant/linalg',
     cython_args: ['-3'],
-    cpp_args: ['-std=c++14'] + numpy_args,
+    cpp_args: ['-std=c++14'],
 )
 
 subdir('tests')

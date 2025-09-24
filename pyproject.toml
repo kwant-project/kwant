@@ -25,9 +25,9 @@ classifiers = [
 urls = {Homepage = "https://kwant-project.org"}
 requires-python = ">=3.11"
 dependencies = [
-    "numpy >= 1.26.0",
-    "scipy >= 1.12.0",
-    "tinyarray >= 1.2.2",
+    "numpy >= 2.0.0",
+    "scipy >= 1.13.0",
+    "tinyarray >= 1.2.5",
     "packaging >= 23.0",
 ]
 dynamic = ["version"]
@@ -37,7 +37,7 @@ file = "README.rst"
 content-type = "text/x-rst"
 
 [project.optional-dependencies]
-plotting = ["matplotlib >= 3.7.0", "plotly >= 2.7.0"]
+plotting = ["matplotlib >= 3.8.0", "plotly >= 5.15.0"]
 continuum = ["sympy >= 1.11.0"]
 qsymm = ["qsymm >= 1.2.6"]
 mumps = ["python-mumps < 0.1"]
@@ -66,7 +66,7 @@ MKL_NUM_THREADS = "1"
 [tool.pixi.dependencies]
 python = ">=3.11.0"
 packaging = ">=23.0"
-tinyarray = ">=1.2.4"
+tinyarray = ">=1.2.5"
 
 [tool.pixi.pypi-dependencies]
 kwant = { path = ".", editable = true }
@@ -79,17 +79,17 @@ no-build-isolation = ["kwant"]
 python = "~=3.11.0"
 numpy = ">=2.0,<2.1"
 scipy = ">=1.13,<1.14"
-tinyarray = "==1.2.4"
+tinyarray = "==1.2.5"
 packaging = ">=23.0"
 
 # Optional extras now live in dedicated features so that minimal-no-extras can exclude them.
 
 [tool.pixi.feature.minimal-extras.dependencies]
 # Pinned minimal versions of optional features
-sympy = "~=1.12.0"           # continuum
+sympy = "~=1.12.0"  # continuum
 matplotlib-base = "~=3.8.0"  # plotting
-plotly = "~=2.7.0"           # plotting
-qsymm = "~=1.2.6"            # qsymm
+plotly = "~=5.15.0"  # plotting
+qsymm = "~=1.2.6"  # qsymm
 python-mumps = ">=0.0.3,<0.0.5"  # mumps
 
 [tool.pixi.feature.mid.dependencies]
@@ -97,7 +97,7 @@ python-mumps = ">=0.0.3,<0.0.5"  # mumps
 python = "~=3.12.0"
 numpy = ">=2.2,<2.3"
 scipy = ">=1.14,<1.15"
-tinyarray = ">=1.2.4"
+tinyarray = ">=1.2.5"
 sympy = ">=1.13,<1.14"  # continuum mid
 
 [tool.pixi.feature.latest.dependencies]
@@ -110,10 +110,10 @@ sympy = ">=1.14.0"  # continuum latest
 
 [tool.pixi.feature.extras.dependencies]
 # Less restrictive (mid/latest) optional extras; allow solver to pick newer versions.
-matplotlib-base = ">=3.10"   # plotting newer
-plotly = ">=6.2"            # plotting newer
-qsymm = ">=1.4.0"           # qsymm newer
-python-mumps = ">=0.0.4,<0.1" # mumps newer
+matplotlib-base = ">=3.10"  # plotting newer
+plotly = ">=6.2"  # plotting newer
+qsymm = ">=1.4.0"  # qsymm newer
+python-mumps = ">=0.0.4,<0.1"  # mumps newer
 
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
@@ -163,3 +163,13 @@ precommit = { features = ["precommit"], no-default-feature = true }
 [tool.pixi.feature.test.tasks]
 test = "pytest -r w src/kwant --junitxml=tests.xml --durations=10"
 test-cov = "pytest -r w --cov=src/kwant --cov-report term --cov-report html --cov-report xml src/kwant --junitxml=tests.xml --durations=10"
+
+[tool.pixi.feature.latest.tasks.test-all]
+# There is no special reason to put this task under 'latest', except for 'latest'
+# feature being only used in one environment.
+depends-on = [
+    { task = "test", environment = "minimal-no-extras" },
+    { task = "test", environment = "minimal" },
+    { task = "test", environment = "mid" },
+    { task = "test" , environment = "latest" },
+]
