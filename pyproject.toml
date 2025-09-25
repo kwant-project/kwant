@@ -27,7 +27,7 @@ requires-python = ">=3.11"
 dependencies = [
     "numpy >= 2.0.0",
     "scipy >= 1.13.0",
-    "tinyarray >= 1.2.5",
+    "tinyarray >= 1.2.4",
     "packaging >= 23.0",
 ]
 dynamic = ["version"]
@@ -66,7 +66,7 @@ MKL_NUM_THREADS = "1"
 [tool.pixi.dependencies]
 python = ">=3.11.0"
 packaging = ">=23.0"
-tinyarray = ">=1.2.5"
+tinyarray = ">=1.2.4"
 
 [tool.pixi.pypi-dependencies]
 kwant = { path = ".", editable = true }
@@ -79,7 +79,7 @@ no-build-isolation = ["kwant"]
 python = "~=3.11.0"
 numpy = ">=2.0,<2.1"
 scipy = ">=1.13,<1.14"
-tinyarray = "==1.2.5"
+tinyarray = "==1.2.4"
 packaging = ">=23.0"
 
 # Optional extras now live in dedicated features so that minimal-no-extras can exclude them.
@@ -105,7 +105,7 @@ sympy = ">=1.13,<1.14"  # continuum mid
 python = "~=3.13.0"
 numpy = ">=2.3"
 scipy = ">=1.14"
-tinyarray = ">=1.2.4"
+tinyarray = ">=1.2.5"
 sympy = ">=1.14.0"  # continuum latest
 
 [tool.pixi.feature.extras.dependencies]
