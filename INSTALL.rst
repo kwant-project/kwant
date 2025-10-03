@@ -2,21 +2,18 @@
 Installation of Kwant
 =====================
 
-Ready-to-use Kwant packages are available for many platforms (like GNU/Linux,
-Mac OS X, Microsoft Windows).  See the `installation page of the Kwant website
-<https://kwant-project.org/install>`_ for instructions on how to install Kwant
-on your platform.  This is the recommended way for new users.
+.. note::
+
+  If you just want to use Kwant, see the `installation page of the Kwant
+  website <https://kwant-project.org/install>`_ for instructions on how to install Kwant
+  on your platform.  This is the recommended way for new users.
 
 The remainder of this section documents how to build Kwant from source.  This
 information is mostly of interest to contributors and packagers.
 
-
-********************
-Generic instructions
-********************
-
+*************************
 Obtaining the source code
-=========================
+*************************
 
 Source distributions of Kwant (and Tinyarray) are available at the `downloads
 section of the Kwant website <https://downloads.kwant-project.org/kwant/>`_ as well
@@ -25,184 +22,164 @@ cloned directly from the `official Kwant git repository
 <https://gitlab.kwant-project.org/kwant/kwant>`_.
 
 
+***********************
+Development environment
+***********************
+
+The fastest way to set up a development environment for Kwant is to use `pixi
+<https://pixi.sh/>`_.
+
+After installing pixi and obtaining the Kwant source code, run::
+
+    pixi run test-all
+
+This will:
+
+* Configure isolated environments for all supported Kwant dependencies
+* Build and install Kwant in each environment
+* Run all tests in each environment
+
+The environments will be cached by pixi, so subsequent runs will be much
+faster.
+
+Similarly, to build the documentation, run::
+
+    pixi run build-docs
+
+********************
+Generic instructions
+********************
+
 Prerequisites
 =============
 
-Building Kwant requires
- * `Python <https://www.python.org/>`_ 3.8 or above,
- * `NumPy <https://numpy.org/>`_ 1.18.0 or newer,
- * `SciPy <https://www.scipy.org/>`_ 1.3.0 or newer,
- * `LAPACK <https://netlib.org/lapack/>`_ and `BLAS <https://netlib.org/blas/>`_,
-   (For best performance we recommend the free `OpenBLAS
-   <https://www.openblas.net/>`_ or the nonfree `MKL
-   <https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html>`_.)
- * `Tinyarray <https://gitlab.kwant-project.org/kwant/tinyarray>`_ 1.2.2 or newer,
-a NumPy-like Python package optimized for very small arrays,
- * An environment which allows to compile Python extensions written in C and
-   C++.
+System dependencies
+-------------------
 
-The following software is highly recommended though not strictly required:
- * `matplotlib <https://matplotlib.org/>`_ 3.2.2 or newer, for the module `kwant.plotter` and the tutorial,
- * `SymPy <https://sympy.org/>`_ 1.5.1 or newer, for the subpackage `kwant.continuum`.
- * `Qsymm <https://pypi.org/project/qsymm/>`_ 1.2.6 or newer, for the subpackage `kwant.qsymm`.
- * `MUMPS <https://mumps-solver.org/>`_, a sparse linear algebra library
-   that will in many cases speed up Kwant several times and reduce the memory
-   footprint.  (Kwant uses only the sequential, single core version
-   of MUMPS.  The advantages due to MUMPS as used by Kwant are thus independent
-   of the number of CPU cores of the machine on which Kwant runs.)
- * The `py.test testing framework <https://docs.pytest.org/>`_ 3.3.2 or newer for running the
-   tests included with Kwant.
+Building Kwant from source requires a standard scientific Python toolchain with
+the following system components:
 
-In addition, to build a copy of Kwant that has been checked-out directly from
-version control, you will also need `Cython <https://cython.org/>`_ 3.0 or
-newer.  You do not need Cython to build Kwant that has been unpacked from a
-source .tar.gz-file.
+* A supported Python interpreter together with its development headers.  The
+  supported versions are listed in ``pyproject.toml``.
+* A C compiler with C11 support and a C++ compiler with C++14 support (for
+  example GCC or Clang), plus the usual build utilities such as ``pkg-config``.
+* The Meson build system and Ninja build tool available on ``PATH``.  Meson is
+  also responsible for driving Cython compilation as part of the build.
+* `Cython <https://cython.org/>`_ is needed when building from a version control
+  checkout.  Release tarballs already include the generated C files.
+
+Python requirements
+-------------------
+
+All Python runtime dependencies, optional extras, and build requirements are
+declared in ``pyproject.toml``.  Install the sets you need with your preferred
+environment manager (``pip``, ``pixi``, ``conda``, ...).
+
+Optional components such as plotting support, continuum helpers, symmetry
+tools, or the MUMPS-based linear solver are provided through extras also listed
+in ``pyproject.toml``.  For MUMPS support install the ``python-mumps`` package
+from PyPI (or your distribution, if available) and ensure that the MUMPS
+libraries are present on your machine.
 
 
 Building and installing Kwant
 =============================
 
-Kwant can be built and installed by running the following commands in the root
-directory of the Kwant distribution. ::
+The recommended way to build Kwant in a generic environment is to let
+``pip`` drive the ``meson-python`` backend.  Ensure that the required
+dependencies from ``pyproject.toml`` are provided by your environment, then run
+in the root of the source tree::
 
-    python3 setup.py build
-    python3 setup.py install
+  python -m pip install --no-build-isolation .
 
-Depending on your system, you might have to run the second command with
-administrator privileges (e.g. prefixing it with ``sudo``).
+The ``--no-build-isolation`` flag makes ``pip`` reuse the packages available in
+your environment (in particular it is important to build Kwant using the
+correct ``numpy`` version), so please install them beforehand. Add extras such
+as ``.[plotting,continuum]`` if you need optional features.
 
-After installation, tests can be run with::
+For development work, perform an editable install instead::
 
-    python3 -c 'import kwant; kwant.test()'
+  python -m pip install --no-build-isolation -e .
 
-The tutorial examples can be found in the directory ``tutorial`` inside the root
-directory of the Kwant source distribution.
+Editable installs keep the source tree and the installed package in sync.  Add
+optional extras explicitly (for example ``-e .[plotting]``) based on the groups
+declared in ``pyproject.toml``.  Install testing tools such as ``pytest`` if you
+intend to run the test suite.
 
-(Cython will be run automatically when the source tree has been checked out of
-version control.  Kwant tarballs include the Cython-generated files, and
-cythonization is disabled when building not from git.  If ever necessary, this
-default can be overridden by giving the ``--cython`` option to setup.py.)
+If you prefer to invoke Meson manually, activate the Python environment into
+which Kwant should be installed and run::
 
+  meson setup build --prefix="$(python -c 'import sys; print(sys.prefix)')" --buildtype=release
+  meson compile -C build
+  meson install -C build
 
-.. _build-configuration:
+This uses the same interpreter Meson detected during configuration, installs
+into its prefix (for example a virtual environment), and mirrors the layout
+produced by ``pip``/``meson-python``.
 
-Build configuration
-===================
+After installing, run the test suite from the repository root with::
 
-Kwant contains several extension modules.  The compilation and linking of these
-modules can be configured by editing a build configuration file.  By default,
-this file is ``build.conf`` in the root directory of the Kwant distribution.  A
-different path may be provided using the ``--configfile=PATH`` option.
-
-This configuration file consists of
-sections, one for each extension module that is contained in Kwant, led by a
-``[section name]`` header and followed by ``key = value`` lines.
-
-The sections bear the names of the extension modules, for example
-``[kwant.operator]``.  There can be also a
-``[DEFAULT]`` section that provides default values for all extensions, also
-those not explicitly present in the file.
-
-Possible keys are the keyword arguments for ``setuptools.Extension`` (For a
-complete list, see its `documentation
-<https://setuptools.pypa.io/en/latest/userguide/ext_modules.html>`_).
-The corresponding values are whitespace-separated lists of strings.
-
-Example ``build.conf`` for compiling Kwant with C assertions and Cython's line
-trace feature::
-
-    [DEFAULT]
-    undef_macros = NDEBUG
-    define_macros = CYTHON_TRACE=1
-
-Kwant can optionally be linked against MUMPS.  The main
-application of build configuration is adopting the build process to the various
-deployments of MUMPS. MUMPS will be not linked
-against by default, except on Debian-based systems when the package
-``libmumps-scotch-dev`` is installed.
-
-The section ``[kwant.linalg._mumps]`` may be used to adapt the build process.
-(For simplicity and backwards compatibility, ``[mumps]`` is an aliases for the above.)
-
-
-Example ``build.conf`` for linking Kwant against a self-compiled MUMPS, `SCOTCH
-<https://www.labri.fr/perso/pelegrin/scotch/>`_ and `METIS
-<http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_::
-
-    [mumps]
-    libraries = zmumps mumps_common pord metis esmumps scotch scotcherr mpiseq gfortran
-
-The detailed syntax of ``build.conf`` is explained in the `documentation of
-Python's configparser module
-<https://docs.python.org/3/library/configparser.html#supported-ini-file-structure>`_.
+    python -m pytest src/kwant
 
 
 Building the documentation
 ==========================
 
-To build the documentation, the `Sphinx documentation generator
-<https://www.sphinx-doc.org/en/stable/>`_ is required with ``numpydoc`` extension
-(version 0.5 or newer), as well as ``jupyter-sphinx`` (version 0.2 or newer).
-If PDF documentation is to be built, the tools
-from the `libRSVG <https://wiki.gnome.org/action/show/Projects/LibRsvg>`_
-(Debian/Ubuntu package ``librsvg2-bin``) and a Sphinx extension
-``sphinxcontrib-svg2pdfconverter`` are needed to convert SVG drawings into the
-PDF format.
+To build the documentation install the packages listed under
+``[tool.pixi.feature.docs.dependencies]`` in ``pyproject.toml`` (``make``,
+``sphinx``, ``sphinx-book-theme``, ``numpydoc``, ``requests``,
+``sphinx-togglebutton``, and ``jupyter-sphinx``).  The
+``sphinxcontrib-svg2pdfconverter`` package listed in
+``[tool.pixi.feature.docs.pypi-dependencies]`` is required for PDF builds.  If
+PDF documentation is to be generated you also need the tools from the
+`libRSVG <https://wiki.gnome.org/action/show/Projects/LibRsvg>`_
+(Debian/Ubuntu package ``librsvg2-bin``) to convert SVG drawings into PDF.
 
-As a prerequisite for building the documentation, Kwant must have been built
-successfully using ``python3 setup.py build`` as described above (or Kwant must
-be already installed in Python's search path).  HTML documentation is built by
+As a prerequisite for building the documentation, Kwant must already be built
+successfully (for example via ``python -m pip install .`` or a manual Meson
+build) or otherwise installed on Python's search path.  HTML documentation is
+built by
 entering the ``doc`` subdirectory of the Kwant package and executing ``make
 html``.  PDF documentation is generated by executing ``make latex`` followed
 by ``make all-pdf`` in ``doc/build/latex``.
 
-Because of some quirks of how Sphinx works, it might be necessary to execute
-``make clean`` between building HTML and PDF documentation.  If this is not
-done, Sphinx may mistakenly use PNG files for PDF output or other problems may
-appear.
-
-****************************
-Hints for specific platforms
-****************************
-
+*****************************
 Unix-like systems (GNU/Linux)
-=============================
+*****************************
 
 Kwant should run on all recent Unix-like systems.  The following instructions
-have been verified to work on Debian 8 (Jessie) or newer, and on Ubuntu 14.04 or
-newer.  For other distributions step 1 will likely have to be adapted.  If
-Ubuntu-style ``sudo`` is not available, the respective command must be run as
-root.
+have been verified to work on Debian 13 (Trixie) or newer, and on Ubuntu 25.04 or
+newer.  For other distributions step 1 will likely have to be adapted.
 
-1. Install the required packages.  On Debian-based systems like Ubuntu this can
-   be done by running the command ::
+1. Install the required packages (these are both runtime and build dependencies)::
 
-       sudo apt-get install python3-dev python3-setuptools python3-scipy python3-matplotlib python3-pytest python3-sympy g++ gfortran libmumps-scotch-dev
+  sudo apt-get update && sudo apt-get install --no-install-recommends \
+      build-essential python3 python3-venv python3-pip python3-dev pkg-config \
+      ninja-build meson python3-mesonpy cmake python3-numpy python3-scipy \
+      python3-tinyarray python3-packaging cython3 python3-setuptools-scm \
+      python3-pytest
 
-2. Unpack Tinyarray, enter its directory. To build and install, run ::
+   Install optional packages such as plotting libraries if you need them.
 
-       python3 setup.py build
-       sudo python3 setup.py install
+2. Create and activate a virtual environment that can access the
+   distribution-provided packages::
 
-3. Inside the Kwant source distribution's root directory run ::
+  python3 -m venv --system-site-packages kwant-venv
+  source kwant-venv/bin/activate
 
-       python3 setup.py build
-       sudo python3 setup.py install
+3. From the root of the Kwant source tree install the package using the
+   pre-installed dependencies::
 
-By default the package will be installed under ``/usr/local``.  Run ``python3
-setup.py --help install`` for installation options.
+  pip install --no-build-isolation .
 
+   Use ``-e .`` instead if you need an editable install, and add extras such as
+   ``.[docs]`` when necessary.  This approach avoids downloading wheels because
+   ``pip`` reuses the packages supplied by Debian.
 
-Microsoft Windows
-=================
+4. (Optional) Verify the installation and run the tests::
 
-Our efforts to compile Kwant on Windows using only free software (MinGW) were
-only moderately successful.  At the end of a very complicated process we
-obtained packages that worked, albeit unreliably.  As the only recommended way
-to compile Python extensions on Windows is using Visual C++, it may well be that
-there exists no easy solution.
+  python -c "import kwant; print(kwant.__version__)"
+  python -m pytest src/kwant
 
-It is possible to compile Kwant on Windows using non-free compilers, however we
-(the authors of Kwant) have no experience with this.  The existing Windows
-binary installers of Kwant and Tinyarray were kindly prepared by Christoph
-Gohlke.
+By default the package is installed inside the virtual environment.  Adjust the
+commands above if you prefer a different layout.
