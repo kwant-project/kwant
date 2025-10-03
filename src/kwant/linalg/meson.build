@@ -15,7 +15,8 @@ py.extension_module(
     install: true,
     subdir: 'kwant/linalg',
     cython_args: ['-3'],
-    cpp_args: ['-std=c++14'],
+    c_args: ['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION'],
+    cpp_args: ['-std=c++14', '-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION'],
 )
 
 subdir('tests')

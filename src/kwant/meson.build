@@ -23,7 +23,11 @@ foreach module_name : ['_system', 'operator']
         install: true,
         subdir: 'kwant',
         cython_args: ['-3'],
-        cpp_args: ['-std=c++14'],
+        # Ensure deprecated NumPy C API usage is disabled at compile time so
+        # that NumPy does not emit the "Using deprecated NumPy API" warning.
+        # Pass the define to both the C and C++ compilers to be safe.
+        c_args: ['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION'],
+        cpp_args: ['-std=c++14', '-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION'],
     )
 endforeach
 
