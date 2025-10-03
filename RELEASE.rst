@@ -14,6 +14,17 @@ Preflight checks
 The following checks should be made *before* tagging the release.
 
 
+Review branch state
+-------------------
+
+Kwant follows a mainline-first workflow.
+
+* ``main`` is the primary development branch; prefer preparing releases directly from it.
+* We do not decide in advance whether the next release cut from ``main`` will be a feature or patch release.
+* Make a best effort to tag any merge commit that introduces new features as ``vX.Y.0a0``. If a tag was missed, add it before the release.
+* When an urgent bugfix must ship before ``main`` is ready, create a maintenance branch from the relevant tag. Land the fix on that branch (preferred) or backport it from ``main`` if it already landed there.
+
+
 Check that all issues are resolved
 ----------------------------------
 
@@ -26,11 +37,17 @@ bumped.
 Ensure that all tests pass
 --------------------------
 
-For major and minor releases we will be tagging the ``master`` branch.
-For patch releases, the ``stable`` branch.
-This should be as simple as verifying that the latest CI pipeline succeeded,
-however in ``stable`` branch also manually trigger CI task of building the
-conda package and verify that it, too, succeeds.
+Releases normally come straight from ``main``. If you are working from a
+short-lived maintenance branch, ensure its history is clean, rebased on the
+relevant tag, and contains only the bugfixes you plan to ship.
+
+1. Confirm that the latest CI pipeline for the branch you intend to tag
+   (``main`` or a maintenance branch) succeeded, including packaging jobs.
+2. Run the full pixi test matrix locally from the repository root::
+
+        pixi run test-all
+
+    This exercises every supported environment declared in ``pyproject.toml``.
 
 
 Inspect the documentation
@@ -101,28 +118,30 @@ Do *not* yet push the tag anywhere; it might have to be undone!
 Build a source tarball and inspect it
 -------------------------------------
 
-    ./setup.py sdist
+Ensure that old artefacts do not linger in ``dist`` and run the dedicated pixi
+task to generate the sdist and wheel::
 
-This creates the file dist/kwant-<version>.tar.gz.  It is a good idea to unpack it
-in /tmp and inspect that builds in isolation and that the tests run::
+    rm -rf dist
+    pixi run build-dist
 
-    cd /tmp
-    tar xzf ~/src/kwant/dist/kwant-<version>.tar.gz
-    cd kwant-<version>
-    ./setup.py build
-    ./setup.py build_ext -i
-    py.test
+This creates ``dist/kwant-<version>.{tar.gz,whl}``.  Inspect the tarball contents and
+verify that it installs correctly.  For an additional sanity check, unpack the tarball
+into ``/tmp`` and build it with an isolated Meson setup if desired.
 
 
 Build the documentation
 -----------------------
 Building the documentation requires 'sphinx' and a Latex installation.
-First build the HTML and PDF documentation::
+Clean previous artefacts, then build the HTML documentation using the dedicated
+pixi environment::
 
-    ./setup.py build
-    make -C doc realclean
-    make -C doc html latex
-    make -C doc/build/latex all-pdf
+    pixi run -e docs make -C doc realclean
+    pixi run -e docs build-docs
+
+Before producing PDFs, run the latex target and compile the books::
+
+    pixi run -e docs make -C doc latex
+    pixi run -e docs make -C doc/build/latex all-pdf
 
 Then create a zipped version of the HTML documentation and name the PDF
 consistently, storing them, for example, in the "dist" directory along with the
@@ -136,11 +155,16 @@ source tarballs::
 
 Finally, rebuild the documentation for the website (including the web analysis javascript code)::
 
-    make -C doc html SPHINXOPTS='-A website_deploy=True -n -W'
+    pixi run -e docs make -C doc html SPHINXOPTS='-A website_deploy=True -n -W'
 
 
 Clone the repository of the Kwant Debian package
 ------------------------------------------------
+
+.. warning::
+
+    The Debian packaging workflow documented in this section is known to be out
+    of date and needs to be refreshed alongside future releases.
 
 This step needs to be performed only once.  The cloned repository can be reused
 for subsequent releases.
@@ -558,9 +582,9 @@ Working towards the next release
 ################################
 
 After finalizing a release, a new ``whatsnew`` file should be created for
-the *next* release, and this addition should be committed and tagged as::
-
-    <new major>.<new minor>.<new patch>a0
-
-This tag should be pushed to Kwant Gitlab, and a new milestone for the next
-release should be created.
+the *next* release. Keep the version number flexible until it becomes clear
+whether the next cut is a feature or patch release. As part of our best effort
+tagging policy, add ``v<new major>.<new minor>.0a0`` to the merge commit that
+introduces the next new feature. If the tag is missed, create it retroactively
+before the next release preparations. Finally, create a new milestone for the
+upcoming release.

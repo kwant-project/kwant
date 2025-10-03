@@ -128,6 +128,13 @@ meson = ">=1.4.0"
 meson-python = ">=0.15.0"
 ninja = ">=1.11.1"
 setuptools-scm = ">=6.2"
+python-build = "*"
+
+[tool.pixi.feature.build.pypi-dependencies]
+ninja = "*"
+
+[tool.pixi.feature.build.tasks]
+build-dist = "python -m build --sdist --wheel --no-isolation --skip-dependency-check"
 
 [tool.pixi.feature.docs.dependencies]
 make = "*"

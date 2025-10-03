@@ -174,11 +174,29 @@ upload dev version docs:
     only:
        - /^v[0-9]+\.[0-9]+.[0-9]+$/@kwant/kwant
 
+build distribution:
+  extends: .tagged-version
+  variables:
+    PIXI_ENV: default
+  script:
+    - rm -rf dist
+    - pixi run -e $PIXI_ENV build-dist
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+  cache:
+    key: "$CI_JOB_NAME"
+    paths:
+      - .pixi
+      - build
+
 gather release artifacts:
   extends: .tagged-version
   needs:
     - run tests
     - build documentation
+    - build distribution
   script:
     - mkdir docs
     - mv doc/build/html docs/html
