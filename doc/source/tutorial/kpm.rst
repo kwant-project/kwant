@@ -518,7 +518,9 @@ vectors
     cond_array_xy = np.array([cond_xy(e, temperature=0.01) for e in energies])
 
     # area of the unit cell per site
-    area_per_site = np.abs(np.cross(*lat.prim_vecs)) / len(lat.sublattices)
+    prim_vecs = np.stack(lat.prim_vecs)
+    area_per_site = (np.abs(np.linalg.det(prim_vecs)) /
+                     len(lat.sublattices))
     cond_array_xx /= area_per_site
     cond_array_xy /= area_per_site
 

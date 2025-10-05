@@ -46,6 +46,8 @@ Similarly, to build the documentation, run::
 
     pixi run build-docs
 
+.. _build-configuration:
+
 ********************
 Generic instructions
 ********************
@@ -132,7 +134,7 @@ To build the documentation install the packages listed under
 ``sphinxcontrib-svg2pdfconverter`` package listed in
 ``[tool.pixi.feature.docs.pypi-dependencies]`` is required for PDF builds.  If
 PDF documentation is to be generated you also need the tools from the
-`libRSVG <https://wiki.gnome.org/action/show/Projects/LibRsvg>`_
+`libRSVG <https://wiki.gnome.org/Projects/LibRsvg>`_
 (Debian/Ubuntu package ``librsvg2-bin``) to convert SVG drawings into PDF.
 
 As a prerequisite for building the documentation, Kwant must already be built
@@ -151,35 +153,43 @@ Kwant should run on all recent Unix-like systems.  The following instructions
 have been verified to work on Debian 13 (Trixie) or newer, and on Ubuntu 25.04 or
 newer.  For other distributions step 1 will likely have to be adapted.
 
-1. Install the required packages (these are both runtime and build dependencies)::
+1. Install the required packages (these are both runtime and build dependencies):
 
-  sudo apt-get update && sudo apt-get install --no-install-recommends \
-      build-essential python3 python3-venv python3-pip python3-dev pkg-config \
-      ninja-build meson python3-mesonpy cmake python3-numpy python3-scipy \
-      python3-tinyarray python3-packaging cython3 python3-setuptools-scm \
-      python3-pytest
+   .. code-block:: console
+
+      sudo apt-get update && sudo apt-get install --no-install-recommends \
+         build-essential python3 python3-venv python3-pip python3-dev pkg-config \
+         ninja-build meson python3-mesonpy cmake python3-numpy python3-scipy \
+         python3-tinyarray python3-packaging cython3 python3-setuptools-scm \
+         python3-pytest
 
    Install optional packages such as plotting libraries if you need them.
 
 2. Create and activate a virtual environment that can access the
-   distribution-provided packages::
+   distribution-provided packages:
 
-  python3 -m venv --system-site-packages kwant-venv
-  source kwant-venv/bin/activate
+   .. code-block:: console
+
+      python3 -m venv --system-site-packages kwant-venv
+      source kwant-venv/bin/activate
 
 3. From the root of the Kwant source tree install the package using the
-   pre-installed dependencies::
+   pre-installed dependencies:
 
-  pip install --no-build-isolation .
+   .. code-block:: console
+
+      pip install --no-build-isolation .
 
    Use ``-e .`` instead if you need an editable install, and add extras such as
    ``.[docs]`` when necessary.  This approach avoids downloading wheels because
    ``pip`` reuses the packages supplied by Debian.
 
-4. (Optional) Verify the installation and run the tests::
+4. (Optional) Verify the installation and run the tests:
 
-  python -c "import kwant; print(kwant.__version__)"
-  python -m pytest src/kwant
+   .. code-block:: console
+
+      python -c "import kwant; print(kwant.__version__)"
+      python -m pytest src/kwant
 
 By default the package is installed inside the virtual environment.  Adjust the
 commands above if you prefer a different layout.

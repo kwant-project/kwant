@@ -214,7 +214,15 @@ energy eigenstates:
 .. jupyter-execute::
     :hide-code:
 
-    plot_eigenstate(syst)
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The plotted data contains",
+            category=RuntimeWarning,
+        )
+        plot_eigenstate(syst)
 
 Note in the above that we pass the spatially varying potential *function*
 to our system via a parameter called ``V``, because the symbol :math:`V`
@@ -291,6 +299,17 @@ and plot its dispersion using `kwant.plotter.bands`:
 
 In the above we see the edge states of the quantum spin Hall effect, which
 we can visualize using `kwant.plotter.map`:
+
+.. jupyter-execute::
+    :hide-code:
+
+    import warnings
+
+    warnings.filterwarnings(
+        "ignore",
+        message="The plotted data contains",
+        category=RuntimeWarning,
+    )
 
 .. jupyter-execute::
 
