@@ -420,7 +420,8 @@ if mpl_available:
                 vs = np.array(proj(xs, ys, zs, self.axes.M)[:3])
 
                 if sort3d:
-                    indx = vs[2].argsort()[::-1]
+                    indx = np.asarray(np.ma.argsort(vs[2])[::-1], dtype=int)
+                    self._z_markers_idx = indx
 
                     self.set_offsets(vs[:2, indx].T)
 
@@ -459,6 +460,7 @@ if mpl_available:
                                                 np.resize(self.edgecolors_orig,
                                                           shape)[indx])
                 else:
+                    self._z_markers_idx = slice(None)
                     self.set_offsets(vs[:2].T)
 
                 # the whole 3D ordering is flawed in mplot3d when several
