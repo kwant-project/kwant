@@ -1,5 +1,5 @@
 [build-system]
-requires = ["meson-python>=0.15.0", "ninja>=1.11.1", "cython>=3.0.8", "setuptools-scm>=6.2", "numpy>=1.26.0"]
+requires = ["meson-python>=0.15.0", "ninja>=1.11.1", "cython>=3.0.8", "setuptools-scm>=6.2", "numpy>=2.0.0"]
 build-backend = "mesonpy"
 
 [project]
@@ -23,7 +23,7 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
 ]
 urls = {Homepage = "https://kwant-project.org"}
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "numpy >= 2.0.0",
     "scipy >= 1.13.0",
@@ -64,7 +64,7 @@ MKL_DYNAMIC = "FALSE"
 MKL_NUM_THREADS = "1"
 
 [tool.pixi.dependencies]
-python = ">=3.11.0"
+python = ">=3.12.0"
 packaging = ">=23.0"
 tinyarray = ">=1.2.4"
 
@@ -76,7 +76,7 @@ no-build-isolation = ["kwant"]
 
 [tool.pixi.feature.minimal.dependencies]
 # Core: oldest supported stack (SPEC-0 guidance, Aug 2025) without optional extras
-python = "~=3.11.0"
+python = "~=3.12.0"
 numpy = ">=2.0,<2.1"
 scipy = ">=1.13,<1.14"
 tinyarray = "==1.2.4"
@@ -94,7 +94,7 @@ python-mumps = ">=0.0.3,<0.0.5"  # mumps
 
 [tool.pixi.feature.mid.dependencies]
 # Mid-range (current stable minor versions)
-python = "~=3.12.0"
+python = "~=3.13.0"
 numpy = ">=2.2,<2.3"
 scipy = ">=1.14,<1.15"
 tinyarray = ">=1.2.5"
@@ -102,9 +102,9 @@ sympy = ">=1.13,<1.14"  # continuum mid
 
 [tool.pixi.feature.latest.dependencies]
 # Latest (allow newest releases)
-python = "~=3.13.0"
+python = "~=3.14.0"
 numpy = ">=2.3"
-scipy = ">=1.14"
+scipy = ">=1.16"
 tinyarray = ">=1.2.5"
 sympy = ">=1.14.0"  # continuum latest
 
