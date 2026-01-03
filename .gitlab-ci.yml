@@ -1,4 +1,4 @@
-image: ghcr.io/prefix-dev/pixi:0.50.2
+image: ghcr.io/prefix-dev/pixi:0.62.2
 
 variables:
   FF_USE_FASTZIP: "true"
@@ -27,8 +27,7 @@ run tests:
       - PIXI_ENV:
           - minimal-no-extras
           - minimal
-          - mid
-          - latest
+          - default
   script:
     - pixi run -e $PIXI_ENV test
   extends: .test_template
@@ -51,9 +50,9 @@ run coverage:
 
 build documentation:
   variables:
-    PIXI_ENV: mid
+    PIXI_ENV: docs
   script:
-    - pixi run -e docs build-docs
+    - pixi run -e $PIXI_ENV build-docs
   artifacts:
     paths:
       - doc/build/html/
@@ -66,9 +65,9 @@ build documentation:
 
 check for broken links in doc:
   variables:
-    PIXI_ENV: mid
+    PIXI_ENV: docs
   script:
-    - pixi run -e docs make -C doc linkcheck
+    - pixi run -e $PIXI_ENV make -C doc linkcheck
   allow_failure: true
   cache:
     key: "$CI_JOB_NAME"
