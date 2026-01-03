@@ -29,7 +29,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/cycler-0.12.1-pyhcf101f3_2.conda
       - conda: https://prefix.dev/conda-forge/linux-64/cython-3.2.3-py314h1807b08_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/execnet-2.1.2-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/fonttools-4.61.1-pyh7db6752_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/fortran-compiler-1.11.0-h9bea470_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/freetype-2.14.1-ha770c72_0.conda
@@ -101,21 +100,16 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/openjpeg-2.5.4-h55fea9a_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/openssl-3.6.0-h26f9b46_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/packaging-25.0-pyh29332c3_1.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pep8-1.7.1-py_0.tar.bz2
       - conda: https://prefix.dev/conda-forge/linux-64/pillow-12.1.0-py314h8ec4b1a_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/plotly-6.5.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pthread-stubs-0.4-hb9d3cd8_1002.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pyflakes-3.4.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pyparsing-3.3.1-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pyproject-metadata-0.10.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pyproject_hooks-1.2.0-pyhd8ed1ab_1.conda
       - conda: https://prefix.dev/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-cache-1.0-pyhd8ed1ab_3.conda
       - conda: https://prefix.dev/conda-forge/noarch/pytest-cov-7.0.0-pyhcf101f3_1.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-flakes-4.0.5-pyhd8ed1ab_1.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-pep8-1.0.6-pyhd8ed1ab_3.conda
       - conda: https://prefix.dev/conda-forge/linux-64/python-3.14.2-h32b2ec7_100_cp314.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-build-1.3.0-pyhff2d567_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
@@ -402,7 +396,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/cython-3.0.8-py312h30efb56_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/decorator-5.2.1-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/execnet-2.1.2-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/fonttools-4.61.1-py312h8a5da7c_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/fortran-compiler-1.0.2-he991be0_0.tar.bz2
       - conda: https://prefix.dev/conda-forge/linux-64/freetype-2.14.1-ha770c72_0.conda
@@ -487,21 +480,16 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/openssl-3.6.0-h26f9b46_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/packaging-24.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pep517-0.13.0-pyhd8ed1ab_0.tar.bz2
-      - conda: https://prefix.dev/conda-forge/noarch/pep8-1.7.1-py_0.tar.bz2
       - conda: https://prefix.dev/conda-forge/linux-64/pillow-12.1.0-py312h50c33e8_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/platformdirs-4.5.1-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/plotly-2.7.0-py_1.tar.bz2
       - conda: https://prefix.dev/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda
       - conda: https://prefix.dev/conda-forge/linux-64/pthread-stubs-0.4-hb9d3cd8_1002.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pyflakes-3.4.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pyparsing-3.3.1-pyhcf101f3_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pyproject-metadata-0.10.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pysocks-1.7.1-pyha55dd90_7.conda
       - conda: https://prefix.dev/conda-forge/noarch/pytest-7.2.0-pyhd8ed1ab_2.tar.bz2
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-cache-1.0-pyhd8ed1ab_3.conda
       - conda: https://prefix.dev/conda-forge/noarch/pytest-cov-2.5.1-py_1.tar.bz2
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-flakes-2.0.0-py_1.tar.bz2
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-pep8-1.0.6-pyhd8ed1ab_3.conda
       - conda: https://prefix.dev/conda-forge/linux-64/python-3.12.0-hab00c5b_0_cpython.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-build-0.0.4-py_0.tar.bz2
       - conda: https://prefix.dev/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
@@ -566,7 +554,6 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/cxx-compiler-1.0.2-hc9558a2_0.tar.bz2
       - conda: https://prefix.dev/conda-forge/linux-64/cython-3.0.8-py312h30efb56_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
-      - conda: https://prefix.dev/conda-forge/noarch/execnet-2.1.2-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/fortran-compiler-1.0.2-he991be0_0.tar.bz2
       - conda: https://prefix.dev/conda-forge/linux-64/gcc_impl_linux-64-7.5.0-habd7529_20.tar.bz2
       - conda: https://prefix.dev/conda-forge/linux-64/gcc_linux-64-7.5.0-h47867f9_33.tar.bz2
@@ -615,15 +602,10 @@ environments:
       - conda: https://prefix.dev/conda-forge/linux-64/openssl-3.6.0-h26f9b46_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/packaging-24.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pep517-0.13.0-pyhd8ed1ab_0.tar.bz2
-      - conda: https://prefix.dev/conda-forge/noarch/pep8-1.7.1-py_0.tar.bz2
       - conda: https://prefix.dev/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda
-      - conda: https://prefix.dev/conda-forge/noarch/pyflakes-3.4.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pyproject-metadata-0.10.0-pyhd8ed1ab_0.conda
       - conda: https://prefix.dev/conda-forge/noarch/pytest-7.2.0-pyhd8ed1ab_2.tar.bz2
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-cache-1.0-pyhd8ed1ab_3.conda
       - conda: https://prefix.dev/conda-forge/noarch/pytest-cov-2.5.1-py_1.tar.bz2
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-flakes-2.0.0-py_1.tar.bz2
-      - conda: https://prefix.dev/conda-forge/noarch/pytest-pep8-1.0.6-pyhd8ed1ab_3.conda
       - conda: https://prefix.dev/conda-forge/linux-64/python-3.12.0-hab00c5b_0_cpython.conda
       - conda: https://prefix.dev/conda-forge/noarch/python-build-0.0.4-py_0.tar.bz2
       - conda: https://prefix.dev/conda-forge/noarch/python_abi-3.12-8_cp312.conda
@@ -1367,17 +1349,6 @@ packages:
   - pkg:pypi/exceptiongroup?source=hash-mapping
   size: 21333
   timestamp: 1763918099466
-- conda: https://prefix.dev/conda-forge/noarch/execnet-2.1.2-pyhd8ed1ab_0.conda
-  sha256: 1acc6a420efc5b64c384c1f35f49129966f8a12c93b4bb2bdc30079e5dc9d8a8
-  md5: a57b4be42619213a94f31d2c69c5dda7
-  depends:
-  - python >=3.10
-  license: MIT
-  license_family: MIT
-  purls:
-  - pkg:pypi/execnet?source=hash-mapping
-  size: 39499
-  timestamp: 1762974150770
 - conda: https://prefix.dev/conda-forge/noarch/executing-2.2.1-pyhd8ed1ab_0.conda
   sha256: 210c8165a58fdbf16e626aac93cc4c14dbd551a01d1516be5ecad795d2422cad
   md5: ff9efb7f7469aed3c4a8106ffa29593c
@@ -2106,8 +2077,8 @@ packages:
   timestamp: 1719463201255
 - pypi: ./
   name: kwant
-  version: 1.5.1.dev59+g11c38034.d20260103
-  sha256: 60e93e2339b511277e5d24cd28e75a004acf64b44a2b36eb30345c83ffb5cd46
+  version: 1.5.1.dev60+gfa2db478.d20260103
+  sha256: caa4315c5e37c987d8e21f204f913f056370c9b4a2da3b3e312272a830e06733
   requires_dist:
   - numpy>=2.0.0
   - scipy>=1.13.0
@@ -3477,16 +3448,6 @@ packages:
   - pkg:pypi/pep517?source=hash-mapping
   size: 19044
   timestamp: 1667916747996
-- conda: https://prefix.dev/conda-forge/noarch/pep8-1.7.1-py_0.tar.bz2
-  sha256: 556c2d145e044f4b52c5641e893c7f88a7de8bec21a18beabe90785fda01f2ed
-  md5: d0b5bc3aebbffcb175bf8a1d419acb79
-  depends:
-  - python
-  license: MIT
-  license_family: MIT
-  purls:
-  - pkg:pypi/pep8?source=hash-mapping
-  size: 31002
 - conda: https://prefix.dev/conda-forge/linux-64/perl-5.32.1-7_hd590300_perl5.conda
   build_number: 7
   sha256: 9ec32b6936b0e37bcb0ed34f22ec3116e75b3c0964f9f50ecea5f58734ed6ce9
@@ -3715,17 +3676,6 @@ packages:
   - pkg:pypi/pydata-sphinx-theme?source=hash-mapping
   size: 1393462
   timestamp: 1719344980505
-- conda: https://prefix.dev/conda-forge/noarch/pyflakes-3.4.0-pyhd8ed1ab_0.conda
-  sha256: 4b6fb3f7697b4e591c06149671699777c71ca215e9ec16d5bd0767425e630d65
-  md5: dba204e749e06890aeb3756ef2b1bf35
-  depends:
-  - python >=3.9
-  license: MIT
-  license_family: MIT
-  purls:
-  - pkg:pypi/pyflakes?source=hash-mapping
-  size: 59592
-  timestamp: 1750492011671
 - conda: https://prefix.dev/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
   sha256: 5577623b9f6685ece2697c6eb7511b4c9ac5fb607c9babc2646c811b428fd46a
   md5: 6b6ece66ebcae2d5f326c77ef2c5a066
@@ -3826,19 +3776,6 @@ packages:
   - pkg:pypi/pytest?source=hash-mapping
   size: 299581
   timestamp: 1765062031645
-- conda: https://prefix.dev/conda-forge/noarch/pytest-cache-1.0-pyhd8ed1ab_3.conda
-  sha256: 6f570dcd53203cd620bc7480d3e227e9466b734b092ce8ceb68f61a3f1713d2d
-  md5: 0b2a01521d2ec413e57154338c43b82a
-  depends:
-  - execnet >=1.1.dev1
-  - pytest >=2.2
-  - python >=3.9
-  license: MIT
-  license_family: MIT
-  purls:
-  - pkg:pypi/pytest-cache?source=hash-mapping
-  size: 12570
-  timestamp: 1733852753851
 - conda: https://prefix.dev/conda-forge/noarch/pytest-cov-2.5.1-py_1.tar.bz2
   sha256: 5260648796f566828b36a7ffe8f7304a9aab2e1ab3b0f6b5923e5babf98017ca
   md5: ead2f9e370a840bbe18e800002d0f5ed
@@ -3868,48 +3805,6 @@ packages:
   - pkg:pypi/pytest-cov?source=hash-mapping
   size: 29016
   timestamp: 1757612051022
-- conda: https://prefix.dev/conda-forge/noarch/pytest-flakes-2.0.0-py_1.tar.bz2
-  sha256: b1d95071224b032eb95f0bcc08d34a8faa79676d8e3c1c604ebc5cba5d05d858
-  md5: 76dd44cd0637c281add407b1dec378e5
-  depends:
-  - pyflakes
-  - pytest >=2.4.0
-  - pytest-cache
-  - python
-  license: MIT
-  license_family: MIT
-  purls:
-  - pkg:pypi/pytest-flakes?source=hash-mapping
-  size: 7576
-  timestamp: 1531260247796
-- conda: https://prefix.dev/conda-forge/noarch/pytest-flakes-4.0.5-pyhd8ed1ab_1.conda
-  sha256: 0134b5c30c2d65b2556cd8b769fac1ce24141d162fc50263be5f5fd9ab14b6d5
-  md5: d30ae984f0c2faa58ba8d8ca35fdd3dc
-  depends:
-  - pyflakes
-  - pytest >=2.4.0
-  - pytest-cache
-  - python >=3.9
-  license: MIT
-  license_family: MIT
-  purls:
-  - pkg:pypi/pytest-flakes?source=hash-mapping
-  size: 12542
-  timestamp: 1733908607283
-- conda: https://prefix.dev/conda-forge/noarch/pytest-pep8-1.0.6-pyhd8ed1ab_3.conda
-  sha256: a4eb8feb49a51b5c57db0bdc39200df2c3ad14bdea4c19b342d1bb51f220f8ef
-  md5: bad3708da4f8980eaf56dca3ffc6e28d
-  depends:
-  - pep8 >=1.3
-  - pytest >=2.4.2
-  - pytest-cache
-  - python >=3.9
-  license: MIT
-  license_family: MIT
-  purls:
-  - pkg:pypi/pytest-pep8?source=hash-mapping
-  size: 11378
-  timestamp: 1733854179076
 - conda: https://prefix.dev/conda-forge/linux-64/python-3.12.0-hab00c5b_0_cpython.conda
   sha256: 5398ebae6a1ccbfd3f76361eac75f3ac071527a8072627c4bf9008c689034f48
   md5: 7f97faab5bebcc2580f4f299285323da

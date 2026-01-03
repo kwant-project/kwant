@@ -89,8 +89,6 @@ python-mumps = "*"  # mumps
 [tool.pixi.feature.test.dependencies]
 pytest = "*"
 pytest-cov = "*"
-pytest-flakes = "*"
-pytest-pep8 = "*"
 
 [tool.pixi.feature.build.dependencies]
 compilers = "*"
