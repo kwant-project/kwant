@@ -1,0 +1,147 @@
+[build-system]
+requires = ["meson-python>=0.15.0", "ninja>=1.11.1", "cython>=3.0.8", "setuptools-scm>=8.2.0", "numpy>=2.0.0"]
+build-backend = "mesonpy"
+
+[project]
+name = "kwant"
+authors = [
+    {name = "C. W. Groth (CEA), M. Wimmer, A. R. Akhmerov, X. Waintal (CEA), and others", email = "authors@kwant-project.org"},
+]
+description = "Kwant: a package for quantum transport calculations"
+license = {text = "BSD-2-Clause"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: BSD License",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+]
+urls = {Homepage = "https://kwant-project.org"}
+requires-python = ">=3.12"
+dependencies = [
+    "numpy >= 2.0.0",
+    "scipy >= 1.13.0",
+    "tinyarray >= 1.2.4",
+    "packaging >= 23.0",
+]
+dynamic = ["version"]
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst"
+
+[project.optional-dependencies]
+plotting = ["matplotlib >= 3.8.0", "plotly >= 5.15.0"]
+continuum = ["sympy >= 1.11.0"]
+qsymm = ["qsymm >= 1.2.6"]
+mumps = ["python-mumps < 0.1"]
+
+[tool.setuptools_scm]
+write_to = "_version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
+fallback_version = "0.0.0.dev0"
+
+[tool.mesonpy]
+install-extra-wheel-files = [
+    { source = "LICENSE.rst", destination = "LICENSE" },
+]
+
+[tool.pixi.workspace]
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.activation.env]
+OPENBLAS_NUM_THREADS = "1"
+OMP_NUM_THREADS = "1"
+MKL_DYNAMIC = "FALSE"
+MKL_NUM_THREADS = "1"
+
+[tool.pixi.dependencies]
+python = ">=3.12"
+packaging = ">=24.0"
+numpy = ">=2.0.0"
+scipy = ">=1.13.0"
+tinyarray = ">=1.2.4"
+
+[tool.pixi.pypi-dependencies]
+kwant = { path = ".", editable = true }
+
+[tool.pixi.pypi-options]
+no-build-isolation = ["kwant"]
+
+[tool.pixi.feature.minimal]
+solve-strategy = "lowest-direct"
+
+[tool.pixi.feature.extras.dependencies]
+# Optional extras without pins; solve strategy decides the versions per environment.
+matplotlib-base = "*"  # plotting
+plotly = "*"  # plotting
+qsymm = "*"  # qsymm
+python-mumps = "*"  # mumps
+
+[tool.pixi.feature.test.dependencies]
+pytest = "*"
+pytest-cov = "*"
+
+[tool.pixi.feature.build.dependencies]
+compilers = "*"
+cython = ">=3.0.8"
+meson = ">=1.4.0"
+meson-python = ">=0.15.0"
+ninja = ">=1.11.1"
+setuptools-scm = ">=8.2.0"
+python-build = "*"
+
+[tool.pixi.feature.build.pypi-dependencies]
+ninja = ">=1.11.1"
+
+[tool.pixi.feature.build.tasks]
+build-dist = "python -m build --sdist --wheel --no-isolation --skip-dependency-check"
+
+[tool.pixi.feature.docs.dependencies]
+make = "*"
+sphinx = "*"
+sphinx-book-theme = "*"
+numpydoc = "*"
+requests = "*"
+sphinx-togglebutton = "*"
+jupyter-sphinx = "*"
+
+[tool.pixi.feature.docs.pypi-dependencies]
+sphinxcontrib-svg2pdfconverter = "*"
+
+[tool.pixi.feature.docs.tasks]
+build-docs = "make -C doc html"
+
+[tool.pixi.feature.precommit.dependencies]
+git = "*"
+pre-commit = "*"
+
+[tool.pixi.feature.precommit.tasks]
+pre-commit = "pre-commit"
+
+[tool.pixi.environments]
+default = { features = ["extras", "build", "test"] }
+minimal = { features = ["minimal", "extras", "build", "test"], solve-group = "minimal" }
+minimal-no-extras = { features = ["minimal", "build", "test"], solve-group = "minimal" }
+docs = { features = ["docs", "extras", "build"] }
+precommit = { features = ["precommit"], no-default-feature = true }
+
+[tool.pixi.feature.test.tasks]
+test = "pytest -r w src/kwant --junitxml=tests.xml --durations=10"
+test-cov = "pytest -r w --cov=src/kwant --cov-report term --cov-report html --cov-report xml src/kwant --junitxml=tests.xml --durations=10"
+
+[tool.pixi.feature.test.tasks.test-all]
+# Keep the test matrix task here as a shared entry point.
+depends-on = [
+    { task = "test", environment = "minimal-no-extras" },
+    { task = "test", environment = "minimal" },
+    { task = "test", environment = "default" },
+]

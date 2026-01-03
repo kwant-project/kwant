@@ -38,14 +38,14 @@ reasons to use another.  The following functions are provided.
 .. autosummary::
    :toctree: generated/
 
-   kwant.solvers.common.SMatrix
+   common.SMatrix
 
 The analog of ``smatrix``, ``greens_function`` accordingly returns:
 
 .. autosummary::
    :toctree: generated/
 
-   kwant.solvers.common.GreensFunction
+   common.GreensFunction
 
 Being just a thin wrapper around other solvers, the default solver selectively
 imports their functionality.  To find out the origin of any function in this

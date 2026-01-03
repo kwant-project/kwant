@@ -275,11 +275,19 @@ is returned by evaluating a `~kwant.operator.Density` can be used directly with
 .. jupyter-execute::
     :hide-code:
 
-    plot_densities(syst, [
-        ('$σ_0$', density),
-        ('$σ_z$', spin_z),
-        ('$σ_y$', spin_y),
-    ])
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The plotted data contains",
+            category=RuntimeWarning,
+        )
+        plot_densities(syst, [
+            ('$σ_0$', density),
+            ('$σ_z$', spin_z),
+            ('$σ_y$', spin_y),
+        ])
 
 .. admonition:: Technical details
     :class: dropdown note
