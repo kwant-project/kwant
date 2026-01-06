@@ -46,6 +46,13 @@ Similarly, to build the documentation, run::
 
     pixi run build-docs
 
+To build a local conda package artifact of Kwant (a ``.conda`` file) using Pixi's
+preview build feature, run from the repository root::
+
+  pixi build --clean -o dist-pixi
+
+This produces a ``.conda`` artifact under ``dist-pixi/``.
+
 .. _build-configuration:
 
 ********************
