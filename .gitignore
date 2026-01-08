@@ -19,6 +19,8 @@
 htmlcov/
 .ipynb_checkpoints/
 
-# pixi environments
+# pixi
 .pixi
 *.egg-info
+.pixi-cache/
+dist-pixi/

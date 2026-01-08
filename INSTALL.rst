@@ -46,6 +46,19 @@ Similarly, to build the documentation, run::
 
     pixi run build-docs
 
+To build a local conda package artifact of Kwant (a ``.conda`` file) using Pixi's
+preview build feature, run from the repository root::
+
+  pixi build --clean -o dist-pixi
+
+This produces a ``.conda`` artifact under ``dist-pixi/``.
+
+On Windows, ``pixi build`` uses conda-forge's compiler infrastructure, which
+requires an MSVC toolchain (``cl.exe``).  In practice this means you need
+Microsoft Visual Studio 2022 Build Tools (or a full Visual Studio 2022
+installation) with the C++ workload and a Windows SDK installed.  The Pixi
+configuration in ``pyproject.toml`` selects the VS2022 toolchain explicitly.
+
 .. _build-configuration:
 
 ********************

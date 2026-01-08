@@ -56,6 +56,55 @@ install-extra-wheel-files = [
 [tool.pixi.workspace]
 channels = ["https://prefix.dev/conda-forge"]
 platforms = ["linux-64"]
+preview = ["pixi-build"]
+
+[tool.pixi.package]
+name = "kwant"
+# NOTE: Kwant's Python package version is dynamic (setuptools-scm). Pixi-build
+# requires an explicit version for the produced .conda artifact.
+version = "0.0.0.dev0"
+
+[tool.pixi.package.build.backend]
+name = "pixi-build-python"
+version = "*"
+channels = ["https://prefix.dev/conda-forge"]
+
+[tool.pixi.package.build.config]
+noarch = false
+compilers = ["c", "cxx"]
+env = { SETUPTOOLS_SCM_PRETEND_VERSION = "0.0.0.dev0" }
+
+# Compiler selection for `pixi build` on Windows.
+#
+# When `compilers = ["c", "cxx"]` is enabled (required for Kwant), pixi-build
+# uses conda-forge's compiler infrastructure. On Windows this means an MSVC
+# toolchain (cl.exe). We explicitly select VS2022 to avoid requiring an older
+# VS2019 installation.
+[tool.pixi.workspace.target.win-64.build-variants]
+c_compiler = ["vs2022"]
+cxx_compiler = ["vs2022"]
+
+[tool.pixi.package.build-dependencies]
+python = ">=3.12"
+setuptools-scm = ">=8.2.0"
+
+[tool.pixi.package.host-dependencies]
+python = ">=3.12"
+pkg-config = "*"
+meson = ">=1.4.0"
+meson-python = ">=0.15.0"
+ninja = ">=1.11.1"
+cython = ">=3.0.8"
+setuptools-scm = ">=8.2.0"
+numpy = ">=2.0.0"
+scipy = ">=1.13.0"
+
+[tool.pixi.package.run-dependencies]
+python = ">=3.12"
+numpy = ">=2.0.0"
+scipy = ">=1.13.0"
+tinyarray = ">=1.2.4"
+packaging = ">=23.0"
 
 [tool.pixi.activation.env]
 OPENBLAS_NUM_THREADS = "1"
@@ -69,6 +118,7 @@ packaging = ">=24.0"
 numpy = ">=2.0.0"
 scipy = ">=1.13.0"
 tinyarray = ">=1.2.4"
+libblas = { version = "*", build = "*openblas" }
 
 [tool.pixi.pypi-dependencies]
 kwant = { path = ".", editable = true }
