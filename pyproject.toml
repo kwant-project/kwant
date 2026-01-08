@@ -74,6 +74,16 @@ noarch = false
 compilers = ["c", "cxx"]
 env = { SETUPTOOLS_SCM_PRETEND_VERSION = "0.0.0.dev0" }
 
+# Compiler selection for `pixi build` on Windows.
+#
+# When `compilers = ["c", "cxx"]` is enabled (required for Kwant), pixi-build
+# uses conda-forge's compiler infrastructure. On Windows this means an MSVC
+# toolchain (cl.exe). We explicitly select VS2022 to avoid requiring an older
+# VS2019 installation.
+[tool.pixi.workspace.target.win-64.build-variants]
+c_compiler = ["vs2022"]
+cxx_compiler = ["vs2022"]
+
 [tool.pixi.package.build-dependencies]
 python = ">=3.12"
 setuptools-scm = ">=8.2.0"

@@ -2066,8 +2066,8 @@ packages:
   timestamp: 1719463201255
 - pypi: ./
   name: kwant
-  version: 1.5.1.dev68+g0522acbac.d20260106
-  sha256: 18b9acddee248040e7b41459a83acd2a13b388d4060ae9936b1e9476a4662a2b
+  version: 1.5.1.dev73+gd10289bc6.d20260108
+  sha256: 80d3ba03b26b92cf2e250ad1e716dbdfef8f9c3640841bf7cabb888f902846c1
   requires_dist:
   - numpy>=2.0.0
   - scipy>=1.13.0
@@ -2418,6 +2418,7 @@ packages:
   - __glibc >=2.17,<3.0.a0
   - libgcc >=14
   license: LGPL-2.1-only
+  purls: []
   size: 790176
   timestamp: 1754908768807
 - conda: https://prefix.dev/conda-forge/linux-64/libjpeg-turbo-3.1.2-hb03c661_0.conda
